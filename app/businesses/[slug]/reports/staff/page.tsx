@@ -1,0 +1,914 @@
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
+import Link from "next/link";
+
+import {
+  notFound,
+  redirect,
+} from "next/navigation";
+
+type StaffReportsPageProps = {
+  params: Promise<{
+    slug: string;
+  }>;
+
+  searchParams: Promise<{
+    from?: string;
+    to?: string;
+  }>;
+};
+
+function formatDateInput(
+  date: Date
+) {
+  const year =
+    date.getUTCFullYear();
+
+  const month = String(
+    date.getUTCMonth() + 1
+  ).padStart(
+    2,
+    "0"
+  );
+
+  const day = String(
+    date.getUTCDate()
+  ).padStart(
+    2,
+    "0"
+  );
+
+  return `${year}-${month}-${day}`;
+}
+
+function parseDateInput(
+  value: string,
+  endOfDay = false
+) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      value
+    )
+  ) {
+    return null;
+  }
+
+  const time =
+    endOfDay
+      ? "23:59:59.999"
+      : "00:00:00.000";
+
+  const date =
+    new Date(
+      `${value}T${time}Z`
+    );
+
+  return Number.isNaN(
+    date.getTime()
+  )
+    ? null
+    : date;
+}
+
+function roleLabel(
+  role: string
+) {
+  switch (role) {
+    case "OWNER":
+      return "مالك";
+
+    case "STAFF":
+      return "موظف";
+
+    case "SUPER_ADMIN":
+      return "مدير النظام";
+
+    default:
+      return role;
+  }
+}
+
+const numberFormatter =
+  new Intl.NumberFormat(
+    "ar-EG"
+  );
+
+export default async function StaffReportsPage({
+  params,
+  searchParams,
+}: StaffReportsPageProps) {
+  const session =
+    await auth();
+
+  if (!session?.user) {
+    redirect(
+      "/login"
+    );
+  }
+
+  const { slug } =
+    await params;
+
+  const query =
+    await searchParams;
+
+  const business =
+    await prisma.business.findUnique({
+      where: {
+        slug,
+      },
+
+      select: {
+        id:
+          true,
+        name:
+          true,
+        slug:
+          true,
+        primaryColor:
+          true,
+        unitName:
+          true,
+        isActive:
+          true,
+      },
+    });
+
+  if (!business) {
+    notFound();
+  }
+
+  const canViewReports =
+    session.user.role ===
+      "SUPER_ADMIN" ||
+    (
+      session.user.role ===
+        "OWNER" &&
+      session.user.businessId ===
+        business.id
+    );
+
+  if (!canViewReports) {
+    redirect(
+      `/businesses/${business.slug}`
+    );
+  }
+
+  const today =
+    new Date();
+
+  const defaultToInput =
+    formatDateInput(
+      today
+    );
+
+  const defaultFromDate =
+    new Date(today);
+
+  defaultFromDate.setUTCDate(
+    defaultFromDate.getUTCDate() -
+      29
+  );
+
+  const defaultFromInput =
+    formatDateInput(
+      defaultFromDate
+    );
+
+  const requestedFromInput =
+    query.from ??
+    defaultFromInput;
+
+  const requestedToInput =
+    query.to ??
+    defaultToInput;
+
+  let fromInput =
+    requestedFromInput;
+
+  let toInput =
+    requestedToInput;
+
+  let from =
+    parseDateInput(
+      fromInput
+    );
+
+  let to =
+    parseDateInput(
+      toInput,
+      true
+    );
+
+  if (
+    !from ||
+    !to ||
+    from.getTime() >
+      to.getTime()
+  ) {
+    fromInput =
+      defaultFromInput;
+
+    toInput =
+      defaultToInput;
+
+    from =
+      parseDateInput(
+        fromInput
+      );
+
+    to =
+      parseDateInput(
+        toInput,
+        true
+      );
+  }
+
+  if (!from || !to) {
+    throw new Error(
+      "تعذر تحديد فترة التقرير"
+    );
+  }
+
+  const [
+    users,
+    transactions,
+  ] =
+    await Promise.all([
+      prisma.user.findMany({
+        where: {
+          businessId:
+            business.id,
+        },
+
+        orderBy: [
+          {
+            role:
+              "asc",
+          },
+
+          {
+            firstName:
+              "asc",
+          },
+        ],
+
+        select: {
+          id:
+            true,
+          firstName:
+            true,
+          lastName:
+            true,
+          email:
+            true,
+          role:
+            true,
+          isActive:
+            true,
+        },
+      }),
+
+      prisma
+        .loyaltyTransaction
+        .findMany({
+          where: {
+            businessId:
+              business.id,
+
+            createdAt: {
+              gte:
+                from,
+              lte:
+                to,
+            },
+          },
+
+          select: {
+            type:
+              true,
+            amount:
+              true,
+            customerId:
+              true,
+            createdById:
+              true,
+          },
+        }),
+    ]);
+
+  type PerformanceRow = {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+    earnActions: number;
+    earnedAmount: number;
+    redeemActions: number;
+    redeemedAmount: number;
+    adjustmentActions: number;
+    customers: Set<string>;
+  };
+
+  const performance =
+    new Map<
+      string,
+      PerformanceRow
+    >();
+
+  for (
+    const user of users
+  ) {
+    performance.set(
+      user.id,
+      {
+        id:
+          user.id,
+
+        name:
+          [
+            user.firstName,
+            user.lastName,
+          ]
+            .filter(Boolean)
+            .join(" "),
+
+        email:
+          user.email,
+
+        role:
+          user.role,
+
+        isActive:
+          user.isActive,
+
+        earnActions:
+          0,
+
+        earnedAmount:
+          0,
+
+        redeemActions:
+          0,
+
+        redeemedAmount:
+          0,
+
+        adjustmentActions:
+          0,
+
+        customers:
+          new Set<string>(),
+      }
+    );
+  }
+
+  let systemRow:
+    PerformanceRow | null =
+      null;
+
+  for (
+    const transaction of
+      transactions
+  ) {
+    let row =
+      transaction.createdById
+        ? performance.get(
+            transaction.createdById
+          )
+        : undefined;
+
+    if (!row) {
+      if (!systemRow) {
+        systemRow = {
+          id:
+            "system",
+          name:
+            "النظام أو مستخدم محذوف",
+          email:
+            "—",
+          role:
+            "SYSTEM",
+          isActive:
+            false,
+          earnActions:
+            0,
+          earnedAmount:
+            0,
+          redeemActions:
+            0,
+          redeemedAmount:
+            0,
+          adjustmentActions:
+            0,
+          customers:
+            new Set<string>(),
+        };
+      }
+
+      row =
+        systemRow;
+    }
+
+    row.customers.add(
+      transaction.customerId
+    );
+
+    switch (
+      transaction.type
+    ) {
+      case "EARN":
+        row.earnActions +=
+          1;
+
+        row.earnedAmount +=
+          Math.max(
+            0,
+            transaction.amount
+          );
+
+        break;
+
+      case "REDEEM":
+        row.redeemActions +=
+          1;
+
+        row.redeemedAmount +=
+          Math.abs(
+            transaction.amount
+          );
+
+        break;
+
+      case "ADJUSTMENT":
+        row.adjustmentActions +=
+          1;
+
+        break;
+    }
+  }
+
+  const rows = [
+    ...performance.values(),
+    ...(systemRow
+      ? [systemRow]
+      : []),
+  ]
+    .map(
+      (row) => ({
+        ...row,
+
+        customersCount:
+          row.customers.size,
+
+        totalActions:
+          row.earnActions +
+          row.redeemActions +
+          row.adjustmentActions,
+      })
+    )
+    .sort(
+      (
+        first,
+        second
+      ) =>
+        second.totalActions -
+          first.totalActions ||
+        second.customersCount -
+          first.customersCount
+    );
+
+  const totalActions =
+    rows.reduce(
+      (
+        total,
+        row
+      ) =>
+        total +
+        row.totalActions,
+      0
+    );
+
+  const totalEarned =
+    rows.reduce(
+      (
+        total,
+        row
+      ) =>
+        total +
+        row.earnedAmount,
+      0
+    );
+
+  const totalRedeemed =
+    rows.reduce(
+      (
+        total,
+        row
+      ) =>
+        total +
+        row.redeemedAmount,
+      0
+    );
+
+  const activeUsers =
+    users.filter(
+      (user) =>
+        user.isActive
+    ).length;
+
+  const reportQuery =
+    new URLSearchParams({
+      from:
+        fromInput,
+      to:
+        toInput,
+    }).toString();
+
+  return (
+    <main
+      dir="rtl"
+      className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8"
+    >
+      <div className="mx-auto max-w-7xl">
+        <Link
+          href={`/businesses/${business.slug}/reports?${reportQuery}`}
+          className="text-sm font-bold text-violet-700 hover:text-violet-900"
+        >
+          العودة إلى التقارير ←
+        </Link>
+
+        <header
+          className="mt-5 rounded-3xl p-5 text-white shadow-xl sm:p-8"
+          style={{
+            backgroundColor:
+              business.primaryColor,
+          }}
+        >
+          <p className="text-sm font-bold text-white/70">
+            تحليل العمليات المنفذة
+          </p>
+
+          <h1 className="mt-2 text-2xl font-black sm:text-3xl">
+            أداء فريق العمل
+          </h1>
+
+          <p className="mt-2 text-sm leading-6 text-white/75">
+            مقارنة عمليات إضافة الرصيد والاستبدال والتعديلات لكل مستخدم.
+          </p>
+        </header>
+
+        <form
+          method="get"
+          className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6"
+        >
+          <div>
+            <label
+              htmlFor="from"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              من تاريخ
+            </label>
+
+            <input
+              id="from"
+              name="from"
+              type="date"
+              defaultValue={
+                fromInput
+              }
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="to"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              إلى تاريخ
+            </label>
+
+            <input
+              id="to"
+              name="to"
+              type="date"
+              defaultValue={
+                toInput
+              }
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="rounded-xl bg-violet-600 px-6 py-3 font-bold text-white transition hover:bg-violet-700"
+          >
+            تطبيق الفترة
+          </button>
+
+          <Link
+            href={`/businesses/${business.slug}/reports/staff`}
+            className="rounded-xl border border-slate-300 px-6 py-3 text-center font-bold text-slate-700"
+          >
+            آخر 30 يومًا
+          </Link>
+        </form>
+
+        <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              المستخدمون النشطون
+            </p>
+
+            <p className="mt-3 text-3xl font-black text-slate-950">
+              {numberFormatter.format(
+                activeUsers
+              )}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              إجمالي العمليات
+            </p>
+
+            <p className="mt-3 text-3xl font-black text-slate-950">
+              {numberFormatter.format(
+                totalActions
+              )}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              الرصيد المضاف
+            </p>
+
+            <p className="mt-3 text-3xl font-black text-emerald-700">
+              {numberFormatter.format(
+                totalEarned
+              )}
+            </p>
+
+            <p
+              dir="auto"
+              className="mt-1 text-xs text-slate-500"
+            >
+              {business.unitName}
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              الرصيد المستبدل
+            </p>
+
+            <p className="mt-3 text-3xl font-black text-amber-700">
+              {numberFormatter.format(
+                totalRedeemed
+              )}
+            </p>
+
+            <p
+              dir="auto"
+              className="mt-1 text-xs text-slate-500"
+            >
+              {business.unitName}
+            </p>
+          </article>
+        </section>
+
+        {rows.length === 0 ? (
+          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
+            <h2 className="text-xl font-black text-slate-950">
+              لا يوجد مستخدمون
+            </h2>
+          </section>
+        ) : (
+          <>
+            <section className="mt-6 hidden overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:block">
+              <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                  <thead className="bg-slate-950 text-sm text-white">
+                    <tr>
+                      <th className="px-5 py-4">
+                        المستخدم
+                      </th>
+
+                      <th className="px-5 py-4">
+                        العملاء
+                      </th>
+
+                      <th className="px-5 py-4">
+                        إضافات
+                      </th>
+
+                      <th className="px-5 py-4">
+                        القيمة المضافة
+                      </th>
+
+                      <th className="px-5 py-4">
+                        استبدالات
+                      </th>
+
+                      <th className="px-5 py-4">
+                        القيمة المستبدلة
+                      </th>
+
+                      <th className="px-5 py-4">
+                        تعديلات
+                      </th>
+
+                      <th className="px-5 py-4">
+                        الإجمالي
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-100">
+                    {rows.map(
+                      (row) => (
+                        <tr
+                          key={row.id}
+                          className="hover:bg-slate-50"
+                        >
+                          <td className="px-5 py-4">
+                            <p
+                              dir="auto"
+                              className="font-black text-slate-950"
+                            >
+                              {row.name}
+                            </p>
+
+                            <p
+                              dir="ltr"
+                              className="mt-1 text-right text-xs text-slate-500"
+                            >
+                              {row.email}
+                            </p>
+
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-700">
+                                {roleLabel(
+                                  row.role
+                                )}
+                              </span>
+
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                                  row.isActive
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-slate-100 text-slate-500"
+                                }`}
+                              >
+                                {row.isActive
+                                  ? "نشط"
+                                  : "غير نشط"}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-5 py-4 font-bold">
+                            {numberFormatter.format(
+                              row.customersCount
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4 font-bold">
+                            {numberFormatter.format(
+                              row.earnActions
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4 font-bold text-emerald-700">
+                            {numberFormatter.format(
+                              row.earnedAmount
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4 font-bold">
+                            {numberFormatter.format(
+                              row.redeemActions
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4 font-bold text-amber-700">
+                            {numberFormatter.format(
+                              row.redeemedAmount
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4 font-bold">
+                            {numberFormatter.format(
+                              row.adjustmentActions
+                            )}
+                          </td>
+
+                          <td className="px-5 py-4">
+                            <span className="inline-flex min-w-12 justify-center rounded-full bg-slate-950 px-3 py-1.5 font-black text-white">
+                              {numberFormatter.format(
+                                row.totalActions
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="mt-6 space-y-4 lg:hidden">
+              {rows.map(
+                (row) => (
+                  <article
+                    key={row.id}
+                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <h2
+                          dir="auto"
+                          className="truncate text-lg font-black text-slate-950"
+                        >
+                          {row.name}
+                        </h2>
+
+                        <p
+                          dir="ltr"
+                          className="mt-1 truncate text-right text-xs text-slate-500"
+                        >
+                          {row.email}
+                        </p>
+                      </div>
+
+                      <span className="rounded-full bg-slate-950 px-3 py-1.5 text-sm font-black text-white">
+                        {numberFormatter.format(
+                          row.totalActions
+                        )}{" "}
+                        عملية
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-slate-500">
+                          العملاء
+                        </p>
+
+                        <p className="mt-1 font-black">
+                          {numberFormatter.format(
+                            row.customersCount
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-emerald-50 p-3">
+                        <p className="text-emerald-700">
+                          الرصيد المضاف
+                        </p>
+
+                        <p className="mt-1 font-black text-emerald-900">
+                          {numberFormatter.format(
+                            row.earnedAmount
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-amber-50 p-3">
+                        <p className="text-amber-700">
+                          الرصيد المستبدل
+                        </p>
+
+                        <p className="mt-1 font-black text-amber-900">
+                          {numberFormatter.format(
+                            row.redeemedAmount
+                          )}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-violet-50 p-3">
+                        <p className="text-violet-700">
+                          التعديلات
+                        </p>
+
+                        <p className="mt-1 font-black text-violet-900">
+                          {numberFormatter.format(
+                            row.adjustmentActions
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                )
+              )}
+            </section>
+          </>
+        )}
+      </div>
+    </main>
+  );
+}

@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "ActivityType" ADD VALUE 'USER_PASSWORD_CHANGED';
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "authVersion" INTEGER NOT NULL DEFAULT 0;
