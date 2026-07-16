@@ -408,7 +408,7 @@ export default function BusinessSettingsForm({
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  قيمة الإضافة
+                  {loyaltyMode === "SALES_AMOUNT" ? 'قيمة الشراء' : 'قيمة الإضافة'}
                 </label>
 
                 <input
@@ -532,7 +532,7 @@ export default function BusinessSettingsForm({
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                الرصيد المطلوب للمكافأة
+                {loyaltyMode === "SALES_AMOUNT" ? 'Spending Target Amount' : 'الرصيد المطلوب للمكافأة'}
               </label>
 
               <input

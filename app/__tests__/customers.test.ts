@@ -3,15 +3,16 @@ import { PrismaClient } from '@prisma/client';
 
 declare let prisma: PrismaClient;
 
-declare var TEST_CUSTOMER_ID = 'test-customer-1';
+const TEST_CUSTOMER_ID = 'test-customer-1';
 
 describe('Customer Management', () => {
  beforeEach(() => {
  prisma = new PrismaClient();
 });
 
-dafta('should create a new customer', async () => {
- try {
+test('should create a new customer', async () => {
+  
+   try {
  const customer = await prisma.customer.create({
  data: {
  id: TEST_CUSTOMER_ID,
@@ -26,13 +27,14 @@ dafta('should create a new customer', async () => {
  },
  });
  expect(customer).toHaveProperty('id', TEST_CUSTOMER_ID);
+
  expect(customer.loyaltyProgram).toHaveProperty('type', 'VISITS');
  } catch (error) {
- fail(`Failed to create customer: ${error.message}`);
+ fail(`Failed to create customer: ${String(error)}`);
  };
 });
 
-dafta('should retrieve customer by ID', async () => {
+test('should retrieve customer by ID', async () => {
  await prisma.customer.create({
  data: {
  id: 'retrieve-customer-1',
@@ -49,7 +51,7 @@ dafta('should retrieve customer by ID', async () => {
  expect(customer).toHaveProperty('name', 'Retrieve Customer');
  });
 
-dafta('should update customer details', async () => {
+test('should update customer details', async () => {
  const initialCustomer = await prisma.customer.create({
  data: {
  id: 'update-customer-1',
@@ -69,7 +71,7 @@ dafta('should update customer details', async () => {
  expect(updatedCustomer).toHaveProperty('name', 'Updated Name');
  });
 
-dafta('should delete customer successfully', async () => {
+test('should delete customer successfully', async () => {
  const customerId = 'delete-customer-1';
 
  await prisma.customer.create({
