@@ -5,7 +5,171 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id                     String                  @id @default(cuid())
+  name                   String
+  slug                   String                  @unique
+  logoUrl                String?
+  primaryColor           String                  @default("#111827")
+  secondaryColor         String                  @default("#FFFFFF")
+  loyaltyMode            LoyaltyMode             @default(VISITS)
+  unitName               String                  @default("زيارة")
+  rewardName             String                  @default("هدية مجانية")
+  rewardThreshold        Int                     @default(5)
+  earnAmount             Int                     @default(1)
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  whatsappBalanceMessage String?
+  whatsappRewardMessage  String?
+  whatsappWelcomeMessage String?
+  address                String?
+  cardTerms              String?
+  contactPhone           String?
+  allowOwnerDataExport   Boolean                 @default(false)
+  cardDefaultLanguage    AppLanguage             @default(AR)
+  rewardType             RewardType              @default(GIFT)
+  rewardCode             String?
+  rewardDescription      String?
+  activities             BusinessActivity[]
+  customers              Customer[]
+  transactions           LoyaltyTransaction[]
+  notificationItemReads  NotificationItemRead[]
+  notificationReadStates NotificationReadState[]
+  redemptions            RewardRedemption[]
+  users                  User[]
+}
+
+model User {
+  id                     String                  @id @default(cuid())
+  firstName              String
+  lastName               String?
+  email                  String                  @unique
+  passwordHash           String
+  role                   UserRole                @default(STAFF)
+  isActive               Boolean                 @default(true)
+  businessId             String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  authVersion            Int                     @default(0)
+  language               AppLanguage             @default(AR)
+  activities             BusinessActivity[]      @relation("ActivityCreatedBy")
+  transactions           LoyaltyTransaction[]    @relation("TransactionCreatedBy")
+  notificationItemReads  NotificationItemRead[]
+  notificationReadStates NotificationReadState[]
+  redemptions            RewardRedemption[]      @relation("RedemptionCreatedBy")
+  business               Business?               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+model Customer {
+  id               String               @id @default(cuid())
+  firstName        String
+  lastName         String?
+  phone            String
+  customerCode     String
+  publicToken      String               @unique @default(cuid())
+  balance          Int                  @default(0)
+  lifetimeEarned   Int                  @default(0)
+  lifetimeRedeemed Int                  @default(0)
+  isActive         Boolean              @default(true)
+  businessId       String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  activities       BusinessActivity[]
+  business         Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  transactions     LoyaltyTransaction[]
+  redemptions      RewardRedemption[]
+
+  @@unique([businessId, phone])
+  @@unique([businessId, customerCode])
+  @@index([businessId, createdAt])
+}
+
+model LoyaltyTransaction {
+  id           String          @id @default(cuid())
+  type         TransactionType
+  amount       Int
+  balanceAfter Int
+  note         String?
+  customerId   String
+  businessId   String
+  createdById  String?
+  createdAt    DateTime        @default(now())
+  business     Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdBy    User?           @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  customer     Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([businessId, createdAt])
+  @@index([createdById])
+}
+
+model RewardRedemption {
+  id          String   @id @default(cuid())
+  rewardName  String
+  cost        Int
+  customerId  String
+  businessId  String
+  createdById String?
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdBy   User?    @relation("RedemptionCreatedBy", fields: [createdById], references: [id])
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, createdAt])
+  @@index([businessId, createdAt])
+  @@index([createdById])
+}
+
+model BusinessActivity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String
+  businessId  String
+  customerId  String?
+  createdById String?
+  createdAt   DateTime     @default(now())
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdBy   User?        @relation("ActivityCreatedBy", fields: [createdById], references: [id])
+  customer    Customer?    @relation(fields: [customerId], references: [id])
+
+  @@index([businessId, createdAt])
+  @@index([customerId])
+  @@index([createdById])
+  @@index([type])
+}
+
+model NotificationReadState {
+  id         String   @id @default(cuid())
+  lastReadAt DateTime @default(now())
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@index([businessId, lastReadAt])
+}
+
+model NotificationItemRead {
+  id              String   @id @default(cuid())
+  notificationKey String
+  readAt          DateTime @default(now())
+  userId          String
+  businessId      String
+  createdAt       DateTime @default(now())
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId, notificationKey])
+  @@index([userId, businessId])
+  @@index([businessId, readAt])
 }
 
 enum UserRole {
@@ -22,6 +186,7 @@ enum AppLanguage {
 enum LoyaltyMode {
   VISITS
   POINTS
+  SALES_AMOUNT
 }
 
 enum TransactionType {
@@ -44,191 +209,9 @@ enum ActivityType {
   USER_PASSWORD_CHANGED
 }
 
-model Business {
-  id                   String      @id @default(cuid())
-  name                 String
-  slug                 String      @unique
-  logoUrl              String?
-  primaryColor         String      @default("#111827")
-  secondaryColor       String      @default("#FFFFFF")
-  loyaltyMode          LoyaltyMode @default(VISITS)
-  unitName             String      @default("زيارة")
-  rewardName           String      @default("هدية مجانية")
-  rewardThreshold      Int         @default(5)
-  earnAmount           Int         @default(1)
-  contactPhone         String?
-  address              String?
-  cardTerms            String?
-  isActive             Boolean     @default(true)
-  cardDefaultLanguage  AppLanguage @default(AR)
-  allowOwnerDataExport Boolean     @default(false)
-
-  whatsappWelcomeMessage String?
-  whatsappBalanceMessage String?
-  whatsappRewardMessage  String?
-
-  users                  User[]
-  customers              Customer[]
-  transactions           LoyaltyTransaction[]
-  redemptions            RewardRedemption[]
-  activities             BusinessActivity[]
-  notificationReadStates NotificationReadState[]
-  notificationItemReads  NotificationItemRead[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model User {
-  id           String      @id @default(cuid())
-  firstName    String
-  lastName     String?
-  email        String      @unique
-  passwordHash String
-  role         UserRole    @default(STAFF)
-  isActive     Boolean     @default(true)
-  authVersion  Int         @default(0)
-  language     AppLanguage @default(AR)
-
-  businessId String?
-  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  transactions           LoyaltyTransaction[]    @relation("TransactionCreatedBy")
-  redemptions            RewardRedemption[]      @relation("RedemptionCreatedBy")
-  activities             BusinessActivity[]      @relation("ActivityCreatedBy")
-  notificationReadStates NotificationReadState[]
-  notificationItemReads  NotificationItemRead[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([businessId])
-}
-
-model Customer {
-  id               String  @id @default(cuid())
-  firstName        String
-  lastName         String?
-  phone            String
-  customerCode     String
-  publicToken      String  @unique @default(cuid())
-  balance          Int     @default(0)
-  lifetimeEarned   Int     @default(0)
-  lifetimeRedeemed Int     @default(0)
-  isActive         Boolean @default(true)
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  transactions LoyaltyTransaction[]
-  redemptions  RewardRedemption[]
-  activities   BusinessActivity[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([businessId, phone])
-  @@unique([businessId, customerCode])
-  @@index([businessId, createdAt])
-}
-
-model LoyaltyTransaction {
-  id           String          @id @default(cuid())
-  type         TransactionType
-  amount       Int
-  balanceAfter Int
-  note         String?
-
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  createdById String?
-  createdBy   User?   @relation("TransactionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-
-  @@index([customerId, createdAt])
-  @@index([businessId, createdAt])
-  @@index([createdById])
-}
-
-model RewardRedemption {
-  id         String @id @default(cuid())
-  rewardName String
-  cost       Int
-
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  createdById String?
-  createdBy   User?   @relation("RedemptionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-
-  @@index([customerId, createdAt])
-  @@index([businessId, createdAt])
-  @@index([createdById])
-}
-
-model BusinessActivity {
-  id          String       @id @default(cuid())
-  type        ActivityType
-  description String
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  customerId String?
-  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-
-  createdById String?
-  createdBy   User?   @relation("ActivityCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-
-  @@index([businessId, createdAt])
-  @@index([customerId])
-  @@index([createdById])
-  @@index([type])
-}
-
-model NotificationReadState {
-  id         String   @id @default(cuid())
-  lastReadAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, businessId])
-  @@index([businessId, lastReadAt])
-}
-
-model NotificationItemRead {
-  id              String   @id @default(cuid())
-  notificationKey String
-  readAt          DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, businessId, notificationKey])
-  @@index([userId, businessId])
-  @@index([businessId, readAt])
+enum RewardType {
+  GIFT
+  PROMO_CODE
+  DISCOUNT
+  CUSTOM
 }

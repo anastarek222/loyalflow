@@ -53,14 +53,14 @@ async function getBusinessAccess(slug: string) {
       id: true,
       slug: true,
       earnAmount: true,
+      rewardType: true,
+      rewardCode: true,
+      rewardDescription: true,
       unitName: true,
       rewardThreshold: true,
       rewardName: true,
       loyaltyMode: true,
-      rewardType: true,
-      rewardCode: true,
-      rewardDescription: true,
-
+                  
     },
   });
 

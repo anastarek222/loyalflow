@@ -374,7 +374,7 @@ export default async function CustomerDetailsPage({
             <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
               <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                 <div>
-                  <p className="text-sm text-slate-500">الرصيد الحالي</p>
+                  <p className="text-sm text-slate-500">{business.loyaltyMode === "SALES_AMOUNT" ? 'إجمالي الإنفاق' : 'الرصيد الحالي'}</p>
 
                   <p className="mt-2 text-5xl font-bold text-slate-950">
                     {customer.balance}
