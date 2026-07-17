@@ -48,3 +48,5 @@ generated/
 *.bak
 scripts/uat-*.ts
 *.backup-*
+.claude/
+.claude/
