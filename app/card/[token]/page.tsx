@@ -15,7 +15,7 @@ type PublicCardPageProps = {
 
 export async function generateMetadata({
   params,
-}: PublicCardPageProps): Promise<Metadata> {
+): PublicCardPageProps): Promise<Metadata> {
   const { token } = await params;
 
   const customer =
@@ -148,9 +148,21 @@ function renderCardTemplate(
   );
 }
 
+import { useRouter } from 'next/navigation';
+
 export default async function PublicCardPage({
   params,
-}: PublicCardPageProps) {
+): PublicCardPageProps) {
+  const router = useRouter();
+
+  // ... existing code ...
+
+  // Add this function to handle refresh after Earn/Redeem
+  const handleRefresh = () => {
+    router.refresh();
+  };
+  params,
+): PublicCardPageProps) {
   const { token } = await params;
 
   /*
@@ -187,7 +199,9 @@ export default async function PublicCardPage({
     !customer.isActive ||
     !customer.business.isActive
   ) {
-    notFound();
+    const router = useRouter();
+  await router.refresh();
+  notFound();
   }
 
   const business =
