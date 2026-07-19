@@ -15,7 +15,7 @@ type PublicCardPageProps = {
 
 export async function generateMetadata({
   params,
-): PublicCardPageProps): Promise<Metadata> {
+}: PublicCardPageProps): Promise<Metadata> {
   const { token } = await params;
 
   const customer =
@@ -148,21 +148,9 @@ function renderCardTemplate(
   );
 }
 
-import { useRouter } from 'next/navigation';
-
 export default async function PublicCardPage({
   params,
-): PublicCardPageProps) {
-  const router = useRouter();
-
-  // ... existing code ...
-
-  // Add this function to handle refresh after Earn/Redeem
-  const handleRefresh = () => {
-    router.refresh();
-  };
-  params,
-): PublicCardPageProps) {
+}: PublicCardPageProps) {
   const { token } = await params;
 
   /*
@@ -199,13 +187,15 @@ export default async function PublicCardPage({
     !customer.isActive ||
     !customer.business.isActive
   ) {
-    const router = useRouter();
-  await router.refresh();
-  notFound();
+    notFound();
   }
 
   const business =
     customer.business;
+
+  const cardUnitName =
+    business.pointsName?.trim() ||
+    business.unitName;
 
   const baseUrl =
     await getRequestBaseUrl();
@@ -357,6 +347,9 @@ export default async function PublicCardPage({
           logoUrl={
             business.logoUrl
           }
+          coverImageUrl={
+            business.coverImageUrl
+          }
           primaryColor={
             business.primaryColor
           }
@@ -369,11 +362,20 @@ export default async function PublicCardPage({
           customerCode={
             customer.customerCode
           }
+          loyaltyProgramName={
+            business.loyaltyProgramName
+          }
+          membershipName={
+            business.membershipName
+          }
+          welcomeMessage={
+            business.welcomeMessage
+          }
           balance={
             customer.balance
           }
           unitName={
-            business.unitName
+            cardUnitName
           }
           loyaltyMode={
             business.loyaltyMode

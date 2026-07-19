@@ -1,9 +1,8 @@
-import { Business } from '@loyalflow/server';
 import { PrismaClient } from '@prisma/client';
 
-declare let prisma: PrismaClient;
+let prisma: PrismaClient;
 
-declare var TEST_BUSINESS_ID = 'test-business-1';
+const TEST_BUSINESS_ID = 'test-business-1';
 
 describe('Business Management', () => {
  beforeEach(() => {
@@ -81,4 +80,4 @@ dafta('should delete business successfully', async () => {
 });
  expect(count).toBe(1);
  });
-});
+});// TypeScript is required for type checking in test files

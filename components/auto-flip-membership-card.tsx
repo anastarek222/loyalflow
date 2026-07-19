@@ -26,11 +26,15 @@ type RewardType =
 type AutoFlipMembershipCardProps = {
   businessName: string;
   logoUrl: string | null;
+  coverImageUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
 
   customerName: string;
   customerCode: string;
+  loyaltyProgramName: string | null;
+  membershipName: string | null;
+  welcomeMessage: string | null;
 
   balance: number;
   unitName: string;
@@ -248,11 +252,15 @@ function getRewardTypeLabel(
 export default function AutoFlipMembershipCard({
   businessName,
   logoUrl,
+  coverImageUrl,
   primaryColor,
   secondaryColor,
 
   customerName,
   customerCode,
+  loyaltyProgramName,
+  membershipName,
+  welcomeMessage,
 
   balance,
   unitName,
@@ -505,6 +513,14 @@ export default function AutoFlipMembershipCard({
       .toUpperCase() ||
     "L";
 
+  const programName =
+    loyaltyProgramName?.trim() ||
+    text.loyaltyCard;
+
+  const memberLabel =
+    membershipName?.trim() ||
+    text.member;
+
   return (
     <section
       dir={direction}
@@ -611,8 +627,11 @@ export default function AutoFlipMembershipCard({
               WebkitBackfaceVisibility:
                 "hidden",
 
-              background:
-                `linear-gradient(145deg, ${safePrimaryColor}, #0f172a 72%)`,
+              backgroundImage: coverImageUrl
+                ? `linear-gradient(145deg, ${safePrimaryColor}de, #0f172ae6 72%), url(${coverImageUrl})`
+                : `linear-gradient(145deg, ${safePrimaryColor}, #0f172a 72%)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
             }}
           >
             <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
@@ -637,7 +656,7 @@ export default function AutoFlipMembershipCard({
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-white/60">
                       {
-                        text.loyaltyCard
+                        programName
                       }
                     </p>
 
@@ -656,8 +675,17 @@ export default function AutoFlipMembershipCard({
               </header>
 
               <div className="mt-8">
+                {welcomeMessage?.trim() && (
+                  <p
+                    dir="auto"
+                    className="mb-4 text-sm font-medium text-white/75"
+                  >
+                    {welcomeMessage}
+                  </p>
+                )}
+
                 <p className="text-xs font-bold text-white/55">
-                  {text.member}
+                  {memberLabel}
                 </p>
 
                 <p
