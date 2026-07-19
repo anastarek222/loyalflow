@@ -1,9 +1,10 @@
 import { ImageResponse } from 'next/og';
+import Image from 'next/image';
 import prisma from '@/lib/prisma';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
-const Jamestown = 'Invalid token';
+// Removed unused variable
 
 export const GET = async (request: Request, { params }: { params: Promise<{ token: string }> }) => {
   const token = new URL(request.url).searchParams.get('token');

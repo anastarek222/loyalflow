@@ -47,6 +47,23 @@ const settingsSchema = z.object({
       }
     }),
 
+  coverImageUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((value) => {
+      if (value === "") {
+        return true;
+      }
+
+      try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch {
+        return false;
+      }
+    }),
+
   primaryColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/),
@@ -54,6 +71,11 @@ const settingsSchema = z.object({
   secondaryColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/),
+
+  loyaltyProgramName: z.string().trim().max(80),
+  pointsName: z.string().trim().max(30),
+  membershipName: z.string().trim().max(50),
+  welcomeMessage: z.string().trim().max(300),
 
   loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
 
@@ -186,8 +208,16 @@ export async function updateBusinessSettingsAction(
   const parsed = settingsSchema.safeParse({
     name: formData.get("name"),
     logoUrl: formData.get("logoUrl") ?? "",
+    coverImageUrl: formData.get("coverImageUrl") ?? "",
     primaryColor: formData.get("primaryColor"),
     secondaryColor: formData.get("secondaryColor"),
+    loyaltyProgramName:
+      formData.get("loyaltyProgramName") ?? "",
+    pointsName: formData.get("pointsName") ?? "",
+    membershipName:
+      formData.get("membershipName") ?? "",
+    welcomeMessage:
+      formData.get("welcomeMessage") ?? "",
     loyaltyMode: formData.get("loyaltyMode"),
     unitName: formData.get("unitName"),
     rewardName: formData.get("rewardName"),
@@ -238,8 +268,18 @@ export async function updateBusinessSettingsAction(
       data: {
         name: parsed.data.name,
         logoUrl: finalLogoUrl,
+        coverImageUrl:
+          parsed.data.coverImageUrl || null,
         primaryColor: parsed.data.primaryColor,
         secondaryColor: parsed.data.secondaryColor,
+        loyaltyProgramName:
+          parsed.data.loyaltyProgramName || null,
+        pointsName:
+          parsed.data.pointsName || null,
+        membershipName:
+          parsed.data.membershipName || null,
+        welcomeMessage:
+          parsed.data.welcomeMessage || null,
         loyaltyMode: parsed.data.loyaltyMode,
         unitName: parsed.data.unitName,
         rewardName: parsed.data.rewardName,

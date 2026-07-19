@@ -56,6 +56,14 @@ export async function GET(
           primaryColor: customer.business.primaryColor,
           secondaryColor: customer.business.secondaryColor,
           logoUrl: customer.business.logoUrl,
+          coverImageUrl: customer.business.coverImageUrl,
+          loyaltyProgramName:
+            customer.business.loyaltyProgramName,
+          pointsName: customer.business.pointsName,
+          membershipName:
+            customer.business.membershipName,
+          welcomeMessage:
+            customer.business.welcomeMessage,
         },
       },
     });

@@ -3,7 +3,7 @@ import { Customer, Business } from '@prisma/client';
 export function calculateProgress(customer: Customer, business: Business) {
   if (!business?.rewardThreshold) return { progress: 0, total: 1 };
 
-  let progress: number;
+  let progress = 0;
 
   switch (business.loyaltyMode) {
     case 'VISITS':
@@ -20,7 +20,7 @@ export function calculateProgress(customer: Customer, business: Business) {
   const total = parseFloat(business.rewardThreshold?.toFixed(2)) || 1;
 
   return {
-    progress: Math.min(100, Math.max(0, (progress / total) * 100))),
+    progress: Math.min(100, Math.max(0, (progress / total) * 100)),
     total,
   };
 }

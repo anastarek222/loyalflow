@@ -1,9 +1,10 @@
 import { Customer, LoyaltyProgram } from '@loyalflow/server';
 import { PrismaClient } from '@prisma/client';
 
-declare let prisma: PrismaClient;
+let prisma: PrismaClient;
 
-const TEST_CUSTOMER_ID = 'test-customer-1';
+const TEST_CUSTOMER_ID = 'test-customer-1',
+  testCustomerName = 'Test Customer';,
 
 describe('Customer Management', () => {
  beforeEach(() => {

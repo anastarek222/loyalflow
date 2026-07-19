@@ -17,8 +17,13 @@ type BusinessSettingsFormProps = {
     name: string;
     slug: string;
     logoUrl: string | null;
+    coverImageUrl: string | null;
     primaryColor: string;
     secondaryColor: string;
+    loyaltyProgramName: string | null;
+    pointsName: string | null;
+    membershipName: string | null;
+    welcomeMessage: string | null;
     loyaltyMode: LoyaltyMode;
     unitName: string;
     rewardName: string;
@@ -65,6 +70,25 @@ export default function BusinessSettingsForm({
 
   const [secondaryColor, setSecondaryColor] = useState(
     business.secondaryColor
+  );
+
+  const [coverImageUrl, setCoverImageUrl] = useState(
+    business.coverImageUrl ?? ""
+  );
+
+  const [loyaltyProgramName, setLoyaltyProgramName] =
+    useState(business.loyaltyProgramName ?? "");
+
+  const [pointsName, setPointsName] = useState(
+    business.pointsName ?? ""
+  );
+
+  const [membershipName, setMembershipName] = useState(
+    business.membershipName ?? ""
+  );
+
+  const [welcomeMessage, setWelcomeMessage] = useState(
+    business.welcomeMessage ?? ""
   );
 
   const [loyaltyMode, setLoyaltyMode] =
@@ -186,6 +210,105 @@ export default function BusinessSettingsForm({
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
             </div>
+
+            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5">
+              <h3 className="font-black text-violet-950">
+                هوية برنامج الولاء
+              </h3>
+
+              <p className="mt-1 text-sm text-violet-700">
+                استخدم روابط صور مباشرة فقط. رفع وتخزين الصور ليس جزءًا من هذه المرحلة.
+              </p>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  رابط صورة الغلاف
+                </label>
+
+                <input
+                  name="coverImageUrl"
+                  type="url"
+                  value={coverImageUrl}
+                  onChange={(event) =>
+                    setCoverImageUrl(event.target.value)
+                  }
+                  maxLength={500}
+                  placeholder="https://example.com/cover.jpg"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    اسم برنامج الولاء
+                  </label>
+
+                  <input
+                    name="loyaltyProgramName"
+                    value={loyaltyProgramName}
+                    onChange={(event) =>
+                      setLoyaltyProgramName(event.target.value)
+                    }
+                    maxLength={80}
+                    placeholder="برنامج مكافآتي"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    اسم النقاط
+                  </label>
+
+                  <input
+                    name="pointsName"
+                    value={pointsName}
+                    onChange={(event) =>
+                      setPointsName(event.target.value)
+                    }
+                    maxLength={30}
+                    placeholder="نقطة"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    اسم العضوية
+                  </label>
+
+                  <input
+                    name="membershipName"
+                    value={membershipName}
+                    onChange={(event) =>
+                      setMembershipName(event.target.value)
+                    }
+                    maxLength={50}
+                    placeholder="عضو مميز"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  رسالة الترحيب داخل الكارت
+                </label>
+
+                <textarea
+                  name="welcomeMessage"
+                  value={welcomeMessage}
+                  onChange={(event) =>
+                    setWelcomeMessage(event.target.value)
+                  }
+                  rows={3}
+                  maxLength={300}
+                  placeholder="أهلًا بك في برنامج الولاء"
+                  className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                />
+              </div>
+            </section>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">

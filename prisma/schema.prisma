@@ -12,8 +12,13 @@ model Business {
   name                   String
   slug                   String                  @unique
   logoUrl                String?
+  coverImageUrl          String?
   primaryColor           String                  @default("#111827")
   secondaryColor         String                  @default("#FFFFFF")
+  loyaltyProgramName     String?
+  pointsName             String?
+  membershipName         String?
+  welcomeMessage         String?
   loyaltyMode            LoyaltyMode             @default(VISITS)
   unitName               String                  @default("زيارة")
   rewardName             String                  @default("هدية مجانية")
