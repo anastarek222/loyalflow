@@ -1,8 +1,10 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import ScanActionButton from "@/components/scan-action-button";
 import {
   addLoyaltyAction,
+  redeemRewardAction,
 } from "@/app/businesses/[slug]/customers/[customerId]/actions";
 
 type PageProps = {
@@ -25,12 +27,30 @@ export default async function ScanCustomerPage({
           slug,
         },
       },
+
       select: {
         id: true,
         firstName: true,
         lastName: true,
         phone: true,
         balance: true,
+
+        rewardUnlocks: {
+          where: {
+            redeemedAt: null,
+          },
+          include: {
+            reward: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                code: true,
+              },
+            },
+          },
+        },
+
         business: {
           select: {
             name: true,
@@ -73,6 +93,7 @@ export default async function ScanCustomerPage({
           {customer.phone}
         </p>
 
+
         <div className="mt-5 rounded-2xl bg-violet-50 p-4">
           <p className="text-sm font-bold text-violet-700">
             الرصيد الحالي
@@ -88,25 +109,95 @@ export default async function ScanCustomerPage({
           action={earnAction}
           className="mt-6"
         >
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-slate-950 px-5 py-4 font-black text-white"
-          >
+
+          {customer.business.loyaltyMode === "SALES_AMOUNT" ? (
+            <input
+              name="saleAmount"
+              type="number"
+              placeholder="قيمة البيع"
+              className="mb-3 w-full rounded-xl border border-slate-300 px-4 py-3"
+            />
+          ) : null}
+
+
+          <input
+            type="hidden"
+            name="operationId"
+            value={crypto.randomUUID()}
+          />
+
+
+          <ScanActionButton>
             {customer.business.loyaltyMode === "SALES_AMOUNT"
               ? "تسجيل عملية بيع"
               : customer.business.loyaltyMode === "VISITS"
                 ? "+ إضافة زيارة"
                 : `+ إضافة ${customer.business.earnAmount} نقطة`}
-          </button>
+          </ScanActionButton>
+
         </form>
+
+
+      {customer.rewardUnlocks.length > 0 ? (
+  <div className="mt-6">
+
+    <h2 className="mb-3 font-black text-slate-950">
+      🎁 المكافآت المتاحة
+    </h2>
+
+    <div className="space-y-3">
+
+      {customer.rewardUnlocks.map((unlock) => {
+        const redeemAction =
+          redeemRewardAction.bind(
+            null,
+            slug,
+            customer.id,
+            unlock.reward.id
+          );
+
+        return (
+          <div
+            key={unlock.id}
+            className="rounded-2xl bg-emerald-50 p-4"
+          >
+            <p className="font-black text-emerald-900">
+              {unlock.reward.name}
+            </p>
+
+            {unlock.reward.code ? (
+              <p className="mt-1 text-sm text-emerald-700">
+                الكود: {unlock.reward.code}
+              </p>
+            ) : null}
+
+            <form
+              action={redeemAction}
+              className="mt-3"
+            >
+              <ScanActionButton>
+                استبدال المكافأة
+              </ScanActionButton>
+            </form>
+
+          </div>
+        );
+      })}
+
+    </div>
+
+  </div>
+) : null}
+        
 
 
         <Link
           href={`/businesses/${slug}/customers/${customer.id}`}
-          className="mt-4 block rounded-xl border border-slate-300 px-5 py-4 text-center font-bold text-slate-800"
+          className="mt-6 block rounded-xl border border-slate-300 px-5 py-4 text-center font-bold text-slate-800"
         >
           فتح ملف العميل الكامل
         </Link>
+
 
       </section>
     </main>
