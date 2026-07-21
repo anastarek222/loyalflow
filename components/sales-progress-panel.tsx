@@ -13,24 +13,54 @@ type SalesProgressPanelProps = {
   rewardCode: string | null;
   rewardDescription: string | null;
   primaryColor: string;
+  defaultLanguage: "AR" | "EN";
 };
 
+const dictionary = {
+  AR: {
+    purchases: "إجمالي مشتريات العميل",
+    target: "الهدف",
+    reached: "🎉 تم الوصول إلى الهدف",
+    remaining: "المتبقي للوصول إلى المكافأة",
+    reward: "الجائزة",
+    promo: "كود خصم",
+    discount: "خصم",
+    custom: "مكافأة مخصصة",
+    gift: "هدية",
+    promoCode: "Promo Code",
+  },
+  EN: {
+    purchases: "Customer purchases",
+    target: "Target",
+    reached: "🎉 Reward target reached",
+    remaining: "Remaining to unlock reward",
+    reward: "Reward",
+    promo: "Promo code",
+    discount: "Discount",
+    custom: "Custom reward",
+    gift: "Gift",
+    promoCode: "Promo Code",
+  },
+} as const;
+
 function getRewardTypeLabel(
+  language: "AR" | "EN",
   rewardType: RewardType
 ) {
+  const text = dictionary[language];
+
   switch (rewardType) {
     case "PROMO_CODE":
-      return "كود خصم";
+      return text.promo;
 
     case "DISCOUNT":
-      return "خصم";
+      return text.discount;
 
     case "CUSTOM":
-      return "مكافأة مخصصة";
+      return text.custom;
 
-    case "GIFT":
     default:
-      return "هدية";
+      return text.gift;
   }
 }
 
@@ -43,56 +73,38 @@ export default function SalesProgressPanel({
   rewardCode,
   rewardDescription,
   primaryColor,
+  defaultLanguage,
 }: SalesProgressPanelProps) {
-  const safeTarget =
-    Math.max(
-      1,
-      targetAmount
-    );
+  const text = dictionary[defaultLanguage];
+
+  const safeTarget = Math.max(1, targetAmount);
 
   const rewardAvailable =
-    currentAmount >=
-    safeTarget;
+    currentAmount >= safeTarget;
 
   const remaining =
-    Math.max(
-      0,
-      safeTarget -
-        currentAmount
-    );
+    Math.max(0, safeTarget - currentAmount);
 
-  const progress =
-    Math.min(
-      100,
-      Math.floor(
-        (
-          currentAmount /
-          safeTarget
-        ) *
-          100
-      )
-    );
+  const progress = Math.min(
+    100,
+    Math.floor((currentAmount / safeTarget) * 100)
+  );
 
   const numberFormatter =
     new Intl.NumberFormat(
-      "ar-EG",
+      defaultLanguage === "AR" ? "ar-EG" : "en-US",
       {
-        maximumFractionDigits:
-          0,
+        maximumFractionDigits: 0,
       }
     );
 
-  function formatAmount(
-    amount: number
-  ) {
-    return `${numberFormatter.format(
-      amount
-    )} ${unitName}`;
+  function formatAmount(amount: number) {
+    return `${numberFormatter.format(amount)} ${unitName}`;
   }
 
   return (
     <section
-      dir="rtl"
+      dir={defaultLanguage === "AR" ? "rtl" : "ltr"}
       className="mb-5 overflow-hidden rounded-3xl border border-white/10 bg-white shadow-xl"
     >
       <div
@@ -105,49 +117,33 @@ export default function SalesProgressPanel({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black text-white/65">
-              إجمالي مشتريات العميل
+              {text.purchases}
             </p>
 
-            <p
-              dir="auto"
-              className="mt-2 text-2xl font-black sm:text-3xl"
-            >
-              {formatAmount(
-                currentAmount
-              )}
+            <p className="mt-2 text-2xl font-black">
+              {formatAmount(currentAmount)}
             </p>
           </div>
 
           <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black">
-            {numberFormatter.format(
-              progress
-            )}
-            %
+            {progress}%
           </span>
         </div>
 
         <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/20">
           <div
-            className="h-full rounded-full bg-white transition-all duration-700"
+            className="h-full rounded-full bg-white transition-all"
             style={{
-              width:
-                `${progress}%`,
+              width: `${progress}%`,
             }}
           />
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3 text-xs font-bold text-white/75">
-          <span>
-            {formatAmount(
-              currentAmount
-            )}
-          </span>
+        <div className="mt-3 flex justify-between text-xs font-bold text-white/75">
+          <span>{formatAmount(currentAmount)}</span>
 
           <span>
-            الهدف:{" "}
-            {formatAmount(
-              safeTarget
-            )}
+            {text.target}: {formatAmount(safeTarget)}
           </span>
         </div>
       </div>
@@ -156,45 +152,34 @@ export default function SalesProgressPanel({
         {rewardAvailable ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center">
             <p className="text-sm font-black text-emerald-700">
-              🎉 تم الوصول إلى الهدف
+              {text.reached}
             </p>
 
-            <p
-              dir="auto"
-              className="mt-2 text-xl font-black text-emerald-950"
-            >
+            <p className="mt-2 text-xl font-black text-emerald-950">
               {rewardName}
             </p>
 
-            <p className="mt-1 text-xs font-bold text-emerald-700">
+            <p className="text-xs font-bold text-emerald-700">
               {getRewardTypeLabel(
+                defaultLanguage,
                 rewardType
               )}
             </p>
 
             {rewardDescription && (
-              <p
-                dir="auto"
-                className="mt-3 text-sm leading-6 text-emerald-800"
-              >
-                {
-                  rewardDescription
-                }
+              <p className="mt-3 text-sm">
+                {rewardDescription}
               </p>
             )}
 
-            {rewardType ===
-              "PROMO_CODE" &&
+            {rewardType === "PROMO_CODE" &&
               rewardCode && (
-                <div className="mt-4 rounded-xl border border-dashed border-emerald-400 bg-white p-3">
-                  <p className="text-xs font-black text-emerald-600">
-                    Promo Code
+                <div className="mt-4 rounded-xl bg-white p-3">
+                  <p className="text-xs font-black">
+                    {text.promoCode}
                   </p>
 
-                  <p
-                    dir="ltr"
-                    className="mt-1 select-all text-2xl font-black tracking-widest text-emerald-950"
-                  >
+                  <p className="text-2xl font-black">
                     {rewardCode}
                   </p>
                 </div>
@@ -203,24 +188,15 @@ export default function SalesProgressPanel({
         ) : (
           <div className="rounded-2xl bg-slate-50 p-4 text-center">
             <p className="text-sm font-bold text-slate-500">
-              المتبقي للوصول إلى المكافأة
+              {text.remaining}
             </p>
 
-            <p
-              dir="auto"
-              className="mt-2 text-2xl font-black text-slate-950"
-            >
-              {formatAmount(
-                remaining
-              )}
+            <p className="mt-2 text-2xl font-black">
+              {formatAmount(remaining)}
             </p>
 
-            <p
-              dir="auto"
-              className="mt-2 text-sm font-bold text-violet-700"
-            >
-              الجائزة:{" "}
-              {rewardName}
+            <p className="mt-2 font-bold text-violet-700">
+              {text.reward}: {rewardName}
             </p>
           </div>
         )}
