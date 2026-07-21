@@ -576,17 +576,46 @@ export default async function PublicCardPage({
         </section>
       ) : null}
 
-      <section className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 text-right shadow-sm" dir="rtl">
-        <h2 className="font-black text-slate-950">عروض متاحة لك</h2>
+      <section
+        className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
+        dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
+      >
+        <h2 className="font-black text-slate-950">
+          {business.cardDefaultLanguage === "AR"
+            ? "عروض متاحة لك"
+            : "Offers available to you"}
+        </h2>
+
         {publicOffers.length === 0 ? (
-          <p className="mt-2 text-sm leading-6 text-slate-500">لا توجد عروض متاحة لك حاليًا.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {business.cardDefaultLanguage === "AR"
+              ? "لا توجد عروض متاحة لك حاليًا."
+              : "There are no offers available to you right now."}
+          </p>
         ) : (
           <div className="mt-3 space-y-3">
             {publicOffers.map((offer) => (
-              <article key={offer.id} className="rounded-2xl bg-violet-50 px-4 py-3">
-                <p className="font-black text-slate-950">{offer.name}</p>
-                {offer.description ? <p className="mt-1 text-sm leading-6 text-slate-600">{offer.description}</p> : null}
-                {offer.validUntil ? <p className="mt-2 text-xs font-bold text-violet-700">متاح حتى {dateFormatter.format(offer.validUntil)}</p> : null}
+              <article
+                key={offer.id}
+                className="rounded-2xl bg-violet-50 px-4 py-3"
+              >
+                <p className="font-black text-slate-950">
+                  {offer.name}
+                </p>
+
+                {offer.description ? (
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    {offer.description}
+                  </p>
+                ) : null}
+
+                {offer.validUntil ? (
+                  <p className="mt-2 text-xs font-bold text-violet-700">
+                    {business.cardDefaultLanguage === "AR"
+                      ? `متاح حتى ${dateFormatter.format(offer.validUntil)}`
+                      : `Available until ${dateFormatter.format(offer.validUntil)}`}
+                  </p>
+                ) : null}
               </article>
             ))}
           </div>
@@ -594,17 +623,37 @@ export default async function PublicCardPage({
       </section>
 
       {rewardExpiryStatuses.length > 0 ? (
-        <section className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 text-right shadow-sm" dir="rtl">
-          <h2 className="font-black text-slate-950">حالة المكافآت</h2>
+        <section
+          className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
+          dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
+        >
+          <h2 className="font-black text-slate-950">
+            {business.cardDefaultLanguage === "AR"
+              ? "حالة المكافآت"
+              : "Reward status"}
+          </h2>
+
           <div className="mt-3 space-y-2">
             {rewardExpiryStatuses.map((reward) => (
-              <div key={reward.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm">
-                <span className="font-bold text-slate-800">{reward.name}</span>
+              <div
+                key={reward.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm"
+              >
+                <span className="font-bold text-slate-800">
+                  {reward.name}
+                </span>
+
                 {reward.state === "EXPIRED" ? (
-                  <span className="font-black text-rose-700">منتهية</span>
+                  <span className="font-black text-rose-700">
+                    {business.cardDefaultLanguage === "AR"
+                      ? "منتهية"
+                      : "Expired"}
+                  </span>
                 ) : (
                   <span className="font-bold text-emerald-700">
-                    صالحة حتى {dateFormatter.format(reward.expiresAt)}
+                    {business.cardDefaultLanguage === "AR"
+                      ? `صالحة حتى ${dateFormatter.format(reward.expiresAt)}`
+                      : `Valid until ${dateFormatter.format(reward.expiresAt)}`}
                   </span>
                 )}
               </div>
