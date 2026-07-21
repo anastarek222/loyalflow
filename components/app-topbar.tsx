@@ -2,10 +2,17 @@ import LanguageSwitcher from "@/components/language-switcher";
 
 type Props = {
   language: "AR" | "EN";
+
+  user: {
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
 };
 
 export default function AppTopbar({
   language,
+  user,
 }: Props) {
 
   return (

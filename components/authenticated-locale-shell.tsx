@@ -35,6 +35,9 @@ export default async function AuthenticatedLocaleShell({
 
       select: {
         language: true,
+        firstName: true,
+        lastName: true,
+        role: true,
       },
     });
 
@@ -74,6 +77,11 @@ export default async function AuthenticatedLocaleShell({
 
           <AppTopbar
             language={language}
+            user={{
+              firstName: user?.firstName ?? "User",
+              lastName: user?.lastName ?? "",
+              role: user?.role ?? "STAFF",
+            }}
           />
 
 
