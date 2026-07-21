@@ -186,6 +186,25 @@ export async function createBusinessUserAction(
     );
   }
 
+  if (parsed.data.role === "OWNER") {
+    const existingBusinessOwner =
+      await prisma.user.findFirst({
+        where: {
+          businessId: business.id,
+          role: "OWNER",
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (existingBusinessOwner) {
+      redirect(
+        `/businesses/${slug}/users?error=owner-exists`
+      );
+    }
+  }
+
   const email =
     parsed.data.email.toLowerCase();
 
