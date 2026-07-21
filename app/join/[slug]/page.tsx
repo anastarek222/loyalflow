@@ -1,0 +1,250 @@
+import type { Metadata } from "next";
+import { joinBusinessAction } from "@/app/join/[slug]/actions";
+import { normalizeReferralCode } from "@/lib/referrals/code";
+import prisma from "@/lib/prisma";
+import { notFound } from "next/navigation";
+
+type JoinBusinessPageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ error?: string; ref?: string }>;
+};
+
+export async function generateMetadata({
+  params,
+}: JoinBusinessPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: {
+      name: true,
+      cardDefaultLanguage: true,
+      isActive: true,
+    },
+  });
+
+  if (!business?.isActive) {
+    return { title: "Registration unavailable" };
+  }
+
+  const isArabic = business.cardDefaultLanguage === "AR";
+
+  return {
+    title: isArabic
+      ? `انضم إلى برنامج ${business.name}`
+      : `Join ${business.name}`,
+    description: isArabic
+      ? `سجل في برنامج الولاء الخاص بـ ${business.name}.`
+      : `Register for ${business.name}'s loyalty program.`,
+  };
+}
+
+export default async function JoinBusinessPage({
+  params,
+  searchParams,
+}: JoinBusinessPageProps) {
+  const { slug } = await params;
+  const query = await searchParams;
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: {
+      name: true,
+      slug: true,
+      logoUrl: true,
+      welcomeMessage: true,
+      primaryColor: true,
+      secondaryColor: true,
+      loyaltyProgramName: true,
+      unitName: true,
+      rewardName: true,
+      rewardThreshold: true,
+      cardDefaultLanguage: true,
+      isActive: true,
+    },
+  });
+
+  if (!business?.isActive) {
+    notFound();
+  }
+
+  const joinBusiness = joinBusinessAction.bind(null, business.slug);
+  const referralCode = normalizeReferralCode(query.ref);
+  const language = business.cardDefaultLanguage;
+  const copy =
+    language === "AR"
+      ? {
+          programFallback: "برنامج الولاء",
+          messageFallback: "سجل الآن واحصل على كارتك الرقمي مباشرة.",
+          join: "انضم إلى",
+          reward: "عند جمع",
+          rewardSuffix: "تحصل على",
+          firstName: "الاسم الأول",
+          lastName: "اسم العائلة",
+          optional: "(اختياري)",
+          phone: "رقم الهاتف",
+          createCard: "إنشاء الكارت الرقمي",
+          privacy:
+            "بإكمال التسجيل، ستنشئ حساب عميل وكارت ولاء رقمي لهذا النشاط فقط.",
+          errors: {
+            invalid: "راجع الاسم ورقم الهاتف ثم حاول مرة أخرى.",
+            duplicate: "رقم الهاتف مسجل بالفعل لدى هذا النشاط.",
+            "rate-limit": "تم تجاوز عدد المحاولات. حاول مرة أخرى بعد قليل.",
+            unavailable: "التسجيل غير متاح حاليًا.",
+          },
+        }
+      : {
+          programFallback: "Loyalty program",
+          messageFallback: "Register now and receive your digital card instantly.",
+          join: "Join",
+          reward: "Collect",
+          rewardSuffix: "to receive",
+          firstName: "First name",
+          lastName: "Last name",
+          optional: "(optional)",
+          phone: "Phone number",
+          createCard: "Create digital card",
+          privacy:
+            "By registering, you create a customer profile and digital loyalty card for this business only.",
+          errors: {
+            invalid: "Check your name and phone number, then try again.",
+            duplicate: "This phone number is already registered with this business.",
+            "rate-limit": "Too many attempts. Please try again shortly.",
+            unavailable: "Registration is unavailable right now.",
+          },
+        };
+  const programName =
+    business.loyaltyProgramName?.trim() || copy.programFallback;
+  const message =
+    business.welcomeMessage?.trim() ||
+    copy.messageFallback;
+
+  return (
+    <main
+      dir={language === "AR" ? "rtl" : "ltr"}
+      className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10"
+    >
+      <section className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+        <div
+          className="px-6 py-8 text-white sm:px-8"
+          style={{ backgroundColor: business.primaryColor }}
+        >
+          {business.logoUrl ? (
+            // The logo may be a data URL configured by the business owner.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={business.logoUrl}
+              alt={business.name}
+              className="mb-5 h-14 w-14 rounded-2xl bg-white/95 object-contain p-1"
+            />
+          ) : null}
+
+          <p className="text-sm font-semibold text-white/80">
+            {programName}
+          </p>
+
+          <h1 className="mt-1 text-3xl font-black">
+            {copy.join} {business.name}
+          </h1>
+
+          <p className="mt-3 leading-7 text-white/90">
+            {message}
+          </p>
+        </div>
+
+        <div className="p-6 sm:p-8">
+          {query.error && copy.errors[query.error as keyof typeof copy.errors] ? (
+            <p
+              className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+              role="alert"
+            >
+              {copy.errors[query.error as keyof typeof copy.errors]}
+            </p>
+          ) : null}
+
+          <div
+            className="mb-6 rounded-2xl px-4 py-3 text-sm leading-6"
+            style={{
+              backgroundColor: `${business.secondaryColor}CC`,
+              color: business.primaryColor,
+            }}
+          >
+            {copy.reward} {business.rewardThreshold} {business.unitName} {copy.rewardSuffix} {business.rewardName}.
+          </div>
+
+          <form action={joinBusiness} className="space-y-5">
+            {referralCode ? (
+              <input type="hidden" name="ref" value={referralCode} />
+            ) : null}
+            <div>
+              <label
+                htmlFor="firstName"
+                className="mb-2 block text-sm font-bold text-slate-800"
+              >
+                {copy.firstName}
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                required
+                minLength={2}
+                maxLength={50}
+                autoComplete="given-name"
+                placeholder={language === "AR" ? "محمد" : "Jane"}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="lastName"
+                className="mb-2 block text-sm font-bold text-slate-800"
+              >
+                {copy.lastName} <span className="font-normal text-slate-500">{copy.optional}</span>
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                maxLength={50}
+                autoComplete="family-name"
+                placeholder={language === "AR" ? "أحمد" : "Smith"}
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="phone"
+                className="mb-2 block text-sm font-bold text-slate-800"
+              >
+                {copy.phone}
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                required
+                minLength={8}
+                maxLength={25}
+                autoComplete="tel"
+                placeholder="+201000000000"
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full rounded-xl px-5 py-3.5 font-black text-white transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-violet-200"
+              style={{ backgroundColor: business.primaryColor }}
+            >
+              {copy.createCard}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-xs leading-5 text-slate-500">
+            {copy.privacy}
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}

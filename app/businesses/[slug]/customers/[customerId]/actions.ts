@@ -1,11 +1,47 @@
 "use server";
 
 import { auth } from "@/auth";
+import {
+  getEarnDetails,
+  getRewardLabel,
+} from "@/lib/loyalty/operations";
+import {
+  getRapidEarnRateLimitKey,
+  getRapidEarnWhere,
+  getRapidRedemptionRateLimitKey,
+  getRapidRedemptionWhere,
+  RAPID_EARN_WINDOW_MS,
+} from "@/lib/loyalty/fraud";
+import {
+  recordBalanceAdjustment,
+  recordLoyaltyEarn,
+  recordRewardRedemption,
+} from "@/lib/loyalty/transactions";
+import {
+  calculatePromotionBonus,
+  selectEligiblePromotion,
+} from "@/lib/promotions/engine";
+import {
+  getRewardExpiryDate,
+  getRewardUnlockRedemptionState,
+} from "@/lib/rewards/expiration";
+import { createReferralCodeCandidate } from "@/lib/referrals/code";
+import {
+  customerNoteContentSchema,
+  customerTagNameSchema,
+} from "@/lib/customers/notes-tags";
+import {
+  canAccessBusiness,
+  canPerform,
+  type Capability,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { rateLimit } from "@/lib/utils/rate-limiter";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import type { Prisma } from "@/generated/prisma/client";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -32,6 +68,117 @@ const saleAmountSchema = z.object({
     .min(1)
     .max(1000000000),
 });
+
+const earnOperationSchema = z.string().uuid();
+
+async function createRewardUnlocksForEarn(
+  transaction: Prisma.TransactionClient,
+  input: {
+    businessId: string;
+    customerId: string;
+    createdById: string;
+    balanceAfter: number;
+  }
+) {
+  const now = new Date();
+  const expiringRewards = await transaction.reward.findMany({
+    where: {
+      businessId: input.businessId,
+      isActive: true,
+      expiresAfterDays: { not: null },
+      cost: { lte: input.balanceAfter },
+    },
+    select: {
+      id: true,
+      name: true,
+      expiresAfterDays: true,
+    },
+  });
+
+  for (const reward of expiringRewards) {
+    const currentUnlock = await transaction.rewardUnlock.findFirst({
+      where: {
+        businessId: input.businessId,
+        customerId: input.customerId,
+        rewardId: reward.id,
+        redeemedAt: null,
+      },
+      orderBy: { unlockedAt: "desc" },
+      select: { id: true },
+    });
+
+    if (reward.expiresAfterDays === null) {
+      continue;
+    }
+
+    if (currentUnlock) {
+      const unlock = await transaction.rewardUnlock.findUniqueOrThrow({
+        where: { id: currentUnlock.id },
+      });
+      const unlockState = getRewardUnlockRedemptionState({
+        expectedBusinessId: input.businessId,
+        unlockBusinessId: unlock.businessId,
+        rewardBusinessId: input.businessId,
+        expiresAt: unlock.expiresAt,
+        redeemedAt: unlock.redeemedAt,
+        expiredAt: unlock.expiredAt,
+        now,
+      });
+
+      if (unlockState === "ACTIVE") {
+        continue;
+      }
+
+      if (!unlock.expiredAt) {
+        await transaction.rewardUnlock.update({
+          where: { id: unlock.id },
+          data: { expiredAt: now },
+        });
+        await transaction.businessActivity.create({
+          data: {
+            type: "REWARD_EXPIRED",
+            description: `انتهت صلاحية ${reward.name}`,
+            businessId: input.businessId,
+            customerId: input.customerId,
+            createdById: input.createdById,
+          },
+        });
+      }
+    }
+
+    const expiresAt = getRewardExpiryDate(
+      now,
+      reward.expiresAfterDays
+    );
+    try {
+      await transaction.rewardUnlock.create({
+        data: {
+          businessId: input.businessId,
+          customerId: input.customerId,
+          rewardId: reward.id,
+          unlockedAt: now,
+          expiresAt,
+        },
+      });
+    } catch (error) {
+      // A concurrent earn may have unlocked this same reward first. Keep the
+      // earned balance and do not create a duplicate entitlement or activity.
+      if (!(typeof error === "object" && error && "code" in error && error.code === "P2002")) {
+        throw error;
+      }
+      continue;
+    }
+    await transaction.businessActivity.create({
+      data: {
+        type: "REWARD_UNLOCKED",
+        description: `تم فتح ${reward.name} حتى ${expiresAt.toISOString()}`,
+        businessId: input.businessId,
+        customerId: input.customerId,
+        createdById: input.createdById,
+      },
+    });
+  }
+}
 
 function normalizePhone(value: string) {
   const cleaned = value.replace(/[^\d+]/g, "");
@@ -60,7 +207,8 @@ async function getBusinessAccess(slug: string) {
       rewardThreshold: true,
       rewardName: true,
       loyaltyMode: true,
-                  
+      staffAttributionEnabled: true,
+      staffAttributionRequired: true,
     },
   });
 
@@ -68,11 +216,7 @@ async function getBusinessAccess(slug: string) {
     redirect("/businesses");
   }
 
-  const canAccess =
-    session.user.role === "SUPER_ADMIN" ||
-    session.user.businessId === business.id;
-
-  if (!canAccess) {
+  if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
 
@@ -84,10 +228,15 @@ async function getBusinessAccess(slug: string) {
 
 async function getActionContext(
   slug: string,
-  customerId: string
+  customerId: string,
+  capability: Capability
 ) {
   const { session, business } =
     await getBusinessAccess(slug);
+
+  if (!canPerform(session.user, business.id, capability)) {
+    redirect(`/businesses/${slug}/customers/${customerId}`);
+  }
 
   const customer = await prisma.customer.findFirst({
     where: {
@@ -115,17 +264,13 @@ async function getActionContext(
 
 async function getManagementContext(
   slug: string,
-  customerId: string
+  customerId: string,
+  capability: Capability = "CUSTOMERS_EDIT"
 ) {
   const { session, business } =
     await getBusinessAccess(slug);
 
-  const canManage =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id);
-
-  if (!canManage) {
+  if (!canPerform(session.user, business.id, capability)) {
     redirect(
       `/businesses/${slug}/customers/${customerId}`
     );
@@ -183,7 +328,8 @@ export async function updateCustomerAction(
     customer,
   } = await getManagementContext(
     slug,
-    customerId
+    customerId,
+    "LOYALTY_ADJUST"
   );
 
   const parsed = customerSchema.safeParse({
@@ -354,91 +500,17 @@ export async function adjustCustomerBalanceAction(
     );
   }
 
-  const signedAmount =
-    parsed.data.direction === "ADD"
-      ? parsed.data.amount
-      : -parsed.data.amount;
-
   const newBalance =
     await prisma.$transaction(
-      async (transaction) => {
-        const updateResult =
-          await transaction.customer.updateMany({
-            where: {
-              id: customer.id,
-              isActive: true,
-
-              ...(parsed.data.direction ===
-              "SUBTRACT"
-                ? {
-                    balance: {
-                      gte: parsed.data.amount,
-                    },
-                  }
-                : {}),
-            },
-
-            data: {
-              balance:
-                parsed.data.direction === "ADD"
-                  ? {
-                      increment:
-                        parsed.data.amount,
-                    }
-                  : {
-                      decrement:
-                        parsed.data.amount,
-                    },
-            },
-          });
-
-        if (updateResult.count !== 1) {
-          return null;
-        }
-
-        const updatedCustomer =
-          await transaction.customer.findUnique({
-            where: {
-              id: customer.id,
-            },
-            select: {
-              balance: true,
-            },
-          });
-
-        if (!updatedCustomer) {
-          return null;
-        }
-
-        await transaction.loyaltyTransaction.create({
-          data: {
-            type: "ADJUSTMENT",
-            amount: signedAmount,
-            balanceAfter:
-              updatedCustomer.balance,
-            note:
-              `تعديل يدوي: ${parsed.data.reason}`,
-            customerId: customer.id,
-            businessId: business.id,
-            createdById: session.user.id,
-          },
-        });
-
-        await transaction.businessActivity.create({
-          data: {
-            type: "BALANCE_ADJUSTED",
-            description:
-              `تم تعديل الرصيد بمقدار ${
-                signedAmount > 0 ? "+" : ""
-              }${signedAmount}. السبب: ${parsed.data.reason}`,
-            businessId: business.id,
-            customerId: customer.id,
-            createdById: session.user.id,
-          },
-        });
-
-        return updatedCustomer.balance;
-      }
+      (transaction) =>
+        recordBalanceAdjustment(transaction, {
+          customerId: customer.id,
+          businessId: business.id,
+          createdById: session.user.id,
+          direction: parsed.data.direction,
+          amount: parsed.data.amount,
+          reason: parsed.data.reason,
+        })
     );
 
   if (newBalance === null) {
@@ -464,6 +536,314 @@ export async function adjustCustomerBalanceAction(
   );
 }
 
+export async function createCustomerReferralCodeAction(
+  slug: string,
+  customerId: string
+) {
+  const { business, customer } = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT"
+  );
+
+  const existing = await prisma.customerReferralCode.findUnique({
+    where: {
+      businessId_customerId: {
+        businessId: business.id,
+        customerId: customer.id,
+      },
+    },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    let created = false;
+    for (let attempt = 0; attempt < 10 && !created; attempt += 1) {
+      try {
+        await prisma.customerReferralCode.create({
+          data: {
+            businessId: business.id,
+            customerId: customer.id,
+            code: createReferralCodeCandidate(),
+          },
+        });
+        created = true;
+      } catch (error) {
+        if (!(typeof error === "object" && error && "code" in error && error.code === "P2002")) {
+          throw error;
+        }
+        const codeCreatedByAnotherRequest =
+          await prisma.customerReferralCode.findUnique({
+            where: {
+              businessId_customerId: {
+                businessId: business.id,
+                customerId: customer.id,
+              },
+            },
+            select: { id: true },
+          });
+        if (codeCreatedByAnotherRequest) created = true;
+      }
+    }
+
+    if (!created) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=referral`);
+    }
+  }
+
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=referral-link`);
+}
+
+export async function createAndAssignCustomerTagAction(
+  slug: string,
+  customerId: string,
+  formData: FormData
+) {
+  const { session, business, customer } = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT"
+  );
+  const parsed = customerTagNameSchema.safeParse(formData.get("tagName"));
+
+  if (!parsed.success) {
+    redirect(`/businesses/${slug}/customers/${customer.id}?error=tag-invalid`);
+  }
+
+  const tag = await prisma.customerTag.upsert({
+    where: {
+      businessId_name: {
+        businessId: business.id,
+        name: parsed.data,
+      },
+    },
+    create: {
+      businessId: business.id,
+      name: parsed.data,
+    },
+    update: {},
+    select: { id: true, name: true },
+  });
+
+  const existing = await prisma.customerTagAssignment.findUnique({
+    where: {
+      customerId_tagId: {
+        customerId: customer.id,
+        tagId: tag.id,
+      },
+    },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    await prisma.$transaction([
+      prisma.customerTagAssignment.create({
+        data: {
+          businessId: business.id,
+          customerId: customer.id,
+          tagId: tag.id,
+        },
+      }),
+      prisma.businessActivity.create({
+        data: {
+          type: "CUSTOMER_TAG_ASSIGNED",
+          description: `تمت إضافة وسم العميل: ${tag.name}`,
+          businessId: business.id,
+          customerId: customer.id,
+          createdById: session.user.id,
+        },
+      }),
+    ]);
+  }
+
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=tag-assigned`);
+}
+
+export async function assignCustomerTagAction(
+  slug: string,
+  customerId: string,
+  tagId: string
+) {
+  const { session, business, customer } = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT"
+  );
+  const tag = await prisma.customerTag.findFirst({
+    where: { id: tagId, businessId: business.id },
+    select: { id: true, name: true },
+  });
+
+  if (!tag) {
+    redirect(`/businesses/${slug}/customers/${customer.id}?error=tag-invalid`);
+  }
+
+  const existing = await prisma.customerTagAssignment.findUnique({
+    where: {
+      customerId_tagId: { customerId: customer.id, tagId: tag.id },
+    },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    await prisma.$transaction([
+      prisma.customerTagAssignment.create({
+        data: {
+          businessId: business.id,
+          customerId: customer.id,
+          tagId: tag.id,
+        },
+      }),
+      prisma.businessActivity.create({
+        data: {
+          type: "CUSTOMER_TAG_ASSIGNED",
+          description: `تمت إضافة وسم العميل: ${tag.name}`,
+          businessId: business.id,
+          customerId: customer.id,
+          createdById: session.user.id,
+        },
+      }),
+    ]);
+  }
+
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=tag-assigned`);
+}
+
+export async function removeCustomerTagAction(
+  slug: string,
+  customerId: string,
+  tagId: string
+) {
+  const { session, business, customer } = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT"
+  );
+  const assignment = await prisma.customerTagAssignment.findFirst({
+    where: {
+      businessId: business.id,
+      customerId: customer.id,
+      tagId,
+    },
+    include: { tag: { select: { name: true } } },
+  });
+
+  if (assignment) {
+    await prisma.$transaction([
+      prisma.customerTagAssignment.delete({ where: { id: assignment.id } }),
+      prisma.businessActivity.create({
+        data: {
+          type: "CUSTOMER_TAG_REMOVED",
+          description: `تمت إزالة وسم العميل: ${assignment.tag.name}`,
+          businessId: business.id,
+          customerId: customer.id,
+          createdById: session.user.id,
+        },
+      }),
+    ]);
+  }
+
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=tag-removed`);
+}
+
+export async function createCustomerNoteAction(
+  slug: string,
+  customerId: string,
+  formData: FormData
+) {
+  const { session, business, customer } = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT"
+  );
+  const parsed = customerNoteContentSchema.safeParse(formData.get("content"));
+
+  if (!parsed.success) {
+    redirect(`/businesses/${slug}/customers/${customer.id}?error=note-invalid`);
+  }
+
+  await prisma.$transaction([
+    prisma.customerNote.create({
+      data: {
+        businessId: business.id,
+        customerId: customer.id,
+        content: parsed.data,
+        createdById: session.user.id,
+        updatedById: session.user.id,
+      },
+    }),
+    prisma.businessActivity.create({
+      data: {
+        type: "CUSTOMER_NOTE_CREATED",
+        description: "تمت إضافة ملاحظة داخلية للعميل",
+        businessId: business.id,
+        customerId: customer.id,
+        createdById: session.user.id,
+      },
+    }),
+  ]);
+
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=note-created`);
+}
+
+export async function updateCustomerNoteAction(
+  slug: string,
+  customerId: string,
+  noteId: string,
+  formData: FormData
+) {
+  const { session, business, customer } = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT"
+  );
+  const parsed = customerNoteContentSchema.safeParse(formData.get("content"));
+
+  if (!parsed.success) {
+    redirect(`/businesses/${slug}/customers/${customer.id}?error=note-invalid`);
+  }
+
+  const note = await prisma.customerNote.findFirst({
+    where: {
+      id: noteId,
+      businessId: business.id,
+      customerId: customer.id,
+    },
+    select: { id: true },
+  });
+
+  if (!note) {
+    redirect(`/businesses/${slug}/customers/${customer.id}`);
+  }
+
+  await prisma.$transaction([
+    prisma.customerNote.update({
+      where: { id: note.id },
+      data: {
+        content: parsed.data,
+        updatedById: session.user.id,
+      },
+    }),
+    prisma.businessActivity.create({
+      data: {
+        type: "CUSTOMER_NOTE_UPDATED",
+        description: "تم تعديل ملاحظة داخلية للعميل",
+        businessId: business.id,
+        customerId: customer.id,
+        createdById: session.user.id,
+      },
+    }),
+  ]);
+
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=note-updated`);
+}
+
 export async function addLoyaltyAction(
   slug: string,
   customerId: string,
@@ -475,11 +855,52 @@ export async function addLoyaltyAction(
     customer,
   } = await getActionContext(
     slug,
-    customerId
+    customerId,
+    "LOYALTY_EARN"
   );
 
-  let amount =
-    business.earnAmount;
+  const submittedAttribution = formData.get(
+    "attributedStaffId"
+  );
+  const requestedStaffId =
+    typeof submittedAttribution === "string"
+      ? submittedAttribution.trim() || undefined
+      : undefined;
+  let attributedStaffId: string | undefined;
+
+  if (business.staffAttributionEnabled) {
+    if (!requestedStaffId) {
+      if (business.staffAttributionRequired) {
+        redirect(
+          `/businesses/${slug}/customers/${customer.id}?error=staff-attribution`
+        );
+      }
+    } else {
+      const staff = await prisma.user.findFirst({
+        where: {
+          id: requestedStaffId,
+          businessId: business.id,
+          isActive: true,
+          role: {
+            in: ["OWNER", "MANAGER", "STAFF"],
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!staff) {
+        redirect(
+          `/businesses/${slug}/customers/${customer.id}?error=staff-attribution`
+        );
+      }
+
+      attributedStaffId = staff.id;
+    }
+  }
+
+  let saleAmount: number | undefined;
 
   if (
     business.loyaltyMode ===
@@ -499,85 +920,201 @@ export async function addLoyaltyAction(
       );
     }
 
-    amount =
-      parsedSale.data.saleAmount;
+    saleAmount = parsedSale.data.saleAmount;
   }
 
-  const transactionNote =
-    business.loyaltyMode ===
-    "SALES_AMOUNT"
-      ? `Sale recorded: ${amount} ${business.unitName}`
-      : "Loyalty credit added";
+  const {
+    amount,
+    transactionNote,
+    activityDescription,
+  } = getEarnDetails({
+    loyaltyMode: business.loyaltyMode,
+    earnAmount: business.earnAmount,
+    saleAmount,
+    unitName: business.unitName,
+  });
 
-  const activityDescription =
-    business.loyaltyMode ===
-    "SALES_AMOUNT"
-      ? `Recorded sale amount ${amount} ${business.unitName}`
-      : `Added ${amount} loyalty credit`;
+  const parsedOperation = earnOperationSchema.safeParse(
+    formData.get("operationId")
+  );
 
-  const newBalance =
-    await prisma.$transaction(
-      async (transaction) => {
-        const updateResult =
-          await transaction.customer.updateMany({
-            where: {
-              id: customer.id,
-              isActive: true,
-            },
-            data: {
-              balance: {
-                increment: amount,
-              },
-              lifetimeEarned: {
-                increment: amount,
-              },
-            },
-          });
-
-        if (updateResult.count !== 1) {
-          return null;
-        }
-
-        const updatedCustomer =
-          await transaction.customer.findUnique({
-            where: {
-              id: customer.id,
-            },
-            select: {
-              balance: true,
-            },
-          });
-
-        if (!updatedCustomer) {
-          return null;
-        }
-
-        await transaction.loyaltyTransaction.create({
-          data: {
-            type: "EARN",
-            amount,
-            balanceAfter:
-              updatedCustomer.balance,
-            note: transactionNote,
-            customerId: customer.id,
-            businessId: business.id,
-            createdById: session.user.id,
-          },
-        });
-
-        await transaction.businessActivity.create({
-          data: {
-            type: "LOYALTY_EARNED",
-            description: activityDescription,
-            businessId: business.id,
-            customerId: customer.id,
-            createdById: session.user.id,
-          },
-        });
-
-        return updatedCustomer.balance;
-      }
+  if (!parsedOperation.success) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=earned-invalid`
     );
+  }
+
+  const idempotencyKey = parsedOperation.data;
+
+  const completedOperation =
+    await prisma.loyaltyTransaction.findUnique({
+      where: {
+        businessId_idempotencyKey: {
+          businessId: business.id,
+          idempotencyKey,
+        },
+      },
+      select: {
+        customerId: true,
+      },
+    });
+
+  if (completedOperation) {
+    if (completedOperation.customerId !== customer.id) {
+      redirect(`/businesses/${slug}/customers/${customer.id}`);
+    }
+
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?success=earned`
+    );
+  }
+
+  const rapidEarnInput = {
+    businessId: business.id,
+    customerId: customer.id,
+    createdById: session.user.id,
+    amount,
+  };
+
+  const rapidEarnLimit = rateLimit(
+    getRapidEarnRateLimitKey(rapidEarnInput),
+    {
+      limit: 1,
+      windowMs: RAPID_EARN_WINDOW_MS,
+    }
+  );
+
+  if (!rapidEarnLimit.allowed) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
+    );
+  }
+
+  const recentDuplicateEarn =
+    await prisma.loyaltyTransaction.findFirst({
+      where: getRapidEarnWhere(rapidEarnInput),
+      select: {
+        id: true,
+      },
+    });
+
+  if (recentDuplicateEarn) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
+    );
+  }
+
+  let newBalance: number | null;
+
+  try {
+    newBalance = await prisma.$transaction(async (transaction) => {
+      const occurredAt = new Date();
+      const promotions = await transaction.promotion.findMany({
+        where: {
+          businessId: business.id,
+          isActive: true,
+          AND: [
+            {
+              OR: [
+                { startsAt: null },
+                { startsAt: { lte: occurredAt } },
+              ],
+            },
+            {
+              OR: [
+                { endsAt: null },
+                { endsAt: { gte: occurredAt } },
+              ],
+            },
+          ],
+        },
+        select: {
+          id: true,
+          businessId: true,
+          isActive: true,
+          loyaltyMode: true,
+          minimumTransactionAmount: true,
+          bonusAmount: true,
+          bonusMultiplier: true,
+          startsAt: true,
+          endsAt: true,
+          createdAt: true,
+        },
+      });
+      const promotion = selectEligiblePromotion({
+        businessId: business.id,
+        loyaltyMode: business.loyaltyMode,
+        transactionAmount: amount,
+        occurredAt,
+        promotions,
+      });
+
+      const balanceAfter = await recordLoyaltyEarn(transaction, {
+        customerId: customer.id,
+        businessId: business.id,
+        createdById: session.user.id,
+        attributedStaffId,
+        amount,
+        sourceLoyaltyMode: business.loyaltyMode,
+        saleAmount,
+        idempotencyKey,
+        promotion: promotion
+          ? {
+              id: promotion.id,
+              businessId: promotion.businessId,
+              bonusAmount: calculatePromotionBonus(
+                promotion,
+                amount
+              ),
+            }
+          : undefined,
+        transactionNote,
+        activityDescription,
+      });
+
+      if (balanceAfter !== null) {
+        await createRewardUnlocksForEarn(transaction, {
+          businessId: business.id,
+          customerId: customer.id,
+          createdById: session.user.id,
+          balanceAfter,
+        });
+      }
+
+      return balanceAfter;
+    });
+  } catch (error) {
+    if (
+      !(
+        typeof error === "object" &&
+        error &&
+        "code" in error &&
+        error.code === "P2002"
+      )
+    ) {
+      throw error;
+    }
+
+    const completedAfterRace =
+      await prisma.loyaltyTransaction.findUnique({
+        where: {
+          businessId_idempotencyKey: {
+            businessId: business.id,
+            idempotencyKey,
+          },
+        },
+        select: {
+          customerId: true,
+          balanceAfter: true,
+        },
+      });
+
+    if (completedAfterRace?.customerId !== customer.id) {
+      throw error;
+    }
+
+    newBalance = completedAfterRace.balanceAfter;
+  }
 
   if (newBalance === null) {
     redirect(
@@ -602,7 +1139,8 @@ export async function addLoyaltyAction(
 
 export async function redeemRewardAction(
   slug: string,
-  customerId: string
+  customerId: string,
+  rewardId?: string
 ) {
   const {
     session,
@@ -610,97 +1148,171 @@ export async function redeemRewardAction(
     customer,
   } = await getActionContext(
     slug,
-    customerId
+    customerId,
+    "LOYALTY_REDEEM"
   );
 
-  const rewardLabel: string =
-    business.rewardType ===
-      "PROMO_CODE" &&
-    business.rewardCode
-      ? `${business.rewardName} — ${business.rewardCode}`
-      : business.rewardName;
+  const selectedReward = rewardId
+    ? await prisma.reward.findFirst({
+        where: {
+          id: rewardId,
+          businessId: business.id,
+          isActive: true,
+        },
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            code: true,
+            cost: true,
+            expiresAfterDays: true,
+            businessId: true,
+        },
+      })
+    : null;
 
-  const cost = business.rewardThreshold;
-
-  const newBalance =
-    await prisma.$transaction(
-      async (transaction) => {
-        const updateResult =
-          await transaction.customer.updateMany({
-            where: {
-              id: customer.id,
-              isActive: true,
-              balance: {
-                gte: cost,
-              },
-            },
-            data: {
-              balance: {
-                decrement: cost,
-              },
-              lifetimeRedeemed: {
-                increment: cost,
-              },
-            },
-          });
-
-        if (updateResult.count !== 1) {
-          return null;
-        }
-
-        const updatedCustomer =
-          await transaction.customer.findUnique({
-            where: {
-              id: customer.id,
-            },
-            select: {
-              balance: true,
-            },
-          });
-
-        if (!updatedCustomer) {
-          return null;
-        }
-
-        await transaction.loyaltyTransaction.create({
-          data: {
-            type: "REDEEM",
-            amount: -cost,
-            balanceAfter:
-              updatedCustomer.balance,
-            note: rewardLabel,
-            customerId: customer.id,
-            businessId: business.id,
-            createdById: session.user.id,
-          },
-        });
-
-        await transaction.rewardRedemption.create({
-          data: {
-            rewardName: rewardLabel,
-            cost,
-            customerId: customer.id,
-            businessId: business.id,
-            createdById: session.user.id,
-          },
-        });
-
-        await transaction.businessActivity.create({
-          data: {
-            type: "REWARD_REDEEMED",
-            description:
-              `تم استبدال ${business.rewardName} مقابل ${cost}`,
-            businessId: business.id,
-            customerId: customer.id,
-            createdById: session.user.id,
-          },
-        });
-
-        return updatedCustomer.balance;
-      }
+  if (rewardId && !selectedReward) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=reward-unavailable`
     );
+  }
 
-  if (newBalance === null) {
+  const rewardName = selectedReward?.name ?? business.rewardName;
+  const rewardLabel = getRewardLabel(
+    selectedReward?.type ?? business.rewardType,
+    rewardName,
+    selectedReward?.code ?? business.rewardCode
+  );
+
+  const cost = selectedReward?.cost ?? business.rewardThreshold;
+
+  const rapidRedemptionInput = {
+    businessId: business.id,
+    customerId: customer.id,
+    createdById: session.user.id,
+    cost,
+  };
+
+  const rapidRedemptionLimit = rateLimit(
+    getRapidRedemptionRateLimitKey(rapidRedemptionInput),
+    {
+      limit: 1,
+      windowMs: RAPID_EARN_WINDOW_MS,
+    }
+  );
+
+  if (!rapidRedemptionLimit.allowed) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
+    );
+  }
+
+  const recentDuplicateRedemption =
+    await prisma.loyaltyTransaction.findFirst({
+      where: getRapidRedemptionWhere(
+        rapidRedemptionInput
+      ),
+      select: {
+        id: true,
+      },
+    });
+
+  if (recentDuplicateRedemption) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
+    );
+  }
+
+  const redemption = await prisma.$transaction(
+    async (transaction) => {
+      const now = new Date();
+      let unlockId: string | null = null;
+
+      if (selectedReward?.expiresAfterDays) {
+        const unlock = await transaction.rewardUnlock.findFirst({
+          where: {
+            businessId: business.id,
+            customerId: customer.id,
+            rewardId: selectedReward.id,
+            redeemedAt: null,
+          },
+          orderBy: { unlockedAt: "desc" },
+        });
+
+        // No unlock means this balance predates enabling expiry, so preserve
+        // backward-compatible redemption behavior for existing customers.
+        if (unlock) {
+          const unlockState = getRewardUnlockRedemptionState({
+            expectedBusinessId: business.id,
+            unlockBusinessId: unlock.businessId,
+            rewardBusinessId: selectedReward.businessId,
+            expiresAt: unlock.expiresAt,
+            redeemedAt: unlock.redeemedAt,
+            expiredAt: unlock.expiredAt,
+            now,
+          });
+
+          if (unlockState !== "ACTIVE") {
+            if (!unlock.expiredAt) {
+              await transaction.rewardUnlock.update({
+                where: { id: unlock.id },
+                data: { expiredAt: now },
+              });
+              await transaction.businessActivity.create({
+                data: {
+                  type: "REWARD_EXPIRED",
+                  description: `انتهت صلاحية ${selectedReward.name}`,
+                  businessId: business.id,
+                  customerId: customer.id,
+                  createdById: session.user.id,
+                },
+              });
+            }
+
+            await transaction.businessActivity.create({
+              data: {
+                type: "REWARD_REDEMPTION_BLOCKED",
+                description: `تم رفض استبدال ${selectedReward.name} لانتهاء الصلاحية`,
+                businessId: business.id,
+                customerId: customer.id,
+                createdById: session.user.id,
+              },
+            });
+            return { balance: null, expired: true };
+          }
+
+          unlockId = unlock.id;
+        }
+      }
+
+      const balance = await recordRewardRedemption(transaction, {
+          customerId: customer.id,
+          businessId: business.id,
+          createdById: session.user.id,
+          cost,
+          rewardLabel,
+          rewardName,
+          rewardId: selectedReward?.id,
+        });
+
+      if (balance !== null && unlockId) {
+        await transaction.rewardUnlock.update({
+          where: { id: unlockId },
+          data: { redeemedAt: now },
+        });
+      }
+
+      return { balance, expired: false };
+    }
+  );
+
+  if (redemption.expired) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=reward-expired`
+    );
+  }
+
+  if (redemption.balance === null) {
     redirect(
       `/businesses/${slug}/customers/${customer.id}?error=not-enough`
     );

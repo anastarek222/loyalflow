@@ -1,4 +1,9 @@
 import { auth } from "@/auth";
+import {
+  formatUtcDateInput,
+  parseUtcDateInput,
+} from "@/lib/analytics/date-range";
+import { canExportBusinessData } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -9,59 +14,6 @@ type ExportRouteContext = {
     slug: string;
   }>;
 };
-
-function formatDateInput(
-  date: Date
-) {
-  const year =
-    date.getUTCFullYear();
-
-  const month = String(
-    date.getUTCMonth() + 1
-  ).padStart(
-    2,
-    "0"
-  );
-
-  const day = String(
-    date.getUTCDate()
-  ).padStart(
-    2,
-    "0"
-  );
-
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateInput(
-  value: string | null,
-  endOfDay = false
-) {
-  if (
-    !value ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      value
-    )
-  ) {
-    return null;
-  }
-
-  const time =
-    endOfDay
-      ? "23:59:59.999"
-      : "00:00:00.000";
-
-  const date =
-    new Date(
-      `${value}T${time}Z`
-    );
-
-  return Number.isNaN(
-    date.getTime()
-  )
-    ? null
-    : date;
-}
 
 function escapeCsvCell(
   value:
@@ -181,10 +133,11 @@ export async function GET(
   }
 
   const canExportData =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id &&
-      business.allowOwnerDataExport);
+    canExportBusinessData(
+      session.user,
+      business.id,
+      business.allowOwnerDataExport
+    );
 
   if (!canExportData) {
     return Response.json(
@@ -208,7 +161,7 @@ export async function GET(
     new Date();
 
   const defaultTo =
-    formatDateInput(
+    formatUtcDateInput(
       today
     );
 
@@ -221,7 +174,7 @@ export async function GET(
   );
 
   const defaultFrom =
-    formatDateInput(
+    formatUtcDateInput(
       defaultFromDate
     );
 
@@ -236,19 +189,19 @@ export async function GET(
     ) ?? defaultTo;
 
   const from =
-    parseDateInput(
+    parseUtcDateInput(
       fromInput
     ) ??
-    parseDateInput(
+    parseUtcDateInput(
       defaultFrom
     );
 
   const to =
-    parseDateInput(
+    parseUtcDateInput(
       toInput,
       true
     ) ??
-    parseDateInput(
+    parseUtcDateInput(
       defaultTo,
       true
     );

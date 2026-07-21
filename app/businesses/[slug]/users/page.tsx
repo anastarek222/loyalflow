@@ -1,4 +1,8 @@
 import { auth } from "@/auth";
+import {
+  canPerform,
+  isSuperAdmin as isSuperAdminRole,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import {
@@ -50,18 +54,9 @@ export default async function UsersPage({
   }
 
   const isSuperAdmin =
-    session.user.role ===
-    "SUPER_ADMIN";
+    isSuperAdminRole(session.user);
 
-  const isBusinessOwner =
-    session.user.role === "OWNER" &&
-    session.user.businessId ===
-      business.id;
-
-  if (
-    !isSuperAdmin &&
-    !isBusinessOwner
-  ) {
+  if (!canPerform(session.user, business.id, "STAFF_MANAGE")) {
     redirect("/dashboard");
   }
 
@@ -313,8 +308,16 @@ export default async function UsersPage({
                     </option>
                   )}
 
+                  <option value="MANAGER">
+                    مدير — يدير العملاء والولاء والتقارير
+                  </option>
+
                   <option value="STAFF">
-                    موظف — يدير العملاء
+                    موظف / كاشير — يجمع ويستبدل الولاء
+                  </option>
+
+                  <option value="VIEWER">
+                    مشاهد — يعرض العملاء والتقارير فقط
                   </option>
                 </select>
               </div>
@@ -342,14 +345,11 @@ export default async function UsersPage({
 
                   const canChangeStatus =
                     !isCurrentUser &&
-                    (isSuperAdmin ||
-                      user.role ===
-                        "STAFF");
+                    (isSuperAdmin || user.role !== "OWNER");
 
                   const canChangePassword =
                     isSuperAdmin ||
-                    user.role ===
-                      "STAFF" ||
+                    user.role !== "OWNER" ||
                     isCurrentUser;
 
                   const changeStatus =
@@ -407,7 +407,11 @@ export default async function UsersPage({
                           <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
                             {user.role === "OWNER"
                               ? "مالك"
-                              : "موظف"}
+                              : user.role === "MANAGER"
+                                ? "مدير"
+                                : user.role === "VIEWER"
+                                  ? "مشاهد"
+                                  : "موظف / كاشير"}
                           </span>
 
                           <span

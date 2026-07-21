@@ -80,9 +80,9 @@ export default async function BusinessesPage({
           </div>
         )}
 
-        {params.error === "slug" && (
+        {params.error === "slug-generation" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            This business link is already being used.
+            We could not safely generate a unique business link. Please try again.
           </div>
         )}
 
@@ -110,22 +110,58 @@ export default async function BusinessesPage({
                 />
               </div>
 
+              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Your business link is generated automatically from the business name.
+              </p>
+
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Business link
+                  Business phone
                 </label>
 
                 <input
-                  name="slug"
-                  required
-                  pattern="[a-z0-9-]+"
-                  placeholder="elite-barber"
+                  name="contactPhone"
+                  type="tel"
+                  placeholder="+20 100 000 0000"
+                  maxLength={25}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
+              </div>
 
-                <p className="mt-1 text-xs text-slate-400">
-                  English lowercase letters, numbers and dashes only.
-                </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Currency
+                  </label>
+
+                  <select
+                    name="currency"
+                    defaultValue="EGP"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                  >
+                    <option value="AED">AED</option>
+                    <option value="EGP">EGP</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="KWD">KWD</option>
+                    <option value="QAR">QAR</option>
+                    <option value="SAR">SAR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Timezone
+                  </label>
+
+                  <input
+                    name="timezone"
+                    defaultValue="Africa/Cairo"
+                    placeholder="Africa/Cairo"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                  />
+                </div>
               </div>
 
               <div>

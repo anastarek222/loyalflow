@@ -1,21 +1,12 @@
-import { ImageResponse } from 'next/og';
-import Image from 'next/image';
-import prisma from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+/* eslint-disable @next/next/no-img-element -- ImageResponse only supports standard image elements. */
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
-// Removed unused variable
+import { ImageResponse } from "next/og";
+import prisma from "@/lib/prisma";
 
-export const GET = async (request: Request, { params }: { params: Promise<{ token: string }> }) => {
-  const token = new URL(request.url).searchParams.get('token');
-  if (!token) {
-    return new Response('Token required', { status: 401 });
-  }
-  try {
-    jwt.verify(token, JWT_SECRET as string || 'default-secret');
-  } catch (error) {
-    return new Response('Invalid token', { status: 401 });
-  }
+export const GET = async (
+  request: Request,
+  { params }: { params: Promise<{ token: string }> }
+) => {
   const { token: cardToken } = await params;
   const requestedSize = new URL(request.url).searchParams.get('size');
   const iconSize = requestedSize === '192' ? 192 : 512;

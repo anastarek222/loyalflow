@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import DigitalLoyaltyCard from "@/components/digital-loyalty-card";
+import CopyLinkButton from "@/components/copy-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
+import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import { isOfferEligible } from "@/lib/offers/eligibility";
+import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -164,7 +168,15 @@ export default async function PublicCardPage({
       },
 
       include: {
-        business: true,
+        // Private staff notes and tag assignments are intentionally absent.
+        // Public cards expose loyalty data only, never internal CRM metadata.
+        business: {
+          include: {
+            offers: {
+              orderBy: [{ validUntil: "asc" }, { createdAt: "asc" }],
+            },
+          },
+        },
 
         transactions: {
           orderBy: {
@@ -177,6 +189,31 @@ export default async function PublicCardPage({
         _count: {
           select: {
             redemptions: true,
+          },
+        },
+        rewardUnlocks: {
+          where: {
+            redeemedAt: null,
+          },
+          orderBy: {
+            unlockedAt: "desc",
+          },
+          include: {
+            reward: {
+              select: {
+                name: true,
+                isActive: true,
+              },
+            },
+          },
+        },
+        referralCodes: {
+          where: {
+            isActive: true,
+          },
+          take: 1,
+          select: {
+            code: true,
           },
         },
       },
@@ -192,6 +229,19 @@ export default async function PublicCardPage({
 
   const business =
     customer.business;
+  const publicOffers = business.offers.filter((offer) =>
+    isOfferEligible(
+      offer,
+      {
+        businessId: customer.businessId,
+        isActive: customer.isActive,
+        createdAt: customer.createdAt,
+        lifetimeEarned: customer.lifetimeEarned,
+        lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+      },
+      { id: business.id, rewardThreshold: business.rewardThreshold }
+    )
+  );
 
   const cardUnitName =
     business.pointsName?.trim() ||
@@ -206,6 +256,9 @@ export default async function PublicCardPage({
    */
   const cardUrl =
     `${baseUrl}/card/${customer.publicToken}`;
+  const referralLink = customer.referralCodes[0]
+    ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
+    : null;
 
   const qrCode =
     await QRCode.toDataURL(
@@ -222,27 +275,31 @@ export default async function PublicCardPage({
    * البيانات المحسوبة لا يتم تخزينها،
    * بل يتم حسابها مباشرة حتى تظل محدثة.
    */
-  const progress = Math.min(
-    100,
-    Math.max(
-      0,
-      Math.floor(
-        (customer.balance /
-          business.rewardThreshold) *
-          100
-      )
-    )
+  const {
+    progress,
+    remaining,
+    rewardAvailable,
+  } = calculateRewardProgress(
+    customer.balance,
+    business.rewardThreshold
   );
 
-  const rewardAvailable =
-    customer.balance >=
-    business.rewardThreshold;
-
-  const remaining = Math.max(
-    0,
-    business.rewardThreshold -
-      customer.balance
-  );
+  const rewardExpiryStatuses = customer.rewardUnlocks
+    .filter((unlock) => unlock.businessId === business.id && unlock.reward.isActive)
+    .map((unlock) => ({
+      id: unlock.id,
+      name: unlock.reward.name,
+      expiresAt: unlock.expiresAt,
+      state: getPersistedRewardUnlockState({
+        expiresAt: unlock.expiresAt,
+        redeemedAt: unlock.redeemedAt,
+        expiredAt: unlock.expiredAt,
+      }),
+    }));
+  const cardRewardAvailable =
+    rewardAvailable &&
+    (!rewardExpiryStatuses.some((reward) => reward.state === "EXPIRED") ||
+      rewardExpiryStatuses.some((reward) => reward.state === "ACTIVE"));
 
   const customerName = [
     customer.firstName,
@@ -396,7 +453,7 @@ export default async function PublicCardPage({
             business.rewardDescription
           }
           rewardAvailable={
-            rewardAvailable
+            cardRewardAvailable
           }
           qrCode={
             qrCode
@@ -419,6 +476,55 @@ export default async function PublicCardPage({
         كارت الولاء الخاص بـ{" "}
         {customerName}
       </h1>
+
+      {referralLink ? (
+        <section className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 text-right shadow-sm" dir="rtl">
+          <h2 className="font-black text-slate-950">ادعُ صديقًا</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            شارك الرابط. يتم تسجيل الإحالة فقط عند انضمام عميل جديد لهذا النشاط؛ لا تُمنح أي نقاط تلقائيًا.
+          </p>
+          <div className="mt-4">
+            <CopyLinkButton value={referralLink} label="نسخ رابط الدعوة" />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 text-right shadow-sm" dir="rtl">
+        <h2 className="font-black text-slate-950">عروض متاحة لك</h2>
+        {publicOffers.length === 0 ? (
+          <p className="mt-2 text-sm leading-6 text-slate-500">لا توجد عروض متاحة لك حاليًا.</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {publicOffers.map((offer) => (
+              <article key={offer.id} className="rounded-2xl bg-violet-50 px-4 py-3">
+                <p className="font-black text-slate-950">{offer.name}</p>
+                {offer.description ? <p className="mt-1 text-sm leading-6 text-slate-600">{offer.description}</p> : null}
+                {offer.validUntil ? <p className="mt-2 text-xs font-bold text-violet-700">متاح حتى {dateFormatter.format(offer.validUntil)}</p> : null}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {rewardExpiryStatuses.length > 0 ? (
+        <section className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 text-right shadow-sm" dir="rtl">
+          <h2 className="font-black text-slate-950">حالة المكافآت</h2>
+          <div className="mt-3 space-y-2">
+            {rewardExpiryStatuses.map((reward) => (
+              <div key={reward.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+                <span className="font-bold text-slate-800">{reward.name}</span>
+                {reward.state === "EXPIRED" ? (
+                  <span className="font-black text-rose-700">منتهية</span>
+                ) : (
+                  <span className="font-bold text-emerald-700">
+                    صالحة حتى {dateFormatter.format(reward.expiresAt)}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
         {business.loyaltyMode ===
           "SALES_AMOUNT" && (
@@ -507,7 +613,7 @@ export default async function PublicCardPage({
         progress={progress}
         remaining={remaining}
         rewardAvailable={
-          rewardAvailable
+          cardRewardAvailable
         }
       />
     </main>

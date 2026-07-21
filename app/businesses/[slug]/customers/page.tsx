@@ -1,9 +1,26 @@
 import { auth } from "@/auth";
+import {
+  getCustomerFilterSegments,
+  getCustomerSegment,
+  getCustomerSegmentLabel,
+  getCustomerSegmentWhere,
+  type CustomerSegment,
+} from "@/lib/customers/segments";
+import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import { getCustomerTagWhere } from "@/lib/customers/notes-tags";
+import {
+  canAccessBusiness,
+  canExportBusinessData,
+  canManageBusiness,
+  canPerform,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import type { Prisma } from "@/generated/prisma/client";
+import BulkCustomerOperations from "@/components/bulk-customer-operations";
 
-import { createCustomerAction } from "./actions";
+import { bulkCustomerAction, createCustomerAction } from "./actions";
 
 const CUSTOMERS_PER_PAGE = 10;
 
@@ -16,8 +33,13 @@ type CustomersPageProps = {
     created?: string;
     error?: string;
     q?: string;
+    segment?: string;
     status?: string;
     sort?: string;
+    tag?: string;
+    bulk?: string;
+    selected?: string;
+    changed?: string;
     page?: string;
   }>;
 };
@@ -45,20 +67,35 @@ export default async function CustomersPage({
     notFound();
   }
 
-  const canAccess =
-    session.user.role === "SUPER_ADMIN" ||
-    session.user.businessId === business.id;
-
-  if (!canAccess) {
+  if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
 
   const search = query.q?.trim() ?? "";
 
+  const businessTags = await prisma.customerTag.findMany({
+    where: { businessId: business.id },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  const selectedTagId = businessTags.some((tag) => tag.id === query.tag)
+    ? query.tag!
+    : null;
+
   const status =
     query.status === "active" || query.status === "inactive"
       ? query.status
       : "all";
+
+  const availableSegments = getCustomerFilterSegments(
+    business.loyaltyMode
+  );
+
+  const segment = availableSegments.includes(
+    query.segment as CustomerSegment
+  )
+    ? (query.segment as CustomerSegment)
+    : null;
 
   const allowedSorts = ["newest", "oldest", "balance_high", "balance_low"];
 
@@ -69,48 +106,96 @@ export default async function CustomersPage({
   const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
-  const customerWhere = {
-    businessId: business.id,
+  const customerFilters: Prisma.CustomerWhereInput[] = [
+    {
+      businessId: business.id,
+    },
+  ];
 
-    ...(status === "active"
-      ? {
-          isActive: true,
-        }
-      : status === "inactive"
-        ? {
-            isActive: false,
-          }
-        : {}),
+  if (status === "active") {
+    customerFilters.push({
+      isActive: true,
+    });
+  }
 
-    ...(search
-      ? {
-          OR: [
-            {
-              firstName: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
+  if (status === "inactive") {
+    customerFilters.push({
+      isActive: false,
+    });
+  }
+
+  if (search) {
+    const nameParts = search
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const searchFilters: Prisma.CustomerWhereInput[] = [
+      {
+        firstName: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        lastName: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        phone: {
+          contains: search,
+        },
+      },
+      {
+        customerCode: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+
+    if (nameParts.length >= 2) {
+      searchFilters.push({
+        AND: [
+          {
+            firstName: {
+              contains: nameParts[0],
+              mode: "insensitive",
             },
-            {
-              lastName: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
+          },
+          {
+            lastName: {
+              contains: nameParts.slice(1).join(" "),
+              mode: "insensitive",
             },
-            {
-              phone: {
-                contains: search,
-              },
-            },
-            {
-              customerCode: {
-                contains: search,
-                mode: "insensitive" as const,
-              },
-            },
-          ],
-        }
-      : {}),
+          },
+        ],
+      });
+    }
+
+    customerFilters.push({
+      OR: searchFilters,
+    });
+  }
+
+  if (segment) {
+    customerFilters.push(
+      getCustomerSegmentWhere(
+        segment,
+        business.rewardThreshold,
+        undefined,
+        business.earnAmount
+      )
+    );
+  }
+
+  if (selectedTagId) {
+    customerFilters.push(getCustomerTagWhere(selectedTagId));
+  }
+
+  const customerWhere: Prisma.CustomerWhereInput = {
+    AND: customerFilters,
   };
 
   const [totalCustomers, filteredCustomers] = await Promise.all([
@@ -164,6 +249,25 @@ export default async function CustomersPage({
     orderBy,
     skip: (currentPage - 1) * CUSTOMERS_PER_PAGE,
     take: CUSTOMERS_PER_PAGE,
+    include: {
+      transactions: {
+        select: {
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 1,
+      },
+      tagAssignments: {
+        orderBy: { tag: { name: "asc" } },
+        include: {
+          tag: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+    },
   });
 
   const createCustomer = createCustomerAction.bind(null, business.slug);
@@ -177,6 +281,14 @@ export default async function CustomersPage({
 
     if (status !== "all") {
       parameters.set("status", status);
+    }
+
+    if (segment) {
+      parameters.set("segment", segment);
+    }
+
+    if (selectedTagId) {
+      parameters.set("tag", selectedTagId);
     }
 
     if (sort !== "newest") {
@@ -217,13 +329,24 @@ export default async function CustomersPage({
   );
 
   const filtersActive =
-    Boolean(search) || status !== "all" || sort !== "newest";
+    Boolean(search) ||
+    status !== "all" ||
+    Boolean(segment) ||
+    Boolean(selectedTagId) ||
+    sort !== "newest";
 
-  const canExportData =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id &&
-      business.allowOwnerDataExport);
+  const canExportData = canExportBusinessData(
+    session.user,
+    business.id,
+    business.allowOwnerDataExport
+  );
+  const canReviewDuplicates = canPerform(
+    session.user,
+    business.id,
+    "CUSTOMERS_EDIT"
+  );
+  const canUseCampaigns = canManageBusiness(session.user, business.id);
+  const bulkAction = bulkCustomerAction.bind(null, business.slug);
 
   return (
     <main
@@ -250,6 +373,14 @@ export default async function CustomersPage({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            {canReviewDuplicates && (
+              <Link
+                href={`/businesses/${business.slug}/duplicates`}
+                className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 text-center font-semibold text-amber-900 shadow-sm transition hover:bg-amber-100"
+              >
+                مراجعة التكرارات
+              </Link>
+            )}
             {canExportData && (
               <a
               href={`/businesses/${business.slug}/customers/export`}
@@ -288,6 +419,14 @@ export default async function CustomersPage({
         {query.error === "duplicate" && (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
             رقم الهاتف مسجل بالفعل داخل هذا النشاط.
+          </div>
+        )}
+
+        {query.bulk && query.selected && query.changed && (
+          <div className={`mb-6 rounded-xl border px-4 py-3 ${query.bulk === "invalid" || query.bulk === "invalid-selection" ? "border-red-200 bg-red-50 text-red-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+            {query.bulk === "invalid" || query.bulk === "invalid-selection"
+              ? "لم تُنفّذ العملية: الاختيار أو الوسم غير صالح ضمن هذا النشاط."
+              : `تمت العملية الجماعية على ${query.selected} عميل؛ تغيّر ${query.changed} سجل.`}
           </div>
         )}
 
@@ -364,8 +503,23 @@ export default async function CustomersPage({
           </section>
 
           <section>
+            {canReviewDuplicates ? (
+              <BulkCustomerOperations
+                customers={customers.map((customer) => ({
+                  id: customer.id,
+                  name: [customer.firstName, customer.lastName].filter(Boolean).join(" "),
+                  phone: customer.phone,
+                }))}
+                tags={businessTags}
+                action={bulkAction}
+                exportUrl={`/businesses/${business.slug}/customers/export`}
+                campaignUrl={`/businesses/${business.slug}/campaigns`}
+                canExport={canExportData}
+                canUseCampaigns={canUseCampaigns}
+              />
+            ) : null}
             <form className="mb-5 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_190px_auto]">
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_150px_150px_190px_auto]">
                 <div>
                   <label
                     htmlFor="q"
@@ -381,6 +535,29 @@ export default async function CustomersPage({
                     placeholder="الاسم أو الهاتف أو كود العميل"
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
                   />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="tag"
+                    className="mb-2 block text-sm font-medium text-slate-700"
+                  >
+                    وسم العميل
+                  </label>
+
+                  <select
+                    id="tag"
+                    name="tag"
+                    defaultValue={selectedTagId ?? ""}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                  >
+                    <option value="">كل الوسوم</option>
+                    {businessTags.map((tag) => (
+                      <option key={tag.id} value={tag.id}>
+                        {tag.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -402,6 +579,29 @@ export default async function CustomersPage({
                     <option value="active">Active</option>
 
                     <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="segment"
+                    className="mb-2 block text-sm font-medium text-slate-700"
+                  >
+                    شريحة العميل
+                  </label>
+
+                  <select
+                    id="segment"
+                    name="segment"
+                    defaultValue={segment ?? ""}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                  >
+                    <option value="">كل الشرائح</option>
+                    {availableSegments.map((value) => (
+                      <option key={value} value={value}>
+                        {getCustomerSegmentLabel(value)}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -477,12 +677,20 @@ export default async function CustomersPage({
               <>
                 <div className="space-y-4">
                   {customers.map((customer) => {
-                    const progress = Math.min(
-                      100,
-                      Math.floor(
-                        (customer.balance / business.rewardThreshold) * 100,
-                      ),
+                    const { progress } = calculateRewardProgress(
+                      customer.balance,
+                      business.rewardThreshold,
+                      customer.isActive
                     );
+
+                    const customerSegment = getCustomerSegment({
+                      isActive: customer.isActive,
+                      createdAt: customer.createdAt,
+                      lastActivityAt:
+                        customer.transactions[0]?.createdAt ?? null,
+                      lifetimeEarned: customer.lifetimeEarned,
+                      rewardThreshold: business.rewardThreshold,
+                    });
 
                     return (
                       <article
@@ -508,6 +716,21 @@ export default async function CustomersPage({
                               >
                                 {customer.isActive ? "نشط" : "موقوف"}
                               </span>
+
+                              <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                                {getCustomerSegmentLabel(
+                                  customerSegment
+                                )}
+                              </span>
+
+                              {customer.tagAssignments.map((assignment) => (
+                                <span
+                                  key={assignment.id}
+                                  className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-semibold text-cyan-800"
+                                >
+                                  {assignment.tag.name}
+                                </span>
+                              ))}
                             </div>
 
                             <p className="mt-1 text-sm text-slate-500">

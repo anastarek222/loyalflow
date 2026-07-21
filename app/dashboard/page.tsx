@@ -358,8 +358,14 @@ function getRoleLabel(
     case "OWNER":
       return dictionary.owner;
 
+    case "MANAGER":
+      return language === "AR" ? "مدير" : "Manager";
+
     case "STAFF":
       return dictionary.staff;
+
+    case "VIEWER":
+      return language === "AR" ? "مشاهد" : "Viewer";
 
     default:
       return role;

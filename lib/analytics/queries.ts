@@ -1,8 +1,15 @@
-import prisma from '../prisma';
-import { TransactionType } from '@prisma/client';
+import { LoyaltyMode, TransactionType } from "@/generated/prisma/client";
+import prisma from "../prisma";
 
 export const getBusinessAnalytics = async (businessId: string) => {
-  const [totalCustomers, activeCustomers, newCustomersThisMonth, totalEarnedAmount, totalRedemptions, recentLoyaltyTransactions] = await prisma.$transaction([
+  const [
+    totalCustomers,
+    activeCustomers,
+    newCustomersThisMonth,
+    earnedTransactions,
+    totalRedemptions,
+    recentLoyaltyTransactions,
+  ] = await prisma.$transaction([
     // Total Customers
     prisma.customer.count({ where: { businessId } }),
     // Active Customers
@@ -23,7 +30,7 @@ export const getBusinessAnalytics = async (businessId: string) => {
         businessId,
         type: TransactionType.EARN,
       },
-    }) ?? 0,
+    }),
     // Total Redemptions
     prisma.loyaltyTransaction.count({
       where: {
@@ -43,26 +50,30 @@ export const getBusinessAnalytics = async (businessId: string) => {
   ]);
 
   // Loyalty Mode Summary
-  const { loyaltyMode } = await prisma.business.findUnique({
+  const business = await prisma.business.findUnique({
     where: { id: businessId },
     select: { loyaltyMode: true },
   });
+
+  if (!business) {
+    return null;
+  }
 
   return {
     totalCustomers,
     activeCustomers,
     newCustomersThisMonth,
-    totalEarnedAmount: parseFloat(totalEarnedAmount.toString()),
+    totalEarnedAmount: earnedTransactions._sum.amount ?? 0,
     totalRedemptions,
     recentLoyaltyTransactions,
     loyaltyModeSummary: {
-      mode: loyaltyMode,
-      description: getLoyaltyModeDescription(loyaltyMode),
+      mode: business.loyaltyMode,
+      description: getLoyaltyModeDescription(business.loyaltyMode),
     },
   };
 };
 
-const getLoyaltyModeDescription = (mode: typeof TransactionType.EARN | typeof TransactionType.REDEEM) => {
+const getLoyaltyModeDescription = (mode: LoyaltyMode) => {
   switch (mode) {
     case 'VISITS':
       return 'Customers earn points based on visits.';

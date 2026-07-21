@@ -1,4 +1,6 @@
 import { auth } from "@/auth";
+import { canExportBusinessData } from "@/lib/permissions";
+import { parseSelectedExportIds } from "@/lib/customers/bulk";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -26,7 +28,7 @@ function escapeCsvCell(
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: ExportRouteContext
 ) {
   const session = await auth();
@@ -69,10 +71,11 @@ export async function GET(
   }
 
   const canExportData =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id &&
-      business.allowOwnerDataExport);
+    canExportBusinessData(
+      session.user,
+      business.id,
+      business.allowOwnerDataExport
+    );
 
   if (!canExportData) {
     return Response.json(
@@ -85,9 +88,27 @@ export async function GET(
     );
   }
 
+  const selectedIds = parseSelectedExportIds(
+    new URL(request.url).searchParams.get("ids")
+  );
+  const requestedSelection = new URL(request.url).searchParams.has("ids");
+  if (requestedSelection && !selectedIds) {
+    return Response.json({ error: "Invalid selected customers" }, { status: 400 });
+  }
+
+  if (selectedIds) {
+    const selectedCount = await prisma.customer.count({
+      where: { businessId: business.id, id: { in: selectedIds } },
+    });
+    if (selectedCount !== selectedIds.length) {
+      return Response.json({ error: "Selected customers not found" }, { status: 400 });
+    }
+  }
+
   const customers = await prisma.customer.findMany({
     where: {
       businessId: business.id,
+      ...(selectedIds ? { id: { in: selectedIds } } : {}),
     },
     orderBy: {
       createdAt: "desc",

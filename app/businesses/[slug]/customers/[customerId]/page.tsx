@@ -1,8 +1,22 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { randomUUID } from "node:crypto";
+
 import { auth } from "@/auth";
 import { getRequestBaseUrl } from "@/lib/app-url";
+import { getCampaignSuggestion } from "@/lib/campaigns/suggestions";
+import { isUnusualManualAdjustment } from "@/lib/loyalty/fraud";
+import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import {
+  canAccessBusiness,
+  canPerform,
+} from "@/lib/permissions";
+import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
+import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
+import { calculateRetentionScore } from "@/lib/customers/retention-score";
+import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import CopyLinkButton from "@/components/copy-link-button";
+import RedeemRewardDialog from "@/components/redeem-reward-dialog";
 import prisma from "@/lib/prisma";
 import {
   buildWhatsAppUrl,
@@ -15,9 +29,15 @@ import * as QRCode from "qrcode";
 
 import {
   addLoyaltyAction,
+  assignCustomerTagAction,
+  createAndAssignCustomerTagAction,
+  createCustomerNoteAction,
   adjustCustomerBalanceAction,
+  createCustomerReferralCodeAction,
   redeemRewardAction,
+  removeCustomerTagAction,
   setCustomerStatusAction,
+  updateCustomerNoteAction,
   updateCustomerAction,
 } from "./actions";
 
@@ -49,23 +69,72 @@ export default async function CustomerDetailsPage({
     where: {
       slug,
     },
+    include: {
+      rewards: {
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          cost: "asc",
+        },
+      },
+    },
   });
 
   if (!business) {
     notFound();
   }
 
-  const canAccess =
-    session.user.role === "SUPER_ADMIN" ||
-    session.user.businessId === business.id;
+  const canAccess = canAccessBusiness(
+    session.user,
+    business.id
+  );
 
   if (!canAccess) {
     redirect("/dashboard");
   }
 
-  const canManageCustomer =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" && session.user.businessId === business.id);
+  const canManageCustomer = canPerform(
+    session.user,
+    business.id,
+    "CUSTOMERS_EDIT"
+  );
+  const canAdjustBalance = canPerform(
+    session.user,
+    business.id,
+    "LOYALTY_ADJUST"
+  );
+  const canEarnLoyalty = canPerform(
+    session.user,
+    business.id,
+    "LOYALTY_EARN"
+  );
+  const canRedeemLoyalty = canPerform(
+    session.user,
+    business.id,
+    "LOYALTY_REDEEM"
+  );
+
+  const attributableStaff = business.staffAttributionEnabled
+    ? await prisma.user.findMany({
+        where: {
+          businessId: business.id,
+          isActive: true,
+          role: {
+            in: ["OWNER", "MANAGER", "STAFF"],
+          },
+        },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+        },
+        orderBy: [
+          { firstName: "asc" },
+          { lastName: "asc" },
+        ],
+      })
+    : [];
 
   const customer = await prisma.customer.findFirst({
     where: {
@@ -87,9 +156,80 @@ export default async function CustomerDetailsPage({
           },
         },
       },
+      activities: {
+        where: {
+          type: {
+            in: [
+              "CUSTOMER_CREATED",
+              "CUSTOMER_UPDATED",
+              "CUSTOMER_DEACTIVATED",
+              "CUSTOMER_REACTIVATED",
+              "CUSTOMER_TAG_ASSIGNED",
+              "CUSTOMER_TAG_REMOVED",
+              "CUSTOMER_NOTE_CREATED",
+              "CUSTOMER_NOTE_UPDATED",
+              "REWARD_UNLOCKED",
+              "REWARD_EXPIRED",
+              "REWARD_REDEMPTION_BLOCKED",
+              "REFERRAL_RECORDED",
+            ],
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 20,
+        include: {
+          createdBy: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      },
+      rewardUnlocks: {
+        where: {
+          businessId: business.id,
+          redeemedAt: null,
+        },
+        orderBy: {
+          unlockedAt: "desc",
+        },
+      },
+      referralCodes: {
+        where: {
+          businessId: business.id,
+          isActive: true,
+        },
+        take: 1,
+        select: {
+          code: true,
+        },
+      },
+      tagAssignments: {
+        orderBy: { tag: { name: "asc" } },
+        include: {
+          tag: {
+            select: { id: true, name: true },
+          },
+        },
+      },
+      notes: {
+        orderBy: { updatedAt: "desc" },
+        include: {
+          createdBy: {
+            select: { firstName: true, lastName: true },
+          },
+          updatedBy: {
+            select: { firstName: true, lastName: true },
+          },
+        },
+      },
       _count: {
         select: {
           redemptions: true,
+          transactions: true,
         },
       },
     },
@@ -99,9 +239,46 @@ export default async function CustomerDetailsPage({
     notFound();
   }
 
+  const staffAttributionSelector = business.staffAttributionEnabled ? (
+    <div className="mb-3">
+      <label className="mb-2 block text-sm font-bold text-slate-700">
+        الموظف المنسوبة إليه العملية
+      </label>
+      <select
+        name="attributedStaffId"
+        required={business.staffAttributionRequired}
+        disabled={!customer.isActive || !canEarnLoyalty}
+        defaultValue=""
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500 disabled:bg-slate-100"
+      >
+        <option value="">
+          {business.staffAttributionRequired
+            ? "اختر موظفًا"
+            : "بدون نسبة لموظف"}
+        </option>
+        {attributableStaff.map((staff) => (
+          <option key={staff.id} value={staff.id}>
+            {[staff.firstName, staff.lastName]
+              .filter(Boolean)
+              .join(" ")}
+          </option>
+        ))}
+      </select>
+    </div>
+  ) : null;
+
+  const businessTags = await prisma.customerTag.findMany({
+    where: { businessId: business.id },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+
   const baseUrl = await getRequestBaseUrl();
 
   const cardUrl = `${baseUrl}/card/${customer.publicToken}`;
+  const referralLink = customer.referralCodes[0]
+    ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
+    : null;
 
   const qrCode = await QRCode.toDataURL(cardUrl, {
     width: 240,
@@ -109,21 +286,58 @@ export default async function CustomerDetailsPage({
     errorCorrectionLevel: "M",
   });
 
-  const progress = Math.min(
-    100,
-    Math.floor((customer.balance / business.rewardThreshold) * 100),
-  );
-
-  const rewardAvailable =
-    customer.isActive && customer.balance >= business.rewardThreshold;
-
   const addLoyalty = addLoyaltyAction.bind(null, business.slug, customer.id);
+  const loyaltyOperationId = randomUUID();
 
-  const redeemReward = redeemRewardAction.bind(
-    null,
-    business.slug,
-    customer.id,
+  const availableRewards = getAvailableRewardOptions(
+    business.rewards,
+    {
+      name: business.rewardName,
+      description: business.rewardDescription,
+      type: business.rewardType,
+      code: business.rewardCode,
+      cost: business.rewardThreshold,
+    }
   );
+
+  const rewardUnlocksByRewardId = new Map(
+    customer.rewardUnlocks.map((unlock) => [unlock.rewardId, unlock])
+  );
+
+  const rewardStates = availableRewards.map((reward) => {
+    const unlock = reward.id
+      ? rewardUnlocksByRewardId.get(reward.id)
+      : undefined;
+    const expirationState = unlock
+      ? getPersistedRewardUnlockState({
+          expiresAt: unlock.expiresAt,
+          redeemedAt: unlock.redeemedAt,
+          expiredAt: unlock.expiredAt,
+        })
+      : null;
+    const progress = calculateRewardProgress(
+      customer.balance,
+      reward.cost,
+      customer.isActive
+    );
+
+    return {
+      reward,
+      ...progress,
+      expirationState,
+      expiresAt: unlock?.expiresAt ?? null,
+      rewardAvailable:
+        progress.rewardAvailable && expirationState !== "EXPIRED",
+    };
+  });
+  const primaryRewardState = rewardStates[0]!;
+  const rewardAvailable = rewardStates.some(
+    (rewardState) => rewardState.rewardAvailable
+  );
+  const remaining = primaryRewardState.remaining;
+  const messageReward =
+    rewardStates.find((rewardState) => rewardState.rewardAvailable)
+      ?.reward ?? primaryRewardState.reward;
 
   const updateCustomer = updateCustomerAction.bind(
     null,
@@ -132,6 +346,21 @@ export default async function CustomerDetailsPage({
   );
 
   const adjustCustomerBalance = adjustCustomerBalanceAction.bind(
+    null,
+    business.slug,
+    customer.id,
+  );
+  const createReferralCode = createCustomerReferralCodeAction.bind(
+    null,
+    business.slug,
+    customer.id,
+  );
+  const createAndAssignTag = createAndAssignCustomerTagAction.bind(
+    null,
+    business.slug,
+    customer.id,
+  );
+  const createNote = createCustomerNoteAction.bind(
     null,
     business.slug,
     customer.id,
@@ -155,14 +384,29 @@ export default async function CustomerDetailsPage({
     .filter(Boolean)
     .join(" ");
 
-  const remaining = Math.max(0, business.rewardThreshold - customer.balance);
+  const timeline = buildCustomerTimeline(
+    customer.transactions,
+    customer.activities
+  );
+
+  const retentionScore = calculateRetentionScore({
+    createdAt: customer.createdAt,
+    lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+    transactionCount: customer._count.transactions,
+    lifetimeEarned: customer.lifetimeEarned,
+    lifetimeRedeemed: customer.lifetimeRedeemed,
+    balance: customer.balance,
+    loyaltyMode: business.loyaltyMode,
+    earnAmount: business.earnAmount,
+    rewardThreshold: business.rewardThreshold,
+  });
 
   const whatsappContext = {
     customer: customerName,
     business: business.name,
     balance: customer.balance,
     unit: business.unitName,
-    reward: business.rewardName,
+    reward: messageReward.name,
     cardLink: cardUrl,
     remaining,
   };
@@ -191,44 +435,22 @@ export default async function CustomerDetailsPage({
     ),
   );
 
-  const smartWhatsAppSuggestion =
-    query.success === "created"
-      ? {
-          title: "تم إنشاء العميل بنجاح 👋",
-          description: "أرسل رسالة الترحيب ورابط كارت الولاء للعميل الجديد.",
-          url: welcomeWhatsAppUrl,
-          button: "إرسال رسالة الترحيب",
-        }
-      : query.success === "earned"
-        ? rewardAvailable
-          ? {
-              title: "المكافأة أصبحت جاهزة 🎁",
-              description: "أرسل للعميل رسالة المكافأة الجاهزة للاستلام.",
-              url: rewardWhatsAppUrl,
-              button: "إرسال رسالة المكافأة",
-            }
-          : {
-              title: "تم تحديث رصيد العميل",
-              description:
-                "أرسل للعميل رصيده الحالي والمتبقي للحصول على المكافأة.",
-              url: balanceWhatsAppUrl,
-              button: "إرسال تحديث الرصيد",
-            }
-        : query.success === "redeemed"
-          ? {
-              title: "تم استبدال المكافأة",
-              description: "أرسل للعميل الرصيد الجديد بعد خصم المكافأة.",
-              url: balanceWhatsAppUrl,
-              button: "إرسال الرصيد الجديد",
-            }
-          : query.success === "adjusted"
-            ? {
-                title: "تم تعديل رصيد العميل",
-                description: "أرسل للعميل أحدث رصيد على واتساب.",
-                url: balanceWhatsAppUrl,
-                button: "إرسال تحديث الرصيد",
-              }
-            : null;
+  const smartWhatsAppSuggestion = getCampaignSuggestion({
+    operation: query.success,
+    phone: customer.phone,
+    context: whatsappContext,
+    templates: {
+      welcome: business.whatsappWelcomeMessage,
+      balance: business.whatsappBalanceMessage,
+      reward: business.whatsappRewardMessage,
+    },
+    rewardAvailable,
+    isOneLoyaltyActionAway:
+      business.loyaltyMode !== "SALES_AMOUNT" &&
+      !rewardAvailable &&
+      remaining > 0 &&
+      remaining <= business.earnAmount,
+  });
 
   return (
     <main
@@ -279,6 +501,36 @@ export default async function CustomerDetailsPage({
           </div>
         )}
 
+        {query.success === "referral-link" && (
+          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+            تم إنشاء رابط الإحالة للعميل.
+          </div>
+        )}
+
+        {query.success === "tag-assigned" && (
+          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+            تم حفظ وسم العميل.
+          </div>
+        )}
+
+        {query.success === "tag-removed" && (
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            تم إزالة وسم العميل.
+          </div>
+        )}
+
+        {query.success === "note-created" && (
+          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+            تمت إضافة الملاحظة الداخلية.
+          </div>
+        )}
+
+        {query.success === "note-updated" && (
+          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+            تم تعديل الملاحظة الداخلية.
+          </div>
+        )}
+
         {query.error === "adjustment-invalid" && (
           <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             أدخل قيمة صحيحة وسببًا واضحًا.
@@ -312,6 +564,42 @@ export default async function CustomerDetailsPage({
         {query.error === "not-enough" && (
           <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
             رصيد العميل غير كافٍ لاستبدال المكافأة.
+          </div>
+        )}
+
+        {query.error === "reward-expired" && (
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            انتهت صلاحية هذه المكافأة. الرصيد لم يتغير.
+          </div>
+        )}
+
+        {query.error === "referral" && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+            تعذر إنشاء رابط إحالة فريد. حاول مرة أخرى.
+          </div>
+        )}
+
+        {(query.error === "tag-invalid" || query.error === "note-invalid") && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+            أدخل نصًا صحيحًا للوسم أو الملاحظة.
+          </div>
+        )}
+
+        {query.error === "earned-too-soon" && (
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            تم منع إضافة متكررة بسرعة. تأكد من العملية ثم حاول مرة أخرى بعد ثوانٍ قليلة.
+          </div>
+        )}
+
+        {query.error === "staff-attribution" && (
+          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+            اختر موظفًا نشطًا من نفس النشاط قبل تسجيل العملية.
+          </div>
+        )}
+
+        {query.error === "redeemed-too-soon" && (
+          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            تم منع استبدال مكرر بسرعة. تأكد من تسليم المكافأة ثم حاول مرة أخرى بعد ثوانٍ قليلة.
           </div>
         )}
 
@@ -368,8 +656,203 @@ export default async function CustomerDetailsPage({
                 <span className="rounded-full bg-white/10 px-4 py-2">
                   {customer.phone}
                 </span>
+
+                {customer.tagAssignments.map((assignment) => (
+                  <span
+                    key={assignment.id}
+                    className="rounded-full bg-cyan-400/20 px-4 py-2 font-semibold text-cyan-100"
+                  >
+                    {assignment.tag.name}
+                  </span>
+                ))}
               </div>
             </header>
+
+            <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+              <h2 className="text-xl font-bold text-slate-950">وسوم العميل</h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                وسوم داخلية للتصفية والتنظيم، ولا تظهر على كارت العميل العام.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {customer.tagAssignments.length === 0 ? (
+                  <p className="text-sm text-slate-500">لا توجد وسوم مضافة.</p>
+                ) : (
+                  customer.tagAssignments.map((assignment) => {
+                    const removeTag = removeCustomerTagAction.bind(
+                      null,
+                      business.slug,
+                      customer.id,
+                      assignment.tag.id,
+                    );
+
+                    return (
+                      <span
+                        key={assignment.id}
+                        className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-2 text-sm font-semibold text-violet-800"
+                      >
+                        {assignment.tag.name}
+                        {canManageCustomer ? (
+                          <form action={removeTag}>
+                            <button
+                              type="submit"
+                              aria-label={`إزالة وسم ${assignment.tag.name}`}
+                              className="rounded-full px-1 text-violet-600 hover:bg-violet-200 hover:text-violet-950"
+                            >
+                              ×
+                            </button>
+                          </form>
+                        ) : null}
+                      </span>
+                    );
+                  })
+                )}
+              </div>
+
+              {canManageCustomer ? (
+                <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
+                  <form
+                    action={createAndAssignTag}
+                    className="flex gap-2"
+                  >
+                    <input
+                      name="tagName"
+                      maxLength={50}
+                      required
+                      placeholder="وسم جديد، مثال: VIP"
+                      className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+                    >
+                      إضافة
+                    </button>
+                  </form>
+
+                  <div className="flex flex-wrap gap-2">
+                    {businessTags
+                      .filter(
+                        (tag) =>
+                          !customer.tagAssignments.some(
+                            (assignment) => assignment.tag.id === tag.id,
+                          ),
+                      )
+                      .map((tag) => {
+                        const assignTag = assignCustomerTagAction.bind(
+                          null,
+                          business.slug,
+                          customer.id,
+                          tag.id,
+                        );
+
+                        return (
+                          <form key={tag.id} action={assignTag}>
+                            <button
+                              type="submit"
+                              className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100"
+                            >
+                              + {tag.name}
+                            </button>
+                          </form>
+                        );
+                      })}
+                  </div>
+                </div>
+              ) : null}
+            </section>
+
+            <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+              <h2 className="text-xl font-bold text-slate-950">ملاحظات داخلية</h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                لا تظهر هذه الملاحظات على كارت العميل أو عبر الرابط العام.
+              </p>
+
+              {canManageCustomer ? (
+                <form action={createNote} className="mt-5">
+                  <label htmlFor="newCustomerNote" className="sr-only">
+                    ملاحظة داخلية جديدة
+                  </label>
+                  <textarea
+                    id="newCustomerNote"
+                    name="content"
+                    required
+                    minLength={1}
+                    maxLength={2000}
+                    rows={3}
+                    placeholder="أضف ملاحظة لفريق العمل فقط"
+                    className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-violet-500"
+                  />
+                  <button
+                    type="submit"
+                    className="mt-3 rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white hover:bg-violet-700"
+                  >
+                    حفظ ملاحظة داخلية
+                  </button>
+                </form>
+              ) : null}
+
+              <div className="mt-5 space-y-4">
+                {customer.notes.length === 0 ? (
+                  <p className="text-sm text-slate-500">لا توجد ملاحظات داخلية.</p>
+                ) : (
+                  customer.notes.map((note) => {
+                    const updateNote = updateCustomerNoteAction.bind(
+                      null,
+                      business.slug,
+                      customer.id,
+                      note.id,
+                    );
+                    const createdByName = note.createdBy
+                      ? [note.createdBy.firstName, note.createdBy.lastName]
+                      .filter(Boolean)
+                      .join(" ")
+                      : "مستخدم محذوف";
+                    const updatedByName = note.updatedBy
+                      ? [note.updatedBy.firstName, note.updatedBy.lastName]
+                      .filter(Boolean)
+                      .join(" ")
+                      : "مستخدم محذوف";
+
+                    return (
+                      <article key={note.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        {canManageCustomer ? (
+                          <form action={updateNote}>
+                            <textarea
+                              name="content"
+                              defaultValue={note.content}
+                              required
+                              minLength={1}
+                              maxLength={2000}
+                              rows={3}
+                              className="w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500"
+                            />
+                            <button
+                              type="submit"
+                              className="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:border-violet-400"
+                            >
+                              حفظ التعديل
+                            </button>
+                          </form>
+                        ) : (
+                          <p dir="auto" className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                            {note.content}
+                          </p>
+                        )}
+                        <p className="mt-3 text-xs text-slate-500">
+                          أضيفت بواسطة {createdByName} في {note.createdAt.toLocaleString("ar-EG")}
+                          {note.updatedAt.getTime() !== note.createdAt.getTime()
+                            ? ` · آخر تعديل بواسطة ${updatedByName}`
+                            : ""}
+                        </p>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </section>
 
             <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
               <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
@@ -394,57 +877,101 @@ export default async function CustomerDetailsPage({
                 >
                   <p className="text-sm font-semibold">
                     {rewardAvailable
-                      ? "المكافأة جاهزة 🎁"
-                      : `متبقي ${business.rewardThreshold - customer.balance}`}
+                      ? `${rewardStates.filter((rewardState) => rewardState.rewardAvailable).length} مكافأة جاهزة 🎁`
+                      : `متبقي ${remaining}`}
                   </p>
 
                   <p dir="auto" className="mt-1 text-xs">
-                    {business.rewardName}
+                    {messageReward.name}
                   </p>
-
-                  {rewardAvailable &&
-                    business.rewardType ===
-                      "PROMO_CODE" &&
-                    business.rewardCode && (
-                      <div className="mt-3 rounded-xl border border-emerald-300 bg-white px-4 py-3">
-                        <p className="text-xs font-bold text-emerald-700">
-                          Promo Code
-                        </p>
-
-                        <p
-                          dir="ltr"
-                          className="mt-1 select-all text-center text-xl font-black tracking-widest text-emerald-950"
-                        >
-                          {business.rewardCode}
-                        </p>
-                      </div>
-                    )}
-
-                  {rewardAvailable &&
-                    business.rewardDescription && (
-                      <p
-                        dir="auto"
-                        className="mt-2 text-xs leading-5"
-                      >
-                        {business.rewardDescription}
-                      </p>
-                    )}
                 </div>
               </div>
 
-              <div className="mt-7 h-3 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${progress}%`,
-                    backgroundColor: business.primaryColor,
-                  }}
-                />
-              </div>
+              <section className="mt-7 grid gap-4 md:grid-cols-2">
+                {rewardStates.map((rewardState) => (
+                  <article
+                    key={rewardState.reward.id ?? "legacy-reward"}
+                    className={`rounded-2xl border p-4 ${
+                      rewardState.rewardAvailable
+                        ? "border-emerald-300 bg-emerald-50"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="font-black text-slate-950">
+                          {rewardState.reward.name}
+                        </h2>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {rewardState.reward.cost} {business.unitName}
+                        </p>
+                      </div>
 
-              <p className="mt-2 text-sm text-slate-500">
-                {customer.balance} / {business.rewardThreshold}
-              </p>
+                      <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                        rewardState.expirationState === "EXPIRED"
+                          ? "bg-rose-100 text-rose-800"
+                          : rewardState.rewardAvailable
+                          ? "bg-emerald-600 text-white"
+                          : "bg-slate-200 text-slate-700"
+                      }`}>
+                        {rewardState.expirationState === "EXPIRED"
+                          ? "منتهية"
+                          : rewardState.rewardAvailable
+                          ? "جاهزة"
+                          : `متبقي ${rewardState.remaining}`}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${rewardState.progress}%`,
+                          backgroundColor: business.primaryColor,
+                        }}
+                      />
+                    </div>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      {customer.balance} / {rewardState.reward.cost}
+                    </p>
+
+                    {rewardState.expiresAt ? (
+                      <p className={`mt-2 text-xs font-bold ${
+                        rewardState.expirationState === "EXPIRED"
+                          ? "text-rose-700"
+                          : "text-slate-500"
+                      }`}>
+                        {rewardState.expirationState === "EXPIRED"
+                          ? "انتهت صلاحية المكافأة"
+                          : `صالحة حتى ${new Intl.DateTimeFormat("ar-EG", {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                              timeZone: "Africa/Cairo",
+                            }).format(rewardState.expiresAt)}`}
+                      </p>
+                    ) : rewardState.reward.expiresAfterDays ? (
+                      <p className="mt-2 text-xs text-slate-500">
+                        تبدأ الصلاحية عند فتح المكافأة.
+                      </p>
+                    ) : null}
+
+                    {rewardState.rewardAvailable &&
+                    rewardState.reward.type === "PROMO_CODE" &&
+                    rewardState.reward.code ? (
+                      <p dir="ltr" className="mt-3 select-all rounded-xl border border-emerald-300 bg-white px-3 py-2 text-center text-sm font-black tracking-widest text-emerald-950">
+                        {rewardState.reward.code}
+                      </p>
+                    ) : null}
+
+                    {rewardState.reward.description ? (
+                      <p className="mt-3 text-xs leading-5 text-slate-600">
+                        {rewardState.reward.description}
+                      </p>
+                    ) : null}
+                  </article>
+                ))}
+              </section>
 
               {!customer.isActive && (
                 <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
@@ -453,12 +980,22 @@ export default async function CustomerDetailsPage({
               )}
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                {business.loyaltyMode ===
-                "SALES_AMOUNT" ? (
-                  <form
-                    action={addLoyalty}
-                    className="w-full rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:max-w-md"
-                  >
+                <form
+                  action={addLoyalty}
+                  className={
+                    business.loyaltyMode === "SALES_AMOUNT"
+                      ? "w-full rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:max-w-md"
+                      : "w-full sm:w-auto"
+                  }
+                >
+                  <input
+                    type="hidden"
+                    name="operationId"
+                    value={loyaltyOperationId}
+                  />
+
+                  {business.loyaltyMode === "SALES_AMOUNT" && (
+                    <>
                     <label
                       htmlFor="saleAmount"
                       className="mb-2 block text-sm font-black text-violet-950"
@@ -477,7 +1014,7 @@ export default async function CustomerDetailsPage({
                         required
                         inputMode="numeric"
                         placeholder="مثال: 25000"
-                        disabled={!customer.isActive}
+                        disabled={!customer.isActive || !canEarnLoyalty}
                         className="min-w-0 flex-1 rounded-xl border border-violet-200 bg-white px-4 py-3 text-lg font-black outline-none focus:border-violet-500 disabled:bg-slate-100"
                       />
 
@@ -488,38 +1025,55 @@ export default async function CustomerDetailsPage({
                         {business.unitName}
                       </span>
                     </div>
+                    </>
+                  )}
 
-                    <button
-                      type="submit"
-                      disabled={!customer.isActive}
-                      className="mt-3 w-full rounded-xl bg-violet-600 px-6 py-3 font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                    >
-                      تسجيل عملية البيع
-                    </button>
-                  </form>
-                ) : (
-                  <form action={addLoyalty} className="w-full sm:w-auto">
+                  {staffAttributionSelector}
+
                   <button
                     type="submit"
-                    disabled={!customer.isActive}
-                    className="w-full rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                    disabled={!customer.isActive || !canEarnLoyalty}
+                    className={
+                      business.loyaltyMode === "SALES_AMOUNT"
+                        ? "mt-3 w-full rounded-xl bg-violet-600 px-6 py-3 font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        : "w-full rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                    }
                   >
-                    {business.loyaltyMode === "VISITS"
-                      ? `+ إضافة زيارة`
-                      : `+ إضافة ${business.earnAmount} نقطة`}
+                    {business.loyaltyMode === "SALES_AMOUNT"
+                      ? "تسجيل عملية البيع"
+                      : business.loyaltyMode === "VISITS"
+                        ? "+ إضافة زيارة"
+                        : `+ إضافة ${business.earnAmount} نقطة`}
                   </button>
                 </form>
-                )}
 
-                <form action={redeemReward} className="w-full sm:w-auto">
-                  <button
-                    type="submit"
-                    disabled={!customer.isActive || !rewardAvailable}
-                    className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                  >
-                    استبدال المكافأة
-                  </button>
-                </form>
+                <div className="grid w-full gap-3 sm:w-auto">
+                  {rewardStates.map((rewardState) => {
+                    const { reward } = rewardState;
+                    const redeemReward = redeemRewardAction.bind(
+                      null,
+                      business.slug,
+                      customer.id,
+                      reward.id ?? undefined,
+                    );
+
+                    return (
+                      <RedeemRewardDialog
+                        key={reward.id ?? "legacy-reward"}
+                        action={redeemReward}
+                        disabled={
+                          !customer.isActive ||
+                          !canRedeemLoyalty ||
+                          customer.balance < reward.cost ||
+                          rewardState.expirationState === "EXPIRED"
+                        }
+                        rewardName={reward.name}
+                        cost={reward.cost}
+                        unitName={business.unitName}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </section>
 
@@ -599,6 +1153,7 @@ export default async function CustomerDetailsPage({
                   </button>
                 </form>
 
+                {canAdjustBalance ? (
                 <div className="mt-7 border-t border-slate-200 pt-6">
                   <h3 className="font-bold text-slate-950">
                     تعديل الرصيد يدويًا
@@ -685,6 +1240,7 @@ export default async function CustomerDetailsPage({
                     </button>
                   </form>
                 </div>
+                ) : null}
 
                 <div className="mt-7 border-t border-slate-200 pt-6">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -722,62 +1278,78 @@ export default async function CustomerDetailsPage({
             )}
 
             <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-              <h2 className="text-xl font-bold text-slate-950">سجل الحركات</h2>
+              <h2 className="text-xl font-bold text-slate-950">الخط الزمني للعميل</h2>
 
-              {customer.transactions.length === 0 ? (
-                <p className="mt-5 text-slate-500">لا توجد حركات حتى الآن.</p>
+              <p className="mt-1 text-sm text-slate-500">
+                سجل موحّد لانضمام العميل وحركات الولاء وتغييرات حالة الحساب.
+              </p>
+
+              {timeline.length === 0 ? (
+                <p className="mt-5 text-slate-500">لا توجد أحداث حتى الآن.</p>
               ) : (
                 <div className="mt-5 divide-y divide-slate-100">
-                  {customer.transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {transaction.type === "EARN"
-                            ? "تمت إضافة رصيد ولاء"
-                            : transaction.type === "REDEEM"
-                              ? "تم استبدال مكافأة"
-                              : "تم تعديل الرصيد"}
-                        </p>
+                  {timeline.map((item) => {
+                    const unusualAdjustment =
+                      item.transactionType === "ADJUSTMENT" &&
+                      isUnusualManualAdjustment(
+                        item.amount ?? 0,
+                        business.rewardThreshold
+                      );
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-semibold text-slate-900">
+                              {item.title}
+                            </p>
+
+                            {unusualAdjustment && (
+                              <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
+                                يتطلب مراجعة
+                              </span>
+                            )}
+                          </div>
 
                         <p className="mt-1 text-xs text-slate-500">
-                          {transaction.createdAt.toLocaleString("ar-EG")}
+                          {item.createdAt.toLocaleString("ar-EG")}
                         </p>
 
-                        {transaction.note && (
+                        {item.description && (
                           <p dir="auto" className="mt-1 text-xs text-slate-500">
-                            {transaction.note}
+                            {item.description}
                           </p>
                         )}
 
-                        {transaction.createdBy && (
-                          <p className="mt-1 text-xs text-slate-400">
-                            By {transaction.createdBy.firstName}{" "}
-                            {transaction.createdBy.lastName ?? ""}
+                        <p className="mt-1 text-xs text-slate-400">
+                          بواسطة {item.actorName}
+                        </p>
+                      </div>
+
+                      {item.amount !== undefined && (
+                        <div className="text-left sm:text-right">
+                          <p
+                            className={`text-lg font-bold ${
+                              item.amount > 0
+                                ? "text-emerald-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {item.amount > 0 ? "+" : ""}
+                            {item.amount}
                           </p>
-                        )}
-                      </div>
 
-                      <div className="text-left sm:text-right">
-                        <p
-                          className={`text-lg font-bold ${
-                            transaction.amount > 0
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {transaction.amount > 0 ? "+" : ""}
-                          {transaction.amount}
-                        </p>
-
-                        <p className="text-xs text-slate-500">
-                          الرصيد: {transaction.balanceAfter}
-                        </p>
+                          <p className="text-xs text-slate-500">
+                            الرصيد بعد العملية: {item.balanceAfter}
+                          </p>
+                        </div>
+                      )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -791,6 +1363,29 @@ export default async function CustomerDetailsPage({
             <p className="mt-2 text-sm text-slate-500">
               افتح الكارت أو أرسله للعميل.
             </p>
+
+            <section className="mt-5 rounded-2xl bg-violet-50 p-4 text-right">
+              <p className="text-xs font-black text-violet-700">
+                درجة الاحتفاظ (مؤشر قواعد)
+              </p>
+              <div className="mt-2 flex items-end justify-between gap-3">
+                <p className="text-3xl font-black text-violet-950">
+                  {retentionScore.score}/100
+                </p>
+                <p className="text-sm font-bold text-violet-800">
+                  {retentionScore.label === "Very Loyal"
+                    ? "ولاء مرتفع"
+                    : retentionScore.label === "Active"
+                      ? "نشط"
+                      : retentionScore.label === "At Risk"
+                        ? "معرّض للتوقف"
+                        : "خطر توقف مرتفع"}
+                </p>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-violet-700">
+                يعتمد على حداثة النشاط والتكرار والتقدم والاستبدال، وليس توقعًا بالذكاء الاصطناعي.
+              </p>
+            </section>
 
             <img
               src={qrCode}
@@ -812,6 +1407,21 @@ export default async function CustomerDetailsPage({
               </Link>
 
               <CopyLinkButton value={cardUrl} />
+
+              {canManageCustomer ? (
+                referralLink ? (
+                  <>
+                    <CopyLinkButton value={referralLink} label="نسخ رابط الإحالة" />
+                    <p className="break-all text-xs text-slate-400">{referralLink}</p>
+                  </>
+                ) : (
+                  <form action={createReferralCode}>
+                    <button type="submit" className="w-full rounded-xl border border-violet-300 bg-violet-50 px-5 py-3 font-semibold text-violet-800 transition hover:bg-violet-100">
+                      إنشاء رابط إحالة
+                    </button>
+                  </form>
+                )
+              ) : null}
 
               <a
                 href={welcomeWhatsAppUrl}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isOfferEligible } from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
 
 export async function GET(
@@ -20,7 +21,14 @@ export async function GET(
         publicToken: token,
       },
       include: {
-        business: true,
+        // Keep tenant-private notes/tags out of every public-card response.
+        business: {
+          include: {
+            offers: {
+              orderBy: [{ validUntil: "asc" }, { createdAt: "asc" }],
+            },
+          },
+        },
         transactions: {
           orderBy: {
             createdAt: "desc",
@@ -30,12 +38,34 @@ export async function GET(
       },
     });
 
-    if (!customer) {
+    if (!customer || !customer.isActive || !customer.business.isActive) {
       return NextResponse.json(
         { error: "Not found" },
         { status: 404 }
       );
     }
+
+    const offers = customer.business.offers
+      .filter((offer) => isOfferEligible(
+        offer,
+        {
+          businessId: customer.businessId,
+          isActive: customer.isActive,
+          createdAt: customer.createdAt,
+          lifetimeEarned: customer.lifetimeEarned,
+          lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+        },
+        {
+          id: customer.business.id,
+          rewardThreshold: customer.business.rewardThreshold,
+        }
+      ))
+      .map((offer) => ({
+        id: offer.id,
+        name: offer.name,
+        description: offer.description,
+        validUntil: offer.validUntil,
+      }));
 
     return NextResponse.json({
       name: `${customer.firstName} ${customer.lastName ?? ""}`.trim(),
@@ -49,6 +79,9 @@ export async function GET(
         amount: t.amount,
         timestamp: t.createdAt,
       })),
+
+      // Deliberately public-safe: no internal eligibility or audience rule.
+      offers,
 
       business: {
         name: customer.business.name,

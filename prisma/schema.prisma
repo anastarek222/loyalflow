@@ -8,43 +8,56 @@ datasource db {
 }
 
 model Business {
-  id                     String                  @id @default(cuid())
-  name                   String
-  slug                   String                  @unique
-  logoUrl                String?
-  coverImageUrl          String?
-  primaryColor           String                  @default("#111827")
-  secondaryColor         String                  @default("#FFFFFF")
-  loyaltyProgramName     String?
-  pointsName             String?
-  membershipName         String?
-  welcomeMessage         String?
-  loyaltyMode            LoyaltyMode             @default(VISITS)
-  unitName               String                  @default("زيارة")
-  rewardName             String                  @default("هدية مجانية")
-  rewardThreshold        Int                     @default(5)
-  earnAmount             Int                     @default(1)
-  isActive               Boolean                 @default(true)
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  whatsappBalanceMessage String?
-  whatsappRewardMessage  String?
-  whatsappWelcomeMessage String?
-  address                String?
-  cardTerms              String?
-  contactPhone           String?
-  allowOwnerDataExport   Boolean                 @default(false)
-  cardDefaultLanguage    AppLanguage             @default(AR)
-  rewardType             RewardType              @default(GIFT)
-  rewardCode             String?
-  rewardDescription      String?
-  activities             BusinessActivity[]
-  customers              Customer[]
-  transactions           LoyaltyTransaction[]
-  notificationItemReads  NotificationItemRead[]
-  notificationReadStates NotificationReadState[]
-  redemptions            RewardRedemption[]
-  users                  User[]
+  id                       String                  @id @default(cuid())
+  name                     String
+  slug                     String                  @unique
+  logoUrl                  String?
+  coverImageUrl            String?
+  primaryColor             String                  @default("#111827")
+  secondaryColor           String                  @default("#FFFFFF")
+  currency                 String?
+  timezone                 String?
+  loyaltyProgramName       String?
+  pointsName               String?
+  membershipName           String?
+  welcomeMessage           String?
+  loyaltyMode              LoyaltyMode             @default(VISITS)
+  unitName                 String                  @default("زيارة")
+  rewardName               String                  @default("هدية مجانية")
+  rewardThreshold          Int                     @default(5)
+  earnAmount               Int                     @default(1)
+  isActive                 Boolean                 @default(true)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  whatsappBalanceMessage   String?
+  whatsappRewardMessage    String?
+  whatsappWelcomeMessage   String?
+  address                  String?
+  cardTerms                String?
+  contactPhone             String?
+  allowOwnerDataExport     Boolean                 @default(false)
+  staffAttributionEnabled  Boolean                 @default(false)
+  staffAttributionRequired Boolean                 @default(false)
+  cardDefaultLanguage      AppLanguage             @default(AR)
+  rewardType               RewardType              @default(GIFT)
+  rewardCode               String?
+  rewardDescription        String?
+  activities               BusinessActivity[]
+  customers                Customer[]
+  transactions             LoyaltyTransaction[]
+  notificationItemReads    NotificationItemRead[]
+  notificationReadStates   NotificationReadState[]
+  redemptions              RewardRedemption[]
+  rewardUnlocks            RewardUnlock[]
+  rewards                  Reward[]
+  promotions               Promotion[]
+  promotionApplications    PromotionApplication[]
+  referralCodes            CustomerReferralCode[]
+  referrals                Referral[]
+  users                    User[]
+  branches                 Branch[]
+  customerTags             CustomerTag[]
+  offers                   Offer[]
 }
 
 model User {
@@ -62,72 +75,316 @@ model User {
   language               AppLanguage             @default(AR)
   activities             BusinessActivity[]      @relation("ActivityCreatedBy")
   transactions           LoyaltyTransaction[]    @relation("TransactionCreatedBy")
+  attributedTransactions LoyaltyTransaction[]    @relation("TransactionAttributedStaff")
   notificationItemReads  NotificationItemRead[]
   notificationReadStates NotificationReadState[]
   redemptions            RewardRedemption[]      @relation("RedemptionCreatedBy")
+  attributedRedemptions  RewardRedemption[]      @relation("RedemptionAttributedStaff")
+  branchAssignments      BranchStaffAssignment[]
+  createdCustomerNotes   CustomerNote[]          @relation("CustomerNoteCreatedBy")
+  updatedCustomerNotes   CustomerNote[]          @relation("CustomerNoteUpdatedBy")
   business               Business?               @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
+  @@unique([id, businessId])
   @@index([businessId])
 }
 
 model Customer {
-  id               String               @id @default(cuid())
-  firstName        String
-  lastName         String?
-  phone            String
-  customerCode     String
-  publicToken      String               @unique @default(cuid())
-  balance          Int                  @default(0)
-  lifetimeEarned   Int                  @default(0)
-  lifetimeRedeemed Int                  @default(0)
-  isActive         Boolean              @default(true)
-  businessId       String
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  activities       BusinessActivity[]
-  business         Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  transactions     LoyaltyTransaction[]
-  redemptions      RewardRedemption[]
+  id                    String                  @id @default(cuid())
+  firstName             String
+  lastName              String?
+  phone                 String
+  customerCode          String
+  publicToken           String                  @unique @default(cuid())
+  balance               Int                     @default(0)
+  lifetimeEarned        Int                     @default(0)
+  lifetimeRedeemed      Int                     @default(0)
+  isActive              Boolean                 @default(true)
+  businessId            String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  activities            BusinessActivity[]
+  business              Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  tagAssignments        CustomerTagAssignment[]
+  notes                 CustomerNote[]
+  transactions          LoyaltyTransaction[]
+  redemptions           RewardRedemption[]
+  rewardUnlocks         RewardUnlock[]
+  promotionApplications PromotionApplication[]
+  referralCodes         CustomerReferralCode[]
+  referralsMade         Referral[]              @relation("ReferralReferrer")
+  referralsReceived     Referral[]              @relation("ReferralReferred")
 
   @@unique([businessId, phone])
   @@unique([businessId, customerCode])
+  @@unique([id, businessId])
   @@index([businessId, createdAt])
+}
+
+model CustomerTag {
+  id          String                  @id @default(cuid())
+  businessId  String
+  name        String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  business    Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  assignments CustomerTagAssignment[]
+
+  @@unique([businessId, name])
+  @@unique([id, businessId])
+  @@index([businessId, name])
+}
+
+model CustomerTagAssignment {
+  id         String      @id @default(cuid())
+  businessId String
+  customerId String
+  tagId      String
+  createdAt  DateTime    @default(now())
+  customer   Customer    @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  tag        CustomerTag @relation(fields: [tagId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([customerId, tagId])
+  @@index([businessId, tagId])
+  @@index([businessId, customerId])
+}
+
+model CustomerNote {
+  id          String   @id @default(cuid())
+  businessId  String
+  customerId  String
+  content     String
+  createdById String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customer    Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  createdBy   User?    @relation("CustomerNoteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?    @relation("CustomerNoteUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([businessId, customerId, updatedAt])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model Reward {
+  id               String             @id @default(cuid())
+  name             String
+  description      String?
+  type             RewardType         @default(GIFT)
+  code             String?
+  cost             Int
+  expiresAfterDays Int?
+  isActive         Boolean            @default(true)
+  businessId       String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  business         Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  redemptions      RewardRedemption[]
+  unlocks          RewardUnlock[]
+
+  @@index([businessId, isActive, cost])
+}
+
+// Customer-facing incentives are intentionally independent from rewards and
+// earning promotions. They never change a loyalty balance by themselves.
+model Offer {
+  id          String           @id @default(cuid())
+  businessId  String
+  name        String
+  description String?
+  isActive    Boolean          @default(true)
+  validFrom   DateTime?
+  validUntil  DateTime?
+  eligibility OfferEligibility @default(ALL)
+  segment     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isActive, validFrom, validUntil])
+  @@index([businessId, eligibility])
 }
 
 model LoyaltyTransaction {
-  id           String          @id @default(cuid())
-  type         TransactionType
-  amount       Int
-  balanceAfter Int
-  note         String?
-  customerId   String
-  businessId   String
-  createdById  String?
-  createdAt    DateTime        @default(now())
-  business     Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdBy    User?           @relation("TransactionCreatedBy", fields: [createdById], references: [id])
-  customer     Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  id                   String                @id @default(cuid())
+  type                 TransactionType
+  amount               Int
+  balanceAfter         Int
+  note                 String?
+  sourceLoyaltyMode    LoyaltyMode?
+  saleAmount           Int?
+  idempotencyKey       String?
+  customerId           String
+  businessId           String
+  branchId             String?
+  createdById          String?
+  attributedStaffId    String?
+  createdAt            DateTime              @default(now())
+  business             Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch               Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy            User?                 @relation("TransactionCreatedBy", fields: [createdById], references: [id])
+  attributedStaff      User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId], references: [id], onDelete: SetNull)
+  customer             Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  promotionApplication PromotionApplication?
 
+  @@unique([businessId, idempotencyKey])
   @@index([customerId, createdAt])
   @@index([businessId, createdAt])
+  @@index([businessId, sourceLoyaltyMode, createdAt])
+  @@index([businessId, branchId, createdAt])
   @@index([createdById])
+  @@index([attributedStaffId])
+}
+
+model Branch {
+  id               String                  @id @default(cuid())
+  businessId       String
+  name             String
+  address          String?
+  contactPhone     String?
+  isActive         Boolean                 @default(true)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  business         Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffAssignments BranchStaffAssignment[]
+  transactions     LoyaltyTransaction[]
+  redemptions      RewardRedemption[]
+  activities       BusinessActivity[]
+
+  @@unique([businessId, name])
+  @@unique([id, businessId])
+  @@index([businessId, isActive])
+}
+
+model BranchStaffAssignment {
+  id         String   @id @default(cuid())
+  branchId   String
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  branch     Branch   @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: Cascade)
+  user       User     @relation(fields: [userId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([userId, branchId])
+  @@index([businessId, branchId])
+}
+
+model Promotion {
+  id                       String                 @id @default(cuid())
+  name                     String
+  description              String?
+  isActive                 Boolean                @default(true)
+  loyaltyMode              LoyaltyMode?
+  minimumTransactionAmount Int?
+  bonusAmount              Int
+  bonusMultiplier          Int?
+  startsAt                 DateTime?
+  endsAt                   DateTime?
+  businessId               String
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  applications             PromotionApplication[]
+  business                 Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isActive, startsAt, endsAt])
+}
+
+model PromotionApplication {
+  id            String             @id @default(cuid())
+  baseAmount    Int?
+  bonusAmount   Int
+  promotionId   String
+  businessId    String
+  customerId    String
+  transactionId String             @unique
+  createdAt     DateTime           @default(now())
+  promotion     Promotion          @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  business      Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer      Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  transaction   LoyaltyTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, customerId, createdAt])
+  @@index([promotionId, createdAt])
 }
 
 model RewardRedemption {
-  id          String   @id @default(cuid())
-  rewardName  String
-  cost        Int
-  customerId  String
-  businessId  String
-  createdById String?
-  createdAt   DateTime @default(now())
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  createdBy   User?    @relation("RedemptionCreatedBy", fields: [createdById], references: [id])
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  id                String   @id @default(cuid())
+  rewardName        String
+  cost              Int
+  rewardId          String?
+  customerId        String
+  businessId        String
+  branchId          String?
+  createdById       String?
+  attributedStaffId String?
+  createdAt         DateTime @default(now())
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch            Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  createdBy         User?    @relation("RedemptionCreatedBy", fields: [createdById], references: [id])
+  attributedStaff   User?    @relation("RedemptionAttributedStaff", fields: [attributedStaffId], references: [id], onDelete: SetNull)
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  reward            Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
 
   @@index([customerId, createdAt])
   @@index([businessId, createdAt])
+  @@index([businessId, branchId, createdAt])
   @@index([createdById])
+  @@index([attributedStaffId])
+  @@index([rewardId])
+}
+
+model RewardUnlock {
+  id         String    @id @default(cuid())
+  businessId String
+  customerId String
+  rewardId   String
+  unlockedAt DateTime  @default(now())
+  expiresAt  DateTime
+  redeemedAt DateTime?
+  expiredAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  reward     Reward    @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, customerId, expiresAt])
+  @@index([customerId, rewardId, redeemedAt, expiredAt])
+  @@index([rewardId, expiresAt])
+}
+
+model CustomerReferralCode {
+  id         String   @id @default(cuid())
+  code       String
+  isActive   Boolean  @default(true)
+  businessId String
+  customerId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, customerId])
+  @@unique([businessId, code])
+  @@index([businessId, isActive])
+}
+
+model Referral {
+  id                 String         @id @default(cuid())
+  status             ReferralStatus @default(RECORDED)
+  businessId         String
+  referrerCustomerId String
+  referredCustomerId String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  business           Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  referrer           Customer       @relation("ReferralReferrer", fields: [referrerCustomerId], references: [id], onDelete: Cascade)
+  referred           Customer       @relation("ReferralReferred", fields: [referredCustomerId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, referredCustomerId])
+  @@index([businessId, referrerCustomerId, createdAt])
 }
 
 model BusinessActivity {
@@ -135,14 +392,17 @@ model BusinessActivity {
   type        ActivityType
   description String
   businessId  String
+  branchId    String?
   customerId  String?
   createdById String?
   createdAt   DateTime     @default(now())
   business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch      Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
   createdBy   User?        @relation("ActivityCreatedBy", fields: [createdById], references: [id])
   customer    Customer?    @relation(fields: [customerId], references: [id])
 
   @@index([businessId, createdAt])
+  @@index([businessId, branchId, createdAt])
   @@index([customerId])
   @@index([createdById])
   @@index([type])
@@ -180,7 +440,9 @@ model NotificationItemRead {
 enum UserRole {
   SUPER_ADMIN
   OWNER
+  MANAGER
   STAFF
+  VIEWER
 }
 
 enum AppLanguage {
@@ -194,6 +456,12 @@ enum LoyaltyMode {
   SALES_AMOUNT
 }
 
+enum OfferEligibility {
+  ALL
+  SEGMENT
+  VIP
+}
+
 enum TransactionType {
   EARN
   REDEEM
@@ -205,13 +473,25 @@ enum ActivityType {
   CUSTOMER_UPDATED
   CUSTOMER_DEACTIVATED
   CUSTOMER_REACTIVATED
+  CUSTOMER_TAG_ASSIGNED
+  CUSTOMER_TAG_REMOVED
+  CUSTOMER_NOTE_CREATED
+  CUSTOMER_NOTE_UPDATED
   LOYALTY_EARNED
   REWARD_REDEEMED
+  REWARD_UNLOCKED
+  REWARD_EXPIRED
+  REWARD_REDEMPTION_BLOCKED
+  REFERRAL_RECORDED
   BALANCE_ADJUSTED
   BUSINESS_SETTINGS_UPDATED
   USER_CREATED
   USER_STATUS_CHANGED
   USER_PASSWORD_CHANGED
+}
+
+enum ReferralStatus {
+  RECORDED
 }
 
 enum RewardType {

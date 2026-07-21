@@ -1,5 +1,26 @@
 import { auth } from "@/auth";
+import {
+  formatUtcDateInput,
+  parseUtcDateInput,
+} from "@/lib/analytics/date-range";
+import {
+  calculateAverageDaysBetweenVisits,
+  calculateAverageDaysToFirstReward,
+  calculateRepeatCustomerRate,
+  countDistinctCustomers,
+} from "@/lib/analytics/metrics";
+import {
+  getCustomerFilterSegments,
+  getCustomerSegmentLabel,
+  getCustomerSegmentWhere,
+  type CustomerSegment,
+} from "@/lib/customers/segments";
+import {
+  canExportBusinessData,
+  canPerform,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -11,37 +32,65 @@ type ReportsPageProps = {
   searchParams: Promise<{
     from?: string;
     to?: string;
+    period?: string;
+    segment?: string;
+    loyaltyMode?: string;
   }>;
 };
-
-function formatDateInput(date: Date) {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateInput(value: string, endOfDay = false) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return null;
-  }
-
-  const time = endOfDay ? "23:59:59.999" : "00:00:00.000";
-
-  const date = new Date(`${value}T${time}Z`);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date;
-}
 
 const dateTimeFormatter = new Intl.DateTimeFormat("ar-EG", {
   dateStyle: "medium",
   timeStyle: "short",
 });
+
+const reportPeriods = ["today", "7d", "30d"] as const;
+
+type ReportPeriod = (typeof reportPeriods)[number] | "custom";
+
+function getReportRange(
+  period: ReportPeriod,
+  now: Date
+) {
+  const toInput = formatUtcDateInput(now);
+  const from = new Date(now);
+
+  if (period === "7d") {
+    from.setUTCDate(from.getUTCDate() - 6);
+  } else if (period === "30d") {
+    from.setUTCDate(from.getUTCDate() - 29);
+  }
+
+  const fromInput = formatUtcDateInput(from);
+
+  return {
+    fromInput,
+    toInput,
+    from: parseUtcDateInput(fromInput)!,
+    to: parseUtcDateInput(toInput, true)!,
+  };
+}
+
+function getLoyaltyModeLabel(mode: string) {
+  switch (mode) {
+    case "VISITS":
+      return "الزيارات";
+    case "POINTS":
+      return "النقاط";
+    case "SALES_AMOUNT":
+      return "المبيعات";
+    default:
+      return mode;
+  }
+}
+
+function getCustomerName(customer: {
+  firstName: string;
+  lastName: string | null;
+}) {
+  return [customer.firstName, customer.lastName]
+    .filter(Boolean)
+    .join(" ");
+}
 
 export default async function ReportsPage({
   params,
@@ -69,6 +118,8 @@ export default async function ReportsPage({
       loyaltyMode: true,
       unitName: true,
       rewardName: true,
+      rewardThreshold: true,
+      earnAmount: true,
     },
   });
 
@@ -76,68 +127,168 @@ export default async function ReportsPage({
     notFound();
   }
 
-  const canViewReports =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" && session.user.businessId === business.id);
+  const canViewReports = canPerform(
+    session.user,
+    business.id,
+    "REPORTS_VIEW"
+  );
 
   if (!canViewReports) {
     redirect(`/businesses/${business.slug}`);
   }
 
   const today = new Date();
+  const requestedPeriod = reportPeriods.includes(
+    query.period as (typeof reportPeriods)[number]
+  )
+    ? (query.period as (typeof reportPeriods)[number])
+    : null;
+  const defaultRange = getReportRange("30d", today);
+  const shortcutRange = requestedPeriod
+    ? getReportRange(requestedPeriod, today)
+    : null;
 
-  const defaultToInput = formatDateInput(today);
-
-  const defaultFromDate = new Date(today);
-  defaultFromDate.setUTCDate(defaultFromDate.getUTCDate() - 29);
-
-  const defaultFromInput = formatDateInput(defaultFromDate);
-
-  let fromInput =
-    query.from && parseDateInput(query.from) ? query.from : defaultFromInput;
-
-  let toInput =
-    query.to && parseDateInput(query.to, true) ? query.to : defaultToInput;
-
-  let fromDate = parseDateInput(fromInput) ?? parseDateInput(defaultFromInput)!;
-
-  let toDate =
-    parseDateInput(toInput, true) ?? parseDateInput(defaultToInput, true)!;
+  let period: ReportPeriod = requestedPeriod ?? "custom";
+  let fromInput = shortcutRange?.fromInput ??
+    (query.from && parseUtcDateInput(query.from)
+      ? query.from
+      : defaultRange.fromInput);
+  let toInput = shortcutRange?.toInput ??
+    (query.to && parseUtcDateInput(query.to, true)
+      ? query.to
+      : defaultRange.toInput);
+  let fromDate = shortcutRange?.from ??
+    parseUtcDateInput(fromInput) ??
+    defaultRange.from;
+  let toDate = shortcutRange?.to ??
+    parseUtcDateInput(toInput, true) ??
+    defaultRange.to;
 
   if (fromDate > toDate) {
-    fromInput = defaultFromInput;
-    toInput = defaultToInput;
-
-    fromDate = parseDateInput(defaultFromInput)!;
-
-    toDate = parseDateInput(defaultToInput, true)!;
+    period = "30d";
+    fromInput = defaultRange.fromInput;
+    toInput = defaultRange.toInput;
+    fromDate = defaultRange.from;
+    toDate = defaultRange.to;
   }
 
-  const transactionWhere = {
+  const availableSegments = getCustomerFilterSegments(
+    business.loyaltyMode
+  );
+  const segment = availableSegments.includes(
+    query.segment as CustomerSegment
+  )
+    ? (query.segment as CustomerSegment)
+    : null;
+
+  // A business has exactly one active loyalty programme in the current schema.
+  // Keeping the selected mode in the report URL makes the filter explicit now
+  // and keeps links forward-compatible if businesses later support programmes.
+  const loyaltyMode =
+    query.loyaltyMode === business.loyaltyMode
+      ? business.loyaltyMode
+      : "all";
+
+  const customerWhere: Prisma.CustomerWhereInput = {
+    businessId: business.id,
+    ...(segment
+      ? getCustomerSegmentWhere(
+          segment,
+          business.rewardThreshold,
+          undefined,
+          business.earnAmount
+        )
+      : {}),
+  };
+
+  const transactionWhere: Prisma.LoyaltyTransactionWhereInput = {
     businessId: business.id,
     createdAt: {
       gte: fromDate,
       lte: toDate,
     },
+    ...(segment
+      ? {
+          customer: customerWhere,
+        }
+      : {}),
+  };
+
+  const redemptionWhere: Prisma.RewardRedemptionWhereInput = {
+    businessId: business.id,
+    createdAt: {
+      gte: fromDate,
+      lte: toDate,
+    },
+    ...(segment
+      ? {
+          customer: customerWhere,
+        }
+      : {}),
   };
 
   const [
     newCustomers,
+    totalCustomers,
+    inactiveCustomers,
+    atRiskCustomers,
     earned,
+    allTimeEarned,
+    trackedSales,
+    allTimeTrackedSales,
     redeemed,
+    allTimeRedeemed,
+    recoveredCustomerGroups,
     transactionCount,
     activeCustomerGroups,
+    returningCustomerGroups,
+    visitEvents,
+    allTimeVisitCount,
     currentBalances,
     recentTransactions,
     topCustomers,
+    mostActiveGroups,
+    highestValueEarnedGroups,
+    mostRedeemedGroups,
+    firstRewardGroups,
   ] = await Promise.all([
     prisma.customer.count({
       where: {
-        businessId: business.id,
+        ...customerWhere,
         createdAt: {
           gte: fromDate,
           lte: toDate,
         },
+      },
+    }),
+
+    prisma.customer.count({
+      where: {
+        ...customerWhere,
+      },
+    }),
+
+    prisma.customer.count({
+      where: {
+        AND: [
+          customerWhere,
+          getCustomerSegmentWhere(
+            "INACTIVE",
+            business.rewardThreshold
+          ),
+        ],
+      },
+    }),
+
+    prisma.customer.count({
+      where: {
+        AND: [
+          customerWhere,
+          getCustomerSegmentWhere(
+            "AT_RISK",
+            business.rewardThreshold
+          ),
+        ],
       },
     }),
 
@@ -149,6 +300,76 @@ export default async function ReportsPage({
       _sum: {
         amount: true,
       },
+      _avg: {
+        amount: true,
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+
+    prisma.loyaltyTransaction.aggregate({
+      where: {
+        businessId: business.id,
+        type: "EARN",
+        ...(segment
+          ? {
+              customer: customerWhere,
+            }
+          : {}),
+      },
+      _sum: {
+        amount: true,
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+
+    prisma.loyaltyTransaction.aggregate({
+      where: {
+        ...transactionWhere,
+        type: "EARN",
+        sourceLoyaltyMode: "SALES_AMOUNT",
+        saleAmount: {
+          not: null,
+        },
+      },
+      _sum: {
+        saleAmount: true,
+      },
+      _avg: {
+        saleAmount: true,
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+
+    prisma.loyaltyTransaction.aggregate({
+      where: {
+        businessId: business.id,
+        type: "EARN",
+        sourceLoyaltyMode: "SALES_AMOUNT",
+        saleAmount: {
+          not: null,
+        },
+        ...(segment
+          ? {
+              customer: customerWhere,
+            }
+          : {}),
+      },
+      _sum: {
+        saleAmount: true,
+      },
+    }),
+
+    prisma.rewardRedemption.aggregate({
+      where: redemptionWhere,
+      _sum: {
+        cost: true,
+      },
       _count: {
         _all: true,
       },
@@ -157,16 +378,34 @@ export default async function ReportsPage({
     prisma.rewardRedemption.aggregate({
       where: {
         businessId: business.id,
+        ...(segment
+          ? {
+              customer: customerWhere,
+            }
+          : {}),
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+
+    prisma.businessActivity.groupBy({
+      by: ["customerId"],
+      where: {
+        businessId: business.id,
+        type: "CUSTOMER_REACTIVATED",
+        customerId: {
+          not: null,
+        },
         createdAt: {
           gte: fromDate,
           lte: toDate,
         },
-      },
-      _sum: {
-        cost: true,
-      },
-      _count: {
-        _all: true,
+        ...(segment
+          ? {
+              customer: customerWhere,
+            }
+          : {}),
       },
     }),
 
@@ -179,9 +418,45 @@ export default async function ReportsPage({
       where: transactionWhere,
     }),
 
-    prisma.customer.aggregate({
+    prisma.loyaltyTransaction.groupBy({
+      by: ["customerId"],
+      where: {
+        ...transactionWhere,
+        type: "EARN",
+      },
+      _count: {
+        _all: true,
+      },
+    }),
+
+    prisma.loyaltyTransaction.findMany({
+      where: {
+        ...transactionWhere,
+        type: "EARN",
+        sourceLoyaltyMode: "VISITS",
+      },
+      select: {
+        customerId: true,
+        createdAt: true,
+      },
+    }),
+
+    prisma.loyaltyTransaction.count({
       where: {
         businessId: business.id,
+        type: "EARN",
+        sourceLoyaltyMode: "VISITS",
+        ...(segment
+          ? {
+              customer: customerWhere,
+            }
+          : {}),
+      },
+    }),
+
+    prisma.customer.aggregate({
+      where: {
+        ...customerWhere,
         isActive: true,
       },
       _sum: {
@@ -215,7 +490,7 @@ export default async function ReportsPage({
 
     prisma.customer.findMany({
       where: {
-        businessId: business.id,
+        ...customerWhere,
       },
       orderBy: [
         {
@@ -236,19 +511,214 @@ export default async function ReportsPage({
         lifetimeRedeemed: true,
       },
     }),
+
+    prisma.loyaltyTransaction.groupBy({
+      by: ["customerId"],
+      where: transactionWhere,
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        _count: {
+          customerId: "desc",
+        },
+      },
+      take: 5,
+    }),
+
+    prisma.loyaltyTransaction.groupBy({
+      by: ["customerId"],
+      where: {
+        ...transactionWhere,
+        type: "EARN",
+      },
+      _sum: {
+        amount: true,
+      },
+      orderBy: {
+        _sum: {
+          amount: "desc",
+        },
+      },
+      take: 5,
+    }),
+
+    prisma.rewardRedemption.groupBy({
+      by: ["customerId"],
+      where: redemptionWhere,
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        _count: {
+          customerId: "desc",
+        },
+      },
+      take: 5,
+    }),
+
+    prisma.rewardRedemption.groupBy({
+      by: ["customerId"],
+      where: {
+        businessId: business.id,
+        ...(segment
+          ? {
+              customer: customerWhere,
+            }
+          : {}),
+      },
+      _min: {
+        createdAt: true,
+      },
+    }),
   ]);
 
   const earnedAmount = earned._sum.amount ?? 0;
+
+  const lifetimeEarnedAmount = allTimeEarned._sum.amount ?? 0;
+
+  const trackedSalesAmount = trackedSales._sum.saleAmount ?? 0;
+
+  const lifetimeTrackedSalesAmount =
+    allTimeTrackedSales._sum.saleAmount ?? 0;
+
+  const recoveredCustomers = countDistinctCustomers(
+    recoveredCustomerGroups
+  );
 
   const redeemedCost = redeemed._sum.cost ?? 0;
 
   const currentBalance = currentBalances._sum.balance ?? 0;
 
-  const canExportData =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id &&
-      business.allowOwnerDataExport);
+  const firstRewardCustomers =
+    firstRewardGroups.length > 0
+      ? await prisma.customer.findMany({
+          where: {
+            id: {
+              in: firstRewardGroups.map(
+                (reward) => reward.customerId
+              ),
+            },
+            businessId: business.id,
+          },
+          select: {
+            id: true,
+            createdAt: true,
+          },
+        })
+      : [];
+
+  const averageDaysToFirstReward =
+    calculateAverageDaysToFirstReward(
+      firstRewardCustomers,
+      firstRewardGroups.map((reward) => ({
+        customerId: reward.customerId,
+        firstRewardAt: reward._min.createdAt,
+      }))
+    );
+
+  const rankingCustomerIds = Array.from(
+    new Set(
+      [
+        ...mostActiveGroups,
+        ...highestValueEarnedGroups,
+        ...mostRedeemedGroups,
+      ].map((group) => group.customerId)
+    )
+  );
+
+  const rankingCustomers =
+    rankingCustomerIds.length > 0
+      ? await prisma.customer.findMany({
+          where: {
+            businessId: business.id,
+            id: {
+              in: rankingCustomerIds,
+            },
+          },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            customerCode: true,
+          },
+        })
+      : [];
+
+  const rankingCustomersById = new Map(
+    rankingCustomers.map((customer) => [customer.id, customer])
+  );
+
+  const mostActiveCustomers = mostActiveGroups.flatMap((group) => {
+    const customer = rankingCustomersById.get(group.customerId);
+
+    return customer
+      ? [{ customer, value: group._count._all }]
+      : [];
+  });
+
+  const highestValueEarnedCustomers =
+    highestValueEarnedGroups.flatMap((group) => {
+      const customer = rankingCustomersById.get(group.customerId);
+
+      return customer
+        ? [{ customer, value: group._sum.amount ?? 0 }]
+        : [];
+    });
+
+  const mostRedeemedCustomers = mostRedeemedGroups.flatMap((group) => {
+    const customer = rankingCustomersById.get(group.customerId);
+
+    return customer
+      ? [{ customer, value: group._count._all }]
+      : [];
+  });
+
+  const returningCustomers =
+    returningCustomerGroups.filter(
+      (customer) => customer._count._all >= 2
+    ).length;
+
+  const repeatCustomerRate = calculateRepeatCustomerRate(
+    returningCustomers,
+    returningCustomerGroups.length
+  );
+
+  const averageDaysBetweenVisits =
+    business.loyaltyMode === "VISITS"
+      ? calculateAverageDaysBetweenVisits(visitEvents)
+      : null;
+
+  const averageLoyaltyActivity =
+    activeCustomerGroups.length > 0
+      ? earned._count._all /
+        activeCustomerGroups.length
+      : 0;
+
+  const redemptionRate =
+    earned._count._all > 0
+      ? (redeemed._count._all /
+          earned._count._all) *
+        100
+      : 0;
+
+  const averagePurchaseAmount =
+    trackedSales._avg.saleAmount ?? 0;
+
+  const canExportData = canExportBusinessData(
+    session.user,
+    business.id,
+    business.allowOwnerDataExport
+  );
+
+  const activeReportFilters = new URLSearchParams({
+    ...(segment ? { segment } : {}),
+    ...(loyaltyMode !== "all" ? { loyaltyMode } : {}),
+  }).toString();
+
+  const reportFilterSuffix = activeReportFilters
+    ? `&${activeReportFilters}`
+    : "";
 
   return (
     <main
@@ -286,7 +756,7 @@ export default async function ReportsPage({
           className="mt-6 grid gap-3 sm:grid-cols-2"
         >
           <Link
-            href={`/businesses/${business.slug}/reports/staff?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}`}
+            href={`/businesses/${business.slug}/reports/staff?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}${reportFilterSuffix}`}
             className="rounded-2xl bg-violet-600 p-5 text-center font-black text-white shadow-sm transition hover:bg-violet-700"
           >
             👥 تقرير أداء الموظفين
@@ -294,7 +764,7 @@ export default async function ReportsPage({
 
           {canExportData && (
             <a
-            href={`/businesses/${business.slug}/reports/export?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}`}
+            href={`/businesses/${business.slug}/reports/export?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}${reportFilterSuffix}`}
             className="rounded-2xl bg-emerald-600 p-5 text-center font-black text-white shadow-sm transition hover:bg-emerald-700"
           >
             📥 تصدير حركات الفترة CSV
@@ -304,8 +774,9 @@ export default async function ReportsPage({
 
         <form
           method="get"
-          className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-8 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6"
+          className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-8 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] xl:items-end sm:p-6"
         >
+          <input name="period" type="hidden" value="custom" />
           <div>
             <label
               htmlFor="from"
@@ -321,6 +792,53 @@ export default async function ReportsPage({
               defaultValue={fromInput}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="segment"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              شريحة العملاء
+            </label>
+
+            <select
+              id="segment"
+              name="segment"
+              defaultValue={segment ?? "all"}
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+            >
+              <option value="all">كل الشرائح</option>
+              {availableSegments.map((customerSegment) => (
+                <option
+                  key={customerSegment}
+                  value={customerSegment}
+                >
+                  {getCustomerSegmentLabel(customerSegment)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="loyaltyMode"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              برنامج الولاء
+            </label>
+
+            <select
+              id="loyaltyMode"
+              name="loyaltyMode"
+              defaultValue={loyaltyMode}
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+            >
+              <option value="all">كل البرامج المتاحة</option>
+              <option value={business.loyaltyMode}>
+                {getLoyaltyModeLabel(business.loyaltyMode)}
+              </option>
+            </select>
           </div>
 
           <div>
@@ -347,15 +865,42 @@ export default async function ReportsPage({
             تطبيق الفلتر
           </button>
 
-          <Link
-            href={`/businesses/${business.slug}/reports`}
-            className="w-full rounded-xl border border-slate-300 bg-white px-6 py-3 text-center font-semibold text-slate-700 transition hover:border-violet-400 sm:w-auto"
-          >
-            آخر 30 يومًا
-          </Link>
+          <div className="flex flex-wrap gap-2 xl:col-span-2">
+            {[
+              ["today", "اليوم"],
+              ["7d", "آخر 7 أيام"],
+              ["30d", "آخر 30 يومًا"],
+            ].map(([shortcut, label]) => (
+              <Link
+                key={shortcut}
+                href={`/businesses/${business.slug}/reports?period=${shortcut}${reportFilterSuffix}`}
+                className={`rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
+                  period === shortcut
+                    ? "border-violet-600 bg-violet-600 text-white"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-violet-400"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
         </form>
 
         <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">إجمالي العملاء</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {totalCustomers}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              {segment
+                ? `ضمن شريحة ${getCustomerSegmentLabel(segment)}`
+                : "كل العملاء المسجلين"}
+            </p>
+          </article>
+
           <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-slate-500">العملاء الجدد</p>
 
@@ -377,6 +922,30 @@ export default async function ReportsPage({
 
             <p className="mt-2 text-xs text-slate-400">
               عملاء لديهم حركات ولاء
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء غير النشطين</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {inactiveCustomers}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              حسب قاعدة عدم النشاط الحالية
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">عملاء معرّضون للتوقف</p>
+
+            <p className="mt-3 text-4xl font-bold text-rose-600">
+              {atRiskCustomers}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              توقف نشاطهم مؤخرًا ويحتاجون متابعة
             </p>
           </article>
 
@@ -405,6 +974,90 @@ export default async function ReportsPage({
           </article>
 
           <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">إجمالي الولاء المكتسب</p>
+
+            <p className="mt-3 text-4xl font-bold text-emerald-700">
+              {lifetimeEarnedAmount}
+            </p>
+
+            <p dir="auto" className="mt-2 text-xs text-slate-400">
+              {allTimeEarned._count._all} عملية إضافة منذ بداية البرنامج
+            </p>
+          </article>
+
+          {business.loyaltyMode === "SALES_AMOUNT" && (
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">إجمالي الإنفاق المسجل</p>
+
+              <p className="mt-3 text-4xl font-bold text-emerald-700">
+                {lifetimeTrackedSalesAmount}
+              </p>
+
+              <p className="mt-2 text-xs text-slate-400">
+                محسوب فقط من عمليات البيع المسجلة في LoyalFlow
+              </p>
+            </article>
+          )}
+
+          {business.loyaltyMode === "VISITS" && (
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">إجمالي الزيارات</p>
+
+              <p className="mt-3 text-4xl font-bold text-slate-950">
+                {allTimeVisitCount}
+              </p>
+
+              <p className="mt-2 text-xs text-slate-400">
+                كل عمليات الإضافة المسجلة كزيارة
+              </p>
+            </article>
+          )}
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">متوسط الوقت لأول مكافأة</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {averageDaysToFirstReward === null
+                ? "—"
+                : `${averageDaysToFirstReward.toFixed(1)} يوم`}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              من إنشاء العميل حتى أول استبدال
+            </p>
+          </article>
+
+          {business.loyaltyMode === "SALES_AMOUNT" && (
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">متوسط قيمة الشراء</p>
+
+              <p className="mt-3 text-4xl font-bold text-slate-950">
+                {averagePurchaseAmount.toFixed(1)}
+              </p>
+
+              <p className="mt-2 text-xs text-slate-400">
+                متوسط عمليات الشراء المؤهلة خلال الفترة
+              </p>
+            </article>
+          )}
+
+          {business.loyaltyMode === "VISITS" && (
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">متوسط الأيام بين الزيارات</p>
+
+              <p className="mt-3 text-4xl font-bold text-slate-950">
+                {averageDaysBetweenVisits === null
+                  ? "—"
+                  : `${averageDaysBetweenVisits.toFixed(1)} يوم`}
+              </p>
+
+              <p className="mt-2 text-xs text-slate-400">
+                بين الزيارات المسجلة خلال الفترة المحددة
+              </p>
+            </article>
+          )}
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-slate-500">المكافآت المستبدلة</p>
 
             <p className="mt-3 text-4xl font-bold text-amber-600">
@@ -412,7 +1065,7 @@ export default async function ReportsPage({
             </p>
 
             <p className="mt-2 text-xs text-slate-400">
-              إجمالي التكلفة: {redeemedCost}
+              إجمالي التكلفة خلال الفترة: {redeemedCost} — الإجمالي منذ البداية: {allTimeRedeemed._count._all}
             </p>
           </article>
 
@@ -427,6 +1080,188 @@ export default async function ReportsPage({
               إجمالي {business.unitName} المتاحة
             </p>
           </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء العائدون</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {returningCustomers}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              عميل لديه عمليتا إضافة أو أكثر خلال الفترة
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">معدل تكرار العملاء</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {repeatCustomerRate.toFixed(1)}%
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              العملاء ذوو عمليتي إضافة أو أكثر من العملاء النشطين بالولاء
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء المستعادون</p>
+
+            <p className="mt-3 text-4xl font-bold text-emerald-600">
+              {recoveredCustomers}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              حسابات أعيد تفعيلها خلال الفترة
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">متوسط نشاط الولاء</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {averageLoyaltyActivity.toFixed(1)}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              عمليات إضافة لكل عميل نشط
+            </p>
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">معدل استبدال المكافآت</p>
+
+            <p className="mt-3 text-4xl font-bold text-slate-950">
+              {redemptionRate.toFixed(1)}%
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              نسبة الاستبدالات إلى عمليات الإضافة
+            </p>
+          </article>
+        </section>
+
+        <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-sm font-black text-emerald-300">أثر برنامج الولاء</p>
+              <h2 className="mt-1 text-2xl font-black">مؤشرات تشغيلية موثقة</h2>
+            </div>
+
+            <p className="max-w-xl text-sm leading-6 text-slate-300">
+              تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {[
+              {
+                label: "عملاء عائدون",
+                value: returningCustomers,
+                detail: "عمليتا إضافة أو أكثر خلال الفترة",
+              },
+              {
+                label: "عملاء مستعادون",
+                value: recoveredCustomers,
+                detail: "حسابات أعيد تفعيلها خلال الفترة",
+              },
+              {
+                label: "حركات ولاء مسجلة",
+                value: transactionCount,
+                detail: "إضافة، استبدال، أو تعديل ضمن الفترة",
+              },
+              {
+                label: "مكافآت مستبدلة",
+                value: redeemed._count._all,
+                detail: "استبدالات مسجلة خلال الفترة",
+              },
+              {
+                label: "معدل تكرار العملاء",
+                value: `${repeatCustomerRate.toFixed(1)}%`,
+                detail: "من العملاء ذوي نشاط الولاء",
+              },
+              ...(business.loyaltyMode === "SALES_AMOUNT"
+                ? [
+                    {
+                      label: "مبيعات ولاء مسجلة",
+                      value: trackedSalesAmount,
+                      detail: "مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا",
+                    },
+                  ]
+                : []),
+            ].map((metric) => (
+              <article key={metric.label} className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm text-slate-300">{metric.label}</p>
+                <p className="mt-2 text-3xl font-black text-white">{metric.value}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-300">{metric.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8 grid gap-5 lg:grid-cols-3">
+          {[
+            {
+              title: "الأكثر نشاطًا",
+              description: "حسب كل حركات الولاء خلال الفترة.",
+              items: mostActiveCustomers,
+              suffix: "حركة",
+            },
+            {
+              title: "أعلى قيمة مكتسبة",
+              description: "حسب الرصيد المكتسب خلال الفترة.",
+              items: highestValueEarnedCustomers,
+              suffix: business.unitName,
+            },
+            {
+              title: "الأكثر استبدالًا",
+              description: "حسب المكافآت المستبدلة خلال الفترة.",
+              items: mostRedeemedCustomers,
+              suffix: "مكافأة",
+            },
+          ].map((ranking) => (
+            <article
+              key={ranking.title}
+              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <h2 className="text-lg font-bold text-slate-950">
+                {ranking.title}
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                {ranking.description}
+              </p>
+
+              <div className="mt-5 space-y-3">
+                {ranking.items.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    لا توجد بيانات خلال هذه الفترة.
+                  </p>
+                ) : (
+                  ranking.items.map(({ customer, value }, index) => (
+                    <Link
+                      key={customer.id}
+                      href={`/businesses/${business.slug}/customers/${customer.id}`}
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 transition hover:border-violet-300 hover:bg-violet-50"
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-bold text-white">
+                        {index + 1}
+                      </span>
+
+                      <span className="min-w-0 flex-1 truncate font-semibold text-slate-950">
+                        {getCustomerName(customer)}
+                      </span>
+
+                      <span className="text-sm font-bold text-violet-700">
+                        {value} {ranking.suffix}
+                      </span>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </article>
+          ))}
         </section>
 
         <section className="mt-8 grid gap-8 xl:grid-cols-[1fr_360px]">

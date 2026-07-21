@@ -3,6 +3,11 @@
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
+import {
+  canPerform,
+  isBusinessOwner as isBusinessOwnerRole,
+  isSuperAdmin as isSuperAdminRole,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -33,7 +38,9 @@ const userSchema = z.object({
 
   role: z.enum([
     "OWNER",
+    "MANAGER",
     "STAFF",
+    "VIEWER",
   ]),
 });
 
@@ -84,27 +91,24 @@ async function getManagementContext(
     redirect("/businesses");
   }
 
-  const isSuperAdmin =
-    session.user.role ===
-    "SUPER_ADMIN";
+  const hasSuperAdminRole =
+    isSuperAdminRole(session.user);
 
-  const isBusinessOwner =
-    session.user.role === "OWNER" &&
-    session.user.businessId ===
-      business.id;
+  const hasBusinessOwnerRole =
+    isBusinessOwnerRole(
+      session.user,
+      business.id
+    );
 
-  if (
-    !isSuperAdmin &&
-    !isBusinessOwner
-  ) {
+  if (!canPerform(session.user, business.id, "STAFF_MANAGE")) {
     redirect("/dashboard");
   }
 
   return {
     session,
     business,
-    isSuperAdmin,
-    isBusinessOwner,
+    isSuperAdmin: hasSuperAdminRole,
+    isBusinessOwner: hasBusinessOwnerRole,
   };
 }
 
@@ -175,7 +179,7 @@ export async function createBusinessUserAction(
 
   if (
     isBusinessOwner &&
-    parsed.data.role !== "STAFF"
+    parsed.data.role === "OWNER"
   ) {
     redirect(
       `/businesses/${slug}/users?error=role`
@@ -234,7 +238,11 @@ export async function createBusinessUserAction(
               `تم إنشاء حساب ${
                 parsed.data.role === "OWNER"
                   ? "مالك"
-                  : "موظف"
+                  : parsed.data.role === "MANAGER"
+                    ? "مدير"
+                    : parsed.data.role === "VIEWER"
+                      ? "مشاهد"
+                      : "موظف"
               } للبريد ${email}`,
             businessId:
               business.id,
@@ -287,7 +295,7 @@ export async function setBusinessUserStatusAction(
 
   if (
     !isSuperAdmin &&
-    targetUser.role !== "STAFF"
+    targetUser.role === "OWNER"
   ) {
     redirect(
       `/businesses/${slug}/users?error=permission`
@@ -354,7 +362,7 @@ export async function resetBusinessUserPasswordAction(
   }
 
   const ownerCanManageTarget =
-    targetUser.role === "STAFF" ||
+    targetUser.role !== "OWNER" ||
     targetUser.id ===
       session.user.id;
 

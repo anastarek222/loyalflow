@@ -1,10 +1,13 @@
 import { auth } from "@/auth";
 import BusinessSettingsForm from "@/components/business-settings-form";
 import CardBusinessDetailsForm from "@/components/card-business-details-form";
+import { getRequestBaseUrl } from "@/lib/app-url";
+import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import * as QRCode from "qrcode";
 
 import {
   syncGoogleSheetAction,
@@ -50,32 +53,27 @@ export default async function BusinessSettingsPage({
     notFound();
   }
 
-  const canManage =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id);
+  const canManage = canManageBusiness(session.user, business.id);
 
   if (!canManage) {
     redirect("/dashboard");
   }
 
-  const updateSettings =
-    updateBusinessSettingsAction.bind(
-      null,
-      business.slug
-    );
+  const updateSettings = updateBusinessSettingsAction.bind(null, business.slug);
 
-  const syncGoogleSheet =
-    syncGoogleSheetAction.bind(
-      null,
-      business.slug
-    );
+  const syncGoogleSheet = syncGoogleSheetAction.bind(null, business.slug);
 
-  const updateCardDetails =
-    updateBusinessCardDetailsAction.bind(
-      null,
-      business.slug
-    );
+  const updateCardDetails = updateBusinessCardDetailsAction.bind(
+    null,
+    business.slug,
+  );
+
+  const joinUrl = `${await getRequestBaseUrl()}/join/${business.slug}`;
+  const joinQrCode = await QRCode.toDataURL(joinUrl, {
+    width: 360,
+    margin: 2,
+    errorCorrectionLevel: "M",
+  });
 
   return (
     <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
@@ -88,9 +86,7 @@ export default async function BusinessSettingsPage({
         </Link>
 
         <header className="mb-8 mt-4">
-          <h1 className="text-3xl font-bold text-slate-950">
-            إعدادات النشاط
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-950">إعدادات النشاط</h1>
 
           <p className="mt-1 text-slate-500">
             تخصيص برنامج الولاء والكارت الرقمي.
@@ -108,6 +104,81 @@ export default async function BusinessSettingsPage({
             تعذرت مزامنة Google Sheets. حاول مرة أخرى.
           </div>
         )}
+
+        <section className="mb-8 rounded-3xl border border-violet-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-violet-700">
+                التسجيل الذاتي
+              </p>
+
+              <h2 className="mt-1 text-xl font-black text-slate-950">
+                QR لانضمام العملاء
+              </h2>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                اطبع هذا الرمز أو شارك الرابط حتى يسجل العملاء بأنفسهم ويستلموا
+                كارتهم الرقمي.
+              </p>
+
+              <a
+                href={joinUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-block break-all text-sm font-bold text-violet-700 underline underline-offset-4"
+              >
+                {joinUrl}
+              </a>
+            </div>
+
+            {/* QR data URLs are generated on the server and cannot use next/image. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={joinQrCode}
+              alt={`QR للتسجيل الذاتي في ${business.name}`}
+              className="h-48 w-48 rounded-2xl border border-slate-200 bg-white p-2"
+            />
+          </div>
+        </section>
+
+        <section className="mb-8 flex flex-col gap-4 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-amber-700">كتالوج المكافآت</p>
+            <h2 className="mt-1 text-xl font-black text-slate-950">
+              مكافآت متعددة قابلة للتفعيل
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              أضف مكافآت إضافية وحدد ما يظهر للموظفين عند استبدال رصيد العميل.
+            </p>
+          </div>
+
+          <Link
+            href={`/businesses/${business.slug}/rewards`}
+            className="shrink-0 rounded-xl bg-amber-500 px-5 py-3 text-center font-black text-white transition hover:bg-amber-600"
+          >
+            إدارة المكافآت
+          </Link>
+        </section>
+
+        <section className="mb-8 flex flex-col gap-4 rounded-3xl border border-violet-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-violet-700">انطلاقة أسرع</p>
+            <h2 className="mt-1 text-xl font-black text-slate-950">
+              قوالب تشغيل النشاط
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+              عاين إعدادات مناسبة لنشاطك ثم طبّقها صراحةً. القالب لا ينشئ عروضًا
+              أو Promotions أو رسائل تلقائية.
+            </p>
+          </div>
+
+          <Link
+            href={`/businesses/${business.slug}/playbooks`}
+            className="shrink-0 rounded-xl bg-violet-600 px-5 py-3 text-center font-black text-white transition hover:bg-violet-700"
+          >
+            استعرض القوالب
+          </Link>
+        </section>
 
         <section className="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -143,10 +214,7 @@ export default async function BusinessSettingsPage({
         )}
 
         <CardBusinessDetailsForm
-          contactPhone={
-            business.contactPhone ??
-            "01033196610"
-          }
+          contactPhone={business.contactPhone ?? "01033196610"}
           address={
             business.address ??
             "١ شارع دكتور لاشين، المريوطية الرئيسي، فيصل، الجيزة"
@@ -162,8 +230,7 @@ export default async function BusinessSettingsPage({
           action={updateCardDetails}
         />
 
-        {session.user.role ===
-        "SUPER_ADMIN" ? (
+        {session.user.role === "SUPER_ADMIN" ? (
           <section className="mb-6 rounded-3xl border border-violet-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
               <div>
@@ -184,7 +251,7 @@ export default async function BusinessSettingsPage({
               <form
                 action={updateBusinessExportPermissionAction.bind(
                   null,
-                  business.slug
+                  business.slug,
                 )}
                 className="flex shrink-0 flex-col gap-3 rounded-2xl bg-slate-50 p-4 sm:min-w-72"
               >
@@ -196,9 +263,7 @@ export default async function BusinessSettingsPage({
                   <input
                     type="checkbox"
                     name="allowOwnerDataExport"
-                    defaultChecked={
-                      business.allowOwnerDataExport
-                    }
+                    defaultChecked={business.allowOwnerDataExport}
                     className="h-5 w-5 accent-violet-600"
                   />
                 </label>
@@ -214,9 +279,7 @@ export default async function BusinessSettingsPage({
           </section>
         ) : (
           <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              تصدير البيانات
-            </p>
+            <p className="text-sm font-bold text-slate-500">تصدير البيانات</p>
 
             <p className="mt-2 font-black text-slate-950">
               {business.allowOwnerDataExport
@@ -234,10 +297,15 @@ export default async function BusinessSettingsPage({
             coverImageUrl: business.coverImageUrl,
             primaryColor: business.primaryColor,
             secondaryColor: business.secondaryColor,
+            currency: business.currency,
+            timezone: business.timezone,
             loyaltyProgramName: business.loyaltyProgramName,
             pointsName: business.pointsName,
             membershipName: business.membershipName,
             welcomeMessage: business.welcomeMessage,
+            cardDefaultLanguage: business.cardDefaultLanguage,
+            staffAttributionEnabled: business.staffAttributionEnabled,
+            staffAttributionRequired: business.staffAttributionRequired,
             loyaltyMode: business.loyaltyMode,
             unitName: business.unitName,
             rewardName: business.rewardName,

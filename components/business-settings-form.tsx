@@ -6,11 +6,11 @@ import { useState } from "react";
 
 type LoyaltyMode = "VISITS" | "POINTS" | "SALES_AMOUNT";
 
-type RewardType =
-  | "GIFT"
-  | "PROMO_CODE"
-  | "DISCOUNT"
-  | "CUSTOM";
+type RewardType = "GIFT" | "PROMO_CODE" | "DISCOUNT" | "CUSTOM";
+
+type CardLanguage = "AR" | "EN";
+
+type StaffAttributionMode = "OFF" | "OPTIONAL" | "REQUIRED";
 
 type BusinessSettingsFormProps = {
   business: {
@@ -20,10 +20,15 @@ type BusinessSettingsFormProps = {
     coverImageUrl: string | null;
     primaryColor: string;
     secondaryColor: string;
+    currency: string | null;
+    timezone: string | null;
     loyaltyProgramName: string | null;
     pointsName: string | null;
     membershipName: string | null;
     welcomeMessage: string | null;
+    cardDefaultLanguage: CardLanguage;
+    staffAttributionEnabled: boolean;
+    staffAttributionRequired: boolean;
     loyaltyMode: LoyaltyMode;
     unitName: string;
     rewardName: string;
@@ -40,9 +45,7 @@ type BusinessSettingsFormProps = {
   saved: boolean;
   error: boolean;
 
-  action: (
-    formData: FormData
-  ) => void | Promise<void>;
+  action: (formData: FormData) => void | Promise<void>;
 };
 
 export default function BusinessSettingsForm({
@@ -53,117 +56,96 @@ export default function BusinessSettingsForm({
 }: BusinessSettingsFormProps) {
   const [name, setName] = useState(business.name);
   const [logoUrl, setLogoUrl] = useState(
-    business.logoUrl?.startsWith("http")
-      ? business.logoUrl
-      : ""
+    business.logoUrl?.startsWith("http") ? business.logoUrl : "",
   );
 
-  const [logoPreview, setLogoPreview] = useState(
-    business.logoUrl ?? ""
-  );
+  const [logoPreview, setLogoPreview] = useState(business.logoUrl ?? "");
 
   const [removeLogo, setRemoveLogo] = useState(false);
 
-  const [primaryColor, setPrimaryColor] = useState(
-    business.primaryColor
-  );
+  const [primaryColor, setPrimaryColor] = useState(business.primaryColor);
 
-  const [secondaryColor, setSecondaryColor] = useState(
-    business.secondaryColor
-  );
+  const [secondaryColor, setSecondaryColor] = useState(business.secondaryColor);
+
+  const [currency, setCurrency] = useState(business.currency ?? "");
+
+  const [timezone, setTimezone] = useState(business.timezone ?? "");
 
   const [coverImageUrl, setCoverImageUrl] = useState(
-    business.coverImageUrl ?? ""
+    business.coverImageUrl ?? "",
   );
 
-  const [loyaltyProgramName, setLoyaltyProgramName] =
-    useState(business.loyaltyProgramName ?? "");
-
-  const [pointsName, setPointsName] = useState(
-    business.pointsName ?? ""
+  const [loyaltyProgramName, setLoyaltyProgramName] = useState(
+    business.loyaltyProgramName ?? "",
   );
+
+  const [pointsName, setPointsName] = useState(business.pointsName ?? "");
 
   const [membershipName, setMembershipName] = useState(
-    business.membershipName ?? ""
+    business.membershipName ?? "",
   );
 
   const [welcomeMessage, setWelcomeMessage] = useState(
-    business.welcomeMessage ?? ""
+    business.welcomeMessage ?? "",
   );
 
-  const [loyaltyMode, setLoyaltyMode] =
-    useState<LoyaltyMode>(business.loyaltyMode);
-
-  const [unitName, setUnitName] = useState(
-    business.unitName
+  const [cardDefaultLanguage, setCardDefaultLanguage] = useState<CardLanguage>(
+    business.cardDefaultLanguage,
   );
 
-  const [rewardName, setRewardName] = useState(
-    business.rewardName
-  );
-
-  const [rewardType, setRewardType] =
-    useState<RewardType>(
-      business.rewardType
+  const [staffAttributionMode, setStaffAttributionMode] =
+    useState<StaffAttributionMode>(
+      !business.staffAttributionEnabled
+        ? "OFF"
+        : business.staffAttributionRequired
+          ? "REQUIRED"
+          : "OPTIONAL",
     );
 
-  const [rewardCode, setRewardCode] =
-    useState(
-      business.rewardCode ?? ""
-    );
-
-  const [
-    rewardDescription,
-    setRewardDescription,
-  ] = useState(
-    business.rewardDescription ?? ""
+  const [loyaltyMode, setLoyaltyMode] = useState<LoyaltyMode>(
+    business.loyaltyMode,
   );
 
-  const [rewardThreshold, setRewardThreshold] =
-    useState(String(business.rewardThreshold));
+  const [unitName, setUnitName] = useState(business.unitName);
 
-  const [earnAmount, setEarnAmount] = useState(
-    String(business.earnAmount)
+  const [rewardName, setRewardName] = useState(business.rewardName);
+
+  const [rewardType, setRewardType] = useState<RewardType>(business.rewardType);
+
+  const [rewardCode, setRewardCode] = useState(business.rewardCode ?? "");
+
+  const [rewardDescription, setRewardDescription] = useState(
+    business.rewardDescription ?? "",
   );
 
-  const [
-    whatsappWelcomeMessage,
-    setWhatsappWelcomeMessage,
-  ] = useState(
-    business.whatsappWelcomeMessage
+  const [rewardThreshold, setRewardThreshold] = useState(
+    String(business.rewardThreshold),
   );
 
-  const [
-    whatsappBalanceMessage,
-    setWhatsappBalanceMessage,
-  ] = useState(
-    business.whatsappBalanceMessage
+  const [earnAmount, setEarnAmount] = useState(String(business.earnAmount));
+
+  const [whatsappWelcomeMessage, setWhatsappWelcomeMessage] = useState(
+    business.whatsappWelcomeMessage,
   );
 
-  const [
-    whatsappRewardMessage,
-    setWhatsappRewardMessage,
-  ] = useState(
-    business.whatsappRewardMessage
+  const [whatsappBalanceMessage, setWhatsappBalanceMessage] = useState(
+    business.whatsappBalanceMessage,
   );
 
-  const threshold = Math.max(
-    1,
-    Number(rewardThreshold) || 1
+  const [whatsappRewardMessage, setWhatsappRewardMessage] = useState(
+    business.whatsappRewardMessage,
   );
 
-  const previewBalance = Math.max(
-    1,
-    Math.floor(threshold * 0.6)
-  );
+  const threshold = Math.max(1, Number(rewardThreshold) || 1);
+
+  const previewBalance = Math.max(1, Math.floor(threshold * 0.6));
 
   const progress = Math.min(
     100,
-    Math.floor((previewBalance / threshold) * 100)
+    Math.floor((previewBalance / threshold) * 100),
   );
 
-  const businessInitial =
-    name.trim().charAt(0).toUpperCase() || "L";
+  const businessInitial = name.trim().charAt(0).toUpperCase() || "L";
 
   return (
     <>
@@ -184,9 +166,7 @@ export default function BusinessSettingsForm({
           action={action}
           className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
         >
-          <h2 className="text-xl font-bold text-slate-950">
-            بيانات النشاط
-          </h2>
+          <h2 className="text-xl font-bold text-slate-950">بيانات النشاط</h2>
 
           <p className="mt-1 text-sm text-slate-500">
             تعديل هوية النشاط وقواعد برنامج الولاء.
@@ -201,9 +181,7 @@ export default function BusinessSettingsForm({
               <input
                 name="name"
                 value={name}
-                onChange={(event) =>
-                  setName(event.target.value)
-                }
+                onChange={(event) => setName(event.target.value)}
                 required
                 minLength={2}
                 maxLength={80}
@@ -211,13 +189,112 @@ export default function BusinessSettingsForm({
               />
             </div>
 
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5">
-              <h3 className="font-black text-violet-950">
-                هوية برنامج الولاء
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  العملة
+                </label>
+
+                <select
+                  name="currency"
+                  value={currency}
+                  onChange={(event) => setCurrency(event.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+                >
+                  <option value="">بدون تحديد</option>
+                  <option value="AED">AED</option>
+                  <option value="EGP">EGP</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="KWD">KWD</option>
+                  <option value="QAR">QAR</option>
+                  <option value="SAR">SAR</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  المنطقة الزمنية
+                </label>
+
+                <input
+                  name="timezone"
+                  value={timezone}
+                  onChange={(event) => setTimezone(event.target.value)}
+                  maxLength={100}
+                  placeholder="Africa/Cairo"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+              </div>
+            </div>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <h3 className="font-black text-slate-950">
+                تسجيل الموظف المسؤول
               </h3>
 
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                حدد هل يجب تسجيل الموظف الذي نفذ البيع أو الزيارة عند إضافة رصيد
+                للعميل.
+              </p>
+
+              <div className="mt-4 grid gap-3">
+                {[
+                  {
+                    value: "OFF",
+                    title: "إيقاف",
+                    description:
+                      "لن يظهر اختيار الموظف ولن يتم تسجيله مع العملية.",
+                  },
+                  {
+                    value: "OPTIONAL",
+                    title: "اختياري",
+                    description:
+                      "يمكن تسجيل الموظف المسؤول أو إكمال العملية بدونه.",
+                  },
+                  {
+                    value: "REQUIRED",
+                    title: "إجباري",
+                    description: "يجب اختيار الموظف المسؤول قبل تسجيل العملية.",
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.value}
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4"
+                  >
+                    <input
+                      type="radio"
+                      name="staffAttributionMode"
+                      value={option.value}
+                      checked={staffAttributionMode === option.value}
+                      onChange={() =>
+                        setStaffAttributionMode(
+                          option.value as StaffAttributionMode,
+                        )
+                      }
+                      className="mt-1 h-4 w-4 accent-violet-600"
+                    />
+
+                    <span>
+                      <span className="block font-black text-slate-900">
+                        {option.title}
+                      </span>
+                      <span className="mt-1 block text-sm text-slate-500">
+                        {option.description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5">
+              <h3 className="font-black text-violet-950">هوية برنامج الولاء</h3>
+
               <p className="mt-1 text-sm text-violet-700">
-                استخدم روابط صور مباشرة فقط. رفع وتخزين الصور ليس جزءًا من هذه المرحلة.
+                استخدم روابط صور مباشرة فقط. رفع وتخزين الصور ليس جزءًا من هذه
+                المرحلة.
               </p>
 
               <div className="mt-4">
@@ -229,9 +306,7 @@ export default function BusinessSettingsForm({
                   name="coverImageUrl"
                   type="url"
                   value={coverImageUrl}
-                  onChange={(event) =>
-                    setCoverImageUrl(event.target.value)
-                  }
+                  onChange={(event) => setCoverImageUrl(event.target.value)}
                   maxLength={500}
                   placeholder="https://example.com/cover.jpg"
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
@@ -264,9 +339,7 @@ export default function BusinessSettingsForm({
                   <input
                     name="pointsName"
                     value={pointsName}
-                    onChange={(event) =>
-                      setPointsName(event.target.value)
-                    }
+                    onChange={(event) => setPointsName(event.target.value)}
                     maxLength={30}
                     placeholder="نقطة"
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
@@ -281,9 +354,7 @@ export default function BusinessSettingsForm({
                   <input
                     name="membershipName"
                     value={membershipName}
-                    onChange={(event) =>
-                      setMembershipName(event.target.value)
-                    }
+                    onChange={(event) => setMembershipName(event.target.value)}
                     maxLength={50}
                     placeholder="عضو مميز"
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
@@ -299,14 +370,35 @@ export default function BusinessSettingsForm({
                 <textarea
                   name="welcomeMessage"
                   value={welcomeMessage}
-                  onChange={(event) =>
-                    setWelcomeMessage(event.target.value)
-                  }
+                  onChange={(event) => setWelcomeMessage(event.target.value)}
                   rows={3}
                   maxLength={300}
                   placeholder="أهلًا بك في برنامج الولاء"
                   className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
                 />
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  لغة الكارت الافتراضية
+                </label>
+
+                <select
+                  name="cardDefaultLanguage"
+                  value={cardDefaultLanguage}
+                  onChange={(event) =>
+                    setCardDefaultLanguage(event.target.value as CardLanguage)
+                  }
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+                >
+                  <option value="AR">العربية (RTL)</option>
+                  <option value="EN">English (LTR)</option>
+                </select>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  يستطيع العميل تغيير اللغة من الكارت لاحقًا دون تغيير إعداد
+                  النشاط.
+                </p>
               </div>
             </section>
 
@@ -344,9 +436,7 @@ export default function BusinessSettingsForm({
                   }
 
                   if (file.size > 500 * 1024) {
-                    window.alert(
-                      "يجب أن يكون حجم الشعار أقل من 500KB."
-                    );
+                    window.alert("يجب أن يكون حجم الشعار أقل من 500KB.");
 
                     event.target.value = "";
                     return;
@@ -359,9 +449,7 @@ export default function BusinessSettingsForm({
 
                   reader.onload = () => {
                     setLogoPreview(
-                      typeof reader.result === "string"
-                        ? reader.result
-                        : ""
+                      typeof reader.result === "string" ? reader.result : "",
                     );
                   };
 
@@ -377,9 +465,7 @@ export default function BusinessSettingsForm({
 
             <div className="my-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs font-semibold text-slate-400">
-                أو
-              </span>
+              <span className="text-xs font-semibold text-slate-400">أو</span>
               <div className="h-px flex-1 bg-slate-200" />
             </div>
 
@@ -397,14 +483,11 @@ export default function BusinessSettingsForm({
 
                   setLogoUrl(value);
                   setRemoveLogo(false);
-                  setLogoPreview(
-                    value || business.logoUrl || ""
-                  );
+                  setLogoPreview(value || business.logoUrl || "");
 
-                  const fileInput =
-                    document.getElementById(
-                      "logoFile"
-                    ) as HTMLInputElement | null;
+                  const fileInput = document.getElementById(
+                    "logoFile",
+                  ) as HTMLInputElement | null;
 
                   if (value && fileInput) {
                     fileInput.value = "";
@@ -425,19 +508,16 @@ export default function BusinessSettingsForm({
 
                   setRemoveLogo(checked);
 
-                  const fileInput =
-                    document.getElementById(
-                      "logoFile"
-                    ) as HTMLInputElement | null;
+                  const fileInput = document.getElementById(
+                    "logoFile",
+                  ) as HTMLInputElement | null;
 
                   if (checked && fileInput) {
                     fileInput.value = "";
                   }
 
                   setLogoPreview(
-                    checked
-                      ? ""
-                      : logoUrl || business.logoUrl || ""
+                    checked ? "" : logoUrl || business.logoUrl || "",
                   );
                 }}
                 className="h-4 w-4"
@@ -458,9 +538,7 @@ export default function BusinessSettingsForm({
                   name="primaryColor"
                   type="color"
                   value={primaryColor}
-                  onChange={(event) =>
-                    setPrimaryColor(event.target.value)
-                  }
+                  onChange={(event) => setPrimaryColor(event.target.value)}
                   className="h-14 w-full rounded-xl border border-slate-300 bg-white p-1"
                 />
               </div>
@@ -474,9 +552,7 @@ export default function BusinessSettingsForm({
                   name="secondaryColor"
                   type="color"
                   value={secondaryColor}
-                  onChange={(event) =>
-                    setSecondaryColor(event.target.value)
-                  }
+                  onChange={(event) => setSecondaryColor(event.target.value)}
                   className="h-14 w-full rounded-xl border border-slate-300 bg-white p-1"
                 />
               </div>
@@ -491,23 +567,15 @@ export default function BusinessSettingsForm({
                 name="loyaltyMode"
                 value={loyaltyMode}
                 onChange={(event) =>
-                  setLoyaltyMode(
-                    event.target.value as LoyaltyMode
-                  )
+                  setLoyaltyMode(event.target.value as LoyaltyMode)
                 }
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
               >
-                <option value="VISITS">
-                  زيارات / أختام
-                </option>
+                <option value="VISITS">زيارات / أختام</option>
 
-                <option value="POINTS">
-                  نقاط
-                </option>
+                <option value="POINTS">نقاط</option>
 
-                <option value="SALES_AMOUNT">
-                  إجمالي المبيعات
-                </option>
+                <option value="SALES_AMOUNT">إجمالي المبيعات</option>
               </select>
             </div>
 
@@ -520,9 +588,7 @@ export default function BusinessSettingsForm({
                 <input
                   name="unitName"
                   value={unitName}
-                  onChange={(event) =>
-                    setUnitName(event.target.value)
-                  }
+                  onChange={(event) => setUnitName(event.target.value)}
                   required
                   maxLength={30}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
@@ -531,7 +597,9 @@ export default function BusinessSettingsForm({
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  {loyaltyMode === "SALES_AMOUNT" ? 'قيمة الشراء' : 'قيمة الإضافة'}
+                  {loyaltyMode === "SALES_AMOUNT"
+                    ? "قيمة الشراء"
+                    : "قيمة الإضافة"}
                 </label>
 
                 <input
@@ -539,9 +607,7 @@ export default function BusinessSettingsForm({
                   type="number"
                   min="1"
                   value={earnAmount}
-                  onChange={(event) =>
-                    setEarnAmount(event.target.value)
-                  }
+                  onChange={(event) => setEarnAmount(event.target.value)}
                   required
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
                 />
@@ -556,9 +622,7 @@ export default function BusinessSettingsForm({
               <input
                 name="rewardName"
                 value={rewardName}
-                onChange={(event) =>
-                  setRewardName(event.target.value)
-                }
+                onChange={(event) => setRewardName(event.target.value)}
                 required
                 maxLength={100}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
@@ -583,27 +647,17 @@ export default function BusinessSettingsForm({
                     name="rewardType"
                     value={rewardType}
                     onChange={(event) =>
-                      setRewardType(
-                        event.target.value as RewardType
-                      )
+                      setRewardType(event.target.value as RewardType)
                     }
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
                   >
-                    <option value="GIFT">
-                      هدية
-                    </option>
+                    <option value="GIFT">هدية</option>
 
-                    <option value="PROMO_CODE">
-                      Promo Code
-                    </option>
+                    <option value="PROMO_CODE">Promo Code</option>
 
-                    <option value="DISCOUNT">
-                      خصم
-                    </option>
+                    <option value="DISCOUNT">خصم</option>
 
-                    <option value="CUSTOM">
-                      مكافأة مخصصة
-                    </option>
+                    <option value="CUSTOM">مكافأة مخصصة</option>
                   </select>
                 </div>
 
@@ -615,15 +669,8 @@ export default function BusinessSettingsForm({
                   <input
                     name="rewardCode"
                     value={rewardCode}
-                    onChange={(event) =>
-                      setRewardCode(
-                        event.target.value
-                      )
-                    }
-                    required={
-                      rewardType ===
-                      "PROMO_CODE"
-                    }
+                    onChange={(event) => setRewardCode(event.target.value)}
+                    required={rewardType === "PROMO_CODE"}
                     maxLength={80}
                     placeholder="VIP20"
                     className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
@@ -639,11 +686,7 @@ export default function BusinessSettingsForm({
                 <textarea
                   name="rewardDescription"
                   value={rewardDescription}
-                  onChange={(event) =>
-                    setRewardDescription(
-                      event.target.value
-                    )
-                  }
+                  onChange={(event) => setRewardDescription(event.target.value)}
                   rows={3}
                   maxLength={300}
                   placeholder="مثال: خصم 20% على عملية الشراء التالية"
@@ -652,10 +695,11 @@ export default function BusinessSettingsForm({
               </div>
             </section>
 
-
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                {loyaltyMode === "SALES_AMOUNT" ? 'Spending Target Amount' : 'الرصيد المطلوب للمكافأة'}
+                {loyaltyMode === "SALES_AMOUNT"
+                  ? "Spending Target Amount"
+                  : "الرصيد المطلوب للمكافأة"}
               </label>
 
               <input
@@ -663,9 +707,7 @@ export default function BusinessSettingsForm({
                 type="number"
                 min="1"
                 value={rewardThreshold}
-                onChange={(event) =>
-                  setRewardThreshold(event.target.value)
-                }
+                onChange={(event) => setRewardThreshold(event.target.value)}
                 required
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
@@ -681,12 +723,12 @@ export default function BusinessSettingsForm({
               </p>
 
               <div className="mt-4 rounded-2xl bg-violet-50 p-4 text-sm text-violet-800">
-                <p className="font-semibold">
-                  المتغيرات المتاحة
-                </p>
+                <p className="font-semibold">المتغيرات المتاحة</p>
 
                 <p className="mt-2 break-words font-mono text-xs leading-6">
-                  {"{customer} {business} {balance} {unit} {reward} {remaining} {card_link}"}
+                  {
+                    "{customer} {business} {balance} {unit} {reward} {remaining} {card_link}"
+                  }
                 </p>
               </div>
 
@@ -707,9 +749,7 @@ export default function BusinessSettingsForm({
                   required
                   value={whatsappWelcomeMessage}
                   onChange={(event) =>
-                    setWhatsappWelcomeMessage(
-                      event.target.value
-                    )
+                    setWhatsappWelcomeMessage(event.target.value)
                   }
                   className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
@@ -732,9 +772,7 @@ export default function BusinessSettingsForm({
                   required
                   value={whatsappBalanceMessage}
                   onChange={(event) =>
-                    setWhatsappBalanceMessage(
-                      event.target.value
-                    )
+                    setWhatsappBalanceMessage(event.target.value)
                   }
                   className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
@@ -757,9 +795,7 @@ export default function BusinessSettingsForm({
                   required
                   value={whatsappRewardMessage}
                   onChange={(event) =>
-                    setWhatsappRewardMessage(
-                      event.target.value
-                    )
+                    setWhatsappRewardMessage(event.target.value)
                   }
                   className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
@@ -806,14 +842,9 @@ export default function BusinessSettingsForm({
                 )}
 
                 <div>
-                  <p className="text-xs text-white/70">
-                    كارت الولاء الرقمي
-                  </p>
+                  <p className="text-xs text-white/70">كارت الولاء الرقمي</p>
 
-                  <h2
-                    dir="auto"
-                    className="mt-1 text-xl font-bold sm:text-2xl"
-                  >
+                  <h2 dir="auto" className="mt-1 text-xl font-bold sm:text-2xl">
                     {name || "اسم النشاط"}
                   </h2>
                 </div>
@@ -839,10 +870,7 @@ export default function BusinessSettingsForm({
                     {previewBalance}
                   </p>
 
-                  <p
-                    dir="auto"
-                    className="mt-1 text-sm text-slate-500"
-                  >
+                  <p dir="auto" className="mt-1 text-sm text-slate-500">
                     {unitName || "نقاط"}
                   </p>
                 </div>
@@ -883,17 +911,11 @@ export default function BusinessSettingsForm({
                 className="mt-6 rounded-2xl bg-slate-100 p-5 text-center text-slate-700"
               >
                 <p className="font-bold">
-                  متبقي{" "}
-                  {Math.max(
-                    0,
-                    threshold - previewBalance
-                  )}{" "}
-                  للحصول على الهدية
+                  متبقي {Math.max(0, threshold - previewBalance)} للحصول على
+                  الهدية
                 </p>
 
-                <p className="mt-1 text-sm">
-                  {rewardName || "المكافأة"}
-                </p>
+                <p className="mt-1 text-sm">{rewardName || "المكافأة"}</p>
               </div>
 
               <div className="mx-auto mt-7 flex h-40 w-40 items-center justify-center rounded-2xl border-8 border-slate-900 bg-white text-center text-xs font-bold text-slate-900">
