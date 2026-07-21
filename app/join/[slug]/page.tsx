@@ -50,6 +50,10 @@ export default async function JoinBusinessPage({
       name: true,
       slug: true,
       logoUrl: true,
+      coverImageUrl: true,
+      industry: true,
+      city: true,
+      country: true,
       welcomeMessage: true,
       primaryColor: true,
       secondaryColor: true,
@@ -123,31 +127,63 @@ export default async function JoinBusinessPage({
       className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10"
     >
       <section className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
-        <div
-          className="px-6 py-8 text-white sm:px-8"
-          style={{ backgroundColor: business.primaryColor }}
-        >
-          {business.logoUrl ? (
-            // The logo may be a data URL configured by the business owner.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={business.logoUrl}
-              alt={business.name}
-              className="mb-5 h-14 w-14 rounded-2xl bg-white/95 object-contain p-1"
+        <div className="relative overflow-hidden px-6 py-8 text-white sm:px-8">
+          {business.coverImageUrl ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={business.coverImageUrl}
+                alt={`${business.name} cover`}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/55" />
+            </>
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: business.primaryColor }}
             />
-          ) : null}
+          )}
 
-          <p className="text-sm font-semibold text-white/80">
-            {programName}
-          </p>
+          <div className="relative">
+            {business.logoUrl ? (
+              // The logo may be a data URL configured by the business owner.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={business.logoUrl}
+                alt={business.name}
+                className="mb-5 h-14 w-14 rounded-2xl bg-white/95 object-contain p-1 shadow-lg"
+              />
+            ) : null}
 
-          <h1 className="mt-1 text-3xl font-black">
-            {copy.join} {business.name}
-          </h1>
+            <p className="text-sm font-semibold text-white/80">
+              {programName}
+            </p>
 
-          <p className="mt-3 leading-7 text-white/90">
-            {message}
-          </p>
+            <h1 className="mt-1 text-3xl font-black">
+              {copy.join} {business.name}
+            </h1>
+
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-white/85">
+              {business.industry ? (
+                <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
+                  {business.industry}
+                </span>
+              ) : null}
+
+              {business.city || business.country ? (
+                <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
+                  {[business.city, business.country]
+                    .filter(Boolean)
+                    .join(language === "AR" ? "، " : ", ")}
+                </span>
+              ) : null}
+            </div>
+
+            <p className="mt-3 leading-7 text-white/90">
+              {message}
+            </p>
+          </div>
         </div>
 
         <div className="p-6 sm:p-8">
