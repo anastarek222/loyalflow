@@ -33,6 +33,16 @@ type BusinessSettingsFormProps = {
     city: string | null;
     taxNumber: string | null;
 
+    description: string | null;
+
+    instagramUrl: string | null;
+    facebookUrl: string | null;
+    tiktokUrl: string | null;
+
+    themePreset: string;
+    cardStyle: string;
+    fontFamily: string;
+
     loyaltyProgramName: string | null;
     pointsName: string | null;
     membershipName: string | null;
@@ -99,6 +109,34 @@ export default function BusinessSettingsForm({
   const [city, setCity] = useState(business.city ?? "");
 
   const [taxNumber, setTaxNumber] = useState(business.taxNumber ?? "");
+
+  const [description, setDescription] = useState(
+    business.description ?? "",
+  );
+
+  const [instagramUrl, setInstagramUrl] = useState(
+    business.instagramUrl ?? "",
+  );
+
+  const [facebookUrl, setFacebookUrl] = useState(
+    business.facebookUrl ?? "",
+  );
+
+  const [tiktokUrl, setTiktokUrl] = useState(
+    business.tiktokUrl ?? "",
+  );
+
+  const [themePreset, setThemePreset] = useState(
+    business.themePreset ?? "DEFAULT",
+  );
+
+  const [cardStyle, setCardStyle] = useState(
+    business.cardStyle ?? "CLASSIC",
+  );
+
+  const [fontFamily, setFontFamily] = useState(
+    business.fontFamily ?? "INTER",
+  );
 
   const [coverImageUrl, setCoverImageUrl] = useState(
     business.coverImageUrl?.startsWith("http") ? business.coverImageUrl : "",
@@ -206,6 +244,150 @@ export default function BusinessSettingsForm({
           <p className="mt-1 text-sm text-slate-500">
             تعديل هوية النشاط وقواعد برنامج الولاء.
           </p>
+
+
+          <div className="mt-8 rounded-2xl border border-slate-200 p-5">
+            <h3 className="text-lg font-black text-slate-950">
+              🎨 هوية وتصميم الكارت
+            </h3>
+
+            <div className="mt-5 space-y-5">
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  وصف النشاط
+                </label>
+                <textarea
+                  name="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                  placeholder="وصف قصير يظهر للعملاء"
+                />
+              </div>
+
+
+              <div className="grid gap-4 sm:grid-cols-2">
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    اللون الأساسي HEX
+                  </label>
+
+                  <div className="flex gap-2">
+                    <input
+                      name="primaryColor"
+                      value={primaryColor}
+                      onChange={(e)=>setPrimaryColor(e.target.value)}
+                      className="w-full rounded-xl border px-4 py-3"
+                      placeholder="#007BFF"
+                    />
+
+                    <div
+                      className="h-12 w-12 rounded-xl border"
+                      style={{backgroundColor: primaryColor}}
+                    />
+                  </div>
+                </div>
+
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">
+                    اللون الثانوي HEX
+                  </label>
+
+                  <div className="flex gap-2">
+                    <input
+                      name="secondaryColor"
+                      value={secondaryColor}
+                      onChange={(e)=>setSecondaryColor(e.target.value)}
+                      className="w-full rounded-xl border px-4 py-3"
+                      placeholder="#FFFFFF"
+                    />
+
+                    <div
+                      className="h-12 w-12 rounded-xl border"
+                      style={{backgroundColor: secondaryColor}}
+                    />
+                  </div>
+                </div>
+
+              </div>
+
+
+              <div className="grid gap-4 sm:grid-cols-3">
+
+                <select
+                  name="themePreset"
+                  value={themePreset}
+                  onChange={(e)=>setThemePreset(e.target.value)}
+                  className="rounded-xl border px-4 py-3"
+                >
+                  <option value="DEFAULT">Default</option>
+                  <option value="MINIMAL">Minimal</option>
+                  <option value="LUXURY">Luxury</option>
+                  <option value="DARK">Dark</option>
+                  <option value="MODERN">Modern</option>
+                  <option value="GRADIENT">Gradient</option>
+                </select>
+
+
+                <select
+                  name="cardStyle"
+                  value={cardStyle}
+                  onChange={(e)=>setCardStyle(e.target.value)}
+                  className="rounded-xl border px-4 py-3"
+                >
+                  <option value="CLASSIC">Classic</option>
+                  <option value="ROUNDED">Rounded</option>
+                  <option value="MODERN">Modern</option>
+                </select>
+
+
+                <select
+                  name="fontFamily"
+                  value={fontFamily}
+                  onChange={(e)=>setFontFamily(e.target.value)}
+                  className="rounded-xl border px-4 py-3"
+                >
+                  <option value="INTER">Inter</option>
+                  <option value="CAIRO">Cairo</option>
+                  <option value="POPPINS">Poppins</option>
+                </select>
+
+              </div>
+
+
+              <div className="grid gap-4 sm:grid-cols-3">
+
+                <input
+                  name="instagramUrl"
+                  value={instagramUrl}
+                  onChange={(e)=>setInstagramUrl(e.target.value)}
+                  placeholder="Instagram URL"
+                  className="rounded-xl border px-4 py-3"
+                />
+
+                <input
+                  name="facebookUrl"
+                  value={facebookUrl}
+                  onChange={(e)=>setFacebookUrl(e.target.value)}
+                  placeholder="Facebook URL"
+                  className="rounded-xl border px-4 py-3"
+                />
+
+                <input
+                  name="tiktokUrl"
+                  value={tiktokUrl}
+                  onChange={(e)=>setTiktokUrl(e.target.value)}
+                  placeholder="TikTok URL"
+                  className="rounded-xl border px-4 py-3"
+                />
+
+              </div>
+
+            </div>
+          </div>
 
           <div className="mt-7 space-y-6">
             <div>

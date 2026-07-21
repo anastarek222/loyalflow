@@ -307,6 +307,15 @@ export default async function BusinessSettingsPage({
             city: business.city,
             taxNumber: business.taxNumber,
 
+            description: business.description,
+            instagramUrl: business.instagramUrl,
+            facebookUrl: business.facebookUrl,
+            tiktokUrl: business.tiktokUrl,
+
+            themePreset: business.themePreset,
+            cardStyle: business.cardStyle,
+            fontFamily: business.fontFamily,
+
             loyaltyProgramName: business.loyaltyProgramName,
             pointsName: business.pointsName,
             membershipName: business.membershipName,
