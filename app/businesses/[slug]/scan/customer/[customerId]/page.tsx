@@ -280,37 +280,49 @@ export default async function ScanCustomerPage({
 
 
         {canEarn ? (
-        <form
-          action={earnAction}
-          className="mt-6"
-        >
+          <form
+            action={earnAction}
+            className="mt-6 rounded-3xl bg-slate-50 p-4"
+          >
 
-          {customer.business.loyaltyMode === "SALES_AMOUNT" ? (
+            <div className="mb-3">
+              <p className="text-xs font-bold text-slate-500">
+                تسجيل عملية جديدة
+              </p>
+
+              <p className="mt-1 text-lg font-black text-slate-950">
+                {customer.business.loyaltyMode === "SALES_AMOUNT"
+                  ? "💰 إضافة عملية بيع"
+                  : customer.business.loyaltyMode === "VISITS"
+                    ? "👋 تسجيل زيارة"
+                    : "⭐ إضافة نقاط ولاء"}
+              </p>
+            </div>
+
+            {customer.business.loyaltyMode === "SALES_AMOUNT" ? (
+              <input
+                name="saleAmount"
+                type="number"
+                placeholder="قيمة البيع"
+                className="mb-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-bold"
+              />
+            ) : null}
+
             <input
-              name="saleAmount"
-              type="number"
-              placeholder="قيمة البيع"
-              className="mb-3 w-full rounded-xl border border-slate-300 px-4 py-3"
+              type="hidden"
+              name="operationId"
+              value={crypto.randomUUID()}
             />
-          ) : null}
 
+            <ScanActionButton>
+              {customer.business.loyaltyMode === "SALES_AMOUNT"
+                ? "تسجيل عملية بيع"
+                : customer.business.loyaltyMode === "VISITS"
+                  ? "+ إضافة زيارة"
+                  : `+ إضافة ${customer.business.earnAmount} نقطة`}
+            </ScanActionButton>
 
-          <input
-            type="hidden"
-            name="operationId"
-            value={crypto.randomUUID()}
-          />
-
-
-          <ScanActionButton>
-            {customer.business.loyaltyMode === "SALES_AMOUNT"
-              ? "تسجيل عملية بيع"
-              : customer.business.loyaltyMode === "VISITS"
-                ? "+ إضافة زيارة"
-                : `+ إضافة ${customer.business.earnAmount} نقطة`}
-          </ScanActionButton>
-
-        </form>
+          </form>
         ) : null}
 
 
