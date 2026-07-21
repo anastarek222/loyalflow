@@ -1118,36 +1118,85 @@ function DashboardLayout({
       <div className="mx-auto max-w-7xl">
 
 
-        <section className="overflow-hidden rounded-3xl bg-slate-950 p-8 text-white shadow-xl">
+        <section
+          className="
+            relative
+            overflow-hidden
+            rounded-3xl
+            bg-gradient-to-br
+            from-slate-950
+            via-slate-900
+            to-violet-950
+            p-6
+            text-white
+            shadow-xl
+            sm:p-8
+          "
+        >
 
-          <p className="text-sm font-black text-cyan-300">
-            {eyebrow}
-          </p>
-
-
-          <h1 className="mt-3 text-3xl font-black sm:text-5xl">
-            {dictionary.welcome},{" "}
-            <span>
-              {name}
-            </span>
-          </h1>
-
-
-          <p className="mt-3 text-slate-400">
-            {title}
-          </p>
-
-
-          <div className="mt-5 flex flex-wrap gap-3">
-
-            <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold">
-              {getRoleLabel(role, language)}
-            </span>
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" />
 
 
-            <span className="rounded-full bg-white/10 px-4 py-2 text-sm">
-              {email}
-            </span>
+          <div className="relative">
+
+            <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+
+
+              <div>
+
+                <p className="text-sm font-black text-violet-300">
+                  {eyebrow}
+                </p>
+
+
+                <h1 className="mt-3 text-3xl font-black sm:text-5xl">
+                  {dictionary.welcome},{" "}
+                  <span>
+                    {name}
+                  </span>
+                </h1>
+
+
+                <p className="mt-3 text-slate-300">
+                  {title}
+                </p>
+
+
+                <div className="mt-5 flex flex-wrap gap-3">
+
+                  <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold backdrop-blur">
+                    {getRoleLabel(role, language)}
+                  </span>
+
+
+                  <span className="rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur">
+                    {email}
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div
+                className="
+                  flex
+                  h-24
+                  w-24
+                  items-center
+                  justify-center
+                  rounded-3xl
+                  bg-white/10
+                  text-4xl
+                  font-black
+                  backdrop-blur
+                "
+              >
+                {name.charAt(0).toUpperCase()}
+              </div>
+
+
+            </div>
 
           </div>
 
