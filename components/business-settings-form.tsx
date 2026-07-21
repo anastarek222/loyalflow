@@ -432,8 +432,8 @@ export default function BusinessSettingsForm({
               <h3 className="font-black text-violet-950">هوية برنامج الولاء</h3>
 
               <p className="mt-1 text-sm text-violet-700">
-                استخدم روابط صور مباشرة فقط. رفع وتخزين الصور ليس جزءًا من هذه
-                المرحلة.
+                خصّص هوية النشاط كما ستظهر للعملاء في الكارت الرقمي ولوحة النشاط.
+                يمكنك رفع الصور مباشرة من جهازك أو استخدام رابط صورة خارجي.
               </p>
 
               <div className="mt-4 space-y-4">
@@ -452,7 +452,7 @@ export default function BusinessSettingsForm({
                     htmlFor="coverImageFile"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    رفع صورة الغلاف
+                    صورة الغلاف
                   </label>
 
                   <input
@@ -477,7 +477,7 @@ export default function BusinessSettingsForm({
                   />
 
                   <p className="mt-2 text-xs text-slate-500">
-                    PNG أو JPG أو WebP بحد أقصى 1MB.
+                    تظهر كخلفية بصرية في تجربة العميل. PNG أو JPG أو WebP بحد أقصى 1MB.
                   </p>
                 </div>
 
@@ -661,7 +661,7 @@ export default function BusinessSettingsForm({
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                رفع صورة الشعار
+                شعار النشاط
               </label>
 
               <input
@@ -700,7 +700,7 @@ export default function BusinessSettingsForm({
               />
 
               <p className="mt-1 text-xs text-slate-400">
-                PNG أو JPG أو WebP — بحد أقصى 500KB.
+                يظهر في لوحة النشاط والكارت الرقمي. PNG أو JPG أو WebP — بحد أقصى 500KB.
               </p>
             </div>
 
@@ -772,7 +772,7 @@ export default function BusinessSettingsForm({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  اللون الأساسي
+                  اللون الأساسي للهوية
                 </label>
 
                 <input
@@ -786,7 +786,7 @@ export default function BusinessSettingsForm({
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700">
-                  خلفية الكارت
+                  لون خلفية الكارت
                 </label>
 
                 <input
