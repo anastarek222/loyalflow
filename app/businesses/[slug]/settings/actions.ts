@@ -154,6 +154,7 @@ export async function updateBusinessSettingsAction(
       id: true,
       slug: true,
       logoUrl: true,
+      coverImageUrl: true,
     },
   });
 
@@ -168,17 +169,20 @@ export async function updateBusinessSettingsAction(
   }
 
   const removeLogo = formData.get("removeLogo") === "on";
+  const removeCoverImage = formData.get("removeCoverImage") === "on";
 
   const logoFile = formData.get("logoFile");
+  const coverImageFile = formData.get("coverImageFile");
 
   let uploadedLogoDataUrl: string | null = null;
+  let uploadedCoverImageDataUrl: string | null = null;
+
+  const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
 
   if (logoFile instanceof File && logoFile.size > 0) {
-    const allowedLogoTypes = ["image/png", "image/jpeg", "image/webp"];
-
     if (
       logoFile.size > 500 * 1024 ||
-      !allowedLogoTypes.includes(logoFile.type)
+      !allowedImageTypes.includes(logoFile.type)
     ) {
       redirect(`/businesses/${business.slug}/settings?error=invalid`);
     }
@@ -187,6 +191,23 @@ export async function updateBusinessSettingsAction(
 
     uploadedLogoDataUrl =
       `data:${logoFile.type};base64,` + logoBuffer.toString("base64");
+  }
+
+  if (coverImageFile instanceof File && coverImageFile.size > 0) {
+    if (
+      coverImageFile.size > 1024 * 1024 ||
+      !allowedImageTypes.includes(coverImageFile.type)
+    ) {
+      redirect(`/businesses/${business.slug}/settings?error=invalid`);
+    }
+
+    const coverImageBuffer = Buffer.from(
+      await coverImageFile.arrayBuffer()
+    );
+
+    uploadedCoverImageDataUrl =
+      `data:${coverImageFile.type};base64,` +
+      coverImageBuffer.toString("base64");
   }
 
   const parsed = settingsSchema.safeParse({
@@ -234,10 +255,19 @@ export async function updateBusinessSettingsAction(
   }
 
   const submittedLogoUrl = parsed.data.logoUrl || null;
+  const submittedCoverImageUrl = parsed.data.coverImageUrl || null;
 
   const finalLogoUrl = removeLogo
     ? null
     : (uploadedLogoDataUrl ?? submittedLogoUrl ?? business.logoUrl);
+
+  const finalCoverImageUrl = removeCoverImage
+    ? null
+    : (
+        uploadedCoverImageDataUrl ??
+        submittedCoverImageUrl ??
+        business.coverImageUrl
+      );
 
   await prisma.$transaction([
     prisma.business.update({
@@ -247,7 +277,7 @@ export async function updateBusinessSettingsAction(
       data: {
         name: parsed.data.name,
         logoUrl: finalLogoUrl,
-        coverImageUrl: parsed.data.coverImageUrl || null,
+        coverImageUrl: finalCoverImageUrl,
         primaryColor: parsed.data.primaryColor,
         secondaryColor: parsed.data.secondaryColor,
         currency: optionalProfileValue(parsed.data.currency),
