@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import JoinSubmitButton from "@/components/join-submit-button";
 import { joinBusinessAction } from "@/app/join/[slug]/actions";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import prisma from "@/lib/prisma";
@@ -85,7 +86,10 @@ export default async function JoinBusinessPage({
           lastName: "اسم العائلة",
           optional: "(اختياري)",
           phone: "رقم الهاتف",
+          phoneHint: "اكتب الرقم مع كود الدولة، مثال: +201000000000",
+          referralApplied: "تم تطبيق كود الإحالة على تسجيلك.",
           createCard: "إنشاء الكارت الرقمي",
+          creatingCard: "جاري إنشاء الكارت...",
           privacy:
             "بإكمال التسجيل، ستنشئ حساب عميل وكارت ولاء رقمي لهذا النشاط فقط.",
           errors: {
@@ -105,7 +109,10 @@ export default async function JoinBusinessPage({
           lastName: "Last name",
           optional: "(optional)",
           phone: "Phone number",
+          phoneHint: "Include the country code, for example: +201000000000",
+          referralApplied: "A referral code has been applied to your registration.",
           createCard: "Create digital card",
+          creatingCard: "Creating your card...",
           privacy:
             "By registering, you create a customer profile and digital loyalty card for this business only.",
           errors: {
@@ -206,6 +213,12 @@ export default async function JoinBusinessPage({
             {copy.reward} {business.rewardThreshold} {business.unitName} {copy.rewardSuffix} {business.rewardName}.
           </div>
 
+          {referralCode ? (
+            <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+              {copy.referralApplied}
+            </div>
+          ) : null}
+
           <form action={joinBusiness} className="space-y-5">
             {referralCode ? (
               <input type="hidden" name="ref" value={referralCode} />
@@ -263,17 +276,22 @@ export default async function JoinBusinessPage({
                 maxLength={25}
                 autoComplete="tel"
                 placeholder="+201000000000"
+                aria-describedby="phone-hint"
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
+              <p
+                id="phone-hint"
+                className="mt-2 text-xs leading-5 text-slate-500"
+              >
+                {copy.phoneHint}
+              </p>
             </div>
 
-            <button
-              type="submit"
-              className="w-full rounded-xl px-5 py-3.5 font-black text-white transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-violet-200"
-              style={{ backgroundColor: business.primaryColor }}
-            >
-              {copy.createCard}
-            </button>
+            <JoinSubmitButton
+              label={copy.createCard}
+              pendingLabel={copy.creatingCard}
+              primaryColor={business.primaryColor}
+            />
           </form>
 
           <p className="mt-5 text-center text-xs leading-5 text-slate-500">
