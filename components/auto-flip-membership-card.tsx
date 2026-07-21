@@ -48,6 +48,7 @@ type AutoFlipMembershipCardProps = {
   rewardAvailable: boolean;
 
   qrCode: string;
+  cardUrl: string;
   businessPhone: string;
   businessAddress: string;
 
@@ -274,6 +275,7 @@ export default function AutoFlipMembershipCard({
   rewardAvailable,
 
   qrCode,
+  cardUrl,
   businessPhone,
   businessAddress,
 
@@ -520,6 +522,32 @@ export default function AutoFlipMembershipCard({
   const memberLabel =
     membershipName?.trim() ||
     text.member;
+
+  async function copyCardLink() {
+    try {
+      await navigator.clipboard.writeText(cardUrl);
+    } catch {
+      // Clipboard access may be unavailable.
+    }
+  }
+
+  async function shareCard() {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: businessName,
+          text: `${text.loyaltyCard} - ${customerName}`,
+          url: cardUrl,
+        });
+
+        return;
+      }
+
+      await copyCardLink();
+    } catch {
+      // Share may be cancelled or unavailable.
+    }
+  }
 
   return (
     <section
@@ -948,6 +976,24 @@ export default function AutoFlipMembershipCard({
       >
         ↻ {text.flip}
       </button>
+
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <button
+          type="button"
+          onClick={shareCard}
+          className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
+        >
+          مشاركة الكارت
+        </button>
+
+        <button
+          type="button"
+          onClick={copyCardLink}
+          className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
+        >
+          نسخ الرابط
+        </button>
+      </div>
     </section>
   );
 }

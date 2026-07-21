@@ -471,6 +471,9 @@ export default async function PublicCardPage({
           qrCode={
             qrCode
           }
+          cardUrl={
+            cardUrl
+          }
           businessPhone={
             business.contactPhone ??
             ""
