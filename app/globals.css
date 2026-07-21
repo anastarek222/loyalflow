@@ -5,6 +5,80 @@
   --foreground: #171717;
 }
 
+
+
+/* ===============================
+   LoyalFlow Stitch Design Tokens
+   =============================== */
+
+:root {
+  --lf-primary: #0f172a;
+  --lf-primary-soft: #1e293b;
+
+  --lf-accent: #7c3aed;
+  --lf-accent-soft: #ede9fe;
+
+  --lf-success: #10b981;
+  --lf-warning: #f59e0b;
+  --lf-danger: #ef4444;
+
+  --lf-background: #f8fafc;
+  --lf-surface: #ffffff;
+
+  --lf-border: #e2e8f0;
+
+  --lf-text: #0f172a;
+  --lf-muted: #64748b;
+
+  --lf-radius-card: 24px;
+  --lf-radius-button: 14px;
+
+  --lf-shadow-card:
+    0 10px 30px rgba(15,23,42,0.06);
+
+  --lf-shadow-hover:
+    0 20px 40px rgba(15,23,42,0.10);
+}
+
+
+/* Stitch SaaS card base */
+
+.lf-card {
+  border-radius: var(--lf-radius-card);
+  border: 1px solid var(--lf-border);
+  background: var(--lf-surface);
+  box-shadow: var(--lf-shadow-card);
+}
+
+
+/* Stitch button base */
+
+.lf-button {
+  border-radius: var(--lf-radius-button);
+  font-weight: 800;
+  transition: all .2s ease;
+}
+
+
+.lf-button:hover {
+  transform: translateY(-1px);
+}
+
+
+/* Stitch section title */
+
+.lf-title {
+  color: var(--lf-text);
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+
+.lf-muted {
+  color: var(--lf-muted);
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
