@@ -689,6 +689,9 @@ export default async function PublicCardPage({
               primaryColor={
                 business.primaryColor
               }
+              defaultLanguage={
+                 business.cardDefaultLanguage
+              } 
             />
           )}
 
