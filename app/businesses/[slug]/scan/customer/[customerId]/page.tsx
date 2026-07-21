@@ -53,6 +53,20 @@ export default async function ScanCustomerPage({
         phone: true,
         balance: true,
 
+        transactions: {
+          take: 5,
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            note: true,
+            createdAt: true,
+          },
+        },
+
         rewardUnlocks: {
           where: {
             redeemedAt: null,
@@ -99,6 +113,12 @@ export default async function ScanCustomerPage({
     .filter(Boolean)
     .join(" ");
 
+  const dateFormatter =
+    new Intl.DateTimeFormat("ar-EG", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8">
       <section className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow">
@@ -133,6 +153,36 @@ export default async function ScanCustomerPage({
             {customer.balance} {customer.business.unitName}
           </p>
         </div>
+
+
+        {customer.transactions.length > 0 ? (
+          <div className="mt-6">
+            <h2 className="mb-3 font-black text-slate-950">
+              آخر النشاطات
+            </h2>
+
+            <div className="space-y-3">
+              {customer.transactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="rounded-2xl bg-slate-50 p-4"
+                >
+                  <p className="font-black text-slate-900">
+                    {transaction.note ?? "عملية ولاء"}
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-600">
+                    {transaction.amount} {customer.business.unitName}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    {dateFormatter.format(transaction.createdAt)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
 
         <form
