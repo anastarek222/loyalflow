@@ -30,6 +30,18 @@ type CardActivity = {
   amount: number;
 };
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+};
+
+type StandaloneNavigator = Navigator & {
+  standalone?: boolean;
+};
+
 type AutoFlipMembershipCardProps = {
   businessName: string;
   logoUrl: string | null;
@@ -143,6 +155,30 @@ const dictionary = {
 
     promo:
       "كود خصم",
+
+    shareCard:
+      "مشاركة الكارت",
+
+    copyLink:
+      "نسخ الرابط",
+
+    installCard:
+      "إضافة للشاشة الرئيسية",
+
+    installed:
+      "الكارت مضاف بالفعل ✓",
+
+    installHelpTitle:
+      "إضافة الكارت للشاشة الرئيسية",
+
+    iosInstallHelp:
+      "اضغط زر المشاركة في Safari، ثم اختر «إضافة إلى الشاشة الرئيسية».",
+
+    otherInstallHelp:
+      "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» إذا كانت متاحة.",
+
+    close:
+      "إغلاق",
   },
 
   EN: {
@@ -220,6 +256,30 @@ const dictionary = {
 
     promo:
       "Promo code",
+
+    shareCard:
+      "Share card",
+
+    copyLink:
+      "Copy link",
+
+    installCard:
+      "Add to Home Screen",
+
+    installed:
+      "Card already added ✓",
+
+    installHelpTitle:
+      "Add card to Home Screen",
+
+    iosInstallHelp:
+      "Tap the Share button in Safari, then choose “Add to Home Screen”.",
+
+    otherInstallHelp:
+      "Open your browser menu and choose “Install app” or “Add to Home Screen” if available.",
+
+    close:
+      "Close",
   },
 } as const;
 
@@ -319,6 +379,90 @@ export default function AutoFlipMembershipCard({
     setReduceMotion,
   ] =
     useState(false);
+
+  const [
+    deferredInstall,
+    setDeferredInstall,
+  ] =
+    useState<BeforeInstallPromptEvent | null>(
+      null
+    );
+
+  const [
+    showInstallHelp,
+    setShowInstallHelp,
+  ] =
+    useState(false);
+
+  const [
+    installHelpPlatform,
+    setInstallHelpPlatform,
+  ] =
+    useState<"ios" | "other">(
+      "other"
+    );
+
+  const [
+    isInstalled,
+    setIsInstalled,
+  ] =
+    useState(() => {
+      if (
+        typeof window === "undefined"
+      ) {
+        return false;
+      }
+
+      const standaloneNavigator =
+        navigator as StandaloneNavigator;
+
+      return (
+        window.matchMedia(
+          "(display-mode: standalone)"
+        ).matches ||
+        standaloneNavigator.standalone === true
+      );
+    });
+
+  useEffect(() => {
+    function handleInstallPrompt(
+      event: Event
+    ) {
+      event.preventDefault();
+
+      setDeferredInstall(
+        event as BeforeInstallPromptEvent
+      );
+    }
+
+    function handleInstalled() {
+      setIsInstalled(true);
+      setDeferredInstall(null);
+      setShowInstallHelp(false);
+    }
+
+    window.addEventListener(
+      "beforeinstallprompt",
+      handleInstallPrompt
+    );
+
+    window.addEventListener(
+      "appinstalled",
+      handleInstalled
+    );
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleInstallPrompt
+      );
+
+      window.removeEventListener(
+        "appinstalled",
+        handleInstalled
+      );
+    };
+  }, []);
 
   useEffect(() => {
   let timer:
@@ -535,6 +679,45 @@ export default function AutoFlipMembershipCard({
   const memberLabel =
     membershipName?.trim() ||
     text.member;
+
+  async function installCard() {
+    if (isInstalled) {
+      return;
+    }
+
+    if (deferredInstall) {
+      await deferredInstall.prompt();
+
+      const choice =
+        await deferredInstall.userChoice;
+
+      if (
+        choice.outcome ===
+        "accepted"
+      ) {
+        setIsInstalled(true);
+      }
+
+      setDeferredInstall(null);
+      return;
+    }
+
+    const isIOS =
+      /iPad|iPhone|iPod/.test(
+        navigator.userAgent
+      ) ||
+      (
+        navigator.platform ===
+          "MacIntel" &&
+        navigator.maxTouchPoints > 1
+      );
+
+    setInstallHelpPlatform(
+      isIOS ? "ios" : "other"
+    );
+
+    setShowInstallHelp(true);
+  }
 
   async function copyCardLink() {
     try {
@@ -1055,13 +1238,13 @@ export default function AutoFlipMembershipCard({
         ↻ {text.flip}
       </button>
 
-      <div className="mt-3 grid grid-cols-2 gap-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <button
           type="button"
           onClick={shareCard}
           className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
         >
-          مشاركة الكارت
+          {text.shareCard}
         </button>
 
         <button
@@ -1069,9 +1252,53 @@ export default function AutoFlipMembershipCard({
           onClick={copyCardLink}
           className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
         >
-          نسخ الرابط
+          {text.copyLink}
+        </button>
+
+        <button
+          type="button"
+          onClick={installCard}
+          disabled={isInstalled}
+          className="col-span-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15 disabled:cursor-default disabled:opacity-70 sm:col-span-1"
+        >
+          {isInstalled
+            ? text.installed
+            : text.installCard}
         </button>
       </div>
+
+      {showInstallHelp ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={text.installHelpTitle}
+          className="mt-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-black">
+                {text.installHelpTitle}
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-white/80">
+                {installHelpPlatform === "ios"
+                  ? text.iosInstallHelp
+                  : text.otherInstallHelp}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setShowInstallHelp(false)
+              }
+              className="shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-black transition hover:bg-white/10"
+            >
+              {text.close}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
