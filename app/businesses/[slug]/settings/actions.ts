@@ -72,6 +72,37 @@ const settingsSchema = z.object({
     .string()
     .trim()
     .refine((value) => value === "" || isValidIanaTimezone(value)),
+industry: z.string().trim().max(100),
+
+website: z
+  .string()
+  .trim()
+  .max(300)
+  .refine((value) => {
+    if (value === "") {
+      return true;
+    }
+
+    try {
+      const url = new URL(value);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }),
+
+email: z
+  .string()
+  .trim()
+  .max(255)
+  .email()
+  .or(z.literal("")),
+
+country: z.string().trim().max(100),
+
+city: z.string().trim().max(100),
+
+taxNumber: z.string().trim().max(100),
 
   loyaltyProgramName: z.string().trim().max(80),
   pointsName: z.string().trim().max(30),
@@ -166,6 +197,12 @@ export async function updateBusinessSettingsAction(
     secondaryColor: formData.get("secondaryColor"),
     currency: formData.get("currency") ?? "",
     timezone: formData.get("timezone") ?? "",
+    industry: formData.get("industry") ?? "",
+    website: formData.get("website") ?? "",
+    email: formData.get("email") ?? "",
+    country: formData.get("country") ?? "",
+    city: formData.get("city") ?? "",
+    taxNumber: formData.get("taxNumber") ?? "",
     loyaltyProgramName: formData.get("loyaltyProgramName") ?? "",
     pointsName: formData.get("pointsName") ?? "",
     membershipName: formData.get("membershipName") ?? "",
@@ -215,6 +252,14 @@ export async function updateBusinessSettingsAction(
         secondaryColor: parsed.data.secondaryColor,
         currency: optionalProfileValue(parsed.data.currency),
         timezone: optionalProfileValue(parsed.data.timezone),
+
+        industry: optionalProfileValue(parsed.data.industry),
+        website: optionalProfileValue(parsed.data.website),
+        email: optionalProfileValue(parsed.data.email),
+        country: optionalProfileValue(parsed.data.country),
+        city: optionalProfileValue(parsed.data.city),
+        taxNumber: optionalProfileValue(parsed.data.taxNumber),
+        
         loyaltyProgramName: parsed.data.loyaltyProgramName || null,
         pointsName: parsed.data.pointsName || null,
         membershipName: parsed.data.membershipName || null,

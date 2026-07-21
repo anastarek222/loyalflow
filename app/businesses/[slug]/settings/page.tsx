@@ -299,6 +299,14 @@ export default async function BusinessSettingsPage({
             secondaryColor: business.secondaryColor,
             currency: business.currency,
             timezone: business.timezone,
+        
+            industry: business.industry, 
+            website: business.website,
+            email: business.email,
+            country: business.country, 
+            city: business.city,
+            taxNumber: business.taxNumber,
+
             loyaltyProgramName: business.loyaltyProgramName,
             pointsName: business.pointsName,
             membershipName: business.membershipName,

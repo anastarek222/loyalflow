@@ -96,20 +96,189 @@ export default async function BusinessesPage({
               Create an independent loyalty program for a client.
             </p>
 
-            <form action={createBusinessAction} className="mt-6 space-y-5">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Business name
-                </label>
+     <form action={createBusinessAction} className="mt-6 space-y-5">
+       <div>
+         <label className="mb-2 block text-sm font-medium text-slate-700">
+           Business name
+         </label>
 
-                <input
-                  name="name"
-                  required
-                  placeholder="Example: Elite Barber"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                />
-              </div>
+         <input
+           name="name"
+           required
+           placeholder="Example: Elite Barber"
+           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+         />
+       </div>
 
+      <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+         Your business link is generated automatically from the business name.
+      </p>
+
+       <div>
+         <label className="mb-2 block text-sm font-medium text-slate-700">
+          Business phone
+         </label>
+
+         <input
+           name="contactPhone"
+           type="tel"
+           placeholder="+20 100 000 0000"
+           maxLength={25}
+           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+         />
+       </div>
+
+<section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+  <h3 className="text-lg font-semibold text-slate-900">
+    Business owner
+</h3>
+
+<p className="mt-1 text-sm text-slate-500">
+  Create the primary owner account for this business.
+</p>
+
+<div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        First name
+      </label>
+
+      <input
+        name="ownerFirstName"
+        required
+        placeholder="First name"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Last name
+      </label>
+
+      <input
+        name="ownerLastName"
+        placeholder="Last name"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Owner email
+      </label>
+
+      <input
+        name="ownerEmail"
+        type="email"
+        required
+        placeholder="owner@example.com"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Temporary password
+      </label>
+
+      <input
+        name="ownerPassword"
+        type="password"
+        required
+        minLength={8}
+        placeholder="Minimum 8 characters"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+  </div>
+</section>
+
+<section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+  <h3 className="text-lg font-semibold text-slate-900">
+    Business information
+  </h3>
+
+  <p className="mt-1 text-sm text-slate-500">
+    Business profile and contact information.
+  </p>
+
+  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Industry
+      </label>
+
+      <input
+        name="industry"
+        placeholder="Barber Shop"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Business email
+      </label>
+
+      <input
+        name="email"
+        type="email"
+        placeholder="info@example.com"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div className="sm:col-span-2">
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Website
+      </label>
+
+      <input
+        name="website"
+        type="url"
+        placeholder="https://example.com"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Country
+      </label>
+
+      <input
+        name="country"
+        placeholder="Egypt"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        City
+      </label>
+
+      <input
+        name="city"
+        placeholder="Cairo"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div className="sm:col-span-2">
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        Tax number
+      </label>
+
+      <input
+        name="taxNumber"
+        placeholder="Optional"
+        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+  </div>
+</section>
               <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                 Your business link is generated automatically from the business name.
               </p>
