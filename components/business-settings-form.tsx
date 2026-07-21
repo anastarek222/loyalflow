@@ -101,8 +101,14 @@ export default function BusinessSettingsForm({
   const [taxNumber, setTaxNumber] = useState(business.taxNumber ?? "");
 
   const [coverImageUrl, setCoverImageUrl] = useState(
+    business.coverImageUrl?.startsWith("http") ? business.coverImageUrl : "",
+  );
+
+  const [coverImagePreview, setCoverImagePreview] = useState(
     business.coverImageUrl ?? "",
   );
+
+  const [removeCoverImage, setRemoveCoverImage] = useState(false);
 
   const [loyaltyProgramName, setLoyaltyProgramName] = useState(
     business.loyaltyProgramName ?? "",
@@ -430,20 +436,122 @@ export default function BusinessSettingsForm({
                 المرحلة.
               </p>
 
-              <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  رابط صورة الغلاف
-                </label>
+              <div className="mt-4 space-y-4">
+                {coverImagePreview && !removeCoverImage && (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <img
+                      src={coverImagePreview}
+                      alt="Cover preview"
+                      className="h-40 w-full object-cover"
+                    />
+                  </div>
+                )}
 
-                <input
-                  name="coverImageUrl"
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(event) => setCoverImageUrl(event.target.value)}
-                  maxLength={500}
-                  placeholder="https://example.com/cover.jpg"
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                />
+                <div>
+                  <label
+                    htmlFor="coverImageFile"
+                    className="mb-2 block text-sm font-medium text-slate-700"
+                  >
+                    رفع صورة الغلاف
+                  </label>
+
+                  <input
+                    id="coverImageFile"
+                    name="coverImageFile"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+
+                      if (!file) {
+                        return;
+                      }
+
+                      const previewUrl = URL.createObjectURL(file);
+
+                      setCoverImagePreview(previewUrl);
+                      setCoverImageUrl("");
+                      setRemoveCoverImage(false);
+                    }}
+                    className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700"
+                  />
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    PNG أو JPG أو WebP بحد أقصى 1MB.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <span className="text-xs font-semibold text-slate-400">
+                    أو
+                  </span>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    رابط صورة الغلاف
+                  </label>
+
+                  <input
+                    name="coverImageUrl"
+                    type="url"
+                    value={coverImageUrl}
+                    onChange={(event) => {
+                      const value = event.target.value;
+
+                      setCoverImageUrl(value);
+                      setRemoveCoverImage(false);
+                      setCoverImagePreview(
+                        value || business.coverImageUrl || "",
+                      );
+
+                      const fileInput = document.getElementById(
+                        "coverImageFile",
+                      ) as HTMLInputElement | null;
+
+                      if (value && fileInput) {
+                        fileInput.value = "";
+                      }
+                    }}
+                    maxLength={500}
+                    placeholder="https://example.com/cover.jpg"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  />
+                </div>
+
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <input
+                    name="removeCoverImage"
+                    type="checkbox"
+                    checked={removeCoverImage}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+
+                      setRemoveCoverImage(checked);
+
+                      const fileInput = document.getElementById(
+                        "coverImageFile",
+                      ) as HTMLInputElement | null;
+
+                      if (checked && fileInput) {
+                        fileInput.value = "";
+                      }
+
+                      setCoverImagePreview(
+                        checked
+                          ? ""
+                          : coverImageUrl || business.coverImageUrl || "",
+                      );
+                    }}
+                    className="h-4 w-4"
+                  />
+
+                  <span className="text-sm font-medium text-slate-700">
+                    حذف صورة الغلاف الحالية
+                  </span>
+                </label>
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
