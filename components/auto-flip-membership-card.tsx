@@ -785,7 +785,23 @@ export default function AutoFlipMembershipCard({
                 safeSecondaryColor,
             }}
           >
-            <div className="flex h-full min-h-[430px] flex-col p-6 sm:p-7">
+            <div
+              className="absolute inset-x-0 top-0 h-1.5"
+              style={{
+                backgroundColor:
+                  safePrimaryColor,
+              }}
+            />
+
+            <div
+              className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full opacity-10 blur-3xl"
+              style={{
+                backgroundColor:
+                  safePrimaryColor,
+              }}
+            />
+
+            <div className="relative flex h-full min-h-[430px] flex-col p-6 sm:p-7">
               <header className="flex items-start justify-between gap-4">
                 <div>
                   <p
@@ -820,7 +836,7 @@ export default function AutoFlipMembershipCard({
                 </span>
               </header>
 
-              <div className="mt-5 grid flex-1 grid-cols-[1fr_auto] items-center gap-5">
+              <div className="mt-5 grid flex-1 grid-cols-1 items-center gap-5 sm:grid-cols-[1fr_auto]">
                 <div className="min-w-0">
                   {rewardDescription && (
                     <p
@@ -904,7 +920,7 @@ export default function AutoFlipMembershipCard({
                       alt={
                         text.scanCard
                       }
-                      className="h-32 w-32 object-contain sm:h-36 sm:w-36"
+                      className="h-28 w-28 object-contain sm:h-36 sm:w-36"
                     />
                   </div>
 
