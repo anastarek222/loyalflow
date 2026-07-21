@@ -231,5 +231,5 @@ try {
   revalidatePath("/businesses");
   revalidatePath("/dashboard");
 
-  redirect("/businesses?created=1");
+  redirect(`/businesses/${createdBusiness.slug}/users?created=business`);
 }

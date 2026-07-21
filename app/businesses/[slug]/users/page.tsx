@@ -125,6 +125,12 @@ export default async function UsersPage({
           </div>
         </header>
 
+        {query.created === "business" && (
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+            تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء الفريق.
+          </div>
+        )}
+
         {query.created === "1" && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
             تم إنشاء الحساب بنجاح.
@@ -168,6 +174,12 @@ export default async function UsersPage({
         {query.error === "role" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             يمكن للمالك إنشاء حسابات موظفين فقط.
+          </div>
+        )}
+
+        {query.error === "owner-exists" && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            يوجد بالفعل مالك أساسي لهذا النشاط. لا يمكن إنشاء مالك إضافي.
           </div>
         )}
 
@@ -297,7 +309,7 @@ export default async function UsersPage({
                   name="role"
                   defaultValue={
                     isSuperAdmin
-                      ? "OWNER"
+                      ? "MANAGER"
                       : "STAFF"
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
