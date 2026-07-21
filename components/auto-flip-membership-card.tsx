@@ -162,6 +162,9 @@ const dictionary = {
     copyLink:
       "نسخ الرابط",
 
+    copied:
+      "تم النسخ ✓",
+
     installCard:
       "إضافة للشاشة الرئيسية",
 
@@ -262,6 +265,9 @@ const dictionary = {
 
     copyLink:
       "Copy link",
+
+    copied:
+      "Copied ✓",
 
     installCard:
       "Add to Home Screen",
@@ -377,6 +383,12 @@ export default function AutoFlipMembershipCard({
   const [
     reduceMotion,
     setReduceMotion,
+  ] =
+    useState(false);
+
+  const [
+    copied,
+    setCopied,
   ] =
     useState(false);
 
@@ -721,9 +733,31 @@ export default function AutoFlipMembershipCard({
 
   async function copyCardLink() {
     try {
-      await navigator.clipboard.writeText(cardUrl);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(cardUrl);
+      } else {
+        const textarea =
+          document.createElement("textarea");
+
+        textarea.value = cardUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      setCopied(true);
+
+      window.setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     } catch {
-      // Clipboard access may be unavailable.
+      setCopied(false);
     }
   }
 
@@ -1252,7 +1286,9 @@ export default function AutoFlipMembershipCard({
           onClick={copyCardLink}
           className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
         >
-          {text.copyLink}
+          {copied
+            ? text.copied
+            : text.copyLink}
         </button>
 
         <button
