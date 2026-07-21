@@ -394,9 +394,22 @@ export default async function PublicCardPage({
     );
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-5 sm:py-10">
+    <main
+      className="relative min-h-screen overflow-hidden px-4 py-5 sm:py-10"
+      style={{
+        background: `linear-gradient(160deg, ${business.primaryColor} 0%, #020617 55%, #0f172a 100%)`,
+      }}
+    >
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 opacity-20"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 28%), radial-gradient(circle at 85% 30%, rgba(255,255,255,0.16), transparent 24%)",
+        }}
+      />
 
-      <div className="mx-auto mb-6 w-full max-w-md">
+      <div className="relative z-10 mx-auto mb-6 w-full max-w-md">
         <AutoFlipMembershipCard
           businessName={
             business.name
