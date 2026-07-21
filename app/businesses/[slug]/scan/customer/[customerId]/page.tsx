@@ -12,12 +12,30 @@ type PageProps = {
     slug: string;
     customerId: string;
   }>;
+  searchParams: Promise<{
+    success?: string;
+    error?: string;
+  }>;
 };
 
 export default async function ScanCustomerPage({
   params,
+  searchParams,
 }: PageProps) {
   const { slug, customerId } = await params;
+  const query = await searchParams;
+
+  const successMessage =
+    query.success === "earned"
+      ? "✅ تم تسجيل العملية بنجاح"
+      : query.success === "redeemed"
+        ? "🎁 تم استبدال المكافأة بنجاح"
+        : null;
+
+  const errorMessage =
+    query.error
+      ? "حدث خطأ، حاول مرة أخرى"
+      : null;
 
   const customer =
     await prisma.customer.findFirst({
@@ -84,6 +102,18 @@ export default async function ScanCustomerPage({
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8">
       <section className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow">
+
+        {successMessage ? (
+          <div className="mb-5 rounded-2xl bg-emerald-100 p-4 text-center font-black text-emerald-800">
+            {successMessage}
+          </div>
+        ) : null}
+
+        {errorMessage ? (
+          <div className="mb-5 rounded-2xl bg-red-100 p-4 text-center font-black text-red-800">
+            {errorMessage}
+          </div>
+        ) : null}
 
         <h1 className="text-2xl font-black text-slate-950">
           {fullName}
