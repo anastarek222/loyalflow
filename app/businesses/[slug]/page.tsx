@@ -561,6 +561,23 @@ export default async function BusinessPage({
               (completedSteps / 4) * 100
             );
 
+          const nextStep = !profileComplete
+            ? {
+                label: "استكمال بيانات النشاط",
+                href: `/businesses/${business.slug}/settings`,
+              }
+            : !teamComplete
+              ? {
+                  label: "إضافة أعضاء الفريق",
+                  href: `/businesses/${business.slug}/users`,
+                }
+              : !brandingComplete
+                ? {
+                    label: "استكمال الهوية",
+                    href: `/businesses/${business.slug}/settings`,
+                  }
+                : null;
+
           return (
             <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:mt-8 sm:p-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -595,6 +612,39 @@ export default async function BusinessPage({
                     width: `${progress}%`,
                   }}
                 />
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                {nextStep ? (
+                  <>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">
+                        الخطوة التالية المقترحة
+                      </p>
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        {nextStep.label}
+                      </p>
+                    </div>
+
+                    <Link
+                      href={nextStep.href}
+                      className="inline-flex justify-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-700"
+                    >
+                      متابعة الإعداد
+                    </Link>
+                  </>
+                ) : (
+                  <div>
+                    <p className="text-sm font-bold text-emerald-700">
+                      ✓ النشاط جاهز للتشغيل
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      تم استكمال الخطوات الأساسية لإعداد النشاط.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
