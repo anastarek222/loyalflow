@@ -1,5 +1,8 @@
 import { auth } from "@/auth";
-import { canAccessBusiness } from "@/lib/permissions";
+import {
+  canAccessBusiness,
+  canPerform,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -50,6 +53,18 @@ export default async function ScanCustomerPage({
   if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
+
+  const canEarn = canPerform(
+    session.user,
+    business.id,
+    "LOYALTY_EARN"
+  );
+
+  const canRedeem = canPerform(
+    session.user,
+    business.id,
+    "LOYALTY_REDEEM"
+  );
 
   const successMessage =
     query.success === "earned"
@@ -245,6 +260,7 @@ export default async function ScanCustomerPage({
         ) : null}
 
 
+        {canEarn ? (
         <form
           action={earnAction}
           className="mt-6"
@@ -276,6 +292,7 @@ export default async function ScanCustomerPage({
           </ScanActionButton>
 
         </form>
+        ) : null}
 
 
       {customer.rewardUnlocks.length > 0 ? (
@@ -311,14 +328,16 @@ export default async function ScanCustomerPage({
               </p>
             ) : null}
 
-            <form
-              action={redeemAction}
-              className="mt-3"
-            >
-              <ScanActionButton>
-                استبدال المكافأة
-              </ScanActionButton>
-            </form>
+            {canRedeem ? (
+              <form
+                action={redeemAction}
+                className="mt-3"
+              >
+                <ScanActionButton>
+                  استبدال المكافأة
+                </ScanActionButton>
+              </form>
+            ) : null}
 
           </div>
         );
