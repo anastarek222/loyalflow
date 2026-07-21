@@ -14,6 +14,9 @@ type PublicCardPageProps = {
   params: Promise<{
     token: string;
   }>;
+  searchParams: Promise<{
+    welcome?: string;
+  }>;
 };
 
 export async function generateMetadata({
@@ -153,8 +156,11 @@ function renderCardTemplate(
 
 export default async function PublicCardPage({
   params,
+  searchParams,
 }: PublicCardPageProps) {
   const { token } = await params;
+  const query = await searchParams;
+  const showWelcome = query.welcome === "1";
 
   /*
    * publicToken مختلف لكل عميل،
@@ -406,6 +412,25 @@ export default async function PublicCardPage({
       />
 
       <div className="relative z-10 mx-auto mb-6 w-full max-w-md">
+        {showWelcome ? (
+          <section
+            dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
+            className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-center backdrop-blur-sm"
+          >
+            <h2 className="text-lg font-black text-emerald-100">
+              {business.cardDefaultLanguage === "AR"
+                ? "🎉 تم إنشاء كارتك بنجاح"
+                : "🎉 Your card is ready"}
+            </h2>
+
+            <p className="mt-1 text-sm leading-6 text-emerald-50/90">
+              {business.cardDefaultLanguage === "AR"
+                ? `أهلاً بك في برنامج ولاء ${business.name}. كارتك جاهز للاستخدام.`
+                : `Welcome to ${business.name}'s loyalty program. Your digital card is ready to use.`}
+            </p>
+          </section>
+        ) : null}
+
         <AutoFlipMembershipCard
           businessName={
             business.name
