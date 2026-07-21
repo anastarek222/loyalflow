@@ -12,6 +12,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Users, BarChart3, ScanLine, Settings, UserCog } from "lucide-react";
 
+import DashboardCharts from "@/components/dashboard-charts";
+
 import { logoutAction } from "./actions";
 
 type QuickAction = {
@@ -641,6 +643,136 @@ export default async function DashboardPage() {
       />
     );
   }
+
+  const chartStartDate = new Date();
+  chartStartDate.setDate(chartStartDate.getDate() - 30);
+
+
+  const [
+    loyaltyTransactions,
+    customerGrowthData,
+    rewardRedemptions,
+  ] = await Promise.all([
+
+    prisma.loyaltyTransaction.findMany({
+      where: {
+        businessId: business.id,
+        createdAt: {
+          gte: chartStartDate,
+        },
+      },
+      select: {
+        type: true,
+        createdAt: true,
+        amount: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    }),
+
+    prisma.customer.findMany({
+      where: {
+        businessId: business.id,
+        createdAt: {
+          gte: chartStartDate,
+        },
+      },
+      select: {
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    }),
+
+    prisma.rewardRedemption.findMany({
+      where: {
+        businessId: business.id,
+        createdAt: {
+          gte: chartStartDate,
+        },
+      },
+      select: {
+        rewardName: true,
+      },
+    }),
+
+  ]);
+
+
+  const loyaltyGrowth =
+    loyaltyTransactions.reduce<
+      {
+        date: string;
+        earned: number;
+        redeemed: number;
+      }[]
+    >((acc, item) => {
+
+      const date =
+        item.createdAt.toISOString().slice(5,10);
+
+      const existing =
+        acc.find(
+          (x)=>x.date === date
+        );
+
+      if(existing){
+        if(item.type === "EARN"){
+          existing.earned += item.amount;
+        } else {
+          existing.redeemed += item.amount;
+        }
+      } else {
+        acc.push({
+          date,
+          earned:
+            item.type === "EARN"
+              ? item.amount
+              : 0,
+          redeemed:
+            item.type === "REDEEM"
+              ? item.amount
+              : 0,
+        });
+      }
+
+      return acc;
+
+    },[]);
+
+
+  const customerGrowth =
+    customerGrowthData.map(
+      (customer)=>({
+        date:
+          customer.createdAt
+            .toISOString()
+            .slice(5,10),
+        customers:1,
+      })
+    );
+
+
+  const rewardStats =
+    Object.entries(
+      rewardRedemptions.reduce(
+        (acc: Record<string,number>, item)=>{
+          acc[item.rewardName] =
+            (acc[item.rewardName] ?? 0)+1;
+
+          return acc;
+        },
+        {}
+      )
+    )
+    .map(([name, redeemed])=>({
+      name,
+      redeemed,
+    }));
+
+
 
   const [
     activeCustomers,
