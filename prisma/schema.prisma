@@ -43,6 +43,16 @@ model Business {
   city      String?
   taxNumber String?
 
+  description String?
+
+  instagramUrl String?
+  facebookUrl String?
+  tiktokUrl String?
+
+  themePreset String @default("DEFAULT")
+  cardStyle String @default("CLASSIC")
+  fontFamily String @default("INTER")
+
   allowOwnerDataExport     Boolean                 @default(false)
   staffAttributionEnabled  Boolean                 @default(false)
   staffAttributionRequired Boolean                 @default(false)
