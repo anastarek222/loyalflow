@@ -38,6 +38,12 @@ export default async function AuthenticatedLocaleShell({
         firstName: true,
         lastName: true,
         role: true,
+        businessId: true,
+        business: {
+          select: {
+            slug: true,
+          },
+        },
       },
     });
 
@@ -70,6 +76,8 @@ export default async function AuthenticatedLocaleShell({
 
         <AppSidebar
           language={language}
+          businessSlug={user?.business?.slug}
+          role={user?.role}
         />
 
 
