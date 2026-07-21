@@ -7,7 +7,8 @@ import {
 
 import prisma from "@/lib/prisma";
 
-import LanguageSwitcher from "@/components/language-switcher";
+import AppSidebar from "@/components/app-sidebar";
+import AppTopbar from "@/components/app-topbar";
 
 import { redirect } from "next/navigation";
 
@@ -18,35 +19,37 @@ type AuthenticatedLocaleShellProps = {
 export default async function AuthenticatedLocaleShell({
   children,
 }: AuthenticatedLocaleShellProps) {
-  const session =
-    await auth();
+
+  const session = await auth();
 
   if (!session?.user?.id) {
     redirect("/login");
   }
 
+
   const user =
     await prisma.user.findUnique({
       where: {
-        id:
-          session.user.id,
+        id: session.user.id,
       },
 
       select: {
-        language:
-          true,
+        language: true,
       },
     });
+
 
   const language =
     normalizeLanguage(
       user?.language
     );
 
+
   const direction =
     getLanguageDirection(
       language
     );
+
 
   return (
     <div
@@ -56,16 +59,32 @@ export default async function AuthenticatedLocaleShell({
           : "en"
       }
       dir={direction}
-      data-app-language={
-        language
-      }
-      className="min-h-screen"
+      data-app-language={language}
+      className="min-h-screen bg-slate-50"
     >
-      <LanguageSwitcher
-        language={language}
-      />
 
-      {children}
+      <div className="flex min-h-screen">
+
+        <AppSidebar
+          language={language}
+        />
+
+
+        <div className="flex min-w-0 flex-1 flex-col">
+
+          <AppTopbar
+            language={language}
+          />
+
+
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
+
+        </div>
+
+      </div>
+
     </div>
   );
 }
