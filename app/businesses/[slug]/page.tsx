@@ -579,7 +579,13 @@ export default async function BusinessPage({
           const teamComplete =
             business._count.users > 1;
 
-          const loyaltyComplete = true;
+          const loyaltyComplete =
+            Boolean(
+              business.unitName?.trim() &&
+              business.rewardName?.trim() &&
+              business.rewardThreshold > 0 &&
+              business.earnAmount > 0
+            );
 
           const brandingComplete =
             Boolean(
@@ -609,12 +615,17 @@ export default async function BusinessPage({
                   label: "إضافة أعضاء الفريق",
                   href: `/businesses/${business.slug}/users`,
                 }
-              : !brandingComplete
+              : !loyaltyComplete
                 ? {
-                    label: "استكمال الهوية",
+                    label: "استكمال إعدادات برنامج الولاء",
                     href: `/businesses/${business.slug}/settings`,
                   }
-                : null;
+                : !brandingComplete
+                  ? {
+                      label: "استكمال الهوية",
+                      href: `/businesses/${business.slug}/settings`,
+                    }
+                  : null;
 
           return (
             <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:mt-8 sm:p-6">
