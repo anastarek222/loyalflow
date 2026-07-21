@@ -67,8 +67,16 @@ export async function joinBusinessAction(
         phone: parsed.phone,
       },
     },
-    select: { id: true },
+    select: {
+      id: true,
+      publicToken: true,
+      isActive: true,
+    },
   });
+
+  if (existingCustomer?.isActive) {
+    redirect(`/card/${existingCustomer.publicToken}`);
+  }
 
   if (existingCustomer) {
     redirect(`/join/${business.slug}?error=duplicate`);
