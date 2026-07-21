@@ -10,6 +10,7 @@ import {
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Building2, Users, Gift, CreditCard, BarChart3, ScanLine, Settings, UserCog } from "lucide-react";
 
 import { logoutAction } from "./actions";
 
@@ -916,6 +917,7 @@ type DashboardLayoutProps = {
   actions: QuickAction[];
 };
 
+
 function DashboardLayout({
   language,
   name,
@@ -926,220 +928,216 @@ function DashboardLayout({
   stats,
   actions,
 }: DashboardLayoutProps) {
+
   const dictionary =
     dashboardDictionary[language];
 
   const direction =
-    getLanguageDirection(
-      language
-    );
+    getLanguageDirection(language);
 
   const locale =
-    getLanguageLocale(
-      language
-    );
+    getLanguageLocale(language);
 
   const numberFormatter =
-    new Intl.NumberFormat(
-      locale
-    );
+    new Intl.NumberFormat(locale);
+
+
+  const actionIcons = [
+    BarChart3,
+    Users,
+    ScanLine,
+    UserCog,
+    BarChart3,
+    Settings,
+  ];
+
 
   return (
     <main
       dir={direction}
-      className="min-h-screen bg-slate-100 px-4 pb-10 pt-20 sm:px-8 sm:pb-12 sm:pt-24"
+      className="min-h-screen bg-slate-50 px-4 py-8 sm:px-8"
     >
+
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl">
-          <div className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-              <p className="text-sm font-black text-cyan-300">
-                {eyebrow}
-              </p>
 
-              <p
-                dir="auto"
-                className="mt-2 text-sm font-bold text-white/65"
-              >
-                {title}
-              </p>
 
-              <h1 className="mt-3 text-2xl font-black sm:text-4xl">
-                {dictionary.welcome},{" "}
-                <span dir="auto">
-                  {name}
-                </span>
-              </h1>
+        <section className="overflow-hidden rounded-3xl bg-slate-950 p-8 text-white shadow-xl">
 
-              <p
-                dir="ltr"
-                className="mt-3 text-left text-sm text-slate-400 rtl:text-right"
-              >
-                {email}
-              </p>
+          <p className="text-sm font-black text-cyan-300">
+            {eyebrow}
+          </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-black text-white/90">
-                  {dictionary.role}:{" "}
-                  {getRoleLabel(
-                    role,
-                    language
-                  )}
-                </span>
-              </div>
-            </div>
 
-            <form
-              action={
-                logoutAction
-              }
-            >
-              <button
-                type="submit"
-                className="w-full rounded-xl border border-white/20 bg-white/10 px-6 py-3 font-black text-white transition hover:bg-white/20 lg:w-auto"
-              >
-                {dictionary.signOut}
-              </button>
-            </form>
+          <h1 className="mt-3 text-3xl font-black sm:text-5xl">
+            {dictionary.welcome},{" "}
+            <span>
+              {name}
+            </span>
+          </h1>
+
+
+          <p className="mt-3 text-slate-400">
+            {title}
+          </p>
+
+
+          <div className="mt-5 flex flex-wrap gap-3">
+
+            <span className="rounded-full bg-white/10 px-4 py-2 text-sm font-bold">
+              {getRoleLabel(role, language)}
+            </span>
+
+
+            <span className="rounded-full bg-white/10 px-4 py-2 text-sm">
+              {email}
+            </span>
+
           </div>
-        </header>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {stats.map(
-            (stat) => (
-              <StatCard
-                key={
-                  stat.label
-                }
-                stat={stat}
-                formatter={
-                  numberFormatter
-                }
-              />
-            )
-          )}
         </section>
 
-        <section className="mt-8">
+
+
+        <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+          {stats.map((stat, index)=>(
+            <StatCard
+              key={stat.label}
+              stat={stat}
+              formatter={numberFormatter}
+              icon={actionIcons[index % actionIcons.length]}
+            />
+          ))}
+
+        </section>
+
+
+
+        <section className="mt-10">
+
           <div className="mb-5">
-            <h2 className="text-xl font-black text-slate-950 sm:text-2xl">
+
+            <h2 className="text-2xl font-black text-slate-950">
               {dictionary.quickActions}
             </h2>
 
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              {
-                dictionary.quickActionsDescription
-              }
+
+            <p className="mt-2 text-slate-500">
+              {dictionary.quickActionsDescription}
             </p>
+
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {actions.map(
-              (action) => (
+
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+
+            {actions.map((action, index)=>{
+
+              const Icon =
+                actionIcons[index % actionIcons.length];
+
+
+              return (
                 <Link
-                  key={
-                    action.href
-                  }
-                  href={
-                    action.href
-                  }
-                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-lg"
+                  key={action.href}
+                  href={action.href}
+                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                 >
-                  <div
-                    className={`h-1.5 ${
-                      action.accent ??
-                      "bg-violet-600"
-                    }`}
-                  />
 
-                  <div className="p-5 sm:p-6">
-                    <div className="flex items-start gap-4">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-2xl transition group-hover:scale-105">
-                        {
-                          action.icon
-                        }
-                      </span>
+                  <div className="flex items-center gap-4">
 
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-black text-slate-950">
-                          {
-                            action.title
-                          }
-                        </h3>
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white">
 
-                        <p className="mt-2 text-sm leading-6 text-slate-500">
-                          {
-                            action.description
-                          }
-                        </p>
-                      </div>
+                      <Icon size={26}/>
+
                     </div>
+
+
+                    <div>
+
+                      <h3 className="text-lg font-black text-slate-950">
+                        {action.title}
+                      </h3>
+
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        {action.description}
+                      </p>
+
+                    </div>
+
                   </div>
+
                 </Link>
-              )
-            )}
+              );
+
+            })}
+
           </div>
+
         </section>
+
+
       </div>
+
     </main>
   );
 }
 
+
+
+
+
 function StatCard({
   stat,
   formatter,
+  icon: Icon,
 }: {
   stat: DashboardStat;
-  formatter:
-    Intl.NumberFormat;
+  formatter: Intl.NumberFormat;
+  icon: React.ElementType;
 }) {
-  const toneClasses = {
-    default:
-      "bg-slate-950 text-white",
 
-    emerald:
-      "bg-emerald-50 text-emerald-950 ring-emerald-100",
-
-    violet:
-      "bg-violet-50 text-violet-950 ring-violet-100",
-
-    amber:
-      "bg-amber-50 text-amber-950 ring-amber-100",
-
-    cyan:
-      "bg-cyan-50 text-cyan-950 ring-cyan-100",
+  const tones = {
+    default: "bg-slate-950 text-white",
+    emerald: "bg-emerald-50 text-emerald-950",
+    violet: "bg-violet-50 text-violet-950",
+    amber: "bg-amber-50 text-amber-950",
+    cyan: "bg-cyan-50 text-cyan-950",
   };
 
-  const tone =
-    stat.tone ??
-    "default";
 
   return (
     <article
-      className={`rounded-2xl p-4 shadow-sm ring-1 sm:p-6 ${
-        toneClasses[tone]
+      className={`rounded-3xl p-6 shadow-sm ring-1 ring-slate-200 ${
+        tones[stat.tone ?? "default"]
       }`}
     >
-      <p className="text-xs font-black opacity-65 sm:text-sm">
-        {stat.label}
-      </p>
 
-      <p className="mt-3 text-2xl font-black sm:text-4xl">
-        {formatter.format(
-          stat.value
-        )}
-      </p>
+      <div className="flex items-center justify-between">
 
-      {stat.description && (
-        <p
-          dir="auto"
-          className="mt-2 truncate text-xs font-bold opacity-55"
-        >
-          {
-            stat.description
-          }
+        <p className="text-sm font-black opacity-70">
+          {stat.label}
         </p>
-      )}
+
+
+        <Icon size={22}/>
+
+      </div>
+
+
+      <p className="mt-5 text-4xl font-black">
+        {formatter.format(stat.value)}
+      </p>
+
+
+      {stat.description ? (
+        <p className="mt-2 text-xs font-bold opacity-60">
+          {stat.description}
+        </p>
+      ) : null}
+
     </article>
   );
 }
