@@ -486,46 +486,84 @@ export default async function BusinessPage({
           → الرجوع
         </Link>
 
-        <header
-          className="mt-5 rounded-3xl p-5 text-white shadow-xl sm:p-8"
-          style={{
-            backgroundColor: business.primaryColor,
-          }}
-        >
-          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            {business.logoUrl ? (
-              <img
-                src={business.logoUrl}
-                alt={`${business.name} logo`}
-                className="h-14 w-14 shrink-0 rounded-xl border border-white/20 bg-white object-contain p-2 shadow-sm sm:h-16 sm:w-16"
-              />
-            ) : (
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/15 text-2xl font-black sm:h-16 sm:w-16">
-                {business.name
-                  .trim()
-                  .charAt(0)
-                  .toUpperCase()}
+        <header className="relative mt-5 overflow-hidden rounded-3xl text-white shadow-xl">
+          {business.coverImageUrl ? (
+            <img
+              src={business.coverImageUrl}
+              alt={`${business.name} cover`}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundColor: business.primaryColor,
+              }}
+            />
+          )}
+
+          <div className="absolute inset-0 bg-black/45" />
+
+          <div className="relative p-5 sm:p-8">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                {business.logoUrl ? (
+                  <img
+                    src={business.logoUrl}
+                    alt={`${business.name} logo`}
+                    className="h-16 w-16 shrink-0 rounded-2xl border border-white/30 bg-white object-contain p-2 shadow-lg sm:h-20 sm:w-20"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-2xl font-black shadow-lg backdrop-blur-sm sm:h-20 sm:w-20">
+                    {business.name
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-white/70">
+                    لوحة تحكم النشاط
+                  </p>
+
+                  <h1
+                    dir="auto"
+                    className="mt-1 break-words text-2xl font-black sm:text-4xl"
+                  >
+                    {business.name}
+                  </h1>
+
+                  <div className="mt-2 flex flex-wrap gap-2 text-sm text-white/80">
+                    {business.industry && (
+                      <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
+                        {business.industry}
+                      </span>
+                    )}
+
+                    {(business.city || business.country) && (
+                      <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
+                        {[business.city, business.country]
+                          .filter(Boolean)
+                          .join("، ")}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
 
-            <div className="min-w-0">
-              <p className="text-sm text-white/70">
-                لوحة تحكم النشاط
-              </p>
+              <div className="rounded-2xl bg-black/20 px-4 py-3 backdrop-blur-sm">
+                <p className="text-xs text-white/60">
+                  رابط النشاط
+                </p>
 
-              <h1
-                dir="auto"
-                className="mt-1 break-words text-2xl font-bold sm:text-3xl"
-              >
-                {business.name}
-              </h1>
-
-              <p
-                dir="ltr"
-                className="mt-1 text-left text-sm text-white/70"
-              >
-                /{business.slug}
-              </p>
+                <p
+                  dir="ltr"
+                  className="mt-1 text-left text-sm font-semibold text-white"
+                >
+                  /{business.slug}
+                </p>
+              </div>
             </div>
           </div>
         </header>
