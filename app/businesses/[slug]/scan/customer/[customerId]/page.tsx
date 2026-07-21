@@ -1,5 +1,7 @@
+import { auth } from "@/auth";
+import { canAccessBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import ScanActionButton from "@/components/scan-action-button";
 import {
@@ -22,8 +24,32 @@ export default async function ScanCustomerPage({
   params,
   searchParams,
 }: PageProps) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const { slug, customerId } = await params;
   const query = await searchParams;
+
+  const business =
+    await prisma.business.findUnique({
+      where: {
+        slug,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  if (!business) {
+    notFound();
+  }
+
+  if (!canAccessBusiness(session.user, business.id)) {
+    redirect("/dashboard");
+  }
 
   const successMessage =
     query.success === "earned"
@@ -41,9 +67,7 @@ export default async function ScanCustomerPage({
     await prisma.customer.findFirst({
       where: {
         id: customerId,
-        business: {
-          slug,
-        },
+        businessId: business.id,
       },
 
       select: {
