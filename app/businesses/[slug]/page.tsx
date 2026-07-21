@@ -530,6 +530,136 @@ export default async function BusinessPage({
           </div>
         </header>
 
+        {(() => {
+          const profileComplete =
+            Boolean(
+              business.industry &&
+              business.email &&
+              business.country
+            );
+
+          const teamComplete =
+            business._count.users > 1;
+
+          const loyaltyComplete = true;
+
+          const brandingComplete =
+            Boolean(
+              business.logoUrl ||
+              business.coverImageUrl
+            );
+
+          const completedSteps = [
+            profileComplete,
+            teamComplete,
+            loyaltyComplete,
+            brandingComplete,
+          ].filter(Boolean).length;
+
+          const progress =
+            Math.round(
+              (completedSteps / 4) * 100
+            );
+
+          return (
+            <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:mt-8 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-violet-600">
+                    إعداد النشاط
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-bold text-slate-950">
+                    تقدّم إعداد {business.name}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    أكمل الخطوات الأساسية قبل بدء التشغيل الكامل.
+                  </p>
+                </div>
+
+                <div className="text-left">
+                  <p className="text-3xl font-black text-slate-950">
+                    {progress}%
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    مكتمل
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-violet-600 transition-all"
+                  style={{
+                    width: `${progress}%`,
+                  }}
+                />
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Link
+                  href={`/businesses/${business.slug}/settings`}
+                  className="rounded-2xl border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
+                >
+                  <p className="text-sm font-bold text-slate-900">
+                    {profileComplete ? "✓ " : ""}
+                    بيانات النشاط
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    البيانات الأساسية والتواصل.
+                  </p>
+                </Link>
+
+                {canManageUsers && (
+                  <Link
+                    href={`/businesses/${business.slug}/users`}
+                    className="rounded-2xl border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
+                  >
+                    <p className="text-sm font-bold text-slate-900">
+                      {teamComplete ? "✓ " : ""}
+                      الفريق
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      إضافة المديرين والموظفين.
+                    </p>
+                  </Link>
+                )}
+
+                <Link
+                  href={`/businesses/${business.slug}/settings`}
+                  className="rounded-2xl border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
+                >
+                  <p className="text-sm font-bold text-slate-900">
+                    {loyaltyComplete ? "✓ " : ""}
+                    برنامج الولاء
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    النظام والمكافآت والقواعد.
+                  </p>
+                </Link>
+
+                <Link
+                  href={`/businesses/${business.slug}/settings`}
+                  className="rounded-2xl border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
+                >
+                  <p className="text-sm font-bold text-slate-900">
+                    {brandingComplete ? "✓ " : ""}
+                    الهوية
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    الشعار والغلاف والألوان.
+                  </p>
+                </Link>
+              </div>
+            </section>
+          );
+        })()}
+
         {business.loyaltyMode ===
           "SALES_AMOUNT" && (
             <BusinessSalesKpis
