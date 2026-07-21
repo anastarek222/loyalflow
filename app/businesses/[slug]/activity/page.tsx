@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -175,10 +176,11 @@ export default async function ActivityPage({
     notFound();
   }
 
-  const canViewActivity =
-    session.user.role === "SUPER_ADMIN" ||
-    (session.user.role === "OWNER" &&
-      session.user.businessId === business.id);
+  const canViewActivity = canPerform(
+    session.user,
+    business.id,
+    "REPORTS_VIEW"
+  );
 
   if (!canViewActivity) {
     redirect(`/businesses/${business.slug}`);

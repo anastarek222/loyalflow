@@ -1,6 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
+import {
+  createWithGeneratedSlug,
+  isSupportedCurrency,
+  isValidIanaTimezone,
+  isValidBusinessPhone,
+  optionalProfileValue,
+} from "@/lib/business-profile";
 import prisma from "@/lib/prisma";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
@@ -9,12 +16,19 @@ import { z } from "zod";
 
 const businessSchema = z.object({
   name: z.string().trim().min(2).max(80),
-  slug: z
+  contactPhone: z
     .string()
     .trim()
-    .min(2)
-    .max(50)
-    .regex(/^[a-z0-9-]+$/),
+    .max(25)
+    .refine((value) => value === "" || isValidBusinessPhone(value)),
+  currency: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || isSupportedCurrency(value)),
+  timezone: z
+    .string()
+    .trim()
+    .refine((value) => value === "" || isValidIanaTimezone(value)),
   loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
   unitName: z.string().trim().min(1).max(30),
   rewardName: z.string().trim().min(2).max(100),
@@ -37,7 +51,9 @@ export async function createBusinessAction(formData: FormData) {
 
   const parsed = businessSchema.safeParse({
     name: formData.get("name"),
-    slug: formData.get("slug"),
+    contactPhone: formData.get("contactPhone") ?? "",
+    currency: formData.get("currency") ?? "",
+    timezone: formData.get("timezone") ?? "",
     loyaltyMode: formData.get("loyaltyMode"),
     unitName: formData.get("unitName"),
     rewardName: formData.get("rewardName"),
@@ -51,29 +67,42 @@ export async function createBusinessAction(formData: FormData) {
     redirect("/businesses?error=invalid");
   }
 
-  const existingBusiness = await prisma.business.findUnique({
-    where: {
-      slug: parsed.data.slug,
-    },
-  });
+  let createdBusiness;
 
-  if (existingBusiness) {
-    redirect("/businesses?error=slug");
+  try {
+    createdBusiness = await createWithGeneratedSlug(
+      parsed.data.name,
+      (slug) =>
+        prisma.business.create({
+          data: {
+            name: parsed.data.name,
+            slug,
+            contactPhone:
+              optionalProfileValue(parsed.data.contactPhone),
+            currency:
+              optionalProfileValue(parsed.data.currency),
+            timezone:
+              optionalProfileValue(parsed.data.timezone),
+            loyaltyMode: parsed.data.loyaltyMode,
+            unitName: parsed.data.unitName,
+            rewardName: parsed.data.rewardName,
+            rewardThreshold: parsed.data.rewardThreshold,
+            earnAmount: parsed.data.earnAmount,
+            primaryColor: parsed.data.primaryColor,
+            secondaryColor: parsed.data.secondaryColor,
+          },
+        })
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "SAFE_SLUG_GENERATION_FAILED"
+    ) {
+      redirect("/businesses?error=slug-generation");
+    }
+
+    throw error;
   }
-
-  const createdBusiness = await prisma.business.create({
-    data: {
-      name: parsed.data.name,
-      slug: parsed.data.slug,
-      loyaltyMode: parsed.data.loyaltyMode,
-      unitName: parsed.data.unitName,
-      rewardName: parsed.data.rewardName,
-      rewardThreshold: parsed.data.rewardThreshold,
-      earnAmount: parsed.data.earnAmount,
-      primaryColor: parsed.data.primaryColor,
-      secondaryColor: parsed.data.secondaryColor,
-    },
-  });
 
   await syncBusinessToGoogleSheetSafely(createdBusiness.id);
 

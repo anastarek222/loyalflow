@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import QrScanner from "@/components/qr-scanner";
+import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -41,9 +42,11 @@ export default async function ScanPage({
     notFound();
   }
 
-  const canAccess =
-    session.user.role === "SUPER_ADMIN" ||
-    session.user.businessId === business.id;
+  const canAccess = canPerform(
+    session.user,
+    business.id,
+    "LOYALTY_EARN"
+  );
 
   if (!canAccess) {
     redirect("/dashboard");

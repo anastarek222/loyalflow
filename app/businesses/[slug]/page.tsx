@@ -1,6 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { auth } from "@/auth";
+import {
+  getCustomerFilterSegments,
+  getCustomerSegmentLabel,
+  getCustomerSegmentWhere,
+} from "@/lib/customers/segments";
+import {
+  canAccessBusiness,
+  canManageBusiness,
+  canPerform,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import BusinessSalesKpis from "@/components/business-sales-kpis";
 import BusinessNotificationsDialog from "@/components/business-notifications-dialog";
@@ -44,17 +54,24 @@ export default async function BusinessPage({
     notFound();
   }
 
-  const canAccess =
-    session.user.role === "SUPER_ADMIN" ||
-    session.user.businessId === business.id;
-
-  if (!canAccess) {
+  if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
 
-  const canManageUsers =
-    session.user.role === "SUPER_ADMIN" ||
-    session.user.role === "OWNER";
+  const canManageBusinessSettings = canManageBusiness(
+    session.user,
+    business.id
+  );
+  const canManageUsers = canPerform(
+    session.user,
+    business.id,
+    "STAFF_MANAGE"
+  );
+  const canViewReports = canPerform(
+    session.user,
+    business.id,
+    "REPORTS_VIEW"
+  );
 
   const backUrl =
     session.user.role === "SUPER_ADMIN"
@@ -440,6 +457,23 @@ export default async function BusinessPage({
     unreadBalanceAdjustedCount +
     unreadLoyaltyEarnedCount;
 
+  const segmentCounts = await Promise.all(
+    getCustomerFilterSegments(business.loyaltyMode).map(async (segment) => [
+      segment,
+      await prisma.customer.count({
+        where: {
+          businessId: business.id,
+          ...getCustomerSegmentWhere(
+            segment,
+            business.rewardThreshold,
+            undefined,
+            business.earnAmount
+          ),
+        },
+      }),
+    ] as const)
+  );
+
   return (
     <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-5 text-right sm:px-8 sm:py-8">
       <BusinessNotificationsAutoRefresh />
@@ -570,7 +604,7 @@ export default async function BusinessPage({
                 loyaltyEarnedActivitiesWithReadState
               }
               canViewActivity={
-                canManageUsers
+                canViewReports
               }
             />
           </BusinessNotificationsDialog>
@@ -581,7 +615,7 @@ export default async function BusinessPage({
             مسح QR للعميل
           </Link>
 
-          {canManageUsers && (
+          {canViewReports && (
             <Link
               href={`/businesses/${business.slug}/reports`}
               className="inline-flex w-full justify-center rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
@@ -590,7 +624,7 @@ export default async function BusinessPage({
             </Link>
           )}
 
-          {canManageUsers && (
+          {canViewReports && (
             <Link
               href={`/businesses/${business.slug}/activity`}
               className="inline-flex w-full justify-center rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
@@ -599,7 +633,25 @@ export default async function BusinessPage({
             </Link>
           )}
 
-          {canManageUsers && (
+          {canManageBusinessSettings && (
+            <Link
+              href={`/businesses/${business.slug}/recovery`}
+              className="inline-flex w-full justify-center rounded-xl bg-amber-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-400 sm:w-auto"
+            >
+              استعادة العملاء
+            </Link>
+          )}
+
+          {canManageBusinessSettings && (
+            <Link
+              href={`/businesses/${business.slug}/campaigns`}
+              className="inline-flex w-full justify-center rounded-xl bg-violet-700 px-6 py-3 font-semibold text-white transition hover:bg-violet-800 sm:w-auto"
+            >
+              الحملات
+            </Link>
+          )}
+
+          {canManageBusinessSettings && (
             <Link
               href={`/businesses/${business.slug}/settings`}
               className="inline-flex w-full justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 font-semibold text-slate-800 transition hover:border-violet-400 hover:text-violet-700 sm:w-auto"
@@ -651,6 +703,45 @@ export default async function BusinessPage({
           </article>
         </section>
 
+        <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-xl font-bold text-slate-950">
+                شرائح العملاء
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                تصنيف تلقائي حسب تاريخ الانضمام وآخر نشاط وإجمالي الولاء.
+              </p>
+            </div>
+
+            <Link
+              href={`/businesses/${business.slug}/customers`}
+              className="text-sm font-semibold text-violet-600 hover:text-violet-800"
+            >
+              إدارة الشرائح ←
+            </Link>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {segmentCounts.map(([segment, count]) => (
+              <Link
+                key={segment}
+                href={`/businesses/${business.slug}/customers?segment=${segment}`}
+                className="rounded-2xl bg-slate-50 p-4 transition hover:bg-violet-50"
+              >
+                <p className="text-sm font-semibold text-slate-500">
+                  {getCustomerSegmentLabel(segment)}
+                </p>
+
+                <p className="mt-2 text-2xl font-black text-slate-950">
+                  {count}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="mt-8 grid gap-5 sm:grid-cols-2">
           <Link
             href={`/businesses/${business.slug}/customers`}
@@ -666,6 +757,21 @@ export default async function BusinessPage({
 
             <p className="mt-2 text-sm text-white/70">
               إضافة العملاء وإدارة الزيارات والنقاط والمكافآت.
+            </p>
+          </Link>
+
+          <Link
+            href={`/businesses/${business.slug}/offers`}
+            className="flex min-h-[155px] flex-col justify-center rounded-3xl border border-violet-200 bg-violet-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg sm:p-7"
+          >
+            <p className="text-sm text-violet-700">حوافز العملاء</p>
+
+            <h2 className="mt-2 text-2xl font-bold text-slate-950">
+              العروض
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-600">
+              عروض ظاهرة للعملاء المؤهلين، منفصلة عن النقاط والمكافآت.
             </p>
           </Link>
 

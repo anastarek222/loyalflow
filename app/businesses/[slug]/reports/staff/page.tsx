@@ -1,4 +1,9 @@
 import { auth } from "@/auth";
+import {
+  formatUtcDateInput,
+  parseUtcDateInput,
+} from "@/lib/analytics/date-range";
+import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 
@@ -18,58 +23,6 @@ type StaffReportsPageProps = {
   }>;
 };
 
-function formatDateInput(
-  date: Date
-) {
-  const year =
-    date.getUTCFullYear();
-
-  const month = String(
-    date.getUTCMonth() + 1
-  ).padStart(
-    2,
-    "0"
-  );
-
-  const day = String(
-    date.getUTCDate()
-  ).padStart(
-    2,
-    "0"
-  );
-
-  return `${year}-${month}-${day}`;
-}
-
-function parseDateInput(
-  value: string,
-  endOfDay = false
-) {
-  if (
-    !/^\d{4}-\d{2}-\d{2}$/.test(
-      value
-    )
-  ) {
-    return null;
-  }
-
-  const time =
-    endOfDay
-      ? "23:59:59.999"
-      : "00:00:00.000";
-
-  const date =
-    new Date(
-      `${value}T${time}Z`
-    );
-
-  return Number.isNaN(
-    date.getTime()
-  )
-    ? null
-    : date;
-}
-
 function roleLabel(
   role: string
 ) {
@@ -77,8 +30,14 @@ function roleLabel(
     case "OWNER":
       return "مالك";
 
+    case "MANAGER":
+      return "مدير";
+
     case "STAFF":
-      return "موظف";
+      return "موظف / كاشير";
+
+    case "VIEWER":
+      return "مشاهد";
 
     case "SUPER_ADMIN":
       return "مدير النظام";
@@ -139,13 +98,10 @@ export default async function StaffReportsPage({
   }
 
   const canViewReports =
-    session.user.role ===
-      "SUPER_ADMIN" ||
-    (
-      session.user.role ===
-        "OWNER" &&
-      session.user.businessId ===
-        business.id
+    canPerform(
+      session.user,
+      business.id,
+      "REPORTS_VIEW"
     );
 
   if (!canViewReports) {
@@ -158,7 +114,7 @@ export default async function StaffReportsPage({
     new Date();
 
   const defaultToInput =
-    formatDateInput(
+    formatUtcDateInput(
       today
     );
 
@@ -171,7 +127,7 @@ export default async function StaffReportsPage({
   );
 
   const defaultFromInput =
-    formatDateInput(
+    formatUtcDateInput(
       defaultFromDate
     );
 
@@ -190,12 +146,12 @@ export default async function StaffReportsPage({
     requestedToInput;
 
   let from =
-    parseDateInput(
+    parseUtcDateInput(
       fromInput
     );
 
   let to =
-    parseDateInput(
+    parseUtcDateInput(
       toInput,
       true
     );
@@ -213,12 +169,12 @@ export default async function StaffReportsPage({
       defaultToInput;
 
     from =
-      parseDateInput(
+      parseUtcDateInput(
         fromInput
       );
 
     to =
-      parseDateInput(
+      parseUtcDateInput(
         toInput,
         true
       );
