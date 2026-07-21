@@ -107,8 +107,8 @@ export async function POST(request: Request) {
     );
   }
 
-  return Response.json({
-    ok: true,
-    url: `/businesses/${customer.business.slug}/customers/${customer.id}`,
-  });
+ return Response.json({
+  ok: true,
+  url: `/businesses/${customer.business.slug}/scan/customer/${customer.id}`,
+});
 }
