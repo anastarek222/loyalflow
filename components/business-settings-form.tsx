@@ -18,25 +18,42 @@ type BusinessSettingsFormProps = {
     slug: string;
     logoUrl: string | null;
     coverImageUrl: string | null;
+   
     primaryColor: string;
     secondaryColor: string;
+   
     currency: string | null;
     timezone: string | null;
+
+
+    industry: string | null;
+    website: string | null;
+    email: string | null;
+    country: string | null;
+    city: string | null;
+    taxNumber: string | null;
+
     loyaltyProgramName: string | null;
     pointsName: string | null;
     membershipName: string | null;
     welcomeMessage: string | null;
+   
     cardDefaultLanguage: CardLanguage;
+   
     staffAttributionEnabled: boolean;
     staffAttributionRequired: boolean;
+   
     loyaltyMode: LoyaltyMode;
     unitName: string;
     rewardName: string;
+   
     rewardType: RewardType;
     rewardCode: string | null;
     rewardDescription: string | null;
+   
     rewardThreshold: number;
     earnAmount: number;
+   
     whatsappWelcomeMessage: string;
     whatsappBalanceMessage: string;
     whatsappRewardMessage: string;
@@ -70,6 +87,18 @@ export default function BusinessSettingsForm({
   const [currency, setCurrency] = useState(business.currency ?? "");
 
   const [timezone, setTimezone] = useState(business.timezone ?? "");
+
+  const [industry, setIndustry] = useState(business.industry ?? "");
+
+  const [website, setWebsite] = useState(business.website ?? "");
+
+  const [email, setEmail] = useState(business.email ?? "");
+
+  const [country, setCountry] = useState(business.country ?? "");
+
+  const [city, setCity] = useState(business.city ?? "");
+
+  const [taxNumber, setTaxNumber] = useState(business.taxNumber ?? "");
 
   const [coverImageUrl, setCoverImageUrl] = useState(
     business.coverImageUrl ?? "",
@@ -188,6 +217,110 @@ export default function BusinessSettingsForm({
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
             </div>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+  <div>
+    <h3 className="font-black text-slate-950">معلومات النشاط</h3>
+
+    <p className="mt-1 text-sm leading-6 text-slate-600">
+      أضف بيانات النشاط الأساسية ومعلومات التواصل والموقع.
+    </p>
+  </div>
+
+  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        نوع النشاط
+      </label>
+
+      <input
+        name="industry"
+        value={industry}
+        onChange={(event) => setIndustry(event.target.value)}
+        maxLength={100}
+        placeholder="مثال: مطعم، صالون، متجر ملابس"
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        البريد الإلكتروني
+      </label>
+
+      <input
+        name="email"
+        type="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        maxLength={255}
+        placeholder="info@example.com"
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+      />
+    </div>
+
+    <div className="sm:col-span-2">
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        الموقع الإلكتروني
+      </label>
+
+      <input
+          name="website"
+          type="url"
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
+          maxLength={300}
+          placeholder="https://example.com"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        />
+      </div>
+  
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          الدولة
+        </label>
+
+        <input
+          name="country"
+          value={country}
+          onChange={(event) => setCountry(event.target.value)}
+          maxLength={100}
+          placeholder="مصر"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          المدينة
+        </label>
+
+        <input
+          name="city"
+          value={city}
+          onChange={(event) => setCity(event.target.value)}
+          maxLength={100}
+          placeholder="القاهرة"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          الرقم الضريبي
+        </label>
+
+        <input
+          name="taxNumber"
+          value={taxNumber}
+          onChange={(event) => setTaxNumber(event.target.value)}
+          maxLength={100}
+          placeholder="اختياري"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        />
+      </div>
+    </div>
+  </section>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
