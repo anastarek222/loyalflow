@@ -167,6 +167,25 @@ export default async function ScanCustomerPage({
     <main className="min-h-screen bg-slate-100 px-4 py-8">
       <section className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow">
 
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold text-slate-500">
+              {customer.business.name}
+            </p>
+
+            <p className="text-lg font-black text-slate-950">
+              كارت العميل
+            </p>
+          </div>
+
+          <Link
+            href={`/businesses/${slug}/scan`}
+            className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50"
+          >
+            ← الماسح
+          </Link>
+        </div>
+
         {successMessage ? (
           <div className="mb-5 rounded-2xl bg-emerald-100 p-4 text-center font-black text-emerald-800">
             {successMessage}
