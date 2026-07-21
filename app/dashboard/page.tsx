@@ -10,7 +10,7 @@ import {
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Building2, Users, Gift, CreditCard, BarChart3, ScanLine, Settings, UserCog } from "lucide-react";
+import { Users, BarChart3, ScanLine, Settings, UserCog } from "lucide-react";
 
 import { logoutAction } from "./actions";
 
