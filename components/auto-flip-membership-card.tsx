@@ -23,6 +23,13 @@ type RewardType =
   | "DISCOUNT"
   | "CUSTOM";
 
+type CardActivity = {
+  id: string;
+  label: string;
+  date: string;
+  amount: number;
+};
+
 type AutoFlipMembershipCardProps = {
   businessName: string;
   logoUrl: string | null;
@@ -49,6 +56,9 @@ type AutoFlipMembershipCardProps = {
 
   qrCode: string;
   cardUrl: string;
+  terms: string[];
+  activities: CardActivity[];
+  redemptions: number;
   businessPhone: string;
   businessAddress: string;
 
@@ -276,6 +286,9 @@ export default function AutoFlipMembershipCard({
 
   qrCode,
   cardUrl,
+  terms,
+  activities,
+  redemptions,
   businessPhone,
   businessAddress,
 
@@ -901,6 +914,71 @@ export default function AutoFlipMembershipCard({
                           }
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {terms.length > 0 && (
+                    <div className="mt-5 rounded-2xl bg-slate-100 p-4">
+                      <p className="text-xs font-black text-slate-500">
+                        شروط الاستخدام
+                      </p>
+
+                      <div className="mt-3 space-y-2">
+                        {terms.slice(0, 4).map((term, index) => (
+                          <div
+                            key={`${index}-${term}`}
+                            className="flex items-start gap-2 text-sm leading-6 text-slate-700"
+                          >
+                            <span
+                              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black text-white"
+                              style={{
+                                backgroundColor: safePrimaryColor,
+                              }}
+                            >
+                              {index + 1}
+                            </span>
+
+                            <p dir="auto">{term}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activities.length > 0 && (
+                    <div className="mt-5 rounded-2xl bg-slate-100 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-black text-slate-500">
+                          آخر الحركات
+                        </p>
+
+                        <span className="text-xs font-bold text-slate-400">
+                          {redemptions} استبدال
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-2">
+                        {activities.slice(0, 3).map((activity) => (
+                          <div
+                            key={activity.id}
+                            className="rounded-xl bg-white px-3 py-2 shadow-sm"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-bold text-slate-800">
+                                {activity.label}
+                              </p>
+
+                              <span className="text-xs font-black text-slate-500">
+                                {activity.amount}
+                              </span>
+                            </div>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                              {activity.date}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
