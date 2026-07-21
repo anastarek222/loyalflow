@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import DigitalLoyaltyCard from "@/components/digital-loyalty-card";
 import CopyLinkButton from "@/components/copy-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
@@ -474,6 +473,15 @@ export default async function PublicCardPage({
           cardUrl={
             cardUrl
           }
+          terms={
+            renderedTerms
+          }
+          activities={
+            activities
+          }
+          redemptions={
+            customer._count.redemptions
+          }
           businessPhone={
             business.contactPhone ??
             ""
@@ -572,66 +580,7 @@ export default async function PublicCardPage({
             />
           )}
 
-      <DigitalLoyaltyCard
-        /* ثابت من بيانات البراند */
-        businessName={
-          business.name
-        }
-        logoUrl={
-          business.logoUrl
-        }
-        primaryColor={
-          business.primaryColor
-        }
-        businessPhone={
-          business.contactPhone?.trim() ||
-          "01033196610"
-        }
-        businessAddress={
-          business.address?.trim() ||
-          "١ شارع دكتور لاشين، المريوطية الرئيسي، فيصل، الجيزة"
-        }
-        terms={renderedTerms}
 
-        /* متغير تلقائيًا حسب العميل */
-        customerName={
-          customerName
-        }
-        customerCode={
-          customer.customerCode
-        }
-        balance={
-          customer.balance
-        }
-        qrCode={qrCode}
-        cardUrl={cardUrl}
-        activities={activities}
-        redemptions={
-          customer._count
-            .redemptions
-        }
-
-        /* إعدادات برنامج الولاء */
-        unitName={
-          business.unitName
-        }
-        loyaltyMode={
-          business.loyaltyMode
-        }
-        rewardName={
-          business.rewardName
-        }
-        rewardThreshold={
-          business.rewardThreshold
-        }
-
-        /* قيم محسوبة تلقائيًا */
-        progress={progress}
-        remaining={remaining}
-        rewardAvailable={
-          cardRewardAvailable
-        }
-      />
     </main>
   );
 }
