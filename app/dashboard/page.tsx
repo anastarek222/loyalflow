@@ -590,6 +590,9 @@ export default async function DashboardPage() {
         }
         stats={stats}
         actions={actions}
+        loyaltyGrowth={[]}
+        customerGrowth={[]}
+        rewardStats={[]}
       />
     );
   }
@@ -1047,6 +1050,22 @@ type DashboardLayoutProps = {
   eyebrow: string;
   stats: DashboardStat[];
   actions: QuickAction[];
+
+  loyaltyGrowth?: {
+    date: string;
+    earned: number;
+    redeemed: number;
+  }[];
+
+  customerGrowth?: {
+    date: string;
+    customers: number;
+  }[];
+
+  rewardStats?: {
+    name: string;
+    redeemed: number;
+  }[];
 };
 
 
@@ -1059,6 +1078,9 @@ function DashboardLayout({
   eyebrow,
   stats,
   actions,
+  loyaltyGrowth = [],
+  customerGrowth = [],
+  rewardStats = [],
 }: DashboardLayoutProps) {
 
   const dictionary =
@@ -1141,6 +1163,15 @@ function DashboardLayout({
             />
           ))}
 
+        </section>
+
+
+        <section className="mt-10">
+          <DashboardCharts
+            loyaltyGrowth={loyaltyGrowth}
+            customerGrowth={customerGrowth}
+            rewardStats={rewardStats}
+          />
         </section>
 
 
