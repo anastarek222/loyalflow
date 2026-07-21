@@ -104,6 +104,33 @@ city: z.string().trim().max(100),
 
 taxNumber: z.string().trim().max(100),
 
+  description: z.string().trim().max(500),
+
+  instagramUrl: z.string().trim().max(300),
+  facebookUrl: z.string().trim().max(300),
+  tiktokUrl: z.string().trim().max(300),
+
+  themePreset: z.enum([
+    "DEFAULT",
+    "MINIMAL",
+    "LUXURY",
+    "DARK",
+    "MODERN",
+    "GRADIENT",
+  ]),
+
+  cardStyle: z.enum([
+    "CLASSIC",
+    "ROUNDED",
+    "MODERN",
+  ]),
+
+  fontFamily: z.enum([
+    "INTER",
+    "CAIRO",
+    "POPPINS",
+  ]),
+
   loyaltyProgramName: z.string().trim().max(80),
   pointsName: z.string().trim().max(30),
   membershipName: z.string().trim().max(50),
@@ -224,6 +251,17 @@ export async function updateBusinessSettingsAction(
     country: formData.get("country") ?? "",
     city: formData.get("city") ?? "",
     taxNumber: formData.get("taxNumber") ?? "",
+
+    description: formData.get("description") ?? "",
+
+    instagramUrl: formData.get("instagramUrl") ?? "",
+    facebookUrl: formData.get("facebookUrl") ?? "",
+    tiktokUrl: formData.get("tiktokUrl") ?? "",
+
+    themePreset: formData.get("themePreset") ?? "DEFAULT",
+    cardStyle: formData.get("cardStyle") ?? "CLASSIC",
+    fontFamily: formData.get("fontFamily") ?? "INTER",
+
     loyaltyProgramName: formData.get("loyaltyProgramName") ?? "",
     pointsName: formData.get("pointsName") ?? "",
     membershipName: formData.get("membershipName") ?? "",
@@ -289,7 +327,17 @@ export async function updateBusinessSettingsAction(
         country: optionalProfileValue(parsed.data.country),
         city: optionalProfileValue(parsed.data.city),
         taxNumber: optionalProfileValue(parsed.data.taxNumber),
-        
+
+        description: optionalProfileValue(parsed.data.description),
+
+        instagramUrl: optionalProfileValue(parsed.data.instagramUrl),
+        facebookUrl: optionalProfileValue(parsed.data.facebookUrl),
+        tiktokUrl: optionalProfileValue(parsed.data.tiktokUrl),
+
+        themePreset: parsed.data.themePreset,
+        cardStyle: parsed.data.cardStyle,
+        fontFamily: parsed.data.fontFamily,
+
         loyaltyProgramName: parsed.data.loyaltyProgramName || null,
         pointsName: parsed.data.pointsName || null,
         membershipName: parsed.data.membershipName || null,
