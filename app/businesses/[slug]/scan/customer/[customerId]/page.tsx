@@ -162,24 +162,49 @@ export default async function ScanCustomerPage({
             </h2>
 
             <div className="space-y-3">
-              {customer.transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="rounded-2xl bg-slate-50 p-4"
-                >
-                  <p className="font-black text-slate-900">
-                    {transaction.note ?? "عملية ولاء"}
-                  </p>
+              {customer.transactions.map((transaction) => {
+                const transactionStyle =
+                  transaction.type === "REDEEM"
+                    ? {
+                        icon: "🎁",
+                        title: "استبدال مكافأة",
+                        color: "bg-violet-50",
+                      }
+                    : transaction.type === "ADJUSTMENT"
+                      ? {
+                          icon: "⚙️",
+                          title: "تعديل يدوي",
+                          color: "bg-orange-50",
+                        }
+                      : {
+                          icon: "⭐",
+                          title: "كسب ولاء",
+                          color: "bg-emerald-50",
+                        };
 
-                  <p className="mt-1 text-sm text-slate-600">
-                    {transaction.amount} {customer.business.unitName}
-                  </p>
+                return (
+                  <div
+                    key={transaction.id}
+                    className={`rounded-2xl p-4 ${transactionStyle.color}`}
+                  >
+                    <p className="font-black text-slate-900">
+                      {transactionStyle.icon} {transactionStyle.title}
+                    </p>
 
-                  <p className="mt-1 text-xs text-slate-400">
-                    {dateFormatter.format(transaction.createdAt)}
-                  </p>
-                </div>
-              ))}
+                    <p className="mt-1 text-sm text-slate-700">
+                      {transaction.note ?? "عملية ولاء"}
+                    </p>
+
+                    <p className="mt-1 font-black text-slate-900">
+                      {transaction.amount} {customer.business.unitName}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-400">
+                      {dateFormatter.format(transaction.createdAt)}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : null}
