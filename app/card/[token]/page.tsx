@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import CopyLinkButton from "@/components/copy-link-button";
+import ShareLinkButton from "@/components/share-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { isOfferEligible } from "@/lib/offers/eligibility";
@@ -524,13 +525,53 @@ export default async function PublicCardPage({
       </h1>
 
       {referralLink ? (
-        <section className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 text-right shadow-sm" dir="rtl">
-          <h2 className="font-black text-slate-950">ادعُ صديقًا</h2>
+        <section
+          className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
+          dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
+        >
+          <h2 className="font-black text-slate-950">
+            {business.cardDefaultLanguage === "AR"
+              ? "ادعُ صديقًا"
+              : "Invite a friend"}
+          </h2>
+
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            شارك الرابط. يتم تسجيل الإحالة فقط عند انضمام عميل جديد لهذا النشاط؛ لا تُمنح أي نقاط تلقائيًا.
+            {business.cardDefaultLanguage === "AR"
+              ? "شارك رابط الدعوة مع أصدقائك. يتم تسجيل الإحالة عند انضمام عميل جديد لهذا النشاط."
+              : "Share your invitation link with friends. The referral is recorded when a new customer joins this business."}
           </p>
-          <div className="mt-4">
-            <CopyLinkButton value={referralLink} label="نسخ رابط الدعوة" />
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <ShareLinkButton
+              value={referralLink}
+              title={business.name}
+              text={
+                business.cardDefaultLanguage === "AR"
+                  ? `انضم إلى برنامج ولاء ${business.name}`
+                  : `Join ${business.name}'s loyalty program`
+              }
+              label={
+                business.cardDefaultLanguage === "AR"
+                  ? "مشاركة الدعوة"
+                  : "Share invite"
+              }
+              className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-black text-white transition hover:bg-slate-800"
+            />
+
+            <CopyLinkButton
+              value={referralLink}
+              label={
+                business.cardDefaultLanguage === "AR"
+                  ? "نسخ رابط الدعوة"
+                  : "Copy invite link"
+              }
+              copiedLabel={
+                business.cardDefaultLanguage === "AR"
+                  ? "تم النسخ ✓"
+                  : "Copied ✓"
+              }
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-800 transition hover:bg-slate-50"
+            />
           </div>
         </section>
       ) : null}
