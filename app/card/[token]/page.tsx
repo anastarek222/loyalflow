@@ -274,14 +274,11 @@ export default async function PublicCardPage({
    * البيانات المحسوبة لا يتم تخزينها،
    * بل يتم حسابها مباشرة حتى تظل محدثة.
    */
-  const {
-    progress,
-    remaining,
-    rewardAvailable,
-  } = calculateRewardProgress(
-    customer.balance,
-    business.rewardThreshold
-  );
+  const { rewardAvailable } =
+    calculateRewardProgress(
+      customer.balance,
+      business.rewardThreshold
+    );
 
   const rewardExpiryStatuses = customer.rewardUnlocks
     .filter((unlock) => unlock.businessId === business.id && unlock.reward.isActive)
