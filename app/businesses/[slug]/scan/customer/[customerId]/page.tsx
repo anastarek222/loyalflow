@@ -64,6 +64,11 @@ export default async function ScanCustomerPage({
             amount: true,
             note: true,
             createdAt: true,
+            createdBy: {
+              select: {
+                email: true,
+              },
+            },
           },
         },
 
@@ -198,6 +203,12 @@ export default async function ScanCustomerPage({
                     <p className="mt-1 font-black text-slate-900">
                       {transaction.amount} {customer.business.unitName}
                     </p>
+
+                    {transaction.createdBy?.email ? (
+                      <p className="mt-1 text-xs font-bold text-slate-500">
+                        بواسطة: {transaction.createdBy.email}
+                      </p>
+                    ) : null}
 
                     <p className="mt-1 text-xs text-slate-400">
                       {dateFormatter.format(transaction.createdAt)}
