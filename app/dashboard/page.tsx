@@ -1037,6 +1037,9 @@ export default async function DashboardPage() {
       }
       stats={stats}
       actions={actions}
+      loyaltyGrowth={loyaltyGrowth}
+      customerGrowth={customerGrowth}
+      rewardStats={rewardStats}
     />
   );
 }
