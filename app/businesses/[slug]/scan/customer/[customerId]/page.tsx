@@ -221,12 +221,21 @@ export default async function ScanCustomerPage({
         
 
 
-        <Link
-          href={`/businesses/${slug}/customers/${customer.id}`}
-          className="mt-6 block rounded-xl border border-slate-300 px-5 py-4 text-center font-bold text-slate-800"
-        >
-          فتح ملف العميل الكامل
-        </Link>
+        <div className="mt-6 grid gap-3">
+          <Link
+            href={`/businesses/${slug}/scan`}
+            className="block rounded-xl bg-violet-600 px-5 py-4 text-center font-black text-white transition hover:bg-violet-700"
+          >
+            📷 مسح عميل جديد
+          </Link>
+
+          <Link
+            href={`/businesses/${slug}/customers/${customer.id}`}
+            className="block rounded-xl border border-slate-300 px-5 py-4 text-center font-bold text-slate-800 transition hover:bg-slate-50"
+          >
+            فتح ملف العميل الكامل
+          </Link>
+        </div>
 
 
       </section>
