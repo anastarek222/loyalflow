@@ -1257,30 +1257,41 @@ function DashboardLayout({
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl"
                 >
 
-                  <div className="flex items-center gap-4">
+                  <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-violet-500/5 blur-2xl transition group-hover:bg-violet-500/10" />
 
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white">
 
-                      <Icon size={26}/>
+                  <div className="relative flex items-start justify-between gap-4">
+
+                    <div className="flex items-center gap-4">
+
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg">
+                        <Icon size={26}/>
+                      </div>
+
+
+                      <div>
+
+                        <h3 className="text-lg font-black text-slate-950">
+                          {action.title}
+                        </h3>
+
+
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          {action.description}
+                        </p>
+
+                      </div>
 
                     </div>
 
 
-                    <div>
+                    <span className="text-xl font-black text-slate-300 transition group-hover:translate-x-1 group-hover:text-violet-600">
+                      →
+                    </span>
 
-                      <h3 className="text-lg font-black text-slate-950">
-                        {action.title}
-                      </h3>
-
-
-                      <p className="mt-1 text-sm text-slate-500">
-                        {action.description}
-                      </p>
-
-                    </div>
 
                   </div>
 
@@ -1315,43 +1326,85 @@ function StatCard({
 }) {
 
   const tones = {
-    default: "bg-slate-950 text-white",
-    emerald: "bg-emerald-50 text-emerald-950",
-    violet: "bg-violet-50 text-violet-950",
-    amber: "bg-amber-50 text-amber-950",
-    cyan: "bg-cyan-50 text-cyan-950",
+    default: {
+      card: "border-slate-200 bg-white",
+      icon: "bg-slate-950 text-white",
+      accent: "text-slate-950",
+    },
+    emerald: {
+      card: "border-emerald-100 bg-white",
+      icon: "bg-emerald-50 text-emerald-700",
+      accent: "text-emerald-700",
+    },
+    violet: {
+      card: "border-violet-100 bg-white",
+      icon: "bg-violet-50 text-violet-700",
+      accent: "text-violet-700",
+    },
+    amber: {
+      card: "border-amber-100 bg-white",
+      icon: "bg-amber-50 text-amber-700",
+      accent: "text-amber-700",
+    },
+    cyan: {
+      card: "border-cyan-100 bg-white",
+      icon: "bg-cyan-50 text-cyan-700",
+      accent: "text-cyan-700",
+    },
   };
 
+  const tone =
+    tones[stat.tone ?? "default"];
 
   return (
     <article
-      className={`rounded-3xl p-6 shadow-sm ring-1 ring-slate-200 ${
-        tones[stat.tone ?? "default"]
-      }`}
+      className={`group relative overflow-hidden rounded-3xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl sm:p-6 ${tone.card}`}
     >
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4">
 
-        <p className="text-sm font-black opacity-70">
-          {stat.label}
-        </p>
+        <div className="min-w-0">
+
+          <p className="text-sm font-bold text-slate-500">
+            {stat.label}
+          </p>
+
+          <p className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+            {formatter.format(stat.value)}
+          </p>
+
+        </div>
 
 
-        <Icon size={22}/>
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tone.icon}`}
+        >
+          <Icon size={22} strokeWidth={2.2} />
+        </div>
 
       </div>
 
 
-      <p className="mt-5 text-4xl font-black">
-        {formatter.format(stat.value)}
-      </p>
-
-
       {stat.description ? (
-        <p className="mt-2 text-xs font-bold opacity-60">
-          {stat.description}
-        </p>
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+
+          <p className="truncate text-xs font-bold text-slate-500">
+            {stat.description}
+          </p>
+
+          <span
+            className={`text-xs font-black ${tone.accent}`}
+          >
+            ●
+          </span>
+
+        </div>
       ) : null}
+
+
+      <div
+        className={`pointer-events-none absolute -bottom-10 -right-10 h-24 w-24 rounded-full opacity-10 transition-transform duration-300 group-hover:scale-125 ${tone.icon}`}
+      />
 
     </article>
   );
