@@ -15,6 +15,7 @@ type RecordedCalls = {
   promotionApplications: unknown[];
   rewardRedemptions: unknown[];
   activities: unknown[];
+  notifications: unknown[];
   branches: unknown[];
 };
 
@@ -35,6 +36,7 @@ function createTransaction(
     promotionApplications: [],
     rewardRedemptions: [],
     activities: [],
+    notifications: [],
     branches: [],
   };
 
@@ -83,6 +85,12 @@ function createTransaction(
     businessActivity: {
       create: async (args: unknown) => {
         calls.activities.push(args);
+        return {};
+      },
+    },
+    notification: {
+      create: async (args: unknown) => {
+        calls.notifications.push(args);
         return {};
       },
     },
