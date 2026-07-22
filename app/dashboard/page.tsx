@@ -7,6 +7,11 @@ import {
   type AppLanguage,
 } from "@/lib/i18n";
 
+import {
+  createDashboardCustomerGrowth,
+  createDashboardLoyaltyGrowth,
+  createDashboardRewardStats,
+} from "@/lib/analytics/dashboard";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -705,76 +710,19 @@ export default async function DashboardPage() {
 
 
   const loyaltyGrowth =
-    loyaltyTransactions.reduce<
-      {
-        date: string;
-        earned: number;
-        redeemed: number;
-      }[]
-    >((acc, item) => {
-
-      const date =
-        item.createdAt.toISOString().slice(5,10);
-
-      const existing =
-        acc.find(
-          (x)=>x.date === date
-        );
-
-      if(existing){
-        if(item.type === "EARN"){
-          existing.earned += item.amount;
-        } else {
-          existing.redeemed += item.amount;
-        }
-      } else {
-        acc.push({
-          date,
-          earned:
-            item.type === "EARN"
-              ? item.amount
-              : 0,
-          redeemed:
-            item.type === "REDEEM"
-              ? item.amount
-              : 0,
-        });
-      }
-
-      return acc;
-
-    },[]);
-
-
-  const customerGrowth =
-    customerGrowthData.map(
-      (customer)=>({
-        date:
-          customer.createdAt
-            .toISOString()
-            .slice(5,10),
-        customers:1,
-      })
+    createDashboardLoyaltyGrowth(
+      loyaltyTransactions
     );
 
+  const customerGrowth =
+    createDashboardCustomerGrowth(
+      customerGrowthData
+    );
 
   const rewardStats =
-    Object.entries(
-      rewardRedemptions.reduce(
-        (acc: Record<string,number>, item)=>{
-          acc[item.rewardName] =
-            (acc[item.rewardName] ?? 0)+1;
-
-          return acc;
-        },
-        {}
-      )
-    )
-    .map(([name, redeemed])=>({
-      name,
-      redeemed,
-    }));
-
+    createDashboardRewardStats(
+      rewardRedemptions
+    );
 
 
   const [
