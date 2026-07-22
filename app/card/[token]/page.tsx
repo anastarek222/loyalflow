@@ -5,6 +5,7 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
+import { getBusinessTheme } from "@/lib/theme";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -235,6 +236,9 @@ export default async function PublicCardPage({
 
   const business =
     customer.business;
+
+  const theme =
+    getBusinessTheme(business);
   const publicOffers = business.offers.filter((offer) =>
     isOfferEligible(
       offer,
@@ -447,6 +451,9 @@ export default async function PublicCardPage({
           }
           secondaryColor={
             business.secondaryColor
+          }
+          theme={
+            theme
           }
           customerName={
             customerName
