@@ -46,12 +46,15 @@ model Business {
   description String?
 
   instagramUrl String?
-  facebookUrl String?
-  tiktokUrl String?
+  facebookUrl  String?
+  tiktokUrl    String?
 
-  themePreset String @default("DEFAULT")
-  cardStyle String @default("CLASSIC")
-  fontFamily String @default("INTER")
+  themePreset     ThemePreset @default(DEFAULT)
+  cardStyle       CardLayout  @default(CLASSIC)
+  buttonStyle     ButtonStyle @default(ROUNDED)
+  backgroundColor String      @default("#F8FAFC")
+  qrStyle         String      @default("CLASSIC")
+  fontFamily      String      @default("INTER")
 
   allowOwnerDataExport     Boolean                 @default(false)
   staffAttributionEnabled  Boolean                 @default(false)
@@ -76,6 +79,7 @@ model Business {
   branches                 Branch[]
   customerTags             CustomerTag[]
   offers                   Offer[]
+  notifications            Notification[]
 }
 
 model User {
@@ -101,6 +105,7 @@ model User {
   branchAssignments      BranchStaffAssignment[]
   createdCustomerNotes   CustomerNote[]          @relation("CustomerNoteCreatedBy")
   updatedCustomerNotes   CustomerNote[]          @relation("CustomerNoteUpdatedBy")
+  notifications          Notification[]
   business               Business?               @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([id, businessId])
@@ -413,6 +418,9 @@ model BusinessActivity {
   branchId    String?
   customerId  String?
   createdById String?
+  deviceName  String?
+  ipAddress   String?
+  metadata    Json?
   createdAt   DateTime     @default(now())
   business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   branch      Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
@@ -424,6 +432,25 @@ model BusinessActivity {
   @@index([customerId])
   @@index([createdById])
   @@index([type])
+}
+
+model Notification {
+  id      String  @id @default(cuid())
+  type    String
+  title   String
+  message String
+  isRead  Boolean @default(false)
+
+  businessId String
+  userId     String?
+
+  createdAt DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
 }
 
 model NotificationReadState {
@@ -453,6 +480,27 @@ model NotificationItemRead {
   @@unique([userId, businessId, notificationKey])
   @@index([userId, businessId])
   @@index([businessId, readAt])
+}
+
+enum ThemePreset {
+  DEFAULT
+  LUXURY
+  MODERN
+  MINIMAL
+  DARK
+  GRADIENT
+}
+
+enum ButtonStyle {
+  ROUNDED
+  PILL
+  SQUARE
+}
+
+enum CardLayout {
+  CLASSIC
+  COMPACT
+  PREMIUM
 }
 
 enum UserRole {
