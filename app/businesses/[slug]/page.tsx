@@ -124,6 +124,53 @@ export default async function BusinessPage({
   }
 
   const [
+    notificationCount,
+    recentNotifications,
+  ] = await Promise.all([
+    prisma.notification.count({
+      where: {
+        businessId: business.id,
+        createdAt: {
+          gt: notificationsLastReadAt,
+        },
+        OR: [
+          {
+            userId: null,
+          },
+          {
+            userId: session.user.id,
+          },
+        ],
+      },
+    }),
+
+    prisma.notification.findMany({
+      where: {
+        businessId: business.id,
+        OR: [
+          {
+            userId: null,
+          },
+          {
+            userId: session.user.id,
+          },
+        ],
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 20,
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        message: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  const [
     rewardReadyCount,
     rewardReadyCustomers,
 
@@ -451,12 +498,6 @@ export default async function BusinessPage({
           )
         )
     ).length;
-
-  const notificationCount =
-    unreadRewardReadyCount +
-    unreadRewardRedeemedCount +
-    unreadBalanceAdjustedCount +
-    unreadLoyaltyEarnedCount;
 
   const theme =
     getBusinessTheme(business);
@@ -838,6 +879,9 @@ export default async function BusinessPage({
               }
               canViewActivity={
                 canViewReports
+              }
+              recentNotifications={
+                recentNotifications
               }
             />
           </BusinessNotificationsDialog>

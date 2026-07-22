@@ -26,6 +26,14 @@ type ActivityItem = {
   isUnread: boolean;
 };
 
+type NotificationItem = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  createdAt: Date;
+};
+
 type ActivitySectionProps = {
   slug: string;
   icon: string;
@@ -66,6 +74,8 @@ type Props = {
     ActivityItem[];
 
   canViewActivity: boolean;
+
+  recentNotifications: NotificationItem[];
 };
 
 const dateFormatter =
@@ -260,12 +270,60 @@ export default function BusinessNotificationsContent({
   loyaltyEarnedActivities,
 
   canViewActivity,
+
+  recentNotifications,
 }: Props) {
   return (
     <div
       dir="rtl"
       className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[0.9fr_1.1fr]"
     >
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold text-violet-700">
+              🔔 الإشعارات
+            </p>
+
+            <h3 className="mt-1 text-xl font-black text-slate-950">
+              آخر الإشعارات
+            </h3>
+          </div>
+
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+            {recentNotifications.length}
+          </span>
+        </div>
+
+        {recentNotifications.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center text-sm font-semibold text-slate-500">
+            لا توجد إشعارات حتى الآن.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {recentNotifications.map((notification) => (
+              <article
+                key={notification.id}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+              >
+                <div className="flex flex-col gap-1">
+                  <p className="font-black text-slate-950">
+                    {notification.title}
+                  </p>
+
+                  <p className="text-sm leading-6 text-slate-600">
+                    {notification.message}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    {dateFormatter.format(notification.createdAt)}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
       <section
         data-notification-section="true"
         data-has-unread={
