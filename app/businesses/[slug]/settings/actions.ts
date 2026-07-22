@@ -121,8 +121,8 @@ taxNumber: z.string().trim().max(100),
 
   cardStyle: z.enum([
     "CLASSIC",
-    "ROUNDED",
-    "MODERN",
+    "COMPACT",
+    "PREMIUM",
   ]),
 
   fontFamily: z.enum([
