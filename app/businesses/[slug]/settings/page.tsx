@@ -316,6 +316,8 @@ export default async function BusinessSettingsPage({
             themePreset: business.themePreset,
             cardStyle: business.cardStyle,
             fontFamily: business.fontFamily,
+            qrStyle: business.qrStyle,
+            qrPosition: business.qrPosition,
 
             loyaltyProgramName: business.loyaltyProgramName,
             pointsName: business.pointsName,

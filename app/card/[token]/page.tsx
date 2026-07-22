@@ -270,14 +270,34 @@ export default async function PublicCardPage({
     ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
     : null;
 
+  const qrStyle =
+    business.qrStyle === "ROUNDED" ||
+    business.qrStyle === "BRANDED"
+      ? business.qrStyle
+      : "CLASSIC";
+
+  const qrPosition =
+    business.qrPosition === "LEFT" ||
+    business.qrPosition === "RIGHT"
+      ? business.qrPosition
+      : "CENTER";
+
   const qrCode =
     await QRCode.toDataURL(
       cardUrl,
       {
         width: 360,
-        margin: 2,
+        margin:
+          qrStyle === "CLASSIC" ? 2 : 1,
         errorCorrectionLevel:
-          "M",
+          qrStyle === "BRANDED" ? "H" : "M",
+        color: {
+          dark:
+            qrStyle === "BRANDED"
+              ? theme.primaryColor
+              : "#111827",
+          light: "#FFFFFFFF",
+        },
       }
     );
 
@@ -499,6 +519,12 @@ export default async function PublicCardPage({
           }
           qrCode={
             qrCode
+          }
+          qrStyle={
+            qrStyle
+          }
+          qrPosition={
+            qrPosition
           }
           cardUrl={
             cardUrl
