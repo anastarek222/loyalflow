@@ -619,6 +619,20 @@ export default function AutoFlipMembershipCard({
       "#ffffff"
     );
 
+  const cardRadius =
+    theme?.cardStyle === "COMPACT"
+      ? "24px"
+      : theme?.cardStyle === "PREMIUM"
+        ? "40px"
+        : "30px";
+
+  const cardBackground =
+    theme?.themePreset === "GRADIENT"
+      ? `linear-gradient(145deg, ${safePrimaryColor}, ${safeSecondaryColor})`
+      : coverImageUrl
+        ? `linear-gradient(145deg, ${safePrimaryColor}de, #0f172ae6 72%), url(${coverImageUrl})`
+        : `linear-gradient(145deg, ${safePrimaryColor}, #0f172a 72%)`;
+
   const safeTarget =
     Math.max(
       1,
@@ -886,19 +900,19 @@ export default function AutoFlipMembershipCard({
             aria-hidden={
               isFlipped
             }
-            className="absolute inset-0 overflow-hidden rounded-[30px] border border-white/15 shadow-2xl"
+            className="absolute inset-0 overflow-hidden border border-white/15 shadow-2xl"
             style={{
+              borderRadius: cardRadius,
               backfaceVisibility:
                 "hidden",
 
               WebkitBackfaceVisibility:
                 "hidden",
 
-              backgroundImage: coverImageUrl
-                ? `linear-gradient(145deg, ${safePrimaryColor}de, #0f172ae6 72%), url(${coverImageUrl})`
-                : `linear-gradient(145deg, ${safePrimaryColor}, #0f172a 72%)`,
+              backgroundImage: cardBackground,
               backgroundSize: "cover",
               backgroundPosition: "center",
+              fontFamily: theme?.fontFamily,
             }}
           >
             <div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
