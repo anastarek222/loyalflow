@@ -42,6 +42,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
+import { createBusinessNotification } from "@/lib/notifications";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -177,6 +178,16 @@ async function createRewardUnlocksForEarn(
         createdById: input.createdById,
       },
     });
+
+    await createBusinessNotification(
+      transaction,
+      {
+        type: "REWARD_UNLOCKED",
+        title: "تم فتح مكافأة جديدة",
+        message: `تم فتح ${reward.name} للعميل`,
+        businessId: input.businessId,
+      }
+    );
   }
 }
 
