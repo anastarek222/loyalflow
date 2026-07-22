@@ -88,6 +88,27 @@ const businessSchema = z.object({
   earnAmount: z.coerce.number().int().min(1).max(1000000),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+
+  themePreset: z.enum([
+    "DEFAULT",
+    "MINIMAL",
+    "LUXURY",
+    "DARK",
+    "MODERN",
+    "GRADIENT",
+  ]),
+
+  cardStyle: z.enum([
+    "CLASSIC",
+    "COMPACT",
+    "PREMIUM",
+  ]),
+
+  fontFamily: z.enum([
+    "INTER",
+    "CAIRO",
+    "POPPINS",
+  ]),
 });
 
 export async function createBusinessAction(formData: FormData) {
@@ -126,6 +147,15 @@ export async function createBusinessAction(formData: FormData) {
     earnAmount: formData.get("earnAmount"),
     primaryColor: formData.get("primaryColor"),
     secondaryColor: formData.get("secondaryColor"),
+
+    themePreset:
+      formData.get("themePreset") ?? "DEFAULT",
+
+    cardStyle:
+      formData.get("cardStyle") ?? "CLASSIC",
+
+    fontFamily:
+      formData.get("fontFamily") ?? "INTER",
   });
 
 
@@ -198,6 +228,15 @@ try {
             earnAmount: parsed.data.earnAmount,
             primaryColor: parsed.data.primaryColor,
             secondaryColor: parsed.data.secondaryColor,
+
+            themePreset:
+              parsed.data.themePreset,
+
+            cardStyle:
+              parsed.data.cardStyle,
+
+            fontFamily:
+              parsed.data.fontFamily,
           },
         });
 
