@@ -20,6 +20,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -115,6 +116,10 @@ export default async function ReportsPage({
       name: true,
       slug: true,
       primaryColor: true,
+      secondaryColor: true,
+      themePreset: true,
+      cardStyle: true,
+      fontFamily: true,
       loyaltyMode: true,
       unitName: true,
       rewardName: true,
@@ -126,6 +131,9 @@ export default async function ReportsPage({
   if (!business) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   const canViewReports = canPerform(
     session.user,
@@ -723,7 +731,11 @@ export default async function ReportsPage({
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8"
+      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
     >
       <div className="mx-auto max-w-7xl">
         <Link
@@ -734,9 +746,9 @@ export default async function ReportsPage({
         </Link>
 
         <header
-          className="mt-5 rounded-3xl p-5 text-white shadow-xl sm:p-8"
+          className={`mt-5 border p-5 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
           style={{
-            backgroundColor: business.primaryColor,
+            backgroundColor: theme.primaryColor,
           }}
         >
           <p className="text-sm text-white/70">تقارير النشاط</p>
@@ -757,7 +769,10 @@ export default async function ReportsPage({
         >
           <Link
             href={`/businesses/${business.slug}/reports/staff?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}${reportFilterSuffix}`}
-            className="rounded-2xl bg-violet-600 p-5 text-center font-black text-white shadow-sm transition hover:bg-violet-700"
+            className={`${theme.buttonClass} p-5 text-center font-black text-white shadow-sm transition`}
+            style={{
+              backgroundColor: theme.primaryColor,
+            }}
           >
             👥 تقرير أداء الموظفين
           </Link>
@@ -774,7 +789,7 @@ export default async function ReportsPage({
 
         <form
           method="get"
-          className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:mt-8 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] xl:items-end sm:p-6"
+          className={`mt-6 grid gap-4 border bg-white p-4 sm:mt-8 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] xl:items-end sm:p-6 ${theme.cardClass} ${theme.borderClass}`}
         >
           <input name="period" type="hidden" value="custom" />
           <div>
