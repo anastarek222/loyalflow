@@ -404,7 +404,7 @@ export default async function PublicCardPage({
     <main
       className="relative min-h-screen overflow-hidden px-4 py-5 sm:py-10"
       style={{
-        background: `linear-gradient(160deg, ${business.primaryColor} 0%, #020617 55%, #0f172a 100%)`,
+        background: `linear-gradient(160deg, ${theme.primaryColor} 0%, #020617 55%, #0f172a 100%)`,
       }}
     >
       <div
@@ -447,7 +447,7 @@ export default async function PublicCardPage({
             business.coverImageUrl
           }
           primaryColor={
-            business.primaryColor
+            theme.primaryColor
           }
           secondaryColor={
             business.secondaryColor
@@ -694,7 +694,7 @@ export default async function PublicCardPage({
                 business.rewardDescription
               }
               primaryColor={
-                business.primaryColor
+                theme.primaryColor
               }
               defaultLanguage={
                  business.cardDefaultLanguage

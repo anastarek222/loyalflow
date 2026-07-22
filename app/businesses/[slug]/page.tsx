@@ -782,7 +782,7 @@ export default async function BusinessPage({
                 business.rewardName
               }
               primaryColor={
-                business.primaryColor
+                theme.primaryColor
               }
             />
           )}
