@@ -15,6 +15,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Prisma } from "@/generated/prisma/client";
@@ -66,6 +67,9 @@ export default async function CustomersPage({
   if (!business) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
@@ -758,7 +762,7 @@ export default async function CustomersPage({
                             className="h-full rounded-full"
                             style={{
                               width: `${progress}%`,
-                              backgroundColor: business.primaryColor,
+                              backgroundColor: theme.primaryColor,
                             }}
                           />
                         </div>
