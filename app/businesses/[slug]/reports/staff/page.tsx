@@ -5,6 +5,7 @@ import {
 } from "@/lib/analytics/date-range";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 
 import {
@@ -86,6 +87,14 @@ export default async function StaffReportsPage({
           true,
         primaryColor:
           true,
+        secondaryColor:
+          true,
+        themePreset:
+          true,
+        cardStyle:
+          true,
+        fontFamily:
+          true,
         unitName:
           true,
         isActive:
@@ -96,6 +105,9 @@ export default async function StaffReportsPage({
   if (!business) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   const canViewReports =
     canPerform(
@@ -485,7 +497,11 @@ export default async function StaffReportsPage({
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8"
+      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
     >
       <div className="mx-auto max-w-7xl">
         <Link
@@ -496,10 +512,10 @@ export default async function StaffReportsPage({
         </Link>
 
         <header
-          className="mt-5 rounded-3xl p-5 text-white shadow-xl sm:p-8"
+          className={`mt-5 border p-5 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
           style={{
             backgroundColor:
-              business.primaryColor,
+              theme.primaryColor,
           }}
         >
           <p className="text-sm font-bold text-white/70">
@@ -517,7 +533,7 @@ export default async function StaffReportsPage({
 
         <form
           method="get"
-          className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6"
+          className={`mt-6 grid gap-4 border bg-white p-5 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6 ${theme.cardClass} ${theme.borderClass}`}
         >
           <div>
             <label
