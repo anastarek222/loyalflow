@@ -62,3 +62,50 @@ export function createDailyTrend(
     ([date, value]) => ({ date, value })
   );
 }
+
+type HistoricalCustomerEvent = {
+  createdAt: Date;
+};
+
+type HistoricalLoyaltyEvent = {
+  createdAt: Date;
+  amount: number;
+};
+
+type HistoricalRewardEvent = {
+  createdAt: Date;
+};
+
+export function createHistoricalAnalyticsTrends(
+  input: {
+    customers: readonly HistoricalCustomerEvent[];
+    loyaltyEarned: readonly HistoricalLoyaltyEvent[];
+    rewardsRedeemed: readonly HistoricalRewardEvent[];
+  },
+  from: Date,
+  to: Date
+) {
+  return {
+    customers: createDailyTrend(
+      input.customers,
+      from,
+      to
+    ),
+
+    loyaltyEarned: createDailyTrend(
+      input.loyaltyEarned.map((event) => ({
+        createdAt: event.createdAt,
+        value: event.amount,
+      })),
+      from,
+      to
+    ),
+
+    rewardsRedeemed: createDailyTrend(
+      input.rewardsRedeemed,
+      from,
+      to
+    ),
+  };
+}
+
