@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { customerSegments, getCustomerSegmentLabel } from "@/lib/customers/segments";
 import { isOfferCurrentlyValid } from "@/lib/offers/eligibility";
 import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
+import { getBusinessTheme } from "@/lib/theme";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -31,21 +32,44 @@ export default async function OffersPage({ params, searchParams }: OffersPagePro
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
-      id: true, slug: true, name: true, primaryColor: true,
+      id: true,
+      slug: true,
+      name: true,
+      primaryColor: true,
+      secondaryColor: true,
+      themePreset: true,
+      cardStyle: true,
+      fontFamily: true,
       offers: { orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }] },
     },
   });
   if (!business) notFound();
   if (!canAccessBusiness(session.user, business.id)) redirect("/dashboard");
   const canManageOffers = canManageBusiness(session.user, business.id);
+
+  const theme =
+    getBusinessTheme(business);
+
   const now = new Date();
   const createOffer = createOfferAction.bind(null, business.slug);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-6 sm:px-8 sm:py-8">
+    <main
+      dir="rtl"
+      className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
+    >
       <div className="mx-auto max-w-6xl">
         <Link href={`/businesses/${business.slug}`} className="text-sm font-bold text-violet-700 hover:text-violet-900">← الرجوع إلى {business.name}</Link>
-        <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8" style={{ backgroundColor: business.primaryColor }}>
+        <header
+          className={`mt-5 border p-6 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
+          style={{
+            backgroundColor: theme.primaryColor,
+          }}
+        >
           <p className="text-sm font-bold text-white/75">عروض العملاء</p>
           <h1 className="mt-2 text-3xl font-black">عروض {business.name}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/85">العرض حافز ظاهر للعميل عند استحقاقه. لا يضيف رصيدًا ولا يغيّر نقاط الولاء أو المكافآت أو الحملات.</p>
@@ -56,7 +80,12 @@ export default async function OffersPage({ params, searchParams }: OffersPagePro
 
         <section className={`mt-6 grid gap-6 ${canManageOffers ? "lg:grid-cols-[380px_1fr]" : ""}`}>
           {canManageOffers ? (
-            <form action={createOffer} className="h-fit rounded-3xl bg-white p-6 shadow-sm">
+            <form
+              action={createOffer}
+              className={`h-fit border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
+              style={{
+                  }}
+            >
               <h2 className="text-xl font-black text-slate-950">إضافة عرض</h2>
               <p className="mt-1 text-sm leading-6 text-slate-500">تُفسَّر التواريخ كتقويم UTC كامل لضمان بدء ونهاية ثابتين؛ تاريخ النهاية يشمل اليوم كله.</p>
               <div className="mt-6 space-y-4">
@@ -68,12 +97,24 @@ export default async function OffersPage({ params, searchParams }: OffersPagePro
                 </div>
                 <label className="block text-sm font-bold text-slate-700">الجمهور<select name="eligibility" defaultValue="ALL" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950"><option value="ALL">كل العملاء النشطين</option><option value="VIP">عملاء VIP فقط</option><option value="SEGMENT">شريحة محددة</option></select></label>
                 <label className="block text-sm font-bold text-slate-700">الشريحة <span className="font-normal text-slate-400">(لعرض الشريحة فقط)</span><select name="segment" defaultValue="" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950"><option value="">اختر شريحة</option>{customerSegments.map((segment) => <option key={segment} value={segment}>{getCustomerSegmentLabel(segment)}</option>)}</select></label>
-                <button type="submit" className="w-full rounded-xl bg-violet-600 px-5 py-3 font-black text-white hover:bg-violet-700">إضافة عرض</button>
+                <button
+                  type="submit"
+                  className={`${theme.buttonClass} w-full px-5 py-3 font-black text-white transition`}
+                  style={{
+                    backgroundColor: theme.primaryColor,
+                  }}
+                >
+                  إضافة عرض
+                </button>
               </div>
             </form>
           ) : null}
 
-          <section className="rounded-3xl bg-white p-6 shadow-sm">
+          <section
+            className={`border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
+            style={{
+              }}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950">كل العروض</h2><p className="mt-1 text-sm text-slate-500">تظهر البطاقة العامة العروض النشطة والصالحة والمؤهلة فقط، دون كشف قواعد الجمهور الداخلية.</p></div>{!canManageOffers ? <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">عرض فقط</span> : null}</div>
             <div className="mt-5 space-y-4">
               {business.offers.length === 0 ? <p className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">لا توجد عروض مضافة بعد.</p> : business.offers.map((offer) => {
