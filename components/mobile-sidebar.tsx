@@ -81,13 +81,21 @@ export default function MobileSidebar({
       {open && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="
+            fixed
+            inset-0
+            z-40
+            bg-slate-950/40
+            backdrop-blur-sm
+            transition-opacity
+            lg:hidden
+          "
         />
       )}
 
 
       <aside
-        className={`fixed top-0 z-50 h-full w-72 bg-white p-6 shadow-xl transition-transform lg:hidden ${
+        className={`fixed top-0 z-50 h-full w-72 border-slate-200 bg-white p-6 shadow-2xl transition-transform duration-300 lg:hidden ${
           language === "AR"
             ? "right-0"
             : "left-0"
@@ -103,12 +111,12 @@ export default function MobileSidebar({
         <div className="mb-8 flex items-center justify-between">
 
           <div>
-            <h1 className="text-2xl font-black">
+            <h1 className="text-2xl font-black text-slate-950">
               LoyalFlow
             </h1>
 
-            <p className="text-sm text-slate-500">
-              Loyalty SaaS
+            <p className="mt-1 text-sm font-bold text-slate-500">
+              Loyalty SaaS Platform
             </p>
           </div>
 
