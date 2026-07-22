@@ -52,7 +52,7 @@ export default function BusinessSetupWizard({
       </div>
 
 
-      {step === 0 && (
+      <div className={step === 0 ? "block" : "hidden"}>
         <section className="space-y-4">
           <h3 className="text-lg font-black">
             Business Information
@@ -116,10 +116,10 @@ export default function BusinessSetupWizard({
             className="w-full rounded-xl border px-4 py-3"
           />
         </section>
-      )}
+      </div>
 
 
-      {step === 1 && (
+      <div className={step === 1 ? "block" : "hidden"}>
         <section className="space-y-4">
           <h3 className="text-lg font-black">
             Owner Account
@@ -154,10 +154,10 @@ export default function BusinessSetupWizard({
             className="w-full rounded-xl border px-4 py-3"
           />
         </section>
-      )}
+      </div>
 
 
-      {step === 2 && (
+      <div className={step === 2 ? "block" : "hidden"}>
         <section className="space-y-4">
           <h3 className="text-lg font-black">
             Loyalty Setup
@@ -205,10 +205,10 @@ export default function BusinessSetupWizard({
             className="w-full rounded-xl border px-4 py-3"
           />
         </section>
-      )}
+      </div>
 
 
-      {step === 3 && (
+      <div className={step === 3 ? "block" : "hidden"}>
         <section className="space-y-4">
           <h3 className="text-lg font-black">
             Branding
@@ -229,10 +229,10 @@ export default function BusinessSetupWizard({
           />
 
         </section>
-      )}
+      </div>
 
 
-      {step === 4 && (
+      <div className={step === 4 ? "block" : "hidden"}>
         <section className="rounded-2xl bg-slate-50 p-5">
           <h3 className="text-lg font-black">
             Ready to create
@@ -241,8 +241,17 @@ export default function BusinessSetupWizard({
           <p className="text-sm text-slate-500">
             Review your information then create business.
           </p>
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+            Your business, owner account, loyalty programme, and branding
+            settings are ready to be created.
+          </div>
+
+          <p className="mt-3 text-xs text-slate-400">
+            For security, the owner password is never displayed in this review.
+          </p>
         </section>
-      )}
+      </div>
 
 
       <div className="flex justify-between">
