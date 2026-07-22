@@ -18,6 +18,7 @@ import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import CopyLinkButton from "@/components/copy-link-button";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import {
   buildWhatsAppUrl,
   DEFAULT_WHATSAPP_TEMPLATES,
@@ -84,6 +85,9 @@ export default async function CustomerDetailsPage({
   if (!business) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   const canAccess = canAccessBusiness(
     session.user,
@@ -927,7 +931,7 @@ export default async function CustomerDetailsPage({
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${rewardState.progress}%`,
-                          backgroundColor: business.primaryColor,
+                          backgroundColor: theme.primaryColor,
                         }}
                       />
                     </div>
