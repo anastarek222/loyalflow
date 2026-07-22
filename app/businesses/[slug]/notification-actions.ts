@@ -99,22 +99,6 @@ export async function markBusinessNotificationsReadAction(
       },
     }),
 
-    prisma.notification.updateMany({
-      where: {
-        businessId: business.id,
-        OR: [
-          {
-            userId: null,
-          },
-          {
-            userId: session.user.id,
-          },
-        ],
-      },
-      data: {
-        isRead: true,
-      },
-    }),
   ]);
 
   revalidatePath(
