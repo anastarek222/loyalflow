@@ -13,6 +13,7 @@ import {
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
+import { getBusinessOnboardingState } from "@/lib/business/onboarding";
 import BusinessSalesKpis from "@/components/business-sales-kpis";
 import BusinessNotificationsDialog from "@/components/business-notifications-dialog";
 import BusinessNotificationsAutoRefresh from "@/components/business-notifications-auto-refresh";
@@ -614,41 +615,22 @@ export default async function BusinessPage({
         </header>
 
         {(() => {
-          const profileComplete =
-            Boolean(
-              business.industry &&
-              business.email &&
-              business.country
-            );
-
-          const teamComplete =
-            business._count.users >= 1;
-
-          const loyaltyComplete =
-            Boolean(
-              business.unitName?.trim() &&
-              business.rewardName?.trim() &&
-              business.rewardThreshold > 0 &&
-              business.earnAmount > 0
-            );
-
-          const brandingComplete =
-            Boolean(
-              business.logoUrl ||
-              business.coverImageUrl
-            );
-
-          const completedSteps = [
+          const {
             profileComplete,
             teamComplete,
             loyaltyComplete,
             brandingComplete,
-          ].filter(Boolean).length;
-
-          const progress =
-            Math.round(
-              (completedSteps / 4) * 100
-            );
+            coreReady,
+            progress,
+          } = getBusinessOnboardingState({
+            userCount: business._count.users,
+            unitName: business.unitName,
+            rewardName: business.rewardName,
+            rewardThreshold: business.rewardThreshold,
+            earnAmount: business.earnAmount,
+            logoUrl: business.logoUrl,
+            coverImageUrl: business.coverImageUrl,
+          });
 
           const nextStep = !profileComplete
             ? {
@@ -731,7 +713,9 @@ export default async function BusinessPage({
                 ) : (
                   <div>
                     <p className="text-sm font-bold text-emerald-700">
-                      ✓ النشاط جاهز للتشغيل
+                      {coreReady
+                        ? "✓ النشاط جاهز للتشغيل"
+                        : "إعداد النشاط غير مكتمل"}
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">

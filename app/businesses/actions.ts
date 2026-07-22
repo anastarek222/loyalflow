@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { passwordValueSchema } from "@/lib/auth/password-policy";
 import {
   createWithGeneratedSlug,
   isSupportedCurrency,
@@ -78,10 +79,7 @@ const businessSchema = z.object({
     .max(255)
     .email(),
 
-  ownerPassword: z
-    .string()
-    .min(8)
-    .max(100),
+  ownerPassword: passwordValueSchema,
 
   loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
   unitName: z.string().trim().min(1).max(30),
