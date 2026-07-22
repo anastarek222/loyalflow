@@ -339,8 +339,8 @@ export default function BusinessSettingsForm({
                   className="rounded-xl border px-4 py-3"
                 >
                   <option value="CLASSIC">Classic</option>
-                  <option value="ROUNDED">Rounded</option>
-                  <option value="MODERN">Modern</option>
+                  <option value="COMPACT">Compact</option>
+                  <option value="PREMIUM">Premium</option>
                 </select>
 
 
