@@ -4,6 +4,10 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
 import {
+  passwordConfirmationSchema,
+  passwordValueSchema,
+} from "@/lib/auth/password-policy";
+import {
   canPerform,
   isBusinessOwner as isBusinessOwnerRole,
   isSuperAdmin as isSuperAdminRole,
@@ -32,10 +36,7 @@ const userSchema = z.object({
     .email()
     .max(120),
 
-  password: z
-    .string()
-    .min(10)
-    .max(100),
+  password: passwordValueSchema,
 
   role: z.enum([
     "OWNER",
@@ -45,28 +46,7 @@ const userSchema = z.object({
   ]),
 });
 
-const passwordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(10)
-      .max(100),
-
-    confirmPassword: z
-      .string()
-      .min(10)
-      .max(100),
-  })
-  .refine(
-    (data) =>
-      data.password ===
-      data.confirmPassword,
-    {
-      path: ["confirmPassword"],
-      message:
-        "كلمتا المرور غير متطابقتين",
-    }
-  );
+const passwordSchema = passwordConfirmationSchema;
 
 async function getManagementContext(
   slug: string
