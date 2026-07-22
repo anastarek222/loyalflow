@@ -133,6 +133,18 @@ employeeCount: z.coerce.number().int().min(0).max(100000),
     "POPPINS",
   ]),
 
+  qrStyle: z.enum([
+    "CLASSIC",
+    "ROUNDED",
+    "BRANDED",
+  ]),
+
+  qrPosition: z.enum([
+    "LEFT",
+    "CENTER",
+    "RIGHT",
+  ]),
+
   loyaltyProgramName: z.string().trim().max(80),
   pointsName: z.string().trim().max(30),
   membershipName: z.string().trim().max(50),
@@ -264,6 +276,8 @@ export async function updateBusinessSettingsAction(
     themePreset: formData.get("themePreset") ?? "DEFAULT",
     cardStyle: formData.get("cardStyle") ?? "CLASSIC",
     fontFamily: formData.get("fontFamily") ?? "INTER",
+    qrStyle: formData.get("qrStyle") ?? "CLASSIC",
+    qrPosition: formData.get("qrPosition") ?? "CENTER",
 
     loyaltyProgramName: formData.get("loyaltyProgramName") ?? "",
     pointsName: formData.get("pointsName") ?? "",
@@ -341,6 +355,8 @@ export async function updateBusinessSettingsAction(
         themePreset: parsed.data.themePreset,
         cardStyle: parsed.data.cardStyle,
         fontFamily: parsed.data.fontFamily,
+        qrStyle: parsed.data.qrStyle,
+        qrPosition: parsed.data.qrPosition,
 
         loyaltyProgramName: parsed.data.loyaltyProgramName || null,
         pointsName: parsed.data.pointsName || null,

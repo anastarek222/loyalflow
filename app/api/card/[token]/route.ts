@@ -90,6 +90,8 @@ export async function GET(
           secondaryColor: customer.business.secondaryColor,
           logoUrl: customer.business.logoUrl,
           coverImageUrl: customer.business.coverImageUrl,
+          qrStyle: customer.business.qrStyle,
+          qrPosition: customer.business.qrPosition,
           loyaltyProgramName:
             customer.business.loyaltyProgramName,
           pointsName: customer.business.pointsName,

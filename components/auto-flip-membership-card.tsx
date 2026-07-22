@@ -75,6 +75,8 @@ type AutoFlipMembershipCardProps = {
   rewardAvailable: boolean;
 
   qrCode: string;
+  qrStyle?: "CLASSIC" | "ROUNDED" | "BRANDED";
+  qrPosition?: "LEFT" | "CENTER" | "RIGHT";
   cardUrl: string;
   terms: string[];
   activities: CardActivity[];
@@ -360,6 +362,8 @@ export default function AutoFlipMembershipCard({
   rewardAvailable,
 
   qrCode,
+  qrStyle = "CLASSIC",
+  qrPosition = "CENTER",
   cardUrl,
   terms,
   activities,
@@ -801,6 +805,20 @@ export default function AutoFlipMembershipCard({
       // Share may be cancelled or unavailable.
     }
   }
+
+  const qrImageClass =
+    qrStyle === "ROUNDED"
+      ? "rounded-2xl"
+      : qrStyle === "BRANDED"
+        ? "rounded-xl"
+        : "";
+
+  const qrPositionClass =
+    qrPosition === "LEFT"
+      ? "self-start"
+      : qrPosition === "RIGHT"
+        ? "self-end"
+        : "self-center";
 
   return (
     <section
@@ -1263,10 +1281,11 @@ export default function AutoFlipMembershipCard({
                   <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <img
                       src={qrCode}
+                        data-qr-style={qrStyle}
+                      className={`h-28 w-28 object-contain sm:h-36 sm:w-36 ${qrImageClass} ${qrPositionClass}`}
                       alt={
                         text.scanCard
                       }
-                      className="h-28 w-28 object-contain sm:h-36 sm:w-36"
                     />
                   </div>
 

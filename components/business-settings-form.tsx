@@ -43,6 +43,8 @@ type BusinessSettingsFormProps = {
     themePreset: string;
     cardStyle: string;
     fontFamily: string;
+    qrStyle: string;
+    qrPosition: string;
 
     loyaltyProgramName: string | null;
     pointsName: string | null;
@@ -141,6 +143,10 @@ export default function BusinessSettingsForm({
 
   const [fontFamily, setFontFamily] = useState(
     business.fontFamily ?? "INTER",
+  );
+
+  const [qrStyle, setQrStyle] = useState(
+    business.qrStyle ?? "CLASSIC",
   );
 
   const [coverImageUrl, setCoverImageUrl] = useState(
@@ -362,6 +368,43 @@ export default function BusinessSettingsForm({
 
               </div>
 
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  شكل رمز QR
+                </label>
+
+                <select
+                  name="qrStyle"
+                  value={qrStyle}
+                  onChange={(e) => setQrStyle(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                >
+                  <option value="CLASSIC">Classic</option>
+                  <option value="ROUNDED">Rounded</option>
+                  <option value="BRANDED">Branded</option>
+                </select>
+
+                <p className="mt-2 text-xs text-slate-500">
+                  يتحكم في شكل QR الظاهر على كارت العميل.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  مكان رمز QR
+                </label>
+
+                <select
+                  name="qrPosition"
+                  defaultValue={business.qrPosition ?? "CENTER"}
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                >
+                  <option value="LEFT">Left</option>
+                  <option value="CENTER">Center</option>
+                  <option value="RIGHT">Right</option>
+                </select>
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-3">
 

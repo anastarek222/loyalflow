@@ -55,6 +55,7 @@ model Business {
   buttonStyle     ButtonStyle @default(ROUNDED)
   backgroundColor String      @default("#F8FAFC")
   qrStyle         String      @default("CLASSIC")
+  qrPosition      String      @default("CENTER")
   fontFamily      String      @default("INTER")
 
   allowOwnerDataExport     Boolean                 @default(false)
