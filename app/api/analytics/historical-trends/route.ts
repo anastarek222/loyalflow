@@ -3,7 +3,7 @@ import {
   getDefaultUtcDateRange,
   parseUtcDateInput,
 } from "@/lib/analytics/date-range";
-import { createDailyTrend } from "@/lib/analytics/trends";
+import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -81,11 +81,16 @@ export async function GET(request: Request) {
         from: from.toISOString(),
         to: to.toISOString(),
       },
-      historicalTrends: {
-        customers: createDailyTrend(customers, from, to),
-        loyaltyEarned: createDailyTrend(loyaltyEarned, from, to),
-        rewardsRedeemed: createDailyTrend(rewardsRedeemed, from, to),
-      },
+      historicalTrends:
+        createHistoricalAnalyticsTrends(
+          {
+            customers,
+            loyaltyEarned,
+            rewardsRedeemed,
+          },
+          from,
+          to
+        ),
     });
   } catch (error) {
     console.error("Unable to load historical analytics", error);
