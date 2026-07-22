@@ -24,7 +24,19 @@ export default function MobileSidebarWrapper({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-xl border border-slate-200 bg-white p-2 lg:hidden"
+        aria-label="Open menu"
+        className="
+          rounded-xl
+          border
+          border-slate-200
+          bg-white
+          p-2.5
+          text-slate-700
+          shadow-sm
+          transition
+          hover:bg-slate-50
+          lg:hidden
+        "
       >
         <Menu size={22}/>
       </button>
