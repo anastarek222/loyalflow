@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import QrScanner from "@/components/qr-scanner";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -34,6 +35,10 @@ export default async function ScanPage({
       slug: true,
       isActive: true,
       primaryColor: true,
+      secondaryColor: true,
+      themePreset: true,
+      cardStyle: true,
+      fontFamily: true,
       logoUrl: true,
     },
   });
@@ -41,6 +46,9 @@ export default async function ScanPage({
   if (!business || !business.isActive) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   const canAccess = canPerform(
     session.user,
@@ -53,7 +61,14 @@ export default async function ScanPage({
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-8">
+    <main
+      dir="rtl"
+      className="min-h-screen px-4 py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
+    >
       <div className="mx-auto max-w-xl">
         <Link
           href={`/businesses/${business.slug}`}
@@ -63,9 +78,9 @@ export default async function ScanPage({
         </Link>
 
         <header
-          className="mt-5 rounded-2xl p-5 text-white shadow-xl sm:rounded-3xl sm:p-7"
+          className={`mt-5 overflow-hidden border p-5 text-white sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
           style={{
-            backgroundColor: business.primaryColor,
+            backgroundColor: theme.primaryColor,
           }}
         >
           <div className="flex items-center gap-4">
@@ -103,7 +118,9 @@ export default async function ScanPage({
           </div>
         </header>
 
-        <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
+        <section
+          className={`mt-6 border bg-white p-5 sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
+        >
           <p
             dir="rtl"
             className="mb-6 text-sm leading-7 text-slate-600"
