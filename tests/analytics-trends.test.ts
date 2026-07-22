@@ -51,3 +51,56 @@ test("counts events by default and ignores events outside the requested range", 
     ]
   );
 });
+
+import {
+  createHistoricalAnalyticsTrends,
+} from "../lib/analytics/trends";
+
+test("builds historical analytics trends with complete daily buckets", () => {
+  assert.deepEqual(
+    createHistoricalAnalyticsTrends(
+      {
+        customers: [
+          { createdAt: new Date("2026-07-01T09:00:00.000Z") },
+          { createdAt: new Date("2026-07-01T15:00:00.000Z") },
+        ],
+        loyaltyEarned: [
+          {
+            createdAt: new Date("2026-07-01T10:00:00.000Z"),
+            amount: 3,
+          },
+          {
+            createdAt: new Date("2026-07-01T18:00:00.000Z"),
+            amount: 7,
+          },
+          {
+            createdAt: new Date("2026-07-03T11:00:00.000Z"),
+            amount: 4,
+          },
+        ],
+        rewardsRedeemed: [
+          { createdAt: new Date("2026-07-02T12:00:00.000Z") },
+        ],
+      },
+      from,
+      to
+    ),
+    {
+      customers: [
+        { date: "2026-07-01", value: 2 },
+        { date: "2026-07-02", value: 0 },
+        { date: "2026-07-03", value: 0 },
+      ],
+      loyaltyEarned: [
+        { date: "2026-07-01", value: 10 },
+        { date: "2026-07-02", value: 0 },
+        { date: "2026-07-03", value: 4 },
+      ],
+      rewardsRedeemed: [
+        { date: "2026-07-01", value: 0 },
+        { date: "2026-07-02", value: 1 },
+        { date: "2026-07-03", value: 0 },
+      ],
+    }
+  );
+});
