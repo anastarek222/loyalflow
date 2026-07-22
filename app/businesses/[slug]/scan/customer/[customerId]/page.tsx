@@ -11,6 +11,7 @@ import {
   addLoyaltyAction,
   redeemRewardAction,
 } from "@/app/businesses/[slug]/customers/[customerId]/actions";
+import { getBusinessTheme } from "@/lib/theme";
 
 type PageProps = {
   params: Promise<{
@@ -42,6 +43,11 @@ export default async function ScanCustomerPage({
         slug,
       },
       select: {
+        primaryColor: true,
+        secondaryColor: true,
+        themePreset: true,
+        cardStyle: true,
+        fontFamily: true,
         id: true,
       },
     });
@@ -49,6 +55,8 @@ export default async function ScanCustomerPage({
   if (!business) {
     notFound();
   }
+
+  const theme = getBusinessTheme(business);
 
   if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
@@ -164,7 +172,7 @@ export default async function ScanCustomerPage({
     });
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-8">
+    <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-8">
       <section className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow">
 
         <div className="mb-5 flex items-center justify-between gap-3">
