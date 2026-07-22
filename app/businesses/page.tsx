@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createBusinessAction } from "./actions";
+import BusinessSetupWizard from "@/components/business-setup-wizard";
 
 type BusinessesPageProps = {
   searchParams: Promise<{
@@ -87,6 +88,7 @@ export default async function BusinessesPage({
         )}
 
         <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
+
           <section className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-xl font-bold text-slate-950">
               Add new business
@@ -96,354 +98,25 @@ export default async function BusinessesPage({
               Create an independent loyalty program for a client.
             </p>
 
-     <form action={createBusinessAction} className="mt-6 space-y-5">
-       <div>
-         <label className="mb-2 block text-sm font-medium text-slate-700">
-           Business name
-         </label>
+            <BusinessSetupWizard
+              action={createBusinessAction}
+            />
 
-         <input
-           name="name"
-           required
-           placeholder="Example: Elite Barber"
-           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-         />
-       </div>
-
-      <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-         Your business link is generated automatically from the business name.
-      </p>
-
-       <div>
-         <label className="mb-2 block text-sm font-medium text-slate-700">
-          Business phone
-         </label>
-
-         <input
-           name="contactPhone"
-           type="tel"
-           placeholder="+20 100 000 0000"
-           maxLength={25}
-           className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-         />
-       </div>
-
-<section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-  <h3 className="text-lg font-semibold text-slate-900">
-    Business owner
-</h3>
-
-<p className="mt-1 text-sm text-slate-500">
-  Create the primary owner account for this business.
-</p>
-
-<div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        First name
-      </label>
-
-      <input
-        name="ownerFirstName"
-        required
-        placeholder="First name"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Last name
-      </label>
-
-      <input
-        name="ownerLastName"
-        placeholder="Last name"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Owner email
-      </label>
-
-      <input
-        name="ownerEmail"
-        type="email"
-        required
-        placeholder="owner@example.com"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Temporary password
-      </label>
-
-      <input
-        name="ownerPassword"
-        type="password"
-        required
-        minLength={8}
-        placeholder="Minimum 8 characters"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-  </div>
-</section>
-
-<section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-  <h3 className="text-lg font-semibold text-slate-900">
-    Business information
-  </h3>
-
-  <p className="mt-1 text-sm text-slate-500">
-    Business profile and contact information.
-  </p>
-
-  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Industry
-      </label>
-
-      <input
-        name="industry"
-        placeholder="Barber Shop"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Business email
-      </label>
-
-      <input
-        name="email"
-        type="email"
-        placeholder="info@example.com"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div className="sm:col-span-2">
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Website
-      </label>
-
-      <input
-        name="website"
-        type="url"
-        placeholder="https://example.com"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Country
-      </label>
-
-      <input
-        name="country"
-        placeholder="Egypt"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        City
-      </label>
-
-      <input
-        name="city"
-        placeholder="Cairo"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-
-    <div className="sm:col-span-2">
-      <label className="mb-2 block text-sm font-medium text-slate-700">
-        Tax number
-      </label>
-
-      <input
-        name="taxNumber"
-        placeholder="Optional"
-        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-      />
-    </div>
-  </div>
-</section>
-              <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                Your business link is generated automatically from the business name.
-              </p>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Business phone
-                </label>
-
-                <input
-                  name="contactPhone"
-                  type="tel"
-                  placeholder="+20 100 000 0000"
-                  maxLength={25}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Currency
-                  </label>
-
-                  <select
-                    name="currency"
-                    defaultValue="EGP"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                  >
-                    <option value="AED">AED</option>
-                    <option value="EGP">EGP</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="KWD">KWD</option>
-                    <option value="QAR">QAR</option>
-                    <option value="SAR">SAR</option>
-                    <option value="USD">USD</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Timezone
-                  </label>
-
-                  <input
-                    name="timezone"
-                    defaultValue="Africa/Cairo"
-                    placeholder="Africa/Cairo"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Loyalty system
-                </label>
-
-                <select
-                  name="loyaltyMode"
-                  defaultValue="VISITS"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                >
-                  <option value="VISITS">Visits / Stamps</option>
-                  <option value="POINTS">Points</option>
-                  <option value="SALES_AMOUNT">إجمالي المبيعات</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Unit name
-                  </label>
-
-                  <input
-                    name="unitName"
-                    required
-                    defaultValue="زيارة"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Amount per visit
-                  </label>
-
-                  <input
-                    name="earnAmount"
-                    type="number"
-                    min="1"
-                    required
-                    defaultValue="1"
-                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Reward name
-                </label>
-
-                <input
-                  name="rewardName"
-                  required
-                  defaultValue="هدية مجانية"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Required amount for reward
-                </label>
-
-                <input
-                  name="rewardThreshold"
-                  type="number"
-                  min="1"
-                  required
-                  defaultValue="5"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Primary color
-                  </label>
-
-                  <input
-                    name="primaryColor"
-                    type="color"
-                    defaultValue="#111827"
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white p-1"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Secondary color
-                  </label>
-
-                  <input
-                    name="secondaryColor"
-                    type="color"
-                    defaultValue="#ffffff"
-                    className="h-12 w-full rounded-xl border border-slate-300 bg-white p-1"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
-              >
-                Create business
-              </button>
-            </form>
           </section>
+          <section className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-950">
+              Add new business
+            </h2>
 
+            <p className="mt-1 text-sm text-slate-500">
+              Create an independent loyalty program for a client.
+            </p>
+
+            <BusinessSetupWizard
+              action={createBusinessAction}
+            />
+
+          </section>
           <section>
             {businesses.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
