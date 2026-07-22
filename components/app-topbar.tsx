@@ -5,7 +5,6 @@ import {
   ChevronDown,
   LogOut,
   User,
-  Menu,
 } from "lucide-react";
 
 import { useState } from "react";
