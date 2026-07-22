@@ -87,6 +87,13 @@ export default async function BusinessesPage({
           </div>
         )}
 
+        {params.error === "owner-email" && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+            An account with this owner email already exists.
+          </div>
+        )}
+
+
         <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
 
           <section className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -103,20 +110,7 @@ export default async function BusinessesPage({
             />
 
           </section>
-          <section className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-950">
-              Add new business
-            </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              Create an independent loyalty program for a client.
-            </p>
-
-            <BusinessSetupWizard
-              action={createBusinessAction}
-            />
-
-          </section>
           <section>
             {businesses.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">

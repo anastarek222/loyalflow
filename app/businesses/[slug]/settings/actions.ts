@@ -104,6 +104,8 @@ city: z.string().trim().max(100),
 
 taxNumber: z.string().trim().max(100),
 
+employeeCount: z.coerce.number().int().min(0).max(100000),
+
   description: z.string().trim().max(500),
 
   instagramUrl: z.string().trim().max(300),
@@ -251,6 +253,7 @@ export async function updateBusinessSettingsAction(
     country: formData.get("country") ?? "",
     city: formData.get("city") ?? "",
     taxNumber: formData.get("taxNumber") ?? "",
+    employeeCount: formData.get("employeeCount") ?? 0,
 
     description: formData.get("description") ?? "",
 
@@ -327,6 +330,7 @@ export async function updateBusinessSettingsAction(
         country: optionalProfileValue(parsed.data.country),
         city: optionalProfileValue(parsed.data.city),
         taxNumber: optionalProfileValue(parsed.data.taxNumber),
+        employeeCount: parsed.data.employeeCount,
 
         description: optionalProfileValue(parsed.data.description),
 

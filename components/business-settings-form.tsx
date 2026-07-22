@@ -32,6 +32,7 @@ type BusinessSettingsFormProps = {
     country: string | null;
     city: string | null;
     taxNumber: string | null;
+    employeeCount: number | null;
 
     description: string | null;
 
@@ -109,6 +110,10 @@ export default function BusinessSettingsForm({
   const [city, setCity] = useState(business.city ?? "");
 
   const [taxNumber, setTaxNumber] = useState(business.taxNumber ?? "");
+
+  const [employeeCount, setEmployeeCount] = useState(
+    business.employeeCount?.toString() ?? ""
+  );
 
   const [description, setDescription] = useState(
     business.description ?? "",
@@ -493,7 +498,7 @@ export default function BusinessSettingsForm({
         />
       </div>
 
-      <div className="sm:col-span-2">
+      <div>
         <label className="mb-2 block text-sm font-medium text-slate-700">
           الرقم الضريبي
         </label>
@@ -504,6 +509,22 @@ export default function BusinessSettingsForm({
           onChange={(event) => setTaxNumber(event.target.value)}
           maxLength={100}
           placeholder="اختياري"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          عدد الموظفين
+        </label>
+
+        <input
+          name="employeeCount"
+          type="number"
+          min="0"
+          value={employeeCount}
+          onChange={(event) => setEmployeeCount(event.target.value)}
+          placeholder="مثال: 10"
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
         />
       </div>
