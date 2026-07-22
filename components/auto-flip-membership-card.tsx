@@ -49,6 +49,14 @@ type AutoFlipMembershipCardProps = {
   primaryColor: string;
   secondaryColor: string;
 
+  theme?: {
+    backgroundColor: string;
+    buttonStyle: string;
+    cardStyle: string;
+    fontFamily: string;
+    themePreset: string;
+  };
+
   customerName: string;
   customerCode: string;
   loyaltyProgramName: string | null;
@@ -332,6 +340,7 @@ export default function AutoFlipMembershipCard({
   coverImageUrl,
   primaryColor,
   secondaryColor,
+  theme,
 
   customerName,
   customerCode,
