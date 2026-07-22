@@ -90,6 +90,31 @@ export default function BusinessSetupWizard({
             placeholder="Business email"
             className="w-full rounded-xl border px-4 py-3"
           />
+
+          <input
+            name="country"
+            placeholder="Country"
+            className="w-full rounded-xl border px-4 py-3"
+          />
+
+          <input
+            name="city"
+            placeholder="City"
+            className="w-full rounded-xl border px-4 py-3"
+          />
+
+          <input
+            name="website"
+            type="url"
+            placeholder="Website"
+            className="w-full rounded-xl border px-4 py-3"
+          />
+
+          <input
+            name="taxNumber"
+            placeholder="Tax number"
+            className="w-full rounded-xl border px-4 py-3"
+          />
         </section>
       )}
 
