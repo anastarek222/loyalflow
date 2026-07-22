@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -169,12 +170,19 @@ export default async function ActivityPage({
       name: true,
       slug: true,
       primaryColor: true,
+      secondaryColor: true,
+      themePreset: true,
+      cardStyle: true,
+      fontFamily: true,
     },
   });
 
   if (!business) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   const canViewActivity = canPerform(
     session.user,
@@ -280,7 +288,14 @@ export default async function ActivityPage({
   }
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
+    <main
+      dir="rtl"
+      className="min-h-screen px-4 py-8 sm:px-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
+    >
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/businesses/${business.slug}`}
@@ -290,9 +305,9 @@ export default async function ActivityPage({
         </Link>
 
         <header
-          className="mt-5 rounded-3xl p-8 text-white shadow-xl"
+          className={`mt-5 border p-8 text-white ${theme.cardClass} ${theme.borderClass}`}
           style={{
-            backgroundColor: business.primaryColor,
+            backgroundColor: theme.primaryColor,
           }}
         >
           <p className="text-sm text-white/70">
@@ -308,7 +323,9 @@ export default async function ActivityPage({
           </p>
         </header>
 
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section
+          className={`mt-8 border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
+        >
           <form className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="flex-1">
               <label
