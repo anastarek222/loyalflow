@@ -12,6 +12,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import BusinessSalesKpis from "@/components/business-sales-kpis";
 import BusinessNotificationsDialog from "@/components/business-notifications-dialog";
 import BusinessNotificationsAutoRefresh from "@/components/business-notifications-auto-refresh";
@@ -457,6 +458,9 @@ export default async function BusinessPage({
     unreadBalanceAdjustedCount +
     unreadLoyaltyEarnedCount;
 
+  const theme =
+    getBusinessTheme(business);
+
   const segmentCounts = await Promise.all(
     getCustomerFilterSegments(business.loyaltyMode).map(async (segment) => [
       segment,
@@ -497,7 +501,7 @@ export default async function BusinessPage({
             <div
               className="absolute inset-0"
               style={{
-                backgroundColor: business.primaryColor,
+                backgroundColor: theme.primaryColor,
               }}
             />
           )}
@@ -656,7 +660,7 @@ export default async function BusinessPage({
 
               <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-violet-600 transition-all"
+                  className={`${theme.buttonClass} h-full rounded-full transition-all`}
                   style={{
                     width: `${progress}%`,
                   }}
@@ -678,7 +682,7 @@ export default async function BusinessPage({
 
                     <Link
                       href={nextStep.href}
-                      className="inline-flex justify-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-700"
+                      className={`${theme.buttonClass} px-5 py-3 text-sm font-bold transition`}
                     >
                       متابعة الإعداد
                     </Link>
