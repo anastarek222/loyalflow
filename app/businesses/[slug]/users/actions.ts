@@ -11,6 +11,7 @@ import {
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createBusinessNotification } from "@/lib/notifications";
 
 const userSchema = z.object({
   firstName: z
@@ -269,6 +270,26 @@ export async function createBusinessUserAction(
               session.user.id,
           },
         });
+
+      await createBusinessNotification(
+        transaction,
+        {
+          type: "USER_CREATED",
+          title: "تم إنشاء حساب فريق جديد",
+          message:
+            `تم إنشاء حساب ${
+              parsed.data.role === "OWNER"
+                ? "مالك"
+                : parsed.data.role === "MANAGER"
+                  ? "مدير"
+                  : parsed.data.role === "VIEWER"
+                    ? "مشاهد"
+                    : "موظف"
+            } للبريد ${email}`,
+          businessId:
+            business.id,
+        }
+      );
     }
   );
 

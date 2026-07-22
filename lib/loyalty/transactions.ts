@@ -1,5 +1,6 @@
 import type { LoyaltyMode, Prisma } from "@/generated/prisma/client";
 import { validateStaffAttribution } from "@/lib/loyalty/staff-attribution";
+import { createBusinessNotification } from "@/lib/notifications";
 
 type TransactionClient = Prisma.TransactionClient;
 
@@ -210,6 +211,16 @@ export async function recordLoyaltyEarn(
     },
   });
 
+  await createBusinessNotification(
+    transaction,
+    {
+      type: "LOYALTY_EARNED",
+      title: "تمت إضافة رصيد ولاء",
+      message: input.activityDescription,
+      businessId: input.businessId,
+    }
+  );
+
   return balanceAfter;
 }
 
@@ -296,6 +307,16 @@ export async function recordRewardRedemption(
     },
   });
 
+  await createBusinessNotification(
+    transaction,
+    {
+      type: "REWARD_REDEEMED",
+      title: "تم استبدال مكافأة",
+      message: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
+      businessId: input.businessId,
+    }
+  );
+
   return balanceAfter;
 }
 
@@ -379,6 +400,18 @@ export async function recordBalanceAdjustment(
       createdById: input.createdById,
     },
   });
+
+  await createBusinessNotification(
+    transaction,
+    {
+      type: "BALANCE_ADJUSTED",
+      title: "تم تعديل رصيد عميل",
+      message: `تم تعديل الرصيد بمقدار ${
+        signedAmount > 0 ? "+" : ""
+      }${signedAmount}. السبب: ${input.reason}`,
+      businessId: input.businessId,
+    }
+  );
 
   return balanceAfter;
 }
