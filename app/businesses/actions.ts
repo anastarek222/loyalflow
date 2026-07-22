@@ -67,6 +67,8 @@ const businessSchema = z.object({
 
   taxNumber: z.string().trim().max(100),
 
+  employeeCount: z.coerce.number().int().min(0).max(100000),
+
   ownerFirstName: z.string().trim().min(2).max(80),
   ownerLastName: z.string().trim().max(80),
 
@@ -134,6 +136,8 @@ export async function createBusinessAction(formData: FormData) {
     country: formData.get("country") ?? "",
     city: formData.get("city") ?? "",
     taxNumber: formData.get("taxNumber") ?? "",
+
+    employeeCount: formData.get("employeeCount") ?? 0,
    
     ownerFirstName: formData.get("ownerFirstName"),
     ownerLastName: formData.get("ownerLastName") ?? "",
@@ -221,6 +225,10 @@ try {
             taxNumber: optionalProfileValue(
               parsed.data.taxNumber
             ),
+
+            employeeCount:
+              parsed.data.employeeCount,
+
             loyaltyMode: parsed.data.loyaltyMode,
             unitName: parsed.data.unitName,
             rewardName: parsed.data.rewardName,
