@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -46,6 +47,10 @@ export default async function RewardsPage({
       name: true,
       slug: true,
       primaryColor: true,
+      secondaryColor: true,
+      themePreset: true,
+      cardStyle: true,
+      fontFamily: true,
       unitName: true,
       rewardName: true,
       rewardThreshold: true,
@@ -59,6 +64,9 @@ export default async function RewardsPage({
     notFound();
   }
 
+  const theme =
+    getBusinessTheme(business);
+
   if (!canManageBusiness(session.user, business.id)) {
     redirect(`/businesses/${business.slug}`);
   }
@@ -66,7 +74,14 @@ export default async function RewardsPage({
   const createReward = createRewardAction.bind(null, business.slug);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-6 sm:px-8 sm:py-8">
+    <main
+      dir="rtl"
+      className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
+    >
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/businesses/${business.slug}/settings`}
@@ -76,8 +91,10 @@ export default async function RewardsPage({
         </Link>
 
         <header
-          className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"
-          style={{ backgroundColor: business.primaryColor }}
+          className={`mt-5 border p-6 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
+          style={{
+            backgroundColor: theme.primaryColor,
+          }}
         >
           <p className="text-sm font-bold text-white/75">كتالوج المكافآت</p>
           <h1 className="mt-2 text-3xl font-black">مكافآت {business.name}</h1>
@@ -100,7 +117,10 @@ export default async function RewardsPage({
         ) : null}
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
-          <form action={createReward} className="h-fit rounded-3xl bg-white p-6 shadow-sm">
+          <form
+            action={createReward}
+            className={`h-fit border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
+          >
             <h2 className="text-xl font-black text-slate-950">إضافة مكافأة</h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">
               تكلفة المكافأة تُخصم من رصيد العميل عند تأكيد الاستبدال.
