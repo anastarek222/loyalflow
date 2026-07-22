@@ -3,6 +3,7 @@ import JoinSubmitButton from "@/components/join-submit-button";
 import { joinBusinessAction } from "@/app/join/[slug]/actions";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import { notFound } from "next/navigation";
 
 type JoinBusinessPageProps = {
@@ -58,6 +59,9 @@ export default async function JoinBusinessPage({
       welcomeMessage: true,
       primaryColor: true,
       secondaryColor: true,
+      themePreset: true,
+      cardStyle: true,
+      fontFamily: true,
       loyaltyProgramName: true,
       unitName: true,
       rewardName: true,
@@ -70,6 +74,9 @@ export default async function JoinBusinessPage({
   if (!business?.isActive) {
     notFound();
   }
+
+  const theme =
+    getBusinessTheme(business);
 
   const joinBusiness = joinBusinessAction.bind(null, business.slug);
   const referralCode = normalizeReferralCode(query.ref);
@@ -131,9 +138,15 @@ export default async function JoinBusinessPage({
   return (
     <main
       dir={language === "AR" ? "rtl" : "ltr"}
-      className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10"
+      className="flex min-h-screen items-center justify-center px-4 py-10"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
     >
-      <section className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60">
+      <section
+        className={`w-full max-w-lg overflow-hidden border bg-white ${theme.cardClass} ${theme.borderClass}`}
+      >
         <div className="relative overflow-hidden px-6 py-8 text-white sm:px-8">
           {business.coverImageUrl ? (
             <>
@@ -148,7 +161,7 @@ export default async function JoinBusinessPage({
           ) : (
             <div
               className="absolute inset-0"
-              style={{ backgroundColor: business.primaryColor }}
+              style={{ backgroundColor: theme.primaryColor }}
             />
           )}
 
@@ -206,8 +219,8 @@ export default async function JoinBusinessPage({
           <div
             className="mb-6 rounded-2xl px-4 py-3 text-sm leading-6"
             style={{
-              backgroundColor: `${business.secondaryColor}CC`,
-              color: business.primaryColor,
+              backgroundColor: `${theme.secondaryColor}CC`,
+              color: theme.primaryColor,
             }}
           >
             {copy.reward} {business.rewardThreshold} {business.unitName} {copy.rewardSuffix} {business.rewardName}.
@@ -290,7 +303,7 @@ export default async function JoinBusinessPage({
             <JoinSubmitButton
               label={copy.createCard}
               pendingLabel={copy.creatingCard}
-              primaryColor={business.primaryColor}
+              primaryColor={theme.primaryColor}
             />
           </form>
 
