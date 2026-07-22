@@ -13,6 +13,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { applyBusinessPlaybookAction } from "./actions";
+import { getBusinessTheme } from "@/lib/theme";
 
 type PlaybooksPageProps = {
   params: Promise<{ slug: string }>;
@@ -55,6 +56,11 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
+        primaryColor: true,
+        secondaryColor: true,
+        themePreset: true,
+        cardStyle: true,
+        fontFamily: true,
       id: true, slug: true, name: true, loyaltyMode: true, unitName: true, rewardName: true,
       rewardType: true, rewardDescription: true, rewardThreshold: true, earnAmount: true,
       loyaltyProgramName: true, pointsName: true, membershipName: true, rewardCode: true,
@@ -65,6 +71,8 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
     },
   });
   if (!business) notFound();
+
+  const theme = getBusinessTheme(business);
   if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${business.slug}`);
   const selected = getBusinessPlaybook(query.playbook) ?? businessPlaybooks.BARBER;
   const current = stateFromBusiness(business);
@@ -73,10 +81,11 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
   const apply = applyBusinessPlaybookAction.bind(null, business.slug);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-6 sm:px-8 sm:py-8">
+    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <Link href={`/businesses/${business.slug}/settings`} className="text-sm font-bold text-violet-700 hover:text-violet-900">← الرجوع إلى إعدادات {business.name}</Link>
-        <header className="mt-5 rounded-3xl bg-violet-700 p-6 text-white shadow-xl sm:p-8">
+        <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"
+          style={{ backgroundColor: theme.primaryColor }}>
           <p className="text-sm font-bold text-white/75">انطلاقة سريعة</p>
           <h1 className="mt-2 text-3xl font-black">قوالب تشغيل النشاط</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-white/90">اختر قالبًا لمعاينة إعدادات عادية قابلة للتعديل. لا يُنشئ القالب مكافآت أو عروضًا أو Promotions أو رسائل أو أي خدمة مدفوعة تلقائيًا.</p>

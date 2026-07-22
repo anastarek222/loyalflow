@@ -15,6 +15,7 @@ import {
   resetBusinessUserPasswordAction,
   setBusinessUserStatusAction,
 } from "./actions";
+import { getBusinessTheme } from "@/lib/theme";
 
 type UsersPageProps = {
   params: Promise<{
@@ -52,6 +53,8 @@ export default async function UsersPage({
   if (!business) {
     notFound();
   }
+
+  const theme = getBusinessTheme(business);
 
   const isSuperAdmin =
     isSuperAdminRole(session.user);
@@ -92,7 +95,7 @@ export default async function UsersPage({
     );
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8">
+    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-5 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>

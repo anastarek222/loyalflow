@@ -8,6 +8,7 @@ import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getBusinessTheme } from "@/lib/theme";
 
 type DuplicateReviewPageProps = {
   params: Promise<{ slug: string }>;
@@ -22,9 +23,16 @@ export default async function DuplicateReviewPage({
   const { slug } = await params;
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, name: true, unitName: true },
+    select: {
+        primaryColor: true,
+        secondaryColor: true,
+        themePreset: true,
+        cardStyle: true,
+        fontFamily: true, id: true, slug: true, name: true, unitName: true },
   });
   if (!business) notFound();
+
+  const theme = getBusinessTheme(business);
 
   if (!canPerform(session.user, business.id, "CUSTOMERS_EDIT")) {
     redirect(`/businesses/${slug}/customers`);
@@ -88,7 +96,7 @@ export default async function DuplicateReviewPage({
   const groups = findDuplicateCustomerGroups(customers);
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8">
+    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-5 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/businesses/${business.slug}/customers`}
@@ -97,7 +105,8 @@ export default async function DuplicateReviewPage({
           → الرجوع إلى العملاء
         </Link>
 
-        <header className="mt-5 rounded-3xl bg-slate-950 p-6 text-white shadow-xl sm:p-8">
+        <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"
+          style={{ backgroundColor: theme.primaryColor }}>
           <p className="text-sm font-bold text-cyan-300">مراجعة فقط</p>
           <h1 className="mt-2 text-2xl font-black sm:text-3xl">مراجعة العملاء المتشابهين</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
