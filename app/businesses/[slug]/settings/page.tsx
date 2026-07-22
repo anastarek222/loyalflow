@@ -306,6 +306,7 @@ export default async function BusinessSettingsPage({
             country: business.country, 
             city: business.city,
             taxNumber: business.taxNumber,
+            employeeCount: business.employeeCount,
 
             description: business.description,
             instagramUrl: business.instagramUrl,

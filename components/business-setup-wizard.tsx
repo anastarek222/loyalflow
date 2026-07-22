@@ -77,6 +77,26 @@ export default function BusinessSetupWizard({
             className="w-full rounded-xl border px-4 py-3"
           />
 
+          <select
+            name="currency"
+            defaultValue="EGP"
+            className="w-full rounded-xl border px-4 py-3"
+          >
+            <option value="EGP">EGP — Egyptian Pound</option>
+            <option value="USD">USD — US Dollar</option>
+            <option value="EUR">EUR — Euro</option>
+            <option value="GBP">GBP — British Pound</option>
+            <option value="SAR">SAR — Saudi Riyal</option>
+            <option value="AED">AED — UAE Dirham</option>
+          </select>
+
+          <input
+            name="timezone"
+            defaultValue="Africa/Cairo"
+            placeholder="Timezone"
+            className="w-full rounded-xl border px-4 py-3"
+          />
+
           <input
             name="employeeCount"
             type="number"

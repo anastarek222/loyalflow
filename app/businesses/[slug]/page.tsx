@@ -622,7 +622,7 @@ export default async function BusinessPage({
             );
 
           const teamComplete =
-            business._count.users > 1;
+            business._count.users >= 1;
 
           const loyaltyComplete =
             Boolean(
