@@ -78,6 +78,14 @@ export default function BusinessSetupWizard({
           />
 
           <input
+            name="employeeCount"
+            type="number"
+            min="0"
+            placeholder="Number of employees"
+            className="w-full rounded-xl border px-4 py-3"
+          />
+
+          <input
             name="email"
             placeholder="Business email"
             className="w-full rounded-xl border px-4 py-3"
