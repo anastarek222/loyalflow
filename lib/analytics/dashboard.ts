@@ -1,4 +1,5 @@
 import type { TransactionType } from "@/generated/prisma/client";
+import { getRedemptionMagnitude } from "@/lib/analytics/metrics";
 
 type LoyaltyTransactionPoint = {
   type: TransactionType;
@@ -42,7 +43,7 @@ export function createDashboardLoyaltyGrowth(
     if (transaction.type === "EARN") {
       bucket.earned += transaction.amount;
     } else if (transaction.type === "REDEEM") {
-      bucket.redeemed += Math.abs(transaction.amount);
+      bucket.redeemed += getRedemptionMagnitude(transaction.amount);
     }
 
     buckets.set(date, bucket);

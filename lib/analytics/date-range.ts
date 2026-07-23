@@ -1,4 +1,5 @@
 const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+export const MAX_REPORT_RANGE_DAYS = 366;
 
 export function formatUtcDateInput(date: Date) {
   const year = date.getUTCFullYear();
@@ -44,5 +45,45 @@ export function getDefaultUtcDateRange(
     toInput,
     from: parseUtcDateInput(fromInput)!,
     to: parseUtcDateInput(toInput, true)!,
+  };
+}
+
+type ReportDateRangeInput = {
+  from?: string | null;
+  to?: string | null;
+  now?: Date;
+  days?: number;
+};
+
+/**
+ * Canonical report/export/API boundary parser. Date-only filters always mean
+ * complete UTC days and are limited so a crafted query cannot request an
+ * unbounded report.
+ */
+export function parseReportDateRange({
+  from: requestedFrom,
+  to: requestedTo,
+  now = new Date(),
+  days = 30,
+}: ReportDateRangeInput) {
+  const defaults = getDefaultUtcDateRange(now, days);
+  const fromInput = requestedFrom ?? defaults.fromInput;
+  const toInput = requestedTo ?? defaults.toInput;
+  const from = parseUtcDateInput(fromInput);
+  const to = parseUtcDateInput(toInput, true);
+
+  if (!from || !to || from > to) return null;
+
+  const rangeDays = Math.floor(
+    (to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000)
+  ) + 1;
+
+  if (rangeDays > MAX_REPORT_RANGE_DAYS) return null;
+
+  return {
+    fromInput,
+    toInput,
+    from,
+    to,
   };
 }

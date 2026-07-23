@@ -1,9 +1,14 @@
 import { auth } from "@/auth";
 import {
-  getDefaultUtcDateRange,
-  parseUtcDateInput,
+  parseReportDateRange,
 } from "@/lib/analytics/date-range";
+import { resolveReportScope } from "@/lib/analytics/report-filters";
 import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
+import {
+  getCustomerFilterSegments,
+  getCustomerSegmentWhere,
+  type CustomerSegment,
+} from "@/lib/customers/segments";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
@@ -25,23 +30,68 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const defaults = getDefaultUtcDateRange();
-
-  const from =
-    parseUtcDateInput(url.searchParams.get("from")) ??
-    defaults.from;
-  const to =
-    parseUtcDateInput(url.searchParams.get("to"), true) ??
-    defaults.to;
-
-  if (from > to) {
+  const dateRange = parseReportDateRange({
+    from: url.searchParams.get("from"),
+    to: url.searchParams.get("to"),
+  });
+  if (!dateRange) {
     return NextResponse.json(
-      { error: "The from date must be before the to date." },
+      { error: "Invalid report date range." },
       { status: 400 }
     );
   }
+  const { from, to } = dateRange;
 
-  const dateRange = {
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: {
+      loyaltyMode: true,
+      rewardThreshold: true,
+      earnAmount: true,
+    },
+  });
+  if (!business) {
+    return NextResponse.json({ error: "Business not found" }, { status: 404 });
+  }
+
+  const [branches, staff] = await Promise.all([
+    prisma.branch.findMany({
+      where: { businessId },
+      select: { id: true, businessId: true, name: true, isActive: true },
+    }),
+    prisma.user.findMany({
+      where: { businessId },
+      select: { id: true, businessId: true },
+    }),
+  ]);
+  const reportScope = resolveReportScope({
+    businessId,
+    branchId: url.searchParams.get("branch"),
+    staffId: url.searchParams.get("staff"),
+    branches,
+    staff,
+  });
+  if (!reportScope) {
+    return NextResponse.json({ error: "Invalid branch or staff filter." }, { status: 400 });
+  }
+  const requestedSegment = url.searchParams.get("segment");
+  const availableSegments = getCustomerFilterSegments(business.loyaltyMode);
+  const segment = availableSegments.includes(requestedSegment as CustomerSegment)
+    ? requestedSegment as CustomerSegment
+    : null;
+  const customerWhere = segment
+    ? {
+        businessId,
+        ...getCustomerSegmentWhere(
+          segment,
+          business.rewardThreshold,
+          undefined,
+          business.earnAmount,
+        ),
+      }
+    : undefined;
+
+  const createdAtRange = {
     gte: from,
     lte: to,
   };
@@ -51,7 +101,8 @@ export async function GET(request: Request) {
       prisma.customer.findMany({
         where: {
           businessId,
-          createdAt: dateRange,
+          createdAt: createdAtRange,
+          ...(customerWhere ?? {}),
         },
         select: {
           createdAt: true,
@@ -64,7 +115,9 @@ export async function GET(request: Request) {
         where: {
           businessId,
           type: "EARN",
-          createdAt: dateRange,
+          createdAt: createdAtRange,
+          ...reportScope,
+          ...(customerWhere ? { customer: customerWhere } : {}),
         },
         select: {
           createdAt: true,
@@ -74,7 +127,9 @@ export async function GET(request: Request) {
       prisma.rewardRedemption.findMany({
         where: {
           businessId,
-          createdAt: dateRange,
+          createdAt: createdAtRange,
+          ...reportScope,
+          ...(customerWhere ? { customer: customerWhere } : {}),
         },
         select: {
           createdAt: true,

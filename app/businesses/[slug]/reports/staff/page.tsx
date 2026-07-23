@@ -1,8 +1,14 @@
 import { auth } from "@/auth";
 import {
-  formatUtcDateInput,
-  parseUtcDateInput,
+  getDefaultUtcDateRange,
+  parseReportDateRange,
 } from "@/lib/analytics/date-range";
+import {
+  getCanonicalStaffAttribution,
+  getReportQueryString,
+  resolveReportScope,
+} from "@/lib/analytics/report-filters";
+import { getRedemptionMagnitude } from "@/lib/analytics/metrics";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
@@ -21,6 +27,8 @@ type StaffReportsPageProps = {
   searchParams: Promise<{
     from?: string;
     to?: string;
+    branch?: string;
+    staff?: string;
   }>;
 };
 
@@ -122,85 +130,15 @@ export default async function StaffReportsPage({
     );
   }
 
-  const today =
-    new Date();
-
-  const defaultToInput =
-    formatUtcDateInput(
-      today
-    );
-
-  const defaultFromDate =
-    new Date(today);
-
-  defaultFromDate.setUTCDate(
-    defaultFromDate.getUTCDate() -
-      29
-  );
-
-  const defaultFromInput =
-    formatUtcDateInput(
-      defaultFromDate
-    );
-
-  const requestedFromInput =
-    query.from ??
-    defaultFromInput;
-
-  const requestedToInput =
-    query.to ??
-    defaultToInput;
-
-  let fromInput =
-    requestedFromInput;
-
-  let toInput =
-    requestedToInput;
-
-  let from =
-    parseUtcDateInput(
-      fromInput
-    );
-
-  let to =
-    parseUtcDateInput(
-      toInput,
-      true
-    );
-
-  if (
-    !from ||
-    !to ||
-    from.getTime() >
-      to.getTime()
-  ) {
-    fromInput =
-      defaultFromInput;
-
-    toInput =
-      defaultToInput;
-
-    from =
-      parseUtcDateInput(
-        fromInput
-      );
-
-    to =
-      parseUtcDateInput(
-        toInput,
-        true
-      );
-  }
-
-  if (!from || !to) {
-    throw new Error(
-      "تعذر تحديد فترة التقرير"
-    );
-  }
+  const dateRange = parseReportDateRange({
+    from: query.from,
+    to: query.to,
+  }) ?? getDefaultUtcDateRange();
+  const { fromInput, toInput, from, to } = dateRange;
 
   const [
     users,
-    transactions,
+    reportBranches,
   ] =
     await Promise.all([
       prisma.user.findMany({
@@ -224,6 +162,8 @@ export default async function StaffReportsPage({
         select: {
           id:
             true,
+          businessId:
+            true,
           firstName:
             true,
           lastName:
@@ -237,35 +177,33 @@ export default async function StaffReportsPage({
         },
       }),
 
-      prisma
-        .loyaltyTransaction
-        .findMany({
-          where: {
-            businessId:
-              business.id,
-
-            createdAt: {
-              gte:
-                from,
-              lte:
-                to,
-            },
-          },
-
-          select: {
-            type:
-              true,
-            amount:
-              true,
-            customerId:
-              true,
-            createdById:
-              true,
-            attributedStaffId:
-              true,
-          },
-        }),
+      prisma.branch.findMany({
+        where: { businessId: business.id },
+        select: { id: true, businessId: true, name: true, isActive: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
+
+  const reportScope = resolveReportScope({
+    businessId: business.id,
+    branchId: query.branch,
+    staffId: query.staff,
+    branches: reportBranches,
+    staff: users,
+  }) ?? {};
+  const transactions = await prisma.loyaltyTransaction.findMany({
+    where: {
+      businessId: business.id,
+      createdAt: { gte: from, lte: to },
+      ...reportScope,
+    },
+    select: {
+      type: true,
+      amount: true,
+      customerId: true,
+      attributedStaffId: true,
+    },
+  });
 
   type PerformanceRow = {
     id: string;
@@ -342,9 +280,7 @@ export default async function StaffReportsPage({
     const transaction of
       transactions
   ) {
-    const creditedStaffId =
-      transaction.attributedStaffId ??
-      transaction.createdById;
+    const creditedStaffId = getCanonicalStaffAttribution(transaction);
     let row =
       creditedStaffId
         ? performance.get(
@@ -407,10 +343,7 @@ export default async function StaffReportsPage({
         row.redeemActions +=
           1;
 
-        row.redeemedAmount +=
-          Math.abs(
-            transaction.amount
-          );
+        row.redeemedAmount += getRedemptionMagnitude(transaction.amount);
 
         break;
 
@@ -491,13 +424,12 @@ export default async function StaffReportsPage({
         user.isActive
     ).length;
 
-  const reportQuery =
-    new URLSearchParams({
-      from:
-        fromInput,
-      to:
-        toInput,
-    }).toString();
+  const reportQuery = getReportQueryString({
+    from: fromInput,
+    to: toInput,
+    branchId: reportScope.branchId,
+    attributedStaffId: reportScope.attributedStaffId,
+  });
 
   return (
     <main
@@ -557,6 +489,45 @@ export default async function StaffReportsPage({
               }
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
             />
+          </div>
+
+          <div>
+            <label htmlFor="branch" className="mb-2 block text-sm font-bold text-slate-700">
+              الفرع
+            </label>
+            <select
+              id="branch"
+              name="branch"
+              defaultValue={reportScope.branchId ?? "all"}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+            >
+              <option value="all">كل الفروع والسجل التاريخي</option>
+              {reportBranches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}{branch.isActive ? "" : " (غير نشط)"}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="staff" className="mb-2 block text-sm font-bold text-slate-700">
+              الموظف المنسوب إليه
+            </label>
+            <select
+              id="staff"
+              name="staff"
+              defaultValue={reportScope.attributedStaffId ?? "all"}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+            >
+              <option value="all">كل الموظفين والعمليات غير المنسوبة</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {[user.firstName, user.lastName].filter(Boolean).join(" ") || "مستخدم بدون اسم"}
+                  {user.isActive ? "" : " (غير نشط)"}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

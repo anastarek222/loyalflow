@@ -5,6 +5,7 @@ import {
   calculateAverageDaysToFirstReward,
   countDistinctCustomers,
   calculateRepeatCustomerRate,
+  getRedemptionMagnitude,
 } from "@/lib/analytics/metrics";
 
 test("calculates the average time from customer creation to first reward", () => {
@@ -20,6 +21,12 @@ test("calculates the average time from customer creation to first reward", () =>
   );
 
   assert.equal(average, 3);
+});
+
+test("normalizes redemption values to one positive reporting convention", () => {
+  assert.equal(getRedemptionMagnitude(-5), 5);
+  assert.equal(getRedemptionMagnitude(5), 5);
+  assert.equal(getRedemptionMagnitude(0), 0);
 });
 
 test("ignores missing and chronologically invalid reward records", () => {
