@@ -33,9 +33,9 @@ export type CustomerTimelineItem = {
   transactionType?: TimelineTransaction["type"];
 };
 
-function getActorName(actor: Actor) {
+function getActorName(actor: Actor, language: AppLanguage) {
   if (!actor) {
-    return "النظام";
+    return language === "AR" ? "النظام" : "System";
   }
 
   return [actor.firstName, actor.lastName]
@@ -43,7 +43,14 @@ function getActorName(actor: Actor) {
     .join(" ");
 }
 
-function getTransactionTitle(type: TimelineTransaction["type"]) {
+function getTransactionTitle(type: TimelineTransaction["type"], language: AppLanguage) {
+  if (language === "EN") {
+    switch (type) {
+      case "EARN": return "Loyalty balance added";
+      case "REDEEM": return "Reward redeemed";
+      case "ADJUSTMENT": return "Balance adjusted manually";
+    }
+  }
   switch (type) {
     case "EARN":
       return "تمت إضافة رصيد ولاء";
@@ -54,7 +61,13 @@ function getTransactionTitle(type: TimelineTransaction["type"]) {
   }
 }
 
-function getLifecycleTitle(type: string) {
+function getLifecycleTitle(type: string, language: AppLanguage) {
+  if (language === "EN") {
+    const labels: Record<string, string> = {
+      CUSTOMER_CREATED: "Customer joined", CUSTOMER_UPDATED: "Customer details updated", CUSTOMER_DEACTIVATED: "Customer account deactivated", CUSTOMER_REACTIVATED: "Customer account reactivated", CUSTOMER_TAG_ASSIGNED: "Customer tag added", CUSTOMER_TAG_REMOVED: "Customer tag removed", CUSTOMER_NOTE_CREATED: "Internal note added", CUSTOMER_NOTE_UPDATED: "Internal note updated", REFERRAL_RECORDED: "Customer referral recorded",
+    };
+    return labels[type] ?? "Customer updated";
+  }
   switch (type) {
     case "CUSTOMER_CREATED":
       return "انضم العميل";
@@ -84,15 +97,16 @@ function getLifecycleTitle(type: string) {
 // single earn/redemption/adjustment operation in the customer timeline.
 export function buildCustomerTimeline(
   transactions: readonly TimelineTransaction[],
-  activities: readonly TimelineActivity[]
+  activities: readonly TimelineActivity[],
+  language: AppLanguage = "AR",
 ): CustomerTimelineItem[] {
   const transactionItems = transactions.map((transaction) => ({
     id: `transaction:${transaction.id}`,
     kind: "transaction" as const,
-    title: getTransactionTitle(transaction.type),
+    title: getTransactionTitle(transaction.type, language),
     description: transaction.note,
     createdAt: transaction.createdAt,
-    actorName: getActorName(transaction.createdBy),
+    actorName: getActorName(transaction.createdBy, language),
     amount: transaction.amount,
     balanceAfter: transaction.balanceAfter,
     transactionType: transaction.type,
@@ -101,13 +115,14 @@ export function buildCustomerTimeline(
   const lifecycleItems = activities.map((activity) => ({
     id: `activity:${activity.id}`,
     kind: "lifecycle" as const,
-    title: getLifecycleTitle(activity.type),
+    title: getLifecycleTitle(activity.type, language),
     description: activity.description,
     createdAt: activity.createdAt,
-    actorName: getActorName(activity.createdBy),
+    actorName: getActorName(activity.createdBy, language),
   }));
 
   return [...transactionItems, ...lifecycleItems].sort(
     (left, right) => right.createdAt.getTime() - left.createdAt.getTime()
   );
 }
+import type { AppLanguage } from "@/lib/i18n";

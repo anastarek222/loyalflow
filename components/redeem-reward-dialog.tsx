@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { customerUiCopy } from "@/lib/customers/ui-copy";
+import type { AppLanguage } from "@/lib/i18n";
 
 type RedeemRewardDialogProps = {
   action: () => void | Promise<void>;
@@ -11,6 +13,7 @@ type RedeemRewardDialogProps = {
   unitName: string;
   operationId: string;
   operationContextFields: ReactNode;
+  language?: AppLanguage;
 };
 
 export default function RedeemRewardDialog({
@@ -21,7 +24,9 @@ export default function RedeemRewardDialog({
   unitName,
   operationId,
   operationContextFields,
+  language = "AR",
 }: RedeemRewardDialogProps) {
+  const copy = customerUiCopy(language);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -32,7 +37,7 @@ export default function RedeemRewardDialog({
         onClick={() => setIsOpen(true)}
         className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
       >
-        استبدال المكافأة
+        {copy.redeemReward}
       </button>
 
       {isOpen && (
@@ -44,7 +49,7 @@ export default function RedeemRewardDialog({
         >
           <section className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <p className="text-sm font-bold text-emerald-700">
-              تأكيد استبدال المكافأة
+              {copy.redeemConfirm}
             </p>
 
             <h2
@@ -55,8 +60,7 @@ export default function RedeemRewardDialog({
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              سيتم خصم {cost} {unitName} من رصيد العميل وتسجيل عملية
-              الاستبدال في السجل.
+              {copy.redeemDescription(cost, unitName)}
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -65,7 +69,7 @@ export default function RedeemRewardDialog({
                 onClick={() => setIsOpen(false)}
                 className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700"
               >
-                إلغاء
+                {copy.cancel}
               </button>
 
               <form action={action}>
@@ -75,7 +79,7 @@ export default function RedeemRewardDialog({
                   type="submit"
                   className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
                 >
-                  تأكيد الاستبدال
+                  {copy.confirmRedeem}
                 </button>
               </form>
             </div>

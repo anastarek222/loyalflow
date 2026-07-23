@@ -1,6 +1,8 @@
 "use client";
 
 import type { BulkCustomerOperation } from "@/lib/customers/bulk";
+import { customerUiCopy } from "@/lib/customers/ui-copy";
+import type { AppLanguage } from "@/lib/i18n";
 import { useMemo, useState, type FormEvent } from "react";
 
 type SelectableCustomer = {
@@ -18,6 +20,7 @@ type BulkCustomerOperationsProps = {
   campaignUrl: string;
   canExport: boolean;
   canUseCampaigns: boolean;
+  language: AppLanguage;
   action: (formData: FormData) => void | Promise<void>;
 };
 
@@ -33,8 +36,10 @@ export default function BulkCustomerOperations({
   campaignUrl,
   canExport,
   canUseCampaigns,
+  language,
   action,
 }: BulkCustomerOperationsProps) {
+  const copy = customerUiCopy(language);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [operation, setOperation] = useState<BulkCustomerOperation>("ADD_TAG");
   const [tagId, setTagId] = useState("");
@@ -61,8 +66,8 @@ export default function BulkCustomerOperations({
       return;
     }
     if (destructiveOperations.has(operation)) {
-      const label = operation === "DEACTIVATE" ? "إيقاف" : "إزالة الوسم من";
-      if (!window.confirm(`تأكيد ${label} ${selectedIds.length} عميل؟`)) {
+      const label = operation === "DEACTIVATE" ? copy.deactivateCustomers : copy.removeTagAction;
+      if (!window.confirm(copy.confirmBulk(label, selectedIds.length))) {
         event.preventDefault();
       }
     }
@@ -74,17 +79,17 @@ export default function BulkCustomerOperations({
     <section className="mb-5 rounded-3xl border border-violet-200 bg-violet-50 p-4 shadow-sm sm:p-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
-          <h2 className="font-black text-violet-950">إجراءات جماعية للنتائج المعروضة</h2>
+          <h2 className="font-black text-violet-950">{selectedIds.length > 0 ? copy.bulkActions : copy.selectCustomers}</h2>
           <p className="mt-1 text-sm text-violet-800">
-            {selectedIds.length} من {customers.length} محدد. الاختيار محدود لهذه الصفحة الحالية من نتائج البحث والفلاتر.
+            {selectedIds.length > 0 ? copy.selectedSummary(selectedIds.length, customers.length) : copy.selectCustomersDescription}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={selectVisible} className="rounded-xl border border-violet-300 bg-white px-3 py-2 text-sm font-bold text-violet-800 hover:bg-violet-100">
-            تحديد المعروض
+            {copy.selectVisible}
           </button>
           <button type="button" onClick={() => setSelectedIds([])} disabled={selectedIds.length === 0} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
-            مسح الاختيار
+            {copy.clearSelection}
           </button>
         </div>
       </div>
@@ -106,43 +111,43 @@ export default function BulkCustomerOperations({
         ))}
       </div>
 
-      <form action={action} onSubmit={onSubmit} className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+      {selectedIds.length > 0 ? <form action={action} onSubmit={onSubmit} className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <input type="hidden" name="customerIds" value={JSON.stringify(selectedIds)} />
         <label className="text-sm font-bold text-slate-700">
-          الإجراء
+          {copy.bulkAction}
           <select name="operation" value={operation} onChange={(event) => setOperation(event.target.value as BulkCustomerOperation)} className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-950">
-            <option value="ADD_TAG">إضافة وسم</option>
-            <option value="REMOVE_TAG">إزالة وسم</option>
-            <option value="ACTIVATE">تفعيل العملاء</option>
-            <option value="DEACTIVATE">إيقاف العملاء</option>
+            <option value="ADD_TAG">{copy.addTag}</option>
+            <option value="REMOVE_TAG">{copy.removeTagAction}</option>
+            <option value="ACTIVATE">{copy.activateCustomers}</option>
+            <option value="DEACTIVATE">{copy.deactivateCustomers}</option>
           </select>
         </label>
 
         {(operation === "ADD_TAG" || operation === "REMOVE_TAG") ? (
           <label className="text-sm font-bold text-slate-700">
-            الوسم
+            {copy.tag}
             <select name="tagId" value={tagId} onChange={(event) => setTagId(event.target.value)} required className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-950">
-              <option value="">اختر وسمًا</option>
+              <option value="">{copy.selectTag}</option>
               {tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
             </select>
           </label>
         ) : <div />}
 
         <button type="submit" disabled={selectedIds.length === 0 || ((operation === "ADD_TAG" || operation === "REMOVE_TAG") && !tagId)} className="self-end rounded-xl bg-violet-600 px-5 py-3 font-black text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300">
-          تنفيذ على المحدد
+          {copy.runSelected}
         </button>
-      </form>
+      </form> : null}
 
       {selectedIds.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2 border-t border-violet-200 pt-4">
           {canExport ? (
             <a href={`${exportUrl}?ids=${encodeURIComponent(selectedQuery)}`} className="rounded-xl border border-emerald-300 bg-white px-4 py-2 text-sm font-bold text-emerald-800 hover:bg-emerald-50">
-              تصدير المحدد CSV
+              {copy.exportSelected}
             </a>
           ) : null}
           {canUseCampaigns ? (
             <a href={`${campaignUrl}?selected=${encodeURIComponent(selectedQuery)}`} className="rounded-xl border border-cyan-300 bg-white px-4 py-2 text-sm font-bold text-cyan-800 hover:bg-cyan-50">
-              معاينة حملة للمحدد
+              {copy.campaignSelected}
             </a>
           ) : null}
         </div>

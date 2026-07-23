@@ -44,3 +44,14 @@ test("builds one chronological timeline without duplicating transaction activiti
   assert.equal(timeline[0]?.balanceAfter, 2);
   assert.equal(timeline[2]?.title, "انضم العميل");
 });
+
+test("builds understandable English customer timeline labels without duplicating activities", () => {
+  const timeline = buildCustomerTimeline(
+    [{ id: "earn", type: "EARN", amount: 1, balanceAfter: 1, note: null, createdAt: new Date(), createdBy: null }],
+    [{ id: "joined", type: "CUSTOMER_CREATED", description: "", createdAt: new Date(), createdBy: null }],
+    "EN",
+  );
+  assert.equal(timeline[0]?.actorName, "System");
+  assert.equal(timeline.some((item) => item.title === "Loyalty balance added"), true);
+  assert.equal(timeline.some((item) => item.title === "Customer joined"), true);
+});

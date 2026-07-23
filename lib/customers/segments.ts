@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { LoyaltyMode } from "@/generated/prisma/client";
+import type { AppLanguage } from "@/lib/i18n";
 
 export const customerSegments = [
   "NEW",
@@ -224,8 +225,21 @@ export function getCustomerSegmentWhere(
 }
 
 export function getCustomerSegmentLabel(
-  segment: CustomerSegment
+  segment: CustomerSegment,
+  language: AppLanguage = "AR",
 ) {
+  if (language === "EN") {
+    switch (segment) {
+      case "NEW": return "New";
+      case "ACTIVE": return "Active";
+      case "VIP": return "VIP";
+      case "AT_RISK": return "At risk";
+      case "INACTIVE": return "Inactive";
+      case "REWARD_READY": return "Reward ready";
+      case "HIGH_SPENDER": return "High spender";
+      case "FREQUENT_VISITOR": return "Frequent visitor";
+    }
+  }
   switch (segment) {
     case "NEW":
       return "جديد";
