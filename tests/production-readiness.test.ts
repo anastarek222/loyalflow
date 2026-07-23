@@ -167,7 +167,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 29);
+  assert.equal(committedMigrations.length, 30);
   assert.match(verifier, /const REVIEWED_MIGRATIONS = \[/);
   assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);
   assert.match(

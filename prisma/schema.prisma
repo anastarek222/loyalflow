@@ -89,6 +89,7 @@ model User {
   firstName              String
   lastName               String?
   email                  String                  @unique
+  phone                  String?
   passwordHash           String
   role                   UserRole                @default(STAFF)
   isActive               Boolean                 @default(true)

@@ -30,6 +30,17 @@ function isImageMimeType(value: string): value is ImageMimeType {
   return imageMimeTypes.includes(value as ImageMimeType);
 }
 
+/** Allows only remote image URLs that browser-rendered branding already supports. */
+export function isValidRemoteImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 /** Converts an explicitly allowed image upload to a bounded canonical data URL. */
 export async function imageFileToDataUrl(
   file: File,
