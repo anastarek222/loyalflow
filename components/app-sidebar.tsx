@@ -11,6 +11,7 @@ import {
   BarChart3,
   Settings,
   UserCog,
+  GitBranch,
 } from "lucide-react";
 
 
@@ -85,6 +86,16 @@ export default function AppSidebar({
         href:
           `/businesses/${businessSlug}/users`,
         icon: UserCog,
+      },
+
+    (role === "OWNER" || role === "SUPER_ADMIN") &&
+      businessSlug && {
+        label:
+          language === "AR"
+            ? "الفروع"
+            : "Branches",
+        href: `/businesses/${businessSlug}/branches`,
+        icon: GitBranch,
       },
 
     businessSlug && {

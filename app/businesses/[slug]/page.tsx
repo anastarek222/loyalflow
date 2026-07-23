@@ -45,6 +45,7 @@ export default async function BusinessPage({
         select: {
           customers: true,
           users: true,
+          branches: true,
           transactions: true,
           redemptions: true,
         },
@@ -891,6 +892,15 @@ export default async function BusinessPage({
               className="inline-flex w-full justify-center rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
             >
               سجل النشاط
+            </Link>
+          )}
+
+          {canManageBusinessSettings && (
+            <Link
+              href={`/businesses/${business.slug}/branches`}
+              className="inline-flex w-full justify-center rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 sm:w-auto"
+            >
+              إدارة الفروع ({business._count.branches})
             </Link>
           )}
 
