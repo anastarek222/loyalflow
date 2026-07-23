@@ -11,7 +11,10 @@ import {
   recordRewardRedemption,
 } from "../lib/loyalty/transactions";
 
-const EXPECTED_MIGRATION = "20260720240000_add_multi_branch_foundation";
+const EXPECTED_MIGRATIONS = [
+  "20260720240000_add_multi_branch_foundation",
+  "20260721170000_add_staff_attribution_foundation",
+] as const;
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not configured");
 
@@ -42,23 +45,37 @@ async function main() {
   assert.equal(identity[0]?.database, "loyalflow_test", "Refusing to run outside loyalflow_test.");
 
   const applied = await prisma.$queryRaw<Array<{ migration_name: string }>>
-    `SELECT migration_name FROM "_prisma_migrations" WHERE migration_name = ${EXPECTED_MIGRATION} AND finished_at IS NOT NULL`;
-  assert.equal(applied.length, 1, "Apply the reviewed multi-branch migration before running this verifier.");
+    `SELECT migration_name FROM "_prisma_migrations" WHERE migration_name IN (${Prisma.join(EXPECTED_MIGRATIONS)}) AND finished_at IS NOT NULL`;
+  assert.equal(
+    applied.length,
+    EXPECTED_MIGRATIONS.length,
+    "Apply the reviewed branch and staff attribution migrations before running this verifier.",
+  );
 
   const [business, otherBusiness] = await Promise.all([
-    prisma.business.create({ data: { name: "Branch verification", slug: `lf-verify-branch-${runId}` } }),
+    prisma.business.create({
+      data: {
+        name: "Branch verification",
+        slug: `lf-verify-branch-${runId}`,
+        staffAttributionEnabled: true,
+        staffAttributionRequired: true,
+      },
+    }),
     prisma.business.create({ data: { name: "Branch other tenant", slug: `lf-verify-branch-other-${runId}` } }),
   ]);
   businessIds.push(business.id, otherBusiness.id);
 
-  const [branch, inactiveBranch, otherBranch] = await Promise.all([
+  const [branch, unassignedBranch, inactiveBranch, otherBranch] = await Promise.all([
     prisma.branch.create({ data: { businessId: business.id, name: "Downtown", address: "Verification address", contactPhone: "+201000000001" } }),
+    prisma.branch.create({ data: { businessId: business.id, name: "Unassigned" } }),
     prisma.branch.create({ data: { businessId: business.id, name: "Paused", isActive: false } }),
     prisma.branch.create({ data: { businessId: otherBusiness.id, name: "Other tenant" } }),
   ]);
-  const [owner, cashier] = await Promise.all([
+  const [owner, cashier, inactiveStaff, otherTenantStaff] = await Promise.all([
     prisma.user.create({ data: { firstName: "Owner", email: `lf-verify-branch-owner-${runId}@example.test`, passwordHash: "verification-only", role: "OWNER", businessId: business.id } }),
     prisma.user.create({ data: { firstName: "Cashier", email: `lf-verify-branch-cashier-${runId}@example.test`, passwordHash: "verification-only", role: "STAFF", businessId: business.id } }),
+    prisma.user.create({ data: { firstName: "Inactive", email: `lf-verify-branch-inactive-${runId}@example.test`, passwordHash: "verification-only", role: "STAFF", isActive: false, businessId: business.id } }),
+    prisma.user.create({ data: { firstName: "Other", email: `lf-verify-branch-other-staff-${runId}@example.test`, passwordHash: "verification-only", role: "STAFF", businessId: otherBusiness.id } }),
   ]);
   await prisma.branchStaffAssignment.create({
     data: { userId: cashier.id, branchId: branch.id, businessId: business.id },
@@ -76,6 +93,12 @@ async function main() {
   assert.equal(canWriteAtBranch({ user: cashier, businessId: business.id, branch: inactiveBranch, assignedBranchIds: [inactiveBranch.id], capability: "LOYALTY_EARN" }), false);
   assert.equal(canWriteAtBranch({ user: owner, businessId: business.id, branch: otherBranch, capability: "LOYALTY_EARN" }), false);
 
+  const cashierActor = {
+    id: cashier.id,
+    role: cashier.role,
+    businessId: business.id,
+  } as const;
+
   const customer = await prisma.customer.create({
     data: {
       firstName: "Branch",
@@ -91,7 +114,8 @@ async function main() {
       customerId: customer.id,
       businessId: business.id,
       branchId: branch.id,
-      createdById: cashier.id,
+      actor: cashierActor,
+      attributedStaffId: cashier.id,
       amount: 7,
       sourceLoyaltyMode: "VISITS",
       transactionNote: "Branch verification earn",
@@ -105,7 +129,8 @@ async function main() {
       customerId: customer.id,
       businessId: business.id,
       branchId: branch.id,
-      createdById: cashier.id,
+      actor: cashierActor,
+      attributedStaffId: cashier.id,
       cost: 2,
       rewardLabel: "Branch verification reward",
       rewardName: "Branch verification reward",
@@ -118,7 +143,8 @@ async function main() {
       customerId: customer.id,
       businessId: business.id,
       branchId: otherBranch.id,
-      createdById: cashier.id,
+      actor: cashierActor,
+      attributedStaffId: cashier.id,
       amount: 1,
       sourceLoyaltyMode: "VISITS",
       transactionNote: "Cross-tenant branch attempt",
@@ -132,7 +158,8 @@ async function main() {
       customerId: customer.id,
       businessId: business.id,
       branchId: inactiveBranch.id,
-      createdById: cashier.id,
+      actor: cashierActor,
+      attributedStaffId: cashier.id,
       amount: 1,
       sourceLoyaltyMode: "VISITS",
       transactionNote: "Inactive branch attempt",
@@ -141,13 +168,94 @@ async function main() {
   );
   assert.equal(inactiveAttempt, null);
 
+  const [unassignedAttempt, missingAttributionAttempt, inactiveAttributionAttempt, crossTenantAttributionAttempt] = await Promise.all([
+    withVerificationTransaction((transaction) =>
+      recordLoyaltyEarn(transaction, {
+        customerId: customer.id,
+        businessId: business.id,
+        branchId: unassignedBranch.id,
+        actor: cashierActor,
+        attributedStaffId: cashier.id,
+        amount: 1,
+        sourceLoyaltyMode: "VISITS",
+        transactionNote: "Unassigned branch attempt",
+        activityDescription: "Unassigned branch attempt",
+      }),
+    ),
+    withVerificationTransaction((transaction) =>
+      recordLoyaltyEarn(transaction, {
+        customerId: customer.id,
+        businessId: business.id,
+        branchId: branch.id,
+        actor: cashierActor,
+        amount: 1,
+        sourceLoyaltyMode: "VISITS",
+        transactionNote: "Missing attribution attempt",
+        activityDescription: "Missing attribution attempt",
+      }),
+    ),
+    withVerificationTransaction((transaction) =>
+      recordLoyaltyEarn(transaction, {
+        customerId: customer.id,
+        businessId: business.id,
+        branchId: branch.id,
+        actor: cashierActor,
+        attributedStaffId: inactiveStaff.id,
+        amount: 1,
+        sourceLoyaltyMode: "VISITS",
+        transactionNote: "Inactive attribution attempt",
+        activityDescription: "Inactive attribution attempt",
+      }),
+    ),
+    withVerificationTransaction((transaction) =>
+      recordLoyaltyEarn(transaction, {
+        customerId: customer.id,
+        businessId: business.id,
+        branchId: branch.id,
+        actor: cashierActor,
+        attributedStaffId: otherTenantStaff.id,
+        amount: 1,
+        sourceLoyaltyMode: "VISITS",
+        transactionNote: "Cross-tenant attribution attempt",
+        activityDescription: "Cross-tenant attribution attempt",
+      }),
+    ),
+  ]);
+  assert.deepEqual(
+    [
+      unassignedAttempt,
+      missingAttributionAttempt,
+      inactiveAttributionAttempt,
+      crossTenantAttributionAttempt,
+    ],
+    [null, null, null, null],
+  );
+
+  await prisma.business.update({
+    where: { id: business.id },
+    data: { staffAttributionRequired: false },
+  });
+  const optionalAttributionAttempt = await withVerificationTransaction((transaction) =>
+    recordLoyaltyEarn(transaction, {
+      customerId: customer.id,
+      businessId: business.id,
+      branchId: branch.id,
+      actor: cashierActor,
+      amount: 1,
+      sourceLoyaltyMode: "VISITS",
+      transactionNote: "Optional attribution verification",
+      activityDescription: "Optional attribution verification",
+    }),
+  );
+  assert.equal(optionalAttributionAttempt, 6);
+
   // Pre-branch records must remain explicitly unassigned; no default branch is
   // invented for a business that previously operated as one location.
   await prisma.loyaltyTransaction.create({
     data: {
       type: "ADJUSTMENT",
       amount: 0,
-      balanceAfter: 5,
+      balanceAfter: 6,
       note: "Pre-branch verification history",
       customerId: customer.id,
       businessId: business.id,
@@ -160,14 +268,25 @@ async function main() {
     prisma.businessActivity.findMany({ where: { businessId: business.id } }),
     prisma.customer.findUniqueOrThrow({ where: { id: customer.id } }),
   ]);
-  assert.equal(currentCustomer.balance, 5);
-  assert.equal(transactions.length, 3);
-  assert.equal(transactions.filter((transaction) => transaction.branchId === branch.id).length, 2);
+  assert.equal(currentCustomer.balance, 6);
+  assert.equal(transactions.length, 4);
+  assert.equal(transactions.filter((transaction) => transaction.branchId === branch.id).length, 3);
   assert.equal(transactions.filter((transaction) => transaction.branchId === null).length, 1);
   assert.equal(redemptions.length, 1);
   assert.equal(redemptions[0]?.branchId, branch.id);
-  assert.equal(activities.length, 2);
+  assert.equal(redemptions[0]?.createdById, cashier.id);
+  assert.equal(redemptions[0]?.attributedStaffId, cashier.id);
+  assert.equal(activities.length, 3);
   assert.ok(activities.every((activity) => activity.branchId === branch.id));
+  assert.ok(activities.every((activity) => activity.createdById === cashier.id));
+  assert.equal(
+    transactions.filter((transaction) => transaction.attributedStaffId === cashier.id).length,
+    2,
+  );
+  assert.equal(
+    transactions.filter((transaction) => transaction.attributedStaffId === null).length,
+    2,
+  );
 
   const branchTotals = await prisma.loyaltyTransaction.groupBy({
     by: ["branchId"],
@@ -176,7 +295,7 @@ async function main() {
   });
   assert.deepEqual(
     branchTotals.find((total) => total.branchId === branch.id)?._sum.amount,
-    5
+    6
   );
   assert.deepEqual(
     branchTotals.find((total) => total.branchId === null)?._sum.amount,
@@ -184,7 +303,7 @@ async function main() {
   );
   assert.equal(
     await prisma.loyaltyTransaction.count({ where: { businessId: business.id, branchId: branch.id } }),
-    2
+    3
   );
   console.log("PASS: loyalflow_test multi-branch migration and isolated verification completed.");
 }

@@ -17,6 +17,8 @@ import { calculateRetentionScore } from "@/lib/customers/retention-score";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import CopyLinkButton from "@/components/copy-link-button";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
+import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
+import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
 import {
@@ -119,26 +121,10 @@ export default async function CustomerDetailsPage({
     "LOYALTY_REDEEM"
   );
 
-  const attributableStaff = business.staffAttributionEnabled
-    ? await prisma.user.findMany({
-        where: {
-          businessId: business.id,
-          isActive: true,
-          role: {
-            in: ["OWNER", "MANAGER", "STAFF"],
-          },
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-        orderBy: [
-          { firstName: "asc" },
-          { lastName: "asc" },
-        ],
-      })
-    : [];
+  const operationContextOptions = await getOperationContextOptions(prisma, {
+    businessId: business.id,
+    actor: session.user,
+  });
 
   const customer = await prisma.customer.findFirst({
     where: {
@@ -243,33 +229,17 @@ export default async function CustomerDetailsPage({
     notFound();
   }
 
-  const staffAttributionSelector = business.staffAttributionEnabled ? (
-    <div className="mb-3">
-      <label className="mb-2 block text-sm font-bold text-slate-700">
-        الموظف المنسوبة إليه العملية
-      </label>
-      <select
-        name="attributedStaffId"
-        required={business.staffAttributionRequired}
-        disabled={!customer.isActive || !canEarnLoyalty}
-        defaultValue=""
-        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500 disabled:bg-slate-100"
-      >
-        <option value="">
-          {business.staffAttributionRequired
-            ? "اختر موظفًا"
-            : "بدون نسبة لموظف"}
-        </option>
-        {attributableStaff.map((staff) => (
-          <option key={staff.id} value={staff.id}>
-            {[staff.firstName, staff.lastName]
-              .filter(Boolean)
-              .join(" ")}
-          </option>
-        ))}
-      </select>
-    </div>
-  ) : null;
+  const operationContextFields = (disabled: boolean, idPrefix: string) => (
+    <LoyaltyOperationContextFields
+      branches={operationContextOptions.branches}
+      staff={operationContextOptions.staff}
+      branchRequired={operationContextOptions.branchRequired}
+      staffAttributionEnabled={business.staffAttributionEnabled}
+      staffAttributionRequired={business.staffAttributionRequired}
+      idPrefix={idPrefix}
+      disabled={disabled}
+    />
+  );
 
   const businessTags = await prisma.customerTag.findMany({
     where: { businessId: business.id },
@@ -1033,7 +1003,10 @@ export default async function CustomerDetailsPage({
                     </>
                   )}
 
-                  {staffAttributionSelector}
+                  {operationContextFields(
+                    !customer.isActive || !canEarnLoyalty,
+                    "earn-operation",
+                  )}
 
                   <button
                     type="submit"
@@ -1076,6 +1049,13 @@ export default async function CustomerDetailsPage({
                         cost={reward.cost}
                         unitName={business.unitName}
                         operationId={randomUUID()}
+                        operationContextFields={operationContextFields(
+                          !customer.isActive ||
+                            !canRedeemLoyalty ||
+                            customer.balance < reward.cost ||
+                            rewardState.expirationState === "EXPIRED",
+                          `redeem-${reward.id ?? "legacy"}`,
+                        )}
                       />
                     );
                   })}
@@ -1183,6 +1163,7 @@ export default async function CustomerDetailsPage({
                       name="operationId"
                       value={adjustmentOperationId}
                     />
+                    {operationContextFields(false, "adjust-operation")}
                     <div>
                       <label
                         htmlFor="adjustmentDirection"

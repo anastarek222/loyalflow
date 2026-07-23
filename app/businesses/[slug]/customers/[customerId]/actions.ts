@@ -19,6 +19,7 @@ import {
   recordLoyaltyEarn,
   recordRewardRedemption,
 } from "@/lib/loyalty/transactions";
+import type { FinancialOperationActor } from "@/lib/loyalty/operation-context";
 import {
   calculatePromotionBonus,
   selectEligiblePromotion,
@@ -74,6 +75,15 @@ const saleAmountSchema = z.object({
 });
 
 const financialOperationSchema = z.string().uuid();
+
+function getOptionalOperationId(formData: FormData | undefined, field: string) {
+  const value = formData?.get(field);
+  return typeof value === "string" ? value.trim() || undefined : undefined;
+}
+
+function getFinancialActor(session: { user: FinancialOperationActor }) {
+  return session.user;
+}
 
 async function createRewardUnlocksForEarn(
   transaction: Prisma.TransactionClient,
@@ -550,7 +560,9 @@ export async function adjustCustomerBalanceAction(
         recordBalanceAdjustment(transaction, {
           customerId: customer.id,
           businessId: business.id,
-          createdById: session.user.id,
+          actor: getFinancialActor(session),
+          branchId: getOptionalOperationId(formData, "branchId"),
+          attributedStaffId: getOptionalOperationId(formData, "attributedStaffId"),
           activityContext: adjustmentActivityContext,
           direction: parsed.data.direction,
           amount: parsed.data.amount,
@@ -917,46 +929,8 @@ export async function addLoyaltyAction(
   const activityContext =
     await getActivityRequestContext();
 
-  const submittedAttribution = formData.get(
-    "attributedStaffId"
-  );
-  const requestedStaffId =
-    typeof submittedAttribution === "string"
-      ? submittedAttribution.trim() || undefined
-      : undefined;
-  let attributedStaffId: string | undefined;
-
-  if (business.staffAttributionEnabled) {
-    if (!requestedStaffId) {
-      if (business.staffAttributionRequired) {
-        redirect(
-          `/businesses/${slug}/customers/${customer.id}?error=staff-attribution`
-        );
-      }
-    } else {
-      const staff = await prisma.user.findFirst({
-        where: {
-          id: requestedStaffId,
-          businessId: business.id,
-          isActive: true,
-          role: {
-            in: ["OWNER", "MANAGER", "STAFF"],
-          },
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      if (!staff) {
-        redirect(
-          `/businesses/${slug}/customers/${customer.id}?error=staff-attribution`
-        );
-      }
-
-      attributedStaffId = staff.id;
-    }
-  }
+  const branchId = getOptionalOperationId(formData, "branchId");
+  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
 
   let saleAmount: number | undefined;
 
@@ -1131,7 +1105,8 @@ export async function addLoyaltyAction(
       const balanceAfter = await recordLoyaltyEarn(transaction, {
         customerId: customer.id,
         businessId: business.id,
-        createdById: session.user.id,
+        actor: getFinancialActor(session),
+        branchId,
         activityContext,
         attributedStaffId,
         amount,
@@ -1255,6 +1230,8 @@ export async function redeemRewardAction(
   }
 
   const idempotencyKey = parsedOperation.data;
+  const branchId = getOptionalOperationId(formData, "branchId");
+  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
 
   const redemptionActivityContext =
     await getActivityRequestContext();
@@ -1407,7 +1384,9 @@ export async function redeemRewardAction(
       const balance = await recordRewardRedemption(transaction, {
           customerId: customer.id,
           businessId: business.id,
-          createdById: session.user.id,
+          actor: getFinancialActor(session),
+          branchId,
+          attributedStaffId,
           activityContext: redemptionActivityContext,
           cost,
           rewardLabel,

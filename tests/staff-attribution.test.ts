@@ -35,7 +35,7 @@ function createTransaction(options: MockOptions = {}) {
     },
 
     user: {
-      findFirst: async () => (staffExists ? { id: staffId } : null),
+      findFirst: async () => (staffExists ? { id: staffId, role: "STAFF" } : null),
     },
 
     branchStaffAssignment: {
