@@ -4,6 +4,11 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
 import {
+  activityActorFields,
+  activityRequestMetadata,
+} from "@/lib/activity/business-activity";
+import { getActivityRequestContext } from "@/lib/activity/request-context";
+import {
   passwordConfirmationSchema,
   passwordValueSchema,
 } from "@/lib/auth/password-policy";
@@ -211,6 +216,7 @@ export async function createBusinessUserAction(
       parsed.data.password,
       12
     );
+  const activityContext = await getActivityRequestContext();
 
   await prisma.$transaction(
     async (transaction) => {
@@ -247,8 +253,8 @@ export async function createBusinessUserAction(
               } للبريد ${email}`,
             businessId:
               business.id,
-            createdById:
-              session.user.id,
+            ...activityActorFields(session.user, business.id),
+            ...activityRequestMetadata(activityContext),
           },
         });
 
@@ -330,6 +336,7 @@ export async function setBusinessUserStatusAction(
     );
   }
 
+  const activityContext = await getActivityRequestContext();
   await prisma.$transaction([
     prisma.user.update({
       where: {
@@ -348,8 +355,8 @@ export async function setBusinessUserStatusAction(
           : `تم إيقاف الحساب ${targetUser.email}`,
         businessId:
           business.id,
-        createdById:
-          session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);
@@ -430,6 +437,7 @@ export async function resetBusinessUserPasswordAction(
       parsed.data.password,
       12
     );
+  const activityContext = await getActivityRequestContext();
 
   await prisma.$transaction([
     prisma.user.update({
@@ -452,8 +460,8 @@ export async function resetBusinessUserPasswordAction(
           `تم تغيير كلمة المرور للحساب ${targetUser.email}`,
         businessId:
           business.id,
-        createdById:
-          session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);

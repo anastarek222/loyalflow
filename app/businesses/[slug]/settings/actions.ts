@@ -2,6 +2,11 @@
 
 import { auth } from "@/auth";
 import {
+  activityActorFields,
+  activityRequestMetadata,
+} from "@/lib/activity/business-activity";
+import { getActivityRequestContext } from "@/lib/activity/request-context";
+import {
   imageFileToDataUrl,
   isValidRemoteImageUrl,
 } from "@/lib/branding/image-data";
@@ -295,6 +300,8 @@ export async function updateBusinessSettingsAction(
         business.coverImageUrl
       );
 
+  const activityContext = await getActivityRequestContext();
+
   await prisma.$transaction([
     prisma.business.update({
       where: {
@@ -356,7 +363,8 @@ export async function updateBusinessSettingsAction(
         type: "BUSINESS_SETTINGS_UPDATED",
         description: "تم تحديث إعدادات النشاط",
         businessId: business.id,
-        createdById: session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);
@@ -453,6 +461,8 @@ export async function updateBusinessCardDetailsAction(
     redirect(`/businesses/${business.slug}/settings?cardError=invalid`);
   }
 
+  const activityContext = await getActivityRequestContext();
+
   await prisma.$transaction([
     prisma.business.update({
       where: {
@@ -470,7 +480,8 @@ export async function updateBusinessCardDetailsAction(
         type: "BUSINESS_SETTINGS_UPDATED",
         description: "تم تحديث بيانات التواصل وشروط الكارت الرقمي",
         businessId: business.id,
-        createdById: session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);
@@ -512,6 +523,7 @@ export async function updateBusinessExportPermissionAction(
   }
 
   const allowOwnerDataExport = formData.get("allowOwnerDataExport") === "on";
+  const activityContext = await getActivityRequestContext();
 
   await prisma.$transaction([
     prisma.business.update({
@@ -534,7 +546,8 @@ export async function updateBusinessExportPermissionAction(
 
         businessId: business.id,
 
-        createdById: session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);

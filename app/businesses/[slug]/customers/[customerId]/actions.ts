@@ -45,6 +45,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  activityActorFields,
+  activityRequestMetadata,
+} from "@/lib/activity/business-activity";
 import { createBusinessNotification } from "@/lib/notifications";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
@@ -431,6 +435,7 @@ export async function updateCustomerAction(
   ]
     .filter(Boolean)
     .join(" ");
+  const activityContext = await getActivityRequestContext();
 
   await prisma.$transaction([
     prisma.customer.update({
@@ -450,7 +455,8 @@ export async function updateCustomerAction(
         description: `تم تحديث بيانات العميل ${updatedCustomerName}`,
         businessId: business.id,
         customerId: customer.id,
-        createdById: session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);
@@ -489,6 +495,7 @@ export async function setCustomerStatusAction(
     slug,
     customerId
   );
+  const activityContext = await getActivityRequestContext();
 
   await prisma.$transaction([
     prisma.customer.update({
@@ -510,7 +517,8 @@ export async function setCustomerStatusAction(
           : "تم إيقاف حساب العميل",
         businessId: business.id,
         customerId: customer.id,
-        createdById: session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     }),
   ]);

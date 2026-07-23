@@ -2,6 +2,11 @@
 
 import { auth } from "@/auth";
 import {
+  activityActorFields,
+  activityRequestMetadata,
+} from "@/lib/activity/business-activity";
+import { getActivityRequestContext } from "@/lib/activity/request-context";
+import {
   generateCustomerCode,
   getCustomerDisplayName,
   parseCustomerRegistration,
@@ -88,6 +93,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     }
 
     if (changedIds.length > 0) {
+      const activityContext = await getActivityRequestContext();
       await prisma.$transaction(async (transaction) => {
         const updated = await transaction.customer.updateMany({
           where: { businessId: business.id, id: { in: changedIds } },
@@ -102,7 +108,8 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
             description: activate ? "تمت إعادة تفعيل العميل عبر عملية جماعية" : "تم إيقاف العميل عبر عملية جماعية",
             businessId: business.id,
             customerId,
-            createdById: session.user.id,
+            ...activityActorFields(session.user, business.id),
+            ...activityRequestMetadata(activityContext),
           })),
         });
       });
@@ -132,6 +139,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     : existingAssignments.map((assignment) => assignment.customerId);
 
   if (changedIds.length > 0) {
+    const activityContext = await getActivityRequestContext();
     await prisma.$transaction(async (transaction) => {
       if (operation === "ADD_TAG") {
         const added = await transaction.customerTagAssignment.createMany({
@@ -159,7 +167,8 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
           description: operation === "ADD_TAG" ? `تمت إضافة وسم العميل عبر عملية جماعية: ${tag.name}` : `تمت إزالة وسم العميل عبر عملية جماعية: ${tag.name}`,
           businessId: business.id,
           customerId,
-          createdById: session.user.id,
+          ...activityActorFields(session.user, business.id),
+          ...activityRequestMetadata(activityContext),
         })),
       });
     });
@@ -245,6 +254,7 @@ export async function createCustomerAction(
   );
 
   const customerName = getCustomerDisplayName(parsed);
+  const activityContext = await getActivityRequestContext();
 
   const createdCustomer =
     await prisma.$transaction(async (transaction) => {
@@ -265,7 +275,8 @@ export async function createCustomerAction(
         description: `تم إنشاء العميل ${customerName}`,
         businessId: business.id,
         customerId: customer.id,
-        createdById: session.user.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
       },
     });
 
