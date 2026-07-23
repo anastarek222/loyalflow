@@ -1,7 +1,10 @@
 "use server";
 
 import { auth } from "@/auth";
-import { imageFileToDataUrl } from "@/lib/branding/image-data";
+import {
+  imageFileToDataUrl,
+  isValidRemoteImageUrl,
+} from "@/lib/branding/image-data";
 import {
   isSupportedCurrency,
   isValidIanaTimezone,
@@ -30,35 +33,13 @@ const settingsSchema = z.object({
     .string()
     .trim()
     .max(500)
-    .refine((value) => {
-      if (value === "") {
-        return true;
-      }
-
-      try {
-        const url = new URL(value);
-        return url.protocol === "http:" || url.protocol === "https:";
-      } catch {
-        return false;
-      }
-    }),
+    .refine((value) => value === "" || isValidRemoteImageUrl(value)),
 
   coverImageUrl: z
     .string()
     .trim()
     .max(500)
-    .refine((value) => {
-      if (value === "") {
-        return true;
-      }
-
-      try {
-        const url = new URL(value);
-        return url.protocol === "http:" || url.protocol === "https:";
-      } catch {
-        return false;
-      }
-    }),
+    .refine((value) => value === "" || isValidRemoteImageUrl(value)),
 
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 

@@ -1,115 +1,18 @@
 "use server";
 
 import { auth } from "@/auth";
-import { passwordValueSchema } from "@/lib/auth/password-policy";
+import { imageFileToDataUrl } from "@/lib/branding/image-data";
+import { businessCreationSchema } from "@/lib/business/creation-input";
 import {
   createWithGeneratedSlug,
-  isSupportedCurrency,
-  isValidIanaTimezone,
-  isValidBusinessPhone,
+  optionalOwnerPhoneValue,
   optionalProfileValue,
 } from "@/lib/business-profile";
 import prisma from "@/lib/prisma";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { hash } from "bcryptjs";
-	
-const businessSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  contactPhone: z
-    .string()
-    .trim()
-    .max(25)
-    .refine((value) => value === "" || isValidBusinessPhone(value)),
-  currency: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || isSupportedCurrency(value)),
-  timezone: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || isValidIanaTimezone(value)),
-  
-
-  industry: z.string().trim().max(100),
-
-  website: z
-   .string()
-   .trim()
-   .max(300)
-   .refine((value) => {
-     if (value === "") {
-       return true;
-     }
-
-     try {
-        const url = new URL(value);
-        return (
-          url.protocol === "http:" ||
-          url.protocol === "https:"
-        );
-      } catch {
-        return false;
-      }
-    }),
-
-  email: z
-    .string()
-    .trim()
-    .max(255)
-    .email()
-    .or(z.literal("")),
-
-  country: z.string().trim().max(100),
-
-  city: z.string().trim().max(100),
-
-  taxNumber: z.string().trim().max(100),
-
-  employeeCount: z.coerce.number().int().min(0).max(100000),
-
-  ownerFirstName: z.string().trim().min(2).max(80),
-  ownerLastName: z.string().trim().max(80),
-
-  ownerEmail: z
-    .string()
-    .trim()
-    .max(255)
-    .email(),
-
-  ownerPassword: passwordValueSchema,
-
-  loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
-  unitName: z.string().trim().min(1).max(30),
-  rewardName: z.string().trim().min(2).max(100),
-  rewardThreshold: z.coerce.number().int().min(1).max(1000000),
-  earnAmount: z.coerce.number().int().min(1).max(1000000),
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-
-  themePreset: z.enum([
-    "DEFAULT",
-    "MINIMAL",
-    "LUXURY",
-    "DARK",
-    "MODERN",
-    "GRADIENT",
-  ]),
-
-  cardStyle: z.enum([
-    "CLASSIC",
-    "COMPACT",
-    "PREMIUM",
-  ]),
-
-  fontFamily: z.enum([
-    "INTER",
-    "CAIRO",
-    "POPPINS",
-  ]),
-});
 
 export async function createBusinessAction(formData: FormData) {
   const session = await auth();
@@ -122,7 +25,18 @@ export async function createBusinessAction(formData: FormData) {
     redirect("/dashboard");
   }
 
-  const parsed = businessSchema.safeParse({
+  const logoFile = formData.get("logoFile");
+  let uploadedLogoDataUrl: string | null = null;
+
+  if (logoFile instanceof File && logoFile.size > 0) {
+    uploadedLogoDataUrl = await imageFileToDataUrl(logoFile, 500 * 1024);
+
+    if (!uploadedLogoDataUrl) {
+      redirect("/businesses?error=invalid");
+    }
+  }
+
+  const parsed = businessCreationSchema.safeParse({
     name: formData.get("name"),
     contactPhone: formData.get("contactPhone") ?? "",
     currency: formData.get("currency") ?? "",
@@ -140,7 +54,9 @@ export async function createBusinessAction(formData: FormData) {
     ownerFirstName: formData.get("ownerFirstName"),
     ownerLastName: formData.get("ownerLastName") ?? "",
     ownerEmail: formData.get("ownerEmail"),
+    ownerPhone: formData.get("ownerPhone") ?? "",
     ownerPassword: formData.get("ownerPassword"),   
+    logoUrl: formData.get("logoUrl") ?? "",
 
     loyaltyMode: formData.get("loyaltyMode"),
     unitName: formData.get("unitName"),
@@ -164,6 +80,8 @@ export async function createBusinessAction(formData: FormData) {
 if (!parsed.success) {
   redirect("/businesses?error=invalid");
 }
+
+const finalLogoUrl = uploadedLogoDataUrl ?? (parsed.data.logoUrl || null);
 
 const ownerEmail = parsed.data.ownerEmail.toLowerCase();
 
@@ -196,6 +114,7 @@ try {
           data: {
             name: parsed.data.name,
             slug,
+            logoUrl: finalLogoUrl,
             contactPhone: optionalProfileValue(
               parsed.data.contactPhone
             ),
@@ -251,6 +170,7 @@ try {
             firstName: parsed.data.ownerFirstName,
             lastName: parsed.data.ownerLastName || null,
             email: ownerEmail,
+            phone: optionalOwnerPhoneValue(parsed.data.ownerPhone),
             passwordHash: ownerPasswordHash,
             role: "OWNER",
             businessId: business.id,

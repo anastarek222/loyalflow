@@ -44,6 +44,21 @@ export function isValidBusinessPhone(value: string) {
   return normalized.length >= 8 && normalized.length <= 25;
 }
 
+/** Normalizes an optional owner phone number without changing its country code. */
+export function normalizeOwnerPhone(value: string) {
+  return value.trim().replace(/[\s().-]/g, "");
+}
+
+export function isValidOwnerPhone(value: string) {
+  return /^\+?\d{8,15}$/.test(normalizeOwnerPhone(value));
+}
+
+export function optionalOwnerPhoneValue(value: string) {
+  const normalized = normalizeOwnerPhone(value);
+
+  return normalized || null;
+}
+
 export function slugifyBusinessName(name: string) {
   const slug = name
     .normalize("NFKD")

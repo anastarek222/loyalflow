@@ -39,6 +39,7 @@ type ReviewData = {
   ownerFirstName: string;
   ownerLastName: string;
   ownerEmail: string;
+  ownerPhone: string;
 
   loyaltyMode: string;
   unitName: string;
@@ -51,6 +52,7 @@ type ReviewData = {
   themePreset: string;
   cardStyle: string;
   fontFamily: string;
+  logoPreview: string;
 };
 
 const loyaltyLabels: Record<
@@ -138,7 +140,8 @@ function isValidHexColor(
 }
 
 function getReviewData(
-  formData: FormData
+  formData: FormData,
+  logoPreview: string
 ): ReviewData {
   return {
     name: getValue(
@@ -198,6 +201,10 @@ function getReviewData(
       formData,
       "ownerEmail"
     ),
+    ownerPhone: getValue(
+      formData,
+      "ownerPhone"
+    ),
 
     loyaltyMode: getValue(
       formData,
@@ -240,6 +247,7 @@ function getReviewData(
       formData,
       "fontFamily"
     ),
+    logoPreview,
   };
 }
 
@@ -266,6 +274,12 @@ export default function BusinessSetupWizard({
     useState<ReviewData | null>(
       null
     );
+
+  const [logoUrl, setLogoUrl] =
+    useState("");
+
+  const [logoPreview, setLogoPreview] =
+    useState("");
 
   function validateStep(
     currentStep: number,
@@ -497,7 +511,8 @@ export default function BusinessSetupWizard({
     if (step === 3) {
       setReviewData(
         getReviewData(
-          formData
+          formData,
+          logoPreview
         )
       );
     }
@@ -532,6 +547,7 @@ export default function BusinessSetupWizard({
     <form
       ref={formRef}
       action={action}
+      encType="multipart/form-data"
       className="mt-6 space-y-5"
     >
       <div className="mb-6">
@@ -765,6 +781,15 @@ export default function BusinessSetupWizard({
           />
 
           <input
+            name="ownerPhone"
+            type="tel"
+            inputMode="tel"
+            maxLength={25}
+            placeholder="Owner phone (optional)"
+            className="w-full rounded-xl border px-4 py-3"
+          />
+
+          <input
             name="ownerPassword"
             type="password"
             required
@@ -865,6 +890,7 @@ export default function BusinessSetupWizard({
               className="w-full rounded-xl border px-4 py-3"
             />
           </div>
+
         </section>
       </div>
 
@@ -884,6 +910,86 @@ export default function BusinessSetupWizard({
             <p className="mt-1 text-sm text-slate-500">
               Choose the initial visual identity. It can be changed later.
             </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="logoFile"
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Logo (optional)
+            </label>
+
+            <input
+              id="logoFile"
+              name="logoFile"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (!file) {
+                  return;
+                }
+
+                if (
+                  file.size > 500 * 1024 ||
+                  !["image/png", "image/jpeg", "image/webp"].includes(file.type)
+                ) {
+                  setValidationError(
+                    "Logo must be a PNG, JPEG, or WebP image smaller than 500KB."
+                  );
+                  event.target.value = "";
+                  setLogoPreview("");
+                  return;
+                }
+
+                setValidationError("");
+                setLogoUrl("");
+
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setLogoPreview(
+                    typeof reader.result === "string" ? reader.result : ""
+                  );
+                };
+                reader.readAsDataURL(file);
+              }}
+              className="mt-2 w-full rounded-xl border bg-white px-4 py-3 text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:font-semibold file:text-white"
+            />
+
+            <p className="mt-1 text-xs text-slate-500">
+              PNG, JPEG, or WebP — up to 500KB.
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="logoUrl"
+              className="block text-sm font-semibold text-slate-700"
+            >
+              Or use a logo image URL
+            </label>
+
+            <input
+              id="logoUrl"
+              name="logoUrl"
+              type="url"
+              maxLength={500}
+              value={logoUrl}
+              onChange={(event) => {
+                const value = event.target.value;
+                setLogoUrl(value);
+                setLogoPreview(isValidHttpUrl(value) ? value : "");
+
+                const fileInput = document.getElementById("logoFile") as HTMLInputElement | null;
+                if (value && fileInput) {
+                  fileInput.value = "";
+                }
+              }}
+              placeholder="https://example.com/logo.png"
+              className="mt-2 w-full rounded-xl border px-4 py-3"
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1070,6 +1176,10 @@ export default function BusinessSetupWizard({
                     reviewData.ownerEmail,
                   ],
                   [
+                    "Phone",
+                    reviewData.ownerPhone,
+                  ],
+                  [
                     "Password",
                     "••••••••••",
                   ],
@@ -1143,8 +1253,25 @@ export default function BusinessSetupWizard({
                     "Secondary",
                     reviewData.secondaryColor,
                   ],
+                  [
+                    "Logo",
+                    reviewData.logoPreview ? "Configured" : "Not set",
+                  ],
                 ]}
               />
+
+              {reviewData.logoPreview ? (
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <img
+                    src={reviewData.logoPreview}
+                    alt="Business logo preview"
+                    className="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1"
+                  />
+                  <span className="text-sm font-medium text-slate-700">
+                    Logo preview
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : (
             <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
