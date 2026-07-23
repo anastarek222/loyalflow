@@ -167,7 +167,7 @@ export default function QrScanner({
   }
 
   return (
-    <div dir="rtl">
+    <div>
       {secureContextWarning && (
         <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
           {secureContextWarning}
@@ -216,6 +216,7 @@ export default function QrScanner({
             setManualValue(event.target.value)
           }
           placeholder="رابط الكارت"
+          dir="ltr"
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-black placeholder:text-slate-500 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
         />
 

@@ -354,7 +354,6 @@ export default async function CustomersPage({
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8"
     >
       <div className="mx-auto max-w-7xl">
@@ -397,7 +396,7 @@ export default async function CustomersPage({
             <div className="rounded-xl bg-slate-950 px-5 py-3 text-white">
               <span className="text-sm text-slate-400">إجمالي العملاء</span>
 
-              <strong className="ml-3 text-xl">{totalCustomers}</strong>
+              <strong className="ms-3 text-xl">{totalCustomers}</strong>
             </div>
           </div>
         </header>
@@ -458,6 +457,7 @@ export default async function CustomersPage({
                   minLength={2}
                   maxLength={50}
                   placeholder="محمد"
+                  dir="auto"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
               </div>
@@ -475,6 +475,7 @@ export default async function CustomersPage({
                   name="lastName"
                   maxLength={50}
                   placeholder="أحمد"
+                  dir="auto"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
               </div>
@@ -492,6 +493,7 @@ export default async function CustomersPage({
                   name="phone"
                   type="tel"
                   required
+                  dir="ltr"
                   placeholder="+201000000000"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />

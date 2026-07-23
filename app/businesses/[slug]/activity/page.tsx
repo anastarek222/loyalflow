@@ -604,7 +604,6 @@ export default async function ActivityPage({
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen px-4 py-8 sm:px-8"
       style={{
         backgroundColor: theme.backgroundColor,

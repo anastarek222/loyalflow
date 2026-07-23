@@ -790,7 +790,6 @@ export default async function ReportsPage({
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
       style={{
         backgroundColor: theme.backgroundColor,
@@ -824,7 +823,6 @@ export default async function ReportsPage({
 
 
         <section
-          dir="rtl"
           className="mt-6 grid gap-3 sm:grid-cols-2"
         >
           <Link

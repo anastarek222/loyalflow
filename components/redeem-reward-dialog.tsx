@@ -42,7 +42,7 @@ export default function RedeemRewardDialog({
           aria-labelledby="redeem-reward-title"
           className="fixed inset-0 z-50 flex items-end bg-slate-950/60 p-4 sm:items-center sm:justify-center"
         >
-          <section className="w-full max-w-md rounded-3xl bg-white p-6 text-right shadow-2xl">
+          <section className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <p className="text-sm font-bold text-emerald-700">
               تأكيد استبدال المكافأة
             </p>

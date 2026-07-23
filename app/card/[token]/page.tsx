@@ -7,6 +7,7 @@ import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
 import { getBusinessTheme } from "@/lib/theme";
+import { getLanguageAttributes } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -246,6 +247,10 @@ export default async function PublicCardPage({
   const business =
     customer.business;
 
+  const { language, lang, dir } = getLanguageAttributes(
+    business.cardDefaultLanguage
+  );
+
   const theme =
     getBusinessTheme(business);
   const publicOffers = business.offers.filter((offer) =>
@@ -431,6 +436,8 @@ export default async function PublicCardPage({
 
   return (
     <main
+      lang={lang}
+      dir={dir}
       className="relative min-h-screen overflow-hidden px-4 py-5 sm:py-10"
       style={{
         background: `linear-gradient(160deg, ${theme.primaryColor} 0%, #020617 55%, #0f172a 100%)`,
@@ -448,17 +455,16 @@ export default async function PublicCardPage({
       <div className="relative z-10 mx-auto mb-6 w-full max-w-md">
         {showWelcome ? (
           <section
-            dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
             className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-center backdrop-blur-sm"
           >
             <h2 className="text-lg font-black text-emerald-100">
-              {business.cardDefaultLanguage === "AR"
+              {language === "AR"
                 ? "🎉 تم إنشاء كارتك بنجاح"
                 : "🎉 Your card is ready"}
             </h2>
 
             <p className="mt-1 text-sm leading-6 text-emerald-50/90">
-              {business.cardDefaultLanguage === "AR"
+              {language === "AR"
                 ? `أهلاً بك في برنامج ولاء ${business.name}. كارتك جاهز للاستخدام.`
                 : `Welcome to ${business.name}'s loyalty program. Your digital card is ready to use.`}
             </p>
@@ -562,23 +568,22 @@ export default async function PublicCardPage({
       </div>
 
       <h1 className="sr-only">
-        كارت الولاء الخاص بـ{" "}
+        {language === "AR" ? "كارت الولاء الخاص بـ" : "Loyalty card for"}{" "}
         {customerName}
       </h1>
 
       {referralLink ? (
         <section
           className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
-          dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
         >
           <h2 className="font-black text-slate-950">
-            {business.cardDefaultLanguage === "AR"
+            {language === "AR"
               ? "ادعُ صديقًا"
               : "Invite a friend"}
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            {business.cardDefaultLanguage === "AR"
+            {language === "AR"
               ? "شارك رابط الدعوة مع أصدقائك. يتم تسجيل الإحالة عند انضمام عميل جديد لهذا النشاط."
               : "Share your invitation link with friends. The referral is recorded when a new customer joins this business."}
           </p>
@@ -588,12 +593,12 @@ export default async function PublicCardPage({
               value={referralLink}
               title={business.name}
               text={
-                business.cardDefaultLanguage === "AR"
+                language === "AR"
                   ? `انضم إلى برنامج ولاء ${business.name}`
                   : `Join ${business.name}'s loyalty program`
               }
               label={
-                business.cardDefaultLanguage === "AR"
+                language === "AR"
                   ? "مشاركة الدعوة"
                   : "Share invite"
               }
@@ -603,12 +608,12 @@ export default async function PublicCardPage({
             <CopyLinkButton
               value={referralLink}
               label={
-                business.cardDefaultLanguage === "AR"
+                language === "AR"
                   ? "نسخ رابط الدعوة"
                   : "Copy invite link"
               }
               copiedLabel={
-                business.cardDefaultLanguage === "AR"
+                language === "AR"
                   ? "تم النسخ ✓"
                   : "Copied ✓"
               }
@@ -620,17 +625,16 @@ export default async function PublicCardPage({
 
       <section
         className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
-        dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
       >
         <h2 className="font-black text-slate-950">
-          {business.cardDefaultLanguage === "AR"
+          {language === "AR"
             ? "عروض متاحة لك"
             : "Offers available to you"}
         </h2>
 
         {publicOffers.length === 0 ? (
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            {business.cardDefaultLanguage === "AR"
+            {language === "AR"
               ? "لا توجد عروض متاحة لك حاليًا."
               : "There are no offers available to you right now."}
           </p>
@@ -653,7 +657,7 @@ export default async function PublicCardPage({
 
                 {offer.validUntil ? (
                   <p className="mt-2 text-xs font-bold text-violet-700">
-                    {business.cardDefaultLanguage === "AR"
+                    {language === "AR"
                       ? `متاح حتى ${dateFormatter.format(offer.validUntil)}`
                       : `Available until ${dateFormatter.format(offer.validUntil)}`}
                   </p>
@@ -667,10 +671,9 @@ export default async function PublicCardPage({
       {rewardExpiryStatuses.length > 0 ? (
         <section
           className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
-          dir={business.cardDefaultLanguage === "AR" ? "rtl" : "ltr"}
         >
           <h2 className="font-black text-slate-950">
-            {business.cardDefaultLanguage === "AR"
+            {language === "AR"
               ? "حالة المكافآت"
               : "Reward status"}
           </h2>
@@ -687,13 +690,13 @@ export default async function PublicCardPage({
 
                 {reward.state === "EXPIRED" ? (
                   <span className="font-black text-rose-700">
-                    {business.cardDefaultLanguage === "AR"
+                    {language === "AR"
                       ? "منتهية"
                       : "Expired"}
                   </span>
                 ) : (
                   <span className="font-bold text-emerald-700">
-                    {business.cardDefaultLanguage === "AR"
+                    {language === "AR"
                       ? `صالحة حتى ${dateFormatter.format(reward.expiresAt)}`
                       : `Valid until ${dateFormatter.format(reward.expiresAt)}`}
                   </span>

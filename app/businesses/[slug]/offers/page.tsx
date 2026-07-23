@@ -55,7 +55,6 @@ export default async function OffersPage({ params, searchParams }: OffersPagePro
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
       style={{
         backgroundColor: theme.backgroundColor,

@@ -80,7 +80,7 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
   });
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-6 sm:px-8">
+    <main className="min-h-screen bg-slate-100 px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <Link href={`/businesses/${business.slug}`} className="text-sm font-bold text-violet-700">← الرجوع إلى {business.name}</Link>
         <header className="mt-5 rounded-3xl bg-violet-700 p-6 text-white sm:p-8">

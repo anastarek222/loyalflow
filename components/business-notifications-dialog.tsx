@@ -160,7 +160,6 @@ useEffect(() => {
 
       {isOpen && (
         <div
-          dir="rtl"
           role="dialog"
           aria-modal="true"
           aria-labelledby="notifications-title"
@@ -243,7 +242,7 @@ useEffect(() => {
             </div>
 
             <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
-              <span className="ml-1 text-sm font-bold text-slate-500">
+              <span className="ms-1 text-sm font-bold text-slate-500">
                 عرض:
               </span>
 

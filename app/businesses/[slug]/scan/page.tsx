@@ -62,7 +62,6 @@ export default async function ScanPage({
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen px-4 py-8"
       style={{
         backgroundColor: theme.backgroundColor,
@@ -122,7 +121,6 @@ export default async function ScanPage({
           className={`mt-6 border bg-white p-5 sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
         >
           <p
-            dir="rtl"
             className="mb-6 text-sm leading-7 text-slate-600"
           >
             افتح الكاميرا ووجّهها ناحية QR الموجود على كارت

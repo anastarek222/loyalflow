@@ -98,7 +98,7 @@ export default async function RecoveryPage({
   );
 
   return (
-    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8">
+    <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <Link href={`/businesses/${business.slug}`} className="text-sm font-bold text-violet-700">
           ← الرجوع إلى {business.name}
