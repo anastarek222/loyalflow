@@ -1,294 +1,77 @@
 "use client";
 
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  User,
-} from "lucide-react";
-
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Bell, Building2, ChevronDown, LogOut, ScanLine } from "lucide-react";
 
 import LanguageSwitcher from "@/components/language-switcher";
 import MobileSidebarWrapper from "@/components/mobile-sidebar-wrapper";
-
+import { Avatar } from "@/components/ui/surface";
+import { logoutAction } from "@/app/dashboard/actions";
+import {
+  buildShellNavigation,
+  getShellPageContext,
+  type ShellBusiness,
+  type ShellUser,
+} from "@/lib/app-shell-navigation";
 
 type Props = {
   language: "AR" | "EN";
-
-  businessSlug?: string;
-
-  role?: string;
-
-  user: {
-    firstName: string;
-    lastName: string;
-    role: string;
-  };
+  activeBusiness?: ShellBusiness;
+  businesses: ShellBusiness[];
+  user: ShellUser & { firstName: string; lastName: string; email: string };
 };
 
+function roleLabel(role: string, language: "AR" | "EN") {
+  const labels = {
+    AR: { OWNER: "مالك النشاط", MANAGER: "مدير", STAFF: "موظف", VIEWER: "مشاهد", SUPER_ADMIN: "مدير النظام" },
+    EN: { OWNER: "Owner", MANAGER: "Manager", STAFF: "Staff", VIEWER: "Viewer", SUPER_ADMIN: "Super admin" },
+  } as const;
+  return labels[language][role as keyof typeof labels.EN] ?? role;
+}
 
-export default function AppTopbar({
-  language,
-  user,
-  businessSlug,
-}: Props) {
+export default function AppTopbar({ language, user, businesses, activeBusiness }: Props) {
+  const pathname = usePathname();
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [businessOpen, setBusinessOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+  const businessRef = useRef<HTMLDivElement>(null);
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const context = getShellPageContext(pathname, language, activeBusiness);
+  const canScan = Boolean(activeBusiness && buildShellNavigation({ language, user, business: activeBusiness }).flatMap((group) => group.items).some((entry) => entry.id === "scan"));
 
+  useEffect(() => {
+    function closeWhenOutside(event: MouseEvent) {
+      if (!accountRef.current?.contains(event.target as Node)) setAccountOpen(false);
+      if (!businessRef.current?.contains(event.target as Node)) setBusinessOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) { if (event.key === "Escape") { setAccountOpen(false); setBusinessOpen(false); } }
+    document.addEventListener("mousedown", closeWhenOutside);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => { document.removeEventListener("mousedown", closeWhenOutside); window.removeEventListener("keydown", closeOnEscape); };
+  }, []);
 
-  const [open, setOpen] = useState(false);
-
-
-  const fullName =
-    `${user.firstName} ${user.lastName}`.trim();
-
-
-  const role =
-    user.role === "OWNER"
-      ? language === "AR"
-        ? "مالك النشاط"
-        : "Owner"
-      : user.role === "MANAGER"
-        ? language === "AR"
-          ? "مدير"
-          : "Manager"
-        : language === "AR"
-          ? "موظف"
-          : "Staff";
-
-
-  const initial =
-    user.firstName
-      .charAt(0)
-      .toUpperCase();
-
-
-
-  return (
-
-    <header
-      className="
-        flex
-        h-20
-        items-center
-        justify-between
-        border-b
-        border-slate-200
-        bg-white
-        px-4
-        sm:px-6
-      "
-    >
-
-
-      <div className="flex items-center gap-3">
-
-        <MobileSidebarWrapper
-          language={language}
-          businessSlug={businessSlug}
-          role={user.role}
-        />
-
-
-        <div>
-
-          <p className="text-xs font-bold text-slate-400">
-            {language === "AR"
-              ? "لوحة التحكم"
-              : "Dashboard"}
-          </p>
-
-
-          <h2 className="text-lg font-black text-slate-950">
-            LoyalFlow
-          </h2>
-
-        </div>
-
+  return <header className="lf-topbar sticky top-0 z-20 flex min-h-16 items-center justify-between gap-3 border-b px-3 py-2 sm:px-6" data-shell-topbar="true">
+    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+      <MobileSidebarWrapper language={language} user={user} business={activeBusiness} businesses={businesses} />
+      <div className="min-w-0">
+        {context.parent && <p className="truncate text-xs font-medium text-slate-500">{context.parent}</p>}
+        <h1 className="truncate text-base font-bold text-slate-950 sm:text-lg">{context.title}</h1>
       </div>
-
-
-
-      <div className="flex items-center gap-3">
-
-
-        <button
-          className="
-            relative
-            rounded-xl
-            border
-            border-slate-200
-            p-2.5
-            text-slate-600
-            transition
-            hover:bg-slate-50
-          "
-        >
-
-          <Bell size={19}/>
-
-          <span
-            className="
-              absolute
-              right-2
-              top-2
-              h-2
-              w-2
-              rounded-full
-              bg-violet-600
-            "
-          />
-
-        </button>
-
-
-
-        <LanguageSwitcher
-          language={language}
-        />
-
-
-
-        <div className="relative">
-
-
-          <button
-            onClick={() => setOpen(!open)}
-            className="
-              flex
-              items-center
-              gap-3
-              rounded-2xl
-              border
-              border-slate-200
-              bg-white
-              px-2
-              py-1.5
-              transition
-              hover:bg-slate-50
-            "
-          >
-
-
-            <div
-              className="
-                flex
-                h-10
-                w-10
-                items-center
-                justify-center
-                rounded-xl
-                bg-slate-950
-                font-black
-                text-white
-              "
-            >
-              {initial}
-            </div>
-
-
-
-            <div className="hidden text-right sm:block">
-
-              <p className="text-sm font-black text-slate-950">
-                {fullName}
-              </p>
-
-
-              <p className="text-xs font-bold text-slate-500">
-                {role}
-              </p>
-
-            </div>
-
-
-            <ChevronDown size={16}/>
-
-
-          </button>
-
-
-
-
-          {open && (
-
-            <div
-              className="
-                absolute
-                right-0
-                top-14
-                z-50
-                w-56
-                rounded-2xl
-                border
-                border-slate-200
-                bg-white
-                p-2
-                shadow-xl
-              "
-            >
-
-              <button
-                className="
-                  flex
-                  w-full
-                  items-center
-                  gap-3
-                  rounded-xl
-                  px-3
-                  py-3
-                  text-sm
-                  font-bold
-                  text-slate-700
-                  hover:bg-slate-100
-                "
-              >
-
-                <User size={17}/>
-
-                {language === "AR"
-                  ? "الملف الشخصي"
-                  : "Profile"}
-
-              </button>
-
-
-
-              <button
-                className="
-                  flex
-                  w-full
-                  items-center
-                  gap-3
-                  rounded-xl
-                  px-3
-                  py-3
-                  text-sm
-                  font-bold
-                  text-red-600
-                  hover:bg-red-50
-                "
-              >
-
-                <LogOut size={17}/>
-
-                {language === "AR"
-                  ? "تسجيل الخروج"
-                  : "Logout"}
-
-              </button>
-
-
-            </div>
-
-          )}
-
-        </div>
-
-
+      {activeBusiness && <div ref={businessRef} className="relative hidden sm:block" data-current-business-context="true">
+        {businesses.length > 1 ? <button type="button" aria-expanded={businessOpen} aria-haspopup="menu" onClick={() => setBusinessOpen((value) => !value)} className="flex min-h-11 max-w-52 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"><Building2 size={16} aria-hidden="true" /><span className="truncate">{activeBusiness.name}</span><ChevronDown size={15} aria-hidden="true" /></button> : <span className="inline-flex min-h-11 max-w-52 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-slate-700"><Building2 size={16} aria-hidden="true" /><span className="truncate">{activeBusiness.name}</span></span>}
+        {businessOpen && <div role="menu" aria-label={language === "AR" ? "تبديل النشاط" : "Switch business"} className="absolute start-0 top-12 z-50 w-64 rounded-md border border-border bg-surface p-1 shadow-[var(--lf-shadow-overlay)]">{businesses.map((business) => <Link key={business.id} href={`/businesses/${business.slug}`} role="menuitem" onClick={() => setBusinessOpen(false)} className={`flex min-h-11 items-center rounded-md px-3 text-sm font-semibold ${business.slug === activeBusiness.slug ? "bg-indigo-50 text-primary" : "text-slate-700 hover:bg-surface-subtle"}`}>{business.name}</Link>)}</div>}
+      </div>}
+    </div>
+    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+      {activeBusiness && canScan && <Link href={`/businesses/${activeBusiness.slug}/scan`} aria-label={language === "AR" ? "فتح المسح" : "Open scan"} className="hidden min-h-11 items-center gap-2 rounded-md bg-primary px-3 text-sm font-semibold text-white hover:bg-primary-hover sm:inline-flex"><ScanLine size={17} aria-hidden="true" /><span>{language === "AR" ? "مسح" : "Scan"}</span></Link>}
+      {activeBusiness && <Link href={`/businesses/${activeBusiness.slug}?notifications=1`} aria-label={language === "AR" ? "الإشعارات" : "Notifications"} className="flex size-11 items-center justify-center rounded-md text-slate-700 hover:bg-surface-subtle"><Bell size={19} aria-hidden="true" /></Link>}
+      <LanguageSwitcher language={language} />
+      <div ref={accountRef} className="relative">
+        <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label={language === "AR" ? "قائمة الحساب" : "Account menu"} onClick={() => setAccountOpen((value) => !value)} className="flex min-h-11 items-center gap-2 rounded-md px-1.5 hover:bg-surface-subtle"><Avatar name={fullName || user.email} className="bg-slate-950 text-white" /><ChevronDown className="hidden text-slate-500 sm:block" size={16} aria-hidden="true" /></button>
+        {accountOpen && <div role="menu" aria-label={language === "AR" ? "الحساب" : "Account"} className="absolute end-0 top-12 z-50 w-72 rounded-md border border-border bg-surface p-2 shadow-[var(--lf-shadow-overlay)]"><div className="border-b border-border px-3 py-2"><p className="font-semibold text-slate-950">{fullName || "User"}</p><p dir="ltr" className="mt-0.5 truncate text-sm text-slate-500">{user.email}</p><p className="mt-1 text-xs font-semibold text-slate-600">{roleLabel(user.role, language)}</p></div><div className="pt-1">{user.role === "SUPER_ADMIN" && <Link href="/businesses" role="menuitem" onClick={() => setAccountOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"><Building2 size={16} aria-hidden="true" />{language === "AR" ? "الأنشطة التجارية" : "Businesses"}</Link>}<form action={logoutAction}><button type="submit" role="menuitem" className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-danger hover:bg-[var(--lf-danger-subtle)]"><LogOut size={16} aria-hidden="true" />{language === "AR" ? "تسجيل الخروج" : "Log out"}</button></form></div></div>}
       </div>
-
-
-    </header>
-
-  );
+    </div>
+  </header>;
 }

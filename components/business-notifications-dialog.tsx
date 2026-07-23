@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   markBusinessNotificationsReadAction,
@@ -19,6 +19,7 @@ type BusinessNotificationsDialogProps = {
   slug: string;
   unreadCount: number;
   children: ReactNode;
+  trigger?: "button" | "shell";
 };
 
 type NotificationFilter =
@@ -29,8 +30,10 @@ export default function BusinessNotificationsDialog({
   slug,
   unreadCount,
   children,
+  trigger = "button",
 }: BusinessNotificationsDialogProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -95,6 +98,13 @@ useEffect(() => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (trigger !== "shell" || searchParams.get("notifications") !== "1") return;
+    setStatus(null);
+    setFilter("all");
+    setIsOpen(true);
+  }, [searchParams, trigger]);
+
   function markAllAsRead() {
     if (
       visibleUnreadCount === 0 ||
@@ -129,7 +139,7 @@ useEffect(() => {
 
   return (
     <>
-      <button
+      {trigger === "button" && <button
         type="button"
         onClick={() => {
           setStatus(null);
@@ -156,7 +166,7 @@ useEffect(() => {
               : visibleUnreadCount}
           </span>
         )}
-      </button>
+      </button>}
 
       {isOpen && (
         <div

@@ -20,12 +20,12 @@ export default function LanguageSwitcher({
     );
 
   return (
-    <aside
+    <div
       dir="ltr"
       aria-label={
         dictionary.language
       }
-      className="fixed right-3 top-3 z-[100] rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-lg backdrop-blur sm:right-5 sm:top-5"
+      className="rounded-md border border-border bg-surface p-1"
     >
       <div className="flex items-center gap-1">
         <form
@@ -88,6 +88,6 @@ export default function LanguageSwitcher({
           </button>
         </form>
       </div>
-    </aside>
+    </div>
   );
 }

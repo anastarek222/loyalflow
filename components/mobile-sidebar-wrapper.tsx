@@ -1,54 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 
 import MobileSidebar from "@/components/mobile-sidebar";
+import type { ShellBusiness, ShellUser } from "@/lib/app-shell-navigation";
 
 type Props = {
   language: "AR" | "EN";
-  businessSlug?: string;
-  role?: string;
+  user: ShellUser;
+  business?: ShellBusiness;
+  businesses: ShellBusiness[];
 };
 
-export default function MobileSidebarWrapper({
-  language,
-  businessSlug,
-  role,
-}: Props) {
-
+export default function MobileSidebarWrapper({ language, user, business, businesses }: Props) {
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    const openNavigation = () => setOpen(true);
+    window.addEventListener("loyalflow:open-navigation", openNavigation);
+    return () => window.removeEventListener("loyalflow:open-navigation", openNavigation);
+  }, []);
 
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        aria-label="Open menu"
-        className="
-          rounded-xl
-          border
-          border-slate-200
-          bg-white
-          p-2.5
-          text-slate-700
-          shadow-sm
-          transition
-          hover:bg-slate-50
-          lg:hidden
-        "
-      >
-        <Menu size={22}/>
-      </button>
-
-
-      <MobileSidebar
-        open={open}
-        onClose={() => setOpen(false)}
-        language={language}
-        businessSlug={businessSlug}
-        role={role}
-      />
-    </>
-  );
+  return <>
+    <button type="button" onClick={() => setOpen(true)} aria-label={language === "AR" ? "فتح القائمة" : "Open navigation"} className="flex size-11 items-center justify-center rounded-md text-slate-700 hover:bg-surface-subtle lg:hidden"><Menu aria-hidden="true" size={22} /></button>
+    <MobileSidebar open={open} onClose={() => setOpen(false)} language={language} user={user} business={business} businesses={businesses} />
+  </>;
 }

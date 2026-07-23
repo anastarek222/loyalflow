@@ -866,6 +866,7 @@ export default async function BusinessPage({
         <div className="mt-6 grid grid-cols-1 gap-3 sm:mt-8 sm:flex sm:flex-wrap">
           <BusinessNotificationsDialog
             slug={business.slug}
+            trigger="shell"
             unreadCount={
               notificationCount +
               unreadRewardReadyCount +
