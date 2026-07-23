@@ -855,10 +855,10 @@ export default async function ActivityPage({
                     <div className="min-w-0">
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getBadgeClass(
-                          type
+                          activity.type
                         )}`}
                       >
-                        {activityLabels[type]}
+                        {activityLabels[activity.type]}
                       </span>
 
                       <p
