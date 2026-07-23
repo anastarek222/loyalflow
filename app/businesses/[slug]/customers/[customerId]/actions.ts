@@ -13,6 +13,8 @@ import {
   RAPID_EARN_WINDOW_MS,
 } from "@/lib/loyalty/fraud";
 import {
+  isFinancialOperationAbortedError,
+  isFinancialOperationConflictError,
   recordBalanceAdjustment,
   recordLoyaltyEarn,
   recordRewardRedemption,
@@ -71,7 +73,7 @@ const saleAmountSchema = z.object({
     .max(1000000000),
 });
 
-const earnOperationSchema = z.string().uuid();
+const financialOperationSchema = z.string().uuid();
 
 async function createRewardUnlocksForEarn(
   transaction: Prisma.TransactionClient,
@@ -114,8 +116,13 @@ async function createRewardUnlocksForEarn(
     }
 
     if (currentUnlock) {
-      const unlock = await transaction.rewardUnlock.findUniqueOrThrow({
-        where: { id: currentUnlock.id },
+      const unlock = await transaction.rewardUnlock.findFirstOrThrow({
+        where: {
+          id: currentUnlock.id,
+          businessId: input.businessId,
+          customerId: input.customerId,
+          rewardId: reward.id,
+        },
       });
       const unlockState = getRewardUnlockRedemptionState({
         expectedBusinessId: input.businessId,
@@ -132,19 +139,29 @@ async function createRewardUnlocksForEarn(
       }
 
       if (!unlock.expiredAt) {
-        await transaction.rewardUnlock.update({
-          where: { id: unlock.id },
-          data: { expiredAt: now },
-        });
-        await transaction.businessActivity.create({
-          data: {
-            type: "REWARD_EXPIRED",
-            description: `انتهت صلاحية ${reward.name}`,
+        const expired = await transaction.rewardUnlock.updateMany({
+          where: {
+            id: unlock.id,
             businessId: input.businessId,
             customerId: input.customerId,
-            createdById: input.createdById,
+            rewardId: reward.id,
+            redeemedAt: null,
+            expiredAt: null,
+            expiresAt: { lte: now },
           },
+          data: { expiredAt: now },
         });
+        if (expired.count === 1) {
+          await transaction.businessActivity.create({
+            data: {
+              type: "REWARD_EXPIRED",
+              description: `انتهت صلاحية ${reward.name}`,
+              businessId: input.businessId,
+              customerId: input.customerId,
+              createdById: input.createdById,
+            },
+          });
+        }
       }
     }
 
@@ -512,11 +529,23 @@ export async function adjustCustomerBalanceAction(
     );
   }
 
+  const parsedOperation = financialOperationSchema.safeParse(
+    formData.get("operationId"),
+  );
+
+  if (!parsedOperation.success) {
+    redirect(
+      `/businesses/${slug}/customers/${customerId}?error=adjustment-invalid`,
+    );
+  }
+
   const adjustmentActivityContext =
     await getActivityRequestContext();
 
-  const newBalance =
-    await prisma.$transaction(
+  let newBalance: number | null;
+
+  try {
+    newBalance = await prisma.$transaction(
       (transaction) =>
         recordBalanceAdjustment(transaction, {
           customerId: customer.id,
@@ -526,8 +555,18 @@ export async function adjustCustomerBalanceAction(
           direction: parsed.data.direction,
           amount: parsed.data.amount,
           reason: parsed.data.reason,
-        })
+          idempotencyKey: parsedOperation.data,
+        }),
     );
+  } catch (error) {
+    if (isFinancialOperationConflictError(error)) {
+      redirect(
+        `/businesses/${slug}/customers/${customerId}?error=adjustment-conflict`,
+      );
+    }
+
+    throw error;
+  }
 
   if (newBalance === null) {
     redirect(
@@ -953,7 +992,7 @@ export async function addLoyaltyAction(
     unitName: business.unitName,
   });
 
-  const parsedOperation = earnOperationSchema.safeParse(
+  const parsedOperation = financialOperationSchema.safeParse(
     formData.get("operationId")
   );
 
@@ -975,16 +1014,35 @@ export async function addLoyaltyAction(
       },
       select: {
         customerId: true,
+        type: true,
+        amount: true,
+        sourceLoyaltyMode: true,
+        saleAmount: true,
+        promotionApplication: {
+          select: { baseAmount: true },
+        },
       },
     });
 
   if (completedOperation) {
-    if (completedOperation.customerId !== customer.id) {
-      redirect(`/businesses/${slug}/customers/${customer.id}`);
+    const baseAmount =
+      completedOperation.promotionApplication?.baseAmount ??
+      completedOperation.amount;
+
+    if (
+      completedOperation.customerId !== customer.id ||
+      completedOperation.type !== "EARN" ||
+      completedOperation.sourceLoyaltyMode !== business.loyaltyMode ||
+      completedOperation.saleAmount !== (saleAmount ?? null) ||
+      baseAmount !== amount
+    ) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=earned-conflict`,
+      );
     }
 
     redirect(
-      `/businesses/${slug}/customers/${customer.id}?success=earned`
+      `/businesses/${slug}/customers/${customer.id}?success=earned`,
     );
   }
 
@@ -995,32 +1053,34 @@ export async function addLoyaltyAction(
     amount,
   };
 
-  const rapidEarnLimit = rateLimit(
-    getRapidEarnRateLimitKey(rapidEarnInput),
-    {
-      limit: 1,
-      windowMs: RAPID_EARN_WINDOW_MS,
+  if (!completedOperation) {
+    const rapidEarnLimit = rateLimit(
+      getRapidEarnRateLimitKey(rapidEarnInput),
+      {
+        limit: 1,
+        windowMs: RAPID_EARN_WINDOW_MS,
+      }
+    );
+
+    if (!rapidEarnLimit.allowed) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
+      );
     }
-  );
 
-  if (!rapidEarnLimit.allowed) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
-    );
-  }
+    const recentDuplicateEarn =
+      await prisma.loyaltyTransaction.findFirst({
+        where: getRapidEarnWhere(rapidEarnInput),
+        select: {
+          id: true,
+        },
+      });
 
-  const recentDuplicateEarn =
-    await prisma.loyaltyTransaction.findFirst({
-      where: getRapidEarnWhere(rapidEarnInput),
-      select: {
-        id: true,
-      },
-    });
-
-  if (recentDuplicateEarn) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
-    );
+    if (recentDuplicateEarn) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
+      );
+    }
   }
 
   let newBalance: number | null;
@@ -1104,36 +1164,13 @@ export async function addLoyaltyAction(
       return balanceAfter;
     });
   } catch (error) {
-    if (
-      !(
-        typeof error === "object" &&
-        error &&
-        "code" in error &&
-        error.code === "P2002"
-      )
-    ) {
-      throw error;
+    if (isFinancialOperationConflictError(error)) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=earned-conflict`,
+      );
     }
 
-    const completedAfterRace =
-      await prisma.loyaltyTransaction.findUnique({
-        where: {
-          businessId_idempotencyKey: {
-            businessId: business.id,
-            idempotencyKey,
-          },
-        },
-        select: {
-          customerId: true,
-          balanceAfter: true,
-        },
-      });
-
-    if (completedAfterRace?.customerId !== customer.id) {
-      throw error;
-    }
-
-    newBalance = completedAfterRace.balanceAfter;
+    throw error;
   }
 
   if (newBalance === null) {
@@ -1160,7 +1197,8 @@ export async function addLoyaltyAction(
 export async function redeemRewardAction(
   slug: string,
   customerId: string,
-  rewardId?: string
+  rewardId?: string,
+  formData?: FormData,
 ) {
   const {
     session,
@@ -1206,6 +1244,18 @@ export async function redeemRewardAction(
 
   const cost = selectedReward?.cost ?? business.rewardThreshold;
 
+  const parsedOperation = financialOperationSchema.safeParse(
+    formData?.get("operationId"),
+  );
+
+  if (!parsedOperation.success) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=redemption-invalid`,
+    );
+  }
+
+  const idempotencyKey = parsedOperation.data;
+
   const redemptionActivityContext =
     await getActivityRequestContext();
 
@@ -1216,34 +1266,72 @@ export async function redeemRewardAction(
     cost,
   };
 
-  const rapidRedemptionLimit = rateLimit(
-    getRapidRedemptionRateLimitKey(rapidRedemptionInput),
-    {
-      limit: 1,
-      windowMs: RAPID_EARN_WINDOW_MS,
-    }
-  );
+  const completedOperation = await prisma.loyaltyTransaction.findUnique({
+    where: {
+      businessId_idempotencyKey: {
+        businessId: business.id,
+        idempotencyKey,
+      },
+    },
+    select: {
+      customerId: true,
+      type: true,
+      amount: true,
+      rewardRedemption: {
+        select: { rewardId: true, cost: true },
+      },
+    },
+  });
 
-  if (!rapidRedemptionLimit.allowed) {
+  if (completedOperation) {
+    if (
+      completedOperation.customerId !== customer.id ||
+      completedOperation.type !== "REDEEM" ||
+      completedOperation.amount !== -cost ||
+      completedOperation.rewardRedemption?.rewardId !==
+        (selectedReward?.id ?? null) ||
+      completedOperation.rewardRedemption?.cost !== cost
+    ) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=redemption-conflict`,
+      );
+    }
+
     redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
+      `/businesses/${slug}/customers/${customer.id}?success=redeemed`,
     );
   }
 
-  const recentDuplicateRedemption =
-    await prisma.loyaltyTransaction.findFirst({
-      where: getRapidRedemptionWhere(
-        rapidRedemptionInput
-      ),
-      select: {
-        id: true,
-      },
-    });
-
-  if (recentDuplicateRedemption) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
+  if (!completedOperation) {
+    const rapidRedemptionLimit = rateLimit(
+      getRapidRedemptionRateLimitKey(rapidRedemptionInput),
+      {
+        limit: 1,
+        windowMs: RAPID_EARN_WINDOW_MS,
+      }
     );
+
+    if (!rapidRedemptionLimit.allowed) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
+      );
+    }
+
+    const recentDuplicateRedemption =
+      await prisma.loyaltyTransaction.findFirst({
+        where: getRapidRedemptionWhere(
+          rapidRedemptionInput
+        ),
+        select: {
+          id: true,
+        },
+      });
+
+    if (recentDuplicateRedemption) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
+      );
+    }
   }
 
   const redemption = await prisma.$transaction(
@@ -1277,8 +1365,16 @@ export async function redeemRewardAction(
 
           if (unlockState !== "ACTIVE") {
             if (!unlock.expiredAt) {
-              await transaction.rewardUnlock.update({
-                where: { id: unlock.id },
+              await transaction.rewardUnlock.updateMany({
+                where: {
+                  id: unlock.id,
+                  businessId: business.id,
+                  customerId: customer.id,
+                  rewardId: selectedReward.id,
+                  redeemedAt: null,
+                  expiredAt: null,
+                  expiresAt: { lte: now },
+                },
                 data: { expiredAt: now },
               });
               await transaction.businessActivity.create({
@@ -1317,18 +1413,25 @@ export async function redeemRewardAction(
           rewardLabel,
           rewardName,
           rewardId: selectedReward?.id,
+          ...(unlockId ? { unlockId } : {}),
+          idempotencyKey,
         });
-
-      if (balance !== null && unlockId) {
-        await transaction.rewardUnlock.update({
-          where: { id: unlockId },
-          data: { redeemedAt: now },
-        });
-      }
 
       return { balance, expired: false };
+    },
+  ).catch((error: unknown) => {
+    if (isFinancialOperationConflictError(error)) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=redemption-conflict`,
+      );
     }
-  );
+
+    if (isFinancialOperationAbortedError(error)) {
+      return { balance: null, expired: false };
+    }
+
+    throw error;
+  });
 
   if (redemption.expired) {
     redirect(

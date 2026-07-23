@@ -8,6 +8,7 @@ type RedeemRewardDialogProps = {
   rewardName: string;
   cost: number;
   unitName: string;
+  operationId: string;
 };
 
 export default function RedeemRewardDialog({
@@ -16,6 +17,7 @@ export default function RedeemRewardDialog({
   rewardName,
   cost,
   unitName,
+  operationId,
 }: RedeemRewardDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -64,6 +66,7 @@ export default function RedeemRewardDialog({
               </button>
 
               <form action={action}>
+                <input type="hidden" name="operationId" value={operationId} />
                 <button
                   type="submit"
                   className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"

@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { randomUUID } from "node:crypto";
 import {
   canAccessBusiness,
   canPerform,
@@ -157,6 +158,7 @@ export default async function ScanCustomerPage({
       slug,
       customer.id
     );
+  const earnOperationId = randomUUID();
 
   const fullName = [
     customer.firstName,
@@ -319,7 +321,7 @@ export default async function ScanCustomerPage({
             <input
               type="hidden"
               name="operationId"
-              value={crypto.randomUUID()}
+              value={earnOperationId}
             />
 
             <ScanActionButton>
@@ -372,6 +374,11 @@ export default async function ScanCustomerPage({
                 action={redeemAction}
                 className="mt-3"
               >
+                <input
+                  type="hidden"
+                  name="operationId"
+                  value={randomUUID()}
+                />
                 <ScanActionButton>
                   استبدال المكافأة
                 </ScanActionButton>

@@ -1,4 +1,4 @@
-import type { LoyaltyMode, Prisma } from "@/generated/prisma/client";
+import { Prisma, type LoyaltyMode } from "@/generated/prisma/client";
 import { validateStaffAttribution } from "@/lib/loyalty/staff-attribution";
 import { createBusinessNotification } from "@/lib/notifications";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
@@ -35,6 +35,8 @@ type RewardRedemptionInput = {
   rewardLabel: string;
   rewardName: string;
   rewardId?: string;
+  unlockId?: string;
+  idempotencyKey?: string;
 };
 
 type BalanceAdjustmentInput = {
@@ -46,24 +48,63 @@ type BalanceAdjustmentInput = {
   direction: "ADD" | "SUBTRACT";
   amount: number;
   reason: string;
+  idempotencyKey?: string;
 };
+
+export class FinancialOperationConflictError extends Error {
+  constructor() {
+    super("This operation ID is already associated with different financial intent.");
+    this.name = "FinancialOperationConflictError";
+  }
+}
+
+export class FinancialOperationAbortedError extends Error {
+  constructor() {
+    super("The financial operation could not complete safely.");
+    this.name = "FinancialOperationAbortedError";
+  }
+}
+
+export function isFinancialOperationConflictError(
+  error: unknown,
+): error is FinancialOperationConflictError {
+  return error instanceof FinancialOperationConflictError;
+}
+
+export function isFinancialOperationAbortedError(
+  error: unknown,
+): error is FinancialOperationAbortedError {
+  return error instanceof FinancialOperationAbortedError;
+}
 
 async function getUpdatedBalance(
   transaction: TransactionClient,
   customerId: string,
   businessId: string,
 ) {
-  const customer = await transaction.customer.findUnique({
+  const customer = await transaction.customer.findFirst({
     where: {
       id: customerId,
+      businessId,
     },
     select: {
       balance: true,
-      businessId: true,
     },
   });
 
-  return customer?.businessId === businessId ? customer.balance : null;
+  return customer?.balance ?? null;
+}
+
+async function lockCustomerBalance(
+  transaction: TransactionClient,
+  customerId: string,
+  businessId: string,
+) {
+  const rows = await transaction.$queryRaw<{ id: string }[]>(
+    Prisma.sql`SELECT "id" FROM "Customer" WHERE "id" = ${customerId} AND "businessId" = ${businessId} FOR UPDATE`,
+  );
+
+  return rows.length === 1;
 }
 
 async function hasActiveBranchContext(
@@ -89,6 +130,22 @@ export async function recordLoyaltyEarn(
   transaction: TransactionClient,
   input: EarnTransactionInput,
 ) {
+  const promotionBonus = input.promotion?.bonusAmount ?? 0;
+  const creditedAmount = input.amount + promotionBonus;
+
+  if (
+    input.promotion &&
+    (input.promotion.businessId !== input.businessId ||
+      !Number.isInteger(promotionBonus) ||
+      promotionBonus < 1)
+  ) {
+    throw new Error("Invalid promotion for loyalty earn.");
+  }
+
+  if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
+    return null;
+  }
+
   if (input.idempotencyKey) {
     const existing = await transaction.loyaltyTransaction.findUnique({
       where: {
@@ -98,15 +155,43 @@ export async function recordLoyaltyEarn(
         },
       },
       select: {
+        businessId: true,
         customerId: true,
+        type: true,
+        amount: true,
+        sourceLoyaltyMode: true,
+        saleAmount: true,
         balanceAfter: true,
+        promotionApplication: {
+          select: {
+            promotionId: true,
+            baseAmount: true,
+            bonusAmount: true,
+          },
+        },
       },
     });
 
     if (existing) {
-      return existing.customerId === input.customerId
-        ? existing.balanceAfter
-        : null;
+      const promotionMatches = input.promotion
+        ? existing.promotionApplication?.promotionId === input.promotion.id &&
+          existing.promotionApplication.baseAmount === input.amount &&
+          existing.promotionApplication.bonusAmount === promotionBonus
+        : existing.promotionApplication === null;
+
+      if (
+        existing.businessId !== input.businessId ||
+        existing.customerId !== input.customerId ||
+        existing.type !== "EARN" ||
+        existing.amount !== creditedAmount ||
+        existing.sourceLoyaltyMode !== input.sourceLoyaltyMode ||
+        existing.saleAmount !== (input.saleAmount ?? null) ||
+        !promotionMatches
+      ) {
+        throw new FinancialOperationConflictError();
+      }
+
+      return existing.balanceAfter;
     }
   }
 
@@ -128,18 +213,6 @@ export async function recordLoyaltyEarn(
 
   if (!staffAttribution.valid) {
     return null;
-  }
-
-  const promotionBonus = input.promotion?.bonusAmount ?? 0;
-  const creditedAmount = input.amount + promotionBonus;
-
-  if (
-    input.promotion &&
-    (input.promotion.businessId !== input.businessId ||
-      !Number.isInteger(promotionBonus) ||
-      promotionBonus < 1)
-  ) {
-    throw new Error("Invalid promotion for loyalty earn.");
   }
 
   const updateResult = await transaction.customer.updateMany({
@@ -238,6 +311,49 @@ export async function recordRewardRedemption(
   transaction: TransactionClient,
   input: RewardRedemptionInput,
 ) {
+  if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
+    return null;
+  }
+
+  if (input.idempotencyKey) {
+    const existing = await transaction.loyaltyTransaction.findUnique({
+      where: {
+        businessId_idempotencyKey: {
+          businessId: input.businessId,
+          idempotencyKey: input.idempotencyKey,
+        },
+      },
+      select: {
+        businessId: true,
+        customerId: true,
+        type: true,
+        amount: true,
+        balanceAfter: true,
+        rewardRedemption: {
+          select: {
+            rewardId: true,
+            cost: true,
+          },
+        },
+      },
+    });
+
+    if (existing) {
+      if (
+        existing.businessId !== input.businessId ||
+        existing.customerId !== input.customerId ||
+        existing.type !== "REDEEM" ||
+        existing.amount !== -input.cost ||
+        existing.rewardRedemption?.rewardId !== (input.rewardId ?? null) ||
+        existing.rewardRedemption?.cost !== input.cost
+      ) {
+        throw new FinancialOperationConflictError();
+      }
+
+      return existing.balanceAfter;
+    }
+  }
+
   if (
     !(await hasActiveBranchContext(
       transaction,
@@ -246,6 +362,27 @@ export async function recordRewardRedemption(
     ))
   ) {
     return null;
+  }
+
+  if (input.unlockId) {
+    const claim = await transaction.rewardUnlock.updateMany({
+      where: {
+        id: input.unlockId,
+        businessId: input.businessId,
+        customerId: input.customerId,
+        ...(input.rewardId ? { rewardId: input.rewardId } : {}),
+        redeemedAt: null,
+        expiredAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      data: {
+        redeemedAt: new Date(),
+      },
+    });
+
+    if (claim.count !== 1) {
+      return null;
+    }
   }
 
   const updateResult = await transaction.customer.updateMany({
@@ -268,6 +405,9 @@ export async function recordRewardRedemption(
   });
 
   if (updateResult.count !== 1) {
+    if (input.unlockId) {
+      throw new FinancialOperationAbortedError();
+    }
     return null;
   }
 
@@ -281,12 +421,13 @@ export async function recordRewardRedemption(
     return null;
   }
 
-  await transaction.loyaltyTransaction.create({
+  const redeemedTransaction = await transaction.loyaltyTransaction.create({
     data: {
       type: "REDEEM",
       amount: -input.cost,
       balanceAfter,
       note: input.rewardLabel,
+      ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
       ...(input.branchId ? { branchId: input.branchId } : {}),
@@ -299,6 +440,7 @@ export async function recordRewardRedemption(
       rewardName: input.rewardLabel,
       cost: input.cost,
       ...(input.rewardId ? { rewardId: input.rewardId } : {}),
+      transactionId: redeemedTransaction.id,
       customerId: input.customerId,
       businessId: input.businessId,
       ...(input.branchId ? { branchId: input.branchId } : {}),
@@ -340,6 +482,45 @@ export async function recordBalanceAdjustment(
   transaction: TransactionClient,
   input: BalanceAdjustmentInput,
 ) {
+  const signedAmount = input.direction === "ADD" ? input.amount : -input.amount;
+
+  if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
+    return null;
+  }
+
+  if (input.idempotencyKey) {
+    const existing = await transaction.loyaltyTransaction.findUnique({
+      where: {
+        businessId_idempotencyKey: {
+          businessId: input.businessId,
+          idempotencyKey: input.idempotencyKey,
+        },
+      },
+      select: {
+        businessId: true,
+        customerId: true,
+        type: true,
+        amount: true,
+        note: true,
+        balanceAfter: true,
+      },
+    });
+
+    if (existing) {
+      if (
+        existing.businessId !== input.businessId ||
+        existing.customerId !== input.customerId ||
+        existing.type !== "ADJUSTMENT" ||
+        existing.amount !== signedAmount ||
+        existing.note !== `تعديل يدوي: ${input.reason}`
+      ) {
+        throw new FinancialOperationConflictError();
+      }
+
+      return existing.balanceAfter;
+    }
+  }
+
   if (
     !(await hasActiveBranchContext(
       transaction,
@@ -349,8 +530,6 @@ export async function recordBalanceAdjustment(
   ) {
     return null;
   }
-
-  const signedAmount = input.direction === "ADD" ? input.amount : -input.amount;
 
   const updateResult = await transaction.customer.updateMany({
     where: {
@@ -397,6 +576,7 @@ export async function recordBalanceAdjustment(
       amount: signedAmount,
       balanceAfter,
       note: `تعديل يدوي: ${input.reason}`,
+      ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
       ...(input.branchId ? { branchId: input.branchId } : {}),
