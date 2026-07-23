@@ -14,6 +14,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import {
+  chartClassNames,
+  chartTokens,
+} from "@/components/ui/chart";
+
 
 type ChartProps = {
   loyaltyGrowth: {
@@ -36,7 +41,7 @@ type ChartProps = {
 
 function EmptyChart() {
   return (
-    <div className="flex h-[300px] items-center justify-center rounded-2xl bg-slate-50 text-sm font-bold text-slate-400">
+    <div className={chartClassNames.empty}>
       No data available yet
     </div>
   );
@@ -74,11 +79,7 @@ function ChartCard({
 }
 
 
-const tooltipStyle = {
-  borderRadius: "16px",
-  border: "1px solid #e2e8f0",
-  boxShadow: "0 10px 30px rgba(15,23,42,.08)",
-};
+const tooltipStyle = chartTokens.tooltip;
 
 
 export default function DashboardCharts({
@@ -102,6 +103,7 @@ export default function DashboardCharts({
 
               <CartesianGrid
                 strokeDasharray="3 3"
+                stroke={chartTokens.grid}
                 vertical={false}
               />
 
@@ -115,7 +117,7 @@ export default function DashboardCharts({
               <Line
                 type="monotone"
                 dataKey="earned"
-                stroke="#7c3aed"
+                stroke={chartTokens.primary}
                 strokeWidth={3}
                 dot={false}
               />
@@ -124,7 +126,7 @@ export default function DashboardCharts({
               <Line
                 type="monotone"
                 dataKey="redeemed"
-                stroke="#10b981"
+                stroke={chartTokens.positive}
                 strokeWidth={3}
                 dot={false}
               />
@@ -153,6 +155,7 @@ export default function DashboardCharts({
 
               <CartesianGrid
                 strokeDasharray="3 3"
+                stroke={chartTokens.grid}
                 vertical={false}
               />
 
@@ -168,8 +171,8 @@ export default function DashboardCharts({
               <Area
                 type="monotone"
                 dataKey="customers"
-                stroke="#06b6d4"
-                fill="#06b6d4"
+                stroke={chartTokens.info}
+                fill={chartTokens.info}
                 fillOpacity={0.15}
                 strokeWidth={3}
               />
@@ -201,6 +204,7 @@ export default function DashboardCharts({
 
               <CartesianGrid
                 strokeDasharray="3 3"
+                stroke={chartTokens.grid}
                 vertical={false}
               />
 
@@ -213,7 +217,7 @@ export default function DashboardCharts({
 
               <Bar
                 dataKey="redeemed"
-                fill="#f59e0b"
+                fill={chartTokens.warning}
                 radius={[10,10,0,0]}
               />
 
