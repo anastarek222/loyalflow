@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import CopyLinkButton from "@/components/copy-link-button";
 import ShareLinkButton from "@/components/share-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
+import { isPublicCardToken } from "@/lib/cards/public-token";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
@@ -25,6 +26,10 @@ export async function generateMetadata({
   params,
 }: PublicCardPageProps): Promise<Metadata> {
   const { token } = await params;
+
+  if (!isPublicCardToken(token)) {
+    return { title: "كارت غير متاح" };
+  }
 
   const customer =
     await prisma.customer.findUnique({
@@ -163,6 +168,10 @@ export default async function PublicCardPage({
   const { token } = await params;
   const query = await searchParams;
   const showWelcome = query.welcome === "1";
+
+  if (!isPublicCardToken(token)) {
+    notFound();
+  }
 
   /*
    * publicToken مختلف لكل عميل،
@@ -383,7 +392,7 @@ export default async function PublicCardPage({
    */
   const activities =
     customer.transactions.map(
-      (transaction) => {
+      (transaction, index) => {
         let label =
           "تم تعديل الرصيد";
 
@@ -407,7 +416,7 @@ export default async function PublicCardPage({
         }
 
         return {
-          id: transaction.id,
+          id: `activity-${transaction.createdAt.getTime()}-${index}`,
           label,
           amount:
             transaction.amount,

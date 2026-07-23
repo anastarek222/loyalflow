@@ -4,6 +4,7 @@ import {
   parseUtcDateInput,
 } from "@/lib/analytics/date-range";
 import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
+import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
@@ -16,6 +17,10 @@ export async function GET(request: Request) {
       { error: "Unauthorized" },
       { status: 401 }
     );
+  }
+
+  if (!canPerform(session.user, businessId, "REPORTS_VIEW")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const url = new URL(request.url);

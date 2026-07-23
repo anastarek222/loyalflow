@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 
 import prisma from "@/lib/prisma";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -37,11 +38,20 @@ export const {
         },
       },
 
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed =
           loginSchema.safeParse(credentials);
 
         if (!parsed.success) {
+          return null;
+        }
+
+        const limit = rateLimit(
+          `credentials-login:${getClientAddress(request.headers)}`,
+          { limit: 10, windowMs: 15 * 60 * 1000 }
+        );
+
+        if (!limit.allowed) {
           return null;
         }
 

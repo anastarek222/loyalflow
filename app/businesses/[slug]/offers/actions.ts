@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { offerInputSchema, normalizeOfferInput } from "@/lib/offers/catalog";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -56,11 +57,12 @@ export async function updateOfferAction(
   formData: FormData
 ) {
   const business = await getOfferManagementContext(slug);
+  const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsed = parseOfferForm(formData);
-  if (!parsed.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  if (!parsed.success || !parsedOfferId.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
 
   const result = await prisma.offer.updateMany({
-    where: { id: offerId, businessId: business.id },
+    where: { id: parsedOfferId.data, businessId: business.id },
     data: normalizeOfferInput(parsed.data),
   });
   if (result.count !== 1) redirect(`/businesses/${business.slug}/offers?error=not-found`);
@@ -75,9 +77,16 @@ export async function toggleOfferStatusAction(
   isActive: boolean
 ) {
   const business = await getOfferManagementContext(slug);
+  const parsedOfferId = opaqueIdSchema.safeParse(offerId);
+  const parsedStatus = actionBooleanSchema.safeParse(isActive);
+
+  if (!parsedOfferId.success || !parsedStatus.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
+
   const result = await prisma.offer.updateMany({
-    where: { id: offerId, businessId: business.id },
-    data: { isActive },
+    where: { id: parsedOfferId.data, businessId: business.id },
+    data: { isActive: parsedStatus.data },
   });
   if (result.count !== 1) redirect(`/businesses/${business.slug}/offers?error=not-found`);
 

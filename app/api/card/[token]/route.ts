@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
 export async function GET(
   request: NextRequest,
@@ -9,10 +11,25 @@ export async function GET(
   try {
     const { token } = await params;
 
-    if (!token) {
+    if (!isPublicCardToken(token)) {
       return NextResponse.json(
         { error: "Not found" },
         { status: 404 }
+      );
+    }
+
+    const limit = rateLimit(
+      `public-card-api:${getClientAddress(request.headers)}:${token}`,
+      { limit: 60, windowMs: 60_000 }
+    );
+
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSeconds) },
+        }
       );
     }
 
@@ -20,12 +37,43 @@ export async function GET(
       where: {
         publicToken: token,
       },
-      include: {
-        // Keep tenant-private notes/tags out of every public-card response.
+      select: {
+        firstName: true,
+        lastName: true,
+        balance: true,
+        lifetimeEarned: true,
+        lifetimeRedeemed: true,
+        businessId: true,
+        createdAt: true,
+        isActive: true,
         business: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            isActive: true,
+            rewardThreshold: true,
+            primaryColor: true,
+            secondaryColor: true,
+            logoUrl: true,
+            coverImageUrl: true,
+            qrStyle: true,
+            qrPosition: true,
+            loyaltyProgramName: true,
+            pointsName: true,
+            membershipName: true,
+            welcomeMessage: true,
             offers: {
               orderBy: [{ validUntil: "asc" }, { createdAt: "asc" }],
+              select: {
+                businessId: true,
+                name: true,
+                description: true,
+                isActive: true,
+                validFrom: true,
+                validUntil: true,
+                eligibility: true,
+                segment: true,
+              },
             },
           },
         },
@@ -34,6 +82,11 @@ export async function GET(
             createdAt: "desc",
           },
           take: 5,
+          select: {
+            type: true,
+            amount: true,
+            createdAt: true,
+          },
         },
       },
     });
@@ -61,20 +114,18 @@ export async function GET(
         }
       ))
       .map((offer) => ({
-        id: offer.id,
         name: offer.name,
         description: offer.description,
         validUntil: offer.validUntil,
       }));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       name: `${customer.firstName} ${customer.lastName ?? ""}`.trim(),
       loyaltyBalance: customer.balance,
       lifetimeEarned: customer.lifetimeEarned,
       lifetimeRedeemed: customer.lifetimeRedeemed,
 
       recentTransactions: customer.transactions.map((t) => ({
-        id: t.id,
         type: t.type,
         amount: t.amount,
         timestamp: t.createdAt,
@@ -102,6 +153,8 @@ export async function GET(
         },
       },
     });
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
 
   } catch (error) {
     console.error("Card API error:", error);

@@ -7,6 +7,7 @@ import {
   normalizeRewardInput,
   rewardInputSchema,
 } from "@/lib/rewards/catalog";
+import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -71,6 +72,7 @@ export async function updateRewardAction(
   formData: FormData
 ) {
   const business = await getRewardManagementContext(slug);
+  const parsedRewardId = opaqueIdSchema.safeParse(rewardId);
   const parsed = rewardInputSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
@@ -81,13 +83,13 @@ export async function updateRewardAction(
       formData.get("expiresAfterDays") || undefined,
   });
 
-  if (!parsed.success) {
+  if (!parsed.success || !parsedRewardId.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
 
   const result = await prisma.reward.updateMany({
     where: {
-      id: rewardId,
+      id: parsedRewardId.data,
       businessId: business.id,
     },
     data: normalizeRewardInput(parsed.data),
@@ -107,13 +109,19 @@ export async function toggleRewardStatusAction(
   isActive: boolean
 ) {
   const business = await getRewardManagementContext(slug);
+  const parsedRewardId = opaqueIdSchema.safeParse(rewardId);
+  const parsedStatus = actionBooleanSchema.safeParse(isActive);
+
+  if (!parsedRewardId.success || !parsedStatus.success) {
+    redirect(`/businesses/${business.slug}/rewards?error=invalid`);
+  }
 
   const result = await prisma.reward.updateMany({
     where: {
-      id: rewardId,
+      id: parsedRewardId.data,
       businessId: business.id,
     },
-    data: { isActive },
+    data: { isActive: parsedStatus.data },
   });
 
   if (result.count !== 1) {

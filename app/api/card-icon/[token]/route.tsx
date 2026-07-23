@@ -1,15 +1,34 @@
 /* eslint-disable @next/next/no-img-element -- ImageResponse only supports standard image elements. */
 
 import { ImageResponse } from "next/og";
+import { getSafeImageDataUrl } from "@/lib/branding/image-data";
+import { isPublicCardToken } from "@/lib/cards/public-token";
 import prisma from "@/lib/prisma";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
 export const GET = async (
   request: Request,
   { params }: { params: Promise<{ token: string }> }
 ) => {
   const { token: cardToken } = await params;
-  const requestedSize = new URL(request.url).searchParams.get('size');
-  const iconSize = requestedSize === '192' ? 192 : 512;
+  if (!isPublicCardToken(cardToken)) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const limit = rateLimit(
+    `public-card-icon:${getClientAddress(request.headers)}:${cardToken}`,
+    { limit: 60, windowMs: 60_000 }
+  );
+
+  if (!limit.allowed) {
+    return new Response("Too many requests", {
+      status: 429,
+      headers: { "Retry-After": String(limit.retryAfterSeconds) },
+    });
+  }
+
+  const requestedSize = new URL(request.url).searchParams.get("size");
+  const iconSize = requestedSize === "192" ? 192 : 512;
   const scale = iconSize / 512;
   const scaled = (value: number) => Math.round(value * scale);
   const customer = await prisma.customer.findUnique({
@@ -34,24 +53,9 @@ export const GET = async (
   const business = customer?.business;
   const primaryColor = getSafeColor(business?.primaryColor, '#2563eb');
 
-  async function getLogoDataUrl(value: string | null | undefined, requestUrl: string) {
-    if (!value) return null;
-    try {
-      const absoluteUrl = new URL(value, new URL(requestUrl).origin).toString();
-      const response = await fetch(absoluteUrl, { cache: 'no-store' });
-      if (!response.ok) return null;
-      const bytes = await response.arrayBuffer();
-      if (bytes.byteLength > 2_000_000) return null;
-      const contentType = response.headers.get('content-type') ?? 'image/png';
-      const base64 = Buffer.from(bytes).toString('base64');
-      return `data:${contentType};base64,${base64}`;
-    } catch {
-      return null;
-    }
-  }
-  const logoDataUrl = await getLogoDataUrl(business?.logoUrl, request.url);
+  const logoDataUrl = getSafeImageDataUrl(business?.logoUrl, 500 * 1024);
   const initials = getInitials(business?.name);
-  return new ImageResponse(
+  const response = new ImageResponse(
     (
       <div
         style={{
@@ -114,6 +118,8 @@ export const GET = async (
       height: iconSize,
     }
   );
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  return response;
 };
 
 function getSafeColor(value: string | null | undefined, fallback: string) {

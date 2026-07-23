@@ -47,6 +47,7 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { createBusinessNotification } from "@/lib/notifications";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
+import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -270,6 +271,12 @@ async function getActionContext(
   customerId: string,
   capability: Capability
 ) {
+  const parsedCustomerId = opaqueIdSchema.safeParse(customerId);
+
+  if (!parsedCustomerId.success) {
+    redirect(`/businesses/${slug}/customers`);
+  }
+
   const { session, business } =
     await getBusinessAccess(slug);
 
@@ -279,7 +286,7 @@ async function getActionContext(
 
   const customer = await prisma.customer.findFirst({
     where: {
-      id: customerId,
+      id: parsedCustomerId.data,
       businessId: business.id,
       isActive: true,
     },
@@ -306,6 +313,12 @@ async function getManagementContext(
   customerId: string,
   capability: Capability = "CUSTOMERS_EDIT"
 ) {
+  const parsedCustomerId = opaqueIdSchema.safeParse(customerId);
+
+  if (!parsedCustomerId.success) {
+    redirect(`/businesses/${slug}/customers`);
+  }
+
   const { session, business } =
     await getBusinessAccess(slug);
 
@@ -317,7 +330,7 @@ async function getManagementContext(
 
   const customer = await prisma.customer.findFirst({
     where: {
-      id: customerId,
+      id: parsedCustomerId.data,
       businessId: business.id,
     },
     select: {
@@ -462,6 +475,12 @@ export async function setCustomerStatusAction(
   customerId: string,
   isActive: boolean
 ) {
+  const parsedStatus = actionBooleanSchema.safeParse(isActive);
+
+  if (!parsedStatus.success) {
+    redirect(`/businesses/${slug}/customers/${customerId}?error=invalid`);
+  }
+
   const {
     session,
     business,
@@ -477,16 +496,16 @@ export async function setCustomerStatusAction(
         id: customer.id,
       },
       data: {
-        isActive,
+        isActive: parsedStatus.data,
       },
     }),
 
     prisma.businessActivity.create({
       data: {
-        type: isActive
+        type: parsedStatus.data
           ? "CUSTOMER_REACTIVATED"
           : "CUSTOMER_DEACTIVATED",
-        description: isActive
+        description: parsedStatus.data
           ? "تم إعادة تفعيل حساب العميل"
           : "تم إيقاف حساب العميل",
         businessId: business.id,
@@ -508,7 +527,7 @@ export async function setCustomerStatusAction(
 
   redirect(
     `/businesses/${slug}/customers/${customer.id}?success=${
-      isActive ? "reactivated" : "deactivated"
+      parsedStatus.data ? "reactivated" : "deactivated"
     }`
   );
 }
@@ -733,13 +752,19 @@ export async function assignCustomerTagAction(
   customerId: string,
   tagId: string
 ) {
+  const parsedTagId = opaqueIdSchema.safeParse(tagId);
+
+  if (!parsedTagId.success) {
+    redirect(`/businesses/${slug}/customers/${customerId}?error=tag-invalid`);
+  }
+
   const { session, business, customer } = await getManagementContext(
     slug,
     customerId,
     "CUSTOMERS_EDIT"
   );
   const tag = await prisma.customerTag.findFirst({
-    where: { id: tagId, businessId: business.id },
+    where: { id: parsedTagId.data, businessId: business.id },
     select: { id: true, name: true },
   });
 
@@ -784,6 +809,12 @@ export async function removeCustomerTagAction(
   customerId: string,
   tagId: string
 ) {
+  const parsedTagId = opaqueIdSchema.safeParse(tagId);
+
+  if (!parsedTagId.success) {
+    redirect(`/businesses/${slug}/customers/${customerId}?error=tag-invalid`);
+  }
+
   const { session, business, customer } = await getManagementContext(
     slug,
     customerId,
@@ -793,7 +824,7 @@ export async function removeCustomerTagAction(
     where: {
       businessId: business.id,
       customerId: customer.id,
-      tagId,
+      tagId: parsedTagId.data,
     },
     include: { tag: { select: { name: true } } },
   });
@@ -864,6 +895,12 @@ export async function updateCustomerNoteAction(
   noteId: string,
   formData: FormData
 ) {
+  const parsedNoteId = opaqueIdSchema.safeParse(noteId);
+
+  if (!parsedNoteId.success) {
+    redirect(`/businesses/${slug}/customers/${customerId}?error=note-invalid`);
+  }
+
   const { session, business, customer } = await getManagementContext(
     slug,
     customerId,
@@ -877,7 +914,7 @@ export async function updateCustomerNoteAction(
 
   const note = await prisma.customerNote.findFirst({
     where: {
-      id: noteId,
+      id: parsedNoteId.data,
       businessId: business.id,
       customerId: customer.id,
     },
@@ -1185,10 +1222,20 @@ export async function redeemRewardAction(
     "LOYALTY_REDEEM"
   );
 
-  const selectedReward = rewardId
+  const parsedRewardId = rewardId
+    ? opaqueIdSchema.safeParse(rewardId)
+    : null;
+
+  if (parsedRewardId && !parsedRewardId.success) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=reward-unavailable`
+    );
+  }
+
+  const selectedReward = parsedRewardId?.success
     ? await prisma.reward.findFirst({
         where: {
-          id: rewardId,
+          id: parsedRewardId.data,
           businessId: business.id,
           isActive: true,
         },

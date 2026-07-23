@@ -2,11 +2,13 @@ import { auth } from "@/auth";
 import { extractPublicCardToken } from "@/lib/cards/public-token";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import { opaqueIdSchema } from "@/lib/validation/action-input";
 import { z } from "zod";
 
 const scanSchema = z.object({
   value: z.string().trim().min(1).max(2048),
-  businessId: z.string().trim().min(1).max(100),
+  businessId: opaqueIdSchema,
 });
 
 export async function POST(request: Request) {
@@ -33,6 +35,28 @@ export async function POST(request: Request) {
       },
       {
         status: 400,
+      }
+    );
+  }
+
+  if (!canPerform(session.user, parsed.data.businessId, "LOYALTY_EARN")) {
+    return Response.json(
+      { error: "ليس لديك صلاحية لفتح هذا العميل." },
+      { status: 403 }
+    );
+  }
+
+  const limit = rateLimit(
+    `scan-resolve:${session.user.id}:${getClientAddress(request.headers)}`,
+    { limit: 60, windowMs: 60_000 }
+  );
+
+  if (!limit.allowed) {
+    return Response.json(
+      { error: "تم تجاوز عدد المحاولات المسموح." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
       }
     );
   }
@@ -73,7 +97,8 @@ export async function POST(request: Request) {
   if (
     !customer ||
     !customer.isActive ||
-    !customer.business.isActive
+    !customer.business.isActive ||
+    customer.businessId !== parsed.data.businessId
   ) {
     return Response.json(
       {
@@ -85,30 +110,8 @@ export async function POST(request: Request) {
     );
   }
 
-  if (customer.businessId !== parsed.data.businessId) {
-    return Response.json(
-      {
-        error: "هذا الكارت تابع لبراند مختلف.",
-      },
-      {
-        status: 403,
-      }
-    );
-  }
-
-  if (!canPerform(session.user, customer.businessId, "LOYALTY_EARN")) {
-    return Response.json(
-      {
-        error: "ليس لديك صلاحية لفتح هذا العميل.",
-      },
-      {
-        status: 403,
-      }
-    );
-  }
-
- return Response.json({
-  ok: true,
-  url: `/businesses/${customer.business.slug}/scan/customer/${customer.id}`,
-});
+  return Response.json({
+    ok: true,
+    url: `/businesses/${customer.business.slug}/scan/customer/${customer.id}`,
+  });
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { isPublicCardToken } from "@/lib/cards/public-token";
 import prisma from "@/lib/prisma";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +31,25 @@ export async function GET(
   { params }: ManifestRouteProps
 ) {
   const { token } = await params;
+
+  if (!isPublicCardToken(token)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const limit = rateLimit(
+    `public-card-manifest:${getClientAddress(_request.headers)}:${token}`,
+    { limit: 30, windowMs: 60_000 }
+  );
+
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfterSeconds) },
+      }
+    );
+  }
 
   const customer =
     await prisma.customer.findUnique({

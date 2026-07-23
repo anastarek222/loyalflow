@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { imageFileToDataUrl } from "@/lib/branding/image-data";
 import {
   isSupportedCurrency,
   isValidIanaTimezone,
@@ -218,37 +219,26 @@ export async function updateBusinessSettingsAction(
   let uploadedLogoDataUrl: string | null = null;
   let uploadedCoverImageDataUrl: string | null = null;
 
-  const allowedImageTypes = ["image/png", "image/jpeg", "image/webp"];
-
   if (logoFile instanceof File && logoFile.size > 0) {
-    if (
-      logoFile.size > 500 * 1024 ||
-      !allowedImageTypes.includes(logoFile.type)
-    ) {
+    uploadedLogoDataUrl = await imageFileToDataUrl(
+      logoFile,
+      500 * 1024
+    );
+
+    if (!uploadedLogoDataUrl) {
       redirect(`/businesses/${business.slug}/settings?error=invalid`);
     }
-
-    const logoBuffer = Buffer.from(await logoFile.arrayBuffer());
-
-    uploadedLogoDataUrl =
-      `data:${logoFile.type};base64,` + logoBuffer.toString("base64");
   }
 
   if (coverImageFile instanceof File && coverImageFile.size > 0) {
-    if (
-      coverImageFile.size > 1024 * 1024 ||
-      !allowedImageTypes.includes(coverImageFile.type)
-    ) {
-      redirect(`/businesses/${business.slug}/settings?error=invalid`);
-    }
-
-    const coverImageBuffer = Buffer.from(
-      await coverImageFile.arrayBuffer()
+    uploadedCoverImageDataUrl = await imageFileToDataUrl(
+      coverImageFile,
+      1024 * 1024
     );
 
-    uploadedCoverImageDataUrl =
-      `data:${coverImageFile.type};base64,` +
-      coverImageBuffer.toString("base64");
+    if (!uploadedCoverImageDataUrl) {
+      redirect(`/businesses/${business.slug}/settings?error=invalid`);
+    }
   }
 
   const parsed = settingsSchema.safeParse({
