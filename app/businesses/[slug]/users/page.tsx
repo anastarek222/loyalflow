@@ -4,11 +4,9 @@ import {
   isSuperAdmin as isSuperAdminRole,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import type { Prisma, UserRole } from "@/generated/prisma/client";
 import Link from "next/link";
-import {
-  notFound,
-  redirect,
-} from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import {
   createBusinessUserAction,
@@ -16,6 +14,8 @@ import {
   setBusinessUserStatusAction,
 } from "./actions";
 import { getBusinessTheme } from "@/lib/theme";
+
+const USERS_PER_PAGE = 10;
 
 type UsersPageProps = {
   params: Promise<{
@@ -26,6 +26,11 @@ type UsersPageProps = {
     created?: string;
     success?: string;
     error?: string;
+    q?: string;
+    role?: string;
+    status?: string;
+    sort?: string;
+    page?: string;
   }>;
 };
 
@@ -40,15 +45,13 @@ export default async function UsersPage({
   }
 
   const { slug } = await params;
-  const query =
-    await searchParams;
+  const query = await searchParams;
 
-  const business =
-    await prisma.business.findUnique({
-      where: {
-        slug,
-      },
-    });
+  const business = await prisma.business.findUnique({
+    where: {
+      slug,
+    },
+  });
 
   if (!business) {
     notFound();
@@ -56,46 +59,196 @@ export default async function UsersPage({
 
   const theme = getBusinessTheme(business);
 
-  const isSuperAdmin =
-    isSuperAdminRole(session.user);
+  const isSuperAdmin = isSuperAdminRole(session.user);
 
   if (!canPerform(session.user, business.id, "STAFF_MANAGE")) {
     redirect("/dashboard");
   }
 
-  const users =
-    await prisma.user.findMany({
-      where: {
-        businessId:
-          business.id,
-      },
-      orderBy: [
-        {
-          role: "asc",
-        },
-        {
-          createdAt: "desc",
-        },
-      ],
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-      },
-    });
+  const search = query.q?.trim() ?? "";
 
-  const createUser =
-    createBusinessUserAction.bind(
-      null,
-      business.slug
-    );
+  const allowedRoles: UserRole[] = ["OWNER", "MANAGER", "STAFF", "VIEWER"];
+
+  const selectedRole = allowedRoles.includes(query.role as UserRole)
+    ? (query.role as UserRole)
+    : null;
+
+  const status =
+    query.status === "active" || query.status === "inactive"
+      ? query.status
+      : "all";
+
+  const allowedSorts = ["newest", "oldest", "name_asc", "name_desc"];
+
+  const sort = allowedSorts.includes(query.sort ?? "") ? query.sort! : "newest";
+
+  const parsedPage = Number.parseInt(query.page ?? "1", 10);
+
+  const requestedPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+  const userFilters: Prisma.UserWhereInput[] = [
+    {
+      businessId: business.id,
+    },
+  ];
+
+  if (search) {
+    const nameParts = search.split(/\s+/).filter(Boolean);
+
+    const searchFilters: Prisma.UserWhereInput[] = [
+      {
+        firstName: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        lastName: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+      {
+        email: {
+          contains: search,
+          mode: "insensitive",
+        },
+      },
+    ];
+
+    if (nameParts.length >= 2) {
+      searchFilters.push({
+        AND: [
+          {
+            firstName: {
+              contains: nameParts[0],
+              mode: "insensitive",
+            },
+          },
+          {
+            lastName: {
+              contains: nameParts.slice(1).join(" "),
+              mode: "insensitive",
+            },
+          },
+        ],
+      });
+    }
+
+    userFilters.push({
+      OR: searchFilters,
+    });
+  }
+
+  if (selectedRole) {
+    userFilters.push({
+      role: selectedRole,
+    });
+  }
+
+  if (status === "active") {
+    userFilters.push({
+      isActive: true,
+    });
+  }
+
+  if (status === "inactive") {
+    userFilters.push({
+      isActive: false,
+    });
+  }
+
+  const userWhere: Prisma.UserWhereInput = {
+    AND: userFilters,
+  };
+
+  const [totalUsers, filteredUsers] = await Promise.all([
+    prisma.user.count({
+      where: {
+        businessId: business.id,
+      },
+    }),
+
+    prisma.user.count({
+      where: userWhere,
+    }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers / USERS_PER_PAGE));
+
+  const currentPage = Math.min(requestedPage, totalPages);
+
+  const orderBy: Prisma.UserOrderByWithRelationInput[] =
+    sort === "oldest"
+      ? [{ createdAt: "asc" }]
+      : sort === "name_asc"
+        ? [{ firstName: "asc" }, { lastName: "asc" }]
+        : sort === "name_desc"
+          ? [{ firstName: "desc" }, { lastName: "desc" }]
+          : [{ createdAt: "desc" }];
+
+  const users = await prisma.user.findMany({
+    where: userWhere,
+    orderBy,
+    skip: (currentPage - 1) * USERS_PER_PAGE,
+    take: USERS_PER_PAGE,
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
+  });
+
+  function getPageUrl(pageNumber: number) {
+    const parameters = new URLSearchParams();
+
+    if (search) {
+      parameters.set("q", search);
+    }
+
+    if (selectedRole) {
+      parameters.set("role", selectedRole);
+    }
+
+    if (status !== "all") {
+      parameters.set("status", status);
+    }
+
+    if (sort !== "newest") {
+      parameters.set("sort", sort);
+    }
+
+    if (pageNumber > 1) {
+      parameters.set("page", String(pageNumber));
+    }
+
+    const queryString = parameters.toString();
+
+    return `/businesses/${slug}/users${queryString ? `?${queryString}` : ""}`;
+  }
+
+  const filtersActive =
+    Boolean(search) ||
+    Boolean(selectedRole) ||
+    status !== "all" ||
+    sort !== "newest";
+
+  const createUser = createBusinessUserAction.bind(null, business.slug);
 
   return (
-    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-5 sm:px-8 sm:py-8">
+    <main
+      dir="rtl"
+      style={{
+        background: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
+      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+    >
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
@@ -103,8 +256,7 @@ export default async function UsersPage({
               href={`/businesses/${business.slug}`}
               className="text-sm font-medium text-violet-600 hover:text-violet-800"
             >
-              → الرجوع إلى{" "}
-              {business.name}
+              → الرجوع إلى {business.name}
             </Link>
 
             <h1 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">
@@ -112,25 +264,21 @@ export default async function UsersPage({
             </h1>
 
             <p className="mt-1 text-slate-500">
-              إنشاء وإدارة حسابات فريق{" "}
-              {business.name}.
+              إنشاء وإدارة حسابات فريق {business.name}.
             </p>
           </div>
 
           <div className="rounded-xl bg-slate-950 px-5 py-3 text-white">
-            <span className="text-sm text-slate-400">
-              إجمالي الحسابات
-            </span>
+            <span className="text-sm text-slate-400">إجمالي الحسابات</span>
 
-            <strong className="ml-3 text-xl">
-              {users.length}
-            </strong>
+            <strong className="ml-3 text-xl">{totalUsers}</strong>
           </div>
         </header>
 
         {query.created === "business" && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء الفريق.
+            تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء
+            الفريق.
           </div>
         )}
 
@@ -140,29 +288,25 @@ export default async function UsersPage({
           </div>
         )}
 
-        {query.success ===
-          "activated" && (
+        {query.success === "activated" && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
             تم إعادة تفعيل الحساب بنجاح.
           </div>
         )}
 
-        {query.success ===
-          "deactivated" && (
+        {query.success === "deactivated" && (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
             تم إيقاف الحساب وإنهاء صلاحية جلساته الحالية.
           </div>
         )}
 
-        {query.success ===
-          "password" && (
+        {query.success === "password" && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
             تم تغيير كلمة المرور وإلغاء الجلسات السابقة للحساب.
           </div>
         )}
 
-        {query.error ===
-          "invalid" && (
+        {query.error === "invalid" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             راجع البيانات المدخلة. يجب ألا تقل كلمة المرور عن 10 أحرف.
           </div>
@@ -186,48 +330,106 @@ export default async function UsersPage({
           </div>
         )}
 
-        {query.error ===
-          "password" && (
+        {query.error === "password" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             يجب أن تتطابق كلمتا المرور وألا تقل كل منهما عن 10 أحرف.
           </div>
         )}
 
-        {query.error ===
-          "self-status" && (
+        {query.error === "self-status" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             لا يمكنك إيقاف حسابك الشخصي.
           </div>
         )}
 
-        {query.error ===
-          "permission" && (
+        {query.error === "permission" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             ليست لديك صلاحية تعديل هذا الحساب.
           </div>
         )}
 
-        {query.error ===
-          "not-found" && (
+        {query.error === "not-found" && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
             الحساب المحدد غير موجود.
           </div>
         )}
 
+        <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <input
+              type="search"
+              name="q"
+              defaultValue={search}
+              placeholder="بحث بالاسم أو البريد الإلكتروني"
+              className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+            />
+
+            <select
+              name="role"
+              defaultValue={selectedRole ?? ""}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              <option value="">كل الصلاحيات</option>
+              <option value="OWNER">مالك</option>
+              <option value="MANAGER">مدير</option>
+              <option value="STAFF">موظف / كاشير</option>
+              <option value="VIEWER">مشاهد</option>
+            </select>
+
+            <select
+              name="status"
+              defaultValue={status}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              <option value="all">كل الحالات</option>
+              <option value="active">نشط</option>
+              <option value="inactive">موقوف</option>
+            </select>
+
+            <select
+              name="sort"
+              defaultValue={sort}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+            >
+              <option value="newest">الأحدث أولًا</option>
+              <option value="oldest">الأقدم أولًا</option>
+              <option value="name_asc">الاسم أ ← ي</option>
+              <option value="name_desc">الاسم ي ← أ</option>
+            </select>
+
+            <button
+              type="submit"
+              className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+            >
+              تطبيق
+            </button>
+          </form>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+            <span>
+              {filteredUsers} نتيجة من {totalUsers} حساب
+            </span>
+
+            {filtersActive && (
+              <Link
+                href={`/businesses/${business.slug}/users`}
+                className="font-semibold text-violet-600 hover:text-violet-800"
+              >
+                مسح الفلاتر
+              </Link>
+            )}
+          </div>
+        </section>
+
         <div className="grid gap-6 lg:grid-cols-[380px_1fr] lg:gap-8">
           <section className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-xl font-bold text-slate-950">
-              إضافة حساب
-            </h2>
+            <h2 className="text-xl font-bold text-slate-950">إضافة حساب</h2>
 
             <p className="mt-1 break-words text-sm text-slate-500">
               سيسجل المستخدم الدخول بالبريد الإلكتروني وكلمة المرور.
             </p>
 
-            <form
-              action={createUser}
-              className="mt-6 space-y-5"
-            >
+            <form action={createUser} className="mt-6 space-y-5">
               <div>
                 <label
                   htmlFor="firstName"
@@ -310,17 +512,11 @@ export default async function UsersPage({
                 <select
                   id="role"
                   name="role"
-                  defaultValue={
-                    isSuperAdmin
-                      ? "MANAGER"
-                      : "STAFF"
-                  }
+                  defaultValue={isSuperAdmin ? "MANAGER" : "STAFF"}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
                 >
                   {isSuperAdmin && (
-                    <option value="OWNER">
-                      مالك — يدير النشاط
-                    </option>
+                    <option value="OWNER">مالك — يدير النشاط</option>
                   )}
 
                   <option value="MANAGER">
@@ -354,33 +550,26 @@ export default async function UsersPage({
             ) : (
               <div className="space-y-5">
                 {users.map((user) => {
-                  const isCurrentUser =
-                    user.id ===
-                    session.user.id;
+                  const isCurrentUser = user.id === session.user.id;
 
                   const canChangeStatus =
-                    !isCurrentUser &&
-                    (isSuperAdmin || user.role !== "OWNER");
+                    !isCurrentUser && (isSuperAdmin || user.role !== "OWNER");
 
                   const canChangePassword =
-                    isSuperAdmin ||
-                    user.role !== "OWNER" ||
-                    isCurrentUser;
+                    isSuperAdmin || user.role !== "OWNER" || isCurrentUser;
 
-                  const changeStatus =
-                    setBusinessUserStatusAction.bind(
-                      null,
-                      business.slug,
-                      user.id,
-                      !user.isActive
-                    );
+                  const changeStatus = setBusinessUserStatusAction.bind(
+                    null,
+                    business.slug,
+                    user.id,
+                    !user.isActive,
+                  );
 
-                  const resetPassword =
-                    resetBusinessUserPasswordAction.bind(
-                      null,
-                      business.slug,
-                      user.id
-                    );
+                  const resetPassword = resetBusinessUserPasswordAction.bind(
+                    null,
+                    business.slug,
+                    user.id,
+                  );
 
                   return (
                     <article
@@ -394,11 +583,7 @@ export default async function UsersPage({
                               dir="auto"
                               className="text-lg font-bold text-slate-950"
                             >
-                              {
-                                user.firstName
-                              }{" "}
-                              {user.lastName ??
-                                ""}
+                              {user.firstName} {user.lastName ?? ""}
                             </h2>
 
                             {isCurrentUser && (
@@ -436,18 +621,14 @@ export default async function UsersPage({
                                 : "bg-red-100 text-red-700"
                             }`}
                           >
-                            {user.isActive
-                              ? "نشط"
-                              : "موقوف"}
+                            {user.isActive ? "نشط" : "موقوف"}
                           </span>
                         </div>
                       </div>
 
                       {canChangePassword && (
                         <form
-                          action={
-                            resetPassword
-                          }
+                          action={resetPassword}
                           className="mt-6 grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-2"
                         >
                           <div>
@@ -509,11 +690,7 @@ export default async function UsersPage({
                         </div>
 
                         {canChangeStatus ? (
-                          <form
-                            action={
-                              changeStatus
-                            }
-                          >
+                          <form action={changeStatus}>
                             <button
                               type="submit"
                               className={
@@ -542,6 +719,40 @@ export default async function UsersPage({
             )}
           </section>
         </div>
+
+        {totalPages > 1 && (
+          <nav className="mt-7 flex items-center justify-center gap-3">
+            {currentPage > 1 ? (
+              <Link
+                href={getPageUrl(currentPage - 1)}
+                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+              >
+                → السابق
+              </Link>
+            ) : (
+              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
+                → السابق
+              </span>
+            )}
+
+            <span className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
+              {currentPage} / {totalPages}
+            </span>
+
+            {currentPage < totalPages ? (
+              <Link
+                href={getPageUrl(currentPage + 1)}
+                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+              >
+                التالي ←
+              </Link>
+            ) : (
+              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
+                التالي ←
+              </span>
+            )}
+          </nav>
+        )}
       </div>
     </main>
   );
