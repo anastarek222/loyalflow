@@ -32,6 +32,8 @@ type NotificationItem = {
   title: string;
   message: string;
   createdAt: Date;
+  notificationKey: string;
+  isUnread: boolean;
 };
 
 type ActivitySectionProps = {
@@ -278,7 +280,17 @@ export default function BusinessNotificationsContent({
       dir="rtl"
       className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[0.9fr_1.1fr]"
     >
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
+      <section
+        data-notification-section="true"
+        data-has-unread={
+          recentNotifications.some(
+            (notification) => notification.isUnread
+          )
+            ? "true"
+            : "false"
+        }
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2"
+      >
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-bold text-violet-700">
@@ -304,12 +316,26 @@ export default function BusinessNotificationsContent({
             {recentNotifications.map((notification) => (
               <article
                 key={notification.id}
-                className="rounded-xl border border-slate-200 bg-slate-50 p-4"
+                data-notification-item="true"
+                data-notification-unread={
+                  notification.isUnread
+                    ? "true"
+                    : "false"
+                }
+                className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center"
               >
-                <div className="flex flex-col gap-1">
-                  <p className="font-black text-slate-950">
-                    {notification.title}
-                  </p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-black text-slate-950">
+                      {notification.title}
+                    </p>
+
+                    {notification.isUnread && (
+                      <span className="rounded-full bg-red-500 px-2 py-1 text-[11px] font-black text-white">
+                        جديد
+                      </span>
+                    )}
+                  </div>
 
                   <p className="text-sm leading-6 text-slate-600">
                     {notification.message}
@@ -319,6 +345,15 @@ export default function BusinessNotificationsContent({
                     {dateFormatter.format(notification.createdAt)}
                   </p>
                 </div>
+
+                {notification.isUnread && (
+                  <NotificationReadButton
+                    slug={slug}
+                    notificationKey={
+                      notification.notificationKey
+                    }
+                  />
+                )}
               </article>
             ))}
           </div>

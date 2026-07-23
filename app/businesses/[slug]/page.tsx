@@ -11,6 +11,14 @@ import {
   canManageBusiness,
   canPerform,
 } from "@/lib/permissions";
+import {
+  individuallyReadNotificationIds,
+  isNotificationUnread,
+  notificationKeyForActivity,
+  notificationKeyForNotification,
+  notificationKeyForRewardReady,
+  notificationReadStateWhere,
+} from "@/lib/notification-read-state";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
 import { getBusinessOnboardingState } from "@/lib/business/onboarding";
@@ -89,10 +97,10 @@ export default async function BusinessPage({
   const notificationReadState =
     await prisma.notificationReadState.findUnique({
       where: {
-        userId_businessId: {
+        ...notificationReadStateWhere({
           userId: session.user.id,
           businessId: business.id,
-        },
+        }),
       },
 
       select: {
@@ -104,26 +112,32 @@ export default async function BusinessPage({
     notificationReadState?.lastReadAt ??
     new Date(0);
 
-  function rewardReadyNotificationKey(
-    customer: {
-      id: string;
-      balance: number;
-      lifetimeRedeemed: number;
-    }
-  ) {
-    return [
-      "reward-ready",
-      customer.id,
-      customer.balance,
-      customer.lifetimeRedeemed,
-    ].join(":");
-  }
+  const notificationItemReads =
+    await prisma.notificationItemRead.findMany({
+      where: {
+        userId: session.user.id,
+        businessId: business.id,
+        readAt: {
+          gt: notificationsLastReadAt,
+        },
+      },
 
-  function activityNotificationKey(
-    activityId: string
-  ) {
-    return `activity:${activityId}`;
-  }
+      select: {
+        notificationKey: true,
+      },
+    });
+
+  const individuallyReadKeys =
+    new Set(
+      notificationItemReads.map(
+        (item) => item.notificationKey
+      )
+    );
+
+  const individuallyReadDurableNotificationIds =
+    individuallyReadNotificationIds(
+      individuallyReadKeys
+    );
 
   const [
     notificationCount,
@@ -143,6 +157,16 @@ export default async function BusinessPage({
             userId: session.user.id,
           },
         ],
+        ...(individuallyReadDurableNotificationIds.length >
+        0
+          ? {
+              NOT: {
+                id: {
+                  in: individuallyReadDurableNotificationIds,
+                },
+              },
+            }
+          : {}),
       },
     }),
 
@@ -158,9 +182,14 @@ export default async function BusinessPage({
           },
         ],
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        {
+          createdAt: "desc",
+        },
+        {
+          id: "desc",
+        },
+      ],
       take: 20,
       select: {
         id: true,
@@ -187,7 +216,6 @@ export default async function BusinessPage({
 
     unreadRewardReadyCandidates,
     unreadActivityCandidates,
-    notificationItemReads,
   ] = await Promise.all([
     prisma.customer.count({
       where: {
@@ -347,6 +375,7 @@ export default async function BusinessPage({
         id: true,
         balance: true,
         lifetimeRedeemed: true,
+        updatedAt: true,
       },
     }),
 
@@ -370,42 +399,26 @@ export default async function BusinessPage({
       select: {
         id: true,
         type: true,
+        createdAt: true,
       },
     }),
 
-    prisma.notificationItemRead.findMany({
-      where: {
-        userId: session.user.id,
-        businessId: business.id,
-      },
-
-      select: {
-        notificationKey: true,
-      },
-    }),
   ]);
-
-  const individuallyReadKeys =
-    new Set(
-      notificationItemReads.map(
-        (item) => item.notificationKey
-      )
-    );
 
   const rewardReadyCustomersWithReadState =
     rewardReadyCustomers.map(
       (customer) => {
         const notificationKey =
-          rewardReadyNotificationKey(
+          notificationKeyForRewardReady(
             customer
           );
 
-        const isUnread =
-          customer.updatedAt.getTime() >
-            notificationsLastReadAt.getTime() &&
-          !individuallyReadKeys.has(
-            notificationKey
-          );
+        const isUnread = isNotificationUnread({
+          createdAt: customer.updatedAt,
+          lastReadAt: notificationsLastReadAt,
+          notificationKey,
+          individuallyReadKeys,
+        });
 
         return {
           ...customer,
@@ -422,16 +435,16 @@ export default async function BusinessPage({
     },
   >(activity: T) {
     const notificationKey =
-      activityNotificationKey(
+      notificationKeyForActivity(
         activity.id
       );
 
-    const isUnread =
-      activity.createdAt.getTime() >
-        notificationsLastReadAt.getTime() &&
-      !individuallyReadKeys.has(
-        notificationKey
-      );
+    const isUnread = isNotificationUnread({
+      createdAt: activity.createdAt,
+      lastReadAt: notificationsLastReadAt,
+      notificationKey,
+      individuallyReadKeys,
+    });
 
     return {
       ...activity,
@@ -458,11 +471,15 @@ export default async function BusinessPage({
   const unreadRewardReadyCount =
     unreadRewardReadyCandidates.filter(
       (customer) =>
-        !individuallyReadKeys.has(
-          rewardReadyNotificationKey(
-            customer
-          )
-        )
+        isNotificationUnread({
+          createdAt: customer.updatedAt,
+          lastReadAt: notificationsLastReadAt,
+          notificationKey:
+            notificationKeyForRewardReady(
+              customer
+            ),
+          individuallyReadKeys,
+        })
     ).length;
 
   const unreadRewardRedeemedCount =
@@ -470,11 +487,15 @@ export default async function BusinessPage({
       (activity) =>
         activity.type ===
           "REWARD_REDEEMED" &&
-        !individuallyReadKeys.has(
-          activityNotificationKey(
-            activity.id
-          )
-        )
+        isNotificationUnread({
+          createdAt: activity.createdAt,
+          lastReadAt: notificationsLastReadAt,
+          notificationKey:
+            notificationKeyForActivity(
+              activity.id
+            ),
+          individuallyReadKeys,
+        })
     ).length;
 
   const unreadBalanceAdjustedCount =
@@ -482,11 +503,15 @@ export default async function BusinessPage({
       (activity) =>
         activity.type ===
           "BALANCE_ADJUSTED" &&
-        !individuallyReadKeys.has(
-          activityNotificationKey(
-            activity.id
-          )
-        )
+        isNotificationUnread({
+          createdAt: activity.createdAt,
+          lastReadAt: notificationsLastReadAt,
+          notificationKey:
+            notificationKeyForActivity(
+              activity.id
+            ),
+          individuallyReadKeys,
+        })
     ).length;
 
   const unreadLoyaltyEarnedCount =
@@ -494,12 +519,37 @@ export default async function BusinessPage({
       (activity) =>
         activity.type ===
           "LOYALTY_EARNED" &&
-        !individuallyReadKeys.has(
-          activityNotificationKey(
-            activity.id
-          )
-        )
+        isNotificationUnread({
+          createdAt: activity.createdAt,
+          lastReadAt: notificationsLastReadAt,
+          notificationKey:
+            notificationKeyForActivity(
+              activity.id
+            ),
+          individuallyReadKeys,
+        })
     ).length;
+
+  const recentNotificationsWithReadState =
+    recentNotifications.map(
+      (notification) => {
+        const notificationKey =
+          notificationKeyForNotification(
+            notification.id
+          );
+
+        return {
+          ...notification,
+          notificationKey,
+          isUnread: isNotificationUnread({
+            createdAt: notification.createdAt,
+            lastReadAt: notificationsLastReadAt,
+            notificationKey,
+            individuallyReadKeys,
+          }),
+        };
+      }
+    );
 
   const theme =
     getBusinessTheme(business);
@@ -817,7 +867,11 @@ export default async function BusinessPage({
           <BusinessNotificationsDialog
             slug={business.slug}
             unreadCount={
-              notificationCount
+              notificationCount +
+              unreadRewardReadyCount +
+              unreadRewardRedeemedCount +
+              unreadBalanceAdjustedCount +
+              unreadLoyaltyEarnedCount
             }
           >
             <BusinessNotificationsContent
@@ -866,7 +920,7 @@ export default async function BusinessPage({
                 canViewReports
               }
               recentNotifications={
-                recentNotifications
+                recentNotificationsWithReadState
               }
             />
           </BusinessNotificationsDialog>
