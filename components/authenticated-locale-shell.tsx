@@ -6,8 +6,7 @@ import {
 
 import prisma from "@/lib/prisma";
 
-import AppSidebar from "@/components/app-sidebar";
-import AppTopbar from "@/components/app-topbar";
+import AuthenticatedAppShell from "@/components/authenticated-app-shell";
 
 import { redirect } from "next/navigation";
 
@@ -36,15 +35,31 @@ export default async function AuthenticatedLocaleShell({
         language: true,
         firstName: true,
         lastName: true,
+        email: true,
+        id: true,
         role: true,
         businessId: true,
         business: {
           select: {
             slug: true,
+            name: true,
           },
         },
       },
     });
+
+  const businesses = user?.role === "SUPER_ADMIN"
+    ? await prisma.business.findMany({
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      })
+    : user?.business
+      ? [{
+          id: user.businessId!,
+          name: user.business.name,
+          slug: user.business.slug,
+        }]
+      : [];
 
 
   const { language, lang, dir } =
@@ -59,34 +74,19 @@ export default async function AuthenticatedLocaleShell({
       className="min-h-screen bg-slate-50"
     >
 
-      <div className="flex min-h-screen">
-
-        <AppSidebar
-          language={language}
-          businessSlug={user?.business?.slug}
-          role={user?.role}
-        />
-
-
-        <div className="flex min-w-0 flex-1 flex-col">
-
-          <AppTopbar
-            language={language}
-            user={{
-              firstName: user?.firstName ?? "User",
-              lastName: user?.lastName ?? "",
-              role: user?.role ?? "STAFF",
-            }}
-          />
-
-
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
-
-        </div>
-
-      </div>
+      <AuthenticatedAppShell
+        language={language}
+        businesses={businesses}
+        user={{
+          firstName: user?.firstName ?? "User",
+          lastName: user?.lastName ?? "",
+          email: user?.email ?? "",
+          role: user?.role ?? "STAFF",
+          businessId: user?.businessId,
+        }}
+      >
+        {children}
+      </AuthenticatedAppShell>
 
     </div>
   );
