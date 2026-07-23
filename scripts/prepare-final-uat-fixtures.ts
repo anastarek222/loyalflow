@@ -34,7 +34,7 @@ function getTestPassword() {
 const testPassword = getTestPassword();
 const PREFIX = "lf-uat-final-";
 const BUSINESS_NAME_PREFIX = "LoyalFlow final UAT ";
-const REQUIRED_MIGRATION = "20260720260000_add_customer_offers";
+const REQUIRED_MIGRATION = "20260723054319_link_reward_redemption_to_ledger";
 const args = process.argv.slice(2);
 const cleanupArgument = args.find((argument) =>
   argument.startsWith("--cleanup=")
@@ -97,7 +97,7 @@ async function assertSafeDatabaseTarget() {
   assert.equal(
     migration.length,
     1,
-    "The reviewed 21-migration schema must be applied before creating final UAT fixtures."
+    "The reviewed current schema must be applied before creating final UAT fixtures."
   );
 }
 
@@ -191,17 +191,23 @@ async function createCustomer(input: {
 
 async function createTransaction(input: {
   businessId: string;
-  customerId: string;
+  customer: { id: string; businessId: string };
   amount: number;
   balanceAfter: number;
   loyaltyMode: "VISITS" | "POINTS" | "SALES_AMOUNT";
   createdAt: Date;
   saleAmount?: number;
 }) {
+  assert.equal(
+    input.customer.businessId,
+    input.businessId,
+    "Every seeded loyalty transaction customer must belong to the same business."
+  );
+
   return prisma.loyaltyTransaction.create({
     data: {
       businessId: input.businessId,
-      customerId: input.customerId,
+      customerId: input.customer.id,
       type: "EARN",
       amount: input.amount,
       balanceAfter: input.balanceAfter,
@@ -317,7 +323,7 @@ async function prepareFixtures() {
     lifetimeEarned: 1,
     createdAt: daysAgo(90),
   });
-  const salesCustomer = await createCustomer({
+  await createCustomer({
     businessId: businessA.id,
     key: "inactive",
     phone: `+20300${runId.slice(0, 8)}`,
@@ -344,7 +350,7 @@ async function prepareFixtures() {
     lifetimeEarned: 9,
     createdAt: daysAgo(90),
   });
-  await createCustomer({
+  const salesCustomer = await createCustomer({
     businessId: businessSales.id,
     key: "sales",
     phone: `+20600${runId.slice(0, 8)}`,
@@ -354,11 +360,11 @@ async function prepareFixtures() {
   });
 
   await Promise.all([
-    createTransaction({ businessId: businessA.id, customerId: activeCustomer.id, amount: 4, balanceAfter: 4, loyaltyMode: "VISITS", createdAt: daysAgo(5) }),
-    createTransaction({ businessId: businessA.id, customerId: atRiskCustomer.id, amount: 1, balanceAfter: 1, loyaltyMode: "VISITS", createdAt: daysAgo(45) }),
-    createTransaction({ businessId: businessA.id, customerId: vipCustomer.id, amount: 25, balanceAfter: 5, loyaltyMode: "VISITS", createdAt: daysAgo(3) }),
-    createTransaction({ businessId: businessB.id, customerId: otherCustomer.id, amount: 9, balanceAfter: 9, loyaltyMode: "POINTS", createdAt: daysAgo(4) }),
-    createTransaction({ businessId: businessSales.id, customerId: salesCustomer.id, amount: 100, balanceAfter: 90, loyaltyMode: "SALES_AMOUNT", saleAmount: 1_000, createdAt: daysAgo(2) }),
+    createTransaction({ businessId: businessA.id, customer: activeCustomer, amount: 4, balanceAfter: 4, loyaltyMode: "VISITS", createdAt: daysAgo(5) }),
+    createTransaction({ businessId: businessA.id, customer: atRiskCustomer, amount: 1, balanceAfter: 1, loyaltyMode: "VISITS", createdAt: daysAgo(45) }),
+    createTransaction({ businessId: businessA.id, customer: vipCustomer, amount: 25, balanceAfter: 5, loyaltyMode: "VISITS", createdAt: daysAgo(3) }),
+    createTransaction({ businessId: businessB.id, customer: otherCustomer, amount: 9, balanceAfter: 9, loyaltyMode: "POINTS", createdAt: daysAgo(4) }),
+    createTransaction({ businessId: businessSales.id, customer: salesCustomer, amount: 100, balanceAfter: 90, loyaltyMode: "SALES_AMOUNT", saleAmount: 1_000, createdAt: daysAgo(2) }),
   ]);
 
   const [standardReward, expiringReward] = await Promise.all([
