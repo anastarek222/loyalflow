@@ -12,17 +12,19 @@ import {
   type ShellUser,
 } from "@/lib/app-shell-navigation";
 import { icons } from "@/components/shell-icons";
+import type { ExperienceMode } from "@/lib/experience-mode";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   language: "AR" | "EN";
+  experienceMode: ExperienceMode;
   user: ShellUser;
   business?: ShellBusiness;
   businesses: ShellBusiness[];
 };
 
-export default function MobileSidebar({ open, onClose, language, user, business, businesses }: Props) {
+export default function MobileSidebar({ open, onClose, language, experienceMode, user, business, businesses }: Props) {
   const pathname = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -37,7 +39,7 @@ export default function MobileSidebar({ open, onClose, language, user, business,
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", onKeydown); previousFocus?.focus(); };
   }, [onClose, open]);
 
-  const groups = buildShellNavigation({ language, user, business });
+  const groups = buildShellNavigation({ language, user, business, experienceMode });
   return <>
     {open && <button type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="fixed inset-0 z-40 cursor-default bg-slate-950/45 lg:hidden" />}
     <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className={`lf-nav-sidebar fixed top-0 z-50 flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e shadow-[var(--lf-shadow-overlay)] transition-transform duration-200 lg:hidden ${language === "AR" ? "right-0" : "left-0"} ${open ? "translate-x-0" : language === "AR" ? "translate-x-full" : "-translate-x-full"}`}>
@@ -52,6 +54,7 @@ export default function MobileSidebar({ open, onClose, language, user, business,
           <ul className="space-y-1">{group.items.map((entry) => {
             const Icon = icons[entry.icon];
             const active = isNavigationItemActive(pathname, entry.href);
+            if (entry.action === "switch-mode") return <li key={entry.id}><button type="button" onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("loyalflow:open-experience-mode")); }} className="lf-nav-item flex min-h-11 w-full items-center gap-3 px-3 text-start text-sm font-semibold"><Icon size={18} aria-hidden="true" />{entry.label}</button></li>;
             return <li key={entry.href}><Link href={entry.href} onClick={onClose} aria-current={active ? "page" : undefined} className={`lf-nav-item flex min-h-11 items-center gap-3 px-3 text-sm font-semibold ${active ? "lf-nav-item-active" : ""}`}><Icon size={18} aria-hidden="true" />{entry.label}</Link></li>;
           })}</ul>
         </section>)}

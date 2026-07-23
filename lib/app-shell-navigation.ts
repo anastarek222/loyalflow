@@ -1,6 +1,10 @@
 import type { UserRole } from "@/generated/prisma/client";
 
 import { canPerform, type TenantUser } from "@/lib/permissions";
+import {
+  getExperienceNavigationRules,
+  type ExperienceMode,
+} from "@/lib/experience-mode";
 
 export type ShellBusiness = {
   id: string;
@@ -16,6 +20,7 @@ export type ShellNavigationItem = {
   id: NavigationId;
   label: string;
   href: string;
+  action?: "switch-mode";
   icon:
     | "overview"
     | "businesses"
@@ -51,7 +56,8 @@ type NavigationId =
   | "branches"
   | "settings"
   | "duplicates"
-  | "playbooks";
+  | "playbooks"
+  | "advancedTools";
 
 export type ShellNavigationGroup = {
   id: string;
@@ -81,6 +87,9 @@ const labels = {
     settings: "الإعدادات",
     duplicates: "السجلات المكررة",
     playbooks: "دليل الإعداد",
+    home: "الرئيسية",
+    more: "المزيد",
+    advancedTools: "أدوات متقدمة",
   },
   EN: {
     overview: "Overview",
@@ -103,6 +112,9 @@ const labels = {
     settings: "Settings",
     duplicates: "Duplicates",
     playbooks: "Setup playbooks",
+    home: "Home",
+    more: "More",
+    advancedTools: "Advanced tools",
   },
 } as const;
 
@@ -110,11 +122,12 @@ type BuildNavigationInput = {
   language: "AR" | "EN";
   user: ShellUser;
   business?: ShellBusiness;
+  experienceMode?: ExperienceMode;
 };
 
 function item(
   language: "AR" | "EN",
-  id: NavigationId,
+  id: Exclude<NavigationId, "advancedTools">,
   href: string,
 ): ShellNavigationItem {
   return { id, href, icon: id, label: labels[language][id] };
@@ -124,6 +137,7 @@ export function buildShellNavigation({
   language,
   user,
   business,
+  experienceMode = "ADVANCED",
 }: BuildNavigationInput): ShellNavigationGroup[] {
   const globalItems = [item(language, "overview", "/dashboard")];
 
@@ -188,7 +202,7 @@ export function buildShellNavigation({
       : []),
   ];
 
-  return [
+  const advancedNavigation = [
     { id: "global", items: globalItems },
     { id: "operations", label: labels[language].operations, items: operations },
     ...(growth.length
@@ -207,6 +221,40 @@ export function buildShellNavigation({
         ]
       : []),
   ];
+
+  if (experienceMode === "ADVANCED") return advancedNavigation;
+
+  const primaryIds = new Set<NavigationId>(["overview", "scan", "customers", "activity"]);
+  const advancedDestinations = advancedNavigation
+    .filter((group) => group.id !== "global")
+    .flatMap((group) => group.items)
+    .filter((entry) => !primaryIds.has(entry.id));
+  const rules = getExperienceNavigationRules({
+    mode: experienceMode,
+    role: user.role,
+    advancedDestinationCount: advancedDestinations.length,
+  });
+  const simplePrimary = advancedNavigation
+    .filter((group) => group.id !== "global")
+    .flatMap((group) => group.items)
+    .filter((entry) => primaryIds.has(entry.id))
+    .map((entry) => entry.id === "overview" ? { ...entry, label: labels[language].home } : entry);
+
+  return [
+    { id: "simple-primary", items: simplePrimary },
+    ...(advancedDestinations.length || rules.showAdvancedToolsEntry
+      ? [{
+          id: "more",
+          label: labels[language].more,
+          items: [
+            ...advancedDestinations.filter((entry) => entry.id === "reports"),
+            ...(rules.showAdvancedToolsEntry
+              ? [{ id: "advancedTools" as const, label: labels[language].advancedTools, icon: "settings" as const, href: "#experience-mode", action: "switch-mode" as const }]
+              : []),
+          ],
+        }]
+      : []),
+  ].filter((group) => group.items.length);
 }
 
 export function businessSlugFromPathname(pathname: string | null) {

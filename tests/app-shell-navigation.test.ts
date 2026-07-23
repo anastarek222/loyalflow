@@ -26,7 +26,7 @@ test("U3 mobile business navigation derives and passes the active business slug"
   assert.match(source("components/authenticated-app-shell.tsx"), /businessSlugFromPathname\(pathname\)/);
   assert.match(source("components/app-topbar.tsx"), /business=\{activeBusiness\}/);
   assert.match(source("components/mobile-sidebar-wrapper.tsx"), /business=\{business\}/);
-  assert.match(source("components/mobile-sidebar.tsx"), /buildShellNavigation\(\{ language, user, business \}\)/);
+  assert.match(source("components/mobile-sidebar.tsx"), /buildShellNavigation\(\{ language, user, business, experienceMode \}\)/);
 });
 
 test("business navigation URLs retain the active business slug and global routes invent none", () => {

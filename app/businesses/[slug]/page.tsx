@@ -3,6 +3,7 @@ import DashboardHealthChart from "@/components/dashboard-health-chart";
 import BusinessNotificationsAutoRefresh from "@/components/business-notifications-auto-refresh";
 import BusinessNotificationsContent from "@/components/business-notifications-content";
 import BusinessNotificationsDialog from "@/components/business-notifications-dialog";
+import OpenAdvancedDashboardButton from "@/components/open-advanced-dashboard-button";
 import { Badge, Card, Progress } from "@/components/ui/surface";
 import { OperationalPageTemplate, PageHeader, SectionHeader, StatCard, StatGrid } from "@/components/page-layout";
 import { createDashboardCustomerGrowth } from "@/lib/analytics/dashboard";
@@ -11,6 +12,7 @@ import { getBusinessOnboardingState } from "@/lib/business/onboarding";
 import { getDashboardSegmentShortcuts, DASHBOARD_RECENT_ACTIVITY_LIMIT, getBusinessDashboardActions, shouldShowOnboardingChecklist } from "@/lib/dashboard/overview";
 import { getCustomerSegmentLabel, getCustomerSegmentWhere } from "@/lib/customers/segments";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { getExperienceModeCookieName, getExperienceNavigationRules, resolveExperienceMode } from "@/lib/experience-mode";
 import {
   individuallyReadNotificationIds,
   isNotificationUnread,
@@ -24,6 +26,7 @@ import prisma from "@/lib/prisma";
 import { ArrowUpRight, CheckCircle2, ClipboardCheck, ScanLine, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 type BusinessPageProps = { params: Promise<{ slug: string }> };
 
@@ -71,6 +74,11 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   if (!user || !canAccessBusiness(user, business.id)) redirect("/dashboard");
 
   const language = normalizeLanguage(user.language);
+  const experienceMode = resolveExperienceMode(
+    (await cookies()).get(getExperienceModeCookieName(user.id))?.value,
+    user.role,
+  );
+  const isSimpleExperience = experienceMode === "SIMPLE";
   const dictionary = copy(language);
   const locale = getLanguageLocale(language);
   const number = new Intl.NumberFormat(locale);
@@ -79,6 +87,11 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   const canViewReports = canPerform(user, business.id, "REPORTS_VIEW");
   const canManageSettings = canManageBusiness(user, business.id);
   const canManageUsers = canPerform(user, business.id, "STAFF_MANAGE");
+  const modeRules = getExperienceNavigationRules({
+    mode: experienceMode,
+    role: user.role,
+    advancedDestinationCount: [canViewReports, canManageSettings, canManageUsers].filter(Boolean).length,
+  });
   const actions = getBusinessDashboardActions(business.slug, { canScan, canViewReports, canManageSettings, canManageUsers });
   const scanAction = actions.find((action) => action.id === "scan");
 
@@ -164,10 +177,12 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
         header={<PageHeader eyebrow={<span className="inline-flex items-center gap-2"><span aria-hidden="true" className="inline-flex size-6 items-center justify-center overflow-hidden rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">{business.logoUrl ? <img src={business.logoUrl} alt="" className="size-full object-cover" /> : business.name.trim().charAt(0).toUpperCase()}</span>{dictionary.eyebrow}</span>} title={business.name} description={dictionary.overview} status={<Badge variant={business.isActive ? "success" : "neutral"}>{business.isActive ? dictionary.active : dictionary.inactive}</Badge>} metadata={<><span>{roleLabel(user.role, language)}</span>{businessContext ? <span dir="auto">{businessContext}</span> : null}<span>{business.loyaltyMode === "SALES_AMOUNT" ? dictionary.salesLoyalty : `${dictionary.loyaltyMode}: ${business.unitName}`}</span>{business._count.branches > 1 ? <span>{number.format(business._count.branches)} {dictionary.branchContext}</span> : null}</>} />}
         primaryAction={scanAction ? <Link href={scanAction.href} className="inline-flex min-h-12 items-center gap-3 rounded-md border border-primary bg-primary px-5 text-base font-semibold text-white shadow-sm hover:bg-primary-hover"><ScanLine size={20} aria-hidden="true" />{dictionary.scan}<span className="hidden text-sm font-normal text-white/80 sm:inline">— {dictionary.scanDescription}</span></Link> : null}
       >
-        <div className="space-y-6">
+        <div data-experience-mode={experienceMode} className={isSimpleExperience ? "space-y-6 [&>section:nth-of-type(4)]:hidden [&>section:nth-of-type(6)]:hidden [&>section:nth-of-type(7)]:hidden [&>section:nth-of-type(8)]:hidden" : "space-y-6"}>
           <section aria-label={operationalAlerts.length ? dictionary.needsAttention : dictionary.allClear}><Card className={operationalAlerts.length ? "border-amber-200" : ""}><SectionHeader title={operationalAlerts.length ? dictionary.needsAttention : dictionary.allClear} description={operationalAlerts.length ? undefined : dictionary.allClearDescription} /><div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{operationalAlerts.map((alert) => alert.href ? <Link key={alert.id} href={alert.href} className="rounded-md border border-border bg-surface-subtle p-4 text-sm font-semibold text-slate-800 hover:border-primary">{alert.count ? <span dir="ltr" className="me-2 lf-type-numeric">{number.format(alert.count)}</span> : null}{alert.label}<ArrowUpRight className="ms-2 inline" size={15} aria-hidden="true" /></Link> : <div key={alert.id} className="rounded-md border border-border bg-surface-subtle p-4 text-sm font-semibold text-slate-800">{alert.count ? <span dir="ltr" className="me-2 lf-type-numeric">{number.format(alert.count)}</span> : null}{alert.label}{alert.id === "unread" ? <p className="mt-1 text-xs font-normal text-slate-600">{dictionary.useNotifications}</p> : null}</div>)}</div></Card></section>
 
           <section aria-label="Daily key performance indicators"><StatGrid><StatCard label={dictionary.totalCustomers} value={number.format(business._count.customers)} supportingText={`${number.format(activeCustomers)} ${dictionary.activeCustomers}`} status="info" icon={<Users size={18} />} /><StatCard label={dictionary.activityToday} value={number.format(todayActivity)} supportingText={dictionary.activityLabel} status="neutral" /><StatCard label={dictionary.redemptionsToday} value={number.format(todayRedemptions)} supportingText={dictionary.reward} status="success" /><StatCard label={dictionary.newCustomers} value={number.format(newCustomersMonth)} supportingText={dictionary.customers} status="info" /></StatGrid></section>
+
+          {isSimpleExperience ? <section data-experience-dashboard="simple"><Card><SectionHeader title={language === "AR" ? "البحث عن عميل" : "Find a customer"} description={language === "AR" ? "ابحث عن عميل أو افتح قائمته بسرعة." : "Search for a customer or open the list quickly."} actions={<Link href={`/businesses/${business.slug}/customers`} className="inline-flex min-h-11 items-center rounded-md border border-primary bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover">{dictionary.openCustomers}</Link>} />{modeRules.showAdvancedToolsEntry ? <OpenAdvancedDashboardButton language={language} /> : null}</Card></section> : null}
 
           {canViewReports ? <section className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(16rem,0.75fr)]"><Card><SectionHeader title={dictionary.trend} description={dictionary.trendDescription} actions={<Link href={`/businesses/${business.slug}/reports`} className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline">{dictionary.reports}<ArrowUpRight size={16} aria-hidden="true" /></Link>} /><div className="mt-4"><DashboardHealthChart data={customerGrowth} emptyLabel={dictionary.noTrend} summary={dictionary.trend} /></div></Card><Card><SectionHeader title={dictionary.segments} description={dictionary.segmentsDescription} /><div className="mt-4 grid gap-2">{segmentCounts.map(([segment, count]) => <Link key={segment} href={`/businesses/${business.slug}/customers?segment=${segment}`} className="flex min-h-11 items-center justify-between rounded-md border border-border px-3 text-sm font-semibold text-slate-800 hover:border-primary hover:bg-surface-subtle"><span>{getCustomerSegmentLabel(segment)}</span><span dir="ltr" className="lf-type-numeric">{number.format(count)}</span></Link>)}</div></Card></section> : <section><Card><SectionHeader title={dictionary.segments} description={dictionary.segmentsDescription} /><div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">{segmentCounts.map(([segment, count]) => <Link key={segment} href={`/businesses/${business.slug}/customers?segment=${segment}`} className="flex min-h-11 items-center justify-between rounded-md border border-border px-3 text-sm font-semibold text-slate-800 hover:border-primary hover:bg-surface-subtle"><span>{getCustomerSegmentLabel(segment)}</span><span dir="ltr" className="lf-type-numeric">{number.format(count)}</span></Link>)}</div></Card></section>}
 

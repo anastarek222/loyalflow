@@ -10,10 +10,12 @@ import {
   type ShellBusiness,
   type ShellUser,
 } from "@/lib/app-shell-navigation";
+import type { ExperienceMode } from "@/lib/experience-mode";
 
 type Props = {
   children: React.ReactNode;
   language: "AR" | "EN";
+  experienceMode: ExperienceMode;
   user: ShellUser & { firstName: string; lastName: string; email: string };
   businesses: ShellBusiness[];
 };
@@ -21,6 +23,7 @@ type Props = {
 export default function AuthenticatedAppShell({
   children,
   language,
+  experienceMode,
   user,
   businesses,
 }: Props) {
@@ -37,10 +40,11 @@ export default function AuthenticatedAppShell({
       >
         {language === "AR" ? "الانتقال إلى المحتوى" : "Skip to content"}
       </a>
-      <AppSidebar language={language} user={user} business={activeBusiness} />
+      <AppSidebar language={language} experienceMode={experienceMode} user={user} business={activeBusiness} />
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar
           language={language}
+          experienceMode={experienceMode}
           user={user}
           businesses={businesses}
           activeBusiness={activeBusiness}
@@ -54,6 +58,7 @@ export default function AuthenticatedAppShell({
       </div>
       <MobileBottomNavigation
         language={language}
+        experienceMode={experienceMode}
         user={user}
         business={activeBusiness}
       />
