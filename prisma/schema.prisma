@@ -184,8 +184,8 @@ model CustomerNote {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   customer    Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
-  createdBy   User?    @relation("CustomerNoteCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedBy   User?    @relation("CustomerNoteUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdBy   User?    @relation("CustomerNoteCreatedBy", fields: [createdById, businessId], references: [id, businessId], onDelete: NoAction)
+  updatedBy   User?    @relation("CustomerNoteUpdatedBy", fields: [updatedById, businessId], references: [id, businessId], onDelete: NoAction)
 
   @@index([businessId, customerId, updatedAt])
   @@index([createdById])
@@ -208,6 +208,7 @@ model Reward {
   redemptions      RewardRedemption[]
   unlocks          RewardUnlock[]
 
+  @@unique([id, businessId])
   @@index([businessId, isActive, cost])
 }
 
@@ -247,13 +248,14 @@ model LoyaltyTransaction {
   attributedStaffId    String?
   createdAt            DateTime              @default(now())
   business             Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branch               Branch?               @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  createdBy            User?                 @relation("TransactionCreatedBy", fields: [createdById], references: [id])
-  attributedStaff      User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId], references: [id], onDelete: SetNull)
-  customer             Customer              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  branch               Branch?               @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy            User?                 @relation("TransactionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  attributedStaff      User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
+  customer             Customer              @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
   promotionApplication PromotionApplication?
 
   @@unique([businessId, idempotencyKey])
+  @@unique([id, businessId])
   @@index([customerId, createdAt])
   @@index([businessId, createdAt])
   @@index([businessId, sourceLoyaltyMode, createdAt])
@@ -313,6 +315,7 @@ model Promotion {
   applications             PromotionApplication[]
   business                 Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
+  @@unique([id, businessId])
   @@index([businessId, isActive, startsAt, endsAt])
 }
 
@@ -325,11 +328,12 @@ model PromotionApplication {
   customerId    String
   transactionId String             @unique
   createdAt     DateTime           @default(now())
-  promotion     Promotion          @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion     Promotion          @relation(fields: [promotionId, businessId], references: [id, businessId], onDelete: Cascade)
   business      Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer      Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  transaction   LoyaltyTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  customer      Customer           @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  transaction   LoyaltyTransaction @relation(fields: [transactionId, businessId], references: [id, businessId], onDelete: Cascade)
 
+  @@unique([transactionId, businessId])
   @@index([businessId, customerId, createdAt])
   @@index([promotionId, createdAt])
 }
@@ -346,11 +350,11 @@ model RewardRedemption {
   attributedStaffId String?
   createdAt         DateTime @default(now())
   business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branch            Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  createdBy         User?    @relation("RedemptionCreatedBy", fields: [createdById], references: [id])
-  attributedStaff   User?    @relation("RedemptionAttributedStaff", fields: [attributedStaffId], references: [id], onDelete: SetNull)
-  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  reward            Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+  branch            Branch?  @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy         User?    @relation("RedemptionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  attributedStaff   User?    @relation("RedemptionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
+  customer          Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  reward            Reward?  @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: NoAction)
 
   @@index([customerId, createdAt])
   @@index([businessId, createdAt])
@@ -372,8 +376,8 @@ model RewardUnlock {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  reward     Reward    @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  customer   Customer  @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  reward     Reward    @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: Cascade)
 
   @@index([businessId, customerId, expiresAt])
   @@index([customerId, rewardId, redeemedAt, expiredAt])
@@ -389,7 +393,7 @@ model CustomerReferralCode {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
 
   @@unique([businessId, customerId])
   @@unique([businessId, code])
@@ -405,8 +409,8 @@ model Referral {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   business           Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  referrer           Customer       @relation("ReferralReferrer", fields: [referrerCustomerId], references: [id], onDelete: Cascade)
-  referred           Customer       @relation("ReferralReferred", fields: [referredCustomerId], references: [id], onDelete: Cascade)
+  referrer           Customer       @relation("ReferralReferrer", fields: [referrerCustomerId, businessId], references: [id, businessId], onDelete: Cascade)
+  referred           Customer       @relation("ReferralReferred", fields: [referredCustomerId, businessId], references: [id, businessId], onDelete: Cascade)
 
   @@unique([businessId, referredCustomerId])
   @@index([businessId, referrerCustomerId, createdAt])
@@ -425,9 +429,9 @@ model BusinessActivity {
   metadata    Json?
   createdAt   DateTime     @default(now())
   business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branch      Branch?      @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  createdBy   User?        @relation("ActivityCreatedBy", fields: [createdById], references: [id])
-  customer    Customer?    @relation(fields: [customerId], references: [id])
+  branch      Branch?      @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy   User?        @relation("ActivityCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  customer    Customer?    @relation(fields: [customerId, businessId], references: [id, businessId])
 
   @@index([businessId, createdAt])
   @@index([businessId, branchId, createdAt])
@@ -449,7 +453,7 @@ model Notification {
   createdAt DateTime @default(now())
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  user     User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId, businessId], references: [id, businessId], onDelete: Cascade)
 
   @@index([businessId, createdAt])
   @@index([userId, createdAt])
