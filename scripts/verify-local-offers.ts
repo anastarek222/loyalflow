@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { isOfferEligible } from "../lib/offers/eligibility";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_MIGRATION = "20260720260000_add_customer_offers";
 const connectionString = process.env.DATABASE_URL;
@@ -65,7 +66,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : error);
+  logServerError("offers_verification_failed", error);
   process.exitCode = 1;
 }).finally(async () => {
   await cleanup();

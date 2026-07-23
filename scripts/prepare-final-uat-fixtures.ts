@@ -7,6 +7,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 
 import { PrismaClient } from "../generated/prisma/client";
+import { logServerError } from "../lib/server/logging";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -18,7 +19,19 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
 });
 
-const TEST_PASSWORD = "LfUat!2026Secure";
+function getTestPassword() {
+  const value = process.env.UAT_FIXTURE_PASSWORD;
+
+  if (!value || value.length < 10) {
+    throw new Error(
+      "UAT_FIXTURE_PASSWORD must be set to a disposable password of at least 10 characters."
+    );
+  }
+
+  return value;
+}
+
+const testPassword = getTestPassword();
 const PREFIX = "lf-uat-final-";
 const BUSINESS_NAME_PREFIX = "LoyalFlow final UAT ";
 const REQUIRED_MIGRATION = "20260720260000_add_customer_offers";
@@ -214,7 +227,7 @@ function printFixtureDetails(input: {
   console.log("\nFINAL UAT FIXTURES READY");
   console.log(`Run ID: ${runId}`);
   console.log("Database guard: loyalflow_test only");
-  console.log(`Shared disposable password: ${TEST_PASSWORD}`);
+  console.log("Shared disposable password: supplied securely outside this script");
   console.log("\nLogin accounts:");
   console.log(`  Owner A: lf-uat-final-owner-a-${runId}@example.test`);
   console.log(`  Manager A: lf-uat-final-manager-a-${runId}@example.test`);
@@ -248,7 +261,7 @@ function printFixtureDetails(input: {
 async function prepareFixtures() {
   assertSafeRunId(runId);
   const baseUrl = buildBaseUrl();
-  const passwordHash = await hash(TEST_PASSWORD, 12);
+  const passwordHash = await hash(testPassword, 12);
 
   // Print the cleanup handle before the first write so an interrupted run is
   // still recoverable without discovering or touching unrelated records.
@@ -403,7 +416,7 @@ async function main() {
 
 main()
   .catch(async (error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("prepare_final_uat_fixtures_failed", error);
 
     for (const businessId of createdBusinessIds) {
       await prisma.business.delete({ where: { id: businessId } }).catch(() => null);

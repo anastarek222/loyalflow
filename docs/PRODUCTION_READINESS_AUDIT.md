@@ -16,11 +16,13 @@ deployment authorization.
 - Operator-reported `loyalflow_test` state: 21 migrations, up to date.
 - This agent environment cannot resolve the configured Neon hostname; it must
   not claim a live migration result.
-- Before deployment, run `npx prisma migrate status` against the intended
-  target, review every migration, then use the approved non-destructive deploy
-  process. Never use `prisma migrate reset`.
-- A backup/restore owner, RPO/RTO, and restore drill evidence are **not
-  currently documented**. This is a production-readiness blocker.
+- Before deployment, run `npm run db:migrate:status` against the intended
+  target, review every migration, then use `npm run db:migrate:deploy` in the
+  approved controlled migration job. Never use `migrate dev`, `db push`, or
+  `migrate reset` in production.
+- The operational backup, recovery, readiness, rate-limit, and smoke-test
+  sequence is documented in `docs/PRODUCTION_DEPLOYMENT.md`; release owners
+  must still record the actual restore point and incident decision owner.
 
 ## Security review
 
@@ -62,9 +64,10 @@ Names only; never put values in tickets, logs, source control, or browser code.
 
 ## Observability and reconciliation
 
-- Existing BusinessActivity is the operational audit source; health route and
-  application errors exist, but no centralized production monitoring/alerting
-  evidence is verified.
+- Existing BusinessActivity is the operational audit source. `/api/health/live`
+  is liveness-only and `/api/health` performs a lightweight read-only readiness
+  probe without exposing database details. No centralized production
+  monitoring/alerting evidence is verified.
 - Free-compatible options to evaluate separately: Vercel logs/alerts within
   plan limits, structured server logs with redaction, Neon metrics, and a
   scheduled reconciliation report comparing customer balance to ledger sums.

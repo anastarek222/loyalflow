@@ -1,11 +1,10 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 
-const connectionString = process.env.DATABASE_URL;
+import { validateRuntimeEnvironment } from "@/lib/server/environment";
 
-if (!connectionString) {
-  throw new Error("DATABASE_URL is not configured");
-}
+const { databaseUrl: connectionString } =
+  validateRuntimeEnvironment();
 
 const adapter = new PrismaPg({
   connectionString,

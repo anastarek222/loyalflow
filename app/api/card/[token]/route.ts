@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
+import { logServerError } from "@/lib/server/logging";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
 export async function GET(
@@ -157,7 +158,7 @@ export async function GET(
     return response;
 
   } catch (error) {
-    console.error("Card API error:", error);
+    logServerError("public_card_api_failed", error);
 
     return NextResponse.json(
       { error: "Internal server error" },

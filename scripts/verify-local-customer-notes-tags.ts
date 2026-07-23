@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { getCustomerTagWhere } from "../lib/customers/notes-tags";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_MIGRATION = "20260720250000_add_customer_notes_and_tags";
 const connectionString = process.env.DATABASE_URL;
@@ -113,7 +114,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("customer_notes_tags_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

@@ -14,6 +14,7 @@ import {
   recordLoyaltyEarn,
   recordRewardRedemption,
 } from "../lib/loyalty/transactions";
+import { logServerError } from "../lib/server/logging";
 
 const REQUIRED_MIGRATION = "20260723054319_link_reward_redemption_to_ledger";
 const connectionString = process.env.DATABASE_URL;
@@ -274,7 +275,7 @@ async function main() {
 
 main()
   .catch((error: unknown) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("financial_integrity_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

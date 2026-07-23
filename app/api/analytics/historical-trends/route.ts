@@ -6,6 +6,7 @@ import {
 import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { logServerError } from "@/lib/server/logging";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -98,7 +99,7 @@ export async function GET(request: Request) {
         ),
     });
   } catch (error) {
-    console.error("Unable to load historical analytics", error);
+    logServerError("historical_analytics_load_failed", error);
 
     return NextResponse.json(
       { error: "Unable to load historical analytics" },

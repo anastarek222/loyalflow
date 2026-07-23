@@ -4,6 +4,7 @@ import {
   getGoogleSheetsClient,
   getSpreadsheetId,
 } from "../lib/google-sheets";
+import { logServerError } from "../lib/server/logging";
 
 async function main() {
   const sheets = await getGoogleSheetsClient();
@@ -30,8 +31,6 @@ async function main() {
 
 main().catch((error) => {
   console.error("❌ Google Sheets connection failed");
-  console.error(
-    error instanceof Error ? error.message : error
-  );
+  logServerError("google_sheets_connection_test_failed", error);
   process.exitCode = 1;
 });

@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { canPerform } from "../lib/permissions";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_MIGRATION = "20260720230000_add_manager_and_viewer_roles";
 const connectionString = process.env.DATABASE_URL;
@@ -53,7 +54,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("staff_permissions_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

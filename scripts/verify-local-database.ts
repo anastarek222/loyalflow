@@ -10,6 +10,7 @@ import {
   PrismaClient,
   RewardType,
 } from "../generated/prisma/client";
+import { logServerError } from "../lib/server/logging";
 import {
   generateCustomerCode,
   parseCustomerRegistration,
@@ -509,9 +510,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(
-      error instanceof Error ? error.stack ?? error.message : error
-    );
+    logServerError("local_database_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {
