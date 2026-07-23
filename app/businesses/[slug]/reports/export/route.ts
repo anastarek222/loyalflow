@@ -1,8 +1,13 @@
 import { auth } from "@/auth";
 import {
-  formatUtcDateInput,
-  parseUtcDateInput,
+  parseReportDateRange,
 } from "@/lib/analytics/date-range";
+import { resolveReportScope } from "@/lib/analytics/report-filters";
+import {
+  getCustomerFilterSegments,
+  getCustomerSegmentWhere,
+  type CustomerSegment,
+} from "@/lib/customers/segments";
 import { canExportBusinessData } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 
@@ -111,6 +116,9 @@ export async function GET(
           true,
         unitName:
           true,
+        loyaltyMode: true,
+        rewardThreshold: true,
+        earnAmount: true,
         isActive:
           true,
       },
@@ -157,56 +165,12 @@ export async function GET(
       request.url
     );
 
-  const today =
-    new Date();
+  const dateRange = parseReportDateRange({
+    from: url.searchParams.get("from"),
+    to: url.searchParams.get("to"),
+  });
 
-  const defaultTo =
-    formatUtcDateInput(
-      today
-    );
-
-  const defaultFromDate =
-    new Date(today);
-
-  defaultFromDate.setUTCDate(
-    defaultFromDate.getUTCDate() -
-      29
-  );
-
-  const defaultFrom =
-    formatUtcDateInput(
-      defaultFromDate
-    );
-
-  const fromInput =
-    url.searchParams.get(
-      "from"
-    ) ?? defaultFrom;
-
-  const toInput =
-    url.searchParams.get(
-      "to"
-    ) ?? defaultTo;
-
-  const from =
-    parseUtcDateInput(
-      fromInput
-    ) ??
-    parseUtcDateInput(
-      defaultFrom
-    );
-
-  const to =
-    parseUtcDateInput(
-      toInput,
-      true
-    ) ??
-    parseUtcDateInput(
-      defaultTo,
-      true
-    );
-
-  if (!from || !to) {
+  if (!dateRange) {
     return Response.json(
       {
         error:
@@ -219,21 +183,43 @@ export async function GET(
     );
   }
 
-  if (
-    from.getTime() >
-    to.getTime()
-  ) {
-    return Response.json(
-      {
-        error:
-          "تاريخ البداية بعد تاريخ النهاية",
-      },
-      {
-        status:
-          400,
-      }
-    );
+  const [branches, staff] = await Promise.all([
+    prisma.branch.findMany({
+      where: { businessId: business.id },
+      select: { id: true, businessId: true, name: true, isActive: true },
+    }),
+    prisma.user.findMany({
+      where: { businessId: business.id },
+      select: { id: true, businessId: true },
+    }),
+  ]);
+  const reportScope = resolveReportScope({
+    businessId: business.id,
+    branchId: url.searchParams.get("branch"),
+    staffId: url.searchParams.get("staff"),
+    branches,
+    staff,
+  });
+  if (!reportScope) {
+    return Response.json({ error: "فلتر الفرع أو الموظف غير صالح" }, { status: 400 });
   }
+
+  const availableSegments = getCustomerFilterSegments(business.loyaltyMode);
+  const requestedSegment = url.searchParams.get("segment");
+  const segment = availableSegments.includes(requestedSegment as CustomerSegment)
+    ? requestedSegment as CustomerSegment
+    : null;
+  const customerWhere = segment
+    ? {
+        businessId: business.id,
+        ...getCustomerSegmentWhere(
+          segment,
+          business.rewardThreshold,
+          undefined,
+          business.earnAmount,
+        ),
+      }
+    : undefined;
 
   const transactions =
     await prisma
@@ -245,10 +231,12 @@ export async function GET(
 
           createdAt: {
             gte:
-              from,
+              dateRange.from,
             lte:
-              to,
+              dateRange.to,
           },
+          ...reportScope,
+          ...(customerWhere ? { customer: customerWhere } : {}),
         },
 
         orderBy: {
@@ -293,6 +281,20 @@ export async function GET(
                 true,
             },
           },
+
+          attributedStaff: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+
+          branch: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
@@ -308,6 +310,9 @@ export async function GET(
     "نفذها",
     "البريد",
     "الدور",
+    "الفرع",
+    "الموظف المنسوب إليه",
+    "بريد الموظف المنسوب إليه",
     "الملاحظة",
   ];
 
@@ -375,6 +380,19 @@ export async function GET(
             .createdBy
             ?.role ?? "",
 
+          transaction.branch?.name ?? "غير منسوب تاريخيًا",
+
+          transaction.attributedStaff
+            ? [
+                transaction.attributedStaff.firstName,
+                transaction.attributedStaff.lastName,
+              ]
+                .filter(Boolean)
+                .join(" ")
+            : "غير منسوب",
+
+          transaction.attributedStaff?.email ?? "",
+
           transaction.note ?? "",
         ];
       }
@@ -397,7 +415,7 @@ export async function GET(
       .join("\r\n");
 
   const filename =
-    `${business.slug}-report-${fromInput}-to-${toInput}.csv`;
+    `${business.slug}-report-${dateRange.fromInput}-to-${dateRange.toInput}.csv`;
 
   return new Response(
     csvContent,

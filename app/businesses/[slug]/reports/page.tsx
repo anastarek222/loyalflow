@@ -2,7 +2,13 @@ import { auth } from "@/auth";
 import {
   formatUtcDateInput,
   parseUtcDateInput,
+  parseReportDateRange,
 } from "@/lib/analytics/date-range";
+import {
+  getReportQueryString,
+  getRecordedSalesWhere,
+  resolveReportScope,
+} from "@/lib/analytics/report-filters";
 import {
   calculateAverageDaysBetweenVisits,
   calculateAverageDaysToFirstReward,
@@ -36,6 +42,8 @@ type ReportsPageProps = {
     period?: string;
     segment?: string;
     loyaltyMode?: string;
+    branch?: string;
+    staff?: string;
   }>;
 };
 
@@ -157,28 +165,14 @@ export default async function ReportsPage({
     : null;
 
   let period: ReportPeriod = requestedPeriod ?? "custom";
-  let fromInput = shortcutRange?.fromInput ??
-    (query.from && parseUtcDateInput(query.from)
-      ? query.from
-      : defaultRange.fromInput);
-  let toInput = shortcutRange?.toInput ??
-    (query.to && parseUtcDateInput(query.to, true)
-      ? query.to
-      : defaultRange.toInput);
-  let fromDate = shortcutRange?.from ??
-    parseUtcDateInput(fromInput) ??
-    defaultRange.from;
-  let toDate = shortcutRange?.to ??
-    parseUtcDateInput(toInput, true) ??
-    defaultRange.to;
-
-  if (fromDate > toDate) {
-    period = "30d";
-    fromInput = defaultRange.fromInput;
-    toInput = defaultRange.toInput;
-    fromDate = defaultRange.from;
-    toDate = defaultRange.to;
-  }
+  const customRange = parseReportDateRange({
+    from: query.from,
+    to: query.to,
+    now: today,
+  });
+  const selectedRange = shortcutRange ?? customRange ?? defaultRange;
+  if (!shortcutRange && !customRange) period = "30d";
+  const { fromInput, toInput, from: fromDate, to: toDate } = selectedRange;
 
   const availableSegments = getCustomerFilterSegments(
     business.loyaltyMode
@@ -196,6 +190,32 @@ export default async function ReportsPage({
     query.loyaltyMode === business.loyaltyMode
       ? business.loyaltyMode
       : "all";
+
+  const [reportBranches, reportStaff] = await Promise.all([
+    prisma.branch.findMany({
+      where: { businessId: business.id },
+      select: { id: true, businessId: true, name: true, isActive: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.user.findMany({
+      where: { businessId: business.id },
+      select: { id: true, businessId: true, firstName: true, lastName: true, isActive: true },
+      orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+    }),
+  ]);
+  // Invalid/cross-tenant route values are ignored on the HTML report. The
+  // export route rejects them; neither path can expand this tenant's scope.
+  const reportScope = resolveReportScope({
+    businessId: business.id,
+    branchId: query.branch,
+    staffId: query.staff,
+    branches: reportBranches,
+    staff: reportStaff,
+  }) ?? {};
+  const operationScope = reportScope;
+  const activityScope = reportScope.branchId
+    ? { branchId: reportScope.branchId }
+    : {};
 
   const customerWhere: Prisma.CustomerWhereInput = {
     businessId: business.id,
@@ -215,6 +235,7 @@ export default async function ReportsPage({
       gte: fromDate,
       lte: toDate,
     },
+    ...operationScope,
     ...(segment
       ? {
           customer: customerWhere,
@@ -228,6 +249,7 @@ export default async function ReportsPage({
       gte: fromDate,
       lte: toDate,
     },
+    ...operationScope,
     ...(segment
       ? {
           customer: customerWhere,
@@ -246,6 +268,8 @@ export default async function ReportsPage({
     allTimeTrackedSales,
     redeemed,
     allTimeRedeemed,
+    rewardUnlocks,
+    rewardDistribution,
     recoveredCustomerGroups,
     transactionCount,
     activeCustomerGroups,
@@ -320,6 +344,7 @@ export default async function ReportsPage({
       where: {
         businessId: business.id,
         type: "EARN",
+        ...operationScope,
         ...(segment
           ? {
               customer: customerWhere,
@@ -337,11 +362,7 @@ export default async function ReportsPage({
     prisma.loyaltyTransaction.aggregate({
       where: {
         ...transactionWhere,
-        type: "EARN",
-        sourceLoyaltyMode: "SALES_AMOUNT",
-        saleAmount: {
-          not: null,
-        },
+        ...getRecordedSalesWhere(),
       },
       _sum: {
         saleAmount: true,
@@ -357,11 +378,8 @@ export default async function ReportsPage({
     prisma.loyaltyTransaction.aggregate({
       where: {
         businessId: business.id,
-        type: "EARN",
-        sourceLoyaltyMode: "SALES_AMOUNT",
-        saleAmount: {
-          not: null,
-        },
+        ...operationScope,
+        ...getRecordedSalesWhere(),
         ...(segment
           ? {
               customer: customerWhere,
@@ -386,6 +404,7 @@ export default async function ReportsPage({
     prisma.rewardRedemption.aggregate({
       where: {
         businessId: business.id,
+        ...operationScope,
         ...(segment
           ? {
               customer: customerWhere,
@@ -397,11 +416,39 @@ export default async function ReportsPage({
       },
     }),
 
+    // Reward unlocks have no branch or staff provenance in the current
+    // schema, so this remains an explicitly business-wide customer metric.
+    prisma.rewardUnlock.count({
+      where: {
+        businessId: business.id,
+        unlockedAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+        ...(segment ? { customer: customerWhere } : {}),
+      },
+    }),
+
+    prisma.rewardRedemption.groupBy({
+      by: ["rewardName"],
+      where: redemptionWhere,
+      _count: {
+        _all: true,
+      },
+      orderBy: {
+        _count: {
+          rewardName: "desc",
+        },
+      },
+      take: 5,
+    }),
+
     prisma.businessActivity.groupBy({
       by: ["customerId"],
       where: {
         businessId: business.id,
         type: "CUSTOMER_REACTIVATED",
+        ...activityScope,
         customerId: {
           not: null,
         },
@@ -454,6 +501,7 @@ export default async function ReportsPage({
         businessId: business.id,
         type: "EARN",
         sourceLoyaltyMode: "VISITS",
+        ...operationScope,
         ...(segment
           ? {
               customer: customerWhere,
@@ -569,6 +617,7 @@ export default async function ReportsPage({
       by: ["customerId"],
       where: {
         businessId: business.id,
+        ...operationScope,
         ...(segment
           ? {
               customer: customerWhere,
@@ -719,9 +768,20 @@ export default async function ReportsPage({
     business.allowOwnerDataExport
   );
 
+  const reportQuery = getReportQueryString({
+    from: fromInput,
+    to: toInput,
+    segment,
+    loyaltyMode,
+    branchId: reportScope.branchId,
+    attributedStaffId: reportScope.attributedStaffId,
+  });
+
   const activeReportFilters = new URLSearchParams({
     ...(segment ? { segment } : {}),
     ...(loyaltyMode !== "all" ? { loyaltyMode } : {}),
+    ...(reportScope.branchId ? { branch: reportScope.branchId } : {}),
+    ...(reportScope.attributedStaffId ? { staff: reportScope.attributedStaffId } : {}),
   }).toString();
 
   const reportFilterSuffix = activeReportFilters
@@ -768,7 +828,7 @@ export default async function ReportsPage({
           className="mt-6 grid gap-3 sm:grid-cols-2"
         >
           <Link
-            href={`/businesses/${business.slug}/reports/staff?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}${reportFilterSuffix}`}
+            href={`/businesses/${business.slug}/reports/staff?${reportQuery}`}
             className={`${theme.buttonClass} p-5 text-center font-black text-white shadow-sm transition`}
             style={{
               backgroundColor: theme.primaryColor,
@@ -779,7 +839,7 @@ export default async function ReportsPage({
 
           {canExportData && (
             <a
-            href={`/businesses/${business.slug}/reports/export?from=${encodeURIComponent(fromInput)}&to=${encodeURIComponent(toInput)}${reportFilterSuffix}`}
+            href={`/businesses/${business.slug}/reports/export?${reportQuery}`}
             className="rounded-2xl bg-emerald-600 p-5 text-center font-black text-white shadow-sm transition hover:bg-emerald-700"
           >
             📥 تصدير حركات الفترة CSV
@@ -871,6 +931,55 @@ export default async function ReportsPage({
               defaultValue={toInput}
               className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="branch"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              الفرع
+            </label>
+
+            <select
+              id="branch"
+              name="branch"
+              defaultValue={reportScope.branchId ?? "all"}
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+            >
+              <option value="all">كل الفروع والسجل التاريخي</option>
+              {reportBranches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}{branch.isActive ? "" : " (غير نشط)"}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="staff"
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              الموظف المنسوب إليه
+            </label>
+
+            <select
+              id="staff"
+              name="staff"
+              defaultValue={reportScope.attributedStaffId ?? "all"}
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+            >
+              <option value="all">كل الموظفين والعمليات غير المنسوبة</option>
+              {reportStaff.map((staffMember) => (
+                <option key={staffMember.id} value={staffMember.id}>
+                  {[staffMember.firstName, staffMember.lastName]
+                    .filter(Boolean)
+                    .join(" ") || "مستخدم بدون اسم"}
+                  {staffMember.isActive ? "" : " (غير نشط)"}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button
@@ -1081,6 +1190,28 @@ export default async function ReportsPage({
 
             <p className="mt-2 text-xs text-slate-400">
               إجمالي التكلفة خلال الفترة: {redeemedCost} — الإجمالي منذ البداية: {allTimeRedeemed._count._all}
+            </p>
+
+            {rewardDistribution.length > 0 && (
+              <ul className="mt-3 space-y-1 text-xs text-slate-500">
+                {rewardDistribution.map((reward) => (
+                  <li key={reward.rewardName}>
+                    {reward.rewardName}: {reward._count._all}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">مكافآت فُتحت</p>
+
+            <p className="mt-3 text-4xl font-bold text-violet-600">
+              {rewardUnlocks}
+            </p>
+
+            <p className="mt-2 text-xs text-slate-400">
+              مقياس على مستوى النشاط؛ لا يحمل فتح المكافأة فرعًا أو موظفًا في السجل الحالي.
             </p>
           </article>
 

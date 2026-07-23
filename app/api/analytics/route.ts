@@ -85,10 +85,9 @@ export async function GET() {
       },
     }),
 
-    prisma.loyaltyTransaction.count({
+    prisma.rewardRedemption.count({
       where: {
         businessId,
-        type: "REDEEM",
       },
     }),
 

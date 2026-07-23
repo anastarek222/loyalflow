@@ -112,3 +112,8 @@ export function countDistinctCustomers(
     )
   ).size;
 }
+
+/** Report redemption values as a positive magnitude in every presentation. */
+export function getRedemptionMagnitude(value: number) {
+  return Math.abs(value);
+}
