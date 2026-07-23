@@ -16,6 +16,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBusinessNotification } from "@/lib/notifications";
+import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 
 const userSchema = z.object({
   firstName: z
@@ -285,6 +286,13 @@ export async function setBusinessUserStatusAction(
   userId: string,
   isActive: boolean
 ) {
+  const parsedUserId = opaqueIdSchema.safeParse(userId);
+  const parsedStatus = actionBooleanSchema.safeParse(isActive);
+
+  if (!parsedUserId.success || !parsedStatus.success) {
+    redirect(`/businesses/${slug}/users?error=invalid`);
+  }
+
   const {
     session,
     business,
@@ -295,7 +303,7 @@ export async function setBusinessUserStatusAction(
   const targetUser =
     await getTargetUser(
       business.id,
-      userId
+      parsedUserId.data
     );
 
   if (!targetUser) {
@@ -328,14 +336,14 @@ export async function setBusinessUserStatusAction(
         id: targetUser.id,
       },
       data: {
-        isActive,
+        isActive: parsedStatus.data,
       },
     }),
 
     prisma.businessActivity.create({
       data: {
         type: "USER_STATUS_CHANGED",
-        description: isActive
+        description: parsedStatus.data
           ? `تم إعادة تفعيل الحساب ${targetUser.email}`
           : `تم إيقاف الحساب ${targetUser.email}`,
         businessId:
@@ -350,7 +358,7 @@ export async function setBusinessUserStatusAction(
 
   redirect(
     `/businesses/${slug}/users?success=${
-      isActive
+      parsedStatus.data
         ? "activated"
         : "deactivated"
     }`
@@ -362,6 +370,12 @@ export async function resetBusinessUserPasswordAction(
   userId: string,
   formData: FormData
 ) {
+  const parsedUserId = opaqueIdSchema.safeParse(userId);
+
+  if (!parsedUserId.success) {
+    redirect(`/businesses/${slug}/users?error=invalid`);
+  }
+
   const {
     session,
     business,
@@ -372,7 +386,7 @@ export async function resetBusinessUserPasswordAction(
   const targetUser =
     await getTargetUser(
       business.id,
-      userId
+      parsedUserId.data
     );
 
   if (!targetUser) {
