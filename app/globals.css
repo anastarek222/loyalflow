@@ -1,109 +1,191 @@
 @import "tailwindcss";
 
+/*
+ * LoyalFlow application tokens. These belong to the product chrome and must
+ * not be replaced by a business's public-card palette.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  color-scheme: light;
 
-
-
-/* ===============================
-   LoyalFlow Stitch Design Tokens
-   =============================== */
-
-:root {
-  --lf-primary: #0f172a;
-  --lf-primary-soft: #1e293b;
-
-  --lf-accent: #7c3aed;
-  --lf-accent-soft: #ede9fe;
-
-  --lf-success: #10b981;
-  --lf-warning: #f59e0b;
-  --lf-danger: #ef4444;
-
-  --lf-background: #f8fafc;
+  --lf-canvas: #f8fafc;
   --lf-surface: #ffffff;
+  --lf-surface-subtle: #f1f5f9;
+  --lf-surface-raised: #ffffff;
+
+  --lf-foreground: #0f172a;
+  --lf-foreground-muted: #475569;
+  --lf-foreground-subtle: #64748b;
+  --lf-inverse: #ffffff;
 
   --lf-border: #e2e8f0;
+  --lf-border-strong: #cbd5e1;
+  --lf-divider: #e2e8f0;
 
-  --lf-text: #0f172a;
-  --lf-muted: #64748b;
+  --lf-primary: #4338ca;
+  --lf-primary-hover: #3730a3;
+  --lf-primary-active: #312e81;
+  --lf-primary-foreground: #ffffff;
 
-  --lf-radius-card: 24px;
-  --lf-radius-button: 14px;
+  --lf-success: #047857;
+  --lf-success-subtle: #ecfdf5;
+  --lf-warning: #b45309;
+  --lf-warning-subtle: #fffbeb;
+  --lf-danger: #b91c1c;
+  --lf-danger-subtle: #fef2f2;
+  --lf-info: #0369a1;
+  --lf-info-subtle: #f0f9ff;
 
-  --lf-shadow-card:
-    0 10px 30px rgba(15,23,42,0.06);
+  --lf-focus: #4f46e5;
+  --lf-selection: #e0e7ff;
+  --lf-disabled: #94a3b8;
 
-  --lf-shadow-hover:
-    0 20px 40px rgba(15,23,42,0.10);
+  --lf-chart-1: #4f46e5;
+  --lf-chart-2: #059669;
+  --lf-chart-3: #0284c7;
+  --lf-chart-4: #c2410c;
+  --lf-chart-5: #be123c;
+  --lf-chart-grid: #e2e8f0;
+
+  --lf-font-sans: Arial, Helvetica, sans-serif;
+  --lf-font-mono: "SFMono-Regular", Consolas, monospace;
+  --lf-leading-arabic: 1.7;
+
+  --lf-space-1: 0.25rem;
+  --lf-space-2: 0.5rem;
+  --lf-space-3: 0.75rem;
+  --lf-space-4: 1rem;
+  --lf-space-5: 1.25rem;
+  --lf-space-6: 1.5rem;
+  --lf-space-8: 2rem;
+  --lf-space-10: 2.5rem;
+
+  --lf-control-compact: 2rem;
+  --lf-control: 2.75rem;
+  --lf-control-touch: 3rem;
+  --lf-radius-sm: 0.375rem;
+  --lf-radius-md: 0.625rem;
+  --lf-radius-lg: 0.875rem;
+  --lf-radius-xl: 1rem;
+  --lf-shadow-raised: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.08);
+  --lf-shadow-overlay: 0 20px 25px -5px rgb(15 23 42 / 0.16), 0 8px 10px -6px rgb(15 23 42 / 0.12);
+  --lf-motion-fast: 120ms;
+  --lf-motion-standard: 180ms;
+  --lf-motion-overlay: 220ms;
+
+  /* Legacy aliases retained while pages migrate to semantic primitives. */
+  --background: var(--lf-canvas);
+  --foreground: var(--lf-foreground);
+  --lf-primary-soft: #1e293b;
+  --lf-accent: var(--lf-primary);
+  --lf-accent-soft: #e0e7ff;
+  --lf-text: var(--lf-foreground);
+  --lf-muted: var(--lf-foreground-subtle);
+  --lf-radius-card: var(--lf-radius-lg);
+  --lf-radius-button: var(--lf-radius-md);
+  --lf-shadow-card: var(--lf-shadow-raised);
+  --lf-shadow-hover: 0 10px 24px rgb(15 23 42 / 0.12);
 }
 
-
-/* Stitch SaaS card base */
-
-.lf-card {
-  border-radius: var(--lf-radius-card);
-  border: 1px solid var(--lf-border);
-  background: var(--lf-surface);
-  box-shadow: var(--lf-shadow-card);
+/* Apply business colors only inside a deliberate business-context boundary. */
+.lf-business-context {
+  --lf-business-primary: var(--business-primary, var(--lf-primary));
+  --lf-business-secondary: var(--business-secondary, var(--lf-primary));
+  --lf-business-font: var(--business-font, var(--lf-font-sans));
 }
-
-
-/* Stitch button base */
-
-.lf-button {
-  border-radius: var(--lf-radius-button);
-  font-weight: 800;
-  transition: all .2s ease;
-}
-
-
-.lf-button:hover {
-  transform: translateY(-1px);
-}
-
-
-/* Stitch section title */
-
-.lf-title {
-  color: var(--lf-text);
-  font-size: 1.5rem;
-  font-weight: 900;
-}
-
-
-.lf-muted {
-  color: var(--lf-muted);
-}
-
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, monospace;
+  --color-background: var(--lf-canvas);
+  --color-foreground: var(--lf-foreground);
+  --color-canvas: var(--lf-canvas);
+  --color-surface: var(--lf-surface);
+  --color-surface-subtle: var(--lf-surface-subtle);
+  --color-surface-raised: var(--lf-surface-raised);
+  --color-border: var(--lf-border);
+  --color-border-strong: var(--lf-border-strong);
+  --color-primary: var(--lf-primary);
+  --color-primary-hover: var(--lf-primary-hover);
+  --color-success: var(--lf-success);
+  --color-warning: var(--lf-warning);
+  --color-danger: var(--lf-danger);
+  --color-info: var(--lf-info);
+  --font-sans: var(--lf-font-sans);
+  --font-mono: var(--lf-font-mono);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--lf-canvas);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  background: var(--lf-canvas);
+  color: var(--lf-foreground);
+  font-family: var(--lf-font-sans);
 }
 
-
-/* Fix form field readability across browsers */
-:root {
-  color-scheme: light;
+::selection {
+  background: var(--lf-selection);
+  color: var(--lf-foreground);
 }
 
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--lf-focus);
+  outline-offset: 2px;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+button {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+main,
+section,
+article,
+form {
+  min-width: 0;
+}
+
+.lf-type-display { font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.25; }
+.lf-type-section { font-size: 1.25rem; font-weight: 700; line-height: 1.35; }
+.lf-type-card { font-size: 1rem; font-weight: 650; line-height: 1.4; }
+.lf-type-body { font-size: 0.875rem; line-height: 1.55; }
+.lf-type-supporting { font-size: 0.8125rem; line-height: 1.5; }
+.lf-type-label { font-size: 0.8125rem; font-weight: 600; line-height: 1.35; }
+.lf-type-caption { font-size: 0.75rem; line-height: 1.4; }
+.lf-type-numeric { font-variant-numeric: tabular-nums; }
+[dir="rtl"] .lf-type-body,
+[dir="rtl"] .lf-type-supporting { line-height: var(--lf-leading-arabic); }
+
+/* Legacy helpers remain stable until pages adopt components/ui. */
+.lf-card { border-radius: var(--lf-radius-card); border: 1px solid var(--lf-border); background: var(--lf-surface); box-shadow: var(--lf-shadow-card); }
+.lf-button { border-radius: var(--lf-radius-button); font-weight: 700; transition: background-color var(--lf-motion-fast) ease, border-color var(--lf-motion-fast) ease, color var(--lf-motion-fast) ease; }
+.lf-title { color: var(--lf-text); font-size: 1.5rem; font-weight: 800; }
+.lf-muted { color: var(--lf-muted); }
+
+/* U3 navigation foundation: tokens/classes only; the existing shell is untouched. */
+.lf-nav-sidebar { background: var(--lf-surface); border-color: var(--lf-border); }
+.lf-nav-item { color: var(--lf-foreground-muted); border-radius: var(--lf-radius-md); }
+.lf-nav-item:hover { background: var(--lf-surface-subtle); color: var(--lf-foreground); }
+.lf-nav-item-active { background: var(--lf-primary); color: var(--lf-primary-foreground); }
+.lf-nav-group-label { color: var(--lf-foreground-subtle); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.lf-topbar { background: var(--lf-surface-raised); border-color: var(--lf-border); }
+.lf-mobile-nav { background: var(--lf-surface-raised); border-color: var(--lf-border); box-shadow: var(--lf-shadow-overlay); }
+
+/* Existing forms keep their established light appearance during the migration. */
 input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
 textarea,
 select {
   background-color: #ffffff;
-  color: #0f172a;
-  -webkit-text-fill-color: #0f172a;
+  color: #000000;
+  -webkit-text-fill-color: #000000;
   opacity: 1;
 }
 
@@ -112,11 +194,6 @@ textarea::placeholder {
   color: #64748b;
   -webkit-text-fill-color: #64748b;
   opacity: 1;
-}
-
-select option {
-  background-color: #ffffff;
-  color: #0f172a;
 }
 
 input:disabled,
@@ -130,156 +207,34 @@ select:disabled {
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #0f172a;
+  -webkit-text-fill-color: #000000;
   box-shadow: 0 0 0 1000px #ffffff inset;
 }
 
-/* Force black text inside form fields */
-input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
-textarea,
-select {
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
-}
+/* html5-qrcode retains its external-widget overrides. */
+#loyalflow-qr-reader { color: var(--lf-foreground) !important; }
+#loyalflow-qr-reader * { box-sizing: border-box; }
+#loyalflow-qr-reader button { min-height: 44px; border: 0 !important; border-radius: var(--lf-radius-md) !important; background-color: var(--lf-foreground) !important; padding: 10px 16px !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; font-weight: 700 !important; }
+#loyalflow-qr-reader select { min-height: 44px; border: 1px solid var(--lf-border-strong) !important; border-radius: var(--lf-radius-md) !important; background-color: #ffffff !important; padding: 8px 12px !important; color: #000000 !important; -webkit-text-fill-color: #000000 !important; }
+#loyalflow-qr-reader a { color: var(--lf-primary) !important; font-weight: 700; }
+#loyalflow-qr-reader video { width: 100% !important; border-radius: var(--lf-radius-lg); }
+#loyalflow-qr-reader img { display: inline-block; }
 
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #000000 !important;
-}
-
-
-/* LoyalFlow mobile usability */
-html {
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  overflow-x: hidden;
-}
-
-img,
-svg,
-video {
-  max-width: 100%;
-  height: auto;
-}
-
-button {
-  touch-action: manipulation;
-}
-
-input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
-textarea,
-select,
-button {
-  min-height: 44px;
-}
-
-main,
-section,
-article,
-form {
-  min-width: 0;
-}
+/* Dark login fields intentionally opt out of the application form surface. */
+.auth-input { background-color: rgb(15 23 42 / 0.7) !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; caret-color: #ffffff; }
+.auth-input::placeholder { color: #94a3b8 !important; -webkit-text-fill-color: #94a3b8 !important; }
 
 @media (max-width: 639px) {
   input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
   textarea,
-  select {
-    font-size: 16px !important;
-  }
+  select { font-size: 16px; }
 
   button,
-  a {
-    -webkit-tap-highlight-color: transparent;
-  }
+  a { -webkit-tap-highlight-color: transparent; }
 }
 
-
-/* LoyalFlow permanent light colors */
-html,
-body {
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
-
-input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
-textarea,
-select {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
-  caret-color: #000000;
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #64748b !important;
-  -webkit-text-fill-color: #64748b !important;
-  opacity: 1 !important;
-}
-
-/* html5-qrcode interface */
-#loyalflow-qr-reader {
-  color: #0f172a !important;
-}
-
-#loyalflow-qr-reader * {
-  box-sizing: border-box;
-}
-
-#loyalflow-qr-reader button {
-  min-height: 44px;
-  border: 0 !important;
-  border-radius: 12px !important;
-  background-color: #0f172a !important;
-  padding: 10px 16px !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  font-weight: 700 !important;
-}
-
-#loyalflow-qr-reader select {
-  min-height: 44px;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 12px !important;
-  background-color: #ffffff !important;
-  padding: 8px 12px !important;
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
-}
-
-#loyalflow-qr-reader a {
-  color: #7c3aed !important;
-  font-weight: 700;
-}
-
-#loyalflow-qr-reader video {
-  width: 100% !important;
-  border-radius: 16px;
-}
-
-#loyalflow-qr-reader img {
-  display: inline-block;
-}
-
-@media (max-width: 639px) {
-  .rounded-3xl {
-    border-radius: 16px !important;
-  }
-}
-
-
-/* Dark login fields override the global white fields */
-.auth-input {
-  background-color: rgba(15, 23, 42, 0.7) !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff;
-}
-
-.auth-input::placeholder {
-  color: #64748b !important;
-  -webkit-text-fill-color: #64748b !important;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
 }
