@@ -28,7 +28,7 @@ import {
 } from "../lib/loyalty/transactions";
 import { getAvailableRewardOptions } from "../lib/rewards/catalog";
 
-const EXPECTED_MIGRATIONS = [
+const REVIEWED_MIGRATIONS = [
   "20260709205131_initial_loyalty_schema",
   "20260711020806_add_business_activity_log",
   "20260711022533_add_team_account_security",
@@ -42,9 +42,6 @@ const EXPECTED_MIGRATIONS = [
   "20260718143000_add_white_label_mvp_fields",
   "20260720170000_add_reward_catalog",
   "20260720180000_add_transaction_mode_provenance",
-] as const;
-
-const OPTIONAL_REVIEWED_MIGRATIONS = [
   "20260720190000_add_loyalty_promotions",
   "20260720200000_add_earn_idempotency_and_promotion_multiplier",
   "20260720210000_add_reward_expiration",
@@ -54,7 +51,13 @@ const OPTIONAL_REVIEWED_MIGRATIONS = [
   "20260720250000_add_customer_notes_and_tags",
   "20260720260000_add_customer_offers",
   "20260721000000_add_business_currency_timezone",
+  "20260721031502_add_business_profile_fields",
   "20260721170000_add_staff_attribution_foundation",
+  "20260722075434_add_theme_notifications_audit",
+  "20260722085251_add_business_employee_count",
+  "20260722224333_add_business_qr_position",
+  "20260723044900_enforce_tenant_composite_foreign_keys",
+  "20260723054319_link_reward_redemption_to_ledger",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;
@@ -148,21 +151,10 @@ async function verifyMigrationHistory() {
   >`SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL ORDER BY migration_name`;
 
   const migrationNames = applied.map((migration) => migration.migration_name);
-  const reviewedHistories = Array.from(
-    { length: OPTIONAL_REVIEWED_MIGRATIONS.length + 1 },
-    (_, optionalCount) => [
-      ...EXPECTED_MIGRATIONS,
-      ...OPTIONAL_REVIEWED_MIGRATIONS.slice(0, optionalCount),
-    ]
-  );
-  const matchesReviewedHistory = reviewedHistories.some(
-    (expectedHistory) =>
-      JSON.stringify(migrationNames) === JSON.stringify(expectedHistory)
-  );
 
   assert.ok(
-    matchesReviewedHistory,
-    "Migration history must match a reviewed sequential 13-to-21 migration set."
+    JSON.stringify(migrationNames) === JSON.stringify(REVIEWED_MIGRATIONS),
+    "Migration history must exactly match the reviewed 29-migration committed history."
   );
 }
 

@@ -158,3 +158,41 @@ test("UAT fixtures require but never print their disposable password", () => {
   assert.doesNotMatch(uatFixtures, /Shared disposable password: \$\{/);
   assert.doesNotMatch(uatFixtures, /const TEST_PASSWORD\s*=/);
 });
+
+test("local database verifier requires the complete reviewed committed migration history", () => {
+  const verifier = source("scripts/verify-local-database.ts");
+  const committedMigrations = fs
+    .readdirSync(path.join(root, "prisma/migrations"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+
+  assert.equal(committedMigrations.length, 29);
+  assert.match(verifier, /const REVIEWED_MIGRATIONS = \[/);
+  assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);
+  assert.match(
+    verifier,
+    /JSON\.stringify\(migrationNames\) === JSON\.stringify\(REVIEWED_MIGRATIONS\)/
+  );
+
+  for (const migration of committedMigrations) {
+    assert.match(verifier, new RegExp(`"${migration}"`));
+  }
+});
+
+test("final UAT transaction fixtures enforce customer-business consistency", () => {
+  const uatFixtures = source("scripts/prepare-final-uat-fixtures.ts");
+
+  assert.match(
+    uatFixtures,
+    /assert\.equal\(\s*input\.customer\.businessId,\s*input\.businessId/
+  );
+  assert.match(
+    uatFixtures,
+    /const salesCustomer = await createCustomer\(\{\s*businessId: businessSales\.id/
+  );
+  assert.match(
+    uatFixtures,
+    /businessId: businessSales\.id, customer: salesCustomer, amount: 100/
+  );
+});
