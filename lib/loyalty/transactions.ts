@@ -1,6 +1,7 @@
 import type { LoyaltyMode, Prisma } from "@/generated/prisma/client";
 import { validateStaffAttribution } from "@/lib/loyalty/staff-attribution";
 import { createBusinessNotification } from "@/lib/notifications";
+import type { ActivityRequestContext } from "@/lib/activity/request-context";
 
 type TransactionClient = Prisma.TransactionClient;
 
@@ -9,6 +10,7 @@ type EarnTransactionInput = {
   businessId: string;
   branchId?: string;
   createdById?: string;
+  activityContext?: ActivityRequestContext;
   attributedStaffId?: string;
   amount: number;
   sourceLoyaltyMode: LoyaltyMode;
@@ -28,6 +30,7 @@ type RewardRedemptionInput = {
   businessId: string;
   branchId?: string;
   createdById?: string;
+  activityContext?: ActivityRequestContext;
   cost: number;
   rewardLabel: string;
   rewardName: string;
@@ -39,6 +42,7 @@ type BalanceAdjustmentInput = {
   businessId: string;
   branchId?: string;
   createdById?: string;
+  activityContext?: ActivityRequestContext;
   direction: "ADD" | "SUBTRACT";
   amount: number;
   reason: string;
@@ -208,6 +212,12 @@ export async function recordLoyaltyEarn(
       ...(input.branchId ? { branchId: input.branchId } : {}),
       customerId: input.customerId,
       createdById: input.createdById,
+      ...(input.activityContext?.deviceName
+        ? { deviceName: input.activityContext.deviceName }
+        : {}),
+      ...(input.activityContext?.ipAddress
+        ? { ipAddress: input.activityContext.ipAddress }
+        : {}),
     },
   });
 
@@ -304,6 +314,12 @@ export async function recordRewardRedemption(
       ...(input.branchId ? { branchId: input.branchId } : {}),
       customerId: input.customerId,
       createdById: input.createdById,
+      ...(input.activityContext?.deviceName
+        ? { deviceName: input.activityContext.deviceName }
+        : {}),
+      ...(input.activityContext?.ipAddress
+        ? { ipAddress: input.activityContext.ipAddress }
+        : {}),
     },
   });
 
@@ -398,6 +414,12 @@ export async function recordBalanceAdjustment(
       ...(input.branchId ? { branchId: input.branchId } : {}),
       customerId: input.customerId,
       createdById: input.createdById,
+      ...(input.activityContext?.deviceName
+        ? { deviceName: input.activityContext.deviceName }
+        : {}),
+      ...(input.activityContext?.ipAddress
+        ? { ipAddress: input.activityContext.ipAddress }
+        : {}),
     },
   });
 
