@@ -1,6 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
+import {
+  activityActorFields,
+  activityRequestMetadata,
+} from "@/lib/activity/business-activity";
+import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { offerInputSchema, normalizeOfferInput } from "@/lib/offers/catalog";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -19,7 +24,7 @@ async function getOfferManagementContext(slug: string) {
   if (!business || !canManageBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
-  return business;
+  return { business, session };
 }
 
 function revalidateOfferPaths(slug: string) {
@@ -40,12 +45,25 @@ function parseOfferForm(formData: FormData) {
 }
 
 export async function createOfferAction(slug: string, formData: FormData) {
-  const business = await getOfferManagementContext(slug);
+  const { business, session } = await getOfferManagementContext(slug);
   const parsed = parseOfferForm(formData);
   if (!parsed.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
 
-  await prisma.offer.create({
-    data: { ...normalizeOfferInput(parsed.data), businessId: business.id },
+  const activityContext = await getActivityRequestContext();
+  await prisma.$transaction(async (transaction) => {
+    const offer = await transaction.offer.create({
+      data: { ...normalizeOfferInput(parsed.data), businessId: business.id },
+      select: { name: true },
+    });
+    await transaction.businessActivity.create({
+      data: {
+        type: "OFFER_CREATED",
+        description: `تم إنشاء العرض ${offer.name}`,
+        businessId: business.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
+      },
+    });
   });
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=created`);
@@ -56,16 +74,34 @@ export async function updateOfferAction(
   offerId: string,
   formData: FormData
 ) {
-  const business = await getOfferManagementContext(slug);
+  const { business, session } = await getOfferManagementContext(slug);
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsed = parseOfferForm(formData);
   if (!parsed.success || !parsedOfferId.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
 
-  const result = await prisma.offer.updateMany({
+  const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
-    data: normalizeOfferInput(parsed.data),
+    select: { id: true },
   });
-  if (result.count !== 1) redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  if (!existingOffer) redirect(`/businesses/${business.slug}/offers?error=not-found`);
+
+  const activityContext = await getActivityRequestContext();
+  await prisma.$transaction(async (transaction) => {
+    const offer = await transaction.offer.update({
+      where: { id: existingOffer.id },
+      data: normalizeOfferInput(parsed.data),
+      select: { name: true },
+    });
+    await transaction.businessActivity.create({
+      data: {
+        type: "OFFER_UPDATED",
+        description: `تم تحديث العرض ${offer.name}`,
+        businessId: business.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
+      },
+    });
+  });
 
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=updated`);
@@ -76,7 +112,7 @@ export async function toggleOfferStatusAction(
   offerId: string,
   isActive: boolean
 ) {
-  const business = await getOfferManagementContext(slug);
+  const { business, session } = await getOfferManagementContext(slug);
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsedStatus = actionBooleanSchema.safeParse(isActive);
 
@@ -84,11 +120,31 @@ export async function toggleOfferStatusAction(
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
 
-  const result = await prisma.offer.updateMany({
+  const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
-    data: { isActive: parsedStatus.data },
+    select: { id: true },
   });
-  if (result.count !== 1) redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  if (!existingOffer) redirect(`/businesses/${business.slug}/offers?error=not-found`);
+
+  const activityContext = await getActivityRequestContext();
+  await prisma.$transaction(async (transaction) => {
+    const offer = await transaction.offer.update({
+      where: { id: existingOffer.id },
+      data: { isActive: parsedStatus.data },
+      select: { name: true },
+    });
+    await transaction.businessActivity.create({
+      data: {
+        type: "OFFER_STATUS_CHANGED",
+        description: parsedStatus.data
+          ? `تم تفعيل العرض ${offer.name}`
+          : `تم إيقاف العرض ${offer.name}`,
+        businessId: business.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
+      },
+    });
+  });
 
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=updated`);

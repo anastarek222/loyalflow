@@ -3,6 +3,12 @@ import {
   ActivityType,
   Prisma,
 } from "@/generated/prisma/client";
+import {
+  activityLabels,
+  activityTypes,
+  getActivityBadgeClass,
+  getActivityMetadataString,
+} from "@/lib/activity/presentation";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
@@ -11,7 +17,7 @@ import { notFound, redirect } from "next/navigation";
 
 const ACTIVITIES_PER_PAGE = 25;
 
-const activityTypes = [
+const legacyActivityTypes = [
   "CUSTOMER_CREATED",
   "CUSTOMER_UPDATED",
   "CUSTOMER_DEACTIVATED",
@@ -31,9 +37,21 @@ const activityTypes = [
   "USER_CREATED",
   "USER_STATUS_CHANGED",
   "USER_PASSWORD_CHANGED",
+  "REWARD_CREATED",
+  "REWARD_UPDATED",
+  "REWARD_STATUS_CHANGED",
+  "OFFER_CREATED",
+  "OFFER_UPDATED",
+  "OFFER_STATUS_CHANGED",
+  "BRANCH_CREATED",
+  "BRANCH_UPDATED",
+  "BRANCH_ACTIVATED",
+  "BRANCH_DEACTIVATED",
+  "BRANCH_STAFF_ASSIGNED",
+  "BRANCH_STAFF_REMOVED",
 ] as const satisfies readonly ActivityType[];
 
-const activityLabels: Record<
+const legacyActivityLabels: Record<
   ActivityType,
   string
 > = {
@@ -57,6 +75,18 @@ const activityLabels: Record<
   USER_CREATED: "إنشاء مستخدم",
   USER_STATUS_CHANGED: "تغيير حالة مستخدم",
   USER_PASSWORD_CHANGED: "تغيير كلمة المرور",
+  REWARD_CREATED: "إنشاء مكافأة",
+  REWARD_UPDATED: "تحديث مكافأة",
+  REWARD_STATUS_CHANGED: "تغيير حالة مكافأة",
+  OFFER_CREATED: "إنشاء عرض",
+  OFFER_UPDATED: "تحديث عرض",
+  OFFER_STATUS_CHANGED: "تغيير حالة عرض",
+  BRANCH_CREATED: "إنشاء فرع",
+  BRANCH_UPDATED: "تحديث فرع",
+  BRANCH_ACTIVATED: "تفعيل فرع",
+  BRANCH_DEACTIVATED: "إيقاف فرع",
+  BRANCH_STAFF_ASSIGNED: "إسناد موظف إلى فرع",
+  BRANCH_STAFF_REMOVED: "إزالة إسناد موظف من فرع",
 };
 
 function localizeActivityDescription(
@@ -118,10 +148,26 @@ function localizeActivityDescription(
     .replace(
       /^Changed password for (.+)$/,
       "تم تغيير كلمة المرور للحساب $1"
+    )
+    .replace(
+      /^Created reward (.+)$/,
+      "تم إنشاء المكافأة $1"
+    )
+    .replace(
+      /^Updated reward (.+)$/,
+      "تم تحديث المكافأة $1"
+    )
+    .replace(
+      /^Created offer (.+)$/,
+      "تم إنشاء العرض $1"
+    )
+    .replace(
+      /^Updated offer (.+)$/,
+      "تم تحديث العرض $1"
     );
 }
 
-function getBadgeClass(type: ActivityType) {
+function legacyGetBadgeClass(type: ActivityType) {
   switch (type) {
     case "CUSTOMER_CREATED":
     case "CUSTOMER_REACTIVATED":
@@ -130,18 +176,30 @@ function getBadgeClass(type: ActivityType) {
     case "LOYALTY_EARNED":
     case "REWARD_UNLOCKED":
     case "REFERRAL_RECORDED":
+    case "BRANCH_CREATED":
+    case "BRANCH_ACTIVATED":
+    case "BRANCH_STAFF_ASSIGNED":
+    case "REWARD_CREATED":
+    case "OFFER_CREATED":
       return "bg-emerald-100 text-emerald-700";
 
     case "CUSTOMER_DEACTIVATED":
     case "CUSTOMER_TAG_REMOVED":
     case "REWARD_EXPIRED":
     case "REWARD_REDEMPTION_BLOCKED":
+    case "BRANCH_DEACTIVATED":
       return "bg-red-100 text-red-700";
 
     case "CUSTOMER_UPDATED":
     case "CUSTOMER_NOTE_UPDATED":
     case "REWARD_REDEEMED":
     case "BALANCE_ADJUSTED":
+    case "BRANCH_UPDATED":
+    case "BRANCH_STAFF_REMOVED":
+    case "REWARD_UPDATED":
+    case "REWARD_STATUS_CHANGED":
+    case "OFFER_UPDATED":
+    case "OFFER_STATUS_CHANGED":
       return "bg-amber-100 text-amber-700";
 
     case "BUSINESS_SETTINGS_UPDATED":
@@ -826,6 +884,10 @@ export default async function ActivityPage({
         ) : (
           <section className="mt-6 space-y-4">
             {activities.map((activity) => {
+              const metadataActorEmail = getActivityMetadataString(
+                activity.metadata,
+                "actorEmail",
+              );
               const employeeName =
                 activity.createdBy
                   ? [
@@ -834,7 +896,9 @@ export default async function ActivityPage({
                     ]
                       .filter(Boolean)
                       .join(" ")
-                  : "النظام أو مستخدم محذوف";
+                  : metadataActorEmail
+                    ? `مدير النظام (${metadataActorEmail})`
+                    : "النظام أو مستخدم محذوف";
 
               const customerName =
                 activity.customer
@@ -854,7 +918,7 @@ export default async function ActivityPage({
                   <div className="flex flex-col justify-between gap-4 sm:flex-row">
                     <div className="min-w-0">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getBadgeClass(
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getActivityBadgeClass(
                           activity.type
                         )}`}
                       >
@@ -897,6 +961,12 @@ export default async function ActivityPage({
                                   : "مدير النظام"}{" "}
                           ·{" "}
                           {activity.createdBy.email}
+                        </p>
+                      )}
+
+                      {!activity.createdBy && metadataActorEmail && (
+                        <p className="mt-1 text-xs text-slate-400">
+                          مدير النظام · {metadataActorEmail}
                         </p>
                       )}
 
