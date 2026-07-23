@@ -1,6 +1,12 @@
 "use server";
 
 import { auth } from "@/auth";
+import {
+  assertTenantScopedNotificationReadTarget,
+  notificationItemReadWhere,
+  notificationReadStateWhere,
+} from "@/lib/notification-read-state";
+import { canAccessBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -23,6 +29,7 @@ async function getAuthorizedBusiness(
       select: {
         id: true,
         slug: true,
+        rewardThreshold: true,
       },
     });
 
@@ -30,13 +37,7 @@ async function getAuthorizedBusiness(
     redirect("/businesses");
   }
 
-  const canAccess =
-    session.user.role ===
-      "SUPER_ADMIN" ||
-    session.user.businessId ===
-      business.id;
-
-  if (!canAccess) {
+  if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
 
@@ -44,22 +45,6 @@ async function getAuthorizedBusiness(
     session,
     business,
   };
-}
-
-function validateNotificationKey(
-  notificationKey: string
-) {
-  const isValid =
-    notificationKey.length <= 250 &&
-    /^(activity|reward-ready):[A-Za-z0-9:_-]+$/.test(
-      notificationKey
-    );
-
-  if (!isValid) {
-    throw new Error(
-      "Invalid notification key"
-    );
-  }
 }
 
 export async function markBusinessNotificationsReadAction(
@@ -75,10 +60,10 @@ export async function markBusinessNotificationsReadAction(
   await prisma.$transaction([
     prisma.notificationReadState.upsert({
       where: {
-        userId_businessId: {
+        ...notificationReadStateWhere({
           userId: session.user.id,
           businessId: business.id,
-        },
+        }),
       },
 
       update: {
@@ -114,33 +99,60 @@ export async function markBusinessNotificationItemReadAction(
   slug: string,
   notificationKey: string
 ) {
-  validateNotificationKey(
-    notificationKey
-  );
-
   const {
     session,
     business,
   } = await getAuthorizedBusiness(slug);
 
+  await assertTenantScopedNotificationReadTarget({
+    notificationKey,
+    businessId: business.id,
+    userId: session.user.id,
+    rewardThreshold: business.rewardThreshold,
+    lookup: {
+      findNotification: (id) =>
+        prisma.notification.findUnique({
+          where: { id },
+          select: { businessId: true, userId: true },
+        }),
+      findActivity: (id) =>
+        prisma.businessActivity.findUnique({
+          where: { id },
+          select: { businessId: true, type: true },
+        }),
+      findRewardReadyCustomer: ({ id, balance, lifetimeRedeemed }) =>
+        prisma.customer.findFirst({
+          where: {
+            id,
+            businessId: business.id,
+            balance,
+            lifetimeRedeemed,
+          },
+          select: { businessId: true, isActive: true },
+        }),
+    },
+  });
+
+  const readAt = new Date();
+
   await prisma.notificationItemRead.upsert({
     where: {
-      userId_businessId_notificationKey: {
+      ...notificationItemReadWhere({
         userId: session.user.id,
         businessId: business.id,
         notificationKey,
-      },
+      }),
     },
 
     update: {
-      readAt: new Date(),
+      readAt,
     },
 
     create: {
       userId: session.user.id,
       businessId: business.id,
       notificationKey,
-      readAt: new Date(),
+      readAt,
     },
   });
 

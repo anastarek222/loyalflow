@@ -20,6 +20,8 @@ type CreateBusinessNotificationInput = {
   userId?: string | null;
 };
 
+// Notification.isRead is a legacy, non-authoritative column. Per-user read
+// state is derived from NotificationReadState and NotificationItemRead.
 export async function createBusinessNotification(
   transaction: NotificationTransaction,
   input: CreateBusinessNotificationInput
