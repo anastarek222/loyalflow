@@ -8,6 +8,7 @@ type LoyaltyOperationContextFieldsProps = {
   staffAttributionRequired: boolean;
   idPrefix: string;
   disabled?: boolean;
+  language?: AppLanguage;
 };
 
 /** Compact, shared form controls for the canonical loyalty operation context. */
@@ -19,13 +20,15 @@ export default function LoyaltyOperationContextFields({
   staffAttributionRequired,
   idPrefix,
   disabled = false,
+  language = "AR",
 }: LoyaltyOperationContextFieldsProps) {
+  const copy = customerUiCopy(language);
   return (
     <>
       {branches.length > 0 ? (
         <div className="mb-3">
           <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor={`${idPrefix}-branch`}>
-            الفرع
+            {copy.branch}
           </label>
           <select
             id={`${idPrefix}-branch`}
@@ -36,7 +39,7 @@ export default function LoyaltyOperationContextFields({
             className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500 disabled:bg-slate-100"
           >
             <option value="">
-              {branchRequired ? "اختر فرعك" : "بدون نسبة لفرع"}
+              {branchRequired ? copy.selectBranch : copy.noBranch}
             </option>
             {branches.map((branch) => (
               <option key={branch.id} value={branch.id}>
@@ -50,7 +53,7 @@ export default function LoyaltyOperationContextFields({
       {staffAttributionEnabled ? (
         <div className="mb-3">
           <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor={`${idPrefix}-staff`}>
-            الموظف المنسوبة إليه العملية
+            {copy.attributedStaff}
           </label>
           <select
             id={`${idPrefix}-staff`}
@@ -62,8 +65,8 @@ export default function LoyaltyOperationContextFields({
           >
             <option value="">
               {staffAttributionRequired
-                ? "اختر موظفًا"
-                : "بدون نسبة لموظف"}
+                ? copy.selectStaff
+                : copy.noStaff}
             </option>
             {staff.map((member) => (
               <option key={member.id} value={member.id}>
@@ -76,3 +79,5 @@ export default function LoyaltyOperationContextFields({
     </>
   );
 }
+import { customerUiCopy } from "@/lib/customers/ui-copy";
+import type { AppLanguage } from "@/lib/i18n";

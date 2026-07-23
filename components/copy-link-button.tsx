@@ -1,20 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { customerUiCopy } from "@/lib/customers/ui-copy";
+import type { AppLanguage } from "@/lib/i18n";
 
 type CopyLinkButtonProps = {
   value: string;
   label?: string;
   copiedLabel?: string;
   className?: string;
+  language?: AppLanguage;
 };
 
 export default function CopyLinkButton({
   value,
-  label = "نسخ الرابط",
-  copiedLabel = "تم النسخ ✓",
+  label,
+  copiedLabel,
   className,
+  language = "AR",
 }: CopyLinkButtonProps) {
+  const copy = customerUiCopy(language);
   const [copied, setCopied] =
     useState(false);
 
@@ -72,8 +77,8 @@ export default function CopyLinkButton({
       }
     >
       {copied
-        ? copiedLabel
-        : label}
+        ? (copiedLabel ?? copy.copied)
+        : (label ?? copy.copyLink)}
     </button>
   );
 }
