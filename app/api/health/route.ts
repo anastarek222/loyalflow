@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { checkReadiness } from "@/lib/health/readiness";
 import prisma from "@/lib/prisma";
+import { logServerError } from "@/lib/server/logging";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,26 +24,16 @@ function noStoreJson(
 }
 
 export async function GET() {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
+  const readiness = await checkReadiness(
+    () => prisma.$queryRaw`SELECT 1`
+  );
 
-    return noStoreJson({
-      ok: true,
-      service: "loyalflow",
-      database: "connected",
-    });
-  } catch {
-    console.error(
-      "LoyalFlow database health check failed."
-    );
-
-    return noStoreJson(
-      {
-        ok: false,
-        service: "loyalflow",
-        database: "disconnected",
-      },
-      503
+  if (readiness.status === 503) {
+    logServerError(
+      "database_readiness_probe_failed",
+      new Error("Database readiness probe failed")
     );
   }
+
+  return noStoreJson(readiness.body, readiness.status);
 }

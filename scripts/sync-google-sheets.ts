@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { syncAllBusinessesToGoogleSheets } from "../lib/google-sheets-sync";
 import prisma from "../lib/prisma";
+import { logServerError } from "../lib/server/logging";
 
 async function main() {
   console.log("\nStarting Google Sheets sync...\n");
@@ -21,9 +22,7 @@ async function main() {
 main()
   .catch((error) => {
     console.error("\n❌ Google Sheets sync failed");
-    console.error(
-      error instanceof Error ? error.message : error
-    );
+    logServerError("google_sheets_sync_script_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

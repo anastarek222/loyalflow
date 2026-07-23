@@ -10,6 +10,7 @@ import {
   getPersistedRewardUnlockState,
   getRewardUnlockRedemptionState,
 } from "../lib/rewards/expiration";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_MIGRATION = "20260720210000_add_reward_expiration";
 const connectionString = process.env.DATABASE_URL;
@@ -138,7 +139,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("reward_expiration_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

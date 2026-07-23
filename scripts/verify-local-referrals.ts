@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/prisma/client";
 import { canRecordReferral } from "../lib/referrals/code";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_MIGRATION = "20260720220000_add_referral_program";
 const connectionString = process.env.DATABASE_URL;
@@ -72,7 +73,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("referrals_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

@@ -10,6 +10,7 @@ import {
   getSlugCandidate,
   slugifyBusinessName,
 } from "../lib/business-profile";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_DATABASE = "loyalflow_test";
 const EXPECTED_MIGRATION = "20260721000000_add_business_currency_timezone";
@@ -151,7 +152,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("business_profile_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

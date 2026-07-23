@@ -11,6 +11,13 @@ export default defineConfig({
   },
   datasource: {
     url: env("DATABASE_URL"),
-    shadowDatabaseUrl: env("SHADOW_DATABASE_URL"),
+    // A shadow database is only used by Prisma development workflows. It is
+    // intentionally optional for status/deploy commands and runtime hosting.
+    ...(process.env.SHADOW_DATABASE_URL?.trim()
+      ? {
+          shadowDatabaseUrl:
+            process.env.SHADOW_DATABASE_URL.trim(),
+        }
+      : {}),
   },
 });

@@ -13,6 +13,7 @@ import {
   calculatePromotionBonus,
   selectEligiblePromotion,
 } from "../lib/promotions/engine";
+import { logServerError } from "../lib/server/logging";
 
 const EXPECTED_PROMOTION_MIGRATION =
   "20260720200000_add_earn_idempotency_and_promotion_multiplier";
@@ -181,9 +182,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(
-      error instanceof Error ? error.stack ?? error.message : error
-    );
+    logServerError("promotions_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

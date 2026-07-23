@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { input, password } from "@inquirer/prompts";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, UserRole } from "../generated/prisma/client";
+import { logServerError } from "../lib/server/logging";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -101,7 +102,7 @@ async function main() {
 main()
   .catch((error) => {
     console.error("\n❌ Failed to create Super Admin");
-    console.error(error instanceof Error ? error.message : error);
+    logServerError("create_super_admin_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

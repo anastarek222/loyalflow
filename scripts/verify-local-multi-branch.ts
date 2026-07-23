@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Prisma, PrismaClient } from "../generated/prisma/client";
+import { logServerError } from "../lib/server/logging";
 import { canAccessBranch, canWriteAtBranch } from "../lib/branches/access";
 import {
   recordLoyaltyEarn,
@@ -310,7 +311,7 @@ async function main() {
 
 main()
   .catch((error) => {
-    console.error(error instanceof Error ? error.stack ?? error.message : error);
+    logServerError("multi_branch_verification_failed", error);
     process.exitCode = 1;
   })
   .finally(async () => {

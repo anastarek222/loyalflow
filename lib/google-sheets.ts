@@ -37,7 +37,7 @@ export function getSpreadsheetId() {
 
   if (!spreadsheetId) {
     throw new Error(
-      "GOOGLE_SPREADSHEET_ID is missing from .env"
+      "GOOGLE_SPREADSHEET_ID is not configured"
     );
   }
 
