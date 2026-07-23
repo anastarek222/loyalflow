@@ -292,6 +292,7 @@ export default async function CustomerDetailsPage({
 
   const addLoyalty = addLoyaltyAction.bind(null, business.slug, customer.id);
   const loyaltyOperationId = randomUUID();
+  const adjustmentOperationId = randomUUID();
 
   const availableRewards = getAvailableRewardOptions(
     business.rewards,
@@ -1074,6 +1075,7 @@ export default async function CustomerDetailsPage({
                         rewardName={reward.name}
                         cost={reward.cost}
                         unitName={business.unitName}
+                        operationId={randomUUID()}
                       />
                     );
                   })}
@@ -1176,6 +1178,11 @@ export default async function CustomerDetailsPage({
                     action={adjustCustomerBalance}
                     className="mt-5 grid gap-4 sm:grid-cols-2"
                   >
+                    <input
+                      type="hidden"
+                      name="operationId"
+                      value={adjustmentOperationId}
+                    />
                     <div>
                       <label
                         htmlFor="adjustmentDirection"

@@ -253,6 +253,7 @@ model LoyaltyTransaction {
   attributedStaff      User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
   customer             Customer              @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
   promotionApplication PromotionApplication?
+  rewardRedemption     RewardRedemption?
 
   @@unique([businessId, idempotencyKey])
   @@unique([id, businessId])
@@ -339,23 +340,26 @@ model PromotionApplication {
 }
 
 model RewardRedemption {
-  id                String   @id @default(cuid())
+  id                String              @id @default(cuid())
   rewardName        String
   cost              Int
   rewardId          String?
+  transactionId     String?
   customerId        String
   businessId        String
   branchId          String?
   createdById       String?
   attributedStaffId String?
-  createdAt         DateTime @default(now())
-  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branch            Branch?  @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
-  createdBy         User?    @relation("RedemptionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
-  attributedStaff   User?    @relation("RedemptionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
-  customer          Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
-  reward            Reward?  @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdAt         DateTime            @default(now())
+  business          Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch            Branch?             @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy         User?               @relation("RedemptionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  attributedStaff   User?               @relation("RedemptionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
+  customer          Customer            @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  reward            Reward?             @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: NoAction)
+  transaction       LoyaltyTransaction? @relation(fields: [transactionId, businessId], references: [id, businessId], onDelete: Cascade)
 
+  @@unique([transactionId, businessId])
   @@index([customerId, createdAt])
   @@index([businessId, createdAt])
   @@index([businessId, branchId, createdAt])

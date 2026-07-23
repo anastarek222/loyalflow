@@ -56,9 +56,25 @@ function createTransaction(
         calls.findUnique.push(args);
         return { balance, businessId };
       },
+      findFirst: async (args: unknown) => {
+        calls.findUnique.push(args);
+        return businessId === "business-1" ? { balance } : null;
+      },
     },
     loyaltyTransaction: {
-      findUnique: async () => existingEarn,
+      findUnique: async () =>
+        existingEarn
+          ? {
+              businessId,
+              customerId: existingEarn.customerId,
+              type: "EARN",
+              amount: 2,
+              sourceLoyaltyMode: "VISITS",
+              saleAmount: null,
+              balanceAfter: existingEarn.balanceAfter,
+              promotionApplication: null,
+            }
+          : null,
       create: async (args: unknown) => {
         calls.loyaltyTransactions.push(args);
         return { id: "transaction-1" };
@@ -94,6 +110,8 @@ function createTransaction(
         return {};
       },
     },
+    $queryRaw: async () =>
+      businessId === "business-1" ? [{ id: "customer-1" }] : [],
   } as unknown as Prisma.TransactionClient;
 
   return { transaction, calls };
@@ -209,6 +227,7 @@ test("redemption records the balance change, reward, and audit activity", async 
         rewardName: "20% off — VIP20",
         cost: 5,
         rewardId: "reward-1",
+        transactionId: "transaction-1",
         customerId: "customer-1",
         businessId: "business-1",
         createdById: "staff-1",
