@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 
 type RedeemRewardDialogProps = {
   action: () => void | Promise<void>;
@@ -9,6 +10,7 @@ type RedeemRewardDialogProps = {
   cost: number;
   unitName: string;
   operationId: string;
+  operationContextFields: ReactNode;
 };
 
 export default function RedeemRewardDialog({
@@ -18,6 +20,7 @@ export default function RedeemRewardDialog({
   cost,
   unitName,
   operationId,
+  operationContextFields,
 }: RedeemRewardDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -67,6 +70,7 @@ export default function RedeemRewardDialog({
 
               <form action={action}>
                 <input type="hidden" name="operationId" value={operationId} />
+                {operationContextFields}
                 <button
                   type="submit"
                   className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"

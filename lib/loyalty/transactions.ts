@@ -1,5 +1,8 @@
 import { Prisma, type LoyaltyMode } from "@/generated/prisma/client";
-import { validateStaffAttribution } from "@/lib/loyalty/staff-attribution";
+import {
+  resolveFinancialOperationContext,
+  type FinancialOperationActor,
+} from "@/lib/loyalty/operation-context";
 import { createBusinessNotification } from "@/lib/notifications";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
 
@@ -10,6 +13,7 @@ type EarnTransactionInput = {
   businessId: string;
   branchId?: string;
   createdById?: string;
+  actor?: FinancialOperationActor;
   activityContext?: ActivityRequestContext;
   attributedStaffId?: string;
   amount: number;
@@ -30,7 +34,9 @@ type RewardRedemptionInput = {
   businessId: string;
   branchId?: string;
   createdById?: string;
+  actor?: FinancialOperationActor;
   activityContext?: ActivityRequestContext;
+  attributedStaffId?: string;
   cost: number;
   rewardLabel: string;
   rewardName: string;
@@ -44,7 +50,9 @@ type BalanceAdjustmentInput = {
   businessId: string;
   branchId?: string;
   createdById?: string;
+  actor?: FinancialOperationActor;
   activityContext?: ActivityRequestContext;
+  attributedStaffId?: string;
   direction: "ADD" | "SUBTRACT";
   amount: number;
   reason: string;
@@ -107,25 +115,6 @@ async function lockCustomerBalance(
   return rows.length === 1;
 }
 
-async function hasActiveBranchContext(
-  transaction: TransactionClient,
-  businessId: string,
-  branchId: string | undefined,
-) {
-  if (!branchId) return true;
-
-  const branch = await transaction.branch.findFirst({
-    where: {
-      id: branchId,
-      businessId,
-      isActive: true,
-    },
-    select: { id: true },
-  });
-
-  return Boolean(branch);
-}
-
 export async function recordLoyaltyEarn(
   transaction: TransactionClient,
   input: EarnTransactionInput,
@@ -141,6 +130,17 @@ export async function recordLoyaltyEarn(
   ) {
     throw new Error("Invalid promotion for loyalty earn.");
   }
+
+  const operationContext = await resolveFinancialOperationContext(transaction, {
+    businessId: input.businessId,
+    capability: "LOYALTY_EARN",
+    actor: input.actor,
+    branchId: input.branchId,
+    attributedStaffId: input.attributedStaffId,
+    legacyCreatedById: input.createdById,
+  });
+
+  if (!operationContext.valid) return null;
 
   if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
     return null;
@@ -195,26 +195,6 @@ export async function recordLoyaltyEarn(
     }
   }
 
-  if (
-    !(await hasActiveBranchContext(
-      transaction,
-      input.businessId,
-      input.branchId,
-    ))
-  ) {
-    return null;
-  }
-
-  const staffAttribution = await validateStaffAttribution(transaction, {
-    businessId: input.businessId,
-    branchId: input.branchId,
-    attributedStaffId: input.attributedStaffId,
-  });
-
-  if (!staffAttribution.valid) {
-    return null;
-  }
-
   const updateResult = await transaction.customer.updateMany({
     where: {
       id: input.customerId,
@@ -256,10 +236,10 @@ export async function recordLoyaltyEarn(
       ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
-      createdById: input.createdById,
-      ...(staffAttribution.attributedStaffId
-        ? { attributedStaffId: staffAttribution.attributedStaffId }
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      createdById: operationContext.createdById,
+      ...(operationContext.attributedStaffId
+        ? { attributedStaffId: operationContext.attributedStaffId }
         : {}),
     },
   });
@@ -282,9 +262,9 @@ export async function recordLoyaltyEarn(
       type: "LOYALTY_EARNED",
       description: input.activityDescription,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
       customerId: input.customerId,
-      createdById: input.createdById,
+      createdById: operationContext.createdById,
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
@@ -311,6 +291,17 @@ export async function recordRewardRedemption(
   transaction: TransactionClient,
   input: RewardRedemptionInput,
 ) {
+  const operationContext = await resolveFinancialOperationContext(transaction, {
+    businessId: input.businessId,
+    capability: "LOYALTY_REDEEM",
+    actor: input.actor,
+    branchId: input.branchId,
+    attributedStaffId: input.attributedStaffId,
+    legacyCreatedById: input.createdById,
+  });
+
+  if (!operationContext.valid) return null;
+
   if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
     return null;
   }
@@ -352,16 +343,6 @@ export async function recordRewardRedemption(
 
       return existing.balanceAfter;
     }
-  }
-
-  if (
-    !(await hasActiveBranchContext(
-      transaction,
-      input.businessId,
-      input.branchId,
-    ))
-  ) {
-    return null;
   }
 
   if (input.unlockId) {
@@ -430,8 +411,11 @@ export async function recordRewardRedemption(
       ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
-      createdById: input.createdById,
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      createdById: operationContext.createdById,
+      ...(operationContext.attributedStaffId
+        ? { attributedStaffId: operationContext.attributedStaffId }
+        : {}),
     },
   });
 
@@ -443,8 +427,11 @@ export async function recordRewardRedemption(
       transactionId: redeemedTransaction.id,
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
-      createdById: input.createdById,
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      createdById: operationContext.createdById,
+      ...(operationContext.attributedStaffId
+        ? { attributedStaffId: operationContext.attributedStaffId }
+        : {}),
     },
   });
 
@@ -453,9 +440,9 @@ export async function recordRewardRedemption(
       type: "REWARD_REDEEMED",
       description: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
       customerId: input.customerId,
-      createdById: input.createdById,
+      createdById: operationContext.createdById,
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
@@ -483,6 +470,17 @@ export async function recordBalanceAdjustment(
   input: BalanceAdjustmentInput,
 ) {
   const signedAmount = input.direction === "ADD" ? input.amount : -input.amount;
+
+  const operationContext = await resolveFinancialOperationContext(transaction, {
+    businessId: input.businessId,
+    capability: "LOYALTY_ADJUST",
+    actor: input.actor,
+    branchId: input.branchId,
+    attributedStaffId: input.attributedStaffId,
+    legacyCreatedById: input.createdById,
+  });
+
+  if (!operationContext.valid) return null;
 
   if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
     return null;
@@ -519,16 +517,6 @@ export async function recordBalanceAdjustment(
 
       return existing.balanceAfter;
     }
-  }
-
-  if (
-    !(await hasActiveBranchContext(
-      transaction,
-      input.businessId,
-      input.branchId,
-    ))
-  ) {
-    return null;
   }
 
   const updateResult = await transaction.customer.updateMany({
@@ -579,8 +567,11 @@ export async function recordBalanceAdjustment(
       ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
-      createdById: input.createdById,
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      createdById: operationContext.createdById,
+      ...(operationContext.attributedStaffId
+        ? { attributedStaffId: operationContext.attributedStaffId }
+        : {}),
     },
   });
 
@@ -591,9 +582,9 @@ export async function recordBalanceAdjustment(
         signedAmount > 0 ? "+" : ""
       }${signedAmount}. السبب: ${input.reason}`,
       businessId: input.businessId,
-      ...(input.branchId ? { branchId: input.branchId } : {}),
+      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
       customerId: input.customerId,
-      createdById: input.createdById,
+      createdById: operationContext.createdById,
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),

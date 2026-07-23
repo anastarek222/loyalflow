@@ -76,6 +76,7 @@ export async function validateStaffAttribution(
     },
     select: {
       id: true,
+      role: true,
     },
   });
 
@@ -86,7 +87,7 @@ export async function validateStaffAttribution(
     };
   }
 
-  if (input.branchId) {
+  if (input.branchId && staff.role === "STAFF") {
     const assignment = await transaction.branchStaffAssignment.findFirst({
       where: {
         businessId: input.businessId,

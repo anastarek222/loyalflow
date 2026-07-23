@@ -15,6 +15,7 @@
     "verify:local-referrals": "tsx scripts/verify-local-referrals.ts",
     "verify:local-staff-permissions": "tsx scripts/verify-local-staff-permissions.ts",
     "verify:local-multi-branch": "tsx scripts/verify-local-multi-branch.ts",
+    "verify:local-branch-staff": "tsx scripts/verify-local-multi-branch.ts",
     "verify:local-customer-notes-tags": "tsx scripts/verify-local-customer-notes-tags.ts",
     "verify:local-bulk-customer-operations": "tsx scripts/verify-local-bulk-customer-operations.ts",
     "verify:local-offers": "tsx scripts/verify-local-offers.ts",

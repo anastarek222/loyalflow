@@ -8,11 +8,13 @@ import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import ScanActionButton from "@/components/scan-action-button";
+import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
 import {
   addLoyaltyAction,
   redeemRewardAction,
 } from "@/app/businesses/[slug]/customers/[customerId]/actions";
 import { getBusinessTheme } from "@/lib/theme";
+import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
 
 type PageProps = {
   params: Promise<{
@@ -50,6 +52,8 @@ export default async function ScanCustomerPage({
         cardStyle: true,
         fontFamily: true,
         id: true,
+        staffAttributionEnabled: true,
+        staffAttributionRequired: true,
       },
     });
 
@@ -73,6 +77,23 @@ export default async function ScanCustomerPage({
     session.user,
     business.id,
     "LOYALTY_REDEEM"
+  );
+
+  const operationContextOptions = await getOperationContextOptions(prisma, {
+    businessId: business.id,
+    actor: session.user,
+  });
+
+  const operationContextFields = (disabled: boolean, idPrefix: string) => (
+    <LoyaltyOperationContextFields
+      branches={operationContextOptions.branches}
+      staff={operationContextOptions.staff}
+      branchRequired={operationContextOptions.branchRequired}
+      staffAttributionEnabled={business.staffAttributionEnabled}
+      staffAttributionRequired={business.staffAttributionRequired}
+      idPrefix={idPrefix}
+      disabled={disabled}
+    />
   );
 
   const successMessage =
@@ -318,6 +339,8 @@ export default async function ScanCustomerPage({
               />
             ) : null}
 
+            {operationContextFields(!canEarn, "scan-earn-operation")}
+
             <input
               type="hidden"
               name="operationId"
@@ -379,6 +402,7 @@ export default async function ScanCustomerPage({
                   name="operationId"
                   value={randomUUID()}
                 />
+                {operationContextFields(!canRedeem, `scan-redeem-${unlock.id}`)}
                 <ScanActionButton>
                   استبدال المكافأة
                 </ScanActionButton>

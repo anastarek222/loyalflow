@@ -261,6 +261,8 @@ export default async function StaffReportsPage({
               true,
             createdById:
               true,
+            attributedStaffId:
+              true,
           },
         }),
     ]);
@@ -340,10 +342,13 @@ export default async function StaffReportsPage({
     const transaction of
       transactions
   ) {
+    const creditedStaffId =
+      transaction.attributedStaffId ??
+      transaction.createdById;
     let row =
-      transaction.createdById
+      creditedStaffId
         ? performance.get(
-            transaction.createdById
+            creditedStaffId
           )
         : undefined;
 

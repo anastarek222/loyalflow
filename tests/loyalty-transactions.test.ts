@@ -28,6 +28,10 @@ function createTransaction(
     balanceAfter: number;
   } | null = null,
   activeBranch = true,
+  staffAttributionEnabled = false,
+  staffAttributionRequired = false,
+  branchAssigned = true,
+  attributedStaffExists = true,
 ) {
   const calls: RecordedCalls = {
     updateMany: [],
@@ -43,8 +47,8 @@ function createTransaction(
   const transaction = {
     business: {
       findUnique: async () => ({
-        staffAttributionEnabled: false,
-        staffAttributionRequired: false,
+        staffAttributionEnabled,
+        staffAttributionRequired,
       }),
     },
     customer: {
@@ -91,6 +95,14 @@ function createTransaction(
         calls.branches.push(args);
         return activeBranch ? { id: "branch-1" } : null;
       },
+      count: async () => (activeBranch ? 1 : 0),
+    },
+    branchStaffAssignment: {
+      findFirst: async () => (branchAssigned ? { id: "assignment-1" } : null),
+    },
+    user: {
+      findFirst: async () =>
+        attributedStaffExists ? { id: "staff-1", role: "STAFF" } : null,
     },
     rewardRedemption: {
       create: async (args: unknown) => {
@@ -472,4 +484,97 @@ test("returns the prior result for the same idempotency key without new writes",
   assert.equal(calls.updateMany.length, 0);
   assert.equal(calls.loyaltyTransactions.length, 0);
   assert.equal(calls.promotionApplications.length, 0);
+});
+
+test("rejected staff branch or staff attribution context writes no financial side effects", async () => {
+  const { transaction, calls } = createTransaction(
+    1,
+    9,
+    "business-1",
+    null,
+    true,
+    true,
+    false,
+    false,
+  );
+
+  const balance = await recordLoyaltyEarn(transaction, {
+    customerId: "customer-1",
+    businessId: "business-1",
+    actor: { id: "actor-staff", role: "STAFF", businessId: "business-1" },
+    branchId: "branch-1",
+    attributedStaffId: "staff-1",
+    amount: 2,
+    sourceLoyaltyMode: "VISITS",
+    transactionNote: "Rejected context",
+    activityDescription: "Rejected context",
+  });
+
+  assert.equal(balance, null);
+  assert.equal(calls.updateMany.length, 0);
+  assert.equal(calls.loyaltyTransactions.length, 0);
+  assert.equal(calls.rewardRedemptions.length, 0);
+  assert.equal(calls.activities.length, 0);
+});
+
+test("successful redemptions persist canonical branch, actor, and staff attribution", async () => {
+  const { transaction, calls } = createTransaction(
+    1,
+    6,
+    "business-1",
+    null,
+    true,
+    true,
+    false,
+    true,
+    true,
+  );
+
+  const balance = await recordRewardRedemption(transaction, {
+    customerId: "customer-1",
+    businessId: "business-1",
+    actor: { id: "actor-staff", role: "STAFF", businessId: "business-1" },
+    branchId: "branch-1",
+    attributedStaffId: "staff-1",
+    cost: 2,
+    rewardLabel: "Context reward",
+    rewardName: "Context reward",
+  });
+
+  assert.equal(balance, 6);
+  assert.deepEqual(calls.loyaltyTransactions[0], {
+    data: {
+      type: "REDEEM",
+      amount: -2,
+      balanceAfter: 6,
+      note: "Context reward",
+      customerId: "customer-1",
+      businessId: "business-1",
+      branchId: "branch-1",
+      createdById: "actor-staff",
+      attributedStaffId: "staff-1",
+    },
+  });
+  assert.deepEqual(calls.rewardRedemptions[0], {
+    data: {
+      rewardName: "Context reward",
+      cost: 2,
+      transactionId: "transaction-1",
+      customerId: "customer-1",
+      businessId: "business-1",
+      branchId: "branch-1",
+      createdById: "actor-staff",
+      attributedStaffId: "staff-1",
+    },
+  });
+  assert.deepEqual(calls.activities[0], {
+    data: {
+      type: "REWARD_REDEEMED",
+      description: "تم استبدال Context reward مقابل 2",
+      businessId: "business-1",
+      branchId: "branch-1",
+      customerId: "customer-1",
+      createdById: "actor-staff",
+    },
+  });
 });
