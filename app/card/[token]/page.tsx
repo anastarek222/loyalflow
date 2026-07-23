@@ -8,6 +8,7 @@ import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
 import { getBusinessTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
+import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -47,6 +48,7 @@ export async function generateMetadata({
           select: {
             name: true,
             isActive: true,
+            cardDefaultLanguage: true,
           },
         },
       },
@@ -68,13 +70,16 @@ export async function generateMetadata({
   ]
     .filter(Boolean)
     .join(" ");
+  const { description } = getPublicCardLocalization(
+    customer.business.cardDefaultLanguage,
+    customerName
+  );
 
   return {
     title:
       `${customer.business.name} - ${customerName}`,
 
-    description:
-      `بطاقة الولاء الرقمية الخاصة بـ ${customerName}`,
+    description,
 
     manifest:
       `/api/card-manifest/${token}`,

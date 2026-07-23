@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { isPublicCardToken } from "@/lib/cards/public-token";
+import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
 import prisma from "@/lib/prisma";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
@@ -67,6 +68,7 @@ export async function GET(
             name: true,
             primaryColor: true,
             isActive: true,
+            cardDefaultLanguage: true,
           },
         },
       },
@@ -94,6 +96,10 @@ export async function GET(
   ]
     .filter(Boolean)
     .join(" ");
+  const { lang, dir, description } = getPublicCardLocalization(
+    customer.business.cardDefaultLanguage,
+    customerName
+  );
 
   const manifest = {
     id: `/card/${token}`,
@@ -107,8 +113,7 @@ export async function GET(
         18
       ),
 
-    description:
-      `بطاقة الولاء الرقمية الخاصة بـ ${customerName}`,
+    description,
 
     start_url:
       `/card/${token}`,
@@ -119,9 +124,9 @@ export async function GET(
 
     orientation: "portrait",
 
-    lang: "ar",
+    lang,
 
-    dir: "rtl",
+    dir,
 
     background_color:
       "#020617",
