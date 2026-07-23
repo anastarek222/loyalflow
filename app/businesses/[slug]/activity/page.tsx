@@ -1,4 +1,8 @@
 import { auth } from "@/auth";
+import {
+  ActivityType,
+  Prisma,
+} from "@/generated/prisma/client";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
@@ -12,28 +16,41 @@ const activityTypes = [
   "CUSTOMER_UPDATED",
   "CUSTOMER_DEACTIVATED",
   "CUSTOMER_REACTIVATED",
+  "CUSTOMER_TAG_ASSIGNED",
+  "CUSTOMER_TAG_REMOVED",
+  "CUSTOMER_NOTE_CREATED",
+  "CUSTOMER_NOTE_UPDATED",
   "LOYALTY_EARNED",
   "REWARD_REDEEMED",
+  "REWARD_UNLOCKED",
+  "REWARD_EXPIRED",
+  "REWARD_REDEMPTION_BLOCKED",
+  "REFERRAL_RECORDED",
   "BALANCE_ADJUSTED",
   "BUSINESS_SETTINGS_UPDATED",
   "USER_CREATED",
   "USER_STATUS_CHANGED",
   "USER_PASSWORD_CHANGED",
-] as const;
-
-type ActivityTypeValue =
-  (typeof activityTypes)[number];
+] as const satisfies readonly ActivityType[];
 
 const activityLabels: Record<
-  ActivityTypeValue,
+  ActivityType,
   string
 > = {
   CUSTOMER_CREATED: "إنشاء عميل",
   CUSTOMER_UPDATED: "تحديث بيانات عميل",
   CUSTOMER_DEACTIVATED: "إيقاف عميل",
   CUSTOMER_REACTIVATED: "إعادة تفعيل عميل",
+  CUSTOMER_TAG_ASSIGNED: "إضافة وسم للعميل",
+  CUSTOMER_TAG_REMOVED: "إزالة وسم من العميل",
+  CUSTOMER_NOTE_CREATED: "إضافة ملاحظة للعميل",
+  CUSTOMER_NOTE_UPDATED: "تحديث ملاحظة العميل",
   LOYALTY_EARNED: "إضافة رصيد ولاء",
   REWARD_REDEEMED: "استبدال مكافأة",
+  REWARD_UNLOCKED: "فتح مكافأة",
+  REWARD_EXPIRED: "انتهاء صلاحية مكافأة",
+  REWARD_REDEMPTION_BLOCKED: "تعذر استبدال مكافأة",
+  REFERRAL_RECORDED: "تسجيل إحالة",
   BALANCE_ADJUSTED: "تعديل رصيد",
   BUSINESS_SETTINGS_UPDATED:
     "تحديث إعدادات النشاط",
@@ -104,16 +121,25 @@ function localizeActivityDescription(
     );
 }
 
-function getBadgeClass(type: ActivityTypeValue) {
+function getBadgeClass(type: ActivityType) {
   switch (type) {
     case "CUSTOMER_CREATED":
     case "CUSTOMER_REACTIVATED":
+    case "CUSTOMER_TAG_ASSIGNED":
+    case "CUSTOMER_NOTE_CREATED":
     case "LOYALTY_EARNED":
+    case "REWARD_UNLOCKED":
+    case "REFERRAL_RECORDED":
       return "bg-emerald-100 text-emerald-700";
 
     case "CUSTOMER_DEACTIVATED":
+    case "CUSTOMER_TAG_REMOVED":
+    case "REWARD_EXPIRED":
+    case "REWARD_REDEMPTION_BLOCKED":
       return "bg-red-100 text-red-700";
 
+    case "CUSTOMER_UPDATED":
+    case "CUSTOMER_NOTE_UPDATED":
     case "REWARD_REDEEMED":
     case "BALANCE_ADJUSTED":
       return "bg-amber-100 text-amber-700";
@@ -124,9 +150,44 @@ function getBadgeClass(type: ActivityTypeValue) {
     case "USER_PASSWORD_CHANGED":
       return "bg-violet-100 text-violet-700";
 
-    default:
-      return "bg-slate-100 text-slate-700";
   }
+}
+
+const sortOptions = ["newest", "oldest"] as const;
+
+type SortOption = (typeof sortOptions)[number];
+
+const activityOrderBy: Record<
+  SortOption,
+  Prisma.BusinessActivityOrderByWithRelationInput
+> = {
+  newest: { createdAt: "desc" },
+  oldest: { createdAt: "asc" },
+};
+
+function isActivityType(
+  value: string | undefined
+): value is ActivityType {
+  return (
+    typeof value === "string" &&
+    Object.hasOwn(activityLabels, value)
+  );
+}
+
+function isSortOption(
+  value: string | undefined
+): value is SortOption {
+  return (
+    typeof value === "string" &&
+    Object.hasOwn(activityOrderBy, value)
+  );
+}
+
+function getAllowedOption(
+  value: string | undefined,
+  options: ReadonlySet<string>
+) {
+  return value && options.has(value) ? value : null;
 }
 
 type ActivityPageProps = {
@@ -135,7 +196,13 @@ type ActivityPageProps = {
   }>;
 
   searchParams: Promise<{
+    q?: string;
     type?: string;
+    actor?: string;
+    customer?: string;
+    branch?: string;
+    device?: string;
+    sort?: string;
     page?: string;
   }>;
 };
@@ -194,32 +261,184 @@ export default async function ActivityPage({
     redirect(`/businesses/${business.slug}`);
   }
 
-  const selectedType = activityTypes.includes(
-    query.type as ActivityTypeValue
-  )
-    ? (query.type as ActivityTypeValue)
-    : null;
+  const [actorOptions, customerOptions, branchOptions, deviceRows, totalActivities] =
+    await Promise.all([
+      prisma.user.findMany({
+        where: { businessId: business.id },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+        orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+      }),
+      prisma.customer.findMany({
+        where: { businessId: business.id },
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          customerCode: true,
+        },
+        orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
+      }),
+      prisma.branch.findMany({
+        where: { businessId: business.id },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.businessActivity.findMany({
+        where: {
+          businessId: business.id,
+          deviceName: { not: null, notIn: [""] },
+        },
+        distinct: ["deviceName"],
+        select: { deviceName: true },
+        orderBy: { deviceName: "asc" },
+      }),
+      prisma.businessActivity.count({
+        where: { businessId: business.id },
+      }),
+    ]);
 
-  const parsedPage = Number.parseInt(
-    query.page ?? "1",
-    10
+  const deviceOptions = deviceRows
+    .flatMap(({ deviceName }) =>
+      deviceName ? [deviceName] : []
+    )
+    .sort((firstDevice, secondDevice) =>
+      firstDevice.localeCompare(secondDevice)
+    );
+  const selectedType = isActivityType(query.type)
+    ? query.type
+    : null;
+  const selectedActor = getAllowedOption(
+    query.actor,
+    new Set(actorOptions.map((actor) => actor.id))
   );
+  const selectedCustomer = getAllowedOption(
+    query.customer,
+    new Set(customerOptions.map((customer) => customer.id))
+  );
+  const selectedBranch = getAllowedOption(
+    query.branch,
+    new Set(branchOptions.map((branch) => branch.id))
+  );
+  const selectedDevice = getAllowedOption(
+    query.device,
+    new Set(deviceOptions)
+  );
+  const selectedSort = isSortOption(query.sort)
+    ? query.sort
+    : "newest";
+  const searchQuery = query.q?.trim().slice(0, 200) ?? "";
+
+  const parsedPage =
+    query.page && /^\d+$/.test(query.page)
+      ? Number(query.page)
+      : Number.NaN;
 
   const requestedPage =
     Number.isFinite(parsedPage) && parsedPage > 0
       ? parsedPage
       : 1;
 
-  const activityWhere = {
+  const activityWhere: Prisma.BusinessActivityWhereInput = {
     businessId: business.id,
     ...(selectedType
       ? {
           type: selectedType,
         }
       : {}),
+    ...(selectedActor ? { createdById: selectedActor } : {}),
+    ...(selectedCustomer
+      ? { customerId: selectedCustomer }
+      : {}),
+    ...(selectedBranch ? { branchId: selectedBranch } : {}),
+    ...(selectedDevice ? { deviceName: selectedDevice } : {}),
+    ...(searchQuery
+      ? {
+          OR: [
+            {
+              description: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+            {
+              deviceName: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+            {
+              ipAddress: {
+                contains: searchQuery,
+                mode: "insensitive",
+              },
+            },
+            {
+              createdBy: {
+                OR: [
+                  {
+                    firstName: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                  {
+                    lastName: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                  {
+                    email: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              customer: {
+                OR: [
+                  {
+                    firstName: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                  {
+                    lastName: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                  {
+                    customerCode: {
+                      contains: searchQuery,
+                      mode: "insensitive",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              branch: {
+                name: {
+                  contains: searchQuery,
+                  mode: "insensitive",
+                },
+              },
+            },
+          ],
+        }
+      : {}),
   };
 
-  const totalActivities =
+  const filteredActivities =
     await prisma.businessActivity.count({
       where: activityWhere,
     });
@@ -227,7 +446,7 @@ export default async function ActivityPage({
   const totalPages = Math.max(
     1,
     Math.ceil(
-      totalActivities / ACTIVITIES_PER_PAGE
+      filteredActivities / ACTIVITIES_PER_PAGE
     )
   );
 
@@ -239,9 +458,7 @@ export default async function ActivityPage({
   const activities =
     await prisma.businessActivity.findMany({
       where: activityWhere,
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: activityOrderBy[selectedSort],
       skip:
         (currentPage - 1) *
         ACTIVITIES_PER_PAGE,
@@ -275,8 +492,32 @@ export default async function ActivityPage({
   function getPageUrl(pageNumber: number) {
     const parameters = new URLSearchParams();
 
+    if (searchQuery) {
+      parameters.set("q", searchQuery);
+    }
+
     if (selectedType) {
       parameters.set("type", selectedType);
+    }
+
+    if (selectedActor) {
+      parameters.set("actor", selectedActor);
+    }
+
+    if (selectedCustomer) {
+      parameters.set("customer", selectedCustomer);
+    }
+
+    if (selectedBranch) {
+      parameters.set("branch", selectedBranch);
+    }
+
+    if (selectedDevice) {
+      parameters.set("device", selectedDevice);
+    }
+
+    if (selectedSort !== "newest") {
+      parameters.set("sort", selectedSort);
     }
 
     if (pageNumber > 1) {
@@ -292,6 +533,16 @@ export default async function ActivityPage({
       queryString ? `?${queryString}` : ""
     }`;
   }
+
+  const hasActiveFilters = Boolean(
+    searchQuery ||
+      selectedType ||
+      selectedActor ||
+      selectedCustomer ||
+      selectedBranch ||
+      selectedDevice ||
+      selectedSort !== "newest"
+  );
 
   return (
     <main
@@ -332,8 +583,27 @@ export default async function ActivityPage({
         <section
           className={`mt-8 border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
         >
-          <form className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="flex-1">
+          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="xl:col-span-2">
+              <label
+                htmlFor="q"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                البحث
+              </label>
+
+              <input
+                id="q"
+                name="q"
+                type="search"
+                maxLength={200}
+                defaultValue={searchQuery}
+                placeholder="الوصف، العميل، الموظف، الفرع، الجهاز أو IP"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none placeholder:text-slate-400 focus:border-violet-500"
+              />
+            </div>
+
+            <div>
               <label
                 htmlFor="type"
                 className="mb-2 block text-sm font-medium text-slate-700"
@@ -359,27 +629,165 @@ export default async function ActivityPage({
               </select>
             </div>
 
-            <button
-              type="submit"
-              className="rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700"
-            >
-              تطبيق الفلتر
-            </button>
-
-            {selectedType && (
-              <Link
-                href={`/businesses/${business.slug}/activity`}
-                className="rounded-xl border border-slate-300 px-6 py-3 text-center font-semibold text-slate-700"
+            <div>
+              <label
+                htmlFor="actor"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Clear
-              </Link>
-            )}
+                المنفذ
+              </label>
+
+              <select
+                id="actor"
+                name="actor"
+                defaultValue={selectedActor ?? ""}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+              >
+                <option value="">كل المنفذين</option>
+
+                {actorOptions.map((actor) => {
+                  const actorName = [
+                    actor.firstName,
+                    actor.lastName,
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                  return (
+                    <option key={actor.id} value={actor.id}>
+                      {actorName} — {actor.email}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="customer"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                العميل
+              </label>
+
+              <select
+                id="customer"
+                name="customer"
+                defaultValue={selectedCustomer ?? ""}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+              >
+                <option value="">كل العملاء</option>
+
+                {customerOptions.map((customer) => {
+                  const customerName = [
+                    customer.firstName,
+                    customer.lastName,
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                  return (
+                    <option
+                      key={customer.id}
+                      value={customer.id}
+                    >
+                      {customerName} — {customer.customerCode}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="branch"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                الفرع
+              </label>
+
+              <select
+                id="branch"
+                name="branch"
+                defaultValue={selectedBranch ?? ""}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+              >
+                <option value="">كل الفروع</option>
+
+                {branchOptions.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="device"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                الجهاز
+              </label>
+
+              <select
+                id="device"
+                name="device"
+                defaultValue={selectedDevice ?? ""}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+              >
+                <option value="">كل الأجهزة</option>
+
+                {deviceOptions.map((device) => (
+                  <option key={device} value={device}>
+                    {device}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="sort"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                الترتيب
+              </label>
+
+              <select
+                id="sort"
+                name="sort"
+                defaultValue={selectedSort}
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+              >
+                <option value="newest">الأحدث أولًا</option>
+                <option value="oldest">الأقدم أولًا</option>
+              </select>
+            </div>
+
+            <div className="flex items-end gap-3 md:col-span-2 xl:col-span-2">
+              <button
+                type="submit"
+                className="rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700"
+              >
+                تطبيق الفلاتر
+              </button>
+
+              {hasActiveFilters && (
+                <Link
+                  href={`/businesses/${business.slug}/activity`}
+                  className="rounded-xl border border-slate-300 px-6 py-3 text-center font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  مسح الفلاتر
+                </Link>
+              )}
+            </div>
           </form>
         </section>
 
         <div className="mt-6 flex items-center justify-between gap-4">
           <p className="text-sm text-slate-500">
-            {totalActivities} عملية مسجلة
+            {filteredActivities} نتيجة من أصل {totalActivities} عملية
           </p>
 
           <p className="text-sm text-slate-500">
@@ -387,7 +795,7 @@ export default async function ActivityPage({
           </p>
         </div>
 
-        {activities.length === 0 ? (
+        {totalActivities === 0 ? (
           <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
             <h2 className="text-xl font-bold text-slate-950">
               لا توجد عمليات مسجلة
@@ -397,12 +805,27 @@ export default async function ActivityPage({
               ستظهر العمليات الجديدة هنا تلقائيًا.
             </p>
           </section>
+        ) : activities.length === 0 ? (
+          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <h2 className="text-xl font-bold text-slate-950">
+              لا توجد عمليات تطابق البحث أو الفلاتر المحددة
+            </h2>
+
+            <p className="mt-2 text-slate-500">
+              جرّب تعديل معايير البحث أو إزالة الفلاتر للعثور على
+              عمليات أخرى.
+            </p>
+
+            <Link
+              href={`/businesses/${business.slug}/activity`}
+              className="mt-5 inline-flex rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              مسح الفلاتر
+            </Link>
+          </section>
         ) : (
           <section className="mt-6 space-y-4">
             {activities.map((activity) => {
-              const type =
-                activity.type as ActivityTypeValue;
-
               const employeeName =
                 activity.createdBy
                   ? [
