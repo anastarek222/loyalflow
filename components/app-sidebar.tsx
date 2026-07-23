@@ -26,9 +26,11 @@ import {
   type ShellNavigationItem,
   type ShellUser,
 } from "@/lib/app-shell-navigation";
+import type { ExperienceMode } from "@/lib/experience-mode";
 
 type Props = {
   language: "AR" | "EN";
+  experienceMode: ExperienceMode;
   user: ShellUser;
   business?: ShellBusiness;
 };
@@ -52,9 +54,9 @@ const icons: Record<ShellNavigationItem["icon"], React.ElementType> = {
   playbooks: FolderCog,
 };
 
-export default function AppSidebar({ language, user, business }: Props) {
+export default function AppSidebar({ language, experienceMode, user, business }: Props) {
   const pathname = usePathname();
-  const groups = buildShellNavigation({ language, user, business });
+  const groups = buildShellNavigation({ language, user, business, experienceMode });
 
   return (
     <aside className="lf-nav-sidebar sticky top-0 hidden h-screen w-72 shrink-0 border-e lg:flex lg:flex-col" aria-label={language === "AR" ? "التنقل الرئيسي" : "Primary navigation"}>
@@ -77,6 +79,7 @@ export default function AppSidebar({ language, user, business }: Props) {
             {group.items.map((entry) => {
               const Icon = icons[entry.icon];
               const active = isNavigationItemActive(pathname, entry.href);
+              if (entry.action === "switch-mode") return <li key={entry.id}><button type="button" onClick={() => window.dispatchEvent(new CustomEvent("loyalflow:open-experience-mode"))} className="lf-nav-item flex min-h-11 w-full items-center gap-3 px-3 text-start text-sm font-semibold transition-colors"><Icon size={18} aria-hidden="true" /><span>{entry.label}</span></button></li>;
               return <li key={entry.href}><Link href={entry.href} aria-current={active ? "page" : undefined} className={`lf-nav-item flex min-h-11 items-center gap-3 px-3 text-sm font-semibold transition-colors ${active ? "lf-nav-item-active" : ""}`}><Icon size={18} aria-hidden="true" /><span>{entry.label}</span></Link></li>;
             })}
           </ul>

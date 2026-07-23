@@ -10,9 +10,11 @@ import {
   type ShellBusiness,
   type ShellUser,
 } from "@/lib/app-shell-navigation";
+import type { ExperienceMode } from "@/lib/experience-mode";
 
 type Props = {
   language: "AR" | "EN";
+  experienceMode: ExperienceMode;
   user: ShellUser;
   business?: ShellBusiness;
 };
@@ -25,18 +27,19 @@ const iconById = {
   more: Menu,
 } as const;
 
-export default function MobileBottomNavigation({ language, user, business }: Props) {
+export default function MobileBottomNavigation({ language, experienceMode, user, business }: Props) {
   const pathname = usePathname();
   if (!business) return null;
 
-  const navigation = buildShellNavigation({ language, user, business });
+  const navigation = buildShellNavigation({ language, user, business, experienceMode });
   const entries = navigation.flatMap((group) => group.items);
   const overview = entries.find((entry) => entry.href === `/businesses/${business.slug}`);
   const customers = entries.find((entry) => entry.id === "customers");
   const scan = entries.find((entry) => entry.id === "scan");
-  const reportsOrActivity = entries.find((entry) => entry.id === "reports")
-    ?? entries.find((entry) => entry.id === "activity");
-  const bottomItems = [overview, customers, scan, reportsOrActivity].filter(Boolean) as typeof entries;
+  const activityOrReports = experienceMode === "SIMPLE"
+    ? entries.find((entry) => entry.id === "activity")
+    : entries.find((entry) => entry.id === "reports") ?? entries.find((entry) => entry.id === "activity");
+  const bottomItems = [overview, customers, scan, activityOrReports].filter(Boolean) as typeof entries;
 
   return (
     <nav aria-label={language === "AR" ? "التنقل السريع" : "Quick navigation"} className="lf-mobile-nav fixed inset-x-0 bottom-0 z-30 border-t px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden">

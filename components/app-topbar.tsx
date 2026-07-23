@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Bell, Building2, ChevronDown, LogOut, ScanLine } from "lucide-react";
 
 import LanguageSwitcher from "@/components/language-switcher";
+import ExperienceModeSwitcher from "@/components/experience-mode-switcher";
 import MobileSidebarWrapper from "@/components/mobile-sidebar-wrapper";
 import { Avatar } from "@/components/ui/surface";
 import { logoutAction } from "@/app/dashboard/actions";
@@ -15,9 +16,14 @@ import {
   type ShellBusiness,
   type ShellUser,
 } from "@/lib/app-shell-navigation";
+import {
+  getExperienceNavigationRules,
+  type ExperienceMode,
+} from "@/lib/experience-mode";
 
 type Props = {
   language: "AR" | "EN";
+  experienceMode: ExperienceMode;
   activeBusiness?: ShellBusiness;
   businesses: ShellBusiness[];
   user: ShellUser & { firstName: string; lastName: string; email: string };
@@ -31,7 +37,7 @@ function roleLabel(role: string, language: "AR" | "EN") {
   return labels[language][role as keyof typeof labels.EN] ?? role;
 }
 
-export default function AppTopbar({ language, user, businesses, activeBusiness }: Props) {
+export default function AppTopbar({ language, experienceMode, user, businesses, activeBusiness }: Props) {
   const pathname = usePathname();
   const [accountOpen, setAccountOpen] = useState(false);
   const [businessOpen, setBusinessOpen] = useState(false);
@@ -39,7 +45,15 @@ export default function AppTopbar({ language, user, businesses, activeBusiness }
   const businessRef = useRef<HTMLDivElement>(null);
   const fullName = `${user.firstName} ${user.lastName}`.trim();
   const context = getShellPageContext(pathname, language, activeBusiness);
-  const canScan = Boolean(activeBusiness && buildShellNavigation({ language, user, business: activeBusiness }).flatMap((group) => group.items).some((entry) => entry.id === "scan"));
+  const advancedEntries = activeBusiness
+    ? buildShellNavigation({ language, user, business: activeBusiness, experienceMode: "ADVANCED" }).flatMap((group) => group.items)
+    : [];
+  const canScan = advancedEntries.some((entry) => entry.id === "scan");
+  const modeRules = getExperienceNavigationRules({
+    mode: experienceMode,
+    role: user.role,
+    advancedDestinationCount: advancedEntries.filter((entry) => !["overview", "scan", "customers", "activity", "businesses"].includes(entry.id)).length,
+  });
 
   useEffect(() => {
     function closeWhenOutside(event: MouseEvent) {
@@ -49,12 +63,14 @@ export default function AppTopbar({ language, user, businesses, activeBusiness }
     function closeOnEscape(event: KeyboardEvent) { if (event.key === "Escape") { setAccountOpen(false); setBusinessOpen(false); } }
     document.addEventListener("mousedown", closeWhenOutside);
     window.addEventListener("keydown", closeOnEscape);
-    return () => { document.removeEventListener("mousedown", closeWhenOutside); window.removeEventListener("keydown", closeOnEscape); };
+    const openExperienceMode = () => setAccountOpen(true);
+    window.addEventListener("loyalflow:open-experience-mode", openExperienceMode);
+    return () => { document.removeEventListener("mousedown", closeWhenOutside); window.removeEventListener("keydown", closeOnEscape); window.removeEventListener("loyalflow:open-experience-mode", openExperienceMode); };
   }, []);
 
   return <header className="lf-topbar sticky top-0 z-20 flex min-h-16 items-center justify-between gap-3 border-b px-3 py-2 sm:px-6" data-shell-topbar="true">
     <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-      <MobileSidebarWrapper language={language} user={user} business={activeBusiness} businesses={businesses} />
+      <MobileSidebarWrapper language={language} experienceMode={experienceMode} user={user} business={activeBusiness} businesses={businesses} />
       <div className="min-w-0">
         {context.parent && <p className="truncate text-xs font-medium text-slate-500">{context.parent}</p>}
         <h1 className="truncate text-base font-bold text-slate-950 sm:text-lg">{context.title}</h1>
@@ -70,7 +86,7 @@ export default function AppTopbar({ language, user, businesses, activeBusiness }
       <LanguageSwitcher language={language} />
       <div ref={accountRef} className="relative">
         <button type="button" aria-expanded={accountOpen} aria-haspopup="menu" aria-label={language === "AR" ? "قائمة الحساب" : "Account menu"} onClick={() => setAccountOpen((value) => !value)} className="flex min-h-11 items-center gap-2 rounded-md px-1.5 hover:bg-surface-subtle"><Avatar name={fullName || user.email} className="bg-slate-950 text-white" /><ChevronDown className="hidden text-slate-500 sm:block" size={16} aria-hidden="true" /></button>
-        {accountOpen && <div role="menu" aria-label={language === "AR" ? "الحساب" : "Account"} className="absolute end-0 top-12 z-50 w-72 rounded-md border border-border bg-surface p-2 shadow-[var(--lf-shadow-overlay)]"><div className="border-b border-border px-3 py-2"><p className="font-semibold text-slate-950">{fullName || "User"}</p><p dir="ltr" className="mt-0.5 truncate text-sm text-slate-500">{user.email}</p><p className="mt-1 text-xs font-semibold text-slate-600">{roleLabel(user.role, language)}</p></div><div className="pt-1">{user.role === "SUPER_ADMIN" && <Link href="/businesses" role="menuitem" onClick={() => setAccountOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"><Building2 size={16} aria-hidden="true" />{language === "AR" ? "الأنشطة التجارية" : "Businesses"}</Link>}<form action={logoutAction}><button type="submit" role="menuitem" className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-danger hover:bg-[var(--lf-danger-subtle)]"><LogOut size={16} aria-hidden="true" />{language === "AR" ? "تسجيل الخروج" : "Log out"}</button></form></div></div>}
+        {accountOpen && <div role="menu" aria-label={language === "AR" ? "الحساب" : "Account"} className="absolute end-0 top-12 z-50 w-72 rounded-md border border-border bg-surface p-2 shadow-[var(--lf-shadow-overlay)]"><div className="border-b border-border px-3 py-2"><p className="font-semibold text-slate-950">{fullName || "User"}</p><p dir="ltr" className="mt-0.5 truncate text-sm text-slate-500">{user.email}</p><p className="mt-1 text-xs font-semibold text-slate-600">{roleLabel(user.role, language)}</p></div>{modeRules.showModeSwitcher ? <ExperienceModeSwitcher language={language} mode={experienceMode} /> : null}<div className="pt-1">{user.role === "SUPER_ADMIN" && <Link href="/businesses" role="menuitem" onClick={() => setAccountOpen(false)} className="flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"><Building2 size={16} aria-hidden="true" />{language === "AR" ? "الأنشطة التجارية" : "Businesses"}</Link>}<form action={logoutAction}><button type="submit" role="menuitem" className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm font-semibold text-danger hover:bg-[var(--lf-danger-subtle)]"><LogOut size={16} aria-hidden="true" />{language === "AR" ? "تسجيل الخروج" : "Log out"}</button></form></div></div>}
       </div>
     </div>
   </header>;

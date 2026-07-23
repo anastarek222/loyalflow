@@ -3,12 +3,17 @@ import { auth } from "@/auth";
 import {
   getLanguageAttributes,
 } from "@/lib/i18n";
+import {
+  getExperienceModeCookieName,
+  resolveExperienceMode,
+} from "@/lib/experience-mode";
 
 import prisma from "@/lib/prisma";
 
 import AuthenticatedAppShell from "@/components/authenticated-app-shell";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 type AuthenticatedLocaleShellProps = {
   children: React.ReactNode;
@@ -64,6 +69,10 @@ export default async function AuthenticatedLocaleShell({
 
   const { language, lang, dir } =
     getLanguageAttributes(user?.language);
+  const experienceMode = resolveExperienceMode(
+    user ? (await cookies()).get(getExperienceModeCookieName(user.id))?.value : null,
+    user?.role ?? "STAFF",
+  );
 
 
   return (
@@ -76,6 +85,7 @@ export default async function AuthenticatedLocaleShell({
 
       <AuthenticatedAppShell
         language={language}
+        experienceMode={experienceMode}
         businesses={businesses}
         user={{
           firstName: user?.firstName ?? "User",
