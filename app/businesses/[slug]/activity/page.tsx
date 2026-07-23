@@ -263,6 +263,12 @@ export default async function ActivityPage({
             role: true,
           },
         },
+        branch: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -459,19 +465,55 @@ export default async function ActivityPage({
                         <p className="mt-1 text-xs text-slate-400">
                           {activity.createdBy.role === "OWNER"
                             ? "مالك"
-                            : activity.createdBy.role === "STAFF"
-                              ? "موظف"
-                              : "مدير النظام"}{" "}
+                            : activity.createdBy.role === "MANAGER"
+                              ? "مدير"
+                              : activity.createdBy.role === "STAFF"
+                                ? "موظف"
+                                : activity.createdBy.role === "VIEWER"
+                                  ? "مشاهد"
+                                  : "مدير النظام"}{" "}
                           ·{" "}
                           {activity.createdBy.email}
                         </p>
                       )}
 
-                      <p className="mt-2 text-sm text-slate-500">
-                        {dateFormatter.format(
-                          activity.createdAt
+                      <div className="mt-3 space-y-1 text-xs text-slate-500">
+                        {activity.branch && (
+                          <p>
+                            <span className="font-semibold text-slate-600">
+                              الفرع:
+                            </span>{" "}
+                            {activity.branch.name}
+                          </p>
                         )}
-                      </p>
+
+                        {activity.deviceName && (
+                          <p>
+                            <span className="font-semibold text-slate-600">
+                              الجهاز:
+                            </span>{" "}
+                            {activity.deviceName}
+                          </p>
+                        )}
+
+                        {activity.ipAddress && (
+                          <p dir="ltr" className="sm:text-right">
+                            <span className="font-semibold text-slate-600">
+                              IP:
+                            </span>{" "}
+                            {activity.ipAddress}
+                          </p>
+                        )}
+
+                        <p>
+                          <span className="font-semibold text-slate-600">
+                            الوقت:
+                          </span>{" "}
+                          {dateFormatter.format(
+                            activity.createdAt
+                          )}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </article>

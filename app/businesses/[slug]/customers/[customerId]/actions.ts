@@ -43,6 +43,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { createBusinessNotification } from "@/lib/notifications";
+import { getActivityRequestContext } from "@/lib/activity/request-context";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -511,6 +512,9 @@ export async function adjustCustomerBalanceAction(
     );
   }
 
+  const adjustmentActivityContext =
+    await getActivityRequestContext();
+
   const newBalance =
     await prisma.$transaction(
       (transaction) =>
@@ -518,6 +522,7 @@ export async function adjustCustomerBalanceAction(
           customerId: customer.id,
           businessId: business.id,
           createdById: session.user.id,
+          activityContext: adjustmentActivityContext,
           direction: parsed.data.direction,
           amount: parsed.data.amount,
           reason: parsed.data.reason,
@@ -870,6 +875,9 @@ export async function addLoyaltyAction(
     "LOYALTY_EARN"
   );
 
+  const activityContext =
+    await getActivityRequestContext();
+
   const submittedAttribution = formData.get(
     "attributedStaffId"
   );
@@ -1064,6 +1072,7 @@ export async function addLoyaltyAction(
         customerId: customer.id,
         businessId: business.id,
         createdById: session.user.id,
+        activityContext,
         attributedStaffId,
         amount,
         sourceLoyaltyMode: business.loyaltyMode,
@@ -1197,6 +1206,9 @@ export async function redeemRewardAction(
 
   const cost = selectedReward?.cost ?? business.rewardThreshold;
 
+  const redemptionActivityContext =
+    await getActivityRequestContext();
+
   const rapidRedemptionInput = {
     businessId: business.id,
     customerId: customer.id,
@@ -1300,6 +1312,7 @@ export async function redeemRewardAction(
           customerId: customer.id,
           businessId: business.id,
           createdById: session.user.id,
+          activityContext: redemptionActivityContext,
           cost,
           rewardLabel,
           rewardName,
