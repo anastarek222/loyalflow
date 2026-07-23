@@ -429,7 +429,6 @@ export default async function CustomerDetailsPage({
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8"
     >
       <div className="mx-auto max-w-7xl">
@@ -580,7 +579,6 @@ export default async function CustomerDetailsPage({
 
         {smartWhatsAppSuggestion && (
           <section
-            dir="rtl"
             className="mt-5 flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
@@ -1090,6 +1088,7 @@ export default async function CustomerDetailsPage({
                       name="firstName"
                       defaultValue={customer.firstName}
                       required
+                      dir="auto"
                       minLength={2}
                       maxLength={50}
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
@@ -1109,6 +1108,7 @@ export default async function CustomerDetailsPage({
                       name="lastName"
                       defaultValue={customer.lastName ?? ""}
                       maxLength={50}
+                      dir="auto"
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
                     />
                   </div>
@@ -1126,6 +1126,7 @@ export default async function CustomerDetailsPage({
                       name="phone"
                       type="tel"
                       defaultValue={customer.phone}
+                      dir="ltr"
                       required
                       className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
                     />

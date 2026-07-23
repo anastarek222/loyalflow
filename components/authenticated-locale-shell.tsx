@@ -1,8 +1,7 @@
 import { auth } from "@/auth";
 
 import {
-  getLanguageDirection,
-  normalizeLanguage,
+  getLanguageAttributes,
 } from "@/lib/i18n";
 
 import prisma from "@/lib/prisma";
@@ -48,26 +47,14 @@ export default async function AuthenticatedLocaleShell({
     });
 
 
-  const language =
-    normalizeLanguage(
-      user?.language
-    );
-
-
-  const direction =
-    getLanguageDirection(
-      language
-    );
+  const { language, lang, dir } =
+    getLanguageAttributes(user?.language);
 
 
   return (
     <div
-      lang={
-        language === "AR"
-          ? "ar"
-          : "en"
-      }
-      dir={direction}
+      lang={lang}
+      dir={dir}
       data-app-language={language}
       className="min-h-screen bg-slate-50"
     >

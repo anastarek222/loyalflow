@@ -276,10 +276,7 @@ export default function BusinessNotificationsContent({
   recentNotifications,
 }: Props) {
   return (
-    <div
-      dir="rtl"
-      className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[0.9fr_1.1fr]"
-    >
+    <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[0.9fr_1.1fr]">
       <section
         data-notification-section="true"
         data-has-unread={
@@ -438,7 +435,7 @@ export default function BusinessNotificationsContent({
                         )}
                       </div>
 
-                      <p className="mt-1 text-xs text-slate-500">
+                  <p dir="ltr" className="mt-1 text-xs text-slate-500">
                         {
                           customer.customerCode
                         }

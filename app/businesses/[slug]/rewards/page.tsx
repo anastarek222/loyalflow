@@ -75,7 +75,6 @@ export default async function RewardsPage({
 
   return (
     <main
-      dir="rtl"
       className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
       style={{
         backgroundColor: theme.backgroundColor,
@@ -134,7 +133,7 @@ export default async function RewardsPage({
 
               <label className="block text-sm font-bold text-slate-700">
                 التكلفة ({business.unitName})
-                <input name="cost" type="number" required min={1} max={1000000} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
+                <input name="cost" type="number" dir="ltr" required min={1} max={1000000} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
               </label>
 
               <label className="block text-sm font-bold text-slate-700">
@@ -154,7 +153,7 @@ export default async function RewardsPage({
 
               <label className="block text-sm font-bold text-slate-700">
                 الكود <span className="font-normal text-slate-400">(اختياري)</span>
-                <input name="code" maxLength={100} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
+                <input name="code" dir="ltr" maxLength={100} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
               </label>
 
               <label className="block text-sm font-bold text-slate-700">
@@ -241,7 +240,7 @@ export default async function RewardsPage({
 
                         <label className="block text-sm font-bold text-slate-700">
                           الكود <span className="font-normal text-slate-400">(اختياري)</span>
-                          <input name="code" maxLength={100} defaultValue={reward.code ?? ""} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
+                          <input name="code" dir="ltr" maxLength={100} defaultValue={reward.code ?? ""} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
                         </label>
 
                         <label className="block text-sm font-bold text-slate-700 sm:col-span-2">

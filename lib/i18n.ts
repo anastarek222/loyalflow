@@ -6,6 +6,14 @@ export const APP_LANGUAGES = [
 export type AppLanguage =
   (typeof APP_LANGUAGES)[number];
 
+export type AppDirection = "rtl" | "ltr";
+
+export type LanguageAttributes = {
+  language: AppLanguage;
+  lang: "ar" | "en";
+  dir: AppDirection;
+};
+
 export function isAppLanguage(
   value: unknown
 ): value is AppLanguage {
@@ -25,10 +33,32 @@ export function normalizeLanguage(
 
 export function getLanguageDirection(
   language: AppLanguage
-) {
+): AppDirection {
   return language === "AR"
     ? "rtl"
     : "ltr";
+}
+
+/**
+ * The HTML language code for an application language. Keep this separate from
+ * display locales (for example, ar-EG) which are used for date formatting.
+ */
+export function getLanguageCode(
+  language: AppLanguage
+): "ar" | "en" {
+  return language === "AR" ? "ar" : "en";
+}
+
+export function getLanguageAttributes(
+  value: unknown
+): LanguageAttributes {
+  const language = normalizeLanguage(value);
+
+  return {
+    language,
+    lang: getLanguageCode(language),
+    dir: getLanguageDirection(language),
+  };
 }
 
 export function getLanguageLocale(

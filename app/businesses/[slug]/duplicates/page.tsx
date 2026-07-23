@@ -96,7 +96,7 @@ export default async function DuplicateReviewPage({
   const groups = findDuplicateCustomerGroups(customers);
 
   return (
-    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-5 sm:px-8 sm:py-8">
+    <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-5 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/businesses/${business.slug}/customers`}

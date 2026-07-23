@@ -81,7 +81,7 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
   const apply = applyBusinessPlaybookAction.bind(null, business.slug);
 
   return (
-    <main dir="rtl" style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
+    <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <Link href={`/businesses/${business.slug}/settings`} className="text-sm font-bold text-violet-700 hover:text-violet-900">← الرجوع إلى إعدادات {business.name}</Link>
         <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"

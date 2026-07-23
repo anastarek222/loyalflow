@@ -242,7 +242,6 @@ export default async function UsersPage({
 
   return (
     <main
-      dir="rtl"
       style={{
         background: theme.backgroundColor,
         fontFamily: theme.fontFamily,
@@ -271,7 +270,7 @@ export default async function UsersPage({
           <div className="rounded-xl bg-slate-950 px-5 py-3 text-white">
             <span className="text-sm text-slate-400">إجمالي الحسابات</span>
 
-            <strong className="ml-3 text-xl">{totalUsers}</strong>
+            <strong className="ms-3 text-xl">{totalUsers}</strong>
           </div>
         </header>
 
@@ -444,6 +443,7 @@ export default async function UsersPage({
                   required
                   minLength={2}
                   maxLength={50}
+                  dir="auto"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
               </div>
@@ -460,6 +460,7 @@ export default async function UsersPage({
                   id="lastName"
                   name="lastName"
                   maxLength={50}
+                  dir="auto"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
               </div>
@@ -477,6 +478,7 @@ export default async function UsersPage({
                   name="email"
                   type="email"
                   required
+                  dir="ltr"
                   autoComplete="off"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                 />
@@ -495,6 +497,7 @@ export default async function UsersPage({
                   name="password"
                   type="password"
                   required
+                  dir="ltr"
                   minLength={10}
                   autoComplete="new-password"
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"

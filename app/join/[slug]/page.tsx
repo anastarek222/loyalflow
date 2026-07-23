@@ -4,6 +4,7 @@ import { joinBusinessAction } from "@/app/join/[slug]/actions";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
+import { getLanguageAttributes } from "@/lib/i18n";
 import { notFound } from "next/navigation";
 
 type JoinBusinessPageProps = {
@@ -80,7 +81,9 @@ export default async function JoinBusinessPage({
 
   const joinBusiness = joinBusinessAction.bind(null, business.slug);
   const referralCode = normalizeReferralCode(query.ref);
-  const language = business.cardDefaultLanguage;
+  const { language, lang, dir } = getLanguageAttributes(
+    business.cardDefaultLanguage
+  );
   const copy =
     language === "AR"
       ? {
@@ -137,7 +140,8 @@ export default async function JoinBusinessPage({
 
   return (
     <main
-      dir={language === "AR" ? "rtl" : "ltr"}
+      lang={lang}
+      dir={dir}
       className="flex min-h-screen items-center justify-center px-4 py-10"
       style={{
         backgroundColor: theme.backgroundColor,
@@ -250,6 +254,7 @@ export default async function JoinBusinessPage({
                 minLength={2}
                 maxLength={50}
                 autoComplete="given-name"
+                dir="auto"
                 placeholder={language === "AR" ? "محمد" : "Jane"}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
@@ -267,6 +272,7 @@ export default async function JoinBusinessPage({
                 name="lastName"
                 maxLength={50}
                 autoComplete="family-name"
+                dir="auto"
                 placeholder={language === "AR" ? "أحمد" : "Smith"}
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
@@ -288,6 +294,7 @@ export default async function JoinBusinessPage({
                 minLength={8}
                 maxLength={25}
                 autoComplete="tel"
+                dir="ltr"
                 placeholder="+201000000000"
                 aria-describedby="phone-hint"
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"

@@ -307,10 +307,7 @@ export default async function BusinessSalesKpis({
   ];
 
   return (
-    <section
-      dir="rtl"
-      className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:mt-8 sm:p-7"
-    >
+    <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:mt-8 sm:p-7">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p

@@ -572,7 +572,7 @@ export default async function BusinessPage({
   );
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-5 text-right sm:px-8 sm:py-8">
+    <main className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8">
       <BusinessNotificationsAutoRefresh />
 
       <div className="mx-auto max-w-6xl">

@@ -26,7 +26,7 @@ export default async function LoginPage({
     (Array.isArray(errorValue) && errorValue.includes("invalid"));
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
+    <main lang="en" dir="ltr" className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-12">
       <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
       <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-cyan-500/20 blur-3xl" />
 
@@ -64,6 +64,7 @@ export default async function LoginPage({
               type="email"
               required
               autoComplete="email"
+              dir="ltr"
               placeholder="name@example.com"
               className="auth-input w-full rounded-xl border border-white/10 px-4 py-3 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"
             />
@@ -84,6 +85,7 @@ export default async function LoginPage({
               required
               minLength={10}
               autoComplete="current-password"
+              dir="ltr"
               placeholder="Enter your password"
               className="auth-input w-full rounded-xl border border-white/10 px-4 py-3 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"
             />

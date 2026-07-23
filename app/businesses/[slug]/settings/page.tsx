@@ -76,7 +76,7 @@ export default async function BusinessSettingsPage({
   });
 
   return (
-    <main dir="rtl" className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
+    <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-7xl">
         <Link
           href={`/businesses/${business.slug}`}

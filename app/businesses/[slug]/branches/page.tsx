@@ -82,7 +82,6 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
 
   return (
     <main
-      dir="rtl"
       style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }}
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
     >
@@ -98,7 +97,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
           </div>
           <div className="rounded-xl bg-slate-950 px-5 py-3 text-white">
             <span className="text-sm text-slate-400">إجمالي الفروع</span>
-            <strong className="mr-3 text-xl">{getBranchCount(branches)}</strong>
+            <strong className="me-3 text-xl">{getBranchCount(branches)}</strong>
           </div>
         </header>
 
