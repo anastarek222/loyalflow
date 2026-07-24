@@ -3,6 +3,7 @@ import test from "node:test";
 
 import type { Prisma } from "../generated/prisma/client";
 import {
+  isFinancialOperationContextError,
   recordBalanceAdjustment,
   recordLoyaltyEarn,
   recordRewardRedemption,
@@ -515,6 +516,66 @@ test("rejected staff branch or staff attribution context writes no financial sid
   assert.equal(calls.loyaltyTransactions.length, 0);
   assert.equal(calls.rewardRedemptions.length, 0);
   assert.equal(calls.activities.length, 0);
+  assert.equal(calls.notifications.length, 0);
+});
+
+test("context reporting is opt-in, bounded, and has no financial or audit side effects", async () => {
+  const { transaction, calls } = createTransaction(
+    1,
+    9,
+    "business-1",
+    null,
+    false,
+  );
+
+  await assert.rejects(
+    recordLoyaltyEarn(transaction, {
+      customerId: "customer-1",
+      businessId: "business-1",
+      branchId: "branch-other-tenant-or-inactive",
+      amount: 2,
+      sourceLoyaltyMode: "VISITS",
+      transactionNote: "Rejected context",
+      activityDescription: "Rejected context",
+      reportContextFailure: true,
+    }),
+    (error: unknown) => {
+      assert.equal(isFinancialOperationContextError(error), true);
+      if (!isFinancialOperationContextError(error)) return false;
+      assert.equal(error.reason, "INVALID_BRANCH");
+      assert.match(error.message, /^The financial operation context is invalid\.$/);
+      assert.doesNotMatch(error.message, /branch|staff|database/i);
+      return true;
+    },
+  );
+
+  assert.equal(calls.updateMany.length, 0);
+  assert.equal(calls.loyaltyTransactions.length, 0);
+  assert.equal(calls.promotionApplications.length, 0);
+  assert.equal(calls.rewardRedemptions.length, 0);
+  assert.equal(calls.activities.length, 0);
+  assert.equal(calls.notifications.length, 0);
+});
+
+test("opting into context reporting does not turn unrelated aborts into context errors", async () => {
+  const { transaction, calls } = createTransaction(0);
+
+  const balance = await recordRewardRedemption(transaction, {
+    customerId: "customer-1",
+    businessId: "business-1",
+    createdById: "staff-1",
+    cost: 5,
+    rewardLabel: "Unavailable reward",
+    rewardName: "Unavailable reward",
+    reportContextFailure: true,
+  });
+
+  assert.equal(balance, null);
+  assert.equal(calls.updateMany.length, 1);
+  assert.equal(calls.loyaltyTransactions.length, 0);
+  assert.equal(calls.rewardRedemptions.length, 0);
+  assert.equal(calls.activities.length, 0);
+  assert.equal(calls.notifications.length, 0);
 });
 
 test("successful redemptions persist canonical branch, actor, and staff attribution", async () => {

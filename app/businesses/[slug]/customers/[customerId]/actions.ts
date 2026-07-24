@@ -15,11 +15,18 @@ import {
 import {
   isFinancialOperationAbortedError,
   isFinancialOperationConflictError,
+  isFinancialOperationContextError,
   recordBalanceAdjustment,
   recordLoyaltyEarn,
   recordRewardRedemption,
 } from "@/lib/loyalty/transactions";
 import type { FinancialOperationActor } from "@/lib/loyalty/operation-context";
+import {
+  getOperationOrigin,
+  operationPresentationPath,
+  type OperationOrigin,
+  type ScanOperationError,
+} from "@/lib/loyalty/operation-origin";
 import {
   calculatePromotionBonus,
   selectEligiblePromotion,
@@ -273,7 +280,8 @@ async function getBusinessAccess(slug: string) {
 async function getActionContext(
   slug: string,
   customerId: string,
-  capability: Capability
+  capability: Capability,
+  origin: OperationOrigin = "CUSTOMER_PROFILE",
 ) {
   const parsedCustomerId = opaqueIdSchema.safeParse(customerId);
 
@@ -285,7 +293,9 @@ async function getActionContext(
     await getBusinessAccess(slug);
 
   if (!canPerform(session.user, business.id, capability)) {
-    redirect(`/businesses/${slug}/customers/${customerId}`);
+    redirect(operationPresentationPath(origin, slug, customerId, {
+      ...(origin === "SCAN" ? { error: "permission" } : {}),
+    }));
   }
 
   const customer = await prisma.customer.findFirst({
@@ -310,6 +320,32 @@ async function getActionContext(
     business,
     customer,
   };
+}
+
+function operationPath(
+  origin: OperationOrigin,
+  slug: string,
+  customerId: string,
+  state: { success?: "earned" | "redeemed"; error?: ScanOperationError },
+  customerProfileError?: string,
+) {
+  if (origin === "SCAN") {
+    return operationPresentationPath(origin, slug, customerId, state);
+  }
+
+  if (state.success) {
+    return operationPresentationPath(origin, slug, customerId, state);
+  }
+
+  return `${operationPresentationPath(origin, slug, customerId)}?error=${customerProfileError ?? "earned-invalid"}`;
+}
+
+function scanContextError(reason: string): ScanOperationError {
+  return reason === "INVALID_BRANCH" || reason === "BRANCH_REQUIRED_FOR_STAFF" || reason === "INVALID_BRANCH_ASSIGNMENT"
+    ? "invalid-branch"
+    : reason === "ATTRIBUTION_REQUIRED" || reason === "INVALID_STAFF"
+      ? "invalid-staff"
+      : "generic";
 }
 
 async function getManagementContext(
@@ -365,6 +401,7 @@ function revalidateCustomerPages(
   revalidatePath(
     `/businesses/${slug}/customers/${customerId}`
   );
+  revalidatePath(`/businesses/${slug}/scan/customer/${customerId}`);
   revalidatePath(`/businesses/${slug}/customers`);
   revalidatePath(`/businesses/${slug}`);
   revalidatePath(`/businesses/${slug}/reports`);
@@ -961,6 +998,7 @@ export async function addLoyaltyAction(
   customerId: string,
   formData: FormData
 ) {
+  const origin = getOperationOrigin(formData);
   const {
     session,
     business,
@@ -968,7 +1006,8 @@ export async function addLoyaltyAction(
   } = await getActionContext(
     slug,
     customerId,
-    "LOYALTY_EARN"
+    "LOYALTY_EARN",
+    origin,
   );
 
   const activityContext =
@@ -992,9 +1031,7 @@ export async function addLoyaltyAction(
       });
 
     if (!parsedSale.success) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=sale-invalid`
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "sale-invalid"));
     }
 
     saleAmount = parsedSale.data.saleAmount;
@@ -1016,9 +1053,7 @@ export async function addLoyaltyAction(
   );
 
   if (!parsedOperation.success) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=earned-invalid`
-    );
+    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "earned-invalid"));
   }
 
   const idempotencyKey = parsedOperation.data;
@@ -1055,14 +1090,10 @@ export async function addLoyaltyAction(
       completedOperation.saleAmount !== (saleAmount ?? null) ||
       baseAmount !== amount
     ) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=earned-conflict`,
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-conflict"));
     }
 
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?success=earned`,
-    );
+    redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
   }
 
   const rapidEarnInput = {
@@ -1082,9 +1113,7 @@ export async function addLoyaltyAction(
     );
 
     if (!rapidEarnLimit.allowed) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-too-soon"));
     }
 
     const recentDuplicateEarn =
@@ -1096,9 +1125,7 @@ export async function addLoyaltyAction(
       });
 
     if (recentDuplicateEarn) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=earned-too-soon`
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-too-soon"));
     }
   }
 
@@ -1170,6 +1197,7 @@ export async function addLoyaltyAction(
           : undefined,
         transactionNote,
         activityDescription,
+        reportContextFailure: origin === "SCAN",
       });
 
       if (balanceAfter !== null) {
@@ -1185,18 +1213,19 @@ export async function addLoyaltyAction(
     });
   } catch (error) {
     if (isFinancialOperationConflictError(error)) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=earned-conflict`,
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-conflict"));
+    }
+    if (isFinancialOperationContextError(error) && origin === "SCAN") {
+      redirect(operationPath(origin, slug, customer.id, { error: scanContextError(error.reason) }));
     }
 
     throw error;
   }
 
   if (newBalance === null) {
-    redirect(
-      `/businesses/${slug}/customers`
-    );
+    redirect(origin === "SCAN"
+      ? operationPath(origin, slug, customer.id, { error: "generic" })
+      : `/businesses/${slug}/customers`);
   }
 
   await syncBusinessToGoogleSheetSafely(
@@ -1209,9 +1238,7 @@ export async function addLoyaltyAction(
     customer.publicToken
   );
 
-  redirect(
-    `/businesses/${slug}/customers/${customer.id}?success=earned`
-  );
+  redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
 }
 
 export async function redeemRewardAction(
@@ -1220,6 +1247,7 @@ export async function redeemRewardAction(
   rewardId?: string,
   formData?: FormData,
 ) {
+  const origin = getOperationOrigin(formData);
   const {
     session,
     business,
@@ -1227,7 +1255,8 @@ export async function redeemRewardAction(
   } = await getActionContext(
     slug,
     customerId,
-    "LOYALTY_REDEEM"
+    "LOYALTY_REDEEM",
+    origin,
   );
 
   const parsedRewardId = rewardId
@@ -1235,9 +1264,7 @@ export async function redeemRewardAction(
     : null;
 
   if (parsedRewardId && !parsedRewardId.success) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=reward-unavailable`
-    );
+    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
   }
 
   const selectedReward = parsedRewardId?.success
@@ -1260,9 +1287,7 @@ export async function redeemRewardAction(
     : null;
 
   if (rewardId && !selectedReward) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=reward-unavailable`
-    );
+    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
   }
 
   const rewardName = selectedReward?.name ?? business.rewardName;
@@ -1279,9 +1304,7 @@ export async function redeemRewardAction(
   );
 
   if (!parsedOperation.success) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=redemption-invalid`,
-    );
+    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "redemption-invalid"));
   }
 
   const idempotencyKey = parsedOperation.data;
@@ -1324,14 +1347,10 @@ export async function redeemRewardAction(
         (selectedReward?.id ?? null) ||
       completedOperation.rewardRedemption?.cost !== cost
     ) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=redemption-conflict`,
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
     }
 
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?success=redeemed`,
-    );
+    redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
   }
 
   if (!completedOperation) {
@@ -1344,9 +1363,7 @@ export async function redeemRewardAction(
     );
 
     if (!rapidRedemptionLimit.allowed) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redeemed-too-soon"));
     }
 
     const recentDuplicateRedemption =
@@ -1360,9 +1377,7 @@ export async function redeemRewardAction(
       });
 
     if (recentDuplicateRedemption) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=redeemed-too-soon`
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redeemed-too-soon"));
     }
   }
 
@@ -1449,15 +1464,18 @@ export async function redeemRewardAction(
           rewardId: selectedReward?.id,
           ...(unlockId ? { unlockId } : {}),
           idempotencyKey,
+          reportContextFailure: origin === "SCAN",
         });
 
       return { balance, expired: false };
     },
   ).catch((error: unknown) => {
     if (isFinancialOperationConflictError(error)) {
-      redirect(
-        `/businesses/${slug}/customers/${customer.id}?error=redemption-conflict`,
-      );
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
+    }
+
+    if (isFinancialOperationContextError(error) && origin === "SCAN") {
+      redirect(operationPath(origin, slug, customer.id, { error: scanContextError(error.reason) }));
     }
 
     if (isFinancialOperationAbortedError(error)) {
@@ -1468,15 +1486,11 @@ export async function redeemRewardAction(
   });
 
   if (redemption.expired) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=reward-expired`
-    );
+    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-expired"));
   }
 
   if (redemption.balance === null) {
-    redirect(
-      `/businesses/${slug}/customers/${customer.id}?error=not-enough`
-    );
+    redirect(operationPath(origin, slug, customer.id, { error: "insufficient-balance" }, "not-enough"));
   }
 
   await syncBusinessToGoogleSheetSafely(
@@ -1489,7 +1503,5 @@ export async function redeemRewardAction(
     customer.publicToken
   );
 
-  redirect(
-    `/businesses/${slug}/customers/${customer.id}?success=redeemed`
-  );
+  redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
 }

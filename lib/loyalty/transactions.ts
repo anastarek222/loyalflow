@@ -2,6 +2,7 @@ import { Prisma, type LoyaltyMode } from "@/generated/prisma/client";
 import {
   resolveFinancialOperationContext,
   type FinancialOperationActor,
+  type FinancialOperationContext,
 } from "@/lib/loyalty/operation-context";
 import { createBusinessNotification } from "@/lib/notifications";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
@@ -27,6 +28,7 @@ type EarnTransactionInput = {
   };
   transactionNote: string;
   activityDescription: string;
+  reportContextFailure?: boolean;
 };
 
 type RewardRedemptionInput = {
@@ -43,6 +45,7 @@ type RewardRedemptionInput = {
   rewardId?: string;
   unlockId?: string;
   idempotencyKey?: string;
+  reportContextFailure?: boolean;
 };
 
 type BalanceAdjustmentInput = {
@@ -73,6 +76,15 @@ export class FinancialOperationAbortedError extends Error {
   }
 }
 
+export class FinancialOperationContextError extends Error {
+  constructor(
+    readonly reason: Extract<FinancialOperationContext, { valid: false }> ["reason"],
+  ) {
+    super("The financial operation context is invalid.");
+    this.name = "FinancialOperationContextError";
+  }
+}
+
 export function isFinancialOperationConflictError(
   error: unknown,
 ): error is FinancialOperationConflictError {
@@ -83,6 +95,12 @@ export function isFinancialOperationAbortedError(
   error: unknown,
 ): error is FinancialOperationAbortedError {
   return error instanceof FinancialOperationAbortedError;
+}
+
+export function isFinancialOperationContextError(
+  error: unknown,
+): error is FinancialOperationContextError {
+  return error instanceof FinancialOperationContextError;
 }
 
 async function getUpdatedBalance(
@@ -140,7 +158,12 @@ export async function recordLoyaltyEarn(
     legacyCreatedById: input.createdById,
   });
 
-  if (!operationContext.valid) return null;
+  if (!operationContext.valid) {
+    if (input.reportContextFailure) {
+      throw new FinancialOperationContextError(operationContext.reason);
+    }
+    return null;
+  }
 
   if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
     return null;
@@ -300,7 +323,12 @@ export async function recordRewardRedemption(
     legacyCreatedById: input.createdById,
   });
 
-  if (!operationContext.valid) return null;
+  if (!operationContext.valid) {
+    if (input.reportContextFailure) {
+      throw new FinancialOperationContextError(operationContext.reason);
+    }
+    return null;
+  }
 
   if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
     return null;
