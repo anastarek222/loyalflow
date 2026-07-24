@@ -34,7 +34,17 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
     const previousFocus = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
-    const onKeydown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); return; }
+      if (event.key !== "Tab") return;
+      const drawer = closeRef.current?.closest("aside");
+      const items = drawer ? Array.from(drawer.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')) : [];
+      if (!items.length) { event.preventDefault(); return; }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
     window.addEventListener("keydown", onKeydown);
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", onKeydown); previousFocus?.focus(); };
   }, [onClose, open]);
@@ -42,7 +52,7 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
   const groups = buildShellNavigation({ language, user, business, experienceMode });
   return <>
     {open && <button type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="fixed inset-0 z-40 cursor-default bg-slate-950/45 lg:hidden" />}
-    <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className={`lf-nav-sidebar fixed top-0 z-50 flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e shadow-[var(--lf-shadow-overlay)] transition-transform duration-200 lg:hidden ${language === "AR" ? "right-0" : "left-0"} ${open ? "translate-x-0" : language === "AR" ? "translate-x-full" : "-translate-x-full"}`}>
+    <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className={`lf-nav-sidebar fixed start-0 top-0 z-50 flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e shadow-[var(--lf-shadow-overlay)] transition-transform duration-200 lg:hidden ${open ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full"}`}>
       <header className="flex items-center justify-between border-b border-border px-5 py-4">
         <div><p className="font-black text-slate-950">LoyalFlow</p><p className="text-xs text-slate-500">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p></div>
         <button ref={closeRef} type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="flex size-11 items-center justify-center rounded-md text-slate-700 hover:bg-surface-subtle"><X aria-hidden="true" /></button>
