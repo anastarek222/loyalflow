@@ -92,6 +92,7 @@ model User {
   phone                  String?
   passwordHash           String
   role                   UserRole                @default(STAFF)
+  experienceAccess       ExperienceAccess        @default(BOTH)
   isActive               Boolean                 @default(true)
   businessId             String?
   createdAt              DateTime                @default(now())
@@ -522,6 +523,12 @@ enum UserRole {
   VIEWER
 }
 
+enum ExperienceAccess {
+  SIMPLE_ONLY
+  ADVANCED_ONLY
+  BOTH
+}
+
 enum AppLanguage {
   AR
   EN
@@ -565,6 +572,7 @@ enum ActivityType {
   USER_CREATED
   USER_STATUS_CHANGED
   USER_PASSWORD_CHANGED
+  USER_EXPERIENCE_ACCESS_UPDATED
   REWARD_CREATED
   REWARD_UPDATED
   REWARD_STATUS_CHANGED

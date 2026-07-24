@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
@@ -95,7 +94,7 @@ test("U5.1 persists only a validated presentation cookie with an accessible swit
   assert.match(switcher, /type="submit"/);
 });
 
-test("U5.1 adds no Prisma schema or migration change", () => {
-  const changed = `${execFileSync("git", ["diff", "--name-only"], { cwd: root, encoding: "utf8" })}\n${execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" })}`.split("\n").filter(Boolean);
-  assert.equal(changed.some((path) => path === "prisma/schema.prisma" || path.startsWith("prisma/migrations/")), false);
+test("U5.1 keeps presentation modes separate from the persisted owner policy", () => {
+  assert.doesNotMatch(source("prisma/schema.prisma"), /enum ExperienceMode/);
+  assert.doesNotMatch(source("prisma/schema.prisma"), /experienceMode\s+/);
 });

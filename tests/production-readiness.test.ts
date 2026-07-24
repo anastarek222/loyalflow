@@ -167,12 +167,16 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 31);
+  assert.equal(committedMigrations.length, 32);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types"
     ),
     "The F3 branch audit activity migration must be part of the reviewed history."
+  );
+  assert.ok(
+    committedMigrations.includes("20260724090000_add_experience_access"),
+    "The U6.2 experience-access migration must be part of the reviewed history.",
   );
   assert.match(verifier, /const REVIEWED_MIGRATIONS = \[/);
   assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);

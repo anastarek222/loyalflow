@@ -12,10 +12,45 @@ import {
   createBusinessUserAction,
   resetBusinessUserPasswordAction,
   setBusinessUserStatusAction,
+  updateBusinessUserExperienceAccessAction,
 } from "./actions";
 import { getBusinessTheme } from "@/lib/theme";
+import { normalizeLanguage } from "@/lib/i18n";
 
 const USERS_PER_PAGE = 10;
+
+const experienceAccessCopy = {
+  AR: {
+    label: "وصول الواجهة",
+    createDescription: "اختر الواجهة التي يستطيع عضو الفريق استخدامها. الصلاحيات الحالية لا تتغير.",
+    editDescription: "يسري التغيير عند أول طلب جديد من الحساب.",
+    ownerDescription: "حسابات المالك تحتفظ دائمًا بالوضعين لحماية الوصول الإداري.",
+    save: "حفظ وصول الواجهة",
+    updated: "تم تحديث وصول الواجهة بنجاح.",
+    SIMPLE_ONLY: "الوضع البسيط فقط",
+    ADVANCED_ONLY: "الوضع المتقدم فقط",
+    BOTH: "البسيط والمتقدم",
+    recommended: "استخدم الإعداد الموصى به للدور",
+    simpleHelp: "أدوات التشغيل اليومية بواجهة مختصرة.",
+    advancedHelp: "واجهة الإدارة الكاملة حسب الصلاحيات المتاحة.",
+    bothHelp: "يمكن للمستخدم التبديل بين البسيط والمتقدم.",
+  },
+  EN: {
+    label: "Interface access",
+    createDescription: "Choose which interface this team member may use. Existing permissions do not change.",
+    editDescription: "The change takes effect on the account’s next request.",
+    ownerDescription: "Owner accounts always retain both modes to protect administrative access.",
+    save: "Save interface access",
+    updated: "Interface access updated successfully.",
+    SIMPLE_ONLY: "Simple only",
+    ADVANCED_ONLY: "Advanced only",
+    BOTH: "Simple + Advanced",
+    recommended: "Use the role-recommended setting",
+    simpleHelp: "Daily operational tools with a reduced interface.",
+    advancedHelp: "Full management interface where permissions allow.",
+    bothHelp: "The user can switch between Simple and Advanced.",
+  },
+} as const;
 
 type UsersPageProps = {
   params: Promise<{
@@ -58,6 +93,13 @@ export default async function UsersPage({
   }
 
   const theme = getBusinessTheme(business);
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { language: true },
+  });
+  const language = normalizeLanguage(currentUser?.language);
+  const accessCopy = experienceAccessCopy[language];
 
   const isSuperAdmin = isSuperAdminRole(session.user);
 
@@ -199,6 +241,7 @@ export default async function UsersPage({
       lastName: true,
       email: true,
       role: true,
+      experienceAccess: true,
       isActive: true,
       createdAt: true,
     },
@@ -302,6 +345,12 @@ export default async function UsersPage({
         {query.success === "password" && (
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
             تم تغيير كلمة المرور وإلغاء الجلسات السابقة للحساب.
+          </div>
+        )}
+
+        {query.success === "experience-access" && (
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+            {accessCopy.updated}
           </div>
         )}
 
@@ -536,6 +585,37 @@ export default async function UsersPage({
                 </select>
               </div>
 
+              <div>
+                <label
+                  htmlFor="experienceAccess"
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  {accessCopy.label}
+                </label>
+
+                <select
+                  id="experienceAccess"
+                  name="experienceAccess"
+                  defaultValue=""
+                  aria-describedby="experience-access-description"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                >
+                  <option value="">{accessCopy.recommended}</option>
+                  <option value="SIMPLE_ONLY">{accessCopy.SIMPLE_ONLY}</option>
+                  <option value="ADVANCED_ONLY">{accessCopy.ADVANCED_ONLY}</option>
+                  <option value="BOTH">{accessCopy.BOTH}</option>
+                </select>
+
+                <p id="experience-access-description" className="mt-2 text-sm text-slate-500">
+                  {accessCopy.createDescription}
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-slate-500">
+                  <li><span className="font-semibold text-slate-700">{accessCopy.SIMPLE_ONLY}:</span> {accessCopy.simpleHelp}</li>
+                  <li><span className="font-semibold text-slate-700">{accessCopy.ADVANCED_ONLY}:</span> {accessCopy.advancedHelp}</li>
+                  <li><span className="font-semibold text-slate-700">{accessCopy.BOTH}:</span> {accessCopy.bothHelp}</li>
+                </ul>
+              </div>
+
               <button
                 type="submit"
                 className="w-full rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
@@ -569,6 +649,11 @@ export default async function UsersPage({
                   );
 
                   const resetPassword = resetBusinessUserPasswordAction.bind(
+                    null,
+                    business.slug,
+                    user.id,
+                  );
+                  const changeExperienceAccess = updateBusinessUserExperienceAccessAction.bind(
                     null,
                     business.slug,
                     user.id,
@@ -680,6 +765,38 @@ export default async function UsersPage({
                           </button>
                         </form>
                       )}
+
+                      <section className="mt-6 border-t border-slate-200 pt-6" aria-labelledby={`experience-access-${user.id}`}>
+                        <h3 id={`experience-access-${user.id}`} className="font-semibold text-slate-900">
+                          {accessCopy.label}
+                        </h3>
+                        {user.role === "OWNER" ? (
+                          <p className="mt-1 text-sm text-slate-500">{accessCopy.ownerDescription}</p>
+                        ) : (
+                          <form action={changeExperienceAccess} className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                            <div>
+                              <label htmlFor={`experienceAccess-${user.id}`} className="mb-2 block text-sm font-medium text-slate-700">
+                                {accessCopy.label}
+                              </label>
+                              <select
+                                id={`experienceAccess-${user.id}`}
+                                name="experienceAccess"
+                                defaultValue={user.experienceAccess}
+                                aria-describedby={`experience-access-description-${user.id}`}
+                                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                              >
+                                <option value="SIMPLE_ONLY">{accessCopy.SIMPLE_ONLY}</option>
+                                <option value="ADVANCED_ONLY">{accessCopy.ADVANCED_ONLY}</option>
+                                <option value="BOTH">{accessCopy.BOTH}</option>
+                              </select>
+                              <p id={`experience-access-description-${user.id}`} className="mt-2 text-sm text-slate-500">{accessCopy.editDescription}</p>
+                            </div>
+                            <button type="submit" className="min-h-11 rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700">
+                              {accessCopy.save}
+                            </button>
+                          </form>
+                        )}
+                      </section>
 
                       <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
                         <div>

@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
@@ -52,7 +51,7 @@ test("U4 templates use logical layout and leave the U3 shell functionally untouc
   assert.doesNotMatch(source("components/authenticated-app-shell.tsx"), /PageContainer|PageHeader|PageTemplate/);
 });
 
-test("U4 does not alter Prisma schema or migrations", () => {
-  const changed = `${execFileSync("git", ["diff", "--name-only"], { cwd: root, encoding: "utf8" })}\n${execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" })}`.split("\n").filter(Boolean);
-  assert.equal(changed.some((path) => path === "prisma/schema.prisma" || path.startsWith("prisma/migrations/")), false);
+test("U4 page templates remain independent of persistence", () => {
+  const templates = ["page-container.tsx", "page-header.tsx", "page-tabs.tsx", "page-toolbar.tsx", "stat.tsx", "summary-panel.tsx", "sticky-action-bar.tsx", "templates.tsx", "states.tsx"].map((file) => source(`components/page-layout/${file}`)).join("\n");
+  assert.doesNotMatch(templates, /prisma\.|ExperienceAccess/);
 });

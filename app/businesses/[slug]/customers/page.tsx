@@ -65,7 +65,7 @@ export default async function CustomersPage({
 
   const authenticatedUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { language: true },
+    select: { language: true, role: true, experienceAccess: true },
   });
 
   const { slug } = await params;
@@ -75,7 +75,8 @@ export default async function CustomersPage({
   const dateLocale = getLanguageLocale(language);
   const experienceMode = resolveExperienceMode(
     (await cookies()).get(getExperienceModeCookieName(session.user.id))?.value,
-    session.user.role,
+    authenticatedUser?.role ?? session.user.role,
+    authenticatedUser?.experienceAccess,
   );
   const isSimpleExperience = experienceMode === "SIMPLE";
 

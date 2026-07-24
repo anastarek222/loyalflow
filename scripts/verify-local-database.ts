@@ -60,6 +60,7 @@ const REVIEWED_MIGRATIONS = [
   "20260723054319_link_reward_redemption_to_ledger",
   "20260723103415_add_branch_audit_activity_types",
   "20260723120000_add_owner_phone",
+  "20260724090000_add_experience_access",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;
@@ -156,7 +157,7 @@ async function verifyMigrationHistory() {
 
   assert.ok(
     JSON.stringify(migrationNames) === JSON.stringify(REVIEWED_MIGRATIONS),
-    "Migration history must exactly match the reviewed 31-migration committed history."
+    "Migration history must exactly match the reviewed migration history."
   );
 }
 
