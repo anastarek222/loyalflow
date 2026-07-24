@@ -100,9 +100,14 @@ useEffect(() => {
 
   useEffect(() => {
     if (trigger !== "shell" || searchParams.get("notifications") !== "1") return;
-    setStatus(null);
-    setFilter("all");
-    setIsOpen(true);
+
+    const frame = window.requestAnimationFrame(() => {
+      setStatus(null);
+      setFilter("all");
+      setIsOpen(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [searchParams, trigger]);
 
   function markAllAsRead() {

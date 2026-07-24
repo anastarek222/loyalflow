@@ -60,7 +60,7 @@ export async function resolveFinancialOperationContext(
     return { valid: false, reason: "ACTOR_NOT_ALLOWED" };
   }
 
-  let branchId = input.branchId;
+  const branchId = input.branchId;
 
   if (branchId) {
     const branch = await transaction.branch.findFirst({
