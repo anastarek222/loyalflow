@@ -1,0 +1,1003 @@
+===== ROOT =====
+total 2728
+drwxr-xr-x   45 apple  staff    1440 Jul 24 12:13 .
+drwxr-x---+  41 apple  staff    1312 Jul 24 07:57 ..
+-rw-r--r--@   1 apple  staff   10244 Jul 14 06:05 .DS_Store
+drwxr-xr-x@   3 apple  staff      96 Jul 18 13:48 .agents
+drwxr-xr-x    6 apple  staff     192 Jul 18 02:09 .claude
+-rw-r--r--    1 apple  staff     457 Jul 20 16:18 .env
+-rw-r--r--@   1 apple  staff     974 Jul 23 10:37 .env.example
+-rw-r--r--    1 apple  staff    1366 Jul 23 08:37 .env.local
+-rw-r--r--    1 apple  staff    1196 Jul 20 02:51 .env.production
+drwxr-xr-x   16 apple  staff     512 Jul 24 09:11 .git
+-rw-r--r--@   1 apple  staff     663 Jul 24 06:19 .gitignore
+drwxr-xr-x   23 apple  staff     736 Jul 24 09:11 .next
+-rw-r--r--    1 apple  staff       3 Jul  9 23:40 .nvmrc
+drwxr-xr-x    4 apple  staff     128 Jul 20 02:53 .vercel
+-rw-r--r--    1 apple  staff     327 Jul  9 02:18 AGENTS.md
+-rw-r--r--    1 apple  staff    6739 Jul 14 07:37 CLAUDE.md
+-rw-r--r--@   1 apple  staff    1513 Jul 16 23:42 LOYALFLOW_CONTEXT.md
+-rw-r--r--@   1 apple  staff   28303 Jul 21 00:08 LOYALFLOW_EXECUTION_CHECKLIST.md
+-rw-r--r--    1 apple  staff  455145 Jul 14 17:16 LoyalFlow_Project.zip
+-rw-r--r--    1 apple  staff    1450 Jul  9 02:16 README.md
+drwxr-xr-x   19 apple  staff     608 Jul 23 22:42 app
+-rw-r--r--    1 apple  staff    3943 Jul 23 10:05 auth.ts
+drwxr-xr-x   43 apple  staff    1376 Jul 24 05:51 components
+drwxr-xr-x@  11 apple  staff     352 Jul 24 08:24 docs
+-rw-r--r--@   1 apple  staff     493 Jul 20 13:36 eslint.config.mjs
+drwxr-xr-x    4 apple  staff     128 Jul 14 06:05 generated
+drwxr-xr-x   46 apple  staff    1472 Jul 24 05:51 lib
+-rw-r--r--    1 apple  staff      17 Jul 24 12:13 loyalflow-report.txt
+-rw-r--r--@   1 apple  staff     247 Jul 24 09:10 next-env.d.ts
+-rw-r--r--    1 apple  staff    1575 Jul 13 03:53 next.config.ts
+drwxr-xr-x  487 apple  staff   15584 Jul 24 08:56 node_modules
+-rw-r--r--@   1 apple  staff  378916 Jul 24 08:56 package-lock.json
+-rw-r--r--@   1 apple  staff    3004 Jul 24 09:01 package.json
+-rw-r--r--    1 apple  staff    1569 Jul 24 07:35 playwright.config.ts
+-rw-r--r--    1 apple  staff      94 Jul  9 02:16 postcss.config.mjs
+drwxr-xr-x    5 apple  staff     160 Jul 21 21:08 prisma
+-rw-r--r--@   1 apple  staff     630 Jul 23 10:36 prisma.config.ts
+drwxr-xr-x   10 apple  staff     320 Jul 11 21:44 public
+drwxr-xr-x   17 apple  staff     544 Jul 23 08:57 scripts
+drwxr-xr-x    3 apple  staff      96 Jul 10 23:58 secrets
+drwxr-xr-x    3 apple  staff      96 Jul 24 09:09 test-results
+drwxr-xr-x@  65 apple  staff    2080 Jul 24 06:19 tests
+-rw-r--r--    1 apple  staff     692 Jul 19 03:43 tsconfig.json
+-rw-r--r--@   1 apple  staff  430069 Jul 24 09:06 tsconfig.tsbuildinfo
+drwxr-xr-x    3 apple  staff      96 Jul 10 18:26 types
+
+===== PACKAGE =====
+{
+  "name": "loyalflow",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build --webpack",
+    "start": "next start",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate:status": "prisma migrate status",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "deploy:check": "npm run db:validate && npm run db:migrate:status && npm run build",
+    "lint": "eslint",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:financial-integrity": "tsx scripts/verify-financial-integrity.ts",
+    "verify:local-db": "tsx scripts/verify-local-database.ts",
+    "verify:local-promotions": "tsx scripts/verify-local-promotions.ts",
+    "verify:local-reward-expiration": "tsx scripts/verify-local-reward-expiration.ts",
+    "verify:local-referrals": "tsx scripts/verify-local-referrals.ts",
+    "verify:local-staff-permissions": "tsx scripts/verify-local-staff-permissions.ts",
+    "verify:local-multi-branch": "tsx scripts/verify-local-multi-branch.ts",
+    "verify:local-branch-staff": "tsx scripts/verify-local-multi-branch.ts",
+    "verify:local-customer-notes-tags": "tsx scripts/verify-local-customer-notes-tags.ts",
+    "verify:local-bulk-customer-operations": "tsx scripts/verify-local-bulk-customer-operations.ts",
+    "verify:local-offers": "tsx scripts/verify-local-offers.ts",
+    "verify:local-business-profile-foundation": "tsx scripts/verify-local-business-profile-foundation.ts",
+    "prepare:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
+    "cleanup:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
+    "test:browser-uat": "playwright test --config=playwright.config.ts",
+    "create-admin": "tsx scripts/create-super-admin.ts",
+    "sync-sheets": "tsx scripts/sync-google-sheets.ts",
+    "postinstall": "prisma generate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.5.2",
+    "@prisma/adapter-pg": "^7.8.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "googleapis": "^173.0.0",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^1.25.0",
+    "next": "^16.2.10",
+    "next-auth": "^5.0.0-beta.31",
+    "pg": "^8.22.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "recharts": "^3.10.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@prisma/client": "^7.8.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "prisma": "^7.8.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.0",
+    "typescript": "^5"
+  },
+  "type": "module",
+  "allowScripts": {
+    "@prisma/engines@7.9.0": true,
+    "prisma@7.9.0": true,
+    "unrs-resolver@1.12.2": true
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.12",
+      "sharp": "0.35.0"
+    }
+  }
+}
+
+===== TREE =====
+
+===== PRISMA =====
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Business {
+  id                     String      @id @default(cuid())
+  name                   String
+  slug                   String      @unique
+  logoUrl                String?
+  coverImageUrl          String?
+  primaryColor           String      @default("#111827")
+  secondaryColor         String      @default("#FFFFFF")
+  currency               String?
+  timezone               String?
+  loyaltyProgramName     String?
+  pointsName             String?
+  membershipName         String?
+  welcomeMessage         String?
+  loyaltyMode            LoyaltyMode @default(VISITS)
+  unitName               String      @default("زيارة")
+  rewardName             String      @default("هدية مجانية")
+  rewardThreshold        Int         @default(5)
+  earnAmount             Int         @default(1)
+  isActive               Boolean     @default(true)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  whatsappBalanceMessage String?
+  whatsappRewardMessage  String?
+  whatsappWelcomeMessage String?
+  address                String?
+  cardTerms              String?
+  contactPhone           String?
+
+  industry      String?
+  website       String?
+  email         String?
+  country       String?
+  city          String?
+  taxNumber     String?
+  employeeCount Int?
+
+  description String?
+
+  instagramUrl String?
+  facebookUrl  String?
+  tiktokUrl    String?
+
+  themePreset     ThemePreset @default(DEFAULT)
+  cardStyle       CardLayout  @default(CLASSIC)
+  buttonStyle     ButtonStyle @default(ROUNDED)
+  backgroundColor String      @default("#F8FAFC")
+  qrStyle         String      @default("CLASSIC")
+  qrPosition      String      @default("CENTER")
+  fontFamily      String      @default("INTER")
+
+  allowOwnerDataExport     Boolean                 @default(false)
+  staffAttributionEnabled  Boolean                 @default(false)
+  staffAttributionRequired Boolean                 @default(false)
+  cardDefaultLanguage      AppLanguage             @default(AR)
+  rewardType               RewardType              @default(GIFT)
+  rewardCode               String?
+  rewardDescription        String?
+  activities               BusinessActivity[]
+  customers                Customer[]
+  transactions             LoyaltyTransaction[]
+  notificationItemReads    NotificationItemRead[]
+  notificationReadStates   NotificationReadState[]
+  redemptions              RewardRedemption[]
+  rewardUnlocks            RewardUnlock[]
+  rewards                  Reward[]
+  promotions               Promotion[]
+  promotionApplications    PromotionApplication[]
+  referralCodes            CustomerReferralCode[]
+  referrals                Referral[]
+  users                    User[]
+  branches                 Branch[]
+  customerTags             CustomerTag[]
+  offers                   Offer[]
+  notifications            Notification[]
+}
+
+model User {
+  id                     String                  @id @default(cuid())
+  firstName              String
+  lastName               String?
+  email                  String                  @unique
+  phone                  String?
+  passwordHash           String
+  role                   UserRole                @default(STAFF)
+  experienceAccess       ExperienceAccess        @default(BOTH)
+  isActive               Boolean                 @default(true)
+  businessId             String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  authVersion            Int                     @default(0)
+  language               AppLanguage             @default(AR)
+  activities             BusinessActivity[]      @relation("ActivityCreatedBy")
+  transactions           LoyaltyTransaction[]    @relation("TransactionCreatedBy")
+  attributedTransactions LoyaltyTransaction[]    @relation("TransactionAttributedStaff")
+  notificationItemReads  NotificationItemRead[]
+  notificationReadStates NotificationReadState[]
+  redemptions            RewardRedemption[]      @relation("RedemptionCreatedBy")
+  attributedRedemptions  RewardRedemption[]      @relation("RedemptionAttributedStaff")
+  branchAssignments      BranchStaffAssignment[]
+  createdCustomerNotes   CustomerNote[]          @relation("CustomerNoteCreatedBy")
+  updatedCustomerNotes   CustomerNote[]          @relation("CustomerNoteUpdatedBy")
+  notifications          Notification[]
+  business               Business?               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([id, businessId])
+  @@index([businessId])
+}
+
+model Customer {
+  id                    String                  @id @default(cuid())
+  firstName             String
+  lastName              String?
+  phone                 String
+  customerCode          String
+  publicToken           String                  @unique @default(cuid())
+  balance               Int                     @default(0)
+  lifetimeEarned        Int                     @default(0)
+  lifetimeRedeemed      Int                     @default(0)
+  isActive              Boolean                 @default(true)
+  businessId            String
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  activities            BusinessActivity[]
+  business              Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  tagAssignments        CustomerTagAssignment[]
+  notes                 CustomerNote[]
+  transactions          LoyaltyTransaction[]
+  redemptions           RewardRedemption[]
+  rewardUnlocks         RewardUnlock[]
+  promotionApplications PromotionApplication[]
+  referralCodes         CustomerReferralCode[]
+  referralsMade         Referral[]              @relation("ReferralReferrer")
+  referralsReceived     Referral[]              @relation("ReferralReferred")
+
+  @@unique([businessId, phone])
+  @@unique([businessId, customerCode])
+  @@unique([id, businessId])
+  @@index([businessId, createdAt])
+}
+
+model CustomerTag {
+  id          String                  @id @default(cuid())
+  businessId  String
+  name        String
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  business    Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  assignments CustomerTagAssignment[]
+
+  @@unique([businessId, name])
+  @@unique([id, businessId])
+  @@index([businessId, name])
+}
+
+model CustomerTagAssignment {
+  id         String      @id @default(cuid())
+  businessId String
+  customerId String
+  tagId      String
+  createdAt  DateTime    @default(now())
+  customer   Customer    @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  tag        CustomerTag @relation(fields: [tagId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([customerId, tagId])
+  @@index([businessId, tagId])
+  @@index([businessId, customerId])
+}
+
+model CustomerNote {
+  id          String   @id @default(cuid())
+  businessId  String
+  customerId  String
+  content     String
+  createdById String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customer    Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  createdBy   User?    @relation("CustomerNoteCreatedBy", fields: [createdById, businessId], references: [id, businessId], onDelete: NoAction)
+  updatedBy   User?    @relation("CustomerNoteUpdatedBy", fields: [updatedById, businessId], references: [id, businessId], onDelete: NoAction)
+
+  @@index([businessId, customerId, updatedAt])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model Reward {
+  id               String             @id @default(cuid())
+  name             String
+  description      String?
+  type             RewardType         @default(GIFT)
+  code             String?
+  cost             Int
+  expiresAfterDays Int?
+  isActive         Boolean            @default(true)
+  businessId       String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  business         Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  redemptions      RewardRedemption[]
+  unlocks          RewardUnlock[]
+
+  @@unique([id, businessId])
+  @@index([businessId, isActive, cost])
+}
+
+// Customer-facing incentives are intentionally independent from rewards and
+// earning promotions. They never change a loyalty balance by themselves.
+model Offer {
+  id          String           @id @default(cuid())
+  businessId  String
+  name        String
+  description String?
+  isActive    Boolean          @default(true)
+  validFrom   DateTime?
+  validUntil  DateTime?
+  eligibility OfferEligibility @default(ALL)
+  segment     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isActive, validFrom, validUntil])
+  @@index([businessId, eligibility])
+}
+
+model LoyaltyTransaction {
+  id                   String                @id @default(cuid())
+  type                 TransactionType
+  amount               Int
+  balanceAfter         Int
+  note                 String?
+  sourceLoyaltyMode    LoyaltyMode?
+  saleAmount           Int?
+  idempotencyKey       String?
+  customerId           String
+  businessId           String
+  branchId             String?
+  createdById          String?
+  attributedStaffId    String?
+  createdAt            DateTime              @default(now())
+  business             Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch               Branch?               @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy            User?                 @relation("TransactionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  attributedStaff      User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
+  customer             Customer              @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  promotionApplication PromotionApplication?
+  rewardRedemption     RewardRedemption?
+
+  @@unique([businessId, idempotencyKey])
+  @@unique([id, businessId])
+  @@index([customerId, createdAt])
+  @@index([businessId, createdAt])
+  @@index([businessId, sourceLoyaltyMode, createdAt])
+  @@index([businessId, branchId, createdAt])
+  @@index([createdById])
+  @@index([attributedStaffId])
+}
+
+model Branch {
+  id               String                  @id @default(cuid())
+  businessId       String
+  name             String
+  address          String?
+  contactPhone     String?
+  isActive         Boolean                 @default(true)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  business         Business                @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffAssignments BranchStaffAssignment[]
+  transactions     LoyaltyTransaction[]
+  redemptions      RewardRedemption[]
+  activities       BusinessActivity[]
+
+  @@unique([businessId, name])
+  @@unique([id, businessId])
+  @@index([businessId, isActive])
+}
+
+model BranchStaffAssignment {
+  id         String   @id @default(cuid())
+  branchId   String
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  branch     Branch   @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: Cascade)
+  user       User     @relation(fields: [userId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([userId, branchId])
+  @@index([businessId, branchId])
+}
+
+model Promotion {
+  id                       String                 @id @default(cuid())
+  name                     String
+  description              String?
+  isActive                 Boolean                @default(true)
+  loyaltyMode              LoyaltyMode?
+  minimumTransactionAmount Int?
+  bonusAmount              Int
+  bonusMultiplier          Int?
+  startsAt                 DateTime?
+  endsAt                   DateTime?
+  businessId               String
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  applications             PromotionApplication[]
+  business                 Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([id, businessId])
+  @@index([businessId, isActive, startsAt, endsAt])
+}
+
+model PromotionApplication {
+  id            String             @id @default(cuid())
+  baseAmount    Int?
+  bonusAmount   Int
+  promotionId   String
+  businessId    String
+  customerId    String
+  transactionId String             @unique
+  createdAt     DateTime           @default(now())
+  promotion     Promotion          @relation(fields: [promotionId, businessId], references: [id, businessId], onDelete: Cascade)
+  business      Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer      Customer           @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  transaction   LoyaltyTransaction @relation(fields: [transactionId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([transactionId, businessId])
+  @@index([businessId, customerId, createdAt])
+  @@index([promotionId, createdAt])
+}
+
+model RewardRedemption {
+  id                String              @id @default(cuid())
+  rewardName        String
+  cost              Int
+  rewardId          String?
+  transactionId     String?
+  customerId        String
+  businessId        String
+  branchId          String?
+  createdById       String?
+  attributedStaffId String?
+  createdAt         DateTime            @default(now())
+  business          Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch            Branch?             @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy         User?               @relation("RedemptionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  attributedStaff   User?               @relation("RedemptionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
+  customer          Customer            @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  reward            Reward?             @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: NoAction)
+  transaction       LoyaltyTransaction? @relation(fields: [transactionId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([transactionId, businessId])
+  @@index([customerId, createdAt])
+  @@index([businessId, createdAt])
+  @@index([businessId, branchId, createdAt])
+  @@index([createdById])
+  @@index([attributedStaffId])
+  @@index([rewardId])
+}
+
+model RewardUnlock {
+  id         String    @id @default(cuid())
+  businessId String
+  customerId String
+  rewardId   String
+  unlockedAt DateTime  @default(now())
+  expiresAt  DateTime
+  redeemedAt DateTime?
+  expiredAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer   Customer  @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  reward     Reward    @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@index([businessId, customerId, expiresAt])
+  @@index([customerId, rewardId, redeemedAt, expiredAt])
+  @@index([rewardId, expiresAt])
+}
+
+model CustomerReferralCode {
+  id         String   @id @default(cuid())
+  code       String
+  isActive   Boolean  @default(true)
+  businessId String
+  customerId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([businessId, customerId])
+  @@unique([businessId, code])
+  @@index([businessId, isActive])
+}
+
+model Referral {
+  id                 String         @id @default(cuid())
+  status             ReferralStatus @default(RECORDED)
+  businessId         String
+  referrerCustomerId String
+  referredCustomerId String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  business           Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  referrer           Customer       @relation("ReferralReferrer", fields: [referrerCustomerId, businessId], references: [id, businessId], onDelete: Cascade)
+  referred           Customer       @relation("ReferralReferred", fields: [referredCustomerId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@unique([businessId, referredCustomerId])
+  @@index([businessId, referrerCustomerId, createdAt])
+}
+
+model BusinessActivity {
+  id          String       @id @default(cuid())
+  type        ActivityType
+  description String
+  businessId  String
+  branchId    String?
+  customerId  String?
+  createdById String?
+  deviceName  String?
+  ipAddress   String?
+  metadata    Json?
+  createdAt   DateTime     @default(now())
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch      Branch?      @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy   User?        @relation("ActivityCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  customer    Customer?    @relation(fields: [customerId, businessId], references: [id, businessId])
+
+  @@index([businessId, createdAt])
+  @@index([businessId, branchId, createdAt])
+  @@index([customerId])
+  @@index([createdById])
+  @@index([type])
+}
+
+model Notification {
+  id      String  @id @default(cuid())
+  type    String
+  title   String
+  message String
+  isRead  Boolean @default(false)
+
+  businessId String
+  userId     String?
+
+  createdAt DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId, businessId], references: [id, businessId], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model NotificationReadState {
+  id         String   @id @default(cuid())
+  lastReadAt DateTime @default(now())
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
+  @@index([businessId, lastReadAt])
+}
+
+model NotificationItemRead {
+  id              String   @id @default(cuid())
+  notificationKey String
+  readAt          DateTime @default(now())
+  userId          String
+  businessId      String
+  createdAt       DateTime @default(now())
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId, notificationKey])
+  @@index([userId, businessId])
+  @@index([businessId, readAt])
+}
+
+enum ThemePreset {
+  DEFAULT
+  LUXURY
+  MODERN
+  MINIMAL
+  DARK
+  GRADIENT
+}
+
+enum ButtonStyle {
+  ROUNDED
+  PILL
+  SQUARE
+}
+
+enum CardLayout {
+  CLASSIC
+  COMPACT
+  PREMIUM
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  OWNER
+  MANAGER
+  STAFF
+  VIEWER
+}
+
+enum ExperienceAccess {
+  SIMPLE_ONLY
+  ADVANCED_ONLY
+  BOTH
+}
+
+enum AppLanguage {
+  AR
+  EN
+}
+
+enum LoyaltyMode {
+  VISITS
+  POINTS
+  SALES_AMOUNT
+}
+
+enum OfferEligibility {
+  ALL
+  SEGMENT
+  VIP
+}
+
+enum TransactionType {
+  EARN
+  REDEEM
+  ADJUSTMENT
+}
+
+enum ActivityType {
+  CUSTOMER_CREATED
+  CUSTOMER_UPDATED
+  CUSTOMER_DEACTIVATED
+  CUSTOMER_REACTIVATED
+  CUSTOMER_TAG_ASSIGNED
+  CUSTOMER_TAG_REMOVED
+  CUSTOMER_NOTE_CREATED
+  CUSTOMER_NOTE_UPDATED
+  LOYALTY_EARNED
+  REWARD_REDEEMED
+  REWARD_UNLOCKED
+  REWARD_EXPIRED
+  REWARD_REDEMPTION_BLOCKED
+  REFERRAL_RECORDED
+  BALANCE_ADJUSTED
+  BUSINESS_SETTINGS_UPDATED
+  USER_CREATED
+  USER_STATUS_CHANGED
+  USER_PASSWORD_CHANGED
+  USER_EXPERIENCE_ACCESS_UPDATED
+  REWARD_CREATED
+  REWARD_UPDATED
+  REWARD_STATUS_CHANGED
+  OFFER_CREATED
+  OFFER_UPDATED
+  OFFER_STATUS_CHANGED
+  BRANCH_CREATED
+  BRANCH_UPDATED
+  BRANCH_ACTIVATED
+  BRANCH_DEACTIVATED
+  BRANCH_STAFF_ASSIGNED
+  BRANCH_STAFF_REMOVED
+}
+
+enum ReferralStatus {
+  RECORDED
+}
+
+enum RewardType {
+  GIFT
+  PROMO_CODE
+  DISCOUNT
+  CUSTOM
+}
+
+===== APP FILES =====
+app/apple-icon.tsx
+app/businesses/actions.ts
+app/businesses/layout.tsx
+app/businesses/error.tsx
+app/businesses/loading.tsx
+app/businesses/page.tsx
+app/businesses/[slug]/customers/[customerId]/actions.ts
+app/businesses/[slug]/customers/[customerId]/error.tsx
+app/businesses/[slug]/customers/[customerId]/loading.tsx
+app/businesses/[slug]/customers/[customerId]/page.tsx
+app/businesses/[slug]/customers/actions.ts
+app/businesses/[slug]/customers/error.tsx
+app/businesses/[slug]/customers/loading.tsx
+app/businesses/[slug]/customers/export/route.ts
+app/businesses/[slug]/customers/page.tsx
+app/businesses/[slug]/settings/actions.ts
+app/businesses/[slug]/settings/loading.tsx
+app/businesses/[slug]/settings/page.tsx
+app/businesses/[slug]/offers/actions.ts
+app/businesses/[slug]/offers/loading.tsx
+app/businesses/[slug]/offers/page.tsx
+app/businesses/[slug]/activity/page.tsx
+app/businesses/[slug]/recovery/loading.tsx
+app/businesses/[slug]/recovery/export/route.ts
+app/businesses/[slug]/recovery/page.tsx
+app/businesses/[slug]/rewards/actions.ts
+app/businesses/[slug]/rewards/loading.tsx
+app/businesses/[slug]/rewards/page.tsx
+app/businesses/[slug]/playbooks/actions.ts
+app/businesses/[slug]/playbooks/loading.tsx
+app/businesses/[slug]/playbooks/page.tsx
+app/businesses/[slug]/scan/page.tsx
+app/businesses/[slug]/scan/customer/[customerId]/page.tsx
+app/businesses/[slug]/users/actions.ts
+app/businesses/[slug]/users/loading.tsx
+app/businesses/[slug]/users/page.tsx
+app/businesses/[slug]/notification-actions.ts
+app/businesses/[slug]/loading.tsx
+app/businesses/[slug]/branches/actions.ts
+app/businesses/[slug]/branches/loading.tsx
+app/businesses/[slug]/branches/page.tsx
+app/businesses/[slug]/campaigns/loading.tsx
+app/businesses/[slug]/campaigns/page.tsx
+app/businesses/[slug]/page.tsx
+app/businesses/[slug]/duplicates/page.tsx
+app/businesses/[slug]/reports/loading.tsx
+app/businesses/[slug]/reports/staff/page.tsx
+app/businesses/[slug]/reports/export/route.ts
+app/businesses/[slug]/reports/page.tsx
+app/favicon.ico
+app/.DS_Store
+app/card/[token]/page.tsx
+app/card/[token]/not-found.tsx
+app/join/[slug]/actions.ts
+app/join/[slug]/page.tsx
+app/join/[slug]/not-found.tsx
+app/icon.tsx
+app/language/actions.ts
+app/dashboard/actions.ts
+app/dashboard/layout.tsx
+app/dashboard/error.tsx
+app/dashboard/loading.tsx
+app/dashboard/page.tsx
+app/layout.tsx
+app/api/.DS_Store
+app/api/card/[token]/route.ts
+app/api/auth/[...nextauth]/route.ts
+app/api/health/route.ts
+app/api/health/live/route.ts
+app/api/scan/customers/route.ts
+app/api/scan/resolve/route.ts
+app/api/card-manifest/[token]/route.ts
+app/api/card-icon/[token]/route.tsx
+app/api/analytics/historical-trends/route.ts
+app/api/analytics/route.ts
+app/experience-mode/actions.ts
+app/manifest.ts
+app/page.tsx
+app/globals.css
+app/login/actions.ts
+app/login/page.tsx
+
+===== COMPONENTS =====
+components/page-layout/templates.tsx
+components/page-layout/page-toolbar.tsx
+components/page-layout/states.tsx
+components/page-layout/summary-panel.tsx
+components/page-layout/sticky-action-bar.tsx
+components/page-layout/page-container.tsx
+components/page-layout/page-tabs.tsx
+components/page-layout/index.ts
+components/page-layout/page-header.tsx
+components/page-layout/stat.tsx
+components/ui/form-controls.tsx
+components/ui/surface.tsx
+components/ui/chart.tsx
+components/ui/toolbar.tsx
+components/ui/utils.ts
+components/ui/dialog.tsx
+components/ui/table.tsx
+components/ui/index.ts
+components/ui/feedback.tsx
+components/ui/button.tsx
+components/ui/navigation.tsx
+components/business-settings-form.tsx
+components/dashboard-charts.tsx
+components/scan-customer-search.tsx
+components/shell-icons.tsx
+components/authenticated-locale-shell.tsx
+components/qr-scanner.tsx
+components/app-topbar.tsx
+components/notification-read-button.tsx
+components/authenticated-app-shell.tsx
+components/open-advanced-dashboard-button.tsx
+components/card-business-details-form.tsx
+components/copy-link-button.tsx
+components/campaign-builder.tsx
+components/business-notifications-auto-refresh.tsx
+components/redeem-reward-dialog.tsx
+components/card-offline-manager.tsx
+components/growth/growth-navigation.tsx
+components/growth/growth-loading.tsx
+components/growth/growth-shell.tsx
+components/app-sidebar.tsx
+components/customer-experience/public-page-shell.tsx
+components/customer-experience/public-card-actions.tsx
+components/mobile-sidebar.tsx
+components/scan-action-button.tsx
+components/loyalty-submit-button.tsx
+components/mobile-bottom-navigation.tsx
+components/share-link-button.tsx
+components/experience-mode-switcher.tsx
+components/join-submit-button.tsx
+components/bulk-customer-operations.tsx
+components/administration/administration-navigation.tsx
+components/administration/confirm-submit-button.tsx
+components/language-switcher.tsx
+components/dashboard-health-chart.tsx
+components/mobile-sidebar-wrapper.tsx
+components/business-sales-kpis.tsx
+components/business-notifications-dialog.tsx
+components/loyalty-operation-context-fields.tsx
+components/sales-progress-panel.tsx
+components/auto-flip-membership-card.tsx
+components/business-setup-wizard.tsx
+components/business-notifications-content.tsx
+components/reports/report-navigation.tsx
+components/reports/report-charts.tsx
+
+===== LIB =====
+lib/customers/notes-tags.ts
+lib/customers/vip-tiers.ts
+lib/customers/ui-copy.ts
+lib/customers/retention-score.ts
+lib/customers/segments.ts
+lib/customers/bulk.ts
+lib/customers/timeline.ts
+lib/customers/duplicates.ts
+lib/customers/phone.ts
+lib/customers/registration.ts
+lib/google-wallet/readiness.ts
+lib/prisma.ts
+lib/business-profile.ts
+lib/offers/eligibility.ts
+lib/offers/catalog.ts
+lib/branding/image-data.ts
+lib/google-sheets.ts
+lib/auth/password-policy.ts
+lib/notifications.ts
+lib/activity/business-activity.ts
+lib/activity/presentation.ts
+lib/activity/request-context.ts
+lib/i18n.ts
+lib/referrals/code.ts
+lib/permissions.ts
+lib/cards/public-token.ts
+lib/cards/public-card-localization.ts
+lib/health/readiness.ts
+lib/rewards/expiration.ts
+lib/rewards/catalog.ts
+lib/business/creation-input.ts
+lib/business/onboarding.ts
+lib/app-shell-navigation.ts
+lib/server/environment.ts
+lib/server/logging.ts
+lib/playbooks/catalog.ts
+lib/utils/qrcode.ts
+lib/utils/rate-limiter.ts
+lib/google-sheets-sync-safe.ts
+lib/google-sheets-sync.ts
+lib/loyalty/progress.ts
+lib/loyalty/operation-context.ts
+lib/loyalty/operations.ts
+lib/loyalty/staff-attribution.ts
+lib/loyalty/fraud.ts
+lib/loyalty/operation-origin.ts
+lib/loyalty/transactions.ts
+lib/scan/customer-search.ts
+lib/scan/copy.ts
+lib/scan/resolve.ts
+lib/entitlements.ts
+lib/growth/ui-copy.ts
+lib/dashboard/overview.ts
+lib/customer-experience/public-copy.ts
+lib/app-url.ts
+lib/notification-read-state.ts
+lib/promotions/engine.ts
+lib/whatsapp-templates.ts
+lib/experience-mode.ts
+lib/wallet/foundation.ts
+lib/request-base-url.ts
+lib/administration/navigation.ts
+lib/branches/management.ts
+lib/branches/access.ts
+lib/campaigns/builder.ts
+lib/campaigns/suggestions.ts
+lib/campaigns/winback.ts
+lib/theme.ts
+lib/events/foundation.ts
+lib/validation/action-input.ts
+lib/analytics/trends.ts
+lib/analytics/dashboard.ts
+lib/analytics/report-filters.ts
+lib/analytics/date-range.ts
+lib/analytics/metrics.ts
+lib/reports/presentation.ts
+
+===== HOOKS =====
+
+===== API =====
+app/api/.DS_Store
+app/api/card/[token]/route.ts
+app/api/auth/[...nextauth]/route.ts
+app/api/health/route.ts
+app/api/health/live/route.ts
+app/api/scan/customers/route.ts
+app/api/scan/resolve/route.ts
+app/api/card-manifest/[token]/route.ts
+app/api/card-icon/[token]/route.tsx
+app/api/analytics/historical-trends/route.ts
+app/api/analytics/route.ts
+
+===== CONFIG =====
+./.env.production
+./.DS_Store
+./.env.local
+./LoyalFlow_Project.zip
+./postcss.config.mjs
+./tsconfig.tsbuildinfo
+./LOYALFLOW_EXECUTION_CHECKLIST.md
+./LOYALFLOW_CONTEXT.md
+./prisma.config.ts
+./next-env.d.ts
+./README.md
+./.gitignore
+./package-lock.json
+./package.json
+./.env
+./.nvmrc
+./tsconfig.json
+./playwright.config.ts
+./.env.example
+./AGENTS.md
+./eslint.config.mjs
+./CLAUDE.md
+./auth.ts
+./loyalflow-report.txt
+./next.config.ts
