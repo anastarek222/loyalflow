@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
@@ -95,7 +94,6 @@ test("U5 global dashboard safely models zero, one, and multiple workspaces", () 
   assert.match(dashboard, /getGlobalDashboardMode\(businesses\.length\)/);
 });
 
-test("U5 does not alter Prisma schema or migrations", () => {
-  const changed = `${execFileSync("git", ["diff", "--name-only"], { cwd: root, encoding: "utf8" })}\n${execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" })}`.split("\n").filter(Boolean);
-  assert.equal(changed.some((path) => path === "prisma/schema.prisma" || path.startsWith("prisma/migrations/")), false);
+test("U5 dashboard keeps its original presentation-only boundary", () => {
+  assert.doesNotMatch(businessDashboard, /prisma\.user\.update\(/);
 });

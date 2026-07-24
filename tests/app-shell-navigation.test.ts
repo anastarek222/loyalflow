@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
@@ -62,7 +61,6 @@ test("the shell has one canonical notification control and direction remains use
   assert.match(source("components/mobile-bottom-navigation.tsx"), /entry\.id === "scan"/);
 });
 
-test("U3 does not change schemas or migrations", () => {
-  const changed = `${execFileSync("git", ["diff", "--name-only"], { cwd: root, encoding: "utf8" })}\n${execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" })}`.split("\n").filter(Boolean);
-  assert.equal(changed.some((path) => path === "prisma/schema.prisma" || path.startsWith("prisma/migrations/")), false);
+test("U3 navigation remains separate from durable experience policy", () => {
+  assert.doesNotMatch(source("lib/app-shell-navigation.ts"), /prisma\.|ExperienceAccess.*update/);
 });

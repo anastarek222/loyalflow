@@ -68,7 +68,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
       where: { slug },
       include: { _count: { select: { customers: true, users: true, branches: true } } },
     }),
-    prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, role: true, businessId: true, language: true } }),
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, role: true, businessId: true, language: true, experienceAccess: true } }),
   ]);
   if (!business) notFound();
   if (!user || !canAccessBusiness(user, business.id)) redirect("/dashboard");
@@ -77,6 +77,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   const experienceMode = resolveExperienceMode(
     (await cookies()).get(getExperienceModeCookieName(user.id))?.value,
     user.role,
+    user.experienceAccess,
   );
   const isSimpleExperience = experienceMode === "SIMPLE";
   const dictionary = copy(language);
@@ -90,6 +91,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   const modeRules = getExperienceNavigationRules({
     mode: experienceMode,
     role: user.role,
+    access: user.experienceAccess,
     advancedDestinationCount: [canViewReports, canManageSettings, canManageUsers].filter(Boolean).length,
   });
   const actions = getBusinessDashboardActions(business.slug, { canScan, canViewReports, canManageSettings, canManageUsers });

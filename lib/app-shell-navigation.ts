@@ -3,6 +3,7 @@ import type { UserRole } from "@/generated/prisma/client";
 import { canPerform, type TenantUser } from "@/lib/permissions";
 import {
   getExperienceNavigationRules,
+  type ExperienceAccess,
   type ExperienceMode,
 } from "@/lib/experience-mode";
 
@@ -14,6 +15,7 @@ export type ShellBusiness = {
 
 export type ShellUser = TenantUser & {
   role: UserRole;
+  experienceAccess?: ExperienceAccess;
 };
 
 export type ShellNavigationItem = {
@@ -232,6 +234,7 @@ export function buildShellNavigation({
   const rules = getExperienceNavigationRules({
     mode: experienceMode,
     role: user.role,
+    access: user.experienceAccess,
     advancedDestinationCount: advancedDestinations.length,
   });
   const simplePrimary = advancedNavigation

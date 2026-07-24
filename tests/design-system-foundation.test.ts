@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
@@ -40,9 +39,7 @@ test("new primitives use direction-safe layout and expose required accessibility
   for (const attribute of ["aria-label", "aria-disabled", "aria-busy", "aria-describedby", "aria-modal", "aria-labelledby", "aria-sort", "aria-selected"]) assert.match(files, new RegExp(attribute));
 });
 
-test("U2 has no schema or migration changes", () => {
-  const tracked = execFileSync("git", ["diff", "--name-only"], { cwd: root, encoding: "utf8" });
-  const untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" });
-  const changed = `${tracked}\n${untracked}`.split("\n").filter(Boolean);
-  assert.equal(changed.some((path) => path === "prisma/schema.prisma" || path.startsWith("prisma/migrations/")), false);
+test("U2 design-system primitives remain independent of persistence", () => {
+  const files = ["button.tsx", "form-controls.tsx", "table.tsx", "navigation.tsx", "dialog.tsx", "toolbar.tsx"].map((file) => source(`components/ui/${file}`)).join("\n");
+  assert.doesNotMatch(files, /prisma\.|ExperienceAccess/);
 });

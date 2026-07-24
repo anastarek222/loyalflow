@@ -3,11 +3,12 @@
 import { useTransition } from "react";
 
 import { updateExperienceModeAction } from "@/app/experience-mode/actions";
-import type { ExperienceMode } from "@/lib/experience-mode";
+import type { ExperienceAccess, ExperienceMode } from "@/lib/experience-mode";
 
 type Props = {
   language: "AR" | "EN";
   mode: ExperienceMode;
+  access: ExperienceAccess;
 };
 
 const labels = {
@@ -15,9 +16,10 @@ const labels = {
   EN: { label: "Experience mode", simple: "Simple", advanced: "Advanced", updating: "Updating" },
 } as const;
 
-export default function ExperienceModeSwitcher({ language, mode }: Props) {
+export default function ExperienceModeSwitcher({ language, mode, access }: Props) {
   const [isPending, startTransition] = useTransition();
   const copy = labels[language];
+  if (access !== "BOTH") return null;
 
   return (
     <fieldset id="experience-mode" aria-label={copy.label} className="border-b border-border px-3 py-3">

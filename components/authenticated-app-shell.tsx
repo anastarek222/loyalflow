@@ -10,12 +10,13 @@ import {
   type ShellBusiness,
   type ShellUser,
 } from "@/lib/app-shell-navigation";
-import type { ExperienceMode } from "@/lib/experience-mode";
+import type { ExperienceAccess, ExperienceMode } from "@/lib/experience-mode";
 
 type Props = {
   children: React.ReactNode;
   language: "AR" | "EN";
   experienceMode: ExperienceMode;
+  experienceAccess: ExperienceAccess;
   user: ShellUser & { firstName: string; lastName: string; email: string };
   businesses: ShellBusiness[];
 };
@@ -24,6 +25,7 @@ export default function AuthenticatedAppShell({
   children,
   language,
   experienceMode,
+  experienceAccess,
   user,
   businesses,
 }: Props) {
@@ -44,7 +46,7 @@ export default function AuthenticatedAppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <AppTopbar
           language={language}
-          experienceMode={experienceMode}
+          experienceMode={experienceMode} experienceAccess={experienceAccess}
           user={user}
           businesses={businesses}
           activeBusiness={activeBusiness}

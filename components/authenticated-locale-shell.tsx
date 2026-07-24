@@ -5,6 +5,7 @@ import {
 } from "@/lib/i18n";
 import {
   getExperienceModeCookieName,
+  resolveExperienceAccess,
   resolveExperienceMode,
 } from "@/lib/experience-mode";
 
@@ -43,6 +44,7 @@ export default async function AuthenticatedLocaleShell({
         email: true,
         id: true,
         role: true,
+        experienceAccess: true,
         businessId: true,
         business: {
           select: {
@@ -72,7 +74,9 @@ export default async function AuthenticatedLocaleShell({
   const experienceMode = resolveExperienceMode(
     user ? (await cookies()).get(getExperienceModeCookieName(user.id))?.value : null,
     user?.role ?? "STAFF",
+    user?.experienceAccess,
   );
+  const experienceAccess = resolveExperienceAccess(user?.role ?? "STAFF", user?.experienceAccess);
 
 
   return (
@@ -86,6 +90,7 @@ export default async function AuthenticatedLocaleShell({
       <AuthenticatedAppShell
         language={language}
         experienceMode={experienceMode}
+        experienceAccess={experienceAccess}
         businesses={businesses}
         user={{
           firstName: user?.firstName ?? "User",
@@ -93,6 +98,7 @@ export default async function AuthenticatedLocaleShell({
           email: user?.email ?? "",
           role: user?.role ?? "STAFF",
           businessId: user?.businessId,
+          experienceAccess,
         }}
       >
         {children}

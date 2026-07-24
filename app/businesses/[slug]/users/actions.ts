@@ -22,6 +22,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBusinessNotification } from "@/lib/notifications";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import {
+  EXPERIENCE_ACCESS_VALUES,
+  getDefaultExperienceAccess,
+  resolveExperienceAccess,
+} from "@/lib/experience-mode";
+
+const experienceAccessSchema = z.enum(EXPERIENCE_ACCESS_VALUES);
 
 const userSchema = z.object({
   firstName: z
@@ -43,6 +50,8 @@ const userSchema = z.object({
     .max(120),
 
   password: passwordValueSchema,
+
+  experienceAccess: experienceAccessSchema.optional(),
 
   role: z.enum([
     "OWNER",
@@ -114,6 +123,7 @@ async function getTargetUser(
       firstName: true,
       lastName: true,
       role: true,
+      experienceAccess: true,
       isActive: true,
     },
   });
@@ -142,6 +152,7 @@ export async function createBusinessUserAction(
     session,
     business,
     isBusinessOwner,
+    isSuperAdmin,
   } =
     await getManagementContext(slug);
 
@@ -156,12 +167,17 @@ export async function createBusinessUserAction(
       password:
         formData.get("password"),
       role: formData.get("role"),
+      experienceAccess: formData.get("experienceAccess") || undefined,
     });
 
   if (!parsed.success) {
     redirect(
       `/businesses/${slug}/users?error=invalid`
     );
+  }
+
+  if (!isBusinessOwner && !isSuperAdmin) {
+    redirect(`/businesses/${slug}/users?error=permission`);
   }
 
   if (
@@ -230,6 +246,10 @@ export async function createBusinessUserAction(
           email,
           passwordHash,
           role: parsed.data.role,
+          experienceAccess: resolveExperienceAccess(
+            parsed.data.role,
+            parsed.data.experienceAccess ?? getDefaultExperienceAccess(parsed.data.role),
+          ),
           businessId:
             business.id,
           isActive: true,
@@ -285,6 +305,51 @@ export async function createBusinessUserAction(
   redirect(
     `/businesses/${slug}/users?created=1`
   );
+}
+
+export async function updateBusinessUserExperienceAccessAction(
+  slug: string,
+  userId: string,
+  formData: FormData,
+) {
+  const parsedUserId = opaqueIdSchema.safeParse(userId);
+  const parsedAccess = experienceAccessSchema.safeParse(formData.get("experienceAccess"));
+
+  if (!parsedUserId.success || !parsedAccess.success) {
+    redirect(`/businesses/${slug}/users?error=invalid`);
+  }
+
+  const { session, business, isBusinessOwner, isSuperAdmin } = await getManagementContext(slug);
+  if (!isBusinessOwner && !isSuperAdmin) {
+    redirect(`/businesses/${slug}/users?error=permission`);
+  }
+
+  const targetUser = await getTargetUser(business.id, parsedUserId.data);
+  if (!targetUser) {
+    redirect(`/businesses/${slug}/users?error=not-found`);
+  }
+
+  const experienceAccess = resolveExperienceAccess(targetUser.role, parsedAccess.data);
+  const activityContext = await getActivityRequestContext();
+
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: targetUser.id },
+      data: { experienceAccess },
+    }),
+    prisma.businessActivity.create({
+      data: {
+        type: "USER_EXPERIENCE_ACCESS_UPDATED",
+        description: `تم تحديث وصول الواجهة للحساب ${targetUser.email}`,
+        businessId: business.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
+      },
+    }),
+  ]);
+
+  revalidateTeamPages(slug);
+  redirect(`/businesses/${slug}/users?success=experience-access`);
 }
 
 export async function setBusinessUserStatusAction(

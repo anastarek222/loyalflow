@@ -37,6 +37,7 @@ const legacyActivityTypes = [
   "USER_CREATED",
   "USER_STATUS_CHANGED",
   "USER_PASSWORD_CHANGED",
+  "USER_EXPERIENCE_ACCESS_UPDATED",
   "REWARD_CREATED",
   "REWARD_UPDATED",
   "REWARD_STATUS_CHANGED",
@@ -75,6 +76,7 @@ const legacyActivityLabels: Record<
   USER_CREATED: "إنشاء مستخدم",
   USER_STATUS_CHANGED: "تغيير حالة مستخدم",
   USER_PASSWORD_CHANGED: "تغيير كلمة المرور",
+  USER_EXPERIENCE_ACCESS_UPDATED: "تحديث وصول الواجهة",
   REWARD_CREATED: "إنشاء مكافأة",
   REWARD_UPDATED: "تحديث مكافأة",
   REWARD_STATUS_CHANGED: "تغيير حالة مكافأة",
@@ -206,6 +208,7 @@ function legacyGetBadgeClass(type: ActivityType) {
     case "USER_CREATED":
     case "USER_STATUS_CHANGED":
     case "USER_PASSWORD_CHANGED":
+    case "USER_EXPERIENCE_ACCESS_UPDATED":
       return "bg-violet-100 text-violet-700";
 
   }
