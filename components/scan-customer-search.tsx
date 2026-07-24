@@ -19,14 +19,15 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
   const [state, setState] = useState<"idle" | "loading" | "empty" | "error" | "results">("idle");
   const requestSequenceRef = useRef(0);
   const activeQueryRef = useRef<string | null>(null);
+  const queryIsTooShort = query.trim().length < SCAN_CUSTOMER_SEARCH_MIN_LENGTH;
+  const displayedResults = queryIsTooShort ? [] : results;
+  const displayedState = queryIsTooShort ? "idle" : state;
 
   useEffect(() => {
     const normalizedQuery = query.trim();
     if (normalizedQuery.length < SCAN_CUSTOMER_SEARCH_MIN_LENGTH) {
       requestSequenceRef.current += 1;
       activeQueryRef.current = null;
-      setResults([]);
-      setState("idle");
       return;
     }
     if (activeQueryRef.current === normalizedQuery) return;
@@ -90,12 +91,12 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
         {query && <button type="button" onClick={clearSearch} className="min-h-11 shrink-0 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{copy.clearCustomerSearch}</button>}
       </div>
       <p className="mt-2 text-xs text-slate-500">{copy.customerSearchMinimum}</p>
-      <div aria-live="polite" aria-busy={state === "loading"} className="mt-3">
-        {state === "loading" && <p role="status" className="text-sm text-slate-600">{copy.customerSearching}</p>}
-        {state === "empty" && <p role="status" className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{copy.customerSearchEmpty}</p>}
-        {state === "error" && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{copy.customerSearchError}</p>}
-        {state === "results" && <ul className="space-y-2" aria-label={copy.customerSearchHeading}>
-          {results.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm hover:border-violet-300 hover:bg-violet-50 focus:outline-none focus:ring-4 focus:ring-violet-100" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-slate-950" dir="auto">{customer.name}</span><span className="block text-xs text-slate-500" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-violet-700">{copy.customerSearchOpen}</span></Link></li>)}
+      <div aria-live="polite" aria-busy={displayedState === "loading"} className="mt-3">
+        {displayedState === "loading" && <p role="status" className="text-sm text-slate-600">{copy.customerSearching}</p>}
+        {displayedState === "empty" && <p role="status" className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{copy.customerSearchEmpty}</p>}
+        {displayedState === "error" && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{copy.customerSearchError}</p>}
+        {displayedState === "results" && <ul className="space-y-2" aria-label={copy.customerSearchHeading}>
+          {displayedResults.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm hover:border-violet-300 hover:bg-violet-50 focus:outline-none focus:ring-4 focus:ring-violet-100" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-slate-950" dir="auto">{customer.name}</span><span className="block text-xs text-slate-500" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-violet-700">{copy.customerSearchOpen}</span></Link></li>)}
         </ul>}
       </div>
     </section>
