@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { ReportNavigation } from "@/components/reports/report-navigation";
 import {
   getDefaultUtcDateRange,
   parseReportDateRange,
@@ -12,7 +13,11 @@ import { getRedemptionMagnitude } from "@/lib/analytics/metrics";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
+import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { reportCopy } from "@/lib/reports/presentation";
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 import {
   notFound,
@@ -55,11 +60,6 @@ function roleLabel(
       return role;
   }
 }
-
-const numberFormatter =
-  new Intl.NumberFormat(
-    "ar-EG"
-  );
 
 export default async function StaffReportsPage({
   params,
@@ -116,6 +116,13 @@ export default async function StaffReportsPage({
 
   const theme =
     getBusinessTheme(business);
+
+  const reportUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, language: true, role: true, experienceAccess: true } });
+  const language = normalizeLanguage(reportUser?.language);
+  const experienceMode = resolveExperienceMode((await cookies()).get(getExperienceModeCookieName(session.user.id))?.value, reportUser?.role ?? session.user.role, reportUser?.experienceAccess);
+  const simple = experienceMode === "SIMPLE";
+  const copy = reportCopy(language);
+  const numberFormatter = new Intl.NumberFormat(getLanguageLocale(language));
 
   const canViewReports =
     canPerform(
@@ -191,7 +198,7 @@ export default async function StaffReportsPage({
     branches: reportBranches,
     staff: users,
   }) ?? {};
-  const transactions = await prisma.loyaltyTransaction.findMany({
+  const [transactions, rewardRedemptions] = await Promise.all([prisma.loyaltyTransaction.findMany({
     where: {
       businessId: business.id,
       createdAt: { gte: from, lte: to },
@@ -203,7 +210,10 @@ export default async function StaffReportsPage({
       customerId: true,
       attributedStaffId: true,
     },
-  });
+  }), prisma.rewardRedemption.findMany({
+    where: { businessId: business.id, createdAt: { gte: from, lte: to }, ...reportScope },
+    select: { customerId: true, attributedStaffId: true },
+  })]);
 
   type PerformanceRow = {
     id: string;
@@ -216,6 +226,7 @@ export default async function StaffReportsPage({
     redeemActions: number;
     redeemedAmount: number;
     adjustmentActions: number;
+    rewardRedemptions: number;
     customers: Set<string>;
   };
 
@@ -265,6 +276,7 @@ export default async function StaffReportsPage({
 
         adjustmentActions:
           0,
+        rewardRedemptions: 0,
 
         customers:
           new Set<string>(),
@@ -311,6 +323,7 @@ export default async function StaffReportsPage({
             0,
           adjustmentActions:
             0,
+          rewardRedemptions: 0,
           customers:
             new Set<string>(),
         };
@@ -353,6 +366,21 @@ export default async function StaffReportsPage({
 
         break;
     }
+  }
+
+  // Reward-redemption credit is shown only when persisted attribution exists;
+  // it never falls back to the currently logged-in user or operation creator.
+  for (const redemption of rewardRedemptions) {
+    const creditedStaffId = getCanonicalStaffAttribution(redemption);
+    let row = creditedStaffId ? performance.get(creditedStaffId) : undefined;
+    if (!row) {
+      if (!systemRow) {
+        systemRow = { id: "system", name: language === "AR" ? "النظام أو مستخدم محذوف" : "System or deleted user", email: "—", role: "SYSTEM", isActive: false, earnActions: 0, earnedAmount: 0, redeemActions: 0, redeemedAmount: 0, adjustmentActions: 0, rewardRedemptions: 0, customers: new Set<string>() };
+      }
+      row = systemRow;
+    }
+    row.customers.add(redemption.customerId);
+    row.rewardRedemptions += 1;
   }
 
   const rows = [
@@ -439,7 +467,7 @@ export default async function StaffReportsPage({
         fontFamily: theme.fontFamily,
       }}
     >
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl" data-experience-mode={experienceMode}>
         <Link
           href={`/businesses/${business.slug}/reports?${reportQuery}`}
           className="text-sm font-bold text-violet-700 hover:text-violet-900"
@@ -455,17 +483,19 @@ export default async function StaffReportsPage({
           }}
         >
           <p className="text-sm font-bold text-white/70">
-            تحليل العمليات المنفذة
+            {copy.staff}
           </p>
 
           <h1 className="mt-2 text-2xl font-black sm:text-3xl">
-            أداء فريق العمل
+            {copy.staff}
           </h1>
 
           <p className="mt-2 text-sm leading-6 text-white/75">
-            مقارنة عمليات إضافة الرصيد والاستبدال والتعديلات لكل مستخدم.
+            {simple ? copy.simple : (language === "AR" ? "مقارنة العمليات المنسوبة المثبتة لكل مستخدم." : "Compare operations with persisted staff attribution.")}
           </p>
         </header>
+
+        <ReportNavigation slug={business.slug} active="staff" query={getReportQueryString({ from: fromInput, to: toInput, branchId: reportScope.branchId, attributedStaffId: reportScope.attributedStaffId })} language={language} />
 
         <form
           method="get"
@@ -563,6 +593,12 @@ export default async function StaffReportsPage({
           </Link>
         </form>
 
+        <p className="mt-3 text-sm text-slate-600" role="status">
+          {reportScope.branchId
+            ? `${language === "AR" ? "سياق الفرع" : "Branch context"}: ${reportBranches.find((branch) => branch.id === reportScope.branchId)?.name ?? "—"}`
+            : language === "AR" ? "يشمل التقرير العمليات التاريخية غير المنسوبة إلى فرع." : "This report includes historical operations with no branch attribution."}
+        </p>
+
         <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <article className="rounded-2xl bg-white p-5 shadow-sm">
             <p className="text-sm font-bold text-slate-500">
@@ -635,7 +671,7 @@ export default async function StaffReportsPage({
           </section>
         ) : (
           <>
-            <section className="mt-6 hidden overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:block">
+            <section className={`${simple ? "hidden" : "hidden lg:block"} mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-right">
                   <thead className="bg-slate-950 text-sm text-white">
@@ -662,6 +698,10 @@ export default async function StaffReportsPage({
 
                       <th className="px-5 py-4">
                         القيمة المستبدلة
+                      </th>
+
+                      <th className="px-5 py-4">
+                        مكافآت مستبدلة
                       </th>
 
                       <th className="px-5 py-4">
@@ -748,6 +788,10 @@ export default async function StaffReportsPage({
                           </td>
 
                           <td className="px-5 py-4 font-bold">
+                            {numberFormatter.format(row.rewardRedemptions)}
+                          </td>
+
+                          <td className="px-5 py-4 font-bold">
                             {numberFormatter.format(
                               row.adjustmentActions
                             )}
@@ -768,7 +812,7 @@ export default async function StaffReportsPage({
               </div>
             </section>
 
-            <section className="mt-6 space-y-4 lg:hidden">
+            <section className={`${simple ? "hidden" : "lg:hidden"} mt-6 space-y-4`}>
               {rows.map(
                 (row) => (
                   <article
@@ -811,6 +855,11 @@ export default async function StaffReportsPage({
                             row.customersCount
                           )}
                         </p>
+                      </div>
+
+                      <div className="rounded-xl bg-amber-50 p-3">
+                        <p className="text-amber-800">مكافآت مستبدلة</p>
+                        <p className="mt-1 font-black text-amber-950">{numberFormatter.format(row.rewardRedemptions)}</p>
                       </div>
 
                       <div className="rounded-xl bg-emerald-50 p-3">
