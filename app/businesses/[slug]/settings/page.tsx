@@ -1,10 +1,12 @@
 import { auth } from "@/auth";
 import BusinessSettingsForm from "@/components/business-settings-form";
 import CardBusinessDetailsForm from "@/components/card-business-details-form";
+import { AdministrationNavigation } from "@/components/administration/administration-navigation";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
+import { normalizeLanguage } from "@/lib/i18n";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -59,6 +61,9 @@ export default async function BusinessSettingsPage({
     redirect("/dashboard");
   }
 
+  const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
+  const language = normalizeLanguage(currentUser?.language);
+
   const updateSettings = updateBusinessSettingsAction.bind(null, business.slug);
 
   const syncGoogleSheet = syncGoogleSheetAction.bind(null, business.slug);
@@ -78,6 +83,7 @@ export default async function BusinessSettingsPage({
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-7xl">
+        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="settings" language={language} />
         <Link
           href={`/businesses/${business.slug}`}
           className="text-sm font-medium text-violet-600 hover:text-violet-800"

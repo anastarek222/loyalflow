@@ -6,6 +6,9 @@ import {
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
+import { AdministrationNavigation } from "@/components/administration/administration-navigation";
+import { ConfirmSubmitButton } from "@/components/administration/confirm-submit-button";
+import { normalizeLanguage } from "@/lib/i18n";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -49,6 +52,9 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
   if (!business) notFound();
   if (!canManageBranches(session.user, business.id)) redirect("/dashboard");
 
+  const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
+  const language = normalizeLanguage(currentUser?.language);
+
   const theme = getBusinessTheme(business);
   const [branches, eligibleStaff] = await Promise.all([
     prisma.branch.findMany({
@@ -86,6 +92,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
     >
       <div className="mx-auto max-w-6xl">
+        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="branches" language={language} />
         <Link href={`/businesses/${business.slug}`} className="text-sm font-medium text-violet-600 hover:text-violet-800">
           → الرجوع إلى {business.name}
         </Link>
@@ -153,9 +160,9 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
                     </p>
                   </div>
                   <form action={setBranchStatus}>
-                    <button type="submit" className={`rounded-xl px-4 py-2 text-sm font-bold ${branch.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"}`}>
+                    <ConfirmSubmitButton confirmation={branch.isActive ? `إيقاف فرع ${branch.name}؟ لن يقبل عمليات ولاء أو إسنادات جديدة حتى إعادة تفعيله.` : `تفعيل فرع ${branch.name}؟`} type="submit" className={`min-h-11 rounded-xl px-4 py-2 text-sm font-bold ${branch.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"}`}>
                       {branch.isActive ? "إيقاف الفرع" : "تفعيل الفرع"}
-                    </button>
+                    </ConfirmSubmitButton>
                   </form>
                 </div>
 
@@ -183,7 +190,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
                         const removeAssignment = removeStaffAssignmentAction.bind(null, business.slug, assignment.id);
                         return <li key={assignment.id} className="flex flex-col gap-3 rounded-xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                           <span className="text-sm text-slate-700"><strong>{fullName(assignment.user)}</strong> <span dir="ltr" className="text-slate-500">{assignment.user.email}</span></span>
-                          <form action={removeAssignment}><button type="submit" className="text-sm font-bold text-red-700 hover:text-red-900">إزالة الإسناد</button></form>
+                          <form action={removeAssignment}><ConfirmSubmitButton confirmation={`إزالة إسناد ${fullName(assignment.user)} من ${branch.name}؟`} type="submit" className="min-h-11 text-sm font-bold text-red-700 hover:text-red-900">إزالة الإسناد</ConfirmSubmitButton></form>
                         </li>;
                       })}
                     </ul>
