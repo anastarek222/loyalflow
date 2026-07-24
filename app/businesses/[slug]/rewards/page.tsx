@@ -1,265 +1,42 @@
+import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+
 import { auth } from "@/auth";
+import { GrowthShell } from "@/components/growth/growth-shell";
+import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import { normalizeLanguage } from "@/lib/i18n";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { getBusinessTheme } from "@/lib/theme";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import {
-  createRewardAction,
-  toggleRewardStatusAction,
-  updateRewardAction,
-} from "./actions";
+import { getGrowthCopy } from "@/lib/growth/ui-copy";
+import { createRewardAction, toggleRewardStatusAction, updateRewardAction } from "./actions";
 
-type RewardsPageProps = {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ success?: string; error?: string }>;
-};
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ success?: string; error?: string }> };
+const rewardType = (type: string, language: "AR" | "EN") => ({ GIFT: language === "AR" ? "هدية" : "Gift", PROMO_CODE: language === "AR" ? "كود ترويجي" : "Promo code", DISCOUNT: language === "AR" ? "خصم" : "Discount", CUSTOM: language === "AR" ? "مكافأة مخصصة" : "Custom reward" }[type] ?? type);
 
-function getRewardTypeLabel(type: string) {
-  switch (type) {
-    case "PROMO_CODE":
-      return "كود ترويجي";
-    case "DISCOUNT":
-      return "خصم";
-    case "CUSTOM":
-      return "مكافأة مخصصة";
-    default:
-      return "هدية";
-  }
+export default async function RewardsPage({ params, searchParams }: Props) {
+  const session = await auth(); if (!session?.user) redirect("/login");
+  const { slug } = await params; const query = await searchParams;
+  const [user, business] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true, role: true, experienceAccess: true } }),
+    prisma.business.findUnique({ where: { slug }, select: { id: true, slug: true, name: true, unitName: true, rewardName: true, rewardThreshold: true, rewards: { orderBy: [{ isActive: "desc" }, { cost: "asc" }] } } }),
+  ]);
+  if (!business) notFound(); if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${business.slug}`);
+  const language = normalizeLanguage(user?.language); const copy = getGrowthCopy(language);
+  const experienceMode = resolveExperienceMode((await cookies()).get(getExperienceModeCookieName(session.user.id))?.value, user?.role ?? session.user.role, user?.experienceAccess);
+  const simple = experienceMode === "SIMPLE"; const createReward = createRewardAction.bind(null, business.slug);
+  return <GrowthShell slug={business.slug} businessName={business.name} area="rewards" language={language} experienceMode={experienceMode} title={copy.rewards} description={language === "AR" ? "كتالوج مكافآت واضح؛ الاستحقاق والصلاحية والاستبدال يظلّون في محرك الولاء المعتمد." : "A clear reward catalog; eligibility, expiry, and redemption stay in the reviewed loyalty engine."}>
+    {query.success ? <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">{language === "AR" ? "تم حفظ كتالوج المكافآت." : "Reward catalog saved."}</p> : null}
+    {query.error ? <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900">{language === "AR" ? "تعذر حفظ المكافأة. راجع البيانات وحاول مرة أخرى." : "We could not save this reward. Review the details and try again."}</p> : null}
+    <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="order-2 space-y-4 lg:order-1"><div className="grid gap-3 sm:grid-cols-3"><Summary label={language === "AR" ? "نشطة" : "Active"} value={business.rewards.filter((r) => r.isActive).length} /><Summary label={language === "AR" ? "إجمالي الكتالوج" : "Catalog total"} value={business.rewards.length} /><Summary label={language === "AR" ? "الخيار الاحتياطي" : "Fallback"} value={`${business.rewardThreshold} ${business.unitName}`} /></div>
+        <p className="rounded-lg border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-950">{copy.scanNote}</p>
+        {business.rewards.length === 0 ? <Empty title={language === "AR" ? "لا توجد مكافآت مضافة بعد" : "No rewards have been added yet"} description={language === "AR" ? "سيظل الخيار الاحتياطي الحالي متاحًا وفق قواعد الولاء الحالية." : "The current fallback remains available under the existing loyalty rules."} /> : business.rewards.map((reward) => <article key={reward.id} className="rounded-lg border border-border bg-surface p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><div className="flex flex-wrap gap-2"><h2 className="font-semibold text-slate-950">{reward.name}</h2><Status active={reward.isActive} language={language} /></div><p className="mt-1 text-sm text-slate-600">{rewardType(reward.type, language)} · {reward.cost} {business.unitName}</p><p className="mt-1 text-sm text-slate-500">{reward.expiresAfterDays ? (language === "AR" ? `تنتهي بعد ${reward.expiresAfterDays} يوم من الفتح` : `Expires ${reward.expiresAfterDays} days after unlock`) : (language === "AR" ? "لا تنتهي بعد الفتح" : "No expiry after unlock")}</p>{reward.description ? <p className="mt-3 text-sm text-slate-700">{reward.description}</p> : null}</div><form action={toggleRewardStatusAction.bind(null, business.slug, reward.id, !reward.isActive)}><button type="submit" className="min-h-11 rounded-md border border-border px-4 text-sm font-semibold text-primary">{reward.isActive ? (language === "AR" ? "إيقاف" : "Deactivate") : (language === "AR" ? "تفعيل" : "Activate")}</button></form></div>
+          {!simple ? <details className="mt-4 rounded-md bg-surface-subtle p-4"><summary className="cursor-pointer font-semibold text-primary">{language === "AR" ? "تعديل الإعدادات" : "Edit settings"}</summary><form action={updateRewardAction.bind(null, business.slug, reward.id)} className="mt-4 grid gap-3 sm:grid-cols-2"><Field name="name" label={language === "AR" ? "الاسم" : "Name"} defaultValue={reward.name} required /><Field name="cost" type="number" label={`${language === "AR" ? "التكلفة" : "Cost"} (${business.unitName})`} defaultValue={String(reward.cost)} required /><Field name="expiresAfterDays" type="number" label={language === "AR" ? "أيام الصلاحية" : "Expiry days"} defaultValue={reward.expiresAfterDays?.toString() ?? ""} /><label className="text-sm font-semibold text-slate-700">{language === "AR" ? "النوع" : "Type"}<select name="type" defaultValue={reward.type} className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3"><option value="GIFT">Gift</option><option value="PROMO_CODE">Promo code</option><option value="DISCOUNT">Discount</option><option value="CUSTOM">Custom</option></select></label><Field name="code" label={language === "AR" ? "الكود" : "Code"} defaultValue={reward.code ?? ""} /><label className="text-sm font-semibold text-slate-700 sm:col-span-2">{language === "AR" ? "الوصف" : "Description"}<textarea name="description" defaultValue={reward.description ?? ""} maxLength={300} rows={3} className="mt-1 w-full rounded-md border border-border bg-surface p-3" /></label><button type="submit" className="min-h-11 rounded-md bg-primary px-4 font-semibold text-white sm:col-span-2">{language === "AR" ? "حفظ التعديلات" : "Save changes"}</button></form></details> : null}</article>)}</div>
+      {!simple ? <form action={createReward} className="order-1 h-fit rounded-lg border border-border bg-surface p-5 lg:order-2"><h2 className="font-semibold text-slate-950">{language === "AR" ? "إضافة مكافأة" : "Add reward"}</h2><p className="mt-1 text-sm text-slate-600">{copy.scanNote}</p><div className="mt-4 space-y-3"><Field name="name" label={language === "AR" ? "اسم المكافأة" : "Reward name"} required /><Field name="cost" type="number" label={`${language === "AR" ? "التكلفة" : "Cost"} (${business.unitName})`} required /><Field name="expiresAfterDays" type="number" label={language === "AR" ? "أيام الصلاحية (اختياري)" : "Expiry days (optional)"} /><label className="text-sm font-semibold text-slate-700">{language === "AR" ? "النوع" : "Type"}<select name="type" defaultValue="GIFT" className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3"><option value="GIFT">Gift</option><option value="PROMO_CODE">Promo code</option><option value="DISCOUNT">Discount</option><option value="CUSTOM">Custom</option></select></label><Field name="code" label={language === "AR" ? "الكود (اختياري)" : "Code (optional)"} /><label className="text-sm font-semibold text-slate-700">{language === "AR" ? "الوصف" : "Description"}<textarea name="description" rows={3} maxLength={300} className="mt-1 w-full rounded-md border border-border bg-surface p-3" /></label><button type="submit" className="min-h-11 w-full rounded-md bg-primary px-4 font-semibold text-white">{language === "AR" ? "إضافة مكافأة" : "Add reward"}</button></div></form> : null}
+    </section>
+  </GrowthShell>;
 }
-
-export default async function RewardsPage({
-  params,
-  searchParams,
-}: RewardsPageProps) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  const { slug } = await params;
-  const query = await searchParams;
-  const business = await prisma.business.findUnique({
-    where: { slug },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      primaryColor: true,
-      secondaryColor: true,
-      themePreset: true,
-      cardStyle: true,
-      fontFamily: true,
-      unitName: true,
-      rewardName: true,
-      rewardThreshold: true,
-      rewards: {
-        orderBy: [{ isActive: "desc" }, { cost: "asc" }],
-      },
-    },
-  });
-
-  if (!business) {
-    notFound();
-  }
-
-  const theme =
-    getBusinessTheme(business);
-
-  if (!canManageBusiness(session.user, business.id)) {
-    redirect(`/businesses/${business.slug}`);
-  }
-
-  const createReward = createRewardAction.bind(null, business.slug);
-
-  return (
-    <main
-      className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
-      style={{
-        backgroundColor: theme.backgroundColor,
-        fontFamily: theme.fontFamily,
-      }}
-    >
-      <div className="mx-auto max-w-6xl">
-        <Link
-          href={`/businesses/${business.slug}/settings`}
-          className="text-sm font-bold text-violet-700 hover:text-violet-900"
-        >
-          ← الرجوع إلى إعدادات {business.name}
-        </Link>
-
-        <header
-          className={`mt-5 border p-6 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
-          style={{
-            backgroundColor: theme.primaryColor,
-          }}
-        >
-          <p className="text-sm font-bold text-white/75">كتالوج المكافآت</p>
-          <h1 className="mt-2 text-3xl font-black">مكافآت {business.name}</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/85">
-            أضف مكافآت متعددة، فعّل ما تريد ظهوره للموظفين، واحتفظ بالمكافأة
-            الحالية كخيار احتياطي حتى تبدأ في استخدام الكتالوج.
-          </p>
-        </header>
-
-        {query.success ? (
-          <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 font-bold text-emerald-800">
-            تم حفظ كتالوج المكافآت.
-          </p>
-        ) : null}
-
-        {query.error ? (
-          <p className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 font-bold text-red-800">
-            تعذر حفظ المكافأة. راجع البيانات ثم حاول مرة أخرى.
-          </p>
-        ) : null}
-
-        <section className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
-          <form
-            action={createReward}
-            className={`h-fit border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
-          >
-            <h2 className="text-xl font-black text-slate-950">إضافة مكافأة</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              تكلفة المكافأة تُخصم من رصيد العميل عند تأكيد الاستبدال.
-            </p>
-
-            <div className="mt-6 space-y-4">
-              <label className="block text-sm font-bold text-slate-700">
-                اسم المكافأة
-                <input name="name" required minLength={2} maxLength={100} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                التكلفة ({business.unitName})
-                <input name="cost" type="number" dir="ltr" required min={1} max={1000000} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                صلاحية المكافأة بعد فتحها بالأيام <span className="font-normal text-slate-400">(اختياري)</span>
-                <input name="expiresAfterDays" type="number" min={1} max={3650} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                النوع
-                <select name="type" defaultValue="GIFT" className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950">
-                  <option value="GIFT">هدية</option>
-                  <option value="PROMO_CODE">كود ترويجي</option>
-                  <option value="DISCOUNT">خصم</option>
-                  <option value="CUSTOM">مكافأة مخصصة</option>
-                </select>
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                الكود <span className="font-normal text-slate-400">(اختياري)</span>
-                <input name="code" dir="ltr" maxLength={100} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
-              </label>
-
-              <label className="block text-sm font-bold text-slate-700">
-                الوصف <span className="font-normal text-slate-400">(اختياري)</span>
-                <textarea name="description" rows={3} maxLength={300} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
-              </label>
-
-              <button type="submit" className="w-full rounded-xl bg-violet-600 px-5 py-3 font-black text-white hover:bg-violet-700">
-                إضافة مكافأة
-              </button>
-            </div>
-          </form>
-
-          <section className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-black text-slate-950">المكافآت المتاحة</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              إذا لم تضف أي مكافأة هنا، يستمر النظام في استخدام المكافأة القديمة تلقائيًا.
-            </p>
-
-            <article className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
-              <p className="font-bold text-slate-900">الخيار الاحتياطي الحالي: {business.rewardName}</p>
-              <p className="mt-1 text-sm text-slate-500">{business.rewardThreshold} {business.unitName}</p>
-            </article>
-
-            <div className="mt-5 space-y-4">
-              {business.rewards.length === 0 ? (
-                <p className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-500">لا توجد مكافآت مضافة بعد.</p>
-              ) : business.rewards.map((reward) => {
-                const toggleReward = toggleRewardStatusAction.bind(null, business.slug, reward.id, !reward.isActive);
-                const updateReward = updateRewardAction.bind(null, business.slug, reward.id);
-
-                return (
-                  <article key={reward.id} className="rounded-2xl border border-slate-200 p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="font-black text-slate-950">{reward.name}</p>
-                        <p className="mt-1 text-sm text-slate-500">{getRewardTypeLabel(reward.type)} · {reward.cost} {business.unitName}</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {reward.expiresAfterDays
-                            ? `تنتهي بعد ${reward.expiresAfterDays} يوم من فتحها`
-                            : "لا تنتهي بعد الفتح"}
-                        </p>
-                        {reward.description ? <p className="mt-2 text-sm leading-6 text-slate-600">{reward.description}</p> : null}
-                        {reward.code ? <p className="mt-2 text-sm font-bold text-violet-700">الكود: {reward.code}</p> : null}
-                      </div>
-
-                      <form action={toggleReward}>
-                        <button type="submit" className={`rounded-xl px-4 py-2 text-sm font-black ${reward.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"}`}>
-                          {reward.isActive ? "إيقاف" : "تفعيل"}
-                        </button>
-                      </form>
-                    </div>
-
-                    <details className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <summary className="cursor-pointer font-black text-violet-700">
-                        تعديل المكافأة
-                      </summary>
-
-                      <form action={updateReward} className="mt-5 grid gap-4 sm:grid-cols-2">
-                        <label className="block text-sm font-bold text-slate-700">
-                          الاسم
-                          <input name="name" required minLength={2} maxLength={100} defaultValue={reward.name} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
-                        </label>
-
-                        <label className="block text-sm font-bold text-slate-700">
-                          التكلفة ({business.unitName})
-                          <input name="cost" type="number" required min={1} max={1000000} defaultValue={reward.cost} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
-                        </label>
-
-                        <label className="block text-sm font-bold text-slate-700">
-                          الصلاحية بعد الفتح بالأيام <span className="font-normal text-slate-400">(اختياري)</span>
-                          <input name="expiresAfterDays" type="number" min={1} max={3650} defaultValue={reward.expiresAfterDays ?? ""} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
-                        </label>
-
-                        <label className="block text-sm font-bold text-slate-700">
-                          النوع
-                          <select name="type" defaultValue={reward.type} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950">
-                            <option value="GIFT">هدية</option>
-                            <option value="PROMO_CODE">كود ترويجي</option>
-                            <option value="DISCOUNT">خصم</option>
-                            <option value="CUSTOM">مكافأة مخصصة</option>
-                          </select>
-                        </label>
-
-                        <label className="block text-sm font-bold text-slate-700">
-                          الكود <span className="font-normal text-slate-400">(اختياري)</span>
-                          <input name="code" dir="ltr" maxLength={100} defaultValue={reward.code ?? ""} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
-                        </label>
-
-                        <label className="block text-sm font-bold text-slate-700 sm:col-span-2">
-                          الوصف <span className="font-normal text-slate-400">(اختياري)</span>
-                          <textarea name="description" rows={3} maxLength={300} defaultValue={reward.description ?? ""} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950" />
-                        </label>
-
-                        <button type="submit" className="rounded-xl bg-violet-600 px-5 py-3 font-black text-white hover:bg-violet-700 sm:col-span-2">
-                          حفظ التعديلات
-                        </button>
-                      </form>
-                    </details>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        </section>
-      </div>
-    </main>
-  );
-}
+function Summary({ label, value }: { label: string; value: string | number }) { return <div className="rounded-lg border border-border bg-surface p-4"><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-1 text-xl font-semibold text-slate-950">{value}</p></div>; }
+function Status({ active, language }: { active: boolean; language: "AR" | "EN" }) { return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${active ? "bg-emerald-100 text-emerald-900" : "bg-slate-100 text-slate-700"}`}>{active ? (language === "AR" ? "نشطة" : "Active") : (language === "AR" ? "غير نشطة" : "Inactive")}</span>; }
+function Field({ label, name, defaultValue, type = "text", required = false }: { label: string; name: string; defaultValue?: string; type?: string; required?: boolean }) { return <label className="block text-sm font-semibold text-slate-700">{label}<input name={name} type={type} defaultValue={defaultValue} required={required} min={type === "number" ? 1 : undefined} maxLength={type === "text" ? 100 : undefined} dir={name === "code" ? "ltr" : undefined} className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-slate-950" /></label>; }
+function Empty({ title, description }: { title: string; description: string }) { return <section className="rounded-lg border border-dashed border-border bg-surface-subtle p-6 text-center"><h2 className="font-semibold text-slate-950">{title}</h2><p className="mt-2 text-sm text-slate-600">{description}</p></section>; }

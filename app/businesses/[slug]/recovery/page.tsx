@@ -1,180 +1,32 @@
+import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import type { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/auth";
+import CopyLinkButton from "@/components/copy-link-button";
+import { GrowthShell } from "@/components/growth/growth-shell";
 import { getRequestBaseUrl } from "@/lib/app-url";
-import {
-  getWinBackAudienceWhere,
-  getWinBackMessage,
-  type WinBackAudience,
-  winBackAudiences,
-} from "@/lib/campaigns/winback";
+import { getWinBackAudienceWhere, getWinBackMessage, type WinBackAudience, winBackAudiences } from "@/lib/campaigns/winback";
 import { getCustomerSegmentLabel } from "@/lib/customers/segments";
+import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { canExportBusinessData, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { buildWhatsAppUrl } from "@/lib/whatsapp-templates";
-import CopyLinkButton from "@/components/copy-link-button";
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import type { Prisma } from "@/generated/prisma/client";
-import { getBusinessTheme } from "@/lib/theme";
 
-type RecoveryPageProps = {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ audience?: string }>;
-};
-
-const audienceOptions: Array<{ value: WinBackAudience; label: string }> = [
-  { value: "INACTIVE", label: "غير نشطون" },
-  { value: "AT_RISK", label: "معرّضون للتوقف" },
-];
-
-export default async function RecoveryPage({
-  params,
-  searchParams,
-}: RecoveryPageProps) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
-
-  const { slug } = await params;
-  const query = await searchParams;
-  const business = await prisma.business.findUnique({
-    where: { slug },
-    select: {
-        primaryColor: true,
-        secondaryColor: true,
-        themePreset: true,
-        cardStyle: true,
-        fontFamily: true,
-      id: true,
-      slug: true,
-      name: true,
-      loyaltyMode: true,
-      unitName: true,
-      rewardName: true,
-      rewardThreshold: true,
-      earnAmount: true,
-      allowOwnerDataExport: true,
-      whatsappBalanceMessage: true,
-    },
-  });
-  if (!business) notFound();
-
-  const theme = getBusinessTheme(business);
-  if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${slug}`);
-
-  const audience = winBackAudiences.includes(query.audience as WinBackAudience)
-    ? (query.audience as WinBackAudience)
-    : "INACTIVE";
-  const now = new Date();
-  const customerWhere: Prisma.CustomerWhereInput = {
-    businessId: business.id,
-    ...getWinBackAudienceWhere(audience, {
-      rewardThreshold: business.rewardThreshold,
-      earnAmount: business.earnAmount,
-      now,
-    }),
-  };
-  const customers = await prisma.customer.findMany({
-    where: customerWhere,
-    orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
-    take: 100,
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      phone: true,
-      balance: true,
-      publicToken: true,
-      transactions: {
-        select: { createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-    },
-  });
-  const baseUrl = await getRequestBaseUrl();
-  const canExport = canExportBusinessData(
-    session.user,
-    business.id,
-    business.allowOwnerDataExport
-  );
-
-  return (
-    <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        <Link href={`/businesses/${business.slug}`} className="text-sm font-bold text-violet-700">
-          ← الرجوع إلى {business.name}
-        </Link>
-        <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"
-          style={{ backgroundColor: theme.primaryColor }}>
-          <p className="text-sm font-bold text-white/70">استعادة العملاء</p>
-          <h1 className="mt-2 text-3xl font-black">جمهور العودة</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/80">
-            رسائل مراجَعة يدويًا لعملاء محددين بالتصنيف الحالي. لا يرسل النظام أي رسالة تلقائيًا ولا يستخدم SMS أو واجهة WhatsApp مدفوعة.
-          </p>
-        </header>
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          {audienceOptions.map((option) => (
-            <Link
-              key={option.value}
-              href={`/businesses/${business.slug}/recovery?audience=${option.value}`}
-              className={`rounded-xl px-5 py-3 font-black ${audience === option.value ? "bg-violet-600 text-white" : "bg-white text-slate-700 shadow-sm"}`}
-            >
-              {option.label}
-            </Link>
-          ))}
-          {canExport ? (
-            <a href={`/businesses/${business.slug}/recovery/export?audience=${audience}`} className="rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-3 font-black text-emerald-800">
-              تصدير الجمهور CSV
-            </a>
-          ) : null}
-        </div>
-
-        <p className="mt-5 text-sm text-slate-600">
-          {getCustomerSegmentLabel(audience)}: {customers.length} عميل{customers.length === 100 ? " (يعرض أول 100)" : ""}.
-        </p>
-
-        <section className="mt-4 space-y-4">
-          {customers.length === 0 ? (
-            <p className="rounded-3xl bg-white p-6 text-slate-500 shadow-sm">لا يوجد عملاء في هذا الجمهور حاليًا.</p>
-          ) : customers.map((customer) => {
-            const name = [customer.firstName, customer.lastName].filter(Boolean).join(" ");
-            const cardLink = `${baseUrl}/card/${customer.publicToken}`;
-            const remaining = Math.max(0, business.rewardThreshold - customer.balance);
-            const message = getWinBackMessage({
-              customer: name,
-              business: business.name,
-              balance: customer.balance,
-              unit: business.unitName,
-              reward: business.rewardName,
-              cardLink,
-              remaining,
-              loyaltyMode: business.loyaltyMode,
-              template: business.whatsappBalanceMessage,
-            });
-            return (
-              <article key={customer.id} className="rounded-3xl bg-white p-5 shadow-sm">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row">
-                  <div>
-                    <h2 className="font-black text-slate-950">{name}</h2>
-                    <p dir="ltr" className="mt-1 text-sm text-slate-500">{customer.phone}</p>
-                    <p className="mt-2 text-xs text-slate-500">
-                      الرصيد: {customer.balance} {business.unitName}
-                      {customer.transactions[0] ? ` · آخر نشاط: ${customer.transactions[0].createdAt.toLocaleDateString("ar-EG", { timeZone: "Africa/Cairo" })}` : " · لا توجد عمليات"}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 sm:justify-end">
-                    <CopyLinkButton value={message} label="نسخ الرسالة" />
-                    <a href={buildWhatsAppUrl(customer.phone, message)} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700">
-                      فتح WhatsApp
-                    </a>
-                  </div>
-                </div>
-                <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">{message}</pre>
-              </article>
-            );
-          })}
-        </section>
-      </div>
-    </main>
-  );
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ audience?: string }> };
+export default async function RecoveryPage({ params, searchParams }: Props) {
+  const session = await auth(); if (!session?.user) redirect("/login"); const { slug } = await params; const query = await searchParams;
+  const [user, business] = await Promise.all([prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true, role: true, experienceAccess: true } }), prisma.business.findUnique({ where: { slug }, select: { id: true, slug: true, name: true, loyaltyMode: true, unitName: true, rewardName: true, rewardThreshold: true, earnAmount: true, allowOwnerDataExport: true, whatsappBalanceMessage: true } })]);
+  if (!business) notFound(); if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${slug}`);
+  const language = normalizeLanguage(user?.language); const mode = resolveExperienceMode((await cookies()).get(getExperienceModeCookieName(session.user.id))?.value, user?.role ?? session.user.role, user?.experienceAccess);
+  const audience: WinBackAudience = winBackAudiences.includes(query.audience as WinBackAudience) ? query.audience as WinBackAudience : "INACTIVE"; const now = new Date();
+  const where: Prisma.CustomerWhereInput = { businessId: business.id, ...getWinBackAudienceWhere(audience, { rewardThreshold: business.rewardThreshold, earnAmount: business.earnAmount, now }) };
+  const customers = await prisma.customer.findMany({ where, orderBy: [{ updatedAt: "asc" }, { id: "asc" }], take: 100, select: { id: true, firstName: true, lastName: true, phone: true, balance: true, isActive: true, publicToken: true, transactions: { select: { createdAt: true }, orderBy: { createdAt: "desc" }, take: 1 } } });
+  const baseUrl = await getRequestBaseUrl(); const canExport = canExportBusinessData(session.user, business.id, business.allowOwnerDataExport); const options: WinBackAudience[] = ["INACTIVE", "AT_RISK"]; const label = (value: WinBackAudience) => getCustomerSegmentLabel(value, language);
+  return <GrowthShell slug={business.slug} businessName={business.name} area="recovery" language={language} experienceMode={mode} title={language === "AR" ? "استعادة العملاء" : "Customer recovery"} description={language === "AR" ? "قائمة محددة بالقواعد نفسها المستخدمة في التقسيم. راجع المسودة يدويًا قبل النسخ أو الفتح." : "A queue determined by the same segmentation rules. Review a draft manually before copying or opening it."}>
+    <div className="flex flex-wrap gap-2" aria-label={language === "AR" ? "تصفية جمهور الاستعادة" : "Recovery audience filter"}>{options.map((option) => <a key={option} href={`/businesses/${business.slug}/recovery?audience=${option}`} aria-current={audience === option ? "page" : undefined} className={`inline-flex min-h-11 items-center rounded-md px-4 text-sm font-semibold ${audience === option ? "bg-primary text-white" : "border border-border bg-surface text-slate-700"}`}>{label(option)}</a>)}{canExport ? <a href={`/businesses/${business.slug}/recovery/export?audience=${audience}`} className="inline-flex min-h-11 items-center rounded-md border border-emerald-300 bg-emerald-50 px-4 text-sm font-semibold text-emerald-900">{language === "AR" ? "تصدير CSV" : "Export CSV"}</a> : null}</div>
+    <p className="rounded-md bg-surface-subtle p-4 text-sm text-slate-700">{label(audience)}: {customers.length} {language === "AR" ? "عميل" : "customers"}{customers.length === 100 ? (language === "AR" ? " (أول 100)" : " (first 100)") : ""}. {language === "AR" ? (audience === "INACTIVE" ? "لا يوجد نشاط حديث وفق قواعد الشريحة." : "النشاط يتراجع وفق قواعد الشريحة.") : (audience === "INACTIVE" ? "No recent activity under the segment rules." : "Activity is declining under the segment rules.")}</p>
+    <section className="space-y-4">{customers.length === 0 ? <p className="rounded-lg border border-dashed border-border bg-surface-subtle p-6 text-center text-slate-600">{language === "AR" ? "لا يوجد عملاء في هذا الجمهور حاليًا." : "There are no customers in this audience right now."}</p> : customers.map((customer) => { const name = [customer.firstName, customer.lastName].filter(Boolean).join(" "); const remaining = calculateRewardProgress(customer.balance, business.rewardThreshold, customer.isActive).remaining; const message = getWinBackMessage({ customer: name, business: business.name, balance: customer.balance, unit: business.unitName, reward: business.rewardName, cardLink: `${baseUrl}/card/${customer.publicToken}`, remaining, loyaltyMode: business.loyaltyMode, template: business.whatsappBalanceMessage }); return <article key={customer.id} className="rounded-lg border border-border bg-surface p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row"><div><h2 className="font-semibold text-slate-950">{name}</h2><p dir="ltr" className="mt-1 text-sm text-slate-500">{customer.phone}</p><p className="mt-2 text-xs text-slate-500">{language === "AR" ? "الرصيد" : "Balance"}: {customer.balance} {business.unitName}{customer.transactions[0] ? ` · ${language === "AR" ? "آخر نشاط" : "Last activity"}: ${customer.transactions[0].createdAt.toLocaleDateString(getLanguageLocale(language), { timeZone: "Africa/Cairo" })}` : (language === "AR" ? " · لا توجد عمليات" : " · No activity recorded")}</p></div><div className="flex flex-wrap gap-2 sm:justify-end"><CopyLinkButton value={message} label={language === "AR" ? "نسخ المسودة" : "Copy draft"} /><a aria-label={language === "AR" ? `فتح مسودة WhatsApp لـ ${name}` : `Open WhatsApp draft for ${name}`} href={buildWhatsAppUrl(customer.phone, message)} target="_blank" rel="noreferrer" className="rounded-md bg-emerald-600 px-4 py-3 text-sm font-semibold text-white">{language === "AR" ? "فتح مسودة WhatsApp" : "Open WhatsApp draft"}</a></div></div><pre className="mt-4 overflow-x-auto whitespace-pre-wrap rounded-md bg-surface-subtle p-4 text-sm leading-6 text-slate-700">{message}</pre></article>; })}</section>
+  </GrowthShell>;
 }

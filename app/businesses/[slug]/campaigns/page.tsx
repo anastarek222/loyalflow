@@ -7,8 +7,11 @@ import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { GrowthShell } from "@/components/growth/growth-shell";
+import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import { normalizeLanguage } from "@/lib/i18n";
 
 type CampaignsPageProps = {
   params: Promise<{ slug: string }>;
@@ -19,16 +22,18 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
   const session = await auth();
   if (!session?.user) redirect("/login");
   const { slug } = await params;
-  const business = await prisma.business.findUnique({
+  const [user, business] = await Promise.all([prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true, role: true, experienceAccess: true } }), prisma.business.findUnique({
     where: { slug },
     select: {
       id: true, slug: true, name: true, loyaltyMode: true, unitName: true,
       rewardName: true, rewardThreshold: true, earnAmount: true,
       whatsappWelcomeMessage: true, whatsappBalanceMessage: true, whatsappRewardMessage: true,
     },
-  });
+  })]);
   if (!business) notFound();
   if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${slug}`);
+  const language = normalizeLanguage(user?.language);
+  const experienceMode = resolveExperienceMode((await cookies()).get(getExperienceModeCookieName(session.user.id))?.value, user?.role ?? session.user.role, user?.experienceAccess);
 
   const query = await searchParams;
   const selectedIds = parseSelectedExportIds(query.selected ?? null);
@@ -80,17 +85,10 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
   });
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-6 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        <Link href={`/businesses/${business.slug}`} className="text-sm font-bold text-violet-700">← الرجوع إلى {business.name}</Link>
-        <header className="mt-5 rounded-3xl bg-violet-700 p-6 text-white sm:p-8">
-          <p className="text-sm font-bold text-white/75">حملات بسيطة</p>
-          <h1 className="mt-2 text-3xl font-black">أنشئ معاينة حملة</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/90">اختر النوع والجمهور والعرض، ثم راجع كل رسالة قبل نسخها أو فتحها في WhatsApp. لا توجد رسائل تلقائية أو تكامل مدفوع.</p>
-        </header>
+    <GrowthShell slug={business.slug} businessName={business.name} area="campaigns" language={language} experienceMode={experienceMode} title={language === "AR" ? "تحضير الحملات" : "Campaign preparation"} description={language === "AR" ? "اختر الجمهور وراجع المسودات. لا توجد خدمة إرسال أو نتائج تسليم في LoyalFlow." : "Select an audience and review drafts. LoyalFlow has no delivery service or delivery results."}>
         {selectedIds ? (
           <p className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-900">
-            هذه المعاينة مقصورة على {selectedIds.length} عميل محدد من قائمة العملاء. لا يتم حفظ أو إرسال أي حملة.
+            {language === "AR" ? `هذه المعاينة مقصورة على ${selectedIds.length} عميل محدد. لا يتم حفظ أو إرسال أي حملة.` : `This preview is limited to ${selectedIds.length} selected customers. No campaign is saved or sent.`}
           </p>
         ) : null}
         <CampaignBuilder
@@ -103,8 +101,9 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
             reward: business.whatsappRewardMessage ?? DEFAULT_WHATSAPP_TEMPLATES.reward,
           }}
           candidates={candidates}
+          language={language}
+          simple={experienceMode === "SIMPLE"}
         />
-      </div>
-    </main>
+    </GrowthShell>
   );
 }

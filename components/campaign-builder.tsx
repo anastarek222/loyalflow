@@ -12,6 +12,7 @@ import {
 import CopyLinkButton from "@/components/copy-link-button";
 import { buildWhatsAppUrl, renderWhatsAppTemplate } from "@/lib/whatsapp-templates";
 import { useMemo, useState } from "react";
+import type { AppLanguage } from "@/lib/i18n";
 
 type CampaignCandidate = {
   id: string;
@@ -35,6 +36,8 @@ type CampaignBuilderProps = {
     reward: string;
   };
   candidates: CampaignCandidate[];
+  language: AppLanguage;
+  simple?: boolean;
 };
 
 const labels: Record<CampaignTrigger | CampaignAudience, string> = {
@@ -83,6 +86,8 @@ export default function CampaignBuilder({
   rewardName,
   templates,
   candidates,
+  language,
+  simple = false,
 }: CampaignBuilderProps) {
   const [trigger, setTrigger] = useState<CampaignTrigger>("WIN_BACK");
   const [audience, setAudience] = useState<CampaignAudience>("INACTIVE");
@@ -115,42 +120,43 @@ export default function CampaignBuilder({
 
   return (
     <>
-      <section className="mt-6 grid gap-4 rounded-3xl bg-white p-5 shadow-sm sm:grid-cols-3 sm:p-6">
+      <section aria-label={language === "AR" ? "إعداد الحملة" : "Campaign preparation"} className="grid gap-4 rounded-lg border border-border bg-surface p-5 sm:grid-cols-3">
         <label className="text-sm font-black text-slate-700">
-          نوع الحملة
+          {language === "AR" ? "نوع الحملة" : "Campaign type"}
           <select value={trigger} onChange={(event) => onTriggerChange(event.target.value as CampaignTrigger)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950">
             {campaignTriggers.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
           </select>
         </label>
         <label className="text-sm font-black text-slate-700">
-          الجمهور
+          {language === "AR" ? "الجمهور" : "Audience"}
           <select value={audience} onChange={(event) => setAudience(event.target.value as CampaignAudience)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950">
             {campaignAudiences.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
           </select>
         </label>
-        <label className="text-sm font-black text-slate-700">
-          عرض اختياري
-          <input value={offer} onChange={(event) => setOffer(event.target.value.slice(0, 300))} maxLength={300} placeholder="مثال: خصم 10% عند الزيارة القادمة" className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
+        {!simple ? <label className="text-sm font-black text-slate-700">
+          {language === "AR" ? "نص إضافي اختياري" : "Optional additional copy"}
+          <input value={offer} onChange={(event) => setOffer(event.target.value.slice(0, 300))} maxLength={300} placeholder={language === "AR" ? "مثال: خصم 10% عند الزيارة القادمة" : "Example: 10% off on your next visit"} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
         </label>
+        : <div className="text-sm text-slate-600">{language === "AR" ? "راجع الجمهور والمحتوى قبل النسخ." : "Review audience and content before copying."}</div>}
       </section>
 
-      <p className="mt-5 text-sm text-slate-600">{filteredCandidates.length} عميل في المعاينة. لا يتم إنشاء حملة محفوظة أو إرسال أي رسالة تلقائيًا.</p>
+      <p className="mt-5 rounded-md bg-surface-subtle p-3 text-sm text-slate-700">{language === "AR" ? `${filteredCandidates.length} عميل في المعاينة. لا يتم حفظ حملة أو إرسال أي رسالة تلقائيًا.` : `${filteredCandidates.length} customers in this preview. No campaign is saved and no message is sent automatically.`}</p>
 
       <section className="mt-4 space-y-4">
         {filteredCandidates.length === 0 ? (
-          <p className="rounded-3xl bg-white p-6 text-slate-500 shadow-sm">لا يوجد عملاء مطابقون لهذا الجمهور.</p>
+          <p className="rounded-lg border border-dashed border-border bg-surface-subtle p-6 text-slate-600">{language === "AR" ? "لا يوجد عملاء مطابقون لهذا الجمهور." : "No customers match this audience."}</p>
         ) : filteredCandidates.map((candidate) => {
           const message = messageFor(candidate);
           return (
-            <article key={candidate.id} className="rounded-3xl bg-white p-5 shadow-sm">
+            <article key={candidate.id} className="rounded-lg border border-border bg-surface p-5">
               <div className="flex flex-col justify-between gap-4 sm:flex-row">
                 <div>
                   <h2 className="font-black text-slate-950">{candidate.name}</h2>
                   <p dir="ltr" className="mt-1 text-sm text-slate-500">{candidate.phone}</p>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
-                  <CopyLinkButton value={message} label="نسخ الرسالة" />
-                  <a href={buildWhatsAppUrl(candidate.phone, message)} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700">فتح WhatsApp</a>
+                  <CopyLinkButton value={message} label={language === "AR" ? "نسخ المسودة" : "Copy draft"} />
+                  <a aria-label={language === "AR" ? `فتح مسودة WhatsApp للعميل ${candidate.name}` : `Open WhatsApp draft for ${candidate.name}`} href={buildWhatsAppUrl(candidate.phone, message)} target="_blank" rel="noreferrer" className="rounded-xl bg-emerald-600 px-5 py-3 font-black text-white hover:bg-emerald-700">{language === "AR" ? "فتح مسودة WhatsApp" : "Open WhatsApp draft"}</a>
                 </div>
               </div>
               <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">{message}</pre>
