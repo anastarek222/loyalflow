@@ -113,8 +113,10 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
 
         {successMessage ? <Card role="status" className="border-emerald-200 bg-emerald-50 p-5">
           <p className="lf-type-supporting font-semibold text-emerald-800">{successMessage}</p>
-          <p className="mt-4 text-sm font-semibold text-emerald-800">{copy.updatedBalance}</p>
-          <p className="mt-1 lf-type-display lf-type-numeric text-slate-950">{customer.balance} {customer.business.unitName}</p>
+          <section aria-label={copy.balance}>
+            <p className="mt-4 text-sm font-semibold text-emerald-800">{copy.updatedBalance}</p>
+            <p className="mt-1 lf-type-display lf-type-numeric text-slate-950">{customer.balance} {customer.business.unitName}</p>
+          </section>
           <nav aria-label={copy.scan} className="mt-5 grid gap-3">
             <Link href={`/businesses/${slug}/scan`} className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-5 text-center font-semibold text-white hover:bg-primary-hover">{copy.scanNext}</Link>
             <Link href={scanCustomerPath} className="inline-flex min-h-12 items-center justify-center rounded-md border border-border-strong bg-surface px-5 text-center font-semibold text-slate-800 hover:bg-surface-subtle">{copy.performAnotherOperation}</Link>
@@ -123,7 +125,7 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
         </Card> : <>
         {errorMessage ? <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 font-semibold text-red-800">{errorMessage}</div> : null}
 
-        <Card className="p-5">
+        <Card role="region" aria-label={copy.balance} className="p-5">
           <p className="lf-type-supporting font-semibold text-primary">{copy.balance}</p>
           <p className="mt-1 lf-type-display lf-type-numeric text-slate-950">{customer.balance} {customer.business.unitName}</p>
         </Card>
@@ -145,8 +147,8 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
           <SectionHeader title={copy.availableRewards} />
           <div className="mt-3 space-y-3">{customer.rewardUnlocks.map((unlock) => {
             const redeemAction = redeemRewardAction.bind(null, slug, customer.id, unlock.reward.id);
-            return <Card key={unlock.id} className="p-5">
-              <p className="font-semibold text-slate-950">{unlock.reward.name}</p>
+            return <Card key={unlock.id} role="region" aria-labelledby={`scan-reward-${unlock.id}-title`} className="p-5">
+              <p id={`scan-reward-${unlock.id}-title`} className="font-semibold text-slate-950">{unlock.reward.name}</p>
               {unlock.reward.code ? <p className="mt-1 text-sm text-slate-600">{copy.rewardCode}: <span dir="ltr">{unlock.reward.code}</span></p> : null}
               {canRedeem ? <form action={redeemAction} className="mt-4">
                 <input type="hidden" name="operationId" value={randomUUID()} />
