@@ -15,6 +15,8 @@ import * as QRCode from "qrcode";
 
 import SalesProgressPanel from "@/components/sales-progress-panel";
 import AutoFlipMembershipCard from "@/components/auto-flip-membership-card";
+import { PublicCardActions } from "@/components/customer-experience/public-card-actions";
+import { PublicPageShell } from "@/components/customer-experience/public-page-shell";
 type PublicCardPageProps = {
   params: Promise<{
     token: string;
@@ -301,24 +303,18 @@ export default async function PublicCardPage({
       ? business.qrPosition
       : "CENTER";
 
-  const qrCode =
-    await QRCode.toDataURL(
-      cardUrl,
-      {
-        width: 360,
-        margin:
-          qrStyle === "CLASSIC" ? 2 : 1,
-        errorCorrectionLevel:
-          qrStyle === "BRANDED" ? "H" : "M",
-        color: {
-          dark:
-            qrStyle === "BRANDED"
-              ? theme.primaryColor
-              : "#111827",
-          light: "#FFFFFFFF",
-        },
-      }
-    );
+  let qrCode: string | null = null;
+  try {
+    qrCode = await QRCode.toDataURL(cardUrl, {
+      width: 360,
+      margin: 2,
+      errorCorrectionLevel: qrStyle === "BRANDED" ? "H" : "M",
+      // Stored QR style is presentation-only; the destination remains cardUrl.
+      color: { dark: qrStyle === "BRANDED" ? theme.primaryColor : "#111827", light: "#FFFFFFFF" },
+    });
+  } catch {
+    // The public page stays usable through its visible share/copy controls.
+  }
 
   /*
    * البيانات المحسوبة لا يتم تخزينها،
@@ -440,24 +436,8 @@ export default async function PublicCardPage({
     );
 
   return (
-    <main
-      lang={lang}
-      dir={dir}
-      className="relative min-h-screen overflow-hidden px-4 py-5 sm:py-10"
-      style={{
-        background: `linear-gradient(160deg, ${theme.primaryColor} 0%, #020617 55%, #0f172a 100%)`,
-      }}
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-20"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 10%, rgba(255,255,255,0.35), transparent 28%), radial-gradient(circle at 85% 30%, rgba(255,255,255,0.16), transparent 24%)",
-        }}
-      />
-
-      <div className="relative z-10 mx-auto mb-6 w-full max-w-md">
+    <PublicPageShell lang={lang} dir={dir} primaryColor={theme.primaryColor}>
+      <div className="mb-6">
         {showWelcome ? (
           <section
             className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-center backdrop-blur-sm"
@@ -546,9 +526,6 @@ export default async function PublicCardPage({
           qrPosition={
             qrPosition
           }
-          cardUrl={
-            cardUrl
-          }
           terms={
             renderedTerms
           }
@@ -570,6 +547,7 @@ export default async function PublicCardPage({
             business.cardDefaultLanguage
           }
         />
+        <PublicCardActions cardUrl={cardUrl} businessName={business.name} customerName={customerName} language={language} />
       </div>
 
       <h1 className="sr-only">
@@ -746,6 +724,6 @@ export default async function PublicCardPage({
           )}
 
 
-    </main>
+    </PublicPageShell>
   );
 }

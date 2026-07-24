@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { calculateRewardProgress } from "@/lib/loyalty/progress";
 
 type CardLanguage =
   | "AR"
@@ -28,18 +29,6 @@ type CardActivity = {
   label: string;
   date: string;
   amount: number;
-};
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{
-    outcome: "accepted" | "dismissed";
-    platform: string;
-  }>;
-};
-
-type StandaloneNavigator = Navigator & {
-  standalone?: boolean;
 };
 
 type AutoFlipMembershipCardProps = {
@@ -74,10 +63,9 @@ type AutoFlipMembershipCardProps = {
   rewardDescription: string | null;
   rewardAvailable: boolean;
 
-  qrCode: string;
+  qrCode: string | null;
   qrStyle?: "CLASSIC" | "ROUNDED" | "BRANDED";
   qrPosition?: "LEFT" | "CENTER" | "RIGHT";
-  cardUrl: string;
   terms: string[];
   activities: CardActivity[];
   redemptions: number;
@@ -166,32 +154,7 @@ const dictionary = {
     promo:
       "كود خصم",
 
-    shareCard:
-      "مشاركة الكارت",
-
-    copyLink:
-      "نسخ الرابط",
-
-    copied:
-      "تم النسخ ✓",
-
-    installCard:
-      "إضافة للشاشة الرئيسية",
-
-    installed:
-      "الكارت مضاف بالفعل ✓",
-
-    installHelpTitle:
-      "إضافة الكارت للشاشة الرئيسية",
-
-    iosInstallHelp:
-      "اضغط زر المشاركة في Safari، ثم اختر «إضافة إلى الشاشة الرئيسية».",
-
-    otherInstallHelp:
-      "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» إذا كانت متاحة.",
-
-    close:
-      "إغلاق",
+    qrUnavailable: "تعذر إنشاء رمز QR الآن.",
   },
 
   EN: {
@@ -270,32 +233,7 @@ const dictionary = {
     promo:
       "Promo code",
 
-    shareCard:
-      "Share card",
-
-    copyLink:
-      "Copy link",
-
-    copied:
-      "Copied ✓",
-
-    installCard:
-      "Add to Home Screen",
-
-    installed:
-      "Card already added ✓",
-
-    installHelpTitle:
-      "Add card to Home Screen",
-
-    iosInstallHelp:
-      "Tap the Share button in Safari, then choose “Add to Home Screen”.",
-
-    otherInstallHelp:
-      "Open your browser menu and choose “Install app” or “Add to Home Screen” if available.",
-
-    close:
-      "Close",
+    qrUnavailable: "The QR code is unavailable right now.",
   },
 } as const;
 
@@ -364,7 +302,6 @@ export default function AutoFlipMembershipCard({
   qrCode,
   qrStyle = "CLASSIC",
   qrPosition = "CENTER",
-  cardUrl,
   terms,
   activities,
   redemptions,
@@ -398,96 +335,6 @@ export default function AutoFlipMembershipCard({
     setReduceMotion,
   ] =
     useState(false);
-
-  const [
-    copied,
-    setCopied,
-  ] =
-    useState(false);
-
-  const [
-    deferredInstall,
-    setDeferredInstall,
-  ] =
-    useState<BeforeInstallPromptEvent | null>(
-      null
-    );
-
-  const [
-    showInstallHelp,
-    setShowInstallHelp,
-  ] =
-    useState(false);
-
-  const [
-    installHelpPlatform,
-    setInstallHelpPlatform,
-  ] =
-    useState<"ios" | "other">(
-      "other"
-    );
-
-  const [
-    isInstalled,
-    setIsInstalled,
-  ] =
-    useState(() => {
-      if (
-        typeof window === "undefined"
-      ) {
-        return false;
-      }
-
-      const standaloneNavigator =
-        navigator as StandaloneNavigator;
-
-      return (
-        window.matchMedia(
-          "(display-mode: standalone)"
-        ).matches ||
-        standaloneNavigator.standalone === true
-      );
-    });
-
-  useEffect(() => {
-    function handleInstallPrompt(
-      event: Event
-    ) {
-      event.preventDefault();
-
-      setDeferredInstall(
-        event as BeforeInstallPromptEvent
-      );
-    }
-
-    function handleInstalled() {
-      setIsInstalled(true);
-      setDeferredInstall(null);
-      setShowInstallHelp(false);
-    }
-
-    window.addEventListener(
-      "beforeinstallprompt",
-      handleInstallPrompt
-    );
-
-    window.addEventListener(
-      "appinstalled",
-      handleInstalled
-    );
-
-    return () => {
-      window.removeEventListener(
-        "beforeinstallprompt",
-        handleInstallPrompt
-      );
-
-      window.removeEventListener(
-        "appinstalled",
-        handleInstalled
-      );
-    };
-  }, []);
 
   useEffect(() => {
   let timer:
@@ -637,33 +484,8 @@ export default function AutoFlipMembershipCard({
         ? `linear-gradient(145deg, ${safePrimaryColor}de, #0f172ae6 72%), url(${coverImageUrl})`
         : `linear-gradient(145deg, ${safePrimaryColor}, #0f172a 72%)`;
 
-  const safeTarget =
-    Math.max(
-      1,
-      rewardThreshold
-    );
-
-  const progress =
-    Math.min(
-      100,
-      Math.max(
-        0,
-        Math.floor(
-          (
-            balance /
-            safeTarget
-          ) *
-            100
-        )
-      )
-    );
-
-  const remaining =
-    Math.max(
-      0,
-      safeTarget -
-        balance
-    );
+  const { progress, remaining } = calculateRewardProgress(balance, rewardThreshold);
+  const safeTarget = Math.max(1, Math.trunc(rewardThreshold));
 
   function formatValue(
     value: number
@@ -718,93 +540,6 @@ export default function AutoFlipMembershipCard({
   const memberLabel =
     membershipName?.trim() ||
     text.member;
-
-  async function installCard() {
-    if (isInstalled) {
-      return;
-    }
-
-    if (deferredInstall) {
-      await deferredInstall.prompt();
-
-      const choice =
-        await deferredInstall.userChoice;
-
-      if (
-        choice.outcome ===
-        "accepted"
-      ) {
-        setIsInstalled(true);
-      }
-
-      setDeferredInstall(null);
-      return;
-    }
-
-    const isIOS =
-      /iPad|iPhone|iPod/.test(
-        navigator.userAgent
-      ) ||
-      (
-        navigator.platform ===
-          "MacIntel" &&
-        navigator.maxTouchPoints > 1
-      );
-
-    setInstallHelpPlatform(
-      isIOS ? "ios" : "other"
-    );
-
-    setShowInstallHelp(true);
-  }
-
-  async function copyCardLink() {
-    try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(cardUrl);
-      } else {
-        const textarea =
-          document.createElement("textarea");
-
-        textarea.value = cardUrl;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
-
-      setCopied(true);
-
-      window.setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch {
-      setCopied(false);
-    }
-  }
-
-  async function shareCard() {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: businessName,
-          text: `${text.loyaltyCard} - ${customerName}`,
-          url: cardUrl,
-        });
-
-        return;
-      }
-
-      await copyCardLink();
-    } catch {
-      // Share may be cancelled or unavailable.
-    }
-  }
 
   const qrImageClass =
     qrStyle === "ROUNDED"
@@ -1279,14 +1014,14 @@ export default function AutoFlipMembershipCard({
 
                 <div className="shrink-0 text-center">
                   <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-                    <img
+                    {qrCode ? <img
                       src={qrCode}
-                        data-qr-style={qrStyle}
+                      data-qr-style={qrStyle}
                       className={`h-28 w-28 object-contain sm:h-36 sm:w-36 ${qrImageClass} ${qrPositionClass}`}
                       alt={
                         text.scanCard
                       }
-                    />
+                    /> : <p role="status" className="h-28 w-28 p-2 text-xs font-bold text-slate-600 sm:h-36 sm:w-36">{text.qrUnavailable}</p>}
                   </div>
 
                   <p className="mt-2 max-w-36 text-xs font-bold leading-5 text-slate-500">
@@ -1313,70 +1048,6 @@ export default function AutoFlipMembershipCard({
       >
         ↻ {text.flip}
       </button>
-
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={shareCard}
-          className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
-        >
-          {text.shareCard}
-        </button>
-
-        <button
-          type="button"
-          onClick={copyCardLink}
-          className="rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15"
-        >
-          {copied
-            ? text.copied
-            : text.copyLink}
-        </button>
-
-        <button
-          type="button"
-          onClick={installCard}
-          disabled={isInstalled}
-          className="col-span-2 rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-black text-white backdrop-blur transition hover:bg-white/15 disabled:cursor-default disabled:opacity-70 sm:col-span-1"
-        >
-          {isInstalled
-            ? text.installed
-            : text.installCard}
-        </button>
-      </div>
-
-      {showInstallHelp ? (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={text.installHelpTitle}
-          className="mt-3 rounded-2xl border border-white/15 bg-white/10 p-4 text-white backdrop-blur"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="font-black">
-                {text.installHelpTitle}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-white/80">
-                {installHelpPlatform === "ios"
-                  ? text.iosInstallHelp
-                  : text.otherInstallHelp}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowInstallHelp(false)
-              }
-              className="shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-black transition hover:bg-white/10"
-            >
-              {text.close}
-            </button>
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

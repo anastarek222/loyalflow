@@ -179,6 +179,18 @@ export async function joinBusinessAction(
       redirect(`/join/${business.slug}?error=duplicate`);
     }
 
-    throw error;
+    // Redirect errors are control flow. Every other failure gets a bounded
+    // public state rather than exposing database or integration details.
+    if (
+      typeof error === "object" &&
+      error &&
+      "digest" in error &&
+      typeof error.digest === "string" &&
+      error.digest.startsWith("NEXT_REDIRECT")
+    ) {
+      throw error;
+    }
+
+    redirect(`/join/${business.slug}?error=unavailable`);
   }
 }
