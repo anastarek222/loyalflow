@@ -1,4 +1,6 @@
 import { auth } from "@/auth";
+import { ReportCharts } from "@/components/reports/report-charts";
+import { ReportNavigation } from "@/components/reports/report-navigation";
 import {
   formatUtcDateInput,
   parseUtcDateInput,
@@ -27,8 +29,13 @@ import {
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
+import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
+import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { reportCopy } from "@/lib/reports/presentation";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 type ReportsPageProps = {
@@ -129,6 +136,7 @@ export default async function ReportsPage({
       cardStyle: true,
       fontFamily: true,
       loyaltyMode: true,
+      currency: true,
       unitName: true,
       rewardName: true,
       rewardThreshold: true,
@@ -142,6 +150,20 @@ export default async function ReportsPage({
 
   const theme =
     getBusinessTheme(business);
+
+  const reportUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, language: true, role: true, experienceAccess: true },
+  });
+  const language = normalizeLanguage(reportUser?.language);
+  const experienceMode = resolveExperienceMode(
+    (await cookies()).get(getExperienceModeCookieName(session.user.id))?.value,
+    reportUser?.role ?? session.user.role,
+    reportUser?.experienceAccess,
+  );
+  const simple = experienceMode === "SIMPLE";
+  const copy = reportCopy(language);
+  const numberFormatter = new Intl.NumberFormat(getLanguageLocale(language));
 
   const canViewReports = canPerform(
     session.user,
@@ -788,6 +810,19 @@ export default async function ReportsPage({
     ? `&${activeReportFilters}`
     : "";
 
+  // The chart receives only server-derived daily buckets. It intentionally does
+  // not reimplement analytics mathematics in a client component.
+  const [historicalCustomers, historicalEarned, historicalRedemptions] = await Promise.all([
+    prisma.customer.findMany({ where: { ...customerWhere, createdAt: { gte: fromDate, lte: toDate } }, select: { createdAt: true }, orderBy: { createdAt: "asc" } }),
+    prisma.loyaltyTransaction.findMany({ where: { ...transactionWhere, type: "EARN" }, select: { createdAt: true, amount: true } }),
+    prisma.rewardRedemption.findMany({ where: redemptionWhere, select: { createdAt: true } }),
+  ]);
+  const historicalTrends = createHistoricalAnalyticsTrends({
+    customers: historicalCustomers,
+    loyaltyEarned: historicalEarned,
+    rewardsRedeemed: historicalRedemptions,
+  }, fromDate, toDate);
+
   return (
     <main
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
@@ -796,7 +831,7 @@ export default async function ReportsPage({
         fontFamily: theme.fontFamily,
       }}
     >
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl" data-experience-mode={experienceMode}>
         <Link
           href={`/businesses/${business.slug}`}
           className="text-sm font-medium text-violet-600 hover:text-violet-800"
@@ -810,16 +845,18 @@ export default async function ReportsPage({
             backgroundColor: theme.primaryColor,
           }}
         >
-          <p className="text-sm text-white/70">تقارير النشاط</p>
+          <p className="text-sm text-white/70">{copy.overview}</p>
 
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">
             {business.name}
           </h1>
 
           <p className="mt-2 text-sm text-white/70">
-            متابعة العملاء وحركات الولاء والمكافآت.
+            {simple ? copy.simple : copy.advanced}
           </p>
         </header>
+
+        <ReportNavigation slug={business.slug} active="overview" query={reportQuery} language={language} />
 
 
         <section
@@ -841,7 +878,12 @@ export default async function ReportsPage({
             className="rounded-2xl bg-emerald-600 p-5 text-center font-black text-white shadow-sm transition hover:bg-emerald-700"
           >
             📥 تصدير حركات الفترة CSV
-          </a>
+            </a>
+          )}
+          {!canExportData && (
+            <p role="status" className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-center text-sm font-semibold text-slate-600">
+              {copy.exportUnavailable}
+            </p>
           )}
         </section>
 
@@ -1008,7 +1050,17 @@ export default async function ReportsPage({
           </div>
         </form>
 
-        <section className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <section aria-label={copy.summary} className="mt-6 grid gap-4 sm:grid-cols-3">
+          {[
+            { label: language === "AR" ? "عملاء جدد" : "New customers", value: newCustomers, detail: language === "AR" ? "خلال الفترة المحددة" : "In the selected period" },
+            { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: `${numberFormatter.format(earnedAmount)} ${business.unitName}`, detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
+            { label: language === "AR" ? "استبدالات المكافآت" : "Reward redemptions", value: numberFormatter.format(redeemed._count._all), detail: language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions" },
+          ].map((metric) => <article key={metric.label} className="rounded-lg border border-border bg-surface p-5"><p className="text-sm font-semibold text-slate-600">{metric.label}</p><p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p><p className="mt-2 text-xs text-slate-500">{metric.detail}</p></article>)}
+        </section>
+
+        {!simple && <section className="mt-6"><div className="mb-3"><h2 className="text-xl font-bold text-slate-950">{copy.historical}</h2><p className="mt-1 text-sm text-slate-600">{copy.dateRange}</p></div><ReportCharts language={language} unitName={business.unitName} trends={historicalTrends} /></section>}
+
+        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3`}>
           <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-slate-500">إجمالي العملاء</p>
 
@@ -1107,12 +1159,12 @@ export default async function ReportsPage({
             </p>
           </article>
 
-          {business.loyaltyMode === "SALES_AMOUNT" && (
+          {business.loyaltyMode === "SALES_AMOUNT" && business.currency && (
             <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
               <p className="text-sm text-slate-500">إجمالي الإنفاق المسجل</p>
 
               <p className="mt-3 text-4xl font-bold text-emerald-700">
-                {lifetimeTrackedSalesAmount}
+                {lifetimeTrackedSalesAmount}{business.currency ? ` ${business.currency}` : ""}
               </p>
 
               <p className="mt-2 text-xs text-slate-400">
@@ -1149,12 +1201,12 @@ export default async function ReportsPage({
             </p>
           </article>
 
-          {business.loyaltyMode === "SALES_AMOUNT" && (
+          {business.loyaltyMode === "SALES_AMOUNT" && business.currency && (
             <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
               <p className="text-sm text-slate-500">متوسط قيمة الشراء</p>
 
               <p className="mt-3 text-4xl font-bold text-slate-950">
-                {averagePurchaseAmount.toFixed(1)}
+                {averagePurchaseAmount.toFixed(1)}{business.currency ? ` ${business.currency}` : ""}
               </p>
 
               <p className="mt-2 text-xs text-slate-400">
@@ -1286,7 +1338,7 @@ export default async function ReportsPage({
           </article>
         </section>
 
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7">
+        <section className={`${simple ? "hidden " : ""}mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7`}>
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
               <p className="text-sm font-black text-emerald-300">أثر برنامج الولاء</p>
@@ -1325,11 +1377,11 @@ export default async function ReportsPage({
                 value: `${repeatCustomerRate.toFixed(1)}%`,
                 detail: "من العملاء ذوي نشاط الولاء",
               },
-              ...(business.loyaltyMode === "SALES_AMOUNT"
+              ...(business.loyaltyMode === "SALES_AMOUNT" && business.currency
                 ? [
                     {
                       label: "مبيعات ولاء مسجلة",
-                      value: trackedSalesAmount,
+                      value: `${trackedSalesAmount}${business.currency ? ` ${business.currency}` : ""}`,
                       detail: "مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا",
                     },
                   ]
@@ -1344,7 +1396,7 @@ export default async function ReportsPage({
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-3">
+        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-5 lg:grid-cols-3`}>
           {[
             {
               title: "الأكثر نشاطًا",
@@ -1408,7 +1460,7 @@ export default async function ReportsPage({
           ))}
         </section>
 
-        <section className="mt-8 grid gap-8 xl:grid-cols-[1fr_360px]">
+        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-8 xl:grid-cols-[1fr_360px]`}>
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
               <h2 className="text-xl font-bold text-slate-950">أحدث الحركات</h2>

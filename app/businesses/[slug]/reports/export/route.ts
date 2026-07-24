@@ -251,8 +251,6 @@ export async function GET(
             true,
           balanceAfter:
             true,
-          note:
-            true,
           createdAt:
             true,
 
@@ -261,8 +259,6 @@ export async function GET(
               firstName:
                 true,
               lastName:
-                true,
-              phone:
                 true,
               customerCode:
                 true,
@@ -275,8 +271,6 @@ export async function GET(
                 true,
               lastName:
                 true,
-              email:
-                true,
               role:
                 true,
             },
@@ -286,7 +280,6 @@ export async function GET(
             select: {
               firstName: true,
               lastName: true,
-              email: true,
             },
           },
 
@@ -304,34 +297,16 @@ export async function GET(
     "القيمة",
     "الوحدة",
     "الرصيد بعد الحركة",
-    "اسم العميل",
     "كود العميل",
-    "رقم الهاتف",
     "نفذها",
-    "البريد",
     "الدور",
     "الفرع",
     "الموظف المنسوب إليه",
-    "بريد الموظف المنسوب إليه",
-    "الملاحظة",
   ];
 
   const rows =
     transactions.map(
       (transaction) => {
-        const customerName =
-          [
-            transaction
-              .customer
-              .firstName,
-
-            transaction
-              .customer
-              .lastName,
-          ]
-            .filter(Boolean)
-            .join(" ");
-
         const employeeName =
           transaction
             .createdBy
@@ -360,21 +335,11 @@ export async function GET(
           transaction.amount,
           business.unitName,
           transaction.balanceAfter,
-          customerName,
-
           transaction
             .customer
             .customerCode,
 
-          transaction
-            .customer
-            .phone,
-
           employeeName,
-
-          transaction
-            .createdBy
-            ?.email ?? "",
 
           transaction
             .createdBy
@@ -391,9 +356,6 @@ export async function GET(
                 .join(" ")
             : "غير منسوب",
 
-          transaction.attributedStaff?.email ?? "",
-
-          transaction.note ?? "",
         ];
       }
     );
