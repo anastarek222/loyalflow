@@ -9,6 +9,8 @@ import {
 
 let fixture: BrowserUatFixture;
 let manifestPath: string;
+const invalidPublicCardPath = "/card/not-a-valid-public-token";
+const expectedInvalidPublicCard404 = "Failed to load resource: the server responded with a status of 404 (Not Found)";
 
 function applicationNavigation(page: Page) {
   return page.getByRole("complementary", { name: "Primary navigation", exact: true });
@@ -98,7 +100,18 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
-      if (message.type() === "error" && !message.text().includes("favicon.ico")) errors.push(message.text());
+      const isExpectedInvalidPublicCard404 =
+        message.type() === "error" &&
+        message.text() === expectedInvalidPublicCard404 &&
+        message.location().url.endsWith(invalidPublicCardPath);
+
+      if (
+        message.type() === "error" &&
+        !message.text().includes("favicon.ico") &&
+        !isExpectedInvalidPublicCard404
+      ) {
+        errors.push(message.text());
+      }
     });
     (page as Page & { uatErrors?: string[] }).uatErrors = errors;
   });
@@ -291,7 +304,10 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await assertViewportSafety(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-    await page.goto("/card/not-a-valid-public-token");
-    await expect(page.getByText(/not found|غير متاح/i)).toBeVisible();
+    const invalidCardResponse = await page.goto(invalidPublicCardPath);
+    expect(invalidCardResponse).not.toBeNull();
+    expect(invalidCardResponse?.status()).toBe(404);
+    await expect(page.getByRole("heading", { name: "Card unavailable", exact: true })).toBeVisible();
+    await expect(page.getByText("This loyalty card is unavailable or the link is no longer valid.", { exact: true })).toBeVisible();
   });
 });
