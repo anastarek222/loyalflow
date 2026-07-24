@@ -1,9 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { auth } from "@/auth";
+import { PageContainer, PageHeader } from "@/components/page-layout";
 import QrScanner from "@/components/qr-scanner";
+import { Card } from "@/components/ui/surface";
+import { normalizeLanguage } from "@/lib/i18n";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { scanUiCopy } from "@/lib/scan/copy";
 import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -24,6 +28,13 @@ export default async function ScanPage({
   }
 
   const { slug } = await params;
+
+  const authenticatedUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { language: true },
+  });
+  const language = normalizeLanguage(authenticatedUser?.language);
+  const copy = scanUiCopy(language);
 
   const business = await prisma.business.findUnique({
     where: {
@@ -62,22 +73,29 @@ export default async function ScanPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-8"
+      className="min-h-full py-6 sm:py-8"
       style={{
         backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
-      <div className="mx-auto max-w-xl">
-        <Link
-          href={`/businesses/${business.slug}`}
-          className="text-sm font-medium text-violet-600 hover:text-violet-800"
-        >
-          ← الرجوع إلى {business.name}
-        </Link>
+      <PageContainer variant="narrow" className="px-4 sm:px-6">
+        <PageHeader
+          eyebrow={copy.scanner}
+          title={copy.scanCustomerCard}
+          description={copy.scanDescription}
+          secondaryActions={
+            <Link
+              href={`/businesses/${business.slug}`}
+              className="inline-flex min-h-11 items-center rounded-md border border-border bg-surface px-4 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"
+            >
+              {copy.backToBusiness}
+            </Link>
+          }
+        />
 
-        <header
-          className={`mt-5 overflow-hidden border p-5 text-white sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
+        <section
+          className={`overflow-hidden border p-5 text-white sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
           style={{
             backgroundColor: theme.primaryColor,
           }}
@@ -100,37 +118,27 @@ export default async function ScanPage({
 
             <div className="min-w-0">
               <p className="text-sm text-white/70">
-                ماسح LoyalFlow
+                {copy.scanner}
               </p>
 
-              <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-                مسح كارت العميل
-              </h1>
+              <h2 className="mt-1 text-2xl font-bold sm:text-3xl">
+                {business.name}
+              </h2>
 
               <p
                 dir="auto"
                 className="mt-1 break-words text-sm text-white/75"
               >
-                {business.name}
+                {copy.scanCustomerCard}
               </p>
             </div>
           </div>
-        </header>
-
-        <section
-          className={`mt-6 border bg-white p-5 sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
-        >
-          <p
-            className="mb-6 text-sm leading-7 text-slate-600"
-          >
-            افتح الكاميرا ووجّهها ناحية QR الموجود على كارت
-            العميل. بعد القراءة هيفتح ملف العميل مباشرة لإضافة
-            زيارة أو استبدال الهدية.
-          </p>
-
-          <QrScanner businessId={business.id} />
         </section>
-      </div>
+
+        <Card className={`${theme.cardClass} ${theme.borderClass} p-5 sm:p-7`}>
+          <QrScanner businessId={business.id} language={language} />
+        </Card>
+      </PageContainer>
     </main>
   );
 }
