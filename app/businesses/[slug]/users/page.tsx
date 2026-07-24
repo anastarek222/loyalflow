@@ -6,6 +6,8 @@ import {
 import prisma from "@/lib/prisma";
 import type { Prisma, UserRole } from "@/generated/prisma/client";
 import Link from "next/link";
+import { AdministrationNavigation } from "@/components/administration/administration-navigation";
+import { ConfirmSubmitButton } from "@/components/administration/confirm-submit-button";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -292,6 +294,7 @@ export default async function UsersPage({
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
     >
       <div className="mx-auto max-w-7xl">
+        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="users" language={language} />
         <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <Link
@@ -811,7 +814,8 @@ export default async function UsersPage({
 
                         {canChangeStatus ? (
                           <form action={changeStatus}>
-                            <button
+                            <ConfirmSubmitButton
+                              confirmation={user.isActive ? `إيقاف حساب ${user.email} وإنهاء جلساته الحالية؟` : `إعادة تفعيل حساب ${user.email}؟`}
                               type="submit"
                               className={
                                 user.isActive
@@ -822,7 +826,7 @@ export default async function UsersPage({
                               {user.isActive
                                 ? "إيقاف الحساب"
                                 : "إعادة تفعيل الحساب"}
-                            </button>
+                            </ConfirmSubmitButton>
                           </form>
                         ) : (
                           <p className="text-sm font-medium text-slate-400">

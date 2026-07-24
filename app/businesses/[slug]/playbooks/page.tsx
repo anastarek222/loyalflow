@@ -14,6 +14,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { applyBusinessPlaybookAction } from "./actions";
 import { getBusinessTheme } from "@/lib/theme";
+import { AdministrationNavigation } from "@/components/administration/administration-navigation";
+import { normalizeLanguage } from "@/lib/i18n";
 
 type PlaybooksPageProps = {
   params: Promise<{ slug: string }>;
@@ -74,6 +76,8 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
 
   const theme = getBusinessTheme(business);
   if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${business.slug}`);
+  const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
+  const language = normalizeLanguage(currentUser?.language);
   const selected = getBusinessPlaybook(query.playbook) ?? businessPlaybooks.BARBER;
   const current = stateFromBusiness(business);
   const requiresConfirmation = isBusinessConfiguredForPlaybook(current);
@@ -83,6 +87,7 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
   return (
     <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
+        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="playbooks" language={language} />
         <Link href={`/businesses/${business.slug}/settings`} className="text-sm font-bold text-violet-700 hover:text-violet-900">← الرجوع إلى إعدادات {business.name}</Link>
         <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"
           style={{ backgroundColor: theme.primaryColor }}>
