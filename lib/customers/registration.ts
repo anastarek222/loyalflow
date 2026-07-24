@@ -1,5 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
+import { normalizePhone } from "@/lib/customers/phone";
+
+export { normalizePhone } from "@/lib/customers/phone";
 
 export const customerRegistrationSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -20,12 +23,6 @@ type CustomerCodeLookup = {
     }) => Promise<{ id: string } | null>;
   };
 };
-
-export function normalizePhone(value: string) {
-  const cleaned = value.replace(/[^\d+]/g, "");
-
-  return cleaned.replace(/(?!^)\+/g, "");
-}
 
 export function parseCustomerRegistration(value: {
   firstName: FormDataEntryValue | null;
