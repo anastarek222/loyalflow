@@ -2,6 +2,8 @@ import "dotenv/config";
 
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { chmod, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
@@ -45,9 +47,25 @@ const baseUrlArgument = args.find((argument) =>
 const suppliedRunId = args.find((argument) =>
   argument.startsWith("--run=")
 );
+const manifestArgument = args.find((argument) =>
+  argument.startsWith("--manifest=")
+);
 const runId = (cleanupArgument ?? suppliedRunId)?.split("=", 2)[1] ??
   randomUUID().replaceAll("-", "").slice(0, 10);
-const createdBusinessIds: string[] = [];
+let cleanupAttempted = false;
+
+function uatBusinessUserEmails(run: string) {
+  return new Set([
+    "owner-a",
+    "manager-a",
+    "staff-a",
+    "viewer-a",
+    "inactive-user",
+    "owner-b",
+    "owner-sales",
+    "inactive-owner",
+  ].map((role) => `lf-uat-final-${role}-${run}@example.test`));
+}
 
 function assertSafeRunId(value: string) {
   assert.match(
@@ -81,6 +99,20 @@ function slug(label: string) {
   return `${PREFIX}${label}-${runId}`;
 }
 
+function publicEnrollmentPhone(run: string) {
+  // Browser UAT creates ten-hex-character run IDs. Converting that complete
+  // value to a padded decimal string is injective, so the public enrollment
+  // phone is deterministic, unique per run, numeric-only, and stays within
+  // the production validator's 15-digit E.164-compatible limit.
+  assert.match(
+    run,
+    /^[a-f0-9]{10}$/,
+    "Browser UAT requires the generated ten-character hexadecimal run ID."
+  );
+
+  return `+20${BigInt(`0x${run}`).toString().padStart(13, "0")}`;
+}
+
 async function assertSafeDatabaseTarget() {
   const identity = await prisma.$queryRaw<Array<{ database: string }>>
     `SELECT current_database() AS database`;
@@ -102,6 +134,8 @@ async function assertSafeDatabaseTarget() {
 }
 
 async function cleanup(run: string) {
+  assert.ok(!cleanupAttempted, "Final UAT cleanup has already been attempted.");
+  cleanupAttempted = true;
   assertSafeRunId(run);
 
   const businesses = await prisma.business.findMany({
@@ -117,16 +151,63 @@ async function cleanup(run: string) {
     select: { id: true },
   });
 
-  for (const business of businesses) {
-    await prisma.business.delete({ where: { id: business.id } });
-  }
+  const businessIds = businesses.map((business) => business.id);
 
-  await prisma.user.deleteMany({
-    where: {
-      email: `lf-uat-final-superadmin-${run}@example.test`,
-      role: "SUPER_ADMIN",
-      businessId: null,
-    },
+  await prisma.$transaction(async (transaction) => {
+    if (businessIds.length) {
+      const uatUsers = await transaction.user.findMany({
+        where: {
+          businessId: { in: businessIds },
+        },
+        select: { id: true, email: true },
+      });
+      const uatUserIds = uatUsers.map((user) => user.id);
+      const expectedUatUserEmails = uatBusinessUserEmails(run);
+      assert.ok(
+        uatUsers.every((user) => expectedUatUserEmails.has(user.email)),
+        "Refusing to clean a UAT business with an unexpected user."
+      );
+      const businessScope = { businessId: { in: businessIds } };
+
+      // Delete explicit dependents before the UAT users and businesses. Several
+      // of these relations intentionally use NoAction to preserve production
+      // audit history, so relying on a business cascade is not safe here.
+      await transaction.notificationItemRead.deleteMany({ where: businessScope });
+      await transaction.notificationReadState.deleteMany({ where: businessScope });
+      await transaction.notification.deleteMany({ where: businessScope });
+      await transaction.customerNote.deleteMany({ where: businessScope });
+      await transaction.businessActivity.deleteMany({ where: businessScope });
+      await transaction.rewardRedemption.deleteMany({ where: businessScope });
+      await transaction.promotionApplication.deleteMany({ where: businessScope });
+      await transaction.loyaltyTransaction.deleteMany({ where: businessScope });
+      await transaction.rewardUnlock.deleteMany({ where: businessScope });
+      await transaction.customerTagAssignment.deleteMany({ where: businessScope });
+      await transaction.customerReferralCode.deleteMany({ where: businessScope });
+      await transaction.referral.deleteMany({ where: businessScope });
+      await transaction.branchStaffAssignment.deleteMany({ where: businessScope });
+      await transaction.customer.deleteMany({ where: businessScope });
+      await transaction.reward.deleteMany({ where: businessScope });
+      await transaction.promotion.deleteMany({ where: businessScope });
+      await transaction.customerTag.deleteMany({ where: businessScope });
+      await transaction.offer.deleteMany({ where: businessScope });
+      await transaction.branch.deleteMany({ where: businessScope });
+
+      if (uatUserIds.length) {
+        await transaction.user.deleteMany({ where: { id: { in: uatUserIds } } });
+      }
+      await transaction.business.deleteMany({ where: { id: { in: businessIds } } });
+    }
+
+    await transaction.user.deleteMany({
+      where: {
+        email: `lf-uat-final-superadmin-${run}@example.test`,
+        role: "SUPER_ADMIN",
+        businessId: null,
+      },
+    });
+  }, {
+    maxWait: 10_000,
+    timeout: 60_000,
   });
 
   console.log(
@@ -141,6 +222,7 @@ async function createBusiness(input: {
   rewardThreshold: number;
   earnAmount: number;
   isActive?: boolean;
+  cardDefaultLanguage?: "AR" | "EN";
 }) {
   const business = await prisma.business.create({
     data: {
@@ -154,12 +236,11 @@ async function createBusiness(input: {
       rewardThreshold: input.rewardThreshold,
       earnAmount: input.earnAmount,
       allowOwnerDataExport: true,
-      cardDefaultLanguage: "EN",
+      cardDefaultLanguage: input.cardDefaultLanguage ?? "EN",
       isActive: input.isActive ?? true,
     },
   });
 
-  createdBusinessIds.push(business.id);
   return business;
 }
 
@@ -224,7 +305,7 @@ function printFixtureDetails(input: {
   businessA: { slug: string };
   businessB: { slug: string };
   businessSales: { slug: string };
-  activeCustomer: { publicToken: string; id: string };
+  activeCustomer: { id: string };
   otherCustomer: { id: string };
   staffBranchId: string;
 }) {
@@ -255,13 +336,45 @@ function printFixtureDetails(input: {
   console.log(`  A duplicates: ${url(`/businesses/${input.businessA.slug}/duplicates`)}`);
   console.log(`  B customers (POINTS): ${url(`/businesses/${input.businessB.slug}/customers`)}`);
   console.log(`  Sales customers: ${url(`/businesses/${input.businessSales.slug}/customers`)}`);
-  console.log(`  A public card: ${url(`/card/${input.activeCustomer.publicToken}`)}`);
-  console.log(`  A public card API: ${url(`/api/card/${input.activeCustomer.publicToken}`)}`);
+  console.log("  A public card: available to the browser UAT manifest only");
+  console.log("  A public card API: available to the browser UAT manifest only");
   console.log(`  B negative customer ID: ${input.otherCustomer.id}`);
   console.log(`  A staff assigned branch ID: ${input.staffBranchId}`);
   console.log("\nFixture test identifiers:");
   console.log("  A-01,A-02,A-03,B-01,B-02,C-01,C-03,C-05,D-01,D-02,D-03,E-01,F-01,G-01,H-01,H-02,I-01,J-01,K-01,L-01,M-01,N-01,O-01,P-01,Q-01,R-01,S-01");
   console.log(`\nCleanup: npm run cleanup:final-uat -- --run=${runId}`);
+}
+
+async function writeBrowserManifest(input: {
+  businessA: { slug: string };
+  businessB: { slug: string };
+  activeCustomer: { id: string; publicToken: string; customerCode: string };
+  vipCustomer: { id: string; publicToken: string };
+  otherCustomer: { id: string; publicToken: string };
+  staffBranchId: string;
+}) {
+  if (!manifestArgument) return;
+
+  const manifestPath = resolve(manifestArgument.split("=", 2)[1] ?? "");
+  assert.ok(manifestPath, "Browser UAT manifest path is required.");
+
+  // This deliberately contains no password. It is consumed only by the
+  // current Playwright process and is removed by its fixture teardown.
+  await writeFile(
+    manifestPath,
+    JSON.stringify({
+      runId,
+      businessA: input.businessA.slug,
+      businessB: input.businessB.slug,
+      activeCustomer: input.activeCustomer,
+      vipCustomer: input.vipCustomer,
+      otherCustomer: input.otherCustomer,
+      staffBranchId: input.staffBranchId,
+      publicEnrollmentPhone: publicEnrollmentPhone(runId),
+    }),
+    { mode: 0o600 }
+  );
+  await chmod(manifestPath, 0o600);
 }
 
 async function prepareFixtures() {
@@ -275,21 +388,21 @@ async function prepareFixtures() {
 
   const [businessA, businessB, businessSales, inactiveBusiness] = await Promise.all([
     createBusiness({ label: "a", name: "Business A VISITS", loyaltyMode: "VISITS", rewardThreshold: 5, earnAmount: 1 }),
-    createBusiness({ label: "b", name: "Business B POINTS", loyaltyMode: "POINTS", rewardThreshold: 10, earnAmount: 1 }),
+    createBusiness({ label: "b", name: "Business B POINTS", loyaltyMode: "POINTS", rewardThreshold: 10, earnAmount: 1, cardDefaultLanguage: "AR" }),
     createBusiness({ label: "sales", name: "Business Sales", loyaltyMode: "SALES_AMOUNT", rewardThreshold: 100, earnAmount: 1 }),
     createBusiness({ label: "inactive", name: "Inactive business", loyaltyMode: "VISITS", rewardThreshold: 5, earnAmount: 1, isActive: false }),
   ]);
 
   const createdUsers = await Promise.all([
-    prisma.user.create({ data: { firstName: "Final UAT Owner A", email: `lf-uat-final-owner-a-${runId}@example.test`, passwordHash, role: "OWNER", businessId: businessA.id } }),
-    prisma.user.create({ data: { firstName: "Final UAT Manager A", email: `lf-uat-final-manager-a-${runId}@example.test`, passwordHash, role: "MANAGER", businessId: businessA.id } }),
+    prisma.user.create({ data: { firstName: "Final UAT Owner A", email: `lf-uat-final-owner-a-${runId}@example.test`, passwordHash, role: "OWNER", businessId: businessA.id, language: "EN", experienceAccess: "BOTH" } }),
+    prisma.user.create({ data: { firstName: "Final UAT Manager A", email: `lf-uat-final-manager-a-${runId}@example.test`, passwordHash, role: "MANAGER", businessId: businessA.id, language: "EN" } }),
     prisma.user.create({ data: { firstName: "Final UAT Staff A", email: `lf-uat-final-staff-a-${runId}@example.test`, passwordHash, role: "STAFF", businessId: businessA.id } }),
-    prisma.user.create({ data: { firstName: "Final UAT Viewer A", email: `lf-uat-final-viewer-a-${runId}@example.test`, passwordHash, role: "VIEWER", businessId: businessA.id } }),
+    prisma.user.create({ data: { firstName: "Final UAT Viewer A", email: `lf-uat-final-viewer-a-${runId}@example.test`, passwordHash, role: "VIEWER", businessId: businessA.id, language: "EN" } }),
     prisma.user.create({ data: { firstName: "Final UAT Inactive User", email: `lf-uat-final-inactive-user-${runId}@example.test`, passwordHash, role: "STAFF", businessId: businessA.id, isActive: false } }),
     prisma.user.create({ data: { firstName: "Final UAT Owner B", email: `lf-uat-final-owner-b-${runId}@example.test`, passwordHash, role: "OWNER", businessId: businessB.id } }),
     prisma.user.create({ data: { firstName: "Final UAT Owner Sales", email: `lf-uat-final-owner-sales-${runId}@example.test`, passwordHash, role: "OWNER", businessId: businessSales.id } }),
     prisma.user.create({ data: { firstName: "Final UAT Inactive Owner", email: `lf-uat-final-inactive-owner-${runId}@example.test`, passwordHash, role: "OWNER", businessId: inactiveBusiness.id } }),
-    prisma.user.create({ data: { firstName: "Final UAT Super Admin", email: `lf-uat-final-superadmin-${runId}@example.test`, passwordHash, role: "SUPER_ADMIN" } }),
+    prisma.user.create({ data: { firstName: "Final UAT Super Admin", email: `lf-uat-final-superadmin-${runId}@example.test`, passwordHash, role: "SUPER_ADMIN", language: "EN" } }),
   ]);
   const ownerA = createdUsers[0]!;
   const staffA = createdUsers[2]!;
@@ -407,6 +520,15 @@ async function prepareFixtures() {
     otherCustomer,
     staffBranchId: branchOne.id,
   });
+
+  await writeBrowserManifest({
+    businessA,
+    businessB,
+    activeCustomer,
+    vipCustomer,
+    otherCustomer,
+    staffBranchId: branchOne.id,
+  });
 }
 
 async function main() {
@@ -423,19 +545,11 @@ async function main() {
 main()
   .catch(async (error) => {
     logServerError("prepare_final_uat_fixtures_failed", error);
-
-    for (const businessId of createdBusinessIds) {
-      await prisma.business.delete({ where: { id: businessId } }).catch(() => null);
-    }
-
-    await prisma.user.deleteMany({
-      where: {
-        email: `lf-uat-final-superadmin-${runId}@example.test`,
-        role: "SUPER_ADMIN",
-        businessId: null,
-      },
-    }).catch(() => null);
     process.exitCode = 1;
+
+    if (!cleanupAttempted) {
+      await cleanup(runId);
+    }
   })
   .finally(async () => {
     await prisma.$disconnect();

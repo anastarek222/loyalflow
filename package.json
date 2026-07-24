@@ -27,6 +27,7 @@
     "verify:local-business-profile-foundation": "tsx scripts/verify-local-business-profile-foundation.ts",
     "prepare:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
     "cleanup:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
+    "test:browser-uat": "playwright test --config=playwright.config.ts",
     "create-admin": "tsx scripts/create-super-admin.ts",
     "sync-sheets": "tsx scripts/sync-google-sheets.ts",
     "postinstall": "prisma generate",
@@ -50,6 +51,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@prisma/client": "^7.8.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

@@ -76,7 +76,7 @@ export default function AppTopbar({ language, experienceMode, experienceAccess, 
       <MobileSidebarWrapper language={language} experienceMode={experienceMode} user={{ ...user, experienceAccess }} business={activeBusiness} businesses={businesses} />
       <div className="min-w-0">
         {context.parent && <p className="truncate text-xs font-medium text-slate-500">{context.parent}</p>}
-        <h1 className="truncate text-base font-bold text-slate-950 sm:text-lg">{context.title}</h1>
+        <p className="truncate text-base font-bold text-slate-950 sm:text-lg">{context.title}</p>
       </div>
       {activeBusiness && <div ref={businessRef} className="relative hidden sm:block" data-current-business-context="true">
         {businesses.length > 1 ? <button type="button" aria-expanded={businessOpen} aria-haspopup="menu" onClick={() => setBusinessOpen((value) => !value)} className="flex min-h-11 max-w-52 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"><Building2 size={16} aria-hidden="true" /><span className="truncate">{activeBusiness.name}</span><ChevronDown size={15} aria-hidden="true" /></button> : <span className="inline-flex min-h-11 max-w-52 items-center gap-2 rounded-md border border-border px-3 text-sm font-semibold text-slate-700"><Building2 size={16} aria-hidden="true" /><span className="truncate">{activeBusiness.name}</span></span>}

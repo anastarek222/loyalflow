@@ -547,7 +547,6 @@ export default function BusinessSetupWizard({
     <form
       ref={formRef}
       action={action}
-      encType="multipart/form-data"
       className="mt-6 space-y-5"
     >
       <div className="mb-6">
