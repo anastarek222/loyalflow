@@ -107,6 +107,7 @@ export default async function JoinBusinessPage({
             duplicate: "رقم الهاتف مسجل بالفعل لدى هذا النشاط.",
             "rate-limit": "تم تجاوز عدد المحاولات. حاول مرة أخرى بعد قليل.",
             unavailable: "التسجيل غير متاح حاليًا.",
+            failed: "تعذر إكمال التسجيل الآن. حاول مرة أخرى لاحقًا.",
           },
         }
       : {
@@ -130,6 +131,7 @@ export default async function JoinBusinessPage({
             duplicate: "This phone number is already registered with this business.",
             "rate-limit": "Too many attempts. Please try again shortly.",
             unavailable: "Registration is unavailable right now.",
+            failed: "We could not complete registration right now. Please try again later.",
           },
         };
   const programName =
