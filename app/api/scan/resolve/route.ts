@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { extractPublicCardToken } from "@/lib/cards/public-token";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { scanResolveError } from "@/lib/scan/resolve";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 import { opaqueIdSchema } from "@/lib/validation/action-input";
 import { z } from "zod";
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
   if (!session?.user) {
     return Response.json(
       {
-        error: "يجب تسجيل الدخول أولًا.",
+        ...scanResolveError("UNAUTHENTICATED"),
       },
       {
         status: 401,
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return Response.json(
       {
-        error: "بيانات رمز QR غير صحيحة.",
+        ...scanResolveError("INVALID_INPUT"),
       },
       {
         status: 400,
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
 
   if (!canPerform(session.user, parsed.data.businessId, "LOYALTY_EARN")) {
     return Response.json(
-      { error: "ليس لديك صلاحية لفتح هذا العميل." },
+      scanResolveError("FORBIDDEN"),
       { status: 403 }
     );
   }
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
 
   if (!limit.allowed) {
     return Response.json(
-      { error: "تم تجاوز عدد المحاولات المسموح." },
+      scanResolveError("RATE_LIMITED"),
       {
         status: 429,
         headers: { "Retry-After": String(limit.retryAfterSeconds) },
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
   if (!publicToken) {
     return Response.json(
       {
-        error: "هذا رمز QR ليس كارت LoyalFlow صالحًا.",
+        ...scanResolveError("INVALID_CARD"),
       },
       {
         status: 400,
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
   ) {
     return Response.json(
       {
-        error: "العميل أو الكارت غير موجود.",
+        ...scanResolveError("CUSTOMER_NOT_FOUND"),
       },
       {
         status: 404,
