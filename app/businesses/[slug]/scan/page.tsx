@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { PageContainer, PageHeader } from "@/components/page-layout";
 import QrScanner from "@/components/qr-scanner";
+import ScanCustomerSearch from "@/components/scan-customer-search";
 import { Card } from "@/components/ui/surface";
 import { normalizeLanguage } from "@/lib/i18n";
 import { canPerform } from "@/lib/permissions";
@@ -137,6 +138,7 @@ export default async function ScanPage({
 
         <Card className={`${theme.cardClass} ${theme.borderClass} p-5 sm:p-7`}>
           <QrScanner businessId={business.id} language={language} />
+          <ScanCustomerSearch businessId={business.id} language={language} />
         </Card>
       </PageContainer>
     </main>
