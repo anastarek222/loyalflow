@@ -14,6 +14,7 @@ import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { scanUiCopy } from "@/lib/scan/copy";
+import type { ScanOperationError } from "@/lib/loyalty/operation-origin";
 import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -86,8 +87,14 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
   const earnAction = addLoyaltyAction.bind(null, slug, customer.id);
   const fullName = [customer.firstName, customer.lastName].filter(Boolean).join(" ");
   const dateFormatter = new Intl.DateTimeFormat(getLanguageLocale(language), { dateStyle: "short", timeStyle: "short" });
-  const successMessage = query.success === "earned" ? copy.operationRecorded : query.success === "redeemed" ? copy.rewardRedeemed : null;
-  const errorMessage = query.error ? copy.operationError : null;
+  const success = query.success === "earned" || query.success === "redeemed" ? query.success : null;
+  const knownErrors: ScanOperationError[] = ["invalid", "permission", "reward-unavailable", "insufficient-balance", "conflict", "invalid-branch", "invalid-staff", "generic"];
+  const error = knownErrors.includes(query.error as ScanOperationError)
+    ? query.error as ScanOperationError
+    : null;
+  const successMessage = success === "earned" ? copy.earnSuccess : success === "redeemed" ? copy.redeemSuccess : null;
+  const errorMessage = error ? copy.operationErrors[error] : null;
+  const scanCustomerPath = `/businesses/${slug}/scan/customer/${customer.id}`;
   const transactionPresentation = (type: string) => type === "REDEEM"
     ? { icon: "🎁", title: copy.redeemActivity, color: "bg-violet-50" }
     : type === "ADJUSTMENT"
@@ -104,13 +111,53 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
           secondaryActions={<Link href={`/businesses/${slug}/scan`} className="inline-flex min-h-11 items-center rounded-md border border-border bg-surface px-4 text-sm font-semibold text-slate-700 hover:bg-surface-subtle">{copy.backToScanner}</Link>}
         />
 
-        {successMessage ? <div role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 font-semibold text-emerald-800">{successMessage}</div> : null}
+        {successMessage ? <Card role="status" className="border-emerald-200 bg-emerald-50 p-5">
+          <p className="lf-type-supporting font-semibold text-emerald-800">{successMessage}</p>
+          <p className="mt-4 text-sm font-semibold text-emerald-800">{copy.updatedBalance}</p>
+          <p className="mt-1 lf-type-display lf-type-numeric text-slate-950">{customer.balance} {customer.business.unitName}</p>
+          <nav aria-label={copy.scan} className="mt-5 grid gap-3">
+            <Link href={`/businesses/${slug}/scan`} className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-5 text-center font-semibold text-white hover:bg-primary-hover">{copy.scanNext}</Link>
+            <Link href={scanCustomerPath} className="inline-flex min-h-12 items-center justify-center rounded-md border border-border-strong bg-surface px-5 text-center font-semibold text-slate-800 hover:bg-surface-subtle">{copy.performAnotherOperation}</Link>
+            <Link href={`/businesses/${slug}/customers/${customer.id}`} className="inline-flex min-h-11 items-center justify-center rounded-md px-5 text-center text-sm font-semibold text-slate-700 hover:bg-white/60">{copy.openFullProfile}</Link>
+          </nav>
+        </Card> : <>
         {errorMessage ? <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 font-semibold text-red-800">{errorMessage}</div> : null}
 
         <Card className="p-5">
           <p className="lf-type-supporting font-semibold text-primary">{copy.balance}</p>
           <p className="mt-1 lf-type-display lf-type-numeric text-slate-950">{customer.balance} {customer.business.unitName}</p>
         </Card>
+
+        <section aria-label={copy.operationWorkspace}>
+        {canEarn ? <Card className="p-5">
+          <p className="lf-type-supporting font-semibold text-slate-600">{copy.earnOperation}</p>
+          <h2 className="mt-1 lf-type-section text-slate-950">{customer.business.loyaltyMode === "SALES_AMOUNT" ? copy.addSale : customer.business.loyaltyMode === "VISITS" ? copy.addVisit : copy.addPoints}</h2>
+          <form action={earnAction} className="mt-4">
+            {customer.business.loyaltyMode === "SALES_AMOUNT" ? <input name="saleAmount" type="number" inputMode="decimal" placeholder={copy.saleAmountPlaceholder} aria-label={copy.saleAmountPlaceholder} className="mb-3 min-h-12 w-full rounded-md border border-border bg-surface px-4 font-semibold" /> : null}
+            {operationContextFields(!canEarn, "scan-earn-operation")}
+            <input type="hidden" name="operationId" value={randomUUID()} />
+            <input type="hidden" name="operationOrigin" value="SCAN" />
+            <ScanActionButton language={language}>{customer.business.loyaltyMode === "SALES_AMOUNT" ? copy.recordSale : customer.business.loyaltyMode === "VISITS" ? copy.addVisitAction : copy.addPointsAction(customer.business.earnAmount)}</ScanActionButton>
+          </form>
+        </Card> : null}
+
+        {customer.rewardUnlocks.length ? <section aria-label={copy.availableRewards}>
+          <SectionHeader title={copy.availableRewards} />
+          <div className="mt-3 space-y-3">{customer.rewardUnlocks.map((unlock) => {
+            const redeemAction = redeemRewardAction.bind(null, slug, customer.id, unlock.reward.id);
+            return <Card key={unlock.id} className="p-5">
+              <p className="font-semibold text-slate-950">{unlock.reward.name}</p>
+              {unlock.reward.code ? <p className="mt-1 text-sm text-slate-600">{copy.rewardCode}: <span dir="ltr">{unlock.reward.code}</span></p> : null}
+              {canRedeem ? <form action={redeemAction} className="mt-4">
+                <input type="hidden" name="operationId" value={randomUUID()} />
+                <input type="hidden" name="operationOrigin" value="SCAN" />
+                {operationContextFields(!canRedeem, `scan-redeem-${unlock.id}`)}
+                <ScanActionButton language={language}>{copy.redeemReward}</ScanActionButton>
+              </form> : null}
+            </Card>;
+          })}</div>
+        </section> : canRedeem ? <Inset className="mt-3 text-sm text-slate-600">{copy.noAvailableRewards}</Inset> : null}
+        </section>
 
         <section aria-label={copy.activity}>
           <SectionHeader title={copy.activity} />
@@ -126,37 +173,11 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
           })}</div> : <Inset className="mt-3 text-sm text-slate-600">{copy.noActivity}</Inset>}
         </section>
 
-        {canEarn ? <Card className="p-5">
-          <p className="lf-type-supporting font-semibold text-slate-600">{copy.earnOperation}</p>
-          <h2 className="mt-1 lf-type-section text-slate-950">{customer.business.loyaltyMode === "SALES_AMOUNT" ? copy.addSale : customer.business.loyaltyMode === "VISITS" ? copy.addVisit : copy.addPoints}</h2>
-          <form action={earnAction} className="mt-4">
-            {customer.business.loyaltyMode === "SALES_AMOUNT" ? <input name="saleAmount" type="number" inputMode="decimal" placeholder={copy.saleAmountPlaceholder} aria-label={copy.saleAmountPlaceholder} className="mb-3 min-h-12 w-full rounded-md border border-border bg-surface px-4 font-semibold" /> : null}
-            {operationContextFields(!canEarn, "scan-earn-operation")}
-            <input type="hidden" name="operationId" value={randomUUID()} />
-            <ScanActionButton language={language}>{customer.business.loyaltyMode === "SALES_AMOUNT" ? copy.recordSale : customer.business.loyaltyMode === "VISITS" ? copy.addVisitAction : copy.addPointsAction(customer.business.earnAmount)}</ScanActionButton>
-          </form>
-        </Card> : null}
-
-        {customer.rewardUnlocks.length ? <section aria-label={copy.availableRewards}>
-          <SectionHeader title={copy.availableRewards} />
-          <div className="mt-3 space-y-3">{customer.rewardUnlocks.map((unlock) => {
-            const redeemAction = redeemRewardAction.bind(null, slug, customer.id, unlock.reward.id);
-            return <Card key={unlock.id} className="p-5">
-              <p className="font-semibold text-slate-950">{unlock.reward.name}</p>
-              {unlock.reward.code ? <p className="mt-1 text-sm text-slate-600">{copy.rewardCode}: <span dir="ltr">{unlock.reward.code}</span></p> : null}
-              {canRedeem ? <form action={redeemAction} className="mt-4">
-                <input type="hidden" name="operationId" value={randomUUID()} />
-                {operationContextFields(!canRedeem, `scan-redeem-${unlock.id}`)}
-                <ScanActionButton language={language}>{copy.redeemReward}</ScanActionButton>
-              </form> : null}
-            </Card>;
-          })}</div>
-        </section> : null}
-
         <nav aria-label={copy.scan} className="grid gap-3 pb-4 sm:grid-cols-2">
           <Link href={`/businesses/${slug}/scan`} className="inline-flex min-h-12 items-center justify-center rounded-md bg-primary px-5 text-center font-semibold text-white hover:bg-primary-hover">{copy.scanNext}</Link>
           <Link href={`/businesses/${slug}/customers/${customer.id}`} className="inline-flex min-h-12 items-center justify-center rounded-md border border-border-strong bg-surface px-5 text-center font-semibold text-slate-800 hover:bg-surface-subtle">{copy.openFullProfile}</Link>
         </nav>
+        </>}
       </PageContainer>
     </main>
   );
