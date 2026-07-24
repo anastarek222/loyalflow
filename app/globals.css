@@ -115,6 +115,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--lf-canvas);
+  overflow-x: clip;
 }
 
 body {
@@ -122,6 +123,15 @@ body {
   background: var(--lf-canvas);
   color: var(--lf-foreground);
   font-family: var(--lf-font-sans);
+}
+
+/* User-provided names, contact details, and URLs must not widen a page. */
+:where(p, span, a, dd, td, th) {
+  overflow-wrap: anywhere;
+}
+
+:where(input, textarea, select, button) {
+  max-width: 100%;
 }
 
 ::selection {

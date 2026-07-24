@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { customerUiCopy } from "@/lib/customers/ui-copy";
 import type { AppLanguage } from "@/lib/i18n";
+import { Dialog } from "@/components/ui/dialog";
 
 type RedeemRewardDialogProps = {
   action: () => void | Promise<void>;
@@ -41,28 +42,16 @@ export default function RedeemRewardDialog({
       </button>
 
       {isOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="redeem-reward-title"
-          className="fixed inset-0 z-50 flex items-end bg-slate-950/60 p-4 sm:items-center sm:justify-center"
+        <Dialog
+          open={isOpen}
+          onClose={() => setIsOpen(false)}
+          title={rewardName}
+          description={copy.redeemDescription(cost, unitName)}
+          className="max-w-md"
         >
-          <section className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <p className="text-sm font-bold text-emerald-700">
               {copy.redeemConfirm}
             </p>
-
-            <h2
-              id="redeem-reward-title"
-              className="mt-2 text-xl font-black text-slate-950"
-            >
-              {rewardName}
-            </h2>
-
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              {copy.redeemDescription(cost, unitName)}
-            </p>
-
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
@@ -83,8 +72,7 @@ export default function RedeemRewardDialog({
                 </button>
               </form>
             </div>
-          </section>
-        </div>
+        </Dialog>
       )}
     </>
   );
