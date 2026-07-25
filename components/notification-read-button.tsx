@@ -61,7 +61,7 @@ export default function NotificationReadButton({
 
   if (status === "read") {
     return (
-      <span className="shrink-0 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-black text-emerald-700">
+      <span className="shrink-0 rounded-[var(--lf-radius-input)] bg-success-subtle px-4 py-2 text-xs font-black text-success">
         مقروء ✓
       </span>
     );
@@ -72,7 +72,7 @@ export default function NotificationReadButton({
       type="button"
       onClick={markAsRead}
       disabled={isPending}
-      className="shrink-0 rounded-lg border border-violet-200 bg-white px-3 py-2 text-xs font-black text-violet-700 transition hover:border-violet-400 hover:bg-violet-50 disabled:cursor-wait disabled:opacity-60"
+      className="shrink-0 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-2 text-xs font-black text-primary transition hover:border-primary/30 hover:bg-primary-subtle disabled:cursor-wait disabled:opacity-60"
     >
       {isPending
         ? "جاري الحفظ..."

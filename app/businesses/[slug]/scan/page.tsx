@@ -4,12 +4,11 @@ import { auth } from "@/auth";
 import { PageContainer, PageHeader } from "@/components/page-layout";
 import QrScanner from "@/components/qr-scanner";
 import ScanCustomerSearch from "@/components/scan-customer-search";
-import { Card } from "@/components/ui/surface";
+import { Card } from "@/components/ui/card";
 import { normalizeLanguage } from "@/lib/i18n";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { scanUiCopy } from "@/lib/scan/copy";
-import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -59,9 +58,6 @@ export default async function ScanPage({
     notFound();
   }
 
-  const theme =
-    getBusinessTheme(business);
-
   const canAccess = canPerform(
     session.user,
     business.id,
@@ -75,10 +71,6 @@ export default async function ScanPage({
   return (
     <main
       className="min-h-full py-6 sm:py-8"
-      style={{
-        backgroundColor: theme.backgroundColor,
-        fontFamily: theme.fontFamily,
-      }}
     >
       <PageContainer variant="narrow" className="px-4 sm:px-6">
         <PageHeader
@@ -88,7 +80,7 @@ export default async function ScanPage({
           secondaryActions={
             <Link
               href={`/businesses/${business.slug}`}
-              className="inline-flex min-h-11 items-center rounded-md border border-border bg-surface px-4 text-sm font-semibold text-slate-700 hover:bg-surface-subtle"
+              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
             >
               {copy.backToBusiness}
             </Link>
@@ -96,20 +88,17 @@ export default async function ScanPage({
         />
 
         <section
-          className={`overflow-hidden border p-5 text-white sm:p-7 ${theme.cardClass} ${theme.borderClass}`}
-          style={{
-            backgroundColor: theme.primaryColor,
-          }}
+          className={`overflow-hidden border p-6 text-white sm:p-8 rounded-[var(--lf-radius-card)] border-border`}
         >
           <div className="flex items-center gap-4">
             {business.logoUrl ? (
               <img
                 src={business.logoUrl}
                 alt={`${business.name} logo`}
-                className="h-16 w-16 shrink-0 rounded-xl border border-white/20 bg-white object-contain p-2"
+                className="h-16 w-16 shrink-0 rounded-[var(--lf-radius-input)] border border-white/20 bg-white object-contain p-2"
               />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white/15 text-2xl font-black">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-white/15 text-2xl font-black">
                 {business.name
                   .trim()
                   .charAt(0)
@@ -136,7 +125,7 @@ export default async function ScanPage({
           </div>
         </section>
 
-        <Card className={`${theme.cardClass} ${theme.borderClass} p-5 sm:p-7`}>
+        <Card className={`rounded-[var(--lf-radius-card)] border-border p-6 sm:p-8`}>
           <QrScanner businessId={business.id} language={language} />
           <ScanCustomerSearch businessId={business.id} language={language} />
         </Card>

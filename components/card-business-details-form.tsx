@@ -18,28 +18,28 @@ export default function CardBusinessDetailsForm({
   return (
     <form
       action={action}
-      className="mb-8 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7"
+      className="mb-8 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
     >
       <div>
-        <p className="text-sm font-semibold text-violet-600">
+        <p className="text-sm font-semibold text-primary">
           بيانات ثابتة لكل كروت البراند
         </p>
 
-        <h2 className="mt-1 text-xl font-bold text-slate-950">
+        <h2 className="mt-1 text-xl font-bold text-foreground">
           بيانات الكارت والتواصل
         </h2>
 
-        <p className="mt-2 text-sm leading-6 text-slate-500">
+        <p className="mt-2 text-sm leading-6 text-foreground-subtle">
           يتم إدخال هذه البيانات مرة واحدة، ثم تظهر تلقائيًا
           في كل كروت عملاء هذا البراند.
         </p>
       </div>
 
-      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
         <div>
           <label
             htmlFor="contactPhone"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            className="mb-2 block text-sm font-medium text-foreground-muted"
           >
             رقم الهاتف
           </label>
@@ -52,14 +52,14 @@ export default function CardBusinessDetailsForm({
             required
             maxLength={25}
             placeholder="01033196610"
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+            className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
           />
         </div>
 
         <div>
           <label
             htmlFor="address"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            className="mb-2 block text-sm font-medium text-foreground-muted"
           >
             العنوان
           </label>
@@ -72,15 +72,15 @@ export default function CardBusinessDetailsForm({
             required
             maxLength={250}
             placeholder="١ شارع دكتور لاشين..."
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+            className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
           />
         </div>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6">
         <label
           htmlFor="cardTerms"
-          className="mb-2 block text-sm font-medium text-slate-700"
+          className="mb-2 block text-sm font-medium text-foreground-muted"
         >
           شروط الكارت
         </label>
@@ -93,45 +93,45 @@ export default function CardBusinessDetailsForm({
           required
           maxLength={1200}
           defaultValue={cardTerms}
-          className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+          className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
 
-        <p className="mt-2 text-xs leading-5 text-slate-500">
+        <p className="mt-2 text-xs leading-5 text-foreground-subtle">
           اكتب كل شرط في سطر منفصل. سيظهر تلقائيًا كعنصر
           مستقل في ظهر الكارت.
         </p>
 
-        <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-900">
+        <div className="mt-4 rounded-[var(--lf-radius-card)] border border-primary/30 bg-primary-subtle p-4 text-sm text-primary">
           <p className="font-bold">
             متغيرات يتم تحديثها تلقائيًا داخل الشروط:
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-2 font-mono text-xs">
-            <code className="rounded-lg bg-white px-2 py-1">
+          <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
               {"{reward}"}
             </code>
 
-            <code className="rounded-lg bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
               {"{threshold}"}
             </code>
 
-            <code className="rounded-lg bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
               {"{unit}"}
             </code>
 
-            <code className="rounded-lg bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
               {"{earn}"}
             </code>
           </div>
 
-          <p className="mt-3 text-xs leading-5">
+          <p className="mt-4 text-xs leading-5">
             مثال: عند الوصول إلى {"{threshold}"} {"{unit}"}
             يحصل العميل على {"{reward}"}.
           </p>
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm leading-6 text-blue-900">
+      <div className="mt-6 rounded-[var(--lf-radius-card)] border border-info/30 bg-info-subtle p-4 text-sm leading-6 text-info">
         اسم المكافأة والعدد المطلوب يتم التحكم فيهما من
         إعدادات برنامج الولاء الموجودة أسفل الصفحة، ولن
         تحتاج لتعديل تصميم الكارت عند تغيير المكافأة.
@@ -139,7 +139,7 @@ export default function CardBusinessDetailsForm({
 
       <button
         type="submit"
-        className="mt-6 w-full rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 sm:w-auto"
+        className="mt-6 w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle sm:w-auto"
       >
         حفظ بيانات الكارت
       </button>

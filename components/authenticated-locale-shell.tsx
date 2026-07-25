@@ -84,7 +84,7 @@ export default async function AuthenticatedLocaleShell({
       lang={lang}
       dir={dir}
       data-app-language={language}
-      className="min-h-screen bg-slate-50"
+      className="min-h-screen bg-surface-subtle"
     >
 
       <AuthenticatedAppShell

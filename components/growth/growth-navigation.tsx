@@ -12,8 +12,8 @@ export function GrowthNavigation({ slug, activeArea, language }: { slug: string;
     { area: "campaigns", label: copy.campaigns }, { area: "recovery", label: copy.recovery },
   ];
   return <nav aria-label={`${copy.growth} navigation`} className="max-w-full overflow-x-auto" data-growth-navigation="true">
-    <div className="flex min-w-max gap-1 rounded-lg border border-border bg-surface p-1" role="list">
-      {items.map(({ area, label }) => <Link key={area} href={`/businesses/${slug}/${area}`} aria-current={activeArea === area ? "page" : undefined} className={`inline-flex min-h-11 items-center rounded-md px-4 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${activeArea === area ? "bg-primary text-white" : "text-slate-700 hover:bg-surface-subtle"}`}>{label}</Link>)}
+    <div className="flex min-w-max gap-1 rounded-[var(--lf-radius-input)] border border-border bg-surface p-1" role="list">
+      {items.map(({ area, label }) => <Link key={area} href={`/businesses/${slug}/${area}`} aria-current={activeArea === area ? "page" : undefined} className={`inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${activeArea === area ? "bg-primary text-white" : "text-foreground-muted hover:bg-surface-subtle"}`}>{label}</Link>)}
     </div>
   </nav>;
 }

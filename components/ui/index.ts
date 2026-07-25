@@ -4,6 +4,5 @@ export * from "@/components/ui/dialog";
 export * from "@/components/ui/feedback";
 export * from "@/components/ui/form-controls";
 export * from "@/components/ui/navigation";
-export * from "@/components/ui/surface";
 export * from "@/components/ui/table";
 export * from "@/components/ui/toolbar";

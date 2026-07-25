@@ -54,3 +54,4 @@ scripts/uat-*.ts
 *.backup-*
 .claude/
 .claude/
+.f16-backup-*/

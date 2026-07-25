@@ -22,7 +22,6 @@ import LoyaltyOperationContextFields from "@/components/loyalty-operation-contex
 import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
 import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
 import prisma from "@/lib/prisma";
-import { getBusinessTheme } from "@/lib/theme";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { customerUiCopy, getLoyaltyModeLabel } from "@/lib/customers/ui-copy";
 import {
@@ -106,9 +105,6 @@ export default async function CustomerDetailsPage({
   if (!business) {
     notFound();
   }
-
-  const theme =
-    getBusinessTheme(business);
 
   const canAccess = canAccessBusiness(
     session.user,
@@ -454,166 +450,166 @@ export default async function CustomerDetailsPage({
 
   return (
     <main
-      className="min-h-screen bg-slate-100 px-4 py-5 sm:px-8 sm:py-8"
+      className="min-h-screen bg-surface-subtle px-4 py-6 sm:px-8 sm:py-8"
       data-experience-mode={experienceMode}
       data-experience-customer-detail={isSimpleExperience ? "simple" : "advanced"}
     >
       <div className="mx-auto max-w-7xl">
         <Link
           href={`/businesses/${business.slug}/customers`}
-          className="text-sm font-medium text-violet-600 hover:text-violet-800"
+          className="text-sm font-medium text-primary hover:text-primary"
         >
           {copy.backToCustomers}
         </Link>
 
         {query.success === "earned" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.earned}
           </div>
         )}
 
         {query.success === "redeemed" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.redeemed}
           </div>
         )}
 
         {query.success === "updated" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.updated}
           </div>
         )}
 
         {query.success === "deactivated" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.deactivated}
           </div>
         )}
 
         {query.success === "reactivated" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.reactivated}
           </div>
         )}
 
         {query.success === "adjusted" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.adjusted}
           </div>
         )}
 
         {query.success === "referral-link" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.referralLink}
           </div>
         )}
 
         {query.success === "tag-assigned" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.tagAssigned}
           </div>
         )}
 
         {query.success === "tag-removed" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.tagRemoved}
           </div>
         )}
 
         {query.success === "note-created" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.noteCreated}
           </div>
         )}
 
         {query.success === "note-updated" && (
-          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {copy.feedback.noteUpdated}
           </div>
         )}
 
         {query.error === "adjustment-invalid" && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
             {copy.feedback.adjustmentInvalid}
           </div>
         )}
 
         {query.error === "adjustment-negative" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.adjustmentNegative}
           </div>
         )}
 
         {query.error === "invalid" && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
             {copy.invalidCustomer}
           </div>
         )}
 
         {query.error === "phone" && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
             {copy.invalidPhone}
           </div>
         )}
 
         {query.error === "duplicate" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.duplicate}
           </div>
         )}
 
         {query.error === "not-enough" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.notEnough}
           </div>
         )}
 
         {query.error === "reward-expired" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.rewardExpired}
           </div>
         )}
 
         {query.error === "referral" && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
             {copy.feedback.referral}
           </div>
         )}
 
         {(query.error === "tag-invalid" || query.error === "note-invalid") && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
             {copy.feedback.tagOrNoteInvalid}
           </div>
         )}
 
         {query.error === "earned-too-soon" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.earnedTooSoon}
           </div>
         )}
 
         {query.error === "staff-attribution" && (
-          <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
             {copy.feedback.staffAttribution}
           </div>
         )}
 
         {query.error === "redeemed-too-soon" && (
-          <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {copy.feedback.redeemedTooSoon}
           </div>
         )}
 
         {smartWhatsAppSuggestion && (
           <section
-            className="mt-5 flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:flex-row sm:items-center sm:justify-between"
+            className="mt-6 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-6 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <p className="font-black text-emerald-950">
+              <p className="font-black text-success">
                 {smartSuggestionCopy?.title}
               </p>
 
-              <p className="mt-1 text-sm leading-6 text-emerald-800">
+              <p className="mt-1 text-sm leading-6 text-success">
                 {smartSuggestionCopy?.description}
               </p>
             </div>
@@ -622,28 +618,28 @@ export default async function CustomerDetailsPage({
               href={smartWhatsAppSuggestion.url}
               target="_blank"
               rel="noreferrer"
-              className="shrink-0 rounded-xl bg-emerald-600 px-5 py-3 text-center font-bold text-white transition hover:bg-emerald-700"
+              className="shrink-0 rounded-[var(--lf-radius-input)] bg-success px-6 py-4 text-center font-bold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
             >
               {smartSuggestionCopy?.button}
             </a>
           </section>
         )}
 
-        <div className="mt-6 grid gap-7 lg:grid-cols-[1fr_360px]">
+        <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="flex min-w-0 flex-col">
-            <header className="rounded-3xl bg-slate-950 p-5 text-white shadow-xl sm:p-7">
-              <p className="text-sm text-cyan-300">{copy.profile}</p>
+            <header className="rounded-[var(--lf-radius-card)] bg-foreground p-6 text-white shadow-xl sm:p-8">
+              <p className="text-sm text-info">{copy.profile}</p>
 
               <h1 dir="auto" className="mt-2 text-2xl font-bold sm:text-3xl">
                 {customerName}
               </h1>
 
-              <div className="mt-4 flex flex-wrap gap-3 text-sm">
+              <div className="mt-4 flex flex-wrap gap-4 text-sm">
                 <span
                   className={`rounded-full px-4 py-2 font-semibold ${
                     customer.isActive
-                      ? "bg-emerald-500/20 text-emerald-200"
-                      : "bg-red-500/20 text-red-200"
+                      ? "bg-success-subtle/20 text-success"
+                      : "bg-danger-subtle/20 text-danger"
                   }`}
                 >
                   {customer.isActive ? copy.active : copy.inactive}
@@ -660,7 +656,7 @@ export default async function CustomerDetailsPage({
                 {customer.tagAssignments.map((assignment) => (
                   <span
                     key={assignment.id}
-                    className="rounded-full bg-cyan-400/20 px-4 py-2 font-semibold text-cyan-100"
+                    className="rounded-full bg-info-subtle/20 px-4 py-2 font-semibold text-info"
                   >
                     {assignment.tag.name}
                   </span>
@@ -668,30 +664,30 @@ export default async function CustomerDetailsPage({
               </div>
             </header>
 
-            {isSimpleExperience ? <section className="mt-6 rounded-3xl border border-primary/20 bg-white p-5 shadow-sm sm:p-7">
+            {isSimpleExperience ? <section className="mt-6 rounded-[var(--lf-radius-card)] border border-primary/20 bg-white p-6 shadow-sm sm:p-8">
               <p className="text-sm font-semibold text-primary">{copy.loyaltyToday}</p>
               <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                  <p className="text-4xl font-bold text-slate-950"><span dir="ltr" className="lf-type-numeric">{customer.balance}</span> <span dir="auto" className="text-lg font-medium text-slate-600">{business.unitName}</span></p>
-                  <p className="mt-1 text-sm text-slate-600">{rewardAvailable ? copy.rewardReadyNamed(messageReward.name) : copy.remainingForReward(remaining, messageReward.name)}</p>
+                  <p className="text-4xl font-bold text-foreground"><span dir="ltr" className="lf-type-numeric">{customer.balance}</span> <span dir="auto" className="text-lg font-medium text-foreground-muted">{business.unitName}</span></p>
+                  <p className="mt-1 text-sm text-foreground-muted">{rewardAvailable ? copy.rewardReadyNamed(messageReward.name) : copy.remainingForReward(remaining, messageReward.name)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(canEarnLoyalty || canRedeemLoyalty) ? <a href="#daily-loyalty" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">{copy.loyaltyAction}</a> : null}
-                  <a href="#customer-card" className="inline-flex min-h-11 items-center rounded-md border border-border px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-subtle">{copy.customerCard}</a>
+                  {(canEarnLoyalty || canRedeemLoyalty) ? <a href="#daily-loyalty" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">{copy.loyaltyAction}</a> : null}
+                  <a href="#customer-card" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-subtle">{copy.customerCard}</a>
                 </div>
               </div>
             </section> : null}
 
-            <section className={`order-3 mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7 ${isSimpleExperience ? "hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-slate-950">{copy.customerTags}</h2>
+            <section className={`order-3 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}>
+              <h2 className="text-xl font-bold text-foreground">{copy.customerTags}</h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-foreground-subtle">
                 {copy.tagsDescription}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 {customer.tagAssignments.length === 0 ? (
-                  <p className="text-sm text-slate-500">{copy.noTags}</p>
+                  <p className="text-sm text-foreground-subtle">{copy.noTags}</p>
                 ) : (
                   customer.tagAssignments.map((assignment) => {
                     const removeTag = removeCustomerTagAction.bind(
@@ -704,7 +700,7 @@ export default async function CustomerDetailsPage({
                     return (
                       <span
                         key={assignment.id}
-                        className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-2 text-sm font-semibold text-violet-800"
+                        className="inline-flex items-center gap-2 rounded-full bg-primary-subtle px-4 py-2 text-sm font-semibold text-primary"
                       >
                         {assignment.tag.name}
                         {canManageCustomer ? (
@@ -712,7 +708,7 @@ export default async function CustomerDetailsPage({
                             <button
                               type="submit"
                               aria-label={copy.removeTag(assignment.tag.name)}
-                              className="rounded-full px-1 text-violet-600 hover:bg-violet-200 hover:text-violet-950"
+                              className="rounded-full px-1 text-primary hover:bg-primary-subtle hover:text-primary"
                             >
                               ×
                             </button>
@@ -725,7 +721,7 @@ export default async function CustomerDetailsPage({
               </div>
 
               {canManageCustomer ? (
-                <div className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
+                <div className="mt-6 grid gap-4 border-t border-border pt-6 sm:grid-cols-2">
                   <form
                     action={createAndAssignTag}
                     className="flex gap-2"
@@ -735,11 +731,11 @@ export default async function CustomerDetailsPage({
                       maxLength={50}
                       required
                       placeholder={copy.newTagPlaceholder}
-                      className="min-w-0 flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none focus:border-violet-500"
+                      className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm outline-none focus:border-primary/30"
                     />
                     <button
                       type="submit"
-                      className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white hover:bg-violet-700"
+                      className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-bold text-[var(--lf-primary-foreground)] hover:bg-primary-subtle"
                     >
                       {copy.add}
                     </button>
@@ -765,7 +761,7 @@ export default async function CustomerDetailsPage({
                           <form key={tag.id} action={assignTag}>
                             <button
                               type="submit"
-                              className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100"
+                              className="rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-4 py-2 text-sm font-semibold text-primary hover:bg-primary-subtle"
                             >
                               + {tag.name}
                             </button>
@@ -777,15 +773,15 @@ export default async function CustomerDetailsPage({
               ) : null}
             </section>
 
-            <section className={`order-4 mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7 ${isSimpleExperience ? "hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-slate-950">{copy.notes}</h2>
+            <section className={`order-4 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}>
+              <h2 className="text-xl font-bold text-foreground">{copy.notes}</h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-foreground-subtle">
                 {copy.notesDescription}
               </p>
 
               {canManageCustomer ? (
-                <form action={createNote} className="mt-5">
+                <form action={createNote} className="mt-6">
                   <label htmlFor="newCustomerNote" className="sr-only">
                     {copy.newInternalNote}
                   </label>
@@ -797,20 +793,20 @@ export default async function CustomerDetailsPage({
                     maxLength={2000}
                     rows={3}
                     placeholder={copy.notePlaceholder}
-                    className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-violet-500"
+                    className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-sm outline-none focus:border-primary/30"
                   />
                   <button
                     type="submit"
-                    className="mt-3 rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white hover:bg-violet-700"
+                    className="mt-4 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white hover:bg-primary-subtle"
                   >
                     {copy.saveInternalNote}
                   </button>
                 </form>
               ) : null}
 
-              <div className="mt-5 space-y-4">
+              <div className="mt-6 space-y-4">
                 {customer.notes.length === 0 ? (
-                  <p className="text-sm text-slate-500">{copy.noNotes}</p>
+                  <p className="text-sm text-foreground-subtle">{copy.noNotes}</p>
                 ) : (
                   customer.notes.map((note) => {
                     const updateNote = updateCustomerNoteAction.bind(
@@ -831,7 +827,7 @@ export default async function CustomerDetailsPage({
                       : copy.deletedUser;
 
                     return (
-                      <article key={note.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <article key={note.id} className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4">
                         {canManageCustomer ? (
                           <form action={updateNote}>
                             <textarea
@@ -841,21 +837,21 @@ export default async function CustomerDetailsPage({
                               minLength={1}
                               maxLength={2000}
                               rows={3}
-                              className="w-full resize-y rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500"
+                              className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary/30"
                             />
                             <button
                               type="submit"
-                              className="mt-3 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:border-violet-400"
+                              className="mt-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted hover:border-primary/30"
                             >
                               {copy.saveEdit}
                             </button>
                           </form>
                         ) : (
-                          <p dir="auto" className="whitespace-pre-wrap text-sm leading-6 text-slate-800">
+                          <p dir="auto" className="whitespace-pre-wrap text-sm leading-6 text-foreground-muted">
                             {note.content}
                           </p>
                         )}
-                        <p className="mt-3 text-xs text-slate-500">
+                        <p className="mt-4 text-xs text-foreground-subtle">
                           {copy.addedBy(createdByName, note.createdAt.toLocaleString(dateLocale))}
                           {note.updatedAt.getTime() !== note.createdAt.getTime()
                             ? copy.lastEditedBy(updatedByName)
@@ -868,25 +864,25 @@ export default async function CustomerDetailsPage({
               </div>
             </section>
 
-            <section id="daily-loyalty" className="order-1 mt-6 scroll-mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+            <section id="daily-loyalty" className="order-1 mt-6 scroll-mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
-                  <p className="text-sm text-slate-500">{loyaltyModeLabel} · {business.loyaltyMode === "SALES_AMOUNT" ? copy.eligibleSales : business.loyaltyMode === "VISITS" ? copy.visitsCount : copy.pointsBalance}</p>
+                  <p className="text-sm text-foreground-subtle">{loyaltyModeLabel} · {business.loyaltyMode === "SALES_AMOUNT" ? copy.eligibleSales : business.loyaltyMode === "VISITS" ? copy.visitsCount : copy.pointsBalance}</p>
 
-                  <p dir="ltr" className="mt-2 text-5xl font-bold text-slate-950">
+                  <p dir="ltr" className="mt-2 text-5xl font-bold text-foreground">
                     {customer.balance}
                   </p>
 
-                  <p dir="auto" className="mt-1 text-slate-500">
+                  <p dir="auto" className="mt-1 text-foreground-subtle">
                     {business.unitName}
                   </p>
                 </div>
 
                 <div
-                  className={`rounded-2xl px-5 py-4 ${
+                  className={`rounded-[var(--lf-radius-card)] px-6 py-4 ${
                     rewardAvailable
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-slate-100 text-slate-700"
+                      ? "bg-success-subtle text-success"
+                      : "bg-surface-subtle text-foreground-muted"
                   }`}
                 >
                   <p className="text-sm font-semibold">
@@ -901,32 +897,32 @@ export default async function CustomerDetailsPage({
                 </div>
               </div>
 
-              <section className="mt-7 grid gap-4 md:grid-cols-2">
+              <section className="mt-8 grid gap-4 md:grid-cols-2">
                 {rewardStates.map((rewardState) => (
                   <article
                     key={rewardState.reward.id ?? "legacy-reward"}
-                    className={`rounded-2xl border p-4 ${
+                    className={`rounded-[var(--lf-radius-card)] border p-4 ${
                       rewardState.rewardAvailable
-                        ? "border-emerald-300 bg-emerald-50"
-                        : "border-slate-200 bg-slate-50"
+                        ? "border-success/30 bg-success-subtle"
+                        : "border-border bg-surface-subtle"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h2 className="font-black text-slate-950">
+                        <h2 className="font-black text-foreground">
                           {rewardState.reward.name}
                         </h2>
-                        <p className="mt-1 text-sm text-slate-500">
+                        <p className="mt-1 text-sm text-foreground-subtle">
                           <span dir="ltr" className="lf-type-numeric">{rewardState.reward.cost}</span> {business.unitName}
                         </p>
                       </div>
 
-                      <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                      <span className={`rounded-full px-4 py-1 text-xs font-black ${
                         rewardState.expirationState === "EXPIRED"
-                          ? "bg-rose-100 text-rose-800"
+                          ? "bg-danger-subtle text-danger"
                           : rewardState.rewardAvailable
-                          ? "bg-emerald-600 text-white"
-                          : "bg-slate-200 text-slate-700"
+                          ? "bg-success text-[var(--lf-inverse)]"
+                          : "bg-surface-subtle text-foreground-muted"
                       }`}>
                         {rewardState.expirationState === "EXPIRED"
                           ? copy.expired
@@ -941,20 +937,20 @@ export default async function CustomerDetailsPage({
                         className="h-full rounded-full transition-all"
                         style={{
                           width: `${rewardState.progress}%`,
-                          backgroundColor: theme.primaryColor,
+                          backgroundColor: "var(--lf-primary)",
                         }}
                       />
                     </div>
 
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-foreground-subtle">
                       <span dir="ltr" className="lf-type-numeric">{customer.balance} / {rewardState.reward.cost}</span>
                     </p>
 
                     {rewardState.expiresAt ? (
                       <p className={`mt-2 text-xs font-bold ${
                         rewardState.expirationState === "EXPIRED"
-                          ? "text-rose-700"
-                          : "text-slate-500"
+                          ? "text-danger"
+                          : "text-foreground-subtle"
                       }`}>
                         {rewardState.expirationState === "EXPIRED"
                           ? copy.rewardExpired
@@ -965,7 +961,7 @@ export default async function CustomerDetailsPage({
                           }).format(rewardState.expiresAt))}
                       </p>
                     ) : rewardState.reward.expiresAfterDays ? (
-                      <p className="mt-2 text-xs text-slate-500">
+                      <p className="mt-2 text-xs text-foreground-subtle">
                         {copy.rewardStartsOnUnlock}
                       </p>
                     ) : null}
@@ -973,13 +969,13 @@ export default async function CustomerDetailsPage({
                     {rewardState.rewardAvailable &&
                     rewardState.reward.type === "PROMO_CODE" &&
                     rewardState.reward.code ? (
-                      <p dir="ltr" className="mt-3 select-all rounded-xl border border-emerald-300 bg-white px-3 py-2 text-center text-sm font-black tracking-widest text-emerald-950">
+                      <p dir="ltr" className="mt-4 select-all rounded-[var(--lf-radius-input)] border border-success/30 bg-white px-4 py-2 text-center text-sm font-black tracking-widest text-success">
                         {rewardState.reward.code}
                       </p>
                     ) : null}
 
                     {rewardState.reward.description ? (
-                      <p className="mt-3 text-xs leading-5 text-slate-600">
+                      <p className="mt-4 text-xs leading-5 text-foreground-muted">
                         {rewardState.reward.description}
                       </p>
                     ) : null}
@@ -988,17 +984,17 @@ export default async function CustomerDetailsPage({
               </section>
 
               {!customer.isActive && (
-                <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                <div className="mt-6 rounded-[var(--lf-radius-card)] border border-warning/30 bg-warning-subtle p-4 text-sm text-warning">
                   {copy.inactiveLoyaltyUnavailable}
                 </div>
               )}
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row">
                 <form
                   action={addLoyalty}
                   className={
                     business.loyaltyMode === "SALES_AMOUNT"
-                      ? "w-full rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:max-w-md"
+                      ? "w-full rounded-[var(--lf-radius-card)] border border-primary/30 bg-primary-subtle p-4 sm:max-w-md"
                       : "w-full sm:w-auto"
                   }
                 >
@@ -1012,7 +1008,7 @@ export default async function CustomerDetailsPage({
                     <>
                     <label
                       htmlFor="saleAmount"
-                      className="mb-2 block text-sm font-black text-violet-950"
+                      className="mb-2 block text-sm font-black text-primary"
                     >
                       {copy.saleAmount}
                     </label>
@@ -1029,12 +1025,12 @@ export default async function CustomerDetailsPage({
                         inputMode="numeric"
                         placeholder={copy.saleAmountPlaceholder}
                         disabled={!customer.isActive || !canEarnLoyalty}
-                        className="min-w-0 flex-1 rounded-xl border border-violet-200 bg-white px-4 py-3 text-lg font-black outline-none focus:border-violet-500 disabled:bg-slate-100"
+                        className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-4 text-lg font-black outline-none focus:border-primary/30 disabled:bg-surface-subtle"
                       />
 
                       <span
                         dir="auto"
-                        className="flex items-center rounded-xl bg-white px-4 font-black text-violet-800"
+                        className="flex items-center rounded-[var(--lf-radius-input)] bg-white px-4 font-black text-primary"
                       >
                         {business.unitName}
                       </span>
@@ -1052,8 +1048,8 @@ export default async function CustomerDetailsPage({
                     language={language}
                     className={
                       business.loyaltyMode === "SALES_AMOUNT"
-                        ? "mt-3 w-full rounded-xl bg-violet-600 px-6 py-3 font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                        : "w-full rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                        ? "mt-4 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
+                        : "w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
                     }
                   >
                     {business.loyaltyMode === "SALES_AMOUNT"
@@ -1064,7 +1060,7 @@ export default async function CustomerDetailsPage({
                   </LoyaltySubmitButton>
                 </form>
 
-                <div className="grid w-full gap-3 sm:w-auto">
+                <div className="grid w-full gap-4 sm:w-auto">
                   {rewardStates.map((rewardState) => {
                     const { reward } = rewardState;
                     const redeemReward = redeemRewardAction.bind(
@@ -1104,12 +1100,12 @@ export default async function CustomerDetailsPage({
             </section>
 
             {canManageCustomer && (
-              <section className={`order-5 mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7 ${isSimpleExperience ? "hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-slate-950">
+              <section className={`order-5 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}>
+              <h2 className="text-xl font-bold text-foreground">
                   {copy.manageCustomer}
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-foreground-subtle">
                   {copy.manageDescription}
                 </p>
 
@@ -1120,7 +1116,7 @@ export default async function CustomerDetailsPage({
                   <div>
                     <label
                       htmlFor="editFirstName"
-                      className="mb-2 block text-sm font-medium text-slate-700"
+                      className="mb-2 block text-sm font-medium text-foreground-muted"
                     >
                       {copy.firstName}
                     </label>
@@ -1133,14 +1129,14 @@ export default async function CustomerDetailsPage({
                       dir="auto"
                       minLength={2}
                       maxLength={50}
-                      className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="editLastName"
-                      className="mb-2 block text-sm font-medium text-slate-700"
+                      className="mb-2 block text-sm font-medium text-foreground-muted"
                     >
                       {copy.lastName}
                     </label>
@@ -1151,14 +1147,14 @@ export default async function CustomerDetailsPage({
                       defaultValue={customer.lastName ?? ""}
                       maxLength={50}
                       dir="auto"
-                      className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
                     <label
                       htmlFor="editPhone"
-                      className="mb-2 block text-sm font-medium text-slate-700"
+                      className="mb-2 block text-sm font-medium text-foreground-muted"
                     >
                       {copy.phone}
                     </label>
@@ -1170,35 +1166,35 @@ export default async function CustomerDetailsPage({
                       defaultValue={customer.phone}
                       dir="ltr"
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 sm:col-span-2"
+                    className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle sm:col-span-2"
                   >
                     {copy.saveCustomer}
                   </button>
                 </form>
 
                 {canAdjustBalance ? (
-                <div className="mt-7 border-t border-slate-200 pt-6">
-                  <h3 className="font-bold text-slate-950">
+                <div className="mt-8 border-t border-border pt-6">
+                  <h3 className="font-bold text-foreground">
                     {copy.manualBalance}
                   </h3>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-foreground-subtle">
                     {copy.manualBalanceDescription}
                   </p>
 
-                  <p className="mt-3 text-sm font-semibold text-violet-700">
+                  <p className="mt-4 text-sm font-semibold text-primary">
                     {copy.currentBalance(customer.balance, business.unitName)}
                   </p>
 
                   <form
                     action={adjustCustomerBalance}
-                    className="mt-5 grid gap-4 sm:grid-cols-2"
+                    className="mt-6 grid gap-4 sm:grid-cols-2"
                   >
                     <input
                       type="hidden"
@@ -1209,7 +1205,7 @@ export default async function CustomerDetailsPage({
                     <div>
                       <label
                         htmlFor="adjustmentDirection"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
                       >
                         {copy.adjustmentType}
                       </label>
@@ -1218,7 +1214,7 @@ export default async function CustomerDetailsPage({
                         id="adjustmentDirection"
                         name="direction"
                         defaultValue="ADD"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                        className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
                       >
                         <option value="ADD">{copy.addBalance}</option>
 
@@ -1229,7 +1225,7 @@ export default async function CustomerDetailsPage({
                     <div>
                       <label
                         htmlFor="adjustmentAmount"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
                       >
                         {copy.amount}
                       </label>
@@ -1242,14 +1238,14 @@ export default async function CustomerDetailsPage({
                         max="1000000"
                         required
                         placeholder="1"
-                        className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                        className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="adjustmentReason"
-                        className="mb-2 block text-sm font-medium text-slate-700"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
                       >
                         {copy.adjustmentReason}
                       </label>
@@ -1262,13 +1258,13 @@ export default async function CustomerDetailsPage({
                         maxLength={200}
                         rows={3}
                         placeholder={copy.adjustmentReasonPlaceholder}
-                        className="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                        className="w-full resize-none rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className="rounded-xl bg-amber-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-amber-400 sm:col-span-2"
+                      className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-6 py-4 font-semibold text-foreground transition hover:bg-warning-subtle sm:col-span-2"
                     >
                       {copy.saveBalanceAdjustment}
                     </button>
@@ -1276,12 +1272,12 @@ export default async function CustomerDetailsPage({
                 </div>
                 ) : null}
 
-                <div className="mt-7 border-t border-slate-200 pt-6">
+                <div className="mt-8 border-t border-border pt-6">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                      <h3 className="font-bold text-slate-950">{copy.accountStatus}</h3>
+                      <h3 className="font-bold text-foreground">{copy.accountStatus}</h3>
 
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-foreground-subtle">
                         {copy.inactiveAccountDescription}
                       </p>
                     </div>
@@ -1297,8 +1293,8 @@ export default async function CustomerDetailsPage({
                         type="submit"
                         className={
                           customer.isActive
-                            ? "rounded-xl border border-red-300 bg-red-50 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100"
-                            : "rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700"
+                            ? "rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-6 py-4 font-semibold text-danger transition hover:bg-danger-subtle"
+                            : "rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
                         }
                       >
                         {customer.isActive
@@ -1311,17 +1307,17 @@ export default async function CustomerDetailsPage({
               </section>
             )}
 
-            <section className="order-2 mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-              <h2 className="text-xl font-bold text-slate-950">{copy.timeline}</h2>
+            <section className="order-2 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8">
+              <h2 className="text-xl font-bold text-foreground">{copy.timeline}</h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-foreground-subtle">
                 {copy.timelineDescription}
               </p>
 
               {timeline.length === 0 ? (
-                <p className="mt-5 text-slate-500">{copy.noEvents}</p>
+                <p className="mt-6 text-foreground-subtle">{copy.noEvents}</p>
               ) : (
-                <div className="mt-5 divide-y divide-slate-100">
+                <div className="mt-6 divide-y divide-slate-100">
                   {timeline.map((item) => {
                     const unusualAdjustment =
                       item.transactionType === "ADJUSTMENT" &&
@@ -1333,32 +1329,32 @@ export default async function CustomerDetailsPage({
                     return (
                       <div
                         key={item.id}
-                        className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
+                        className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold text-slate-900">
+                            <p className="font-semibold text-foreground">
                               {item.title}
                             </p>
 
                             {unusualAdjustment && (
-                              <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
+                              <span className="rounded-full bg-warning-subtle px-2 py-1 text-xs font-bold text-warning">
                                 {copy.requiresReview}
                               </span>
                             )}
                           </div>
 
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-foreground-subtle">
                           {item.createdAt.toLocaleString(dateLocale)}
                         </p>
 
                         {item.description && (
-                          <p dir="auto" className="mt-1 text-xs text-slate-500">
+                          <p dir="auto" className="mt-1 text-xs text-foreground-subtle">
                             {item.description}
                           </p>
                         )}
 
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-foreground-subtle">
                           {copy.by(item.actorName)}
                         </p>
                       </div>
@@ -1368,15 +1364,15 @@ export default async function CustomerDetailsPage({
                           <p dir="ltr"
                             className={`text-lg font-bold ${
                               item.amount > 0
-                                ? "text-emerald-600"
-                                : "text-red-600"
+                                ? "text-success"
+                                : "text-danger"
                             }`}
                           >
                             {item.amount > 0 ? "+" : ""}
                             {item.amount}
                           </p>
 
-                          <p dir="ltr" className="text-xs text-slate-500">
+                          <p dir="ltr" className="text-xs text-foreground-subtle">
                             {copy.balanceAfter(item.balanceAfter)}
                           </p>
                         </div>
@@ -1389,24 +1385,24 @@ export default async function CustomerDetailsPage({
             </section>
           </div>
 
-          <aside id="customer-card" className="h-fit scroll-mt-6 rounded-3xl bg-white p-5 text-center shadow-sm sm:p-7">
-            <h2 className="text-xl font-bold text-slate-950">
+          <aside id="customer-card" className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 text-center shadow-sm sm:p-8">
+            <h2 className="text-xl font-bold text-foreground">
               {copy.digitalCard}
             </h2>
 
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-foreground-subtle">
               {copy.digitalCardDescription}
             </p>
 
-            <section className="mt-5 rounded-2xl bg-violet-50 p-4 text-right">
-              <p className="text-xs font-black text-violet-700">
+            <section className="mt-6 rounded-[var(--lf-radius-card)] bg-primary-subtle p-4 text-right">
+              <p className="text-xs font-black text-primary">
                 {copy.retentionScore}
               </p>
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <p className="text-3xl font-black text-violet-950">
+              <div className="mt-2 flex items-end justify-between gap-4">
+                <p className="text-3xl font-black text-primary">
                   {retentionScore.score}/100
                 </p>
-                <p className="text-sm font-bold text-violet-800">
+                <p className="text-sm font-bold text-primary">
                   {retentionScore.label === "Very Loyal"
                     ? copy.veryLoyal
                     : retentionScore.label === "Active"
@@ -1416,7 +1412,7 @@ export default async function CustomerDetailsPage({
                         : copy.highRisk}
                 </p>
               </div>
-              <p className="mt-2 text-xs leading-5 text-violet-700">
+              <p className="mt-2 text-xs leading-5 text-primary">
                 {copy.retentionDescription}
               </p>
             </section>
@@ -1426,16 +1422,16 @@ export default async function CustomerDetailsPage({
               alt={copy.cardQrAlt}
               width={240}
               height={240}
-              className="mx-auto mt-6 rounded-2xl border border-slate-200 p-3"
+              className="mx-auto mt-6 rounded-[var(--lf-radius-card)] border border-border p-4"
             />
 
-            <p className="mt-4 break-all text-xs text-slate-400">{cardUrl}</p>
+            <p className="mt-4 break-all text-xs text-foreground-subtle">{cardUrl}</p>
 
-            <div className="mt-6 flex flex-col gap-3">
+            <div className="mt-6 flex flex-col gap-4">
               <Link
                 href={`/card/${customer.publicToken}`}
                 target="_blank"
-                className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+                className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle"
               >
                 {copy.openCard}
               </Link>
@@ -1446,11 +1442,11 @@ export default async function CustomerDetailsPage({
                 referralLink ? (
                   <>
                     <CopyLinkButton value={referralLink} label={copy.copyReferral} language={language} />
-                    <p className="break-all text-xs text-slate-400">{referralLink}</p>
+                    <p className="break-all text-xs text-foreground-subtle">{referralLink}</p>
                   </>
                 ) : (
                   <form action={createReferralCode}>
-                    <button type="submit" className="w-full rounded-xl border border-violet-300 bg-violet-50 px-5 py-3 font-semibold text-violet-800 transition hover:bg-violet-100">
+                    <button type="submit" className="w-full rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-6 py-4 font-semibold text-primary transition hover:bg-primary-subtle">
                       {copy.createReferral}
                     </button>
                   </form>
@@ -1461,7 +1457,7 @@ export default async function CustomerDetailsPage({
                 href={welcomeWhatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+                className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
               >
                 {copy.welcomeMessage}
               </a>
@@ -1470,7 +1466,7 @@ export default async function CustomerDetailsPage({
                 href={balanceWhatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-xl bg-cyan-600 px-5 py-3 font-semibold text-white transition hover:bg-cyan-700"
+                className="rounded-[var(--lf-radius-input)] bg-info px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
               >
                 {copy.balanceMessage}
               </a>
@@ -1480,27 +1476,27 @@ export default async function CustomerDetailsPage({
                   href={rewardWhatsAppUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-xl bg-amber-500 px-5 py-3 font-semibold text-slate-950 transition hover:bg-amber-400"
+                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-6 py-4 font-semibold text-foreground transition hover:bg-warning-subtle"
                 >
                   {copy.rewardMessage}
                 </a>
               ) : (
-                <span className="cursor-not-allowed rounded-xl bg-slate-200 px-5 py-3 font-semibold text-slate-500">
+                <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
                   {copy.rewardMessageUnavailable}
                 </span>
               )}
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-100 p-4">
-                <p className="text-xs text-slate-500">{copy.totalEarned}</p>
+            <div className="mt-8 grid grid-cols-2 gap-4">
+              <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
+                <p className="text-xs text-foreground-subtle">{copy.totalEarned}</p>
                 <p dir="ltr" className="mt-1 text-xl font-bold">
                   {customer.lifetimeEarned}
                 </p>
               </div>
 
-              <div className="rounded-xl bg-slate-100 p-4">
-                <p className="text-xs text-slate-500">{copy.redeemedRewards}</p>
+              <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
+                <p className="text-xs text-foreground-subtle">{copy.redeemedRewards}</p>
                 <p dir="ltr" className="mt-1 text-xl font-bold">
                   {customer._count.redemptions}
                 </p>

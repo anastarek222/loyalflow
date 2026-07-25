@@ -72,7 +72,7 @@ export default function ShareLinkButton({
       aria-label={label}
       className={
         className ??
-        "rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50"
+        "rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted transition hover:bg-surface-subtle"
       }
     >
       {label}

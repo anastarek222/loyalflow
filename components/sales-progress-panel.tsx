@@ -105,10 +105,10 @@ export default function SalesProgressPanel({
   return (
     <section
       dir={defaultLanguage === "AR" ? "rtl" : "ltr"}
-      className="mb-5 overflow-hidden rounded-3xl border border-white/10 bg-white shadow-xl"
+      className="mb-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-white/10 bg-white shadow-xl"
     >
       <div
-        className="p-5 text-white sm:p-6"
+        className="p-6 text-white sm:p-6"
         style={{
           background:
             `linear-gradient(135deg, ${primaryColor}, #0f172a)`,
@@ -125,12 +125,12 @@ export default function SalesProgressPanel({
             </p>
           </div>
 
-          <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-black">
+          <span className="rounded-full bg-white/15 px-4 py-1.5 text-xs font-black">
             {progress}%
           </span>
         </div>
 
-        <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/20">
+        <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/20">
           <div
             className="h-full rounded-full bg-white transition-all"
             style={{
@@ -139,7 +139,7 @@ export default function SalesProgressPanel({
           />
         </div>
 
-        <div className="mt-3 flex justify-between text-xs font-bold text-white/75">
+        <div className="mt-4 flex justify-between text-xs font-bold text-white/75">
           <span>{formatAmount(currentAmount)}</span>
 
           <span>
@@ -148,18 +148,18 @@ export default function SalesProgressPanel({
         </div>
       </div>
 
-      <div className="p-5 sm:p-6">
+      <div className="p-6 sm:p-6">
         {rewardAvailable ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center">
-            <p className="text-sm font-black text-emerald-700">
+          <div className="rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-4 text-center">
+            <p className="text-sm font-black text-success">
               {text.reached}
             </p>
 
-            <p className="mt-2 text-xl font-black text-emerald-950">
+            <p className="mt-2 text-xl font-black text-success">
               {rewardName}
             </p>
 
-            <p className="text-xs font-bold text-emerald-700">
+            <p className="text-xs font-bold text-success">
               {getRewardTypeLabel(
                 defaultLanguage,
                 rewardType
@@ -167,14 +167,14 @@ export default function SalesProgressPanel({
             </p>
 
             {rewardDescription && (
-              <p className="mt-3 text-sm">
+              <p className="mt-4 text-sm">
                 {rewardDescription}
               </p>
             )}
 
             {rewardType === "PROMO_CODE" &&
               rewardCode && (
-                <div className="mt-4 rounded-xl bg-white p-3">
+                <div className="mt-4 rounded-[var(--lf-radius-input)] bg-white p-4">
                   <p className="text-xs font-black">
                     {text.promoCode}
                   </p>
@@ -186,8 +186,8 @@ export default function SalesProgressPanel({
               )}
           </div>
         ) : (
-          <div className="rounded-2xl bg-slate-50 p-4 text-center">
-            <p className="text-sm font-bold text-slate-500">
+          <div className="rounded-[var(--lf-radius-card)] bg-surface-subtle p-4 text-center">
+            <p className="text-sm font-bold text-foreground-subtle">
               {text.remaining}
             </p>
 
@@ -195,7 +195,7 @@ export default function SalesProgressPanel({
               {formatAmount(remaining)}
             </p>
 
-            <p className="mt-2 font-bold text-violet-700">
+            <p className="mt-2 font-bold text-primary">
               {text.reward}: {rewardName}
             </p>
           </div>

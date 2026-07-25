@@ -47,9 +47,9 @@ export default function MobileBottomNavigation({ language, experienceMode, user,
         {bottomItems.map((entry) => {
           const Icon = iconById[entry.id as keyof typeof iconById] ?? LayoutDashboard;
           const active = isNavigationItemActive(pathname, entry.href);
-          return <Link key={entry.href} href={entry.href} aria-current={active ? "page" : undefined} className={`flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[11px] font-semibold ${active ? "bg-indigo-50 text-primary" : "text-slate-600 hover:bg-surface-subtle"}`}><Icon size={19} aria-hidden="true" /><span className="truncate">{entry.label}</span></Link>;
+          return <Link key={entry.href} href={entry.href} aria-current={active ? "page" : undefined} className={`flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] px-1 text-[11px] font-semibold ${active ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}><Icon size={19} aria-hidden="true" /><span className="truncate">{entry.label}</span></Link>;
         })}
-        <button type="button" aria-label={language === "AR" ? "فتح القائمة" : "Open full menu"} onClick={() => window.dispatchEvent(new CustomEvent("loyalflow:open-navigation"))} className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-md px-1 text-[11px] font-semibold text-slate-600 hover:bg-surface-subtle"><Menu size={19} aria-hidden="true" /><span>{language === "AR" ? "المزيد" : "More"}</span></button>
+        <button type="button" aria-label={language === "AR" ? "فتح القائمة" : "Open full menu"} onClick={() => window.dispatchEvent(new CustomEvent("loyalflow:open-navigation"))} className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] px-1 text-[11px] font-semibold text-foreground-muted hover:bg-surface-subtle"><Menu size={19} aria-hidden="true" /><span>{language === "AR" ? "المزيد" : "More"}</span></button>
       </div>
     </nav>
   );

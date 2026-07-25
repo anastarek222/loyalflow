@@ -38,7 +38,7 @@ export default function AuthenticatedAppShell({
     <div className="flex min-h-screen bg-canvas">
       <a
         href="#app-content"
-        className="sr-only z-[200] rounded-md bg-primary px-4 py-2 font-semibold text-white focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
+        className="sr-only z-[200] rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 font-semibold text-white focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
       >
         {language === "AR" ? "الانتقال إلى المحتوى" : "Skip to content"}
       </a>
@@ -53,7 +53,7 @@ export default function AuthenticatedAppShell({
         />
         <main
           id="app-content"
-          className="min-w-0 flex-1 px-4 py-5 pb-28 sm:px-6 sm:py-6 lg:px-8 lg:pb-8"
+          className="min-w-0 flex-1 px-4 py-6 pb-28 sm:px-6 sm:py-6 lg:px-8 lg:pb-8"
         >
           {children}
         </main>

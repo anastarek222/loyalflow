@@ -59,16 +59,16 @@ function ChartCard({
 }) {
   return (
     <div
-      className={`rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md ${className}`}
+      className={`rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm transition hover:shadow-md ${className}`}
     >
 
       <div className="mb-6 flex items-center justify-between">
 
-        <h3 className="text-lg font-black text-slate-950">
+        <h3 className="text-lg font-black text-foreground">
           {title}
         </h3>
 
-        <span className="h-2 w-2 rounded-full bg-violet-600" />
+        <span className="h-2 w-2 rounded-full bg-primary-subtle" />
 
       </div>
 

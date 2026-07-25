@@ -11,7 +11,7 @@ export function StickyActionBar({ children, label = "Page actions", className }:
     <div
       role="region"
       aria-label={label}
-      className={cn("fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex flex-wrap items-center justify-end gap-2 rounded-lg border border-border bg-surface p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[var(--lf-shadow-overlay)] sm:static sm:rounded-md sm:shadow-[var(--lf-shadow-raised)]", className)}
+      className={cn("fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex flex-wrap items-center justify-end gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[var(--lf-shadow-overlay)] sm:static sm:rounded-[var(--lf-radius-input)] sm:shadow-[var(--lf-shadow-raised)]", className)}
     >
       {children}
     </div>

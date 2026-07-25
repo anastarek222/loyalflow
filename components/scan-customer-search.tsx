@@ -80,23 +80,23 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
   }
 
   return (
-    <section aria-labelledby="scan-customer-search-heading" className="mt-7 border-t border-slate-200 pt-6">
-      <h2 id="scan-customer-search-heading" className="text-lg font-bold text-slate-950">{copy.customerSearchHeading}</h2>
-      <p className="mt-1 text-sm text-slate-600">{copy.customerSearchDescription}</p>
+    <section aria-labelledby="scan-customer-search-heading" className="mt-8 border-t border-border pt-6">
+      <h2 id="scan-customer-search-heading" className="text-lg font-bold text-foreground">{copy.customerSearchHeading}</h2>
+      <p className="mt-1 text-sm text-foreground-muted">{copy.customerSearchDescription}</p>
       <div className="mt-4 flex gap-2">
         <div className="min-w-0 flex-1">
           <label htmlFor="scanCustomerSearch" className="sr-only">{copy.customerSearchLabel}</label>
-          <input id="scanCustomerSearch" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.customerSearchPlaceholder} autoComplete="off" className="min-h-11 w-full rounded-xl border border-slate-300 bg-white px-4 text-black placeholder:text-slate-500 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100" />
+          <input id="scanCustomerSearch" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.customerSearchPlaceholder} autoComplete="off" className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />
         </div>
-        {query && <button type="button" onClick={clearSearch} className="min-h-11 shrink-0 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">{copy.clearCustomerSearch}</button>}
+        {query && <button type="button" onClick={clearSearch} className="min-h-11 shrink-0 rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle">{copy.clearCustomerSearch}</button>}
       </div>
-      <p className="mt-2 text-xs text-slate-500">{copy.customerSearchMinimum}</p>
-      <div aria-live="polite" aria-busy={displayedState === "loading"} className="mt-3">
-        {displayedState === "loading" && <p role="status" className="text-sm text-slate-600">{copy.customerSearching}</p>}
-        {displayedState === "empty" && <p role="status" className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">{copy.customerSearchEmpty}</p>}
-        {displayedState === "error" && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{copy.customerSearchError}</p>}
+      <p className="mt-2 text-xs text-foreground-subtle">{copy.customerSearchMinimum}</p>
+      <div aria-live="polite" aria-busy={displayedState === "loading"} className="mt-4">
+        {displayedState === "loading" && <p role="status" className="text-sm text-foreground-muted">{copy.customerSearching}</p>}
+        {displayedState === "empty" && <p role="status" className="rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 py-4 text-sm text-foreground-muted">{copy.customerSearchEmpty}</p>}
+        {displayedState === "error" && <p role="alert" className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-sm text-danger">{copy.customerSearchError}</p>}
         {displayedState === "results" && <ul className="space-y-2" aria-label={copy.customerSearchHeading}>
-          {displayedResults.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm hover:border-violet-300 hover:bg-violet-50 focus:outline-none focus:ring-4 focus:ring-violet-100" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-slate-950" dir="auto">{customer.name}</span><span className="block text-xs text-slate-500" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-violet-700">{copy.customerSearchOpen}</span></Link></li>)}
+          {displayedResults.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-sm hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-foreground" dir="auto">{customer.name}</span><span className="block text-xs text-foreground-subtle" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-primary">{copy.customerSearchOpen}</span></Link></li>)}
         </ul>}
       </div>
     </section>

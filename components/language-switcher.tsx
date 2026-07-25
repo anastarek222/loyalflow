@@ -25,7 +25,7 @@ export default function LanguageSwitcher({
       aria-label={
         dictionary.language
       }
-      className="rounded-md border border-border bg-surface p-1"
+      className="rounded-[var(--lf-radius-input)] border border-border bg-surface p-1"
     >
       <div className="flex items-center gap-1">
         <form
@@ -48,10 +48,10 @@ export default function LanguageSwitcher({
             aria-pressed={
               language === "AR"
             }
-            className={`rounded-xl px-3 py-2 text-xs font-black transition sm:px-4 sm:text-sm ${
+            className={`rounded-[var(--lf-radius-input)] px-4 py-2 text-xs font-black transition sm:px-4 sm:text-sm ${
               language === "AR"
-                ? "bg-slate-950 text-white"
-                : "text-slate-600 hover:bg-slate-100"
+                ? "bg-foreground text-white"
+                : "text-foreground-muted hover:bg-surface-subtle"
             }`}
           >
             العربية
@@ -78,10 +78,10 @@ export default function LanguageSwitcher({
             aria-pressed={
               language === "EN"
             }
-            className={`rounded-xl px-3 py-2 text-xs font-black transition sm:px-4 sm:text-sm ${
+            className={`rounded-[var(--lf-radius-input)] px-4 py-2 text-xs font-black transition sm:px-4 sm:text-sm ${
               language === "EN"
-                ? "bg-slate-950 text-white"
-                : "text-slate-600 hover:bg-slate-100"
+                ? "bg-foreground text-white"
+                : "text-foreground-muted hover:bg-surface-subtle"
             }`}
           >
             English

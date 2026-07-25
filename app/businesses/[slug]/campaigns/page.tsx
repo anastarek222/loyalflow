@@ -87,7 +87,7 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
   return (
     <GrowthShell slug={business.slug} businessName={business.name} area="campaigns" language={language} experienceMode={experienceMode} title={language === "AR" ? "تحضير الحملات" : "Campaign preparation"} description={language === "AR" ? "اختر الجمهور وراجع المسودات. لا توجد خدمة إرسال أو نتائج تسليم في LoyalFlow." : "Select an audience and review drafts. LoyalFlow has no delivery service or delivery results."}>
         {selectedIds ? (
-          <p className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-900">
+          <p className="mt-6 rounded-[var(--lf-radius-card)] border border-info/30 bg-info-subtle px-4 py-4 text-sm font-bold text-info">
             {language === "AR" ? `هذه المعاينة مقصورة على ${selectedIds.length} عميل محدد. لا يتم حفظ أو إرسال أي حملة.` : `This preview is limited to ${selectedIds.length} selected customers. No campaign is saved or sent.`}
           </p>
         ) : null}

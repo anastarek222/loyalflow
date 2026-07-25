@@ -36,7 +36,7 @@ export default function RedeemRewardDialog({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
       >
         {copy.redeemReward}
       </button>
@@ -49,14 +49,14 @@ export default function RedeemRewardDialog({
           description={copy.redeemDescription(cost, unitName)}
           className="max-w-md"
         >
-            <p className="text-sm font-bold text-emerald-700">
+            <p className="text-sm font-bold text-success">
               {copy.redeemConfirm}
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700"
+                className="rounded-[var(--lf-radius-input)] border border-border px-6 py-4 font-semibold text-foreground-muted"
               >
                 {copy.cancel}
               </button>
@@ -66,7 +66,7 @@ export default function RedeemRewardDialog({
                 {operationContextFields}
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+                  className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
                 >
                   {copy.confirmRedeem}
                 </button>

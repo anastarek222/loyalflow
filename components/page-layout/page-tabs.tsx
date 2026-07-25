@@ -30,8 +30,8 @@ export function PageTabs({
         {items.map((item) => {
           const active = item.id === activeId;
           const tabClassName = cn(
-            "inline-flex min-h-11 shrink-0 items-center border-b-2 px-3 text-sm font-semibold transition-colors",
-            active ? "border-primary text-primary" : "border-transparent text-slate-600 hover:text-slate-950",
+            "inline-flex min-h-11 shrink-0 items-center border-b-2 px-4 text-sm font-semibold transition-colors",
+            active ? "border-primary text-primary" : "border-transparent text-foreground-muted hover:text-foreground",
             item.disabled && "pointer-events-none opacity-50",
           );
 

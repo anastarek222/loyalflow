@@ -26,8 +26,8 @@ export default function LoyaltyOperationContextFields({
   return (
     <>
       {branches.length > 0 ? (
-        <div className="mb-3">
-          <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor={`${idPrefix}-branch`}>
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-bold text-foreground-muted" htmlFor={`${idPrefix}-branch`}>
             {copy.branch}
           </label>
           <select
@@ -36,7 +36,7 @@ export default function LoyaltyOperationContextFields({
             required={branchRequired}
             disabled={disabled}
             defaultValue=""
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500 disabled:bg-slate-100"
+            className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
           >
             <option value="">
               {branchRequired ? copy.selectBranch : copy.noBranch}
@@ -51,8 +51,8 @@ export default function LoyaltyOperationContextFields({
       ) : null}
 
       {staffAttributionEnabled ? (
-        <div className="mb-3">
-          <label className="mb-2 block text-sm font-bold text-slate-700" htmlFor={`${idPrefix}-staff`}>
+        <div className="mb-4">
+          <label className="mb-2 block text-sm font-bold text-foreground-muted" htmlFor={`${idPrefix}-staff`}>
             {copy.attributedStaff}
           </label>
           <select
@@ -61,7 +61,7 @@ export default function LoyaltyOperationContextFields({
             required={staffAttributionRequired}
             disabled={disabled}
             defaultValue=""
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500 disabled:bg-slate-100"
+            className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
           >
             <option value="">
               {staffAttributionRequired

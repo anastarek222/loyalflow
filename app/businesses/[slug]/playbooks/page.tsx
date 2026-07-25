@@ -13,7 +13,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { applyBusinessPlaybookAction } from "./actions";
-import { getBusinessTheme } from "@/lib/theme";
 import { AdministrationNavigation } from "@/components/administration/administration-navigation";
 import { normalizeLanguage } from "@/lib/i18n";
 
@@ -46,7 +45,8 @@ function stateFromBusiness(business: {
   };
 }
 
-function loyaltyModeLabel(mode: string) {
+function loyaltyModeLabel(mode: string, language: "AR" | "EN") {
+  if (language === "EN") return mode === "SALES_AMOUNT" ? "Sales amount" : mode === "POINTS" ? "Points" : "Visits";
   return mode === "SALES_AMOUNT" ? "قيمة المبيعات" : mode === "POINTS" ? "نقاط" : "زيارات";
 }
 
@@ -73,11 +73,10 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
     },
   });
   if (!business) notFound();
-
-  const theme = getBusinessTheme(business);
   if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${business.slug}`);
   const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
   const language = normalizeLanguage(currentUser?.language);
+  const t = (ar: string, en: string) => language === "AR" ? ar : en;
   const selected = getBusinessPlaybook(query.playbook) ?? businessPlaybooks.BARBER;
   const current = stateFromBusiness(business);
   const requiresConfirmation = isBusinessConfiguredForPlaybook(current);
@@ -85,54 +84,53 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
   const apply = applyBusinessPlaybookAction.bind(null, business.slug);
 
   return (
-    <main style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }} className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
+    <main className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="playbooks" language={language} />
-        <Link href={`/businesses/${business.slug}/settings`} className="text-sm font-bold text-violet-700 hover:text-violet-900">← الرجوع إلى إعدادات {business.name}</Link>
-        <header className="mt-5 rounded-3xl p-6 text-white shadow-xl sm:p-8"
-          style={{ backgroundColor: theme.primaryColor }}>
-          <p className="text-sm font-bold text-white/75">انطلاقة سريعة</p>
-          <h1 className="mt-2 text-3xl font-black">قوالب تشغيل النشاط</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/90">اختر قالبًا لمعاينة إعدادات عادية قابلة للتعديل. لا يُنشئ القالب مكافآت أو عروضًا أو Promotions أو رسائل أو أي خدمة مدفوعة تلقائيًا.</p>
+        <Link href={`/businesses/${business.slug}/settings`} className="text-sm font-bold text-primary hover:text-primary">{t("← الرجوع إلى إعدادات", "← Back to settings for")} {business.name}</Link>
+        <header className="mt-6 rounded-[var(--lf-radius-card)] p-6 text-white shadow-xl sm:p-8">
+          <p className="text-sm font-bold text-white/75">{t("انطلاقة سريعة", "Quick start")}</p>
+          <h1 className="mt-2 text-3xl font-black">{t("قوالب تشغيل النشاط", "Business playbooks")}</h1>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-white/90">{t("اختر قالبًا لمعاينة إعدادات عادية قابلة للتعديل. لا يُنشئ القالب مكافآت أو عروضًا أو Promotions أو رسائل أو أي خدمة مدفوعة تلقائيًا.", "Choose a playbook to preview editable standard settings. It does not automatically create rewards, offers, promotions, messages, or paid services.")}</p>
         </header>
-        {query.saved === "1" ? <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 font-bold text-emerald-800">تم تطبيق القالب. راجع الإعدادات وعدّلها كما تريد.</p> : null}
-        {query.saved === "already" ? <p className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold text-slate-700">هذا القالب مطبق بالفعل؛ لم تُنشأ سجلات مكررة.</p> : null}
-        {query.error === "confirmation" ? <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 font-bold text-amber-900">النشاط يحتوي إعدادات أو بيانات قائمة. راجع التغييرات ثم أكّد الاستبدال صراحةً.</p> : null}
-        {query.error === "invalid" ? <p className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 font-bold text-red-800">تعذر تحديد القالب.</p> : null}
+        {query.saved === "1" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle px-6 py-4 font-bold text-success">{t("تم تطبيق القالب. راجع الإعدادات وعدّلها كما تريد.", "Playbook applied. Review the settings and adjust them as needed.")}</p> : null}
+        {query.saved === "already" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle px-6 py-4 font-bold text-foreground-muted">{t("هذا القالب مطبق بالفعل؛ لم تُنشأ سجلات مكررة.", "This playbook is already applied; no duplicate records were created.")}</p> : null}
+        {query.error === "confirmation" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-warning/30 bg-warning-subtle px-6 py-4 font-bold text-warning">{t("النشاط يحتوي إعدادات أو بيانات قائمة. راجع التغييرات ثم أكّد الاستبدال صراحةً.", "This business already has settings or data. Review the changes and explicitly confirm replacement.")}</p> : null}
+        {query.error === "invalid" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-danger/30 bg-danger-subtle px-6 py-4 font-bold text-danger">{t("تعذر تحديد القالب.", "The playbook could not be identified.")}</p> : null}
 
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {businessPlaybookIds.map((id) => {
             const playbook = businessPlaybooks[id];
-            return <Link key={id} href={`/businesses/${business.slug}/playbooks?playbook=${id}`} className={`rounded-2xl border p-5 shadow-sm transition hover:-translate-y-0.5 ${selected.id === id ? "border-violet-500 bg-violet-50" : "border-slate-200 bg-white"}`}><h2 className="font-black text-slate-950">{playbook.name}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{playbook.summary}</p><span className="mt-4 inline-block text-sm font-bold text-violet-700">معاينة القالب ←</span></Link>;
+            return <Link key={id} href={`/businesses/${business.slug}/playbooks?playbook=${id}`} className={`rounded-[var(--lf-radius-card)] border p-6 shadow-sm transition hover:-translate-y-0.5 ${selected.id === id ? "border-primary/30 bg-primary-subtle" : "border-border bg-white"}`}><h2 className="font-black text-foreground">{playbook.name}</h2><p className="mt-2 text-sm leading-6 text-foreground-muted">{playbook.summary}</p><span className="mt-4 inline-block text-sm font-bold text-primary">{t("معاينة القالب ←", "Preview playbook →")}</span></Link>;
           })}
         </section>
 
         <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
-          <article className="rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-black text-slate-950">معاينة: {selected.name}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{selected.summary}</p>
-            <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-xs font-bold text-slate-500">نظام الولاء</dt><dd className="mt-1 font-black text-slate-950">{loyaltyModeLabel(update.loyaltyMode)}</dd></div>
-              <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-xs font-bold text-slate-500">المكافأة الافتراضية</dt><dd className="mt-1 font-black text-slate-950">{update.rewardThreshold} {update.unitName} ← {update.rewardName}</dd></div>
-              <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-xs font-bold text-slate-500">اسم البرنامج</dt><dd className="mt-1 font-black text-slate-950">{update.loyaltyProgramName}</dd></div>
-              <div className="rounded-2xl bg-slate-50 p-4"><dt className="text-xs font-bold text-slate-500">وحدة الإضافة</dt><dd className="mt-1 font-black text-slate-950">{update.earnAmount} {update.unitName}</dd></div>
+          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-black text-foreground">{t("معاينة:", "Preview:")} {selected.name}</h2>
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">{selected.summary}</p>
+            <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[var(--lf-radius-card)] bg-surface-subtle p-4"><dt className="text-xs font-bold text-foreground-subtle">{t("نظام الولاء", "Loyalty mode")}</dt><dd className="mt-1 font-black text-foreground">{loyaltyModeLabel(update.loyaltyMode, language)}</dd></div>
+              <div className="rounded-[var(--lf-radius-card)] bg-surface-subtle p-4"><dt className="text-xs font-bold text-foreground-subtle">{t("المكافأة الافتراضية", "Default reward")}</dt><dd className="mt-1 font-black text-foreground">{update.rewardThreshold} {update.unitName} ← {update.rewardName}</dd></div>
+              <div className="rounded-[var(--lf-radius-card)] bg-surface-subtle p-4"><dt className="text-xs font-bold text-foreground-subtle">{t("اسم البرنامج", "Programme name")}</dt><dd className="mt-1 font-black text-foreground">{update.loyaltyProgramName}</dd></div>
+              <div className="rounded-[var(--lf-radius-card)] bg-surface-subtle p-4"><dt className="text-xs font-bold text-foreground-subtle">{t("وحدة الإضافة", "Earn unit")}</dt><dd className="mt-1 font-black text-foreground">{update.earnAmount} {update.unitName}</dd></div>
             </dl>
-            <div className="mt-6 space-y-3 rounded-2xl border border-dashed border-slate-300 p-4 text-sm leading-6 text-slate-600">
-              <p className="font-black text-slate-900">اقتراحات اختيارية — لا تُنشأ تلقائيًا</p>
+            <div className="mt-6 space-y-4 rounded-[var(--lf-radius-card)] border border-dashed border-border p-4 text-sm leading-6 text-foreground-muted">
+              <p className="font-black text-foreground">{t("اقتراحات اختيارية — لا تُنشأ تلقائيًا", "Optional suggestions \u2014 never created automatically")}</p>
               {selected.promotionSuggestion ? <p>Promotion: {selected.promotionSuggestion}</p> : null}
               {selected.offerSuggestion ? <p>Offer: {selected.offerSuggestion}</p> : null}
               {selected.vipSuggestion ? <p>VIP: {selected.vipSuggestion}</p> : null}
-              {selected.recoverySuggestion ? <p>استعادة العملاء: {selected.recoverySuggestion}</p> : null}
-              {selected.campaignSuggestion ? <p>حملة: {selected.campaignSuggestion}</p> : null}
+              {selected.recoverySuggestion ? <p>{t("استعادة العملاء:", "Recovery:")} {selected.recoverySuggestion}</p> : null}
+              {selected.campaignSuggestion ? <p>{t("حملة:", "Campaign:")} {selected.campaignSuggestion}</p> : null}
             </div>
           </article>
 
-          <form action={apply} className="h-fit rounded-3xl bg-white p-6 shadow-sm">
+          <form action={apply} className="h-fit rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm">
             <input type="hidden" name="playbook" value={selected.id} />
-            <h2 className="text-xl font-black text-slate-950">تطبيق بعد المراجعة</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">سيتم تحديث إعدادات الولاء الافتراضية فقط وتسجيل نشاط تدقيق. الألوان والهوية والبيانات الحالية غير المذكورة أعلاه تبقى كما هي.</p>
-            {requiresConfirmation ? <label className="mt-5 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><input name="confirmExisting" type="checkbox" className="mt-1" required /><span>أفهم أن النشاط مهيأ أو يحتوي بيانات، وأريد استبدال إعدادات القالب الظاهرة فقط. لن تُحذف البيانات أو تُنشأ سجلات تلقائية.</span></label> : <p className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">لا توجد إعدادات تشغيل أو بيانات سابقة تمنع تطبيق القالب.</p>}
-            <button type="submit" className="mt-5 w-full rounded-xl bg-violet-600 px-5 py-3 font-black text-white hover:bg-violet-700">تطبيق {selected.name}</button>
+            <h2 className="text-xl font-black text-foreground">{t("تطبيق بعد المراجعة", "Apply after review")}</h2>
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">{t("سيتم تحديث إعدادات الولاء الافتراضية فقط وتسجيل نشاط تدقيق. الألوان والهوية والبيانات الحالية غير المذكورة أعلاه تبقى كما هي.", "Only the default loyalty settings will be updated and an audit activity recorded. Existing colours, branding, and data not listed above remain unchanged.")}</p>
+            {requiresConfirmation ? <label className="mt-6 flex gap-4 rounded-[var(--lf-radius-card)] border border-warning/30 bg-warning-subtle p-4 text-sm leading-6 text-warning"><input name="confirmExisting" type="checkbox" className="mt-1" required /><span>{t("أفهم أن النشاط مهيأ أو يحتوي بيانات، وأريد استبدال إعدادات القالب الظاهرة فقط. لن تُحذف البيانات أو تُنشأ سجلات تلقائية.", "I understand this business is configured or contains data, and I want to replace only the displayed playbook settings. No data will be deleted and no records will be created automatically.")}</span></label> : <p className="mt-6 rounded-[var(--lf-radius-card)] bg-success-subtle p-4 text-sm font-bold text-success">{t("لا توجد إعدادات تشغيل أو بيانات سابقة تمنع تطبيق القالب.", "There are no existing operating settings or data preventing this playbook from being applied.")}</p>}
+            <button type="submit" className="mt-6 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-black text-[var(--lf-primary-foreground)] hover:bg-primary-subtle">{t("تطبيق", "Apply")} {selected.name}</button>
           </form>
         </section>
       </div>

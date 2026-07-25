@@ -33,13 +33,13 @@ export function Dialog({ open, onClose, title, description, children, className 
   }, [open, onClose]);
 
   if (!open) return null;
-  return <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-4 sm:items-center" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} className={cn("max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-lg bg-surface p-5 shadow-[var(--lf-shadow-overlay)] outline-none sm:p-6", className)}><h2 id={titleId} className="lf-type-section text-slate-950">{title}</h2>{description && <p id={descriptionId} className="mt-1 text-sm leading-6 text-slate-600">{description}</p>}<div className="mt-5">{children}</div></div></div>;
+  return <div className="fixed inset-0 z-[100] flex items-end justify-center bg-foreground/50 p-4 sm:items-center" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}><div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} className={cn("max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-[var(--lf-radius-input)] bg-surface p-6 shadow-[var(--lf-shadow-overlay)] outline-none sm:p-6", className)}><h2 id={titleId} className="lf-type-section text-foreground">{title}</h2>{description && <p id={descriptionId} className="mt-1 text-sm leading-6 text-foreground-muted">{description}</p>}<div className="mt-6">{children}</div></div></div>;
 }
 
 export function ConfirmationDialog({ open, onClose, title, description, confirmLabel, cancelLabel = "Cancel", pendingLabel = "Working…", onConfirm, destructive = false, isPending = false }: { open: boolean; onClose: () => void; title: ReactNode; description: ReactNode; confirmLabel: string; cancelLabel?: string; pendingLabel?: string; onConfirm: () => void; destructive?: boolean; isPending?: boolean }) {
   return (
     <Dialog open={open} onClose={onClose} title={title} description={description}>
-      <div className="flex flex-wrap justify-end gap-3">
+      <div className="flex flex-wrap justify-end gap-4">
         <Button type="button" variant="outline" onClick={onClose}>
           {cancelLabel}
         </Button>

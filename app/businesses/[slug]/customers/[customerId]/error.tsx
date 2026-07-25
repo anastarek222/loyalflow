@@ -12,5 +12,5 @@ function getAuthenticatedLanguage() {
 
 export default function CustomerDetailsError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const copy = customerUiCopy(getAuthenticatedLanguage());
-  return <PageErrorState title={copy.customerLoadError} description={copy.customerLoadErrorDescription} onRetry={reset} backAction={<Link href="/dashboard" className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-primary">{copy.dashboard}</Link>} />;
+  return <PageErrorState title={copy.customerLoadError} description={copy.customerLoadErrorDescription} onRetry={reset} backAction={<Link href="/dashboard" className="rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm font-semibold text-primary">{copy.dashboard}</Link>} />;
 }

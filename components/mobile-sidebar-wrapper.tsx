@@ -25,7 +25,7 @@ export default function MobileSidebarWrapper({ language, experienceMode, user, b
   }, []);
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} aria-label={language === "AR" ? "فتح القائمة" : "Open navigation"} className="flex size-11 items-center justify-center rounded-md text-slate-700 hover:bg-surface-subtle lg:hidden"><Menu aria-hidden="true" size={22} /></button>
+    <button type="button" onClick={() => setOpen(true)} aria-label={language === "AR" ? "فتح القائمة" : "Open navigation"} className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] text-foreground-muted hover:bg-surface-subtle lg:hidden"><Menu aria-hidden="true" size={22} /></button>
     <MobileSidebar open={open} onClose={() => setOpen(false)} language={language} experienceMode={experienceMode} user={user} business={business} businesses={businesses} />
   </>;
 }

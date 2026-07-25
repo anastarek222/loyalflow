@@ -67,7 +67,7 @@ export function SettingsPageTemplate({
       <div className="grid gap-6 lg:grid-cols-[minmax(14rem,18rem)_minmax(0,1fr)]">
         <aside className="min-w-0 max-w-full overflow-x-auto lg:sticky lg:top-6 lg:self-start lg:overflow-visible">{navigation}</aside>
         <section className="min-w-0 space-y-6" aria-label="Settings content">
-          {sectionDescription ? <div className="rounded-lg border border-border bg-surface-subtle p-4 lf-type-body text-slate-600">{sectionDescription}</div> : null}
+          {sectionDescription ? <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4 lf-type-body text-foreground-muted">{sectionDescription}</div> : null}
           {children}
           {footer}
         </section>
@@ -89,7 +89,7 @@ export function AnalyticsPageTemplate({
   return (
     <PageContainer variant={container} className={className}>
       {header}
-      {toolbar || exportAction ? <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">{toolbar}<div className="flex shrink-0 flex-wrap items-center gap-2">{exportAction}</div></div> : null}
+      {toolbar || exportAction ? <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">{toolbar}<div className="flex shrink-0 flex-wrap items-center gap-2">{exportAction}</div></div> : null}
       {kpis ? <section aria-label="Key performance indicators">{kpis}</section> : null}
       {charts ? <section aria-label="Analytics charts">{charts}</section> : null}
       {table ? <section aria-label="Detailed analytics">{table}</section> : null}
@@ -106,9 +106,9 @@ export function OperationalPageTemplate({
   className,
 }: BaseTemplateProps & { primaryAction?: ReactNode; children: ReactNode; stickyActions?: ReactNode }) {
   return (
-    <PageContainer variant={container} className={cn("space-y-5 pb-24 sm:pb-0", className)}>
+    <PageContainer variant={container} className={cn("space-y-6 pb-24 sm:pb-0", className)}>
       {header}
-      {primaryAction ? <div className="flex flex-wrap items-center gap-3">{primaryAction}</div> : null}
+      {primaryAction ? <div className="flex flex-wrap items-center gap-4">{primaryAction}</div> : null}
       <section className="min-w-0">{children}</section>
       {stickyActions}
     </PageContainer>

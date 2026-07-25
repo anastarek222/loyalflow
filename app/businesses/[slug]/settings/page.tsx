@@ -63,6 +63,7 @@ export default async function BusinessSettingsPage({
 
   const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
   const language = normalizeLanguage(currentUser?.language);
+  const t = (ar: string, en: string) => language === "AR" ? ar : en;
 
   const updateSettings = updateBusinessSettingsAction.bind(null, business.slug);
 
@@ -81,57 +82,56 @@ export default async function BusinessSettingsPage({
   });
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-8">
+    <main className="min-h-screen bg-surface-subtle px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-7xl">
         <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="settings" language={language} />
         <Link
           href={`/businesses/${business.slug}`}
-          className="text-sm font-medium text-violet-600 hover:text-violet-800"
+          className="text-sm font-medium text-primary hover:text-primary"
         >
-          → الرجوع إلى {business.name}
+          {t("→ الرجوع إلى", "← Back to")} {business.name}
         </Link>
 
         <header className="mb-8 mt-4">
-          <h1 className="text-3xl font-bold text-slate-950">إعدادات النشاط</h1>
+          <h1 className="text-3xl font-bold text-foreground">{t("إعدادات النشاط", "Business settings")}</h1>
 
-          <p className="mt-1 text-slate-500">
-            تخصيص برنامج الولاء والكارت الرقمي.
+          <p className="mt-1 text-foreground-subtle">
+            {t("تخصيص برنامج الولاء والكارت الرقمي.", "Configure the loyalty programme and digital card.")}
           </p>
         </header>
 
         {query.sheetSync === "success" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تمت مزامنة Google Sheets بنجاح.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {t("تمت مزامنة Google Sheets بنجاح.", "Google Sheets synced successfully.")}
           </div>
         )}
 
         {query.sheetSync === "error" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            تعذرت مزامنة Google Sheets. حاول مرة أخرى.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("تعذرت مزامنة Google Sheets. حاول مرة أخرى.", "Google Sheets sync failed. Please try again.")}
           </div>
         )}
 
-        <section className="mb-8 rounded-3xl border border-violet-200 bg-white p-6 shadow-sm">
+        <section className="mb-8 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-black text-violet-700">
-                التسجيل الذاتي
+              <p className="text-sm font-black text-primary">
+                {t("التسجيل الذاتي", "Self-enrolment")}
               </p>
 
-              <h2 className="mt-1 text-xl font-black text-slate-950">
-                QR لانضمام العملاء
+              <h2 className="mt-1 text-xl font-black text-foreground">
+                {t("QR لانضمام العملاء", "Customer join QR")}
               </h2>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                اطبع هذا الرمز أو شارك الرابط حتى يسجل العملاء بأنفسهم ويستلموا
-                كارتهم الرقمي.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-foreground-muted">
+                {t("اطبع هذا الرمز أو شارك الرابط حتى يسجل العملاء بأنفسهم ويستلموا كارتهم الرقمي.", "Print this code or share the link so customers can enrol themselves and receive their digital card.")}
               </p>
 
               <a
                 href={joinUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-block break-all text-sm font-bold text-violet-700 underline underline-offset-4"
+                className="mt-4 inline-block break-all text-sm font-bold text-primary underline underline-offset-4"
               >
                 {joinUrl}
               </a>
@@ -141,81 +141,80 @@ export default async function BusinessSettingsPage({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={joinQrCode}
-              alt={`QR للتسجيل الذاتي في ${business.name}`}
-              className="h-48 w-48 rounded-2xl border border-slate-200 bg-white p-2"
+              alt={t(`QR للتسجيل الذاتي في ${business.name}`, `Self-enrolment QR for ${business.name}`)}
+              className="h-48 w-48 rounded-[var(--lf-radius-card)] border border-border bg-white p-2"
             />
           </div>
         </section>
 
-        <section className="mb-8 flex flex-col gap-4 rounded-3xl border border-amber-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-8 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-warning/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-amber-700">كتالوج المكافآت</p>
-            <h2 className="mt-1 text-xl font-black text-slate-950">
-              مكافآت متعددة قابلة للتفعيل
+            <p className="text-sm font-black text-warning">{t("كتالوج المكافآت", "Reward catalogue")}</p>
+            <h2 className="mt-1 text-xl font-black text-foreground">
+              {t("مكافآت متعددة قابلة للتفعيل", "Multiple configurable rewards")}
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              أضف مكافآت إضافية وحدد ما يظهر للموظفين عند استبدال رصيد العميل.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
+              {t("أضف مكافآت إضافية وحدد ما يظهر للموظفين عند استبدال رصيد العميل.", "Add rewards and control what staff see when redeeming customer balance.")}
             </p>
           </div>
 
           <Link
             href={`/businesses/${business.slug}/rewards`}
-            className="shrink-0 rounded-xl bg-amber-500 px-5 py-3 text-center font-black text-white transition hover:bg-amber-600"
+            className="shrink-0 rounded-[var(--lf-radius-input)] bg-warning px-6 py-4 text-center font-black text-foreground transition hover:bg-warning-subtle"
           >
-            إدارة المكافآت
+            {t("إدارة المكافآت", "Manage rewards")}
           </Link>
         </section>
 
-        <section className="mb-8 flex flex-col gap-4 rounded-3xl border border-violet-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-8 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-violet-700">انطلاقة أسرع</p>
-            <h2 className="mt-1 text-xl font-black text-slate-950">
-              قوالب تشغيل النشاط
+            <p className="text-sm font-black text-primary">{t("انطلاقة أسرع", "Faster setup")}</p>
+            <h2 className="mt-1 text-xl font-black text-foreground">
+              {t("قوالب تشغيل النشاط", "Business playbooks")}
             </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              عاين إعدادات مناسبة لنشاطك ثم طبّقها صراحةً. القالب لا ينشئ عروضًا
-              أو Promotions أو رسائل تلقائية.
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
+              {t("عاين إعدادات مناسبة لنشاطك ثم طبّقها صراحةً. القالب لا ينشئ عروضًا أو Promotions أو رسائل تلقائية.", "Preview suitable business settings and apply them explicitly. Playbooks do not create offers, promotions, or automated messages.")}
             </p>
           </div>
 
           <Link
             href={`/businesses/${business.slug}/playbooks`}
-            className="shrink-0 rounded-xl bg-violet-600 px-5 py-3 text-center font-black text-white transition hover:bg-violet-700"
+            className="shrink-0 rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 text-center font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
           >
-            استعرض القوالب
+            {t("استعرض القوالب", "Browse playbooks")}
           </Link>
         </section>
 
-        <section className="mb-8 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-8 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-950">
-              النسخ الاحتياطي على Google Sheets
+            <h2 className="text-lg font-bold text-foreground">
+              {t("النسخ الاحتياطي على Google Sheets", "Google Sheets backup")}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              إرسال أحدث بيانات العملاء والأرصدة والمكافآت إلى ملف النشاط.
+            <p className="mt-1 text-sm text-foreground-subtle">
+              {t("إرسال أحدث بيانات العملاء والأرصدة والمكافآت إلى ملف النشاط.", "Send the latest customers, balances, and rewards to the business sheet.")}
             </p>
           </div>
 
           <form action={syncGoogleSheet}>
             <button
               type="submit"
-              className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+              className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
             >
-              مزامنة Google Sheets
+              {t("مزامنة Google Sheets", "Sync Google Sheets")}
             </button>
           </form>
         </section>
 
         {query.cardSaved === "1" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تم حفظ بيانات الكارت بنجاح.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {t("تم حفظ بيانات الكارت بنجاح.", "Card details saved successfully.")}
           </div>
         )}
 
         {query.cardError === "invalid" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            راجع رقم الهاتف والعنوان وشروط الكارت.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("راجع رقم الهاتف والعنوان وشروط الكارت.", "Review the phone number, address, and card terms.")}
           </div>
         )}
 
@@ -223,34 +222,41 @@ export default async function BusinessSettingsPage({
           contactPhone={business.contactPhone ?? "01033196610"}
           address={
             business.address ??
-            "١ شارع دكتور لاشين، المريوطية الرئيسي، فيصل، الجيزة"
+            (language === "AR"
+              ? "١ شارع دكتور لاشين، المريوطية الرئيسي، فيصل، الجيزة"
+              : "1 Dr. Lasheen Street, Mariouteya Main Road, Faisal, Giza")
           }
           cardTerms={
             business.cardTerms ??
-            [
-              "كل عملية مؤهلة تضيف {earn} {unit}.",
-              "عند الوصول إلى {threshold} {unit} يحصل العميل على {reward}.",
-              "لا يمكن استبدال الرصيد نقدًا.",
-            ].join("\n")
+            (language === "AR"
+              ? [
+                  "كل عملية مؤهلة تضيف {earn} {unit}.",
+                  "عند الوصول إلى {threshold} {unit} يحصل العميل على {reward}.",
+                  "لا يمكن استبدال الرصيد نقدًا.",
+                ]
+              : [
+                  "Each eligible transaction adds {earn} {unit}.",
+                  "At {threshold} {unit}, the customer earns {reward}.",
+                  "Loyalty balance cannot be redeemed for cash.",
+                ]).join("\n")
           }
           action={updateCardDetails}
         />
 
         {session.user.role === "SUPER_ADMIN" ? (
-          <section className="mb-6 rounded-3xl border border-violet-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+          <section className="mb-6 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm sm:p-6">
+            <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
               <div>
-                <p className="text-sm font-black text-violet-700">
-                  إعدادات مدير النظام
+                <p className="text-sm font-black text-primary">
+                  {t("إعدادات مدير النظام", "System administrator settings")}
                 </p>
 
-                <h2 className="mt-1 text-xl font-black text-slate-950">
-                  صلاحية تصدير البيانات
+                <h2 className="mt-1 text-xl font-black text-foreground">
+                  {t("صلاحية تصدير البيانات", "Data export permission")}
                 </h2>
 
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  عند التفعيل يستطيع مالك النشاط تصدير العملاء وتقارير الحركات.
-                  الموظفون لا يحصلون على صلاحية التصدير.
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
+                  {t("عند التفعيل يستطيع مالك النشاط تصدير العملاء وتقارير الحركات. الموظفون لا يحصلون على صلاحية التصدير.", "When enabled, the owner can export customers and transaction reports. Staff do not receive export permission.")}
                 </p>
               </div>
 
@@ -259,38 +265,38 @@ export default async function BusinessSettingsPage({
                   null,
                   business.slug,
                 )}
-                className="flex shrink-0 flex-col gap-3 rounded-2xl bg-slate-50 p-4 sm:min-w-72"
+                className="flex shrink-0 flex-col gap-4 rounded-[var(--lf-radius-card)] bg-surface-subtle p-4 sm:min-w-72"
               >
                 <label className="flex cursor-pointer items-center justify-between gap-4">
-                  <span className="font-black text-slate-800">
-                    السماح للمالك بالتصدير
+                  <span className="font-black text-foreground-muted">
+                    {t("السماح للمالك بالتصدير", "Allow owner exports")}
                   </span>
 
                   <input
                     type="checkbox"
                     name="allowOwnerDataExport"
                     defaultChecked={business.allowOwnerDataExport}
-                    className="h-5 w-5 accent-violet-600"
+                    className="h-5 w-5 accent-[var(--lf-primary)]"
                   />
                 </label>
 
                 <button
                   type="submit"
-                  className="rounded-xl bg-violet-600 px-5 py-3 font-black text-white transition hover:bg-violet-700"
+                  className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
                 >
-                  حفظ صلاحية التصدير
+                  {t("حفظ صلاحية التصدير", "Save export permission")}
                 </button>
               </form>
             </div>
           </section>
         ) : (
-          <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">تصدير البيانات</p>
+          <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
+            <p className="text-sm font-bold text-foreground-subtle">{t("تصدير البيانات", "Data export")}</p>
 
-            <p className="mt-2 font-black text-slate-950">
+            <p className="mt-2 font-black text-foreground">
               {business.allowOwnerDataExport
-                ? "مسموح بواسطة مدير النظام"
-                : "غير مسموح بواسطة مدير النظام"}
+                ? t("مسموح بواسطة مدير النظام", "Allowed by system administrator")
+                : t("غير مسموح بواسطة مدير النظام", "Not allowed by system administrator")}
             </p>
           </section>
         )}

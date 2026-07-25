@@ -16,7 +16,6 @@ import {
   setBusinessUserStatusAction,
   updateBusinessUserExperienceAccessAction,
 } from "./actions";
-import { getBusinessTheme } from "@/lib/theme";
 import { normalizeLanguage } from "@/lib/i18n";
 
 const USERS_PER_PAGE = 10;
@@ -94,13 +93,12 @@ export default async function UsersPage({
     notFound();
   }
 
-  const theme = getBusinessTheme(business);
-
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { language: true },
   });
   const language = normalizeLanguage(currentUser?.language);
+  const t = (ar: string, en: string) => language === "AR" ? ar : en;
   const accessCopy = experienceAccessCopy[language];
 
   const isSuperAdmin = isSuperAdminRole(session.user);
@@ -287,11 +285,7 @@ export default async function UsersPage({
 
   return (
     <main
-      style={{
-        background: theme.backgroundColor,
-        fontFamily: theme.fontFamily,
-      }}
-      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
     >
       <div className="mx-auto max-w-7xl">
         <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="users" language={language} />
@@ -299,194 +293,193 @@ export default async function UsersPage({
           <div>
             <Link
               href={`/businesses/${business.slug}`}
-              className="text-sm font-medium text-violet-600 hover:text-violet-800"
+              className="text-sm font-medium text-primary hover:text-primary"
             >
-              → الرجوع إلى {business.name}
+              {t("→ الرجوع إلى", "← Back to")} {business.name}
             </Link>
 
-            <h1 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">
-              حسابات الفريق
+            <h1 className="mt-4 text-2xl font-bold text-foreground sm:text-3xl">
+              {t("حسابات الفريق", "Team accounts")}
             </h1>
 
-            <p className="mt-1 text-slate-500">
-              إنشاء وإدارة حسابات فريق {business.name}.
+            <p className="mt-1 text-foreground-subtle">
+              {t("إنشاء وإدارة حسابات فريق", "Create and manage team accounts for")} {business.name}.
             </p>
           </div>
 
-          <div className="rounded-xl bg-slate-950 px-5 py-3 text-white">
-            <span className="text-sm text-slate-400">إجمالي الحسابات</span>
+          <div className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-white">
+            <span className="text-sm text-foreground-subtle">{t("إجمالي الحسابات", "Total accounts")}</span>
 
             <strong className="ms-3 text-xl">{totalUsers}</strong>
           </div>
         </header>
 
         {query.created === "business" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء
-            الفريق.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {t("تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء الفريق.", "The business and owner account were created successfully. You can now add the rest of the team.")}
           </div>
         )}
 
         {query.created === "1" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تم إنشاء الحساب بنجاح.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {t("تم إنشاء الحساب بنجاح.", "Account created successfully.")}
           </div>
         )}
 
         {query.success === "activated" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تم إعادة تفعيل الحساب بنجاح.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {t("تم إعادة تفعيل الحساب بنجاح.", "Account reactivated successfully.")}
           </div>
         )}
 
         {query.success === "deactivated" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-            تم إيقاف الحساب وإنهاء صلاحية جلساته الحالية.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
+            {t("تم إيقاف الحساب وإنهاء صلاحية جلساته الحالية.", "Account deactivated and current sessions revoked.")}
           </div>
         )}
 
         {query.success === "password" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-            تم تغيير كلمة المرور وإلغاء الجلسات السابقة للحساب.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {t("تم تغيير كلمة المرور وإلغاء الجلسات السابقة للحساب.", "Password changed and previous sessions revoked.")}
           </div>
         )}
 
         {query.success === "experience-access" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
             {accessCopy.updated}
           </div>
         )}
 
         {query.error === "invalid" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            راجع البيانات المدخلة. يجب ألا تقل كلمة المرور عن 10 أحرف.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("راجع البيانات المدخلة. يجب ألا تقل كلمة المرور عن 10 أحرف.", "Review the entered data. The password must be at least 10 characters.")}
           </div>
         )}
 
         {query.error === "email" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-            البريد الإلكتروني مسجل بالفعل.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
+            {t("البريد الإلكتروني مسجل بالفعل.", "This email address is already registered.")}
           </div>
         )}
 
         {query.error === "role" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            يمكن للمالك إنشاء حسابات موظفين فقط.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("يمكن للمالك إنشاء حسابات موظفين فقط.", "The owner can only create permitted team account roles.")}
           </div>
         )}
 
         {query.error === "owner-exists" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-            يوجد بالفعل مالك أساسي لهذا النشاط. لا يمكن إنشاء مالك إضافي.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
+            {t("يوجد بالفعل مالك أساسي لهذا النشاط. لا يمكن إنشاء مالك إضافي.", "This business already has a primary owner. Another owner cannot be created.")}
           </div>
         )}
 
         {query.error === "password" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            يجب أن تتطابق كلمتا المرور وألا تقل كل منهما عن 10 أحرف.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("يجب أن تتطابق كلمتا المرور وألا تقل كل منهما عن 10 أحرف.", "The passwords must match and be at least 10 characters.")}
           </div>
         )}
 
         {query.error === "self-status" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            لا يمكنك إيقاف حسابك الشخصي.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("لا يمكنك إيقاف حسابك الشخصي.", "You cannot deactivate your own account.")}
           </div>
         )}
 
         {query.error === "permission" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            ليست لديك صلاحية تعديل هذا الحساب.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("ليست لديك صلاحية تعديل هذا الحساب.", "You do not have permission to modify this account.")}
           </div>
         )}
 
         {query.error === "not-found" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
-            الحساب المحدد غير موجود.
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t("الحساب المحدد غير موجود.", "The selected account does not exist.")}
           </div>
         )}
 
-        <section className="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-6">
           <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <input
               type="search"
               name="q"
               defaultValue={search}
-              placeholder="بحث بالاسم أو البريد الإلكتروني"
-              className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+              placeholder={t("بحث بالاسم أو البريد الإلكتروني", "Search by name or email")}
+              className="rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
             />
 
             <select
               name="role"
               defaultValue={selectedRole ?? ""}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+              className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4"
             >
-              <option value="">كل الصلاحيات</option>
-              <option value="OWNER">مالك</option>
-              <option value="MANAGER">مدير</option>
-              <option value="STAFF">موظف / كاشير</option>
-              <option value="VIEWER">مشاهد</option>
+              <option value="">{t("كل الصلاحيات", "All roles")}</option>
+              <option value="OWNER">{t("مالك", "Owner")}</option>
+              <option value="MANAGER">{t("مدير", "Manager")}</option>
+              <option value="STAFF">{t("موظف / كاشير", "Staff / cashier")}</option>
+              <option value="VIEWER">{t("مشاهد", "Viewer")}</option>
             </select>
 
             <select
               name="status"
               defaultValue={status}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+              className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4"
             >
-              <option value="all">كل الحالات</option>
-              <option value="active">نشط</option>
-              <option value="inactive">موقوف</option>
+              <option value="all">{t("كل الحالات", "All statuses")}</option>
+              <option value="active">{t("نشط", "Active")}</option>
+              <option value="inactive">{t("موقوف", "Inactive")}</option>
             </select>
 
             <select
               name="sort"
               defaultValue={sort}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+              className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4"
             >
-              <option value="newest">الأحدث أولًا</option>
-              <option value="oldest">الأقدم أولًا</option>
-              <option value="name_asc">الاسم أ ← ي</option>
-              <option value="name_desc">الاسم ي ← أ</option>
+              <option value="newest">{t("الأحدث أولًا", "Newest first")}</option>
+              <option value="oldest">{t("الأقدم أولًا", "Oldest first")}</option>
+              <option value="name_asc">{t("الاسم أ ← ي", "Name A → Z")}</option>
+              <option value="name_desc">{t("الاسم ي ← أ", "Name Z → A")}</option>
             </select>
 
             <button
               type="submit"
-              className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+              className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
             >
-              تطبيق
+              {t("تطبيق", "Apply")}
             </button>
           </form>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-sm text-foreground-subtle">
             <span>
-              {filteredUsers} نتيجة من {totalUsers} حساب
+              {filteredUsers} {t("نتيجة من", "results of")} {totalUsers} {t("حساب", "accounts")}
             </span>
 
             {filtersActive && (
               <Link
                 href={`/businesses/${business.slug}/users`}
-                className="font-semibold text-violet-600 hover:text-violet-800"
+                className="font-semibold text-primary hover:text-primary"
               >
-                مسح الفلاتر
+                {t("مسح الفلاتر", "Clear filters")}
               </Link>
             )}
           </div>
         </section>
 
         <div className="grid gap-6 lg:grid-cols-[380px_1fr] lg:gap-8">
-          <section className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-xl font-bold text-slate-950">إضافة حساب</h2>
+          <section className="h-fit rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-6">
+            <h2 className="text-xl font-bold text-foreground">{t("إضافة حساب", "Add account")}</h2>
 
-            <p className="mt-1 break-words text-sm text-slate-500">
-              سيسجل المستخدم الدخول بالبريد الإلكتروني وكلمة المرور.
+            <p className="mt-1 break-words text-sm text-foreground-subtle">
+              {t("سيسجل المستخدم الدخول بالبريد الإلكتروني وكلمة المرور.", "The user will sign in with their email address and password.")}
             </p>
 
-            <form action={createUser} className="mt-6 space-y-5">
+            <form action={createUser} className="mt-6 space-y-6">
               <div>
                 <label
                   htmlFor="firstName"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
-                  الاسم الأول
+                  {t("الاسم الأول", "First name")}
                 </label>
 
                 <input
@@ -496,16 +489,16 @@ export default async function UsersPage({
                   minLength={2}
                   maxLength={50}
                   dir="auto"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="lastName"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
-                  اسم العائلة
+                  {t("اسم العائلة", "Last name")}
                 </label>
 
                 <input
@@ -513,16 +506,16 @@ export default async function UsersPage({
                   name="lastName"
                   maxLength={50}
                   dir="auto"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
-                  البريد الإلكتروني
+                  {t("البريد الإلكتروني", "Email address")}
                 </label>
 
                 <input
@@ -532,16 +525,16 @@ export default async function UsersPage({
                   required
                   dir="ltr"
                   autoComplete="off"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
-                  كلمة مرور مؤقتة
+                  {t("كلمة مرور مؤقتة", "Temporary password")}
                 </label>
 
                 <input
@@ -552,38 +545,38 @@ export default async function UsersPage({
                   dir="ltr"
                   minLength={10}
                   autoComplete="new-password"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="role"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
-                  صلاحية الحساب
+                  {t("صلاحية الحساب", "Account role")}
                 </label>
 
                 <select
                   id="role"
                   name="role"
                   defaultValue={isSuperAdmin ? "MANAGER" : "STAFF"}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                 >
                   {isSuperAdmin && (
-                    <option value="OWNER">مالك — يدير النشاط</option>
+                    <option value="OWNER">{t("مالك — يدير النشاط", "Owner — manages the business")}</option>
                   )}
 
                   <option value="MANAGER">
-                    مدير — يدير العملاء والولاء والتقارير
+                    {t("مدير — يدير العملاء والولاء والتقارير", "Manager — manages customers, loyalty, and reports")}
                   </option>
 
                   <option value="STAFF">
-                    موظف / كاشير — يجمع ويستبدل الولاء
+                    {t("موظف / كاشير — يجمع ويستبدل الولاء", "Staff / cashier — earns and redeems loyalty")}
                   </option>
 
                   <option value="VIEWER">
-                    مشاهد — يعرض العملاء والتقارير فقط
+                    {t("مشاهد — يعرض العملاء والتقارير فقط", "Viewer — views customers and reports only")}
                   </option>
                 </select>
               </div>
@@ -591,7 +584,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="experienceAccess"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {accessCopy.label}
                 </label>
@@ -601,7 +594,7 @@ export default async function UsersPage({
                   name="experienceAccess"
                   defaultValue=""
                   aria-describedby="experience-access-description"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                 >
                   <option value="">{accessCopy.recommended}</option>
                   <option value="SIMPLE_ONLY">{accessCopy.SIMPLE_ONLY}</option>
@@ -609,32 +602,32 @@ export default async function UsersPage({
                   <option value="BOTH">{accessCopy.BOTH}</option>
                 </select>
 
-                <p id="experience-access-description" className="mt-2 text-sm text-slate-500">
+                <p id="experience-access-description" className="mt-2 text-sm text-foreground-subtle">
                   {accessCopy.createDescription}
                 </p>
-                <ul className="mt-2 space-y-1 text-xs text-slate-500">
-                  <li><span className="font-semibold text-slate-700">{accessCopy.SIMPLE_ONLY}:</span> {accessCopy.simpleHelp}</li>
-                  <li><span className="font-semibold text-slate-700">{accessCopy.ADVANCED_ONLY}:</span> {accessCopy.advancedHelp}</li>
-                  <li><span className="font-semibold text-slate-700">{accessCopy.BOTH}:</span> {accessCopy.bothHelp}</li>
+                <ul className="mt-2 space-y-1 text-xs text-foreground-subtle">
+                  <li><span className="font-semibold text-foreground-muted">{accessCopy.SIMPLE_ONLY}:</span> {accessCopy.simpleHelp}</li>
+                  <li><span className="font-semibold text-foreground-muted">{accessCopy.ADVANCED_ONLY}:</span> {accessCopy.advancedHelp}</li>
+                  <li><span className="font-semibold text-foreground-muted">{accessCopy.BOTH}:</span> {accessCopy.bothHelp}</li>
                 </ul>
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+                className="w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle"
               >
-                إنشاء الحساب
+                {t("إنشاء الحساب", "Create account")}
               </button>
             </form>
           </section>
 
           <section>
             {users.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-                لا توجد حسابات فريق حتى الآن.
+              <div className="rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
+                {t("لا توجد حسابات فريق حتى الآن.", "There are no team accounts yet.")}
               </div>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {users.map((user) => {
                   const isCurrentUser = user.id === session.user.id;
 
@@ -665,54 +658,54 @@ export default async function UsersPage({
                   return (
                     <article
                       key={user.id}
-                      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+                      className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-6"
                     >
                       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <h2
                               dir="auto"
-                              className="text-lg font-bold text-slate-950"
+                              className="text-lg font-bold text-foreground"
                             >
                               {user.firstName} {user.lastName ?? ""}
                             </h2>
 
                             {isCurrentUser && (
-                              <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
-                                أنت
+                              <span className="rounded-full bg-info-subtle px-4 py-1 text-xs font-semibold text-info">
+                                {t("أنت", "You")}
                               </span>
                             )}
                           </div>
 
-                          <p className="mt-1 break-words text-sm text-slate-500">
+                          <p className="mt-1 break-words text-sm text-foreground-subtle">
                             {user.email}
                           </p>
 
-                          <p className="mt-1 text-xs text-slate-400">
-                            تاريخ الإنشاء:{" "}
-                            {user.createdAt.toLocaleDateString("ar-EG")}
+                          <p className="mt-1 text-xs text-foreground-subtle">
+                            {t("تاريخ الإنشاء:", "Created:")}{" "}
+                            {user.createdAt.toLocaleDateString(language === "AR" ? "ar-EG" : "en-GB")}
                           </p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+                          <span className="rounded-full bg-primary-subtle px-4 py-1 text-xs font-semibold text-primary">
                             {user.role === "OWNER"
-                              ? "مالك"
+                              ? t("مالك", "Owner")
                               : user.role === "MANAGER"
-                                ? "مدير"
+                                ? t("مدير", "Manager")
                                 : user.role === "VIEWER"
-                                  ? "مشاهد"
-                                  : "موظف / كاشير"}
+                                  ? t("مشاهد", "Viewer")
+                                  : t("موظف / كاشير", "Staff / cashier")}
                           </span>
 
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            className={`rounded-full px-4 py-1 text-xs font-semibold ${
                               user.isActive
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-red-100 text-red-700"
+                                ? "bg-success-subtle text-success"
+                                : "bg-danger-subtle text-danger"
                             }`}
                           >
-                            {user.isActive ? "نشط" : "موقوف"}
+                            {user.isActive ? t("نشط", "Active") : t("موقوف", "Inactive")}
                           </span>
                         </div>
                       </div>
@@ -720,14 +713,14 @@ export default async function UsersPage({
                       {canChangePassword && (
                         <form
                           action={resetPassword}
-                          className="mt-6 grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-2"
+                          className="mt-6 grid gap-4 border-t border-border pt-6 sm:grid-cols-2"
                         >
                           <div>
                             <label
                               htmlFor={`password-${user.id}`}
-                              className="mb-2 block text-sm font-medium text-slate-700"
+                              className="mb-2 block text-sm font-medium text-foreground-muted"
                             >
-                              كلمة المرور الجديدة
+                              {t("كلمة المرور الجديدة", "New password")}
                             </label>
 
                             <input
@@ -737,16 +730,16 @@ export default async function UsersPage({
                               minLength={10}
                               required
                               autoComplete="new-password"
-                              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                             />
                           </div>
 
                           <div>
                             <label
                               htmlFor={`confirm-${user.id}`}
-                              className="mb-2 block text-sm font-medium text-slate-700"
+                              className="mb-2 block text-sm font-medium text-foreground-muted"
                             >
-                              تأكيد كلمة المرور
+                              {t("تأكيد كلمة المرور", "Confirm password")}
                             </label>
 
                             <input
@@ -756,29 +749,29 @@ export default async function UsersPage({
                               minLength={10}
                               required
                               autoComplete="new-password"
-                              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                             />
                           </div>
 
                           <button
                             type="submit"
-                            className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700 sm:col-span-2"
+                            className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle sm:col-span-2"
                           >
-                            تغيير كلمة المرور
+                            {t("تغيير كلمة المرور", "Change password")}
                           </button>
                         </form>
                       )}
 
-                      <section className="mt-6 border-t border-slate-200 pt-6" aria-labelledby={`experience-access-${user.id}`}>
-                        <h3 id={`experience-access-${user.id}`} className="font-semibold text-slate-900">
+                      <section className="mt-6 border-t border-border pt-6" aria-labelledby={`experience-access-${user.id}`}>
+                        <h3 id={`experience-access-${user.id}`} className="font-semibold text-foreground">
                           {accessCopy.label}
                         </h3>
                         {user.role === "OWNER" ? (
-                          <p className="mt-1 text-sm text-slate-500">{accessCopy.ownerDescription}</p>
+                          <p className="mt-1 text-sm text-foreground-subtle">{accessCopy.ownerDescription}</p>
                         ) : (
-                          <form action={changeExperienceAccess} className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                          <form action={changeExperienceAccess} className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
                             <div>
-                              <label htmlFor={`experienceAccess-${user.id}`} className="mb-2 block text-sm font-medium text-slate-700">
+                              <label htmlFor={`experienceAccess-${user.id}`} className="mb-2 block text-sm font-medium text-foreground-muted">
                                 {accessCopy.label}
                               </label>
                               <select
@@ -786,53 +779,53 @@ export default async function UsersPage({
                                 name="experienceAccess"
                                 defaultValue={user.experienceAccess}
                                 aria-describedby={`experience-access-description-${user.id}`}
-                                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
                               >
                                 <option value="SIMPLE_ONLY">{accessCopy.SIMPLE_ONLY}</option>
                                 <option value="ADVANCED_ONLY">{accessCopy.ADVANCED_ONLY}</option>
                                 <option value="BOTH">{accessCopy.BOTH}</option>
                               </select>
-                              <p id={`experience-access-description-${user.id}`} className="mt-2 text-sm text-slate-500">{accessCopy.editDescription}</p>
+                              <p id={`experience-access-description-${user.id}`} className="mt-2 text-sm text-foreground-subtle">{accessCopy.editDescription}</p>
                             </div>
-                            <button type="submit" className="min-h-11 rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700">
+                            <button type="submit" className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle">
                               {accessCopy.save}
                             </button>
                           </form>
                         )}
                       </section>
 
-                      <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
+                      <div className="mt-6 flex flex-col justify-between gap-4 border-t border-border pt-6 sm:flex-row sm:items-center">
                         <div>
-                          <p className="font-semibold text-slate-900">
-                            الوصول إلى الحساب
+                          <p className="font-semibold text-foreground">
+                            {t("الوصول إلى الحساب", "Account access")}
                           </p>
 
-                          <p className="mt-1 break-words text-sm text-slate-500">
-                            الحساب الموقوف لا يمكنه الدخول إلى LoyalFlow.
+                          <p className="mt-1 break-words text-sm text-foreground-subtle">
+                            {t("الحساب الموقوف لا يمكنه الدخول إلى LoyalFlow.", "An inactive account cannot sign in to LoyalFlow.")}
                           </p>
                         </div>
 
                         {canChangeStatus ? (
                           <form action={changeStatus}>
                             <ConfirmSubmitButton
-                              confirmation={user.isActive ? `إيقاف حساب ${user.email} وإنهاء جلساته الحالية؟` : `إعادة تفعيل حساب ${user.email}؟`}
+                              confirmation={user.isActive ? t(`إيقاف حساب ${user.email} وإنهاء جلساته الحالية؟`, `Deactivate ${user.email} and revoke current sessions?`) : t(`إعادة تفعيل حساب ${user.email}؟`, `Reactivate ${user.email}?`)}
                               type="submit"
                               className={
                                 user.isActive
-                                  ? "w-full rounded-xl border border-red-300 bg-red-50 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 sm:w-auto"
-                                  : "w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+                                  ? "w-full rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-6 py-4 font-semibold text-danger transition hover:bg-danger-subtle sm:w-auto"
+                                  : "w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
                               }
                             >
                               {user.isActive
-                                ? "إيقاف الحساب"
-                                : "إعادة تفعيل الحساب"}
+                                ? t("إيقاف الحساب", "Deactivate account")
+                                : t("إعادة تفعيل الحساب", "Reactivate account")}
                             </ConfirmSubmitButton>
                           </form>
                         ) : (
-                          <p className="text-sm font-medium text-slate-400">
+                          <p className="text-sm font-medium text-foreground-subtle">
                             {isCurrentUser
-                              ? "أنت cannot deactivate yourself."
-                              : "حساب محمي."}
+                              ? t("لا يمكنك إيقاف حسابك الشخصي.", "You cannot deactivate yourself.")
+                              : t("حساب محمي.", "Protected account.")}
                           </p>
                         )}
                       </div>
@@ -845,34 +838,34 @@ export default async function UsersPage({
         </div>
 
         {totalPages > 1 && (
-          <nav className="mt-7 flex items-center justify-center gap-3">
+          <nav className="mt-8 flex items-center justify-center gap-4">
             {currentPage > 1 ? (
               <Link
                 href={getPageUrl(currentPage - 1)}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+                className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted"
               >
-                → السابق
+                {t("→ السابق", "← Previous")}
               </Link>
             ) : (
-              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
-                → السابق
+              <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
+                {t("→ السابق", "← Previous")}
               </span>
             )}
 
-            <span className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
+            <span className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white">
               {currentPage} / {totalPages}
             </span>
 
             {currentPage < totalPages ? (
               <Link
                 href={getPageUrl(currentPage + 1)}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+                className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted"
               >
-                التالي ←
+                {t("التالي ←", "Next →")}
               </Link>
             ) : (
-              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
-                التالي ←
+              <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
+                {t("التالي ←", "Next →")}
               </span>
             )}
           </nav>

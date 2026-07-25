@@ -29,13 +29,13 @@ export function PageHeader({
   return (
     <header {...props} className={cn("flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
       <div className="min-w-0 space-y-2">
-        {eyebrow ? <div className="lf-type-supporting text-slate-600">{eyebrow}</div> : null}
+        {eyebrow ? <div className="lf-type-supporting text-foreground-muted">{eyebrow}</div> : null}
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="lf-type-display text-slate-950">{title}</h1>
+          <h1 className="lf-type-display text-foreground">{title}</h1>
           {status}
         </div>
-        {description ? <p className="max-w-3xl lf-type-body text-slate-600">{description}</p> : null}
-        {metadata ? <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lf-type-supporting text-slate-500">{metadata}</div> : null}
+        {description ? <p className="max-w-3xl lf-type-body text-foreground-muted">{description}</p> : null}
+        {metadata ? <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lf-type-supporting text-foreground-subtle">{metadata}</div> : null}
       </div>
       {hasActions ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
@@ -61,13 +61,13 @@ export function SectionHeader({
   count?: ReactNode;
 }) {
   return (
-    <header {...props} className={cn("flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between", className)}>
+    <header {...props} className={cn("flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="lf-type-section text-slate-950">{title}</h2>
+          <h2 className="lf-type-section text-foreground">{title}</h2>
           {count}
         </div>
-        {description ? <p className="mt-1 lf-type-body text-slate-600">{description}</p> : null}
+        {description ? <p className="mt-1 lf-type-body text-foreground-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </header>

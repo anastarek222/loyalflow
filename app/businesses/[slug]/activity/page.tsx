@@ -11,85 +11,11 @@ import {
 } from "@/lib/activity/presentation";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 const ACTIVITIES_PER_PAGE = 25;
 
-const legacyActivityTypes = [
-  "CUSTOMER_CREATED",
-  "CUSTOMER_UPDATED",
-  "CUSTOMER_DEACTIVATED",
-  "CUSTOMER_REACTIVATED",
-  "CUSTOMER_TAG_ASSIGNED",
-  "CUSTOMER_TAG_REMOVED",
-  "CUSTOMER_NOTE_CREATED",
-  "CUSTOMER_NOTE_UPDATED",
-  "LOYALTY_EARNED",
-  "REWARD_REDEEMED",
-  "REWARD_UNLOCKED",
-  "REWARD_EXPIRED",
-  "REWARD_REDEMPTION_BLOCKED",
-  "REFERRAL_RECORDED",
-  "BALANCE_ADJUSTED",
-  "BUSINESS_SETTINGS_UPDATED",
-  "USER_CREATED",
-  "USER_STATUS_CHANGED",
-  "USER_PASSWORD_CHANGED",
-  "USER_EXPERIENCE_ACCESS_UPDATED",
-  "REWARD_CREATED",
-  "REWARD_UPDATED",
-  "REWARD_STATUS_CHANGED",
-  "OFFER_CREATED",
-  "OFFER_UPDATED",
-  "OFFER_STATUS_CHANGED",
-  "BRANCH_CREATED",
-  "BRANCH_UPDATED",
-  "BRANCH_ACTIVATED",
-  "BRANCH_DEACTIVATED",
-  "BRANCH_STAFF_ASSIGNED",
-  "BRANCH_STAFF_REMOVED",
-] as const satisfies readonly ActivityType[];
-
-const legacyActivityLabels: Record<
-  ActivityType,
-  string
-> = {
-  CUSTOMER_CREATED: "إنشاء عميل",
-  CUSTOMER_UPDATED: "تحديث بيانات عميل",
-  CUSTOMER_DEACTIVATED: "إيقاف عميل",
-  CUSTOMER_REACTIVATED: "إعادة تفعيل عميل",
-  CUSTOMER_TAG_ASSIGNED: "إضافة وسم للعميل",
-  CUSTOMER_TAG_REMOVED: "إزالة وسم من العميل",
-  CUSTOMER_NOTE_CREATED: "إضافة ملاحظة للعميل",
-  CUSTOMER_NOTE_UPDATED: "تحديث ملاحظة العميل",
-  LOYALTY_EARNED: "إضافة رصيد ولاء",
-  REWARD_REDEEMED: "استبدال مكافأة",
-  REWARD_UNLOCKED: "فتح مكافأة",
-  REWARD_EXPIRED: "انتهاء صلاحية مكافأة",
-  REWARD_REDEMPTION_BLOCKED: "تعذر استبدال مكافأة",
-  REFERRAL_RECORDED: "تسجيل إحالة",
-  BALANCE_ADJUSTED: "تعديل رصيد",
-  BUSINESS_SETTINGS_UPDATED:
-    "تحديث إعدادات النشاط",
-  USER_CREATED: "إنشاء مستخدم",
-  USER_STATUS_CHANGED: "تغيير حالة مستخدم",
-  USER_PASSWORD_CHANGED: "تغيير كلمة المرور",
-  USER_EXPERIENCE_ACCESS_UPDATED: "تحديث وصول الواجهة",
-  REWARD_CREATED: "إنشاء مكافأة",
-  REWARD_UPDATED: "تحديث مكافأة",
-  REWARD_STATUS_CHANGED: "تغيير حالة مكافأة",
-  OFFER_CREATED: "إنشاء عرض",
-  OFFER_UPDATED: "تحديث عرض",
-  OFFER_STATUS_CHANGED: "تغيير حالة عرض",
-  BRANCH_CREATED: "إنشاء فرع",
-  BRANCH_UPDATED: "تحديث فرع",
-  BRANCH_ACTIVATED: "تفعيل فرع",
-  BRANCH_DEACTIVATED: "إيقاف فرع",
-  BRANCH_STAFF_ASSIGNED: "إسناد موظف إلى فرع",
-  BRANCH_STAFF_REMOVED: "إزالة إسناد موظف من فرع",
-};
 
 function localizeActivityDescription(
   value: string
@@ -169,54 +95,7 @@ function localizeActivityDescription(
     );
 }
 
-function legacyGetBadgeClass(type: ActivityType) {
-  switch (type) {
-    case "CUSTOMER_CREATED":
-    case "CUSTOMER_REACTIVATED":
-    case "CUSTOMER_TAG_ASSIGNED":
-    case "CUSTOMER_NOTE_CREATED":
-    case "LOYALTY_EARNED":
-    case "REWARD_UNLOCKED":
-    case "REFERRAL_RECORDED":
-    case "BRANCH_CREATED":
-    case "BRANCH_ACTIVATED":
-    case "BRANCH_STAFF_ASSIGNED":
-    case "REWARD_CREATED":
-    case "OFFER_CREATED":
-      return "bg-emerald-100 text-emerald-700";
-
-    case "CUSTOMER_DEACTIVATED":
-    case "CUSTOMER_TAG_REMOVED":
-    case "REWARD_EXPIRED":
-    case "REWARD_REDEMPTION_BLOCKED":
-    case "BRANCH_DEACTIVATED":
-      return "bg-red-100 text-red-700";
-
-    case "CUSTOMER_UPDATED":
-    case "CUSTOMER_NOTE_UPDATED":
-    case "REWARD_REDEEMED":
-    case "BALANCE_ADJUSTED":
-    case "BRANCH_UPDATED":
-    case "BRANCH_STAFF_REMOVED":
-    case "REWARD_UPDATED":
-    case "REWARD_STATUS_CHANGED":
-    case "OFFER_UPDATED":
-    case "OFFER_STATUS_CHANGED":
-      return "bg-amber-100 text-amber-700";
-
-    case "BUSINESS_SETTINGS_UPDATED":
-    case "USER_CREATED":
-    case "USER_STATUS_CHANGED":
-    case "USER_PASSWORD_CHANGED":
-    case "USER_EXPERIENCE_ACCESS_UPDATED":
-      return "bg-violet-100 text-violet-700";
-
-  }
-}
-
-const sortOptions = ["newest", "oldest"] as const;
-
-type SortOption = (typeof sortOptions)[number];
+type SortOption = "newest" | "oldest";
 
 const activityOrderBy: Record<
   SortOption,
@@ -308,9 +187,6 @@ export default async function ActivityPage({
   if (!business) {
     notFound();
   }
-
-  const theme =
-    getBusinessTheme(business);
 
   const canViewActivity = canPerform(
     session.user,
@@ -608,24 +484,17 @@ export default async function ActivityPage({
   return (
     <main
       className="min-h-screen px-4 py-8 sm:px-8"
-      style={{
-        backgroundColor: theme.backgroundColor,
-        fontFamily: theme.fontFamily,
-      }}
     >
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/businesses/${business.slug}`}
-          className="text-sm font-medium text-violet-600 hover:text-violet-800"
+          className="text-sm font-medium text-primary hover:text-primary"
         >
           → الرجوع إلى {business.name}
         </Link>
 
         <header
-          className={`mt-5 border p-8 text-white ${theme.cardClass} ${theme.borderClass}`}
-          style={{
-            backgroundColor: theme.primaryColor,
-          }}
+          className={`mt-6 border p-8 text-white rounded-[var(--lf-radius-card)] border-border`}
         >
           <p className="text-sm text-white/70">
             سجل المراجعة
@@ -641,13 +510,13 @@ export default async function ActivityPage({
         </header>
 
         <section
-          className={`mt-8 border bg-white p-6 ${theme.cardClass} ${theme.borderClass}`}
+          className={`mt-8 border bg-white p-6 rounded-[var(--lf-radius-card)] border-border`}
         >
           <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="xl:col-span-2">
               <label
                 htmlFor="q"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 البحث
               </label>
@@ -659,14 +528,14 @@ export default async function ActivityPage({
                 maxLength={200}
                 defaultValue={searchQuery}
                 placeholder="الوصف، العميل، الموظف، الفرع، الجهاز أو IP"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none placeholder:text-slate-400 focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none placeholder:text-foreground-subtle focus:border-primary/30"
               />
             </div>
 
             <div>
               <label
                 htmlFor="type"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 نوع العملية
               </label>
@@ -675,7 +544,7 @@ export default async function ActivityPage({
                 id="type"
                 name="type"
                 defaultValue={selectedType ?? ""}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
               >
                 <option value="">
                   كل أنواع العمليات
@@ -692,7 +561,7 @@ export default async function ActivityPage({
             <div>
               <label
                 htmlFor="actor"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 المنفذ
               </label>
@@ -701,7 +570,7 @@ export default async function ActivityPage({
                 id="actor"
                 name="actor"
                 defaultValue={selectedActor ?? ""}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
               >
                 <option value="">كل المنفذين</option>
 
@@ -725,7 +594,7 @@ export default async function ActivityPage({
             <div>
               <label
                 htmlFor="customer"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 العميل
               </label>
@@ -734,7 +603,7 @@ export default async function ActivityPage({
                 id="customer"
                 name="customer"
                 defaultValue={selectedCustomer ?? ""}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
               >
                 <option value="">كل العملاء</option>
 
@@ -761,7 +630,7 @@ export default async function ActivityPage({
             <div>
               <label
                 htmlFor="branch"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 الفرع
               </label>
@@ -770,7 +639,7 @@ export default async function ActivityPage({
                 id="branch"
                 name="branch"
                 defaultValue={selectedBranch ?? ""}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
               >
                 <option value="">كل الفروع</option>
 
@@ -785,7 +654,7 @@ export default async function ActivityPage({
             <div>
               <label
                 htmlFor="device"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 الجهاز
               </label>
@@ -794,7 +663,7 @@ export default async function ActivityPage({
                 id="device"
                 name="device"
                 defaultValue={selectedDevice ?? ""}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
               >
                 <option value="">كل الأجهزة</option>
 
@@ -809,7 +678,7 @@ export default async function ActivityPage({
             <div>
               <label
                 htmlFor="sort"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 الترتيب
               </label>
@@ -818,17 +687,17 @@ export default async function ActivityPage({
                 id="sort"
                 name="sort"
                 defaultValue={selectedSort}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
               >
                 <option value="newest">الأحدث أولًا</option>
                 <option value="oldest">الأقدم أولًا</option>
               </select>
             </div>
 
-            <div className="flex items-end gap-3 md:col-span-2 xl:col-span-2">
+            <div className="flex items-end gap-4 md:col-span-2 xl:col-span-2">
               <button
                 type="submit"
-                className="rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700"
+                className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
               >
                 تطبيق الفلاتر
               </button>
@@ -836,7 +705,7 @@ export default async function ActivityPage({
               {hasActiveFilters && (
                 <Link
                   href={`/businesses/${business.slug}/activity`}
-                  className="rounded-xl border border-slate-300 px-6 py-3 text-center font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="rounded-[var(--lf-radius-input)] border border-border px-6 py-4 text-center font-semibold text-foreground-muted transition hover:bg-surface-subtle"
                 >
                   مسح الفلاتر
                 </Link>
@@ -846,39 +715,39 @@ export default async function ActivityPage({
         </section>
 
         <div className="mt-6 flex items-center justify-between gap-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground-subtle">
             {filteredActivities} نتيجة من أصل {totalActivities} عملية
           </p>
 
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-foreground-subtle">
             صفحة {currentPage} من {totalPages}
           </p>
         </div>
 
         {totalActivities === 0 ? (
-          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <h2 className="text-xl font-bold text-slate-950">
+          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
+            <h2 className="text-xl font-bold text-foreground">
               لا توجد عمليات مسجلة
             </h2>
 
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-foreground-subtle">
               ستظهر العمليات الجديدة هنا تلقائيًا.
             </p>
           </section>
         ) : activities.length === 0 ? (
-          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
-            <h2 className="text-xl font-bold text-slate-950">
+          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
+            <h2 className="text-xl font-bold text-foreground">
               لا توجد عمليات تطابق البحث أو الفلاتر المحددة
             </h2>
 
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-foreground-subtle">
               جرّب تعديل معايير البحث أو إزالة الفلاتر للعثور على
               عمليات أخرى.
             </p>
 
             <Link
               href={`/businesses/${business.slug}/activity`}
-              className="mt-5 inline-flex rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
+              className="mt-6 inline-flex rounded-[var(--lf-radius-input)] border border-border px-6 py-4 font-semibold text-foreground-muted transition hover:bg-surface-subtle"
             >
               مسح الفلاتر
             </Link>
@@ -915,12 +784,12 @@ export default async function ActivityPage({
               return (
                 <article
                   key={activity.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+                  className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm"
                 >
                   <div className="flex flex-col justify-between gap-4 sm:flex-row">
                     <div className="min-w-0">
                       <span
-                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getActivityBadgeClass(
+                        className={`inline-flex rounded-full px-4 py-1 text-xs font-semibold ${getActivityBadgeClass(
                           activity.type
                         )}`}
                       >
@@ -929,7 +798,7 @@ export default async function ActivityPage({
 
                       <p
                         dir="auto"
-                        className="mt-3 font-semibold text-slate-950"
+                        className="mt-4 font-semibold text-foreground"
                       >
                         {localizeActivityDescription(activity.description)}
                       </p>
@@ -937,7 +806,7 @@ export default async function ActivityPage({
                       {activity.customer && (
                         <Link
                           href={`/businesses/${business.slug}/customers/${activity.customer.id}`}
-                          className="mt-3 inline-flex text-sm font-semibold text-violet-600 hover:text-violet-800"
+                          className="mt-4 inline-flex text-sm font-semibold text-primary hover:text-primary"
                         >
                           {customerName} —{" "}
                           {activity.customer.customerCode}
@@ -946,12 +815,12 @@ export default async function ActivityPage({
                     </div>
 
                     <div className="shrink-0 sm:text-right">
-                      <p className="font-semibold text-slate-800">
+                      <p className="font-semibold text-foreground-muted">
                         {employeeName}
                       </p>
 
                       {activity.createdBy && (
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-foreground-subtle">
                           {activity.createdBy.role === "OWNER"
                             ? "مالك"
                             : activity.createdBy.role === "MANAGER"
@@ -967,15 +836,15 @@ export default async function ActivityPage({
                       )}
 
                       {!activity.createdBy && metadataActorEmail && (
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-foreground-subtle">
                           مدير النظام · {metadataActorEmail}
                         </p>
                       )}
 
-                      <div className="mt-3 space-y-1 text-xs text-slate-500">
+                      <div className="mt-4 space-y-1 text-xs text-foreground-subtle">
                         {activity.branch && (
                           <p>
-                            <span className="font-semibold text-slate-600">
+                            <span className="font-semibold text-foreground-muted">
                               الفرع:
                             </span>{" "}
                             {activity.branch.name}
@@ -984,7 +853,7 @@ export default async function ActivityPage({
 
                         {activity.deviceName && (
                           <p>
-                            <span className="font-semibold text-slate-600">
+                            <span className="font-semibold text-foreground-muted">
                               الجهاز:
                             </span>{" "}
                             {activity.deviceName}
@@ -993,7 +862,7 @@ export default async function ActivityPage({
 
                         {activity.ipAddress && (
                           <p dir="ltr" className="sm:text-right">
-                            <span className="font-semibold text-slate-600">
+                            <span className="font-semibold text-foreground-muted">
                               IP:
                             </span>{" "}
                             {activity.ipAddress}
@@ -1001,7 +870,7 @@ export default async function ActivityPage({
                         )}
 
                         <p>
-                          <span className="font-semibold text-slate-600">
+                          <span className="font-semibold text-foreground-muted">
                             الوقت:
                           </span>{" "}
                           {dateFormatter.format(
@@ -1018,33 +887,33 @@ export default async function ActivityPage({
         )}
 
         {totalPages > 1 && (
-          <nav className="mt-7 flex items-center justify-center gap-3">
+          <nav className="mt-8 flex items-center justify-center gap-4">
             {currentPage > 1 ? (
               <Link
                 href={getPageUrl(currentPage - 1)}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+                className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted"
               >
                 → السابق
               </Link>
             ) : (
-              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
+              <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
                 → السابق
               </span>
             )}
 
-            <span className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
+            <span className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white">
               {currentPage} / {totalPages}
             </span>
 
             {currentPage < totalPages ? (
               <Link
                 href={getPageUrl(currentPage + 1)}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+                className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted"
               >
                 التالي ←
               </Link>
             ) : (
-              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
+              <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
                 التالي ←
               </span>
             )}

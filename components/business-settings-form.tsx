@@ -234,13 +234,13 @@ export default function BusinessSettingsForm({
   return (
     <>
       {saved && (
-        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+        <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
           تم حفظ إعدادات النشاط بنجاح.
         </div>
       )}
 
       {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+        <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
           راجع البيانات المدخلة.
         </div>
       )}
@@ -248,31 +248,31 @@ export default function BusinessSettingsForm({
       <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
         <form
           action={action}
-          className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+          className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
         >
-          <h2 className="text-xl font-bold text-slate-950">بيانات النشاط</h2>
+          <h2 className="text-xl font-bold text-foreground">بيانات النشاط</h2>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-foreground-subtle">
             تعديل هوية النشاط وقواعد برنامج الولاء.
           </p>
 
 
-          <div className="mt-8 rounded-2xl border border-slate-200 p-5">
-            <h3 className="text-lg font-black text-slate-950">
+          <div className="mt-8 rounded-[var(--lf-radius-card)] border border-border p-6">
+            <h3 className="text-lg font-black text-foreground">
               🎨 هوية وتصميم الكارت
             </h3>
 
-            <div className="mt-5 space-y-5">
+            <div className="mt-6 space-y-6">
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   وصف النشاط
                 </label>
                 <textarea
                   name="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4"
                   placeholder="وصف قصير يظهر للعملاء"
                 />
               </div>
@@ -290,12 +290,12 @@ export default function BusinessSettingsForm({
                       name="primaryColor"
                       value={primaryColor}
                       onChange={(e)=>setPrimaryColor(e.target.value)}
-                      className="w-full rounded-xl border px-4 py-3"
+                      className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
                       placeholder="#007BFF"
                     />
 
                     <div
-                      className="h-12 w-12 rounded-xl border"
+                      className="h-12 w-12 rounded-[var(--lf-radius-input)] border"
                       style={{backgroundColor: primaryColor}}
                     />
                   </div>
@@ -312,12 +312,12 @@ export default function BusinessSettingsForm({
                       name="secondaryColor"
                       value={secondaryColor}
                       onChange={(e)=>setSecondaryColor(e.target.value)}
-                      className="w-full rounded-xl border px-4 py-3"
+                      className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
                       placeholder="#FFFFFF"
                     />
 
                     <div
-                      className="h-12 w-12 rounded-xl border"
+                      className="h-12 w-12 rounded-[var(--lf-radius-input)] border"
                       style={{backgroundColor: secondaryColor}}
                     />
                   </div>
@@ -332,7 +332,7 @@ export default function BusinessSettingsForm({
                   name="themePreset"
                   value={themePreset}
                   onChange={(e)=>setThemePreset(e.target.value)}
-                  className="rounded-xl border px-4 py-3"
+                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
                 >
                   <option value="DEFAULT">Default</option>
                   <option value="MINIMAL">Minimal</option>
@@ -347,7 +347,7 @@ export default function BusinessSettingsForm({
                   name="cardStyle"
                   value={cardStyle}
                   onChange={(e)=>setCardStyle(e.target.value)}
-                  className="rounded-xl border px-4 py-3"
+                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
                 >
                   <option value="CLASSIC">Classic</option>
                   <option value="COMPACT">Compact</option>
@@ -359,7 +359,7 @@ export default function BusinessSettingsForm({
                   name="fontFamily"
                   value={fontFamily}
                   onChange={(e)=>setFontFamily(e.target.value)}
-                  className="rounded-xl border px-4 py-3"
+                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
                 >
                   <option value="INTER">Inter</option>
                   <option value="CAIRO">Cairo</option>
@@ -370,7 +370,7 @@ export default function BusinessSettingsForm({
 
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   شكل رمز QR
                 </label>
 
@@ -378,27 +378,27 @@ export default function BusinessSettingsForm({
                   name="qrStyle"
                   value={qrStyle}
                   onChange={(e) => setQrStyle(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4"
                 >
                   <option value="CLASSIC">Classic</option>
                   <option value="ROUNDED">Rounded</option>
                   <option value="BRANDED">Branded</option>
                 </select>
 
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-foreground-subtle">
                   يتحكم في شكل QR الظاهر على كارت العميل.
                 </p>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   مكان رمز QR
                 </label>
 
                 <select
                   name="qrPosition"
                   defaultValue={business.qrPosition ?? "CENTER"}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4"
                 >
                   <option value="LEFT">Left</option>
                   <option value="CENTER">Center</option>
@@ -413,7 +413,7 @@ export default function BusinessSettingsForm({
                   value={instagramUrl}
                   onChange={(e)=>setInstagramUrl(e.target.value)}
                   placeholder="Instagram URL"
-                  className="rounded-xl border px-4 py-3"
+                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
                 />
 
                 <input
@@ -421,7 +421,7 @@ export default function BusinessSettingsForm({
                   value={facebookUrl}
                   onChange={(e)=>setFacebookUrl(e.target.value)}
                   placeholder="Facebook URL"
-                  className="rounded-xl border px-4 py-3"
+                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
                 />
 
                 <input
@@ -429,7 +429,7 @@ export default function BusinessSettingsForm({
                   value={tiktokUrl}
                   onChange={(e)=>setTiktokUrl(e.target.value)}
                   placeholder="TikTok URL"
-                  className="rounded-xl border px-4 py-3"
+                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
                 />
 
               </div>
@@ -437,9 +437,9 @@ export default function BusinessSettingsForm({
             </div>
           </div>
 
-          <div className="mt-7 space-y-6">
+          <div className="mt-8 space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 اسم النشاط
               </label>
 
@@ -450,22 +450,22 @@ export default function BusinessSettingsForm({
                 required
                 minLength={2}
                 maxLength={80}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
               />
             </div>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <section className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4 sm:p-6">
   <div>
-    <h3 className="font-black text-slate-950">معلومات النشاط</h3>
+    <h3 className="font-black text-foreground">معلومات النشاط</h3>
 
-    <p className="mt-1 text-sm leading-6 text-slate-600">
+    <p className="mt-1 text-sm leading-6 text-foreground-muted">
       أضف بيانات النشاط الأساسية ومعلومات التواصل والموقع.
     </p>
   </div>
 
-  <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
+      <label className="mb-2 block text-sm font-medium text-foreground-muted">
         نوع النشاط
       </label>
 
@@ -475,12 +475,12 @@ export default function BusinessSettingsForm({
         onChange={(event) => setIndustry(event.target.value)}
         maxLength={100}
         placeholder="مثال: مطعم، صالون، متجر ملابس"
-        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
       />
     </div>
 
     <div>
-      <label className="mb-2 block text-sm font-medium text-slate-700">
+      <label className="mb-2 block text-sm font-medium text-foreground-muted">
         البريد الإلكتروني
       </label>
 
@@ -491,12 +491,12 @@ export default function BusinessSettingsForm({
         onChange={(event) => setEmail(event.target.value)}
         maxLength={255}
         placeholder="info@example.com"
-        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+        className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-left text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
       />
     </div>
 
     <div className="sm:col-span-2">
-      <label className="mb-2 block text-sm font-medium text-slate-700">
+      <label className="mb-2 block text-sm font-medium text-foreground-muted">
         الموقع الإلكتروني
       </label>
 
@@ -507,12 +507,12 @@ export default function BusinessSettingsForm({
           onChange={(event) => setWebsite(event.target.value)}
           maxLength={300}
           placeholder="https://example.com"
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-left text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
       </div>
   
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-medium text-foreground-muted">
           الدولة
         </label>
 
@@ -522,12 +522,12 @@ export default function BusinessSettingsForm({
           onChange={(event) => setCountry(event.target.value)}
           maxLength={100}
           placeholder="مصر"
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-medium text-foreground-muted">
           المدينة
         </label>
 
@@ -537,12 +537,12 @@ export default function BusinessSettingsForm({
           onChange={(event) => setCity(event.target.value)}
           maxLength={100}
           placeholder="القاهرة"
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-medium text-foreground-muted">
           الرقم الضريبي
         </label>
 
@@ -552,12 +552,12 @@ export default function BusinessSettingsForm({
           onChange={(event) => setTaxNumber(event.target.value)}
           maxLength={100}
           placeholder="اختياري"
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-medium text-foreground-muted">
           عدد الموظفين
         </label>
 
@@ -568,7 +568,7 @@ export default function BusinessSettingsForm({
           value={employeeCount}
           onChange={(event) => setEmployeeCount(event.target.value)}
           placeholder="مثال: 10"
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
       </div>
     </div>
@@ -576,7 +576,7 @@ export default function BusinessSettingsForm({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   العملة
                 </label>
 
@@ -584,7 +584,7 @@ export default function BusinessSettingsForm({
                   name="currency"
                   value={currency}
                   onChange={(event) => setCurrency(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30"
                 >
                   <option value="">بدون تحديد</option>
                   <option value="AED">AED</option>
@@ -599,7 +599,7 @@ export default function BusinessSettingsForm({
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   المنطقة الزمنية
                 </label>
 
@@ -609,22 +609,22 @@ export default function BusinessSettingsForm({
                   onChange={(event) => setTimezone(event.target.value)}
                   maxLength={100}
                   placeholder="Africa/Cairo"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
             </div>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
-              <h3 className="font-black text-slate-950">
+            <section className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4 sm:p-6">
+              <h3 className="font-black text-foreground">
                 تسجيل الموظف المسؤول
               </h3>
 
-              <p className="mt-1 text-sm leading-6 text-slate-600">
+              <p className="mt-1 text-sm leading-6 text-foreground-muted">
                 حدد هل يجب تسجيل الموظف الذي نفذ البيع أو الزيارة عند إضافة رصيد
                 للعميل.
               </p>
 
-              <div className="mt-4 grid gap-3">
+              <div className="mt-4 grid gap-4">
                 {[
                   {
                     value: "OFF",
@@ -646,7 +646,7 @@ export default function BusinessSettingsForm({
                 ].map((option) => (
                   <label
                     key={option.value}
-                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4"
+                    className="flex cursor-pointer items-start gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white p-4"
                   >
                     <input
                       type="radio"
@@ -658,14 +658,14 @@ export default function BusinessSettingsForm({
                           option.value as StaffAttributionMode,
                         )
                       }
-                      className="mt-1 h-4 w-4 accent-violet-600"
+                      className="mt-1 h-4 w-4 accent-[var(--lf-primary)]"
                     />
 
                     <span>
-                      <span className="block font-black text-slate-900">
+                      <span className="block font-black text-foreground">
                         {option.title}
                       </span>
-                      <span className="mt-1 block text-sm text-slate-500">
+                      <span className="mt-1 block text-sm text-foreground-subtle">
                         {option.description}
                       </span>
                     </span>
@@ -674,17 +674,17 @@ export default function BusinessSettingsForm({
               </div>
             </section>
 
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5">
-              <h3 className="font-black text-violet-950">هوية برنامج الولاء</h3>
+            <section className="rounded-[var(--lf-radius-card)] border border-primary/30 bg-primary-subtle p-4 sm:p-6">
+              <h3 className="font-black text-primary">هوية برنامج الولاء</h3>
 
-              <p className="mt-1 text-sm text-violet-700">
+              <p className="mt-1 text-sm text-primary">
                 خصّص هوية النشاط كما ستظهر للعملاء في الكارت الرقمي ولوحة النشاط.
                 يمكنك رفع الصور مباشرة من جهازك أو استخدام رابط صورة خارجي.
               </p>
 
               <div className="mt-4 space-y-4">
                 {coverImagePreview && !removeCoverImage && (
-                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <div className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white">
                     <img
                       src={coverImagePreview}
                       alt="Cover preview"
@@ -696,7 +696,7 @@ export default function BusinessSettingsForm({
                 <div>
                   <label
                     htmlFor="coverImageFile"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-medium text-foreground-muted"
                   >
                     صورة الغلاف
                   </label>
@@ -719,24 +719,24 @@ export default function BusinessSettingsForm({
                       setCoverImageUrl("");
                       setRemoveCoverImage(false);
                     }}
-                    className="block w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700"
+                    className="block w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-sm text-foreground-muted"
                   />
 
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-foreground-subtle">
                     تظهر كخلفية بصرية في تجربة العميل. PNG أو JPG أو WebP بحد أقصى 1MB.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <span className="text-xs font-semibold text-slate-400">
+                <div className="flex items-center gap-4">
+                  <div className="h-px flex-1 bg-surface-subtle" />
+                  <span className="text-xs font-semibold text-foreground-subtle">
                     أو
                   </span>
-                  <div className="h-px flex-1 bg-slate-200" />
+                  <div className="h-px flex-1 bg-surface-subtle" />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-sm font-medium text-foreground-muted">
                     رابط صورة الغلاف
                   </label>
 
@@ -763,11 +763,11 @@ export default function BusinessSettingsForm({
                     }}
                     maxLength={500}
                     placeholder="https://example.com/cover.jpg"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                   />
                 </div>
 
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <label className="flex cursor-pointer items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-4">
                   <input
                     name="removeCoverImage"
                     type="checkbox"
@@ -794,7 +794,7 @@ export default function BusinessSettingsForm({
                     className="h-4 w-4"
                   />
 
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm font-medium text-foreground-muted">
                     حذف صورة الغلاف الحالية
                   </span>
                 </label>
@@ -802,7 +802,7 @@ export default function BusinessSettingsForm({
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-sm font-medium text-foreground-muted">
                     اسم برنامج الولاء
                   </label>
 
@@ -814,12 +814,12 @@ export default function BusinessSettingsForm({
                     }
                     maxLength={80}
                     placeholder="برنامج مكافآتي"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-sm font-medium text-foreground-muted">
                     اسم النقاط
                   </label>
 
@@ -829,12 +829,12 @@ export default function BusinessSettingsForm({
                     onChange={(event) => setPointsName(event.target.value)}
                     maxLength={30}
                     placeholder="نقطة"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-sm font-medium text-foreground-muted">
                     اسم العضوية
                   </label>
 
@@ -844,13 +844,13 @@ export default function BusinessSettingsForm({
                     onChange={(event) => setMembershipName(event.target.value)}
                     maxLength={50}
                     placeholder="عضو مميز"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
                   />
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   رسالة الترحيب داخل الكارت
                 </label>
 
@@ -861,12 +861,12 @@ export default function BusinessSettingsForm({
                   rows={3}
                   maxLength={300}
                   placeholder="أهلًا بك في برنامج الولاء"
-                  className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                  className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
                 />
               </div>
 
               <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   لغة الكارت الافتراضية
                 </label>
 
@@ -876,13 +876,13 @@ export default function BusinessSettingsForm({
                   onChange={(event) =>
                     setCardDefaultLanguage(event.target.value as CardLanguage)
                   }
-                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30"
                 >
                   <option value="AR">العربية (RTL)</option>
                   <option value="EN">English (LTR)</option>
                 </select>
 
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-foreground-subtle">
                   يستطيع العميل تغيير اللغة من الكارت لاحقًا دون تغيير إعداد
                   النشاط.
                 </p>
@@ -890,23 +890,23 @@ export default function BusinessSettingsForm({
             </section>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 رابط النشاط
               </label>
 
               <input
                 value={business.slug}
                 disabled
-                className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-500"
+                className="w-full cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-4 text-foreground-subtle"
               />
 
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-foreground-subtle">
                 لا يمكن تغيير رابط النشاط.
               </p>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 شعار النشاط
               </label>
 
@@ -942,22 +942,22 @@ export default function BusinessSettingsForm({
 
                   reader.readAsDataURL(file);
                 }}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:font-semibold file:text-white"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground-muted file:mr-4 file:rounded-[var(--lf-radius-input)] file:border-0 file:bg-foreground file:px-4 file:py-2 file:font-semibold file:text-white"
               />
 
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-foreground-subtle">
                 يظهر في لوحة النشاط والكارت الرقمي. PNG أو JPG أو WebP — بحد أقصى 500KB.
               </p>
             </div>
 
-            <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs font-semibold text-slate-400">أو</span>
-              <div className="h-px flex-1 bg-slate-200" />
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px flex-1 bg-surface-subtle" />
+              <span className="text-xs font-semibold text-foreground-subtle">أو</span>
+              <div className="h-px flex-1 bg-surface-subtle" />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 رابط صورة الشعار
               </label>
 
@@ -981,11 +981,11 @@ export default function BusinessSettingsForm({
                   }
                 }}
                 placeholder="https://example.com/logo.png"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
               />
             </div>
 
-            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <label className="flex cursor-pointer items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-4">
               <input
                 name="removeLogo"
                 type="checkbox"
@@ -1010,14 +1010,14 @@ export default function BusinessSettingsForm({
                 className="h-4 w-4"
               />
 
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-foreground-muted">
                 حذف الشعار الحالي
               </span>
             </label>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   اللون الأساسي للهوية
                 </label>
 
@@ -1026,12 +1026,12 @@ export default function BusinessSettingsForm({
                   type="color"
                   value={primaryColor}
                   onChange={(event) => setPrimaryColor(event.target.value)}
-                  className="h-14 w-full rounded-xl border border-slate-300 bg-white p-1"
+                  className="h-14 w-full rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   لون خلفية الكارت
                 </label>
 
@@ -1040,13 +1040,13 @@ export default function BusinessSettingsForm({
                   type="color"
                   value={secondaryColor}
                   onChange={(event) => setSecondaryColor(event.target.value)}
-                  className="h-14 w-full rounded-xl border border-slate-300 bg-white p-1"
+                  className="h-14 w-full rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
                 />
               </div>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 نظام الولاء
               </label>
 
@@ -1056,7 +1056,7 @@ export default function BusinessSettingsForm({
                 onChange={(event) =>
                   setLoyaltyMode(event.target.value as LoyaltyMode)
                 }
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
               >
                 <option value="VISITS">زيارات / أختام</option>
 
@@ -1068,7 +1068,7 @@ export default function BusinessSettingsForm({
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   اسم الوحدة
                 </label>
 
@@ -1078,12 +1078,12 @@ export default function BusinessSettingsForm({
                   onChange={(event) => setUnitName(event.target.value)}
                   required
                   maxLength={30}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+                <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   {loyaltyMode === "SALES_AMOUNT"
                     ? "قيمة الشراء"
                     : "قيمة الإضافة"}
@@ -1096,13 +1096,13 @@ export default function BusinessSettingsForm({
                   value={earnAmount}
                   onChange={(event) => setEarnAmount(event.target.value)}
                   required
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
                 />
               </div>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 اسم المكافأة
               </label>
 
@@ -1112,21 +1112,21 @@ export default function BusinessSettingsForm({
                 onChange={(event) => setRewardName(event.target.value)}
                 required
                 maxLength={100}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
               />
             </div>
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-4 sm:p-5">
-              <h3 className="font-black text-violet-950">
+            <section className="rounded-[var(--lf-radius-card)] border border-primary/30 bg-primary-subtle p-4 sm:p-6">
+              <h3 className="font-black text-primary">
                 نوع وتفاصيل المكافأة
               </h3>
 
-              <p className="mt-1 text-xs leading-5 text-violet-700">
+              <p className="mt-1 text-xs leading-5 text-primary">
                 كود الخصم لن يظهر للعميل إلا بعد وصوله إلى الهدف.
               </p>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold text-foreground-muted">
                     نوع المكافأة
                   </label>
 
@@ -1136,7 +1136,7 @@ export default function BusinessSettingsForm({
                     onChange={(event) =>
                       setRewardType(event.target.value as RewardType)
                     }
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4"
                   >
                     <option value="GIFT">هدية</option>
 
@@ -1149,7 +1149,7 @@ export default function BusinessSettingsForm({
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
+                  <label className="mb-2 block text-sm font-bold text-foreground-muted">
                     كود المكافأة
                   </label>
 
@@ -1160,13 +1160,13 @@ export default function BusinessSettingsForm({
                     required={rewardType === "PROMO_CODE"}
                     maxLength={80}
                     placeholder="VIP20"
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3"
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4"
                   />
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="mb-2 block text-sm font-bold text-slate-700">
+                <label className="mb-2 block text-sm font-bold text-foreground-muted">
                   وصف المكافأة
                 </label>
 
@@ -1177,13 +1177,13 @@ export default function BusinessSettingsForm({
                   rows={3}
                   maxLength={300}
                   placeholder="مثال: خصم 20% على عملية الشراء التالية"
-                  className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3"
+                  className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4"
                 />
               </div>
             </section>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-foreground-muted">
                 {loyaltyMode === "SALES_AMOUNT"
                   ? "Spending Target Amount"
                   : "الرصيد المطلوب للمكافأة"}
@@ -1196,20 +1196,20 @@ export default function BusinessSettingsForm({
                 value={rewardThreshold}
                 onChange={(event) => setRewardThreshold(event.target.value)}
                 required
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 placeholder:text-slate-400 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
               />
             </div>
 
-            <section className="border-t border-slate-200 pt-7">
-              <h3 className="text-lg font-bold text-slate-950">
+            <section className="border-t border-border pt-8">
+              <h3 className="text-lg font-bold text-foreground">
                 قوالب رسائل واتساب
               </h3>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-foreground-subtle">
                 تخصيص الرسائل التي يتم فتحها لكل عميل.
               </p>
 
-              <div className="mt-4 rounded-2xl bg-violet-50 p-4 text-sm text-violet-800">
+              <div className="mt-4 rounded-[var(--lf-radius-card)] bg-primary-subtle p-4 text-sm text-primary">
                 <p className="font-semibold">المتغيرات المتاحة</p>
 
                 <p className="mt-2 break-words font-mono text-xs leading-6">
@@ -1222,7 +1222,7 @@ export default function BusinessSettingsForm({
               <div className="mt-6">
                 <label
                   htmlFor="whatsappWelcomeMessage"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   رسالة الترحيب
                 </label>
@@ -1238,14 +1238,14 @@ export default function BusinessSettingsForm({
                   onChange={(event) =>
                     setWhatsappWelcomeMessage(event.target.value)
                   }
-                  className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
 
               <div className="mt-6">
                 <label
                   htmlFor="whatsappBalanceMessage"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   رسالة تحديث الرصيد
                 </label>
@@ -1261,14 +1261,14 @@ export default function BusinessSettingsForm({
                   onChange={(event) =>
                     setWhatsappBalanceMessage(event.target.value)
                   }
-                  className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
 
               <div className="mt-6">
                 <label
                   htmlFor="whatsappRewardMessage"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   رسالة جاهزية المكافأة
                 </label>
@@ -1284,14 +1284,14 @@ export default function BusinessSettingsForm({
                   onChange={(event) =>
                     setWhatsappRewardMessage(event.target.value)
                   }
-                  className="w-full resize-y rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                 />
               </div>
             </section>
 
             <button
               type="submit"
-              className="w-full rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-violet-700"
+              className="w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle"
             >
               حفظ التغييرات
             </button>
@@ -1299,18 +1299,18 @@ export default function BusinessSettingsForm({
         </form>
 
         <aside className="h-fit lg:sticky lg:top-8">
-          <p className="mb-3 text-sm font-semibold text-slate-500">
+          <p className="mb-4 text-sm font-semibold text-foreground-subtle">
             معاينة مباشرة للكارت
           </p>
 
           <section
-            className="overflow-hidden rounded-2xl shadow-2xl sm:rounded-[32px]"
+            className="overflow-hidden rounded-[var(--lf-radius-card)] shadow-2xl sm:rounded-[32px]"
             style={{
               backgroundColor: secondaryColor,
             }}
           >
             <header
-              className="p-5 text-white sm:p-7"
+              className="p-6 text-white sm:p-8"
               style={{
                 backgroundColor: primaryColor,
               }}
@@ -1320,10 +1320,10 @@ export default function BusinessSettingsForm({
                   <img
                     src={logoPreview}
                     alt={`${name} logo`}
-                    className="h-16 w-16 shrink-0 rounded-xl border border-white/20 bg-white object-contain p-2 shadow-sm"
+                    className="h-16 w-16 shrink-0 rounded-[var(--lf-radius-input)] border border-white/20 bg-white object-contain p-2 shadow-sm"
                   />
                 ) : (
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white/20 text-2xl font-black">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-white/20 text-2xl font-black">
                     {businessInitial}
                   </div>
                 )}
@@ -1338,44 +1338,44 @@ export default function BusinessSettingsForm({
               </div>
             </header>
 
-            <div className="p-5 sm:p-7">
-              <p className="text-xs uppercase tracking-wider text-slate-500">
+            <div className="p-6 sm:p-8">
+              <p className="text-xs uppercase tracking-wider text-foreground-subtle">
                 Customer
               </p>
 
-              <h3 className="mt-1 text-2xl font-bold text-slate-950">
+              <h3 className="mt-1 text-2xl font-bold text-foreground">
                 أحمد محمد
               </h3>
 
-              <p className="mt-2 text-sm font-semibold text-violet-600">
+              <p className="mt-2 text-sm font-semibold text-primary">
                 CUS-A1B2C3
               </p>
 
-              <div className="mt-7 flex items-end justify-between">
+              <div className="mt-8 flex items-end justify-between">
                 <div>
-                  <p className="text-5xl font-black text-slate-950">
+                  <p className="text-5xl font-black text-foreground">
                     {previewBalance}
                   </p>
 
-                  <p dir="auto" className="mt-1 text-sm text-slate-500">
+                  <p dir="auto" className="mt-1 text-sm text-foreground-subtle">
                     {unitName || "نقاط"}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-foreground-subtle">
                     {loyaltyMode === "VISITS"
                       ? "نظام الزيارات"
                       : `${earnAmount || 1} نقطة لكل عملية`}
                   </p>
 
-                  <p className="mt-1 text-sm font-semibold text-slate-800">
+                  <p className="mt-1 text-sm font-semibold text-foreground-muted">
                     الهدف: {threshold}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-7 h-3 overflow-hidden rounded-full bg-slate-200">
+              <div className="mt-8 h-3 overflow-hidden rounded-full bg-surface-subtle">
                 <div
                   className="h-full rounded-full transition-all"
                   style={{
@@ -1385,7 +1385,7 @@ export default function BusinessSettingsForm({
                 />
               </div>
 
-              <div className="mt-3 flex justify-between text-sm text-slate-500">
+              <div className="mt-4 flex justify-between text-sm text-foreground-subtle">
                 <span>
                   {previewBalance} / {threshold}
                 </span>
@@ -1395,7 +1395,7 @@ export default function BusinessSettingsForm({
 
               <div
                 dir="auto"
-                className="mt-6 rounded-2xl bg-slate-100 p-5 text-center text-slate-700"
+                className="mt-6 rounded-[var(--lf-radius-card)] bg-surface-subtle p-6 text-center text-foreground-muted"
               >
                 <p className="font-bold">
                   متبقي {Math.max(0, threshold - previewBalance)} للحصول على
@@ -1405,11 +1405,11 @@ export default function BusinessSettingsForm({
                 <p className="mt-1 text-sm">{rewardName || "المكافأة"}</p>
               </div>
 
-              <div className="mx-auto mt-7 flex h-40 w-40 items-center justify-center rounded-2xl border-8 border-slate-900 bg-white text-center text-xs font-bold text-slate-900">
+              <div className="mx-auto mt-8 flex h-40 w-40 items-center justify-center rounded-[var(--lf-radius-card)] border-8 border-border bg-white text-center text-xs font-bold text-foreground">
                 رمز QR
               </div>
 
-              <p className="mt-4 text-center text-xs text-slate-400">
+              <p className="mt-4 text-center text-xs text-foreground-subtle">
                 مدعوم بواسطة LoyalFlow
               </p>
             </div>

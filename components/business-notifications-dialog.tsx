@@ -156,7 +156,7 @@ useEffect(() => {
             ? `${visibleUnreadCount} تنبيه غير مقروء`
             : "كل التنبيهات الحالية مقروءة"
         }
-        className="relative inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 font-bold text-slate-800 shadow-sm transition hover:border-violet-400 hover:text-violet-700 sm:w-auto"
+        className="relative inline-flex w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-bold text-foreground-muted shadow-sm transition hover:border-primary/30 hover:text-primary sm:w-auto"
       >
         <span className="text-xl">
           🔔
@@ -165,7 +165,7 @@ useEffect(() => {
         <span>التنبيهات</span>
 
         {visibleUnreadCount > 0 && (
-          <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-black text-white">
+          <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-danger px-1.5 py-0.5 text-xs font-black text-[var(--lf-inverse)]">
             {visibleUnreadCount > 99
               ? "99+"
               : visibleUnreadCount}
@@ -178,7 +178,7 @@ useEffect(() => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="notifications-title"
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/70 backdrop-blur-sm sm:items-center sm:p-5"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-foreground/70 backdrop-blur-sm sm:items-center sm:p-6"
           onMouseDown={(event) => {
             if (
               event.target ===
@@ -188,10 +188,10 @@ useEffect(() => {
             }
           }}
         >
-          <section className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
-            <header className="flex shrink-0 items-start justify-between gap-4 bg-slate-950 p-5 text-white sm:p-6">
+          <section className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-[var(--lf-radius-card)]">
+            <header className="flex shrink-0 items-start justify-between gap-4 bg-foreground p-6 text-white sm:p-6">
               <div>
-                <p className="text-sm font-bold text-violet-300">
+                <p className="text-sm font-bold text-primary">
                   مركز الإشعارات
                 </p>
 
@@ -219,21 +219,21 @@ useEffect(() => {
               </button>
             </header>
 
-            <div className="flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex shrink-0 flex-col gap-4 border-b border-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-red-100 px-3 py-1.5 text-sm font-black text-red-700">
+                <span className="rounded-full bg-danger-subtle px-4 py-1.5 text-sm font-black text-danger">
                   غير المقروء:{" "}
                   {visibleUnreadCount}
                 </span>
 
                 {status === "success" && (
-                  <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-black text-emerald-700">
+                  <span className="rounded-full bg-success-subtle px-4 py-1.5 text-sm font-black text-success">
                     تمت القراءة ✓
                   </span>
                 )}
 
                 {status === "error" && (
-                  <span className="rounded-full bg-red-100 px-3 py-1.5 text-sm font-black text-red-700">
+                  <span className="rounded-full bg-danger-subtle px-4 py-1.5 text-sm font-black text-danger">
                     تعذر الحفظ
                   </span>
                 )}
@@ -246,7 +246,7 @@ useEffect(() => {
                   visibleUnreadCount === 0 ||
                   isMarkingRead
                 }
-                className="w-full rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-300 sm:w-auto"
+                className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 text-sm font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle sm:w-auto"
               >
                 {isMarkingRead
                   ? "جاري الحفظ..."
@@ -256,8 +256,8 @@ useEffect(() => {
               </button>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
-              <span className="ms-1 text-sm font-bold text-slate-500">
+            <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface-subtle px-4 py-4 sm:px-6">
+              <span className="ms-1 text-sm font-bold text-foreground-subtle">
                 عرض:
               </span>
 
@@ -271,8 +271,8 @@ useEffect(() => {
                 }
                 className={
                   filter === "all"
-                    ? "rounded-xl bg-slate-950 px-4 py-2 text-sm font-black text-white"
-                    : "rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-600 transition hover:border-violet-400 hover:text-violet-700"
+                    ? "rounded-[var(--lf-radius-input)] bg-foreground px-4 py-2 text-sm font-black text-white"
+                    : "rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-black text-foreground-muted transition hover:border-primary/30 hover:text-primary"
                 }
               >
                 الكل
@@ -288,8 +288,8 @@ useEffect(() => {
                 }
                 className={
                   filter === "unread"
-                    ? "rounded-xl bg-red-500 px-4 py-2 text-sm font-black text-white"
-                    : "rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-600 transition hover:border-red-300 hover:text-red-600"
+                    ? "rounded-[var(--lf-radius-input)] bg-danger px-4 py-2 text-sm font-black text-[var(--lf-inverse)]"
+                    : "rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-black text-foreground-muted transition hover:border-danger/30 hover:text-danger"
                 }
               >
                 غير المقروء فقط
@@ -336,11 +336,11 @@ useEffect(() => {
                     ✅
                   </div>
 
-                  <h3 className="mt-4 text-xl font-black text-slate-950">
+                  <h3 className="mt-4 text-xl font-black text-foreground">
                     لا توجد تنبيهات غير مقروءة
                   </h3>
 
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-2 text-sm text-foreground-subtle">
                     جميع التنبيهات الحالية تمت قراءتها.
                   </p>
                 </div>

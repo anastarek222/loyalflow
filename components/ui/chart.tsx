@@ -8,4 +8,4 @@ export const chartTokens = {
   tooltip: { background: "var(--lf-surface-raised)", border: "1px solid var(--lf-border)", borderRadius: "var(--lf-radius-md)", boxShadow: "var(--lf-shadow-raised)" },
 } as const;
 
-export const chartClassNames = { legend: "text-xs font-medium text-slate-600", empty: "flex h-[300px] items-center justify-center rounded-md bg-surface-subtle text-sm text-slate-500" } as const;
+export const chartClassNames = { legend: "text-xs font-medium text-foreground-muted", empty: "flex h-[300px] items-center justify-center rounded-[var(--lf-radius-input)] bg-surface-subtle text-sm text-foreground-subtle" } as const;

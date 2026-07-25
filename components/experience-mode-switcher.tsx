@@ -22,8 +22,8 @@ export default function ExperienceModeSwitcher({ language, mode, access }: Props
   if (access !== "BOTH") return null;
 
   return (
-    <fieldset id="experience-mode" aria-label={copy.label} className="border-b border-border px-3 py-3">
-      <legend className="px-0 text-xs font-semibold text-slate-500">{copy.label}</legend>
+    <fieldset id="experience-mode" aria-label={copy.label} className="border-b border-border px-4 py-4">
+      <legend className="px-0 text-xs font-semibold text-foreground-subtle">{copy.label}</legend>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {(["SIMPLE", "ADVANCED"] as const).map((candidate) => {
           const selected = candidate === mode;
@@ -35,7 +35,7 @@ export default function ExperienceModeSwitcher({ language, mode, access }: Props
                 type="submit"
                 aria-pressed={selected}
                 disabled={isPending}
-                className={`flex min-h-11 w-full items-center justify-between rounded-md border px-3 text-sm font-semibold transition-colors ${selected ? "border-primary bg-indigo-50 text-primary" : "border-border text-slate-700 hover:bg-surface-subtle"}`}
+                className={`flex min-h-11 w-full items-center justify-between rounded-[var(--lf-radius-input)] border px-4 text-sm font-semibold transition-colors ${selected ? "border-primary bg-primary-subtle text-primary" : "border-border text-foreground-muted hover:bg-surface-subtle"}`}
               >
                 <span>{label}</span>
                 <span aria-hidden="true">{selected ? "✓" : ""}</span>
@@ -44,7 +44,7 @@ export default function ExperienceModeSwitcher({ language, mode, access }: Props
           );
         })}
       </div>
-      {isPending ? <p className="mt-2 text-xs text-slate-500" role="status">{copy.updating}</p> : null}
+      {isPending ? <p className="mt-2 text-xs text-foreground-subtle" role="status">{copy.updating}</p> : null}
     </fieldset>
   );
 }

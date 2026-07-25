@@ -1,5 +1,6 @@
 import { PageContainer, PageHeaderSkeleton, StatCardSkeleton } from "@/components/page-layout";
-import { Card, Skeleton } from "@/components/ui/surface";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BusinessOverviewLoading() {
   return (

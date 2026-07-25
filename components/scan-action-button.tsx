@@ -21,7 +21,7 @@ export default function ScanActionButton({
       disabled={pending}
       aria-disabled={pending}
       aria-busy={pending}
-      className="w-full rounded-xl bg-slate-950 px-5 py-4 font-black text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+      className="w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-black text-white transition disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? scanUiCopy(language).pendingAction : children}
     </button>
