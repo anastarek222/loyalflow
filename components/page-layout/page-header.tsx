@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 export type PageHeaderProps = HTMLAttributes<HTMLElement> & {
   eyebrow?: ReactNode;

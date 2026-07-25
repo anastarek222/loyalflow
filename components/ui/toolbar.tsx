@@ -3,7 +3,7 @@ import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form-controls";
 import { Badge } from "@/components/ui/surface";
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 export function Toolbar({ className, ...props }: HTMLAttributes<HTMLDivElement>) { return <div {...props} className={cn("flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between", className)} />; }
 export function SearchField({ label = "Search", ...props }: ComponentProps<typeof Input> & { label?: string }) { return <div className="w-full sm:max-w-sm"><label className="sr-only" htmlFor={props.id}>{label}</label><Input {...props} type="search" /></div>; }

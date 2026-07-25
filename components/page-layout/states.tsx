@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
 import { Card, Skeleton } from "@/components/ui/surface";
 import { TableSkeleton } from "@/components/ui/table";
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 import { PageContainer } from "@/components/page-layout/page-container";
 
 type PageStateProps = { title: ReactNode; description: ReactNode; action?: ReactNode; className?: string };

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Card, Skeleton } from "@/components/ui/surface";
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 export type StatStatus = "neutral" | "success" | "warning" | "danger" | "info";
 

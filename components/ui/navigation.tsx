@@ -2,7 +2,7 @@
 
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 export type TabItem = { id: string; label: ReactNode; disabled?: boolean };
 export function Tabs({ items, activeId, onChange, ariaLabel }: { items: TabItem[]; activeId: string; onChange: (id: string) => void; ariaLabel: string }) { return <div role="tablist" aria-label={ariaLabel} className="flex max-w-full gap-1 overflow-x-auto border-b border-border">{items.map((item) => <button key={item.id} type="button" role="tab" aria-selected={item.id === activeId} aria-controls={`${item.id}-panel`} disabled={item.disabled} onClick={() => onChange(item.id)} className={cn("min-h-10 shrink-0 border-b-2 px-3 text-sm font-semibold transition-colors", item.id === activeId ? "border-primary text-primary" : "border-transparent text-slate-600 hover:text-slate-950")}>{item.label}</button>)}</div>; }

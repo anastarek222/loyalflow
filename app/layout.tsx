@@ -4,6 +4,10 @@ import type {
 } from "next";
 
 import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
@@ -35,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="h-full bg-slate-100 antialiased"
+      className={cn("h-full bg-slate-100 antialiased", "font-sans", geist.variable)}
     >
       <body className="flex min-h-full flex-col">
         {children}

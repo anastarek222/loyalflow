@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 export function TableContainer({ className, ...props }: HTMLAttributes<HTMLDivElement>) { return <div {...props} className={cn("max-w-full overflow-x-auto overscroll-contain rounded-lg border border-border bg-surface", className)} />; }
 export function Table({ className, ...props }: TableHTMLAttributes<HTMLTableElement>) { return <table {...props} className={cn("w-full min-w-[40rem] border-collapse text-sm", className)} />; }

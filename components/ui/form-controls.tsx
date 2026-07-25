@@ -1,7 +1,7 @@
 import { cloneElement, isValidElement } from "react";
 import type { InputHTMLAttributes, LabelHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 const control = "w-full rounded-md border border-border-strong bg-surface px-3 text-sm text-slate-950 shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-slate-500 focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-slate-500";
 

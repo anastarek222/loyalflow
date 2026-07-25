@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 
 import { SearchField, Toolbar, ToolbarActions } from "@/components/ui/toolbar";
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 export type PageToolbarProps = {
   search?: ComponentProps<typeof SearchField>;

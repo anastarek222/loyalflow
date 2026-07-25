@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { PageContainer, type PageContainerVariant } from "@/components/page-layout/page-container";
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 type BaseTemplateProps = {
   header: ReactNode;

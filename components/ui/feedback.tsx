@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Button, type ButtonProps } from "@/components/ui/button";
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 type AlertVariant = "info" | "success" | "warning" | "danger";
 const alertStyles: Record<AlertVariant, string> = { info: "border-sky-200 bg-[var(--lf-info-subtle)] text-info", success: "border-emerald-200 bg-[var(--lf-success-subtle)] text-success", warning: "border-amber-200 bg-[var(--lf-warning-subtle)] text-warning", danger: "border-red-200 bg-[var(--lf-danger-subtle)] text-danger" };

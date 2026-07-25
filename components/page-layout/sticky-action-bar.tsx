@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/components/ui/utils";
+import { cn } from "@/lib/utils";
 
 /**
  * Mobile actions float above the U3 bottom navigation and safe-area inset.
