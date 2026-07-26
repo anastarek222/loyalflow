@@ -1,4 +1,5 @@
 import { passwordValueSchema } from "@/lib/auth/password-policy";
+import { billingInputSchema } from "@/lib/billing/subscription";
 import { isValidRemoteImageUrl } from "@/lib/branding/image-data";
 import {
   isSupportedCurrency,
@@ -75,4 +76,4 @@ export const businessCreationSchema = z.object({
   ]),
   cardStyle: z.enum(["CLASSIC", "COMPACT", "PREMIUM"]),
   fontFamily: z.enum(["INTER", "CAIRO", "POPPINS"]),
-});
+}).and(billingInputSchema);

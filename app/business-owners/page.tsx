@@ -2,16 +2,45 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ListPageTemplate, PageHeader } from "@/components/page-layout";
+import {
+  derivePaymentState,
+  formatMoneyMinor,
+  intervalLabel,
+  type PaymentStatus,
+} from "@/lib/billing/subscription";
 import { normalizeLanguage, getLanguageLocale } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
-import { Building2, Search, Users } from "lucide-react";
+import { Building2, CalendarClock, Search, Users, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+import {
+  recordBusinessPaymentAction,
+  setBusinessPlatformStatusAction,
+  updateBusinessBillingAction,
+} from "./actions";
+
+function dateInputValue(value: Date | null) {
+  return value ? value.toISOString().slice(0, 10) : "";
+}
+
+function paymentBadgeVariant(state: string) {
+  if (state === "PAID") return "success" as const;
+  if (state === "DUE_SOON" || state === "DUE" || state === "TRIAL") return "warning" as const;
+  if (state === "OVERDUE" || state === "SUSPENDED") return "danger" as const;
+  return "neutral" as const;
+}
 
 export default async function BusinessOwnersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    payment?: string;
+    success?: string;
+    error?: string;
+  }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -21,10 +50,26 @@ export default async function BusinessOwnersPage({
     where: { id: session.user.id },
     select: { language: true },
   });
+
   const language = normalizeLanguage(user?.language);
+  const locale = getLanguageLocale(language);
   const params = await searchParams;
   const query = params.q?.trim().slice(0, 120) ?? "";
-  const status = params.status === "active" || params.status === "inactive" ? params.status : "all";
+  const status =
+    params.status === "active" || params.status === "inactive"
+      ? params.status
+      : "all";
+
+  const allowedPaymentStatuses = new Set([
+    "TRIAL",
+    "PAID",
+    "DUE",
+    "OVERDUE",
+    "SUSPENDED",
+  ]);
+  const payment = allowedPaymentStatuses.has(params.payment ?? "")
+    ? (params.payment as PaymentStatus)
+    : "all";
 
   const owners = await prisma.user.findMany({
     where: {
@@ -40,63 +85,107 @@ export default async function BusinessOwnersPage({
             ],
           }
         : {}),
+      ...(payment === "all"
+        ? {}
+        : { business: { paymentStatus: payment } }),
     },
     orderBy: { createdAt: "desc" },
     include: {
       business: {
         include: {
           _count: { select: { customers: true, users: true, branches: true } },
+          transactions: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { createdAt: true },
+          },
         },
       },
     },
   });
 
-  const number = new Intl.NumberFormat(getLanguageLocale(language));
-  const date = new Intl.DateTimeFormat(getLanguageLocale(language), { dateStyle: "medium" });
-  const copy = language === "AR"
-    ? {
-        eyebrow: "إدارة المنصة",
-        title: "ملاك الأنشطة",
-        description: "راجع ملاك الأنشطة وحالة حساباتهم وأعمالهم من مكان واحد.",
-        search: "ابحث بالاسم أو البريد أو النشاط",
-        all: "كل الحالات",
-        active: "نشط",
-        inactive: "موقوف",
-        owner: "المالك",
-        business: "النشاط",
-        customers: "العملاء",
-        team: "الفريق",
-        branches: "الفروع",
-        created: "تاريخ الإنشاء",
-        open: "فتح النشاط",
-        none: "لا توجد نتائج مطابقة.",
-      }
-    : {
-        eyebrow: "Platform administration",
-        title: "Business owners",
-        description: "Review business owners, account status, and their businesses from one place.",
-        search: "Search owner, email, or business",
-        all: "All statuses",
-        active: "Active",
-        inactive: "Inactive",
-        owner: "Owner",
-        business: "Business",
-        customers: "Customers",
-        team: "Team",
-        branches: "Branches",
-        created: "Created",
-        open: "Open business",
-        none: "No matching owners found.",
-      };
+  const number = new Intl.NumberFormat(locale);
+  const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
+  const copy =
+    language === "AR"
+      ? {
+          eyebrow: "إدارة المنصة",
+          title: "ملاك الأنشطة والاشتراكات",
+          description: "راجع العميل، نشاطه، موعد الدفع وحالة الاشتراك من مكان واحد.",
+          search: "ابحث بالاسم أو البريد أو النشاط",
+          all: "كل الحالات",
+          active: "نشط",
+          inactive: "موقوف",
+          customers: "العملاء",
+          team: "الفريق",
+          branches: "الفروع",
+          open: "فتح النشاط",
+          none: "لا توجد نتائج مطابقة.",
+          billing: "الاشتراك والدفع",
+          manage: "إدارة الاشتراك",
+          save: "حفظ بيانات الاشتراك",
+          paid: "تسجيل دفعة الآن",
+          suspend: "إيقاف النشاط",
+          reactivate: "إعادة تفعيل النشاط",
+          lastActivity: "آخر نشاط",
+          never: "لا يوجد نشاط",
+        }
+      : {
+          eyebrow: "Platform administration",
+          title: "Business owners & subscriptions",
+          description: "Review each client, business, payment date, and subscription status in one place.",
+          search: "Search owner, email, or business",
+          all: "All statuses",
+          active: "Active",
+          inactive: "Inactive",
+          customers: "Customers",
+          team: "Team",
+          branches: "Branches",
+          open: "Open business",
+          none: "No matching owners found.",
+          billing: "Subscription & billing",
+          manage: "Manage subscription",
+          save: "Save subscription",
+          paid: "Record payment now",
+          suspend: "Suspend business",
+          reactivate: "Reactivate business",
+          lastActivity: "Last activity",
+          never: "No activity",
+        };
 
   return (
     <ListPageTemplate
       container="wide"
-      header={<PageHeader eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />}
+      header={
+        <PageHeader
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
+          primaryAction={
+            <Link
+              href="/businesses#add-business"
+              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+            >
+              {language === "AR" ? "إضافة نشاط ومالك" : "Add business & owner"}
+            </Link>
+          }
+        />
+      }
     >
+      {params.success ? (
+        <div className="mb-4 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success">
+          {language === "AR" ? "تم تحديث بيانات المنصة بنجاح." : "Platform data updated successfully."}
+        </div>
+      ) : null}
+      {params.error ? (
+        <div className="mb-4 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger">
+          {language === "AR" ? "تعذر تنفيذ التحديث. راجع بيانات الاشتراك." : "The update could not be completed. Review the subscription details."}
+        </div>
+      ) : null}
+
       <Card>
-        <form className="flex flex-col gap-3 sm:flex-row" action="/business-owners">
-          <label className="relative flex-1">
+        <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]" action="/business-owners">
+          <label className="relative">
             <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-foreground-subtle" size={18} aria-hidden="true" />
             <input
               type="search"
@@ -107,16 +196,22 @@ export default async function BusinessOwnersPage({
               className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface ps-10 pe-4 text-sm text-foreground outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
             />
           </label>
-          <select
-            name="status"
-            defaultValue={status}
-            aria-label={copy.all}
-            className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm text-foreground outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
-          >
+
+          <select name="status" defaultValue={status} className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm">
             <option value="all">{copy.all}</option>
             <option value="active">{copy.active}</option>
             <option value="inactive">{copy.inactive}</option>
           </select>
+
+          <select name="payment" defaultValue={payment} className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm">
+            <option value="all">{language === "AR" ? "كل حالات الدفع" : "All payment statuses"}</option>
+            <option value="TRIAL">Trial</option>
+            <option value="PAID">Paid</option>
+            <option value="DUE">Due</option>
+            <option value="OVERDUE">Overdue</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+
           <button className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover" type="submit">
             {language === "AR" ? "تطبيق" : "Apply"}
           </button>
@@ -126,44 +221,194 @@ export default async function BusinessOwnersPage({
       <section aria-label={copy.title} className="mt-5 space-y-3">
         {owners.length === 0 ? (
           <Card><p className="text-sm text-foreground-muted">{copy.none}</p></Card>
-        ) : owners.map((owner) => {
-          const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" ");
-          const business = owner.business;
-          return (
-            <Card key={owner.id} className="p-0 overflow-hidden">
-              <div className="grid gap-4 p-5 lg:grid-cols-[minmax(14rem,1.3fr)_minmax(12rem,1fr)_repeat(3,minmax(6rem,.55fr))_minmax(7rem,.6fr)_auto] lg:items-center">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-sm font-bold text-primary">{owner.firstName.slice(0, 1).toUpperCase()}</span>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-foreground">{ownerName}</p>
-                      <p dir="ltr" className="truncate text-xs text-foreground-subtle">{owner.email}</p>
+        ) : (
+          owners.map((owner) => {
+            const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" ");
+            const business = owner.business;
+
+            if (!business) {
+              return (
+                <Card key={owner.id}>
+                  <p className="font-semibold text-foreground">{ownerName || owner.email}</p>
+                  <p dir="ltr" className="text-sm text-foreground-subtle">{owner.email}</p>
+                </Card>
+              );
+            }
+
+            const derivedState = derivePaymentState({
+              paymentStatus: business.paymentStatus,
+              nextPaymentDate: business.nextPaymentDate,
+              gracePeriodDays: business.gracePeriodDays,
+            });
+            const active = business.isActive && owner.isActive;
+            const latestActivity = business.transactions[0]?.createdAt ?? null;
+
+            return (
+              <Card key={owner.id} className="overflow-hidden p-0">
+                <div className="grid gap-5 p-5 xl:grid-cols-[minmax(15rem,1.3fr)_minmax(15rem,1fr)_minmax(15rem,1fr)_auto] xl:items-center">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-sm font-bold text-primary">
+                        {owner.firstName.slice(0, 1).toUpperCase()}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-foreground">{ownerName}</p>
+                        <p dir="ltr" className="truncate text-xs text-foreground-subtle">{owner.email}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Badge variant={active ? "success" : "neutral"}>{active ? copy.active : copy.inactive}</Badge>
+                          <Badge variant={paymentBadgeVariant(derivedState)}>{derivedState.replace("_", " ")}</Badge>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-foreground">{business.name}</p>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <Metric icon={<Users size={14} />} label={copy.customers} value={business._count.customers} number={number} />
+                      <Metric icon={<Users size={14} />} label={copy.team} value={business._count.users} number={number} />
+                      <Metric icon={<Building2 size={14} />} label={copy.branches} value={business._count.branches} number={number} />
+                    </div>
+                  </div>
+
+                  <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-foreground-subtle">
+                      <WalletCards size={14} aria-hidden="true" />
+                      {copy.billing}
+                    </div>
+                    <p className="mt-2 font-bold text-foreground">
+                      {formatMoneyMinor(business.subscriptionAmountMinor, business.billingCurrency || business.currency, locale)}
+                    </p>
+                    <p className="mt-1 text-xs text-foreground-muted">
+                      {intervalLabel(business.billingInterval, business.billingCustomDays)}
+                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-foreground-muted">
+                      <CalendarClock size={14} aria-hidden="true" />
+                      {business.nextPaymentDate ? date.format(business.nextPaymentDate) : "—"}
+                    </div>
+                    <p className="mt-2 text-xs text-foreground-subtle">
+                      {copy.lastActivity}: {latestActivity ? date.format(latestActivity) : copy.never}
+                    </p>
+                  </div>
+
+                  <Link
+                    href={`/businesses/${business.slug}`}
+                    className="inline-flex min-h-10 items-center justify-center rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground hover:border-primary hover:text-primary"
+                  >
+                    {copy.open}
+                  </Link>
                 </div>
-                <div className="min-w-0">
-                  {business ? <>
-                    <p className="truncate text-sm font-semibold text-foreground">{business.name}</p>
-                    <Badge className="mt-1" variant={business.isActive && owner.isActive ? "success" : "neutral"}>{business.isActive && owner.isActive ? copy.active : copy.inactive}</Badge>
-                  </> : <span className="text-sm text-foreground-subtle">—</span>}
-                </div>
-                <Metric icon={<Users size={15} />} label={copy.customers} value={business?._count.customers ?? 0} number={number} />
-                <Metric icon={<Users size={15} />} label={copy.team} value={business?._count.users ?? 0} number={number} />
-                <Metric icon={<Building2 size={15} />} label={copy.branches} value={business?._count.branches ?? 0} number={number} />
-                <div>
-                  <p className="text-xs font-medium text-foreground-subtle">{copy.created}</p>
-                  <p className="mt-1 text-sm font-semibold text-foreground">{date.format(owner.createdAt)}</p>
-                </div>
-                {business ? <Link href={`/businesses/${business.slug}`} className="inline-flex min-h-10 items-center justify-center rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground hover:border-primary hover:text-primary">{copy.open}</Link> : null}
-              </div>
-            </Card>
-          );
-        })}
+
+                <details className="border-t border-border bg-surface-subtle/60">
+                  <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-primary">
+                    {copy.manage}
+                  </summary>
+                  <div className="grid gap-5 border-t border-border bg-surface p-5 xl:grid-cols-[minmax(0,1fr)_auto]">
+                    <form action={updateBusinessBillingAction.bind(null, business.id)} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <label className="text-xs font-semibold text-foreground-muted">
+                        Billing cycle
+                        <select name="billingInterval" defaultValue={business.billingInterval} className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm">
+                          <option value="FIFTEEN_DAYS">Every 15 days</option>
+                          <option value="MONTHLY">Monthly</option>
+                          <option value="QUARTERLY">Every 3 months</option>
+                          <option value="SEMIANNUAL">Every 6 months</option>
+                          <option value="ANNUAL">Annual</option>
+                          <option value="CUSTOM">Custom</option>
+                        </select>
+                      </label>
+                      <Field name="billingCustomDays" label="Custom days" type="number" defaultValue={business.billingCustomDays?.toString() ?? ""} />
+                      <Field name="subscriptionAmount" label="Amount" inputMode="decimal" defaultValue={business.subscriptionAmountMinor === null ? "" : (business.subscriptionAmountMinor / 100).toFixed(2)} />
+                      <Field name="billingCurrency" label="Currency" defaultValue={business.billingCurrency || business.currency || "EGP"} />
+
+                      <Field name="subscriptionStartDate" label="Start date" type="date" defaultValue={dateInputValue(business.subscriptionStartDate)} />
+                      <Field name="nextPaymentDate" label="Next payment" type="date" defaultValue={dateInputValue(business.nextPaymentDate)} />
+                      <Field name="lastPaymentDate" label="Last payment" type="date" defaultValue={dateInputValue(business.lastPaymentDate)} />
+                      <label className="text-xs font-semibold text-foreground-muted">
+                        Payment status
+                        <select name="paymentStatus" defaultValue={business.paymentStatus} className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm">
+                          <option value="TRIAL">Trial</option>
+                          <option value="PAID">Paid</option>
+                          <option value="DUE">Due</option>
+                          <option value="OVERDUE">Overdue</option>
+                          <option value="SUSPENDED">Suspended</option>
+                        </select>
+                      </label>
+
+                      <Field name="gracePeriodDays" label="Grace days" type="number" defaultValue={business.gracePeriodDays.toString()} />
+                      <Field name="paymentMethod" label="Payment method" defaultValue={business.paymentMethod ?? ""} />
+                      <Field name="billingNotes" label="Payment notes" defaultValue={business.billingNotes ?? ""} />
+                      <Field name="adminNotes" label="Internal admin notes" defaultValue={business.adminNotes ?? ""} />
+
+                      <button type="submit" className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover md:col-span-2 xl:col-span-4">
+                        {copy.save}
+                      </button>
+                    </form>
+
+                    <div className="flex min-w-52 flex-col gap-2">
+                      <form action={recordBusinessPaymentAction.bind(null, business.id)}>
+                        <button type="submit" className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 text-sm font-semibold text-success">
+                          {copy.paid}
+                        </button>
+                      </form>
+                      <form action={setBusinessPlatformStatusAction.bind(null, business.id, !business.isActive)}>
+                        <button type="submit" className={`min-h-11 w-full rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold ${business.isActive ? "border border-danger/30 bg-danger-subtle text-danger" : "border border-success/30 bg-success-subtle text-success"}`}>
+                          {business.isActive ? copy.suspend : copy.reactivate}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </details>
+              </Card>
+            );
+          })
+        )}
       </section>
     </ListPageTemplate>
   );
 }
 
-function Metric({ icon, label, value, number }: { icon: React.ReactNode; label: string; value: number; number: Intl.NumberFormat }) {
-  return <div><p className="flex items-center gap-1.5 text-xs font-medium text-foreground-subtle">{icon}{label}</p><p dir="ltr" className="mt-1 lf-type-numeric text-base font-bold text-foreground">{number.format(value)}</p></div>;
+function Metric({
+  icon,
+  label,
+  value,
+  number,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  number: Intl.NumberFormat;
+}) {
+  return (
+    <div>
+      <p className="flex items-center gap-1 text-[11px] font-medium text-foreground-subtle">{icon}{label}</p>
+      <p dir="ltr" className="mt-1 lf-type-numeric text-sm font-bold text-foreground">{number.format(value)}</p>
+    </div>
+  );
+}
+
+function Field({
+  name,
+  label,
+  defaultValue,
+  type = "text",
+  inputMode,
+}: {
+  name: string;
+  label: string;
+  defaultValue: string;
+  type?: string;
+  inputMode?: "decimal" | "numeric";
+}) {
+  return (
+    <label className="text-xs font-semibold text-foreground-muted">
+      {label}
+      <input
+        name={name}
+        type={type}
+        inputMode={inputMode}
+        defaultValue={defaultValue}
+        className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm text-foreground"
+      />
+    </label>
+  );
 }

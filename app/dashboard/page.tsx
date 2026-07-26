@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ListPageTemplate, PageHeader, StatCard, StatGrid } from "@/components/page-layout";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { derivePaymentState, formatMoneyMinor, monthlyRecurringMinor } from "@/lib/billing/subscription";
 import { getGlobalDashboardMode } from "@/lib/dashboard/overview";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -47,6 +48,10 @@ function adminCopy(language: "AR" | "EN") {
         branches: "الفروع",
         activityToday: "عمليات الولاء اليوم",
         redemptionsToday: "استبدالات اليوم",
+        overdue: "اشتراكات متأخرة",
+        dueSoon: "دفع خلال 7 أيام",
+        recurring: "قيمة شهرية متكررة",
+        suspendedSubscriptions: "اشتراكات موقوفة",
         recentBusinesses: "أحدث الأنشطة",
         recentOwners: "أحدث ملاك الأنشطة",
         viewAll: "عرض الكل",
@@ -70,6 +75,10 @@ function adminCopy(language: "AR" | "EN") {
         branches: "Branches",
         activityToday: "Loyalty actions today",
         redemptionsToday: "Redemptions today",
+        overdue: "Overdue subscriptions",
+        dueSoon: "Due in 7 days",
+        recurring: "Monthly recurring value",
+        suspendedSubscriptions: "Suspended subscriptions",
         recentBusinesses: "Recent businesses",
         recentOwners: "Recent business owners",
         viewAll: "View all",
@@ -118,6 +127,7 @@ export default async function DashboardPage() {
       redemptionsToday,
       recentBusinesses,
       recentOwners,
+      billingBusinesses,
     ] = await Promise.all([
       prisma.business.count(),
       prisma.business.count({ where: { isActive: true } }),
@@ -138,7 +148,44 @@ export default async function DashboardPage() {
         take: 5,
         select: { id: true, firstName: true, lastName: true, email: true, isActive: true, createdAt: true, business: { select: { name: true, slug: true, isActive: true } } },
       }),
+      prisma.business.findMany({
+        select: {
+          paymentStatus: true,
+          nextPaymentDate: true,
+          gracePeriodDays: true,
+          subscriptionAmountMinor: true,
+          billingCurrency: true,
+          billingInterval: true,
+          billingCustomDays: true,
+        },
+      }),
     ]);
+
+    const billingStates = billingBusinesses.map((business) => ({
+      ...business,
+      derivedState: derivePaymentState({
+        paymentStatus: business.paymentStatus,
+        nextPaymentDate: business.nextPaymentDate,
+        gracePeriodDays: business.gracePeriodDays,
+      }),
+    }));
+    const overdueSubscriptions = billingStates.filter((business) => business.derivedState === "OVERDUE").length;
+    const dueSoonSubscriptions = billingStates.filter((business) => business.derivedState === "DUE_SOON" || business.derivedState === "DUE").length;
+    const suspendedSubscriptions = billingStates.filter((business) => business.derivedState === "SUSPENDED").length;
+    const recurringByCurrency = billingStates.reduce<Record<string, number>>((totals, business) => {
+      const currency = business.billingCurrency || "EGP";
+      totals[currency] = (totals[currency] ?? 0) + monthlyRecurringMinor(
+        business.subscriptionAmountMinor,
+        business.billingInterval,
+        business.billingCustomDays,
+      );
+      return totals;
+    }, {});
+    const recurringSummary = Object.entries(recurringByCurrency)
+      .filter(([, value]) => value > 0)
+      .slice(0, 2)
+      .map(([currency, value]) => formatMoneyMinor(value, currency, locale))
+      .join(" · ") || "—";
 
     return (
       <ListPageTemplate
@@ -150,6 +197,13 @@ export default async function DashboardPage() {
           <StatCard label={dictionary.owners} value={formatter.format(ownerCount)} supportingText={dictionary.manageOwners} status="neutral" icon={<UserCog size={18} />} />
           <StatCard label={dictionary.customers} value={formatter.format(customerCount)} supportingText={dictionary.businesses} status="success" icon={<Users size={18} />} />
           <StatCard label={dictionary.activityToday} value={formatter.format(activityToday)} supportingText={`${formatter.format(redemptionsToday)} ${dictionary.redemptionsToday}`} status="neutral" />
+        </StatGrid>
+
+        <StatGrid className="mt-4">
+          <StatCard label={dictionary.overdue} value={formatter.format(overdueSubscriptions)} supportingText={dictionary.manageOwners} status={overdueSubscriptions ? "danger" : "neutral"} />
+          <StatCard label={dictionary.dueSoon} value={formatter.format(dueSoonSubscriptions)} supportingText={dictionary.manageOwners} status={dueSoonSubscriptions ? "warning" : "neutral"} />
+          <StatCard label={dictionary.recurring} value={recurringSummary} supportingText={dictionary.businesses} status="success" />
+          <StatCard label={dictionary.suspendedSubscriptions} value={formatter.format(suspendedSubscriptions)} supportingText={dictionary.manageOwners} status="neutral" />
         </StatGrid>
 
         <section className="mt-6 grid gap-6 xl:grid-cols-2">

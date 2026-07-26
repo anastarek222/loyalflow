@@ -19,6 +19,7 @@ type Props = {
 const steps = [
   "Business",
   "Owner",
+  "Billing",
   "Loyalty",
   "Branding",
   "Review",
@@ -41,6 +42,19 @@ type ReviewData = {
   ownerLastName: string;
   ownerEmail: string;
   ownerPhone: string;
+
+  billingInterval: string;
+  billingCustomDays: string;
+  subscriptionStartDate: string;
+  nextPaymentDate: string;
+  lastPaymentDate: string;
+  subscriptionAmount: string;
+  billingCurrency: string;
+  paymentStatus: string;
+  gracePeriodDays: string;
+  paymentMethod: string;
+  billingNotes: string;
+  adminNotes: string;
 
   loyaltyMode: string;
   unitName: string;
@@ -93,6 +107,24 @@ const fontLabels: Record<
   INTER: "Inter",
   CAIRO: "Cairo",
   POPPINS: "Poppins",
+};
+
+
+const billingIntervalLabels: Record<string, string> = {
+  FIFTEEN_DAYS: "Every 15 days",
+  MONTHLY: "Monthly",
+  QUARTERLY: "Every 3 months",
+  SEMIANNUAL: "Every 6 months",
+  ANNUAL: "Annual",
+  CUSTOM: "Custom",
+};
+
+const paymentStatusLabels: Record<string, string> = {
+  TRIAL: "Trial",
+  PAID: "Paid",
+  DUE: "Due",
+  OVERDUE: "Overdue",
+  SUSPENDED: "Suspended",
 };
 
 function getValue(
@@ -206,6 +238,19 @@ function getReviewData(
       formData,
       "ownerPhone"
     ),
+
+    billingInterval: getValue(formData, "billingInterval"),
+    billingCustomDays: getValue(formData, "billingCustomDays"),
+    subscriptionStartDate: getValue(formData, "subscriptionStartDate"),
+    nextPaymentDate: getValue(formData, "nextPaymentDate"),
+    lastPaymentDate: getValue(formData, "lastPaymentDate"),
+    subscriptionAmount: getValue(formData, "subscriptionAmount"),
+    billingCurrency: getValue(formData, "billingCurrency"),
+    paymentStatus: getValue(formData, "paymentStatus"),
+    gracePeriodDays: getValue(formData, "gracePeriodDays"),
+    paymentMethod: getValue(formData, "paymentMethod"),
+    billingNotes: getValue(formData, "billingNotes"),
+    adminNotes: getValue(formData, "adminNotes"),
 
     loyaltyMode: getValue(
       formData,
@@ -397,6 +442,28 @@ export default function BusinessSetupWizard({
     }
 
     if (currentStep === 2) {
+      const interval = getValue(formData, "billingInterval");
+      const customDays = getValue(formData, "billingCustomDays");
+      const amount = getValue(formData, "subscriptionAmount");
+      const nextPaymentDate = getValue(formData, "nextPaymentDate");
+
+      if (
+        interval === "CUSTOM" &&
+        (!/^\d+$/.test(customDays) || Number(customDays) < 1 || Number(customDays) > 730)
+      ) {
+        return "Custom billing interval must be between 1 and 730 days.";
+      }
+
+      if (amount && !/^\d+(?:\.\d{1,2})?$/.test(amount)) {
+        return "Subscription amount must be a valid non-negative amount with up to two decimals.";
+      }
+
+      if (nextPaymentDate && !/^\d{4}-\d{2}-\d{2}$/.test(nextPaymentDate)) {
+        return "Next payment date must use YYYY-MM-DD.";
+      }
+    }
+
+    if (currentStep === 3) {
       const unitName =
         getValue(
           formData,
@@ -454,7 +521,7 @@ export default function BusinessSetupWizard({
       }
     }
 
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       const primaryColor =
         getValue(
           formData,
@@ -509,7 +576,7 @@ export default function BusinessSetupWizard({
 
     setValidationError("");
 
-    if (step === 3) {
+    if (step === 4) {
       setReviewData(
         getReviewData(
           formData,
@@ -548,7 +615,7 @@ export default function BusinessSetupWizard({
     <form
       ref={formRef}
       action={action}
-      className="mt-6 space-y-6"
+      className="mt-6 space-y-5"
     >
       <div className="mb-6">
         <div className="flex items-center justify-between gap-2 overflow-x-auto">
@@ -571,10 +638,10 @@ export default function BusinessSetupWizard({
                 }}
                 className={`whitespace-nowrap text-xs font-bold ${
                   index === step
-                    ? "text-primary"
+                    ? "text-violet-600"
                     : index < step
-                      ? "text-foreground-muted"
-                      : "cursor-default text-foreground-subtle"
+                      ? "text-slate-700"
+                      : "cursor-default text-slate-400"
                 }`}
               >
                 {index + 1}.{" "}
@@ -584,9 +651,9 @@ export default function BusinessSetupWizard({
           )}
         </div>
 
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-subtle">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-2 rounded-full bg-primary-subtle transition-all"
+            className="h-2 rounded-full bg-violet-600 transition-all"
             style={{
               width:
                 `${
@@ -603,7 +670,7 @@ export default function BusinessSetupWizard({
       {validationError ? (
         <div
           role="alert"
-          className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-sm font-semibold text-danger"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
         >
           {validationError}
         </div>
@@ -622,7 +689,7 @@ export default function BusinessSetupWizard({
               Business Information
             </h3>
 
-            <p className="mt-1 text-sm text-foreground-subtle">
+            <p className="mt-1 text-sm text-slate-500">
               Basic information used to configure the business.
             </p>
           </div>
@@ -633,28 +700,28 @@ export default function BusinessSetupWizard({
             minLength={2}
             maxLength={80}
             placeholder="Business name"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
             name="contactPhone"
             placeholder="Business phone"
             maxLength={25}
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
             name="industry"
             placeholder="Industry"
             maxLength={100}
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <select
               name="currency"
               defaultValue="EGP"
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             >
               <option value="EGP">
                 EGP — Egyptian Pound
@@ -680,7 +747,7 @@ export default function BusinessSetupWizard({
               name="timezone"
               defaultValue="Africa/Cairo"
               placeholder="Timezone"
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
           </div>
 
@@ -691,7 +758,7 @@ export default function BusinessSetupWizard({
             max="100000"
             step="1"
             placeholder="Number of employees"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
@@ -699,7 +766,7 @@ export default function BusinessSetupWizard({
             type="email"
             placeholder="Business email"
             maxLength={255}
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -707,14 +774,14 @@ export default function BusinessSetupWizard({
               name="country"
               placeholder="Country"
               maxLength={100}
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
 
             <input
               name="city"
               placeholder="City"
               maxLength={100}
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
           </div>
 
@@ -723,14 +790,14 @@ export default function BusinessSetupWizard({
             type="url"
             placeholder="https://example.com"
             maxLength={300}
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
             name="taxNumber"
             placeholder="Tax number (optional)"
             maxLength={100}
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
         </section>
       </div>
@@ -748,7 +815,7 @@ export default function BusinessSetupWizard({
               Owner Account
             </h3>
 
-            <p className="mt-1 text-sm text-foreground-subtle">
+            <p className="mt-1 text-sm text-slate-500">
               This account will become the business owner.
             </p>
           </div>
@@ -760,14 +827,14 @@ export default function BusinessSetupWizard({
               minLength={2}
               maxLength={80}
               placeholder="First name"
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
 
             <input
               name="ownerLastName"
               maxLength={80}
               placeholder="Last name"
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
           </div>
 
@@ -777,7 +844,7 @@ export default function BusinessSetupWizard({
             required
             maxLength={255}
             placeholder="Owner email"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
@@ -786,7 +853,7 @@ export default function BusinessSetupWizard({
             inputMode="tel"
             maxLength={25}
             placeholder="Owner phone (optional)"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
@@ -799,10 +866,10 @@ export default function BusinessSetupWizard({
             maxLength={100}
             autoComplete="new-password"
             placeholder={`Password — minimum ${MIN_PASSWORD_LENGTH} characters`}
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
-          <p className="text-xs text-foreground-subtle">
+          <p className="text-xs text-slate-500">
             Minimum{" "}
             {MIN_PASSWORD_LENGTH}{" "}
             characters. The password
@@ -822,10 +889,97 @@ export default function BusinessSetupWizard({
         <section className="space-y-4">
           <div>
             <h3 className="text-lg font-black">
+              Subscription & Billing
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Set the commercial cycle and next payment date for this business.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold text-slate-700">
+              Billing cycle
+              <select name="billingInterval" defaultValue="MONTHLY" className="mt-2 w-full rounded-xl border px-4 py-3">
+                <option value="FIFTEEN_DAYS">Every 15 days</option>
+                <option value="MONTHLY">Monthly</option>
+                <option value="QUARTERLY">Every 3 months</option>
+                <option value="SEMIANNUAL">Every 6 months</option>
+                <option value="ANNUAL">Annual</option>
+                <option value="CUSTOM">Custom days</option>
+              </select>
+            </label>
+
+            <label className="text-sm font-semibold text-slate-700">
+              Custom interval days
+              <input name="billingCustomDays" type="number" min="1" max="730" step="1" placeholder="Only for Custom" className="mt-2 w-full rounded-xl border px-4 py-3" />
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold text-slate-700">
+              Subscription amount
+              <input name="subscriptionAmount" inputMode="decimal" placeholder="1500.00" className="mt-2 w-full rounded-xl border px-4 py-3" />
+            </label>
+            <label className="text-sm font-semibold text-slate-700">
+              Billing currency
+              <select name="billingCurrency" defaultValue="EGP" className="mt-2 w-full rounded-xl border px-4 py-3">
+                <option value="EGP">EGP</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="SAR">SAR</option><option value="AED">AED</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <label className="text-sm font-semibold text-slate-700">
+              Subscription start
+              <input name="subscriptionStartDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" />
+            </label>
+            <label className="text-sm font-semibold text-slate-700">
+              Next payment
+              <input name="nextPaymentDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" />
+            </label>
+            <label className="text-sm font-semibold text-slate-700">
+              Last payment
+              <input name="lastPaymentDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" />
+            </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold text-slate-700">
+              Payment status
+              <select name="paymentStatus" defaultValue="TRIAL" className="mt-2 w-full rounded-xl border px-4 py-3">
+                <option value="TRIAL">Trial</option>
+                <option value="PAID">Paid</option>
+                <option value="DUE">Due</option>
+                <option value="OVERDUE">Overdue</option>
+                <option value="SUSPENDED">Suspended</option>
+              </select>
+            </label>
+            <label className="text-sm font-semibold text-slate-700">
+              Grace period (days)
+              <input name="gracePeriodDays" type="number" min="0" max="60" step="1" defaultValue="3" className="mt-2 w-full rounded-xl border px-4 py-3" />
+            </label>
+          </div>
+
+          <input name="paymentMethod" maxLength={80} placeholder="Payment method / channel (optional)" className="w-full rounded-xl border px-4 py-3" />
+          <textarea name="billingNotes" maxLength={1000} rows={2} placeholder="Payment notes (optional)" className="w-full rounded-xl border px-4 py-3" />
+          <textarea name="adminNotes" maxLength={2000} rows={2} placeholder="Internal admin notes — never shown to the business owner" className="w-full rounded-xl border px-4 py-3" />
+        </section>
+      </div>
+
+      <div
+        className={
+          step === 3
+            ? "block"
+            : "hidden"
+        }
+      >
+        <section className="space-y-4">
+          <div>
+            <h3 className="text-lg font-black">
               Loyalty Setup
             </h3>
 
-            <p className="mt-1 text-sm text-foreground-subtle">
+            <p className="mt-1 text-sm text-slate-500">
               Configure how customers earn and redeem rewards.
             </p>
           </div>
@@ -833,7 +987,7 @@ export default function BusinessSetupWizard({
           <select
             name="loyaltyMode"
             defaultValue="VISITS"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           >
             <option value="VISITS">
               Visits
@@ -852,7 +1006,7 @@ export default function BusinessSetupWizard({
             defaultValue="زيارة"
             maxLength={30}
             placeholder="Unit name"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <input
@@ -862,7 +1016,7 @@ export default function BusinessSetupWizard({
             maxLength={100}
             defaultValue="هدية مجانية"
             placeholder="Reward name"
-            className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+            className="w-full rounded-xl border px-4 py-3"
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -875,7 +1029,7 @@ export default function BusinessSetupWizard({
               required
               defaultValue="5"
               placeholder="Reward threshold"
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
 
             <input
@@ -887,7 +1041,7 @@ export default function BusinessSetupWizard({
               required
               defaultValue="1"
               placeholder="Earn amount"
-              className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="w-full rounded-xl border px-4 py-3"
             />
           </div>
 
@@ -896,18 +1050,18 @@ export default function BusinessSetupWizard({
 
       <div
         className={
-          step === 3
+          step === 4
             ? "block"
             : "hidden"
         }
       >
-        <section className="space-y-6">
+        <section className="space-y-5">
           <div>
             <h3 className="text-lg font-black">
               Branding
             </h3>
 
-            <p className="mt-1 text-sm text-foreground-subtle">
+            <p className="mt-1 text-sm text-slate-500">
               Choose the initial visual identity. It can be changed later.
             </p>
           </div>
@@ -915,7 +1069,7 @@ export default function BusinessSetupWizard({
           <div>
             <label
               htmlFor="logoFile"
-              className="block text-sm font-semibold text-foreground-muted"
+              className="block text-sm font-semibold text-slate-700"
             >
               Logo (optional)
             </label>
@@ -955,10 +1109,10 @@ export default function BusinessSetupWizard({
                 };
                 reader.readAsDataURL(file);
               }}
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border bg-white px-4 py-4 text-foreground-muted file:mr-4 file:rounded-[var(--lf-radius-input)] file:border-0 file:bg-foreground file:px-4 file:py-2 file:font-semibold file:text-white"
+              className="mt-2 w-full rounded-xl border bg-white px-4 py-3 text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:font-semibold file:text-white"
             />
 
-            <p className="mt-1 text-xs text-foreground-subtle">
+            <p className="mt-1 text-xs text-slate-500">
               PNG, JPEG, or WebP — up to 500KB.
             </p>
           </div>
@@ -966,7 +1120,7 @@ export default function BusinessSetupWizard({
           <div>
             <label
               htmlFor="logoUrl"
-              className="block text-sm font-semibold text-foreground-muted"
+              className="block text-sm font-semibold text-slate-700"
             >
               Or use a logo image URL
             </label>
@@ -988,38 +1142,38 @@ export default function BusinessSetupWizard({
                 }
               }}
               placeholder="https://example.com/logo.png"
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="mt-2 w-full rounded-xl border px-4 py-3"
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold text-foreground-muted">
+            <label className="text-sm font-semibold text-slate-700">
               Primary color
               <input
                 name="primaryColor"
                 type="color"
                 defaultValue="#111827"
-                className="mt-2 h-12 w-full rounded-[var(--lf-radius-input)] border bg-white p-1"
+                className="mt-2 h-12 w-full rounded-xl border bg-white p-1"
               />
             </label>
 
-            <label className="text-sm font-semibold text-foreground-muted">
+            <label className="text-sm font-semibold text-slate-700">
               Secondary color
               <input
                 name="secondaryColor"
                 type="color"
                 defaultValue="#ffffff"
-                className="mt-2 h-12 w-full rounded-[var(--lf-radius-input)] border bg-white p-1"
+                className="mt-2 h-12 w-full rounded-xl border bg-white p-1"
               />
             </label>
           </div>
 
-          <label className="block text-sm font-semibold text-foreground-muted">
+          <label className="block text-sm font-semibold text-slate-700">
             Theme
             <select
               name="themePreset"
               defaultValue="DEFAULT"
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="mt-2 w-full rounded-xl border px-4 py-3"
             >
               <option value="DEFAULT">
                 Default
@@ -1042,12 +1196,12 @@ export default function BusinessSetupWizard({
             </select>
           </label>
 
-          <label className="block text-sm font-semibold text-foreground-muted">
+          <label className="block text-sm font-semibold text-slate-700">
             Card layout
             <select
               name="cardStyle"
               defaultValue="CLASSIC"
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="mt-2 w-full rounded-xl border px-4 py-3"
             >
               <option value="CLASSIC">
                 Classic
@@ -1061,12 +1215,12 @@ export default function BusinessSetupWizard({
             </select>
           </label>
 
-          <label className="block text-sm font-semibold text-foreground-muted">
+          <label className="block text-sm font-semibold text-slate-700">
             Font
             <select
               name="fontFamily"
               defaultValue="INTER"
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+              className="mt-2 w-full rounded-xl border px-4 py-3"
             >
               <option value="INTER">
                 Inter
@@ -1084,7 +1238,7 @@ export default function BusinessSetupWizard({
 
       <div
         className={
-          step === 4
+          step === 5
             ? "block"
             : "hidden"
         }
@@ -1095,7 +1249,7 @@ export default function BusinessSetupWizard({
               Review & Create
             </h3>
 
-            <p className="mt-1 text-sm text-foreground-subtle">
+            <p className="mt-1 text-sm text-slate-500">
               Review the setup before creating the business.
             </p>
           </div>
@@ -1187,9 +1341,27 @@ export default function BusinessSetupWizard({
               />
 
               <ReviewSection
+                title="Billing"
+                onEdit={() => editStep(2)}
+                rows={[
+                  ["Cycle", billingIntervalLabels[reviewData.billingInterval] ?? reviewData.billingInterval],
+                  ["Custom days", reviewData.billingCustomDays],
+                  ["Amount", reviewData.subscriptionAmount ? `${reviewData.subscriptionAmount} ${reviewData.billingCurrency}` : ""],
+                  ["Status", paymentStatusLabels[reviewData.paymentStatus] ?? reviewData.paymentStatus],
+                  ["Start date", reviewData.subscriptionStartDate],
+                  ["Next payment", reviewData.nextPaymentDate],
+                  ["Last payment", reviewData.lastPaymentDate],
+                  ["Grace days", reviewData.gracePeriodDays],
+                  ["Payment method", reviewData.paymentMethod],
+                  ["Payment notes", reviewData.billingNotes],
+                  ["Internal notes", reviewData.adminNotes],
+                ]}
+              />
+
+              <ReviewSection
                 title="Loyalty"
                 onEdit={() =>
-                  editStep(2)
+                  editStep(3)
                 }
                 rows={[
                   [
@@ -1221,7 +1393,7 @@ export default function BusinessSetupWizard({
               <ReviewSection
                 title="Branding"
                 onEdit={() =>
-                  editStep(3)
+                  editStep(4)
                 }
                 rows={[
                   [
@@ -1261,32 +1433,32 @@ export default function BusinessSetupWizard({
               />
 
               {reviewData.logoPreview ? (
-                <div className="flex items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <img
                     src={reviewData.logoPreview}
                     alt="Business logo preview"
-                    className="h-12 w-12 rounded-[var(--lf-radius-input)] border border-border bg-white object-contain p-1"
+                    className="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1"
                   />
-                  <span className="text-sm font-medium text-foreground-muted">
+                  <span className="text-sm font-medium text-slate-700">
                     Logo preview
                   </span>
                 </div>
               ) : null}
             </div>
           ) : (
-            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4 text-sm text-foreground-subtle">
+            <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
               Complete the previous steps to generate the review.
             </p>
           )}
         </section>
       </div>
 
-      <div className="flex items-center justify-between gap-4 pt-2">
+      <div className="flex items-center justify-between gap-3 pt-2">
         {step > 0 ? (
           <button
             type="button"
             onClick={goBack}
-            className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted transition hover:bg-surface-subtle"
+            className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Back
           </button>
@@ -1299,14 +1471,14 @@ export default function BusinessSetupWizard({
           <button
             type="button"
             onClick={goNext}
-            className="ml-auto rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle"
+            className="ml-auto rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
           >
             Next
           </button>
         ) : (
           <button
             type="submit"
-            className="ml-auto rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
+            className="ml-auto rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
           >
             Create Business
           </button>
@@ -1328,16 +1500,16 @@ function ReviewSection({
   onEdit: () => void;
 }) {
   return (
-    <section className="rounded-[var(--lf-radius-card)] border border-border bg-white p-4">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between gap-4">
-        <h4 className="font-black text-foreground">
+        <h4 className="font-black text-slate-950">
           {title}
         </h4>
 
         <button
           type="button"
           onClick={onEdit}
-          className="text-sm font-bold text-primary hover:text-primary"
+          className="text-sm font-bold text-violet-600 hover:text-violet-800"
         >
           Edit
         </button>
@@ -1348,15 +1520,15 @@ function ReviewSection({
           ([label, value]) => (
             <div
               key={label}
-              className="flex items-start justify-between gap-6 border-b border-border pb-2 last:border-0 last:pb-0"
+              className="flex items-start justify-between gap-5 border-b border-slate-100 pb-2 last:border-0 last:pb-0"
             >
-              <dt className="text-sm text-foreground-subtle">
+              <dt className="text-sm text-slate-500">
                 {label}
               </dt>
 
               <dd
                 dir="auto"
-                className="max-w-[65%] break-words text-right text-sm font-semibold text-foreground"
+                className="max-w-[65%] break-words text-right text-sm font-semibold text-slate-900"
               >
                 {value || "—"}
               </dd>

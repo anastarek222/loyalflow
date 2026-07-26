@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { imageFileToDataUrl } from "@/lib/branding/image-data";
 import { businessCreationSchema } from "@/lib/business/creation-input";
+import { parseDateOnly, parseMoneyToMinor } from "@/lib/billing/subscription";
 import {
   createWithGeneratedSlug,
   optionalOwnerPhoneValue,
@@ -74,6 +75,19 @@ export async function createBusinessAction(formData: FormData) {
 
     fontFamily:
       formData.get("fontFamily") ?? "INTER",
+
+    billingInterval: formData.get("billingInterval") ?? "MONTHLY",
+    billingCustomDays: formData.get("billingCustomDays") || undefined,
+    subscriptionStartDate: formData.get("subscriptionStartDate") ?? "",
+    nextPaymentDate: formData.get("nextPaymentDate") ?? "",
+    lastPaymentDate: formData.get("lastPaymentDate") ?? "",
+    subscriptionAmount: formData.get("subscriptionAmount") ?? "",
+    billingCurrency: formData.get("billingCurrency") ?? formData.get("currency") ?? "EGP",
+    paymentStatus: formData.get("paymentStatus") ?? "TRIAL",
+    gracePeriodDays: formData.get("gracePeriodDays") ?? 3,
+    paymentMethod: formData.get("paymentMethod") ?? "",
+    billingNotes: formData.get("billingNotes") ?? "",
+    adminNotes: formData.get("adminNotes") ?? "",
   });
 
 
@@ -145,6 +159,22 @@ try {
 
             employeeCount:
               parsed.data.employeeCount,
+
+            billingInterval: parsed.data.billingInterval,
+            billingCustomDays:
+              parsed.data.billingInterval === "CUSTOM"
+                ? parsed.data.billingCustomDays ?? null
+                : null,
+            subscriptionStartDate: parseDateOnly(parsed.data.subscriptionStartDate),
+            nextPaymentDate: parseDateOnly(parsed.data.nextPaymentDate),
+            lastPaymentDate: parseDateOnly(parsed.data.lastPaymentDate),
+            subscriptionAmountMinor: parseMoneyToMinor(parsed.data.subscriptionAmount),
+            billingCurrency: parsed.data.billingCurrency || parsed.data.currency || "EGP",
+            paymentStatus: parsed.data.paymentStatus,
+            gracePeriodDays: parsed.data.gracePeriodDays,
+            paymentMethod: parsed.data.paymentMethod || null,
+            billingNotes: parsed.data.billingNotes || null,
+            adminNotes: parsed.data.adminNotes || null,
 
             loyaltyMode: parsed.data.loyaltyMode,
             unitName: parsed.data.unitName,

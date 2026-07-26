@@ -36,6 +36,19 @@ model Business {
   cardTerms              String?
   contactPhone           String?
 
+  billingInterval        BillingInterval @default(MONTHLY)
+  billingCustomDays      Int?
+  subscriptionStartDate  DateTime?
+  nextPaymentDate        DateTime?
+  lastPaymentDate        DateTime?
+  subscriptionAmountMinor Int?
+  billingCurrency        String?
+  paymentStatus          PaymentStatus   @default(TRIAL)
+  gracePeriodDays        Int             @default(3)
+  paymentMethod          String?
+  billingNotes           String?
+  adminNotes             String?
+
   industry      String?
   website       String?
   email         String?
@@ -538,6 +551,23 @@ enum LoyaltyMode {
   VISITS
   POINTS
   SALES_AMOUNT
+}
+
+enum BillingInterval {
+  FIFTEEN_DAYS
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+  CUSTOM
+}
+
+enum PaymentStatus {
+  TRIAL
+  PAID
+  DUE
+  OVERDUE
+  SUSPENDED
 }
 
 enum OfferEligibility {
