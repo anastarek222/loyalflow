@@ -2,7 +2,7 @@ import process from "node:process";
 
 import {
   EnvironmentValidationError,
-  validateRuntimeEnvironment,
+  validateProductionEnvironment,
 } from "@/lib/server/environment";
 
 type CheckResult = {
@@ -61,15 +61,12 @@ async function main() {
 
   let environment;
   try {
-    environment = validateRuntimeEnvironment({
-      ...process.env,
-      NODE_ENV: "production",
-    });
+    environment = validateProductionEnvironment(process.env);
 
     checks.push({
       name: "required production environment",
       ok: true,
-      detail: "DATABASE_URL, AUTH_SECRET and NEXT_PUBLIC_APP_URL are present and valid",
+      detail: "production identity, DATABASE_URL, AUTH_SECRET and NEXT_PUBLIC_APP_URL are present and valid",
     });
   } catch (error) {
     const detail =
@@ -109,6 +106,24 @@ async function main() {
         name: "database connectivity",
         ok: true,
         detail: safeDatabaseDescriptor(environment.databaseUrl),
+      });
+
+      const identity = await prisma.$queryRaw<Array<{ database: string }>>`
+        SELECT current_database() AS database
+      `;
+      const actualDatabase = identity[0]?.database ?? "";
+      const expectedDatabase = environment.productionDatabaseName ?? "";
+
+      checks.push({
+        name: "production database identity",
+        ok:
+          Boolean(expectedDatabase) &&
+          actualDatabase === expectedDatabase &&
+          !/(^|[_-])(test|dev|development|local|staging)([_-]|$)/i.test(actualDatabase),
+        detail:
+          actualDatabase === expectedDatabase
+            ? "matches LOYALFLOW_PRODUCTION_DATABASE"
+            : "does not match LOYALFLOW_PRODUCTION_DATABASE",
       });
     } catch {
       checks.push({

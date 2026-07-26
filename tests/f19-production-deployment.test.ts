@@ -15,6 +15,8 @@ test("F19 ships a secret-safe production environment template", () => {
   assert.match(envExample, /^DATABASE_URL=/m);
   assert.match(envExample, /^AUTH_SECRET=/m);
   assert.match(envExample, /^NEXT_PUBLIC_APP_URL=/m);
+  assert.match(envExample, /^LOYALFLOW_ENVIRONMENT="production"$/m);
+  assert.match(envExample, /^LOYALFLOW_PRODUCTION_DATABASE=/m);
   assert.match(envExample, /sslmode=verify-full/);
   assert.doesNotMatch(envExample, /loyalflow_test|neon\.tech/);
   assert.doesNotMatch(envExample, /sk-[A-Za-z0-9_-]{8,}/);
@@ -23,8 +25,8 @@ test("F19 ships a secret-safe production environment template", () => {
 test("F19 production verification validates runtime and probes the database", () => {
   const verifier = source("scripts/verify-production-readiness.ts");
 
-  assert.match(verifier, /validateRuntimeEnvironment/);
-  assert.match(verifier, /NODE_ENV:\s*"production"/);
+  assert.match(verifier, /validateProductionEnvironment/);
+  assert.match(verifier, /validateProductionEnvironment\(process\.env\)/);
   assert.match(verifier, /prisma\.\$queryRaw`SELECT 1`/);
   assert.match(verifier, /sslmode/);
   assert.match(verifier, /prisma\.\$disconnect/);

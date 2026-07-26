@@ -17,6 +17,8 @@
 - `DATABASE_URL`
 - `AUTH_SECRET`
 - `NEXT_PUBLIC_APP_URL`
+- `LOYALFLOW_ENVIRONMENT=production`
+- `LOYALFLOW_PRODUCTION_DATABASE`
 
 `NEXT_PUBLIC_APP_URL` must be the exact HTTPS origin with no trailing slash.
 
@@ -37,7 +39,13 @@ pnpm run db:validate
 pnpm run db:migrate:status
 ```
 
-Apply already-reviewed committed migrations only:
+Immediately before applying migrations, verify the exact production target:
+
+```bash
+pnpm run verify:production-db
+```
+
+Only after that passes, apply already-reviewed committed migrations:
 
 ```bash
 pnpm run db:migrate:deploy
@@ -56,8 +64,12 @@ prisma migrate reset
 With production environment variables loaded:
 
 ```bash
-pnpm run verify:production
+pnpm run release:production-preflight
 ```
+
+This runs the production environment/readiness verification, exact production
+database identity guard, and Prisma migration status without mutating the
+database.
 
 This checks:
 - required production environment
@@ -97,6 +109,12 @@ Expected:
 - `/api/health/live` → HTTP 200
 - `/api/health` → HTTP 200 when the database is reachable
 
+Then run the remote health smoke check:
+
+```bash
+pnpm run verify:production-smoke
+```
+
 Then verify:
 - login
 - Super Admin access
@@ -109,3 +127,23 @@ Then verify:
 If authentication, tenant isolation, loyalty writes, or readiness fails after
 deployment, roll back the application deployment first. Do not modify migration
 history to force a rollback.
+
+
+## Release identity
+
+Set `LOYALFLOW_RELEASE_SHA` to the Git commit being deployed. Health responses
+may expose only the safe shortened release SHA and environment name; they never
+expose database URLs, credentials, or secret values.
+
+## Production database identity rule
+
+`LOYALFLOW_PRODUCTION_DATABASE` must exactly match PostgreSQL
+`current_database()`. The production guard also rejects database names that
+look like test, development, local, or staging environments. This is a
+deliberate second confirmation before migration deployment.
+
+## Transport/security headers
+
+Production responses include HSTS in addition to the existing CSP,
+frame-ancestor denial, content-type, referrer, permissions, and opener-policy
+protections.

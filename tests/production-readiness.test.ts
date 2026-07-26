@@ -24,6 +24,9 @@ function productionEnvironment(
     DATABASE_URL: "postgresql://user:database-secret@db.example.test/loyalflow",
     AUTH_SECRET: "auth-secret-value",
     NEXT_PUBLIC_APP_URL: "https://app.example.test",
+    LOYALFLOW_ENVIRONMENT: "production",
+    LOYALFLOW_PRODUCTION_DATABASE: "loyalflow",
+    LOYALFLOW_RELEASE_SHA: "8c0362c",
     ...overrides,
   };
 }
@@ -63,6 +66,9 @@ test("optional integration configuration does not block a valid core runtime", (
 
   assert.equal(environment.googleSheetsConfigured, false);
   assert.equal(environment.appUrl, "https://app.example.test");
+  assert.equal(environment.environmentName, "production");
+  assert.equal(environment.productionDatabaseName, "loyalflow");
+  assert.equal(environment.releaseSha, "8c0362c");
 });
 
 test("server environment validation is not imported by Client Components", () => {

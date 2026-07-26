@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { checkReadiness } from "@/lib/health/readiness";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
+import { getPublicReleaseMetadata } from "@/lib/server/release";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,5 +36,5 @@ export async function GET() {
     );
   }
 
-  return noStoreJson(readiness.body, readiness.status);
+  return noStoreJson({ ...readiness.body, ...getPublicReleaseMetadata() }, readiness.status);
 }
