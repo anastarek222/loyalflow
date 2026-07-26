@@ -7,7 +7,15 @@ Use this checklist for the exact Git commit intended for release.
 ```bash
 git status
 git rev-parse HEAD
-pnpm run release:check
+pnpm run verify:release-checkpoint
+pnpm run release:final
+```
+
+Before production approval, include the final browser gate:
+
+```bash
+export UAT_FIXTURE_PASSWORD='<existing disposable UAT password>'
+pnpm run release:final:browser
 ```
 
 Required:
@@ -91,3 +99,9 @@ Do not rewrite or delete applied migration history as an application rollback.
 
 Use application rollback for release regressions. Database recovery is a
 separate, explicitly verified operation.
+
+
+## Final approval record
+
+Use `F19_RELEASE_APPROVAL_TEMPLATE.md` to record the exact Git SHA and gate
+results. Never include secret values in the approval record.

@@ -38,7 +38,12 @@
     "verify:production-db": "tsx scripts/verify-production-database-target.ts",
     "verify:production-smoke": "tsx scripts/verify-production-smoke.ts",
     "release:production-preflight": "pnpm run verify:production && pnpm run verify:production-db && pnpm run db:migrate:status",
-    "verify:operations": "tsx scripts/verify-operational-readiness.ts"
+    "verify:operations": "tsx scripts/verify-operational-readiness.ts",
+    "verify:release-checkpoint": "tsx scripts/verify-release-checkpoint.ts",
+    "release:manifest": "tsx scripts/print-release-manifest.ts",
+    "release:final": "tsx scripts/run-final-release-gate.ts",
+    "release:final:browser": "tsx scripts/run-final-release-gate.ts --browser",
+    "release:final:production-readonly": "pnpm run release:production-preflight && pnpm run verify:production-smoke && pnpm run verify:operations"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
