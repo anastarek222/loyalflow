@@ -207,7 +207,7 @@ export default async function BusinessesPage({
 
         <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
 
-          <section className="h-fit rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
+          <section id="add-business" className="h-fit scroll-mt-24 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
             <h2 className="text-xl font-bold text-foreground">
               Add new business
             </h2>

@@ -124,9 +124,9 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
         </Card> : <>
         {errorMessage ? <div role="alert" className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle p-4 font-semibold text-danger">{errorMessage}</div> : null}
 
-        <Card role="region" aria-label={copy.balance} className="p-6">
-          <p className="lf-type-supporting font-semibold text-primary">{copy.balance}</p>
-          <p className="mt-1 lf-type-display lf-type-numeric text-foreground">{customer.balance} {customer.business.unitName}</p>
+        <Card role="region" aria-label={copy.balance} className="border-primary/20 bg-primary-subtle/35 p-5 sm:p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">{copy.balance}</p>
+          <p className="mt-2 lf-type-display lf-type-numeric font-black text-foreground">{customer.balance} <span className="text-base font-semibold text-foreground-muted">{customer.business.unitName}</span></p>
         </Card>
 
         <section aria-label={copy.operationWorkspace}>
@@ -160,9 +160,9 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
         </section> : canRedeem ? <Inset className="mt-4 text-sm text-foreground-muted">{copy.noAvailableRewards}</Inset> : null}
         </section>
 
-        <section aria-label={copy.activity}>
-          <SectionHeader title={copy.activity} />
-          {customer.transactions.length ? <div className="mt-4 space-y-4">{customer.transactions.map((transaction) => {
+        <details className="rounded-[var(--lf-radius-card)] border border-border bg-surface">
+          <summary className="cursor-pointer list-none px-5 py-4 text-sm font-bold text-foreground">{copy.activity}</summary>
+          {customer.transactions.length ? <div className="space-y-3 border-t border-border p-4 sm:p-5">{customer.transactions.map((transaction) => {
             const presentation = transactionPresentation(transaction.type);
             return <Inset key={transaction.id} className={presentation.color}>
               <p className="font-semibold text-foreground">{presentation.icon} {presentation.title}</p>
@@ -171,8 +171,8 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
               {transaction.createdBy?.email ? <p className="mt-1 text-xs font-semibold text-foreground-subtle">{copy.by}: {transaction.createdBy.email}</p> : null}
               <p className="mt-1 text-xs text-foreground-subtle">{dateFormatter.format(transaction.createdAt)}</p>
             </Inset>;
-          })}</div> : <Inset className="mt-4 text-sm text-foreground-muted">{copy.noActivity}</Inset>}
-        </section>
+          })}</div> : <div className="border-t border-border p-4"><Inset className="text-sm text-foreground-muted">{copy.noActivity}</Inset></div>}
+        </details>
 
         <nav aria-label={copy.scan} className="grid gap-4 pb-4 sm:grid-cols-2">
           <Link href={`/businesses/${slug}/scan`} className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-6 text-center font-semibold text-white hover:bg-primary-hover">{copy.scanNext}</Link>

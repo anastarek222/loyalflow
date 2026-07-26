@@ -600,7 +600,7 @@ export default async function CustomerDetailsPage({
           </div>
         )}
 
-        {smartWhatsAppSuggestion && (
+        {!isSimpleExperience && smartWhatsAppSuggestion && (
           <section
             className="mt-6 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-6 sm:flex-row sm:items-center sm:justify-between"
           >
@@ -627,48 +627,41 @@ export default async function CustomerDetailsPage({
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="flex min-w-0 flex-col">
-            <header className="rounded-[var(--lf-radius-card)] bg-foreground p-6 text-white shadow-xl sm:p-8">
-              <p className="text-sm text-info">{copy.profile}</p>
-
-              <h1 dir="auto" className="mt-2 text-2xl font-bold sm:text-3xl">
-                {customerName}
-              </h1>
-
-              <div className="mt-4 flex flex-wrap gap-4 text-sm">
-                <span
-                  className={`rounded-full px-4 py-2 font-semibold ${
-                    customer.isActive
-                      ? "bg-success-subtle/20 text-success"
-                      : "bg-danger-subtle/20 text-danger"
-                  }`}
-                >
-                  {customer.isActive ? copy.active : copy.inactive}
-                </span>
-
-                <span dir="ltr" className="rounded-full bg-white/10 px-4 py-2">
-                  {copy.code}: {customer.customerCode}
-                </span>
-
-                <span dir="ltr" className="rounded-full bg-white/10 px-4 py-2">
-                  {customer.phone}
-                </span>
-
-                {customer.tagAssignments.map((assignment) => (
-                  <span
-                    key={assignment.id}
-                    className="rounded-full bg-info-subtle/20 px-4 py-2 font-semibold text-info"
-                  >
-                    {assignment.tag.name}
-                  </span>
-                ))}
+            <header className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-lg font-black text-primary">
+                  {(customerName || "?").trim().charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground-subtle">{copy.profile}</p>
+                  <h1 dir="auto" className="mt-1 truncate text-2xl font-black text-foreground sm:text-3xl">
+                    {customerName}
+                  </h1>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${customer.isActive ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"}`}>
+                      {customer.isActive ? copy.active : copy.inactive}
+                    </span>
+                    <span dir="ltr" className="text-foreground-muted">{customer.phone}</span>
+                    <span dir="ltr" className="text-xs font-semibold text-foreground-subtle">{copy.code}: {customer.customerCode}</span>
+                  </div>
+                  {!isSimpleExperience && customer.tagAssignments.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {customer.tagAssignments.map((assignment) => (
+                        <span key={assignment.id} className="rounded-full bg-info-subtle px-2.5 py-1 text-xs font-semibold text-info">
+                          {assignment.tag.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </header>
 
-            {isSimpleExperience ? <section className="mt-6 rounded-[var(--lf-radius-card)] border border-primary/20 bg-white p-6 shadow-sm sm:p-8">
-              <p className="text-sm font-semibold text-primary">{copy.loyaltyToday}</p>
+            {isSimpleExperience ? <section className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary-subtle/40 p-5 sm:p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">{copy.loyaltyToday}</p>
               <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                  <p className="text-4xl font-bold text-foreground"><span dir="ltr" className="lf-type-numeric">{customer.balance}</span> <span dir="auto" className="text-lg font-medium text-foreground-muted">{business.unitName}</span></p>
+                  <p className="text-4xl font-black text-foreground"><span dir="ltr" className="lf-type-numeric">{customer.balance}</span> <span dir="auto" className="text-base font-semibold text-foreground-muted">{business.unitName}</span></p>
                   <p className="mt-1 text-sm text-foreground-muted">{rewardAvailable ? copy.rewardReadyNamed(messageReward.name) : copy.remainingForReward(remaining, messageReward.name)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">

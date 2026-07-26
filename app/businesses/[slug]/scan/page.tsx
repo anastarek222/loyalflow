@@ -74,60 +74,41 @@ export default async function ScanPage({
     >
       <PageContainer variant="narrow" className="px-4 sm:px-6">
         <PageHeader
-          eyebrow={copy.scanner}
+          eyebrow={business.name}
           title={copy.scanCustomerCard}
           description={copy.scanDescription}
           secondaryActions={
             <Link
               href={`/businesses/${business.slug}`}
-              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
+              className="inline-flex min-h-10 items-center rounded-[var(--lf-radius-input)] px-3 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
             >
               {copy.backToBusiness}
             </Link>
           }
         />
 
-        <section
-          className={`overflow-hidden border p-6 text-white sm:p-8 rounded-[var(--lf-radius-card)] border-border`}
-        >
-          <div className="flex items-center gap-4">
+        <Card className="overflow-hidden border-border p-0">
+          <div className="flex items-center gap-3 border-b border-border bg-surface-subtle px-4 py-3 sm:px-5">
             {business.logoUrl ? (
               <img
                 src={business.logoUrl}
                 alt={`${business.name} logo`}
-                className="h-16 w-16 shrink-0 rounded-[var(--lf-radius-input)] border border-white/20 bg-white object-contain p-2"
+                className="size-10 shrink-0 rounded-[var(--lf-radius-input)] border border-border bg-white object-contain p-1.5"
               />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-white/15 text-2xl font-black">
-                {business.name
-                  .trim()
-                  .charAt(0)
-                  .toUpperCase()}
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary-subtle text-sm font-black text-primary">
+                {business.name.trim().charAt(0).toUpperCase()}
               </div>
             )}
-
             <div className="min-w-0">
-              <p className="text-sm text-white/70">
-                {copy.scanner}
-              </p>
-
-              <h2 className="mt-1 text-2xl font-bold sm:text-3xl">
-                {business.name}
-              </h2>
-
-              <p
-                dir="auto"
-                className="mt-1 break-words text-sm text-white/75"
-              >
-                {copy.scanCustomerCard}
-              </p>
+              <p dir="auto" className="truncate text-sm font-bold text-foreground">{business.name}</p>
+              <p className="text-xs text-foreground-subtle">{copy.scanner}</p>
             </div>
           </div>
-        </section>
-
-        <Card className={`rounded-[var(--lf-radius-card)] border-border p-6 sm:p-8`}>
-          <QrScanner businessId={business.id} language={language} />
-          <ScanCustomerSearch businessId={business.id} language={language} />
+          <div className="p-4 sm:p-6">
+            <QrScanner businessId={business.id} language={language} />
+            <ScanCustomerSearch businessId={business.id} language={language} />
+          </div>
         </Card>
       </PageContainer>
     </main>

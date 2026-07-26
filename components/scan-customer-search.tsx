@@ -80,10 +80,10 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
   }
 
   return (
-    <section aria-labelledby="scan-customer-search-heading" className="mt-8 border-t border-border pt-6">
-      <h2 id="scan-customer-search-heading" className="text-lg font-bold text-foreground">{copy.customerSearchHeading}</h2>
+    <section aria-labelledby="scan-customer-search-heading" className="mt-6 border-t border-border pt-5">
+      <h2 id="scan-customer-search-heading" className="text-base font-bold text-foreground">{copy.customerSearchHeading}</h2>
       <p className="mt-1 text-sm text-foreground-muted">{copy.customerSearchDescription}</p>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-3 flex gap-2">
         <div className="min-w-0 flex-1">
           <label htmlFor="scanCustomerSearch" className="sr-only">{copy.customerSearchLabel}</label>
           <input id="scanCustomerSearch" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.customerSearchPlaceholder} autoComplete="off" className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />

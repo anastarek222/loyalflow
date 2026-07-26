@@ -1,0 +1,781 @@
+========================================
+ LoyalFlow F18 Phase 6 — Release Hardening
+========================================
+Target: /Users/apple/loyalflow
+Backup: /Users/apple/loyalflow-f18-backups/phase6-20260726-212348
+Report: /Users/apple/loyalflow/F18_PHASE6_RELEASE_REPORT.txt
+Started: Sun Jul 26 21:23:48 EEST 2026
+
+===== BASELINE =====
+Branch: feature/design-system-v2
+Commit: 1741600 complete F16 frontend localization and design system cleanup
+
+ M app/businesses/[slug]/branches/page.tsx
+ M app/businesses/[slug]/customers/[customerId]/page.tsx
+ M app/businesses/[slug]/customers/page.tsx
+ M app/businesses/[slug]/offers/page.tsx
+ M app/businesses/[slug]/page.tsx
+ M app/businesses/[slug]/recovery/page.tsx
+ M app/businesses/[slug]/reports/page.tsx
+ M app/businesses/[slug]/rewards/page.tsx
+ M app/businesses/[slug]/scan/customer/[customerId]/page.tsx
+ M app/businesses/[slug]/scan/page.tsx
+ M app/businesses/[slug]/settings/page.tsx
+ M app/businesses/[slug]/users/page.tsx
+ M app/businesses/page.tsx
+ M app/card/[token]/not-found.tsx
+ M app/card/[token]/page.tsx
+ M app/dashboard/page.tsx
+ M app/join/[slug]/not-found.tsx
+ M app/join/[slug]/page.tsx
+ M app/login/page.tsx
+ M components/app-sidebar.tsx
+ M components/app-topbar.tsx
+ M components/business-settings-form.tsx
+ M components/campaign-builder.tsx
+ M components/customer-experience/public-card-actions.tsx
+ M components/customer-experience/public-page-shell.tsx
+ M components/experience-mode-switcher.tsx
+ M components/growth/growth-shell.tsx
+ M components/language-switcher.tsx
+ M components/mobile-bottom-navigation.tsx
+ M components/qr-scanner.tsx
+ M components/scan-customer-search.tsx
+ M components/shell-icons.tsx
+ M lib/app-shell-navigation.ts
+ M tests/app-shell-navigation.test.ts
+ M tests/customer-u6-experience.test.ts
+ M tests/experience-mode.test.ts
+ M tests/growth-u8.test.ts
+?? F18_IA_REDESIGN_PHASE1.md
+?? F18_IA_REDESIGN_PHASE2.md
+?? F18_IA_REDESIGN_PHASE3.md
+?? F18_INTERNAL_POLISH_PHASE4A.md
+?? F18_PHASE6_RELEASE_REPORT.txt
+?? app/business-owners/
+?? tests/customer-u6-experience.test.ts.f18-backup
+
+ app/businesses/[slug]/branches/page.tsx            | 151 +++---
+ .../[slug]/customers/[customerId]/page.tsx         |  69 ++-
+ app/businesses/[slug]/customers/page.tsx           |  43 +-
+ app/businesses/[slug]/offers/page.tsx              |  26 +-
+ app/businesses/[slug]/page.tsx                     | 213 +++++++-
+ app/businesses/[slug]/recovery/page.tsx            |   6 +-
+ app/businesses/[slug]/reports/page.tsx             | 547 +++++++++++----------
+ app/businesses/[slug]/rewards/page.tsx             |  43 +-
+ .../[slug]/scan/customer/[customerId]/page.tsx     |  16 +-
+ app/businesses/[slug]/scan/page.tsx                |  45 +-
+ app/businesses/[slug]/settings/page.tsx            |  55 ++-
+ app/businesses/[slug]/users/page.tsx               | 336 +++++++------
+ app/businesses/page.tsx                            |   2 +-
+ app/card/[token]/not-found.tsx                     |   9 +-
+ app/card/[token]/page.tsx                          |  16 +-
+ app/dashboard/page.tsx                             | 149 +++++-
+ app/join/[slug]/not-found.tsx                      |   7 +-
+ app/join/[slug]/page.tsx                           |  26 +-
+ app/login/page.tsx                                 |  35 +-
+ components/app-sidebar.tsx                         |  25 +-
+ components/app-topbar.tsx                          |   8 +-
+ components/business-settings-form.tsx              | 222 ++++++---
+ components/campaign-builder.tsx                    |  38 +-
+ .../customer-experience/public-card-actions.tsx    |  12 +-
+ .../customer-experience/public-page-shell.tsx      |   6 +-
+ components/experience-mode-switcher.tsx            |  34 +-
+ components/growth/growth-shell.tsx                 |  13 +-
+ components/language-switcher.tsx                   | 106 +---
+ components/mobile-bottom-navigation.tsx            |  17 +-
+ components/qr-scanner.tsx                          |  10 +-
+ components/scan-customer-search.tsx                |   6 +-
+ components/shell-icons.tsx                         |   2 +-
+ lib/app-shell-navigation.ts                        |  19 +-
+ tests/app-shell-navigation.test.ts                 |   9 +
+ tests/customer-u6-experience.test.ts               |   6 +-
+ tests/experience-mode.test.ts                      |   7 +-
+ tests/growth-u8.test.ts                            |   2 +-
+ 37 files changed, 1414 insertions(+), 922 deletions(-)
+
+===== SAFE CLEANUP =====
+✅ Removed temporary U6 backup after saving a Phase 6 copy.
+✅ Removed generated Playwright output directories if present.
+
+===== TYPECHECK =====
+$ tsc --noEmit
+✅ TYPECHECK PASS
+
+===== LINT =====
+$ eslint
+✅ LINT PASS
+
+===== TESTS =====
+$ node --import tsx --test tests/*.test.ts
+✔ extracts first forwarded client IP (33.505962ms)
+✔ prefers Vercel forwarded client IP (0.262714ms)
+✔ creates readable device labels (0.507593ms)
+✔ builds activity request context safely (2.795389ms)
+✔ parses valid UTC date boundaries (4.164807ms)
+✔ rejects impossible and malformed date inputs (0.26741ms)
+✔ builds an inclusive UTC thirty-day default range (0.316895ms)
+✔ calculates the average time from customer creation to first reward (1.492948ms)
+✔ normalizes redemption values to one positive reporting convention (0.212598ms)
+✔ ignores missing and chronologically invalid reward records (0.218382ms)
+✔ calculates visit intervals within each customer only (0.42979ms)
+✔ calculates repeat customer rate without dividing by zero (0.248981ms)
+✔ counts each recovered customer once even with multiple recovery events (0.225365ms)
+✔ creates complete daily buckets and sums loyalty values (4.351534ms)
+✔ counts events by default and ignores events outside the requested range (0.354658ms)
+✔ builds historical analytics trends with complete daily buckets (0.526026ms)
+✔ U3 mobile business navigation derives and passes the active business slug (48.220869ms)
+✔ business navigation URLs retain the active business slug and global routes invent none (3.654216ms)
+✔ super admin global navigation exposes the platform businesses and owners directories (0.636044ms)
+✔ navigation is capability-derived and hides inaccessible administration (0.333701ms)
+✔ active matching handles children and page context avoids raw ids (0.553311ms)
+✔ the shell has one canonical notification control and direction remains user-derived (6.605925ms)
+✔ U3 navigation remains separate from durable experience policy (0.547961ms)
+✔ owners and managers can access branches in their tenant (1.417578ms)
+✔ staff require an explicit same-tenant branch assignment for loyalty writes (51.055269ms)
+✔ viewers can inspect tenant branches but cannot write and inactive branches reject writes (0.309124ms)
+✔ cross-tenant branches are inaccessible even when an ID is supplied (0.264527ms)
+✔ branch report filters are optional so historic unassigned data remains in business totals (1.129923ms)
+✔ branch create, update, and status changes build durable canonical audit records (2.350813ms)
+✔ branch assignment and removal audit the canonical actor, branch, and assigned staff (6.156375ms)
+✔ cross-tenant branch assignment rejection occurs before any success audit payload is built (0.357555ms)
+✔ global administrators retain their server-authenticated identity without breaking tenant actor relations (0.352894ms)
+✔ new activity types have safe UI labels and badge mappings (0.52947ms)
+✔ owners can create, update, and deactivate same-tenant branch inputs (11.853928ms)
+✔ cross-tenant branch mutations and assignments are rejected (1.222802ms)
+✔ staff and viewers cannot manage branches (0.324138ms)
+✔ a valid active same-tenant staff assignment is eligible (0.369052ms)
+✔ duplicate branch assignments are safely recognized (0.406061ms)
+✔ inactive, cross-tenant, and non-staff users cannot be assigned (0.254134ms)
+✔ inactive branches cannot accept new staff assignments (0.218027ms)
+✔ removing an assignment is limited to its business (0.224353ms)
+✔ inactive branches remain unusable for loyalty operations (0.289433ms)
+✔ branch count is derived from Branch records rather than persisted (0.383225ms)
+✔ owner phone is accepted, normalized, and persisted by the creation transaction (82.473277ms)
+✔ owner phone remains optional for existing and newly created users (0.718327ms)
+✔ invalid owner phones are rejected after normalization (1.617513ms)
+✔ business creation accepts safe logo URLs and the settings upload format (1.884168ms)
+✔ business creation rejects unsafe logo URLs and invalid uploads (58.746967ms)
+✔ existing onboarding fields and the isolated business-owner transaction remain intact (1.976047ms)
+✔ an owner-only business is team ready (1.489647ms)
+✔ optional profile metadata never blocks readiness (0.224047ms)
+✔ incomplete loyalty configuration blocks core readiness (0.205886ms)
+✔ branding is tracked without blocking core readiness (0.355794ms)
+✔ onboarding progress is deterministic (0.278213ms)
+✔ every business playbook has a safe preview and only normal settings to apply (3.179511ms)
+✔ an existing business is protected until the owner explicitly confirms a visible playbook overwrite (0.422276ms)
+✔ a repeated playbook apply is detectable without automatic duplicate creation (0.337898ms)
+✔ playbook management remains owner/super-admin tenant scoped (0.330977ms)
+✔ accepts supported ISO 4217 currency codes (1.443215ms)
+✔ rejects unsupported currency codes (0.329035ms)
+✔ accepts valid IANA timezone identifiers (64.906552ms)
+✔ rejects invalid timezone identifiers (0.331988ms)
+✔ keeps legacy currency and timezone values nullable (0.287671ms)
+✔ uses the canonical contactPhone validation for creation and settings (0.207408ms)
+✔ creates a deterministic URL-safe slug from a business name (0.518147ms)
+✔ uses a suffix for duplicate generated slug candidates (0.238401ms)
+✔ does not require a caller-provided manual slug (0.39144ms)
+✔ retries a unique collision without changing an existing slug (1.814473ms)
+✔ retries safely when concurrent creators observe the same initial collision (0.536875ms)
+✔ uses deterministic, safe default audiences for every campaign trigger (1.296159ms)
+✔ appends a staff-authored offer without changing the base message (20.312989ms)
+✔ suggests a reviewed welcome handoff after registration (46.267422ms)
+✔ prioritizes a reward-ready handoff over other earned triggers (0.346541ms)
+✔ uses the one-away trigger only when a reward is not yet ready (2.192233ms)
+✔ does not create a campaign handoff for unrelated page state (0.207899ms)
+✔ business schema contains persisted qrStyle (3.684765ms)
+✔ settings persist supported QR styles (0.493634ms)
+✔ public card uses persisted QR style (0.61014ms)
+✔ public card API exposes QR style only as branding (0.389516ms)
+✔ persists and renders QR position (0.990262ms)
+✔ accepts a bounded selected-only customer set and rejects invalid or duplicate ids (2.883128ms)
+✔ bulk state changes reject cross-tenant or partial selections before mutation (0.340049ms)
+✔ only destructive bulk operations require explicit confirmation (0.216985ms)
+✔ bulk mutations remain unavailable to viewers, staff, and cross-tenant users (0.260103ms)
+✔ detects same-phone candidates after safe normalization (33.034083ms)
+✔ supports normalized email matching only when a persisted email is available (0.421951ms)
+✔ avoids false positives for different values and isolates businesses (0.352371ms)
+✔ read-only merge preview selects the oldest candidate but cannot execute (0.369169ms)
+✔ duplicate review is restricted to tenant customer editors (0.300799ms)
+✔ normalizes reusable tag names and rejects empty values (8.01989ms)
+✔ private notes require meaningful bounded content (0.569872ms)
+✔ tag filtering uses the normalized assignment relation (2.028911ms)
+✔ only customer editors can change private notes and tags (0.594665ms)
+✔ public card projections explicitly exclude private notes and tags (0.325427ms)
+✔ normalizes Arabic separators while retaining an international prefix (3.048205ms)
+✔ rejects malformed customer registration input (39.897905ms)
+✔ parses a valid self-registration input (2.211247ms)
+✔ assigns one deterministic segment using documented priority (1.941308ms)
+✔ keeps advanced segment filters deterministic and programme-aware (1.793439ms)
+✔ builds a transaction-aware filter for the at-risk segment (0.336938ms)
+✔ builds one chronological timeline without duplicating transaction activities (3.20632ms)
+✔ builds understandable English customer timeline labels without duplicating activities (0.338617ms)
+✔ U6 customer list keeps every query tenant scoped and paginated (1.569946ms)
+✔ U6 simple and advanced customers share one route with presentation-only controls (0.368386ms)
+✔ U6 keeps advanced management and mutations unavailable to staff and viewers (0.329759ms)
+✔ U6 customer detail distinguishes visits, points, and sales amount loyalty in both languages (0.645445ms)
+✔ U6 retains dashboard-compatible reward-ready filters and direction-safe values (1.489826ms)
+✔ U6 customer copy covers AR and EN list and detail surfaces (0.328784ms)
+✔ U6 localizes segments and keeps simple and advanced modes on the same language source (0.299712ms)
+✔ U6 language is fetched from the authenticated User and filter URLs stay unchanged (0.288634ms)
+✔ U6 has separate route loading and error presentations without schema work (1.070531ms)
+✔ same phones across businesses never create an automatic global link (1.488583ms)
+✔ only a verified explicit identity link can list that customer wallet membership (1.296968ms)
+✔ unauthorized sessions, revoked memberships, and identity claim conflicts are refused (0.222967ms)
+✔ wallet projections retain tenant privacy and public cards cannot enumerate a wallet (0.237924ms)
+✔ aggregates loyalty growth by day and makes redeemed values positive (61.08302ms)
+✔ aggregates multiple customers created on the same day (4.818458ms)
+✔ aggregates and sorts reward redemption statistics (0.443487ms)
+✔ returns empty analytics arrays when there is no data (0.287469ms)
+✔ U5 exposes Scan as the primary dashboard operation only with loyalty permission (4.807015ms)
+✔ U5 daily KPI presentation never presents visits or points as currency revenue (2.872157ms)
+✔ U5 compresses onboarding after core operational readiness (0.258885ms)
+✔ U5 keeps staff clear of owner-only setup and configuration actions (0.42123ms)
+✔ U5 viewer actions remain read-only (8.666825ms)
+✔ U5 segment shortcuts are a supported subset of Customer filters (0.38893ms)
+✔ U5 bounds recent activity and preserves the dedicated Activity destination (0.212091ms)
+✔ U5 leaves Reports as the deep analytics destination (0.253679ms)
+✔ U5 introduces no second notification bell (0.3763ms)
+✔ U5 dashboard directions remain shell-derived and use logical utility classes (0.583039ms)
+✔ U5 global dashboard safely models zero, one, and multiple workspaces (0.274997ms)
+✔ U5 dashboard keeps its original presentation-only boundary (0.175225ms)
+✔ U2 exposes semantic application color, type, size, motion, and chart tokens (60.107528ms)
+✔ U2 status, focus, selection, and reduced-motion semantics are explicit (0.993025ms)
+✔ application state semantics remain separate from the business branding boundary (0.791604ms)
+✔ new primitives use direction-safe layout and expose required accessibility hooks (2.068426ms)
+✔ U2 design-system primitives remain independent of persistence (0.878835ms)
+✔ U6.2 clamps an Advanced cookie to Simple only (2.975559ms)
+✔ U6.2 clamps a Simple cookie to Advanced only (0.216152ms)
+✔ U6.2 honors a valid preference for Both and has deterministic fallbacks (0.198455ms)
+✔ U6.2 defaults only new accounts by role while preserving existing access in migration (16.521912ms)
+✔ U6.2 never lets owner or super-admin access be restricted (0.257847ms)
+✔ U6.2 only exposes the mode switcher to a meaningful Both experience (0.264572ms)
+✔ U6.2 preserves permission boundaries in Advanced presentation (0.419067ms)
+✔ U6.2 does not allow access policy to grant a cross-business capability (0.218819ms)
+✔ U6.2 resolution is isolated per business-scoped account policy (1.369006ms)
+✔ U6.2 team creation and editing persist the selected policy through server-authorized actions (0.678095ms)
+✔ U6.2 leaves branch assignments unrelated to experience access (0.512481ms)
+✔ U6.2 localizes team controls and keeps the cookie as a preference (0.524444ms)
+✔ U5.1 defaults are deterministic by role (2.490521ms)
+✔ U5.1 valid preferences override defaults and invalid preferences safely fall back (0.352522ms)
+✔ U5.1 simple owner navigation keeps daily operations and hides primary management clutter (1.17552ms)
+✔ U5.1 advanced owner navigation keeps primary work visible and moves specialist tools into their parent surfaces (0.314583ms)
+✔ U5.1 staff simple navigation retains permitted Scan and Customers without a useless switch (0.492643ms)
+✔ U5.1 mode never changes capability results, routes, or the active tenant slug (0.806695ms)
+✔ U5.1 dashboard uses one route and one data implementation with presentation-only sections (0.596699ms)
+✔ U5.1 persists only a validated presentation cookie with an accessible switcher (0.406695ms)
+✔ U5.1 keeps presentation modes separate from the persisted owner policy (1.015617ms)
+✔ the current free plan centrally grants every implemented product feature (3.540441ms)
+✔ an entitlement never bypasses provider credentials or production activation (0.244224ms)
+✔ maps visits, points, and sales programmes from the existing tenant membership (2.184175ms)
+✔ maps reward-ready and public offers without an independent balance mutation (0.4759ms)
+✔ refuses cross-tenant or inactive sources and preserves public-card HTTPS compatibility (0.259096ms)
+✔ uses safe branding fallbacks and never enables an unimplemented provider (1.787984ms)
+✔ U8 has one accessible Growth navigation with distinct slug-preserving routes (1.647602ms)
+✔ U8 experience mode remains presentation-only and keeps authorization authoritative (22.44456ms)
+✔ U8 keeps tenant-scoped engines, Scan operations, deterministic recovery, and protected export (2.992199ms)
+✔ U8 uses truthful campaign language and responsive bilingual accessible foundations (0.963988ms)
+✔ U8 introduces no Prisma or migration dependency (0.871975ms)
+✔ internal events get a deterministic tenant-scoped idempotency key (1.442668ms)
+✔ events cannot cross tenant consumers or accept unsafe identifiers (0.43623ms)
+✔ the foundation has no webhook, provider, or network delivery (0.211131ms)
+✔ AR resolves to Arabic RTL document attributes (29.473101ms)
+✔ EN resolves to English LTR document attributes (0.264045ms)
+✔ public-card metadata uses Arabic semantics from the business card language (0.300386ms)
+✔ public-card metadata uses English semantics from the business card language (0.228653ms)
+✔ public-card AR and EN descriptions are localized differently (0.284407ms)
+✔ invalid language uses the safe AR fallback (0.20552ms)
+✔ user language persistence only accepts supported enum values (0.582162ms)
+✔ authenticated application direction derives from stored user language (0.359595ms)
+✔ public card and join flow derive AR and EN direction from card language (0.989334ms)
+✔ public-card metadata and manifest use Business.cardDefaultLanguage only (10.977666ms)
+✔ public-card metadata and manifest retain token safety and branding fields (11.12952ms)
+✔ technical values are LTR and customer names retain automatic direction (0.650824ms)
+✔ notification dialog no longer forces RTL (0.95892ms)
+✔ card language remains passed through to existing membership-card behavior (0.468025ms)
+✔ F6 does not require a Prisma migration (0.496958ms)
+✔ uses a short fixed window for duplicate earn detection (1.684788ms)
+✔ flags manual adjustments at or above one full reward threshold (0.257237ms)
+✔ scopes rapid redemption checks and stores redemption amounts as negative (1.283067ms)
+✔ scopes duplicate earn detection to the tenant, customer, actor, and amount (0.372748ms)
+✔ uses the configured amount for visits and points (2.265902ms)
+✔ uses the recorded sale amount for sales-based loyalty (0.253578ms)
+✔ rejects missing or fractional loyalty amounts (0.693405ms)
+✔ adds promo codes to the redemption label only when configured (0.277832ms)
+✔ starts a customer at zero progress (37.243366ms)
+✔ marks a customer reward ready exactly at the threshold (0.268738ms)
+✔ keeps reward progress valid across repeated reward cycles (0.238025ms)
+✔ does not offer rewards for inactive customers (0.211281ms)
+✔ earning updates balance and lifetime earned before recording the audit trail (23.70388ms)
+✔ redemption prevents negative balances and records no follow-up writes when blocked (0.788833ms)
+✔ redemption records the balance change, reward, and audit activity (0.58973ms)
+✔ manual subtraction guards against insufficient balance and writes an auditable adjustment (4.65653ms)
+✔ does not record tenant activity when the balance read has a different business (0.503851ms)
+✔ records the immutable source mode and sale amount for sales earnings (0.519405ms)
+✔ records optional active branch context on loyalty writes and audit activity (1.191838ms)
+✔ refuses an inactive or wrong-tenant branch before changing a balance (0.452497ms)
+✔ credits an eligible promotion once and records its transaction audit link (0.640013ms)
+✔ returns the prior result for the same idempotency key without new writes (6.202126ms)
+✔ rejected staff branch or staff attribution context writes no financial side effects (0.438191ms)
+✔ context reporting is opt-in, bounded, and has no financial or audit side effects (1.06383ms)
+✔ opting into context reporting does not turn unrelated aborts into context errors (0.28396ms)
+✔ successful redemptions persist canonical branch, actor, and staff attribution (2.002458ms)
+✔ User A marking one notification read does not affect User B (2.017891ms)
+✔ repeated mark-one input is idempotent at the per-user compound key (4.125314ms)
+✔ mark-all state is scoped to the current user and business (0.484573ms)
+✔ a notification at or before the mark-all cutoff is read (0.430046ms)
+✔ a notification newer than the mark-all cutoff remains unread (0.386029ms)
+✔ individual reads compose with the mark-all cutoff (0.259067ms)
+✔ cross-tenant and wrong-recipient notification keys are rejected (6.338027ms)
+✔ unread counts use the canonical per-user rule (0.355251ms)
+✔ legacy Notification.isRead does not control per-user state (0.278929ms)
+✔ core notification creation keeps durable loyalty and team notification writes (0.631358ms)
+✔ OWNER, MANAGER, STAFF, and VIEWER follow the existing business access policy (0.757808ms)
+✔ reward-ready keys are deterministic and must resolve to the current customer snapshot (0.582301ms)
+✔ active offers are read-only incentives and respect inclusive date boundaries (1.502612ms)
+✔ inactive, expired, future, and cross-tenant offers are never eligible (0.291013ms)
+✔ segment and VIP eligibility reuse the deterministic customer segment engine (0.894619ms)
+✔ offer input uses whole UTC days and rejects invalid audience/date combinations (5.284413ms)
+✔ staff may use an assigned active same-tenant branch (5.327918ms)
+✔ staff cannot use an unassigned, inactive, or wrong-tenant branch (0.596965ms)
+✔ staff cannot omit a branch when the business has active branches (0.304155ms)
+✔ legacy single-location staff operations remain branch-unassigned (1.003995ms)
+✔ required attribution rejects missing, wrong-tenant, and inactive staff (0.421292ms)
+✔ optional attribution and owner or manager branch operations remain allowed (0.45164ms)
+✔ U4 page container provides default, wide, and narrow content widths (1.699644ms)
+✔ U4 page and section headers preserve semantic heading hierarchy and action slots (0.499581ms)
+✔ U4 templates compose list, detail, settings, analytics, and operational slots (0.518024ms)
+✔ U4 toolbar, tabs, stats, and summaries remain compositional (1.792244ms)
+✔ U4 route states expose loading, error, empty, unavailable, and tenant-context foundations (2.967498ms)
+✔ U4 templates use logical layout and leave the U3 shell functionally untouched (1.252751ms)
+✔ U4 page templates remain independent of persistence (0.922115ms)
+✔ super admins can access and manage every business (1.476492ms)
+✔ owners are limited to their own business (0.298099ms)
+✔ managers can operate customer, loyalty, and report capabilities but not team or settings (0.21053ms)
+✔ staff are cashier-equivalent and cannot edit customers, adjust, or view reports (0.218383ms)
+✔ viewers are tenant-scoped read-only users (0.212571ms)
+✔ cross-tenant users have no capability regardless of role (0.197335ms)
+✔ runtime environment validation reports missing production values without secrets (2.446498ms)
+✔ optional integration configuration does not block a valid core runtime (0.35234ms)
+✔ server environment validation is not imported by Client Components (4.245946ms)
+✔ readiness is dependency-aware while its public body omits database details (1.443014ms)
+✔ server error logging redacts connection strings and assigned secrets (74.404635ms)
+✔ health routes expose safe readiness and liveness behavior (0.65665ms)
+✔ deployment configuration retains security headers and safe migration commands (1.501847ms)
+✔ verification scripts do not print raw error stacks (1.876501ms)
+✔ UAT fixtures require but never print their disposable password (0.508848ms)
+✔ local database verifier requires the complete reviewed committed migration history (2.7208ms)
+✔ final UAT transaction fixtures enforce customer-business consistency (0.523542ms)
+✔ selects only an eligible promotion from the current tenant (1.525093ms)
+✔ returns no promotion when no rule matches (0.236102ms)
+✔ uses a deterministic highest-bonus, oldest-rule, then id tie break (92.787706ms)
+✔ rejects inactive, expired, and invalid transaction amounts (1.608832ms)
+✔ calculates fixed and multiplier bonuses from the base earning amount (0.24364ms)
+✔ uses the selected multiplier rule's computed bonus for the final credit (0.690979ms)
+✔ accepts a raw public card token (2.51748ms)
+✔ accepts an exact public card URL (0.304973ms)
+✔ rejects invalid tokens and non-card URL paths (0.299048ms)
+✔ rejects encoded path values that are not safe tokens (0.200404ms)
+✔ U11 retains one canonical public card and validates opaque tokens before lookup (3.022127ms)
+✔ U11 public projections stay bounded and omit staff-only CRM data (2.474905ms)
+✔ U11 uses the canonical reward helper and programme-safe progress (1.556992ms)
+✔ U11 QR, sharing and install are truthful presentation-only controls (0.650767ms)
+✔ U11 manifest, enrollment and responsive foundations stay safe (0.957076ms)
+✔ limits requests within a time window and resets afterwards (1.288315ms)
+✔ normalizes only safe fixed-length referral codes (1.498783ms)
+✔ creates opaque referral-code candidates (0.718167ms)
+✔ records referrals only for an active same-tenant non-self referrer (0.25961ms)
+✔ report and export date filters share inclusive UTC boundaries (64.419296ms)
+✔ business-wide report scope preserves historical null-branch operations (0.764877ms)
+✔ cross-tenant report branch and staff filters are rejected (0.621872ms)
+✔ staff performance attribution never falls back to the operation creator (1.300942ms)
+✔ report export URLs retain the report's supported filters (1.023855ms)
+✔ only explicit saleAmount values qualify as recorded sales (0.2336ms)
+✔ U9 retains canonical report routes and slug-preserving shared navigation (1.636721ms)
+✔ U9 reports remain historical and presentation mode is not authorization (0.548703ms)
+✔ U9 validates bounded inclusive dates and tenant-scoped branch/staff filters (0.746836ms)
+✔ U9 preserves supported filters for export and protects export server-side (0.400241ms)
+✔ U9 uses persisted attribution, safe chart values, localized responsive foundations (0.832913ms)
+✔ U9 never labels visits or points as currency, while recorded sales remain explicit (0.432465ms)
+✔ U12 keeps direction owned by saved authenticated and public context (2.255011ms)
+✔ U12 shared navigation and mobile controls retain accessible responsive foundations (0.674623ms)
+✔ U12 primitives keep bounded dialogs, tables, motion, and long-content safety (0.845261ms)
+✔ U12 public card controls expose names and announced feedback without a new shell (0.619025ms)
+✔ U12 remains presentation-only and introduces no persistence or API changes (1.02627ms)
+✔ scores an engaged recent customer as very loyal (75.217603ms)
+✔ uses documented score boundaries (0.673675ms)
+✔ handles sales programmes using their tracked value (0.35435ms)
+✔ uses the legacy reward until a business has catalogue rewards (2.04739ms)
+✔ prefers the active catalogue supplied by the tenant query (0.236226ms)
+✔ normalizes optional reward fields without accepting invalid costs (3.101018ms)
+✔ keeps rewards active when no explicit expiry policy exists (2.478834ms)
+✔ calculates expiry from unlock time without changing balance state (2.15982ms)
+✔ does not create expiry for a reward that is not unlocked (0.225162ms)
+✔ keeps an unlocked reward active before its deterministic UTC expiry (0.234902ms)
+✔ treats the exact expiry instant as expired (0.212286ms)
+✔ blocks redemption for an expired unlock without treating it as a balance change (0.292097ms)
+✔ does not allow a reward unlock from another tenant to be redeemed (0.184875ms)
+✔ preserves the legacy no-expiry redemption path (0.183184ms)
+✔ U7.1 provides canonical AR and EN Scan copy (1.498872ms)
+✔ U7.1 maps every Scan resolve error to safe AR and EN copy (0.440718ms)
+✔ U7.1 exposes bounded Scan resolve error codes and safely falls back (1.13497ms)
+✔ U7.1 returns stable codes without rendering server error prose (0.434286ms)
+✔ U7.1 resolves Scan language from the authenticated User, not browser locale (0.379724ms)
+✔ U7.1 passes explicit language to Scan client components without forcing RTL (0.311767ms)
+✔ U7.1 exposes scanner and pending operation progress accessibly (0.274605ms)
+✔ U7.1 preserves Scan operation idempotency, branch and staff context (0.213979ms)
+✔ U7.1 retains tenant and permission checks with no Prisma schema or migration work (0.536866ms)
+✔ U7.1 preserves resolve HTTP status, permission, tenant, and rate-limit checks (0.342414ms)
+✔ U7.2 has localized search and camera recovery copy (1.594926ms)
+✔ U7.2 search validates bounded input and supports name, phone, and customer-code terms (5.376869ms)
+✔ U7.2 search API keeps the Scan auth, tenant, active-record, rate-limit, and no-store boundaries (0.51053ms)
+✔ U7.2 returns only server-generated Scan customer URLs (0.254251ms)
+✔ U7.2 search UI blocks short input and protects stale and duplicate requests (0.269075ms)
+✔ U7.2 ignores ordinary render decode misses without classifying NotFoundException as a camera failure (0.481777ms)
+✔ U7.2 catches scanner import and render failures, retries after cleanup, and retains resolve concurrency protection (0.295383ms)
+✔ U7.2 makes no Prisma schema or migration change (0.462527ms)
+✔ U7.3 accepts only the fixed Scan operation origin (88.544531ms)
+✔ U7.3 routes Scan successes and known failures to its fixed customer route (0.411751ms)
+✔ U7.3 retains canonical customer-profile destinations for missing or invalid origins (1.65743ms)
+✔ U7.3 success and errors are bounded presentation state with Scan Next first (0.319748ms)
+✔ U7.3 preserves idempotency, pending accessibility, branch/staff, and canonical financial helpers (0.423392ms)
+✔ U7.3 keeps tenant/capability checks and has localized safe copy (0.407049ms)
+✔ rejects malformed public-card route tokens before database lookup (1.527293ms)
+✔ accepts only bounded canonical uploaded image data (1.424677ms)
+✔ validates opaque action identifiers and action-bound booleans (2.096375ms)
+✔ sensitive APIs enforce capability checks and public APIs are no-store (1.159036ms)
+✔ public self-registration never discloses an existing card token (0.395891ms)
+✔ deployment configuration keeps incremental protective headers (0.382942ms)
+✔ U10 keeps the canonical slug-preserving administration routes and shared navigation (3.008211ms)
+✔ U10 presentation access never expands authorization and all three policies remain separate (0.547173ms)
+✔ U10 server actions retain tenant-scoped team and branch safeguards (0.728765ms)
+✔ U10 preserves canonical profile, loyalty, branding, enrollment, and playbook contracts (0.814027ms)
+✔ U10 provides bilingual RTL/LTR foundations without a migration dependency (0.521883ms)
+✔ disabled attribution ignores supplied staff and remains unattributed (28.274744ms)
+✔ enabled optional attribution accepts missing staff (0.293772ms)
+✔ enabled required attribution rejects missing staff (0.381199ms)
+✔ valid same-business active eligible staff is accepted (0.301699ms)
+✔ invalid inactive wrong-tenant or ineligible staff is rejected (0.277174ms)
+✔ staff without required branch assignment is rejected (0.306577ms)
+✔ staff with matching branch assignment is accepted (0.276807ms)
+✔ missing business rejects attribution safely (0.257914ms)
+✔ assigns VIP tiers at deterministic reward-cycle thresholds (2.336882ms)
+✔ keeps tier qualification safe for invalid thresholds and values (0.236762ms)
+✔ uses the existing deterministic inactive segmentation for a win-back audience (2.60047ms)
+✔ renders a staff-reviewed win-back message without sending it (0.5312ms)
+ℹ tests 355
+ℹ suites 0
+ℹ pass 355
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3866.17358
+✅ TESTS PASS
+
+===== BUILD =====
+$ prisma generate && next build --webpack
+◇ injected env (2) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (7.9.0) to ./generated/prisma in 376ms
+
+▲ Next.js 16.2.11 (webpack)
+- Environments: .env.local, .env.production, .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 10.6s
+  Running TypeScript ...
+  Finished TypeScript in 28.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/14) ...
+  Generating static pages using 11 workers (3/14) 
+  Generating static pages using 11 workers (6/14) 
+  Generating static pages using 11 workers (10/14) 
+✓ Generating static pages using 11 workers (14/14) in 7.3s
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ƒ /api/analytics
+├ ƒ /api/analytics/historical-trends
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/card-icon/[token]
+├ ƒ /api/card-manifest/[token]
+├ ƒ /api/card/[token]
+├ ƒ /api/health
+├ ƒ /api/health/live
+├ ƒ /api/scan/customers
+├ ƒ /api/scan/resolve
+├ ○ /apple-icon
+├ ƒ /business-owners
+├ ƒ /businesses
+├ ƒ /businesses/[slug]
+├ ƒ /businesses/[slug]/activity
+├ ƒ /businesses/[slug]/branches
+├ ƒ /businesses/[slug]/campaigns
+├ ƒ /businesses/[slug]/customers
+├ ƒ /businesses/[slug]/customers/[customerId]
+├ ƒ /businesses/[slug]/customers/export
+├ ƒ /businesses/[slug]/duplicates
+├ ƒ /businesses/[slug]/offers
+├ ƒ /businesses/[slug]/playbooks
+├ ƒ /businesses/[slug]/recovery
+├ ƒ /businesses/[slug]/recovery/export
+├ ƒ /businesses/[slug]/reports
+├ ƒ /businesses/[slug]/reports/export
+├ ƒ /businesses/[slug]/reports/staff
+├ ƒ /businesses/[slug]/rewards
+├ ƒ /businesses/[slug]/scan
+├ ƒ /businesses/[slug]/scan/customer/[customerId]
+├ ƒ /businesses/[slug]/settings
+├ ƒ /businesses/[slug]/users
+├ ƒ /card/[token]
+├ ƒ /dashboard
+├ ○ /icon
+├ ƒ /join/[slug]
+├ ƒ /login
+└ ○ /manifest.webmanifest
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+✅ BUILD PASS
+
+===== CRITICAL BROWSER UAT =====
+===== OWNER SCAN UAT =====
+[WebServer] (node:64546) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+[WebServer] In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+[WebServer] 
+[WebServer] To prepare for this change:
+[WebServer] - If you want the current behavior, explicitly use 'sslmode=verify-full'
+[WebServer] - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+[WebServer] 
+[WebServer] See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+[WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at Module.callback (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/0zhm_@auth_core_1_6c6y3._.js:4325:30)
+[WebServer]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[WebServer]     at async AuthInternal (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/0zhm_@auth_core_1_6c6y3._.js:5181:24)
+[WebServer]     at async Auth (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/0zhm_@auth_core_1_6c6y3._.js:5403:34)
+[WebServer]     at async signIn (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/[root-of-the-server]__00ol1q9._.js:4175:17)
+[WebServer]     at async loginAction (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/[root-of-the-server]__0ds70jz._.js:899:9)
+[WebServer]     at async executeActionAndPrepareForRender (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:66:5248)
+[WebServer]     at async /Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:66:1986
+[WebServer]     at async handleAction (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:64:26472)
+[WebServer]     at async renderToHTMLOrFlightImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:70:55695)
+[WebServer]     at async doRender (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/1rol_next_dist_esm_0z_81ur._.js:775:28)
+[WebServer]     at async AppPageRouteModule.handleResponse (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:72:67020)
+[WebServer]     at async handleResponse (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/1rol_next_dist_esm_0z_81ur._.js:1086:32)
+[WebServer]     at async Module.handler (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/1rol_next_dist_esm_0z_81ur._.js:1492:20)
+[WebServer]     at async DevServer.renderToResponseWithComponentsImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1462:9)
+[WebServer]     at async DevServer.renderPageComponent (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1514:24)
+[WebServer]     at async DevServer.renderToResponseImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1564:32)
+[WebServer]     at async DevServer.pipeImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1044:25)
+[WebServer]     at async NextNodeServer.handleCatchallRenderRequest (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/next-server.js:338:17)
+[WebServer]     at async DevServer.handleRequestImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:935:17)
+[WebServer]     at async /Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/dev/next-dev-server.js:394:20
+[WebServer]     at async Span.traceAsyncFn (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/trace/trace.js:164:20)
+[WebServer]     at async DevServer.handleRequest (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/dev/next-dev-server.js:390:24)
+[WebServer]     at async invokeRender (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/router-server.js:266:21)
+[WebServer]     at async handleRequest (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/router-server.js:465:24)
+[WebServer]     at async requestHandlerImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/router-server.js:514:13)
+[WebServer]     at async Server.requestListener (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/start-server.js:225:13)
+  ✓  1 [desktop-chromium] › tests/browser/final-uat-u13.spec.ts:123:3 › U13 final Chromium browser UAT › authentication, owner navigation, reports, and exact-once Scan earn/redeem @desktop (58.3s)
+
+  1 passed (1.4m)
+✅ OWNER SCAN UAT PASS
+
+===== STAFF MOBILE UAT =====
+[WebServer] (node:64885) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+[WebServer] In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+[WebServer] 
+[WebServer] To prepare for this change:
+[WebServer] - If you want the current behavior, explicitly use 'sslmode=verify-full'
+[WebServer] - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+[WebServer] 
+[WebServer] See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+  ✓  1 [mobile-chromium] › tests/browser/final-uat-u13.spec.ts:235:3 › U13 final Chromium browser UAT › staff operates Scan in Arabic on mobile with branch context and no reports access @mobile (24.8s)
+
+  1 passed (45.9s)
+✅ STAFF MOBILE UAT PASS
+
+===== PUBLIC MOBILE UAT =====
+[WebServer] (node:65089) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+[WebServer] In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+[WebServer] 
+[WebServer] To prepare for this change:
+[WebServer] - If you want the current behavior, explicitly use 'sslmode=verify-full'
+[WebServer] - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+[WebServer] 
+[WebServer] See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+  ✓  1 [mobile-chromium] › tests/browser/final-uat-u13.spec.ts:257:3 › U13 final Chromium browser UAT › public enrollment and English/Arabic public cards are responsive and private @mobile (11.8s)
+
+  1 passed (31.8s)
+✅ PUBLIC MOBILE UAT PASS
+
+===== FULL BROWSER UAT — OBSERVATION =====
+$ playwright test --config=playwright.config.ts
+[WebServer] (node:65319) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+[WebServer] In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+[WebServer] 
+[WebServer] To prepare for this change:
+[WebServer] - If you want the current behavior, explicitly use 'sslmode=verify-full'
+[WebServer] - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+[WebServer] 
+[WebServer] See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 5 tests using 1 worker
+
+[WebServer] [auth][error] CredentialsSignin: Read more at https://errors.authjs.dev#credentialssignin
+[WebServer]     at Module.callback (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/0zhm_@auth_core_1_6c6y3._.js:4325:30)
+[WebServer]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[WebServer]     at async AuthInternal (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/0zhm_@auth_core_1_6c6y3._.js:5181:24)
+[WebServer]     at async Auth (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/0zhm_@auth_core_1_6c6y3._.js:5403:34)
+[WebServer]     at async signIn (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/[root-of-the-server]__00ol1q9._.js:4175:17)
+[WebServer]     at async loginAction (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/[root-of-the-server]__0ds70jz._.js:899:9)
+[WebServer]     at async executeActionAndPrepareForRender (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:66:5248)
+[WebServer]     at async /Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:66:1986
+[WebServer]     at async handleAction (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:64:26472)
+[WebServer]     at async renderToHTMLOrFlightImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:70:55695)
+[WebServer]     at async doRender (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/1rol_next_dist_esm_0z_81ur._.js:775:28)
+[WebServer]     at async AppPageRouteModule.handleResponse (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/compiled/next-server/app-page-turbo.runtime.dev.js:72:67020)
+[WebServer]     at async handleResponse (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/1rol_next_dist_esm_0z_81ur._.js:1086:32)
+[WebServer]     at async Module.handler (/Users/apple/loyalflow/.next/dev/server/chunks/ssr/1rol_next_dist_esm_0z_81ur._.js:1492:20)
+[WebServer]     at async DevServer.renderToResponseWithComponentsImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1462:9)
+[WebServer]     at async DevServer.renderPageComponent (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1514:24)
+[WebServer]     at async DevServer.renderToResponseImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1564:32)
+[WebServer]     at async DevServer.pipeImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:1044:25)
+[WebServer]     at async NextNodeServer.handleCatchallRenderRequest (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/next-server.js:338:17)
+[WebServer]     at async DevServer.handleRequestImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/base-server.js:935:17)
+[WebServer]     at async /Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/dev/next-dev-server.js:394:20
+[WebServer]     at async Span.traceAsyncFn (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/trace/trace.js:164:20)
+[WebServer]     at async DevServer.handleRequest (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/dev/next-dev-server.js:390:24)
+[WebServer]     at async invokeRender (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/router-server.js:266:21)
+[WebServer]     at async handleRequest (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/router-server.js:465:24)
+[WebServer]     at async requestHandlerImpl (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/router-server.js:514:13)
+[WebServer]     at async Server.requestListener (/Users/apple/loyalflow/node_modules/.pnpm/next@16.2.11_@babel+core@7.29.7_supports-color@7.2.0__@playwright+test@1.61.1_react-dom_cbf1c2fbf8d0e53ee62cb048c29a6f00/node_modules/next/dist/server/lib/start-server.js:225:13)
+  ✓  1 [desktop-chromium] › tests/browser/final-uat-u13.spec.ts:123:3 › U13 final Chromium browser UAT › authentication, owner navigation, reports, and exact-once Scan earn/redeem @desktop (49.1s)
+  ✓  2 [desktop-chromium] › tests/browser/final-uat-u13.spec.ts:203:3 › U13 final Chromium browser UAT › manager and viewer remain within their authoritative capabilities @desktop (20.1s)
+  ✓  3 [tablet-chromium] › tests/browser/final-uat-u13.spec.ts:221:3 › U13 final Chromium browser UAT › super admin has explicit global and business context @tablet (8.9s)
+  ✓  4 [mobile-chromium] › tests/browser/final-uat-u13.spec.ts:235:3 › U13 final Chromium browser UAT › staff operates Scan in Arabic on mobile with branch context and no reports access @mobile (19.7s)
+  ✓  5 [mobile-chromium] › tests/browser/final-uat-u13.spec.ts:257:3 › U13 final Chromium browser UAT › public enrollment and English/Arabic public cards are responsive and private @mobile (8.3s)
+
+  5 passed (2.6m)
+✅ FULL BROWSER UAT PASS
+
+===== FINAL GIT REVIEW =====
+ M app/businesses/[slug]/branches/page.tsx
+ M app/businesses/[slug]/customers/[customerId]/page.tsx
+ M app/businesses/[slug]/customers/page.tsx
+ M app/businesses/[slug]/offers/page.tsx
+ M app/businesses/[slug]/page.tsx
+ M app/businesses/[slug]/recovery/page.tsx
+ M app/businesses/[slug]/reports/page.tsx
+ M app/businesses/[slug]/rewards/page.tsx
+ M app/businesses/[slug]/scan/customer/[customerId]/page.tsx
+ M app/businesses/[slug]/scan/page.tsx
+ M app/businesses/[slug]/settings/page.tsx
+ M app/businesses/[slug]/users/page.tsx
+ M app/businesses/page.tsx
+ M app/card/[token]/not-found.tsx
+ M app/card/[token]/page.tsx
+ M app/dashboard/page.tsx
+ M app/join/[slug]/not-found.tsx
+ M app/join/[slug]/page.tsx
+ M app/login/page.tsx
+ M components/app-sidebar.tsx
+ M components/app-topbar.tsx
+ M components/business-settings-form.tsx
+ M components/campaign-builder.tsx
+ M components/customer-experience/public-card-actions.tsx
+ M components/customer-experience/public-page-shell.tsx
+ M components/experience-mode-switcher.tsx
+ M components/growth/growth-shell.tsx
+ M components/language-switcher.tsx
+ M components/mobile-bottom-navigation.tsx
+ M components/qr-scanner.tsx
+ M components/scan-customer-search.tsx
+ M components/shell-icons.tsx
+ M lib/app-shell-navigation.ts
+ M tests/app-shell-navigation.test.ts
+ M tests/customer-u6-experience.test.ts
+ M tests/experience-mode.test.ts
+ M tests/growth-u8.test.ts
+?? F18_IA_REDESIGN_PHASE1.md
+?? F18_IA_REDESIGN_PHASE2.md
+?? F18_IA_REDESIGN_PHASE3.md
+?? F18_INTERNAL_POLISH_PHASE4A.md
+?? F18_PHASE6_RELEASE_REPORT.txt
+?? app/business-owners/
+
+ app/businesses/[slug]/branches/page.tsx            | 151 +++---
+ .../[slug]/customers/[customerId]/page.tsx         |  69 ++-
+ app/businesses/[slug]/customers/page.tsx           |  43 +-
+ app/businesses/[slug]/offers/page.tsx              |  26 +-
+ app/businesses/[slug]/page.tsx                     | 213 +++++++-
+ app/businesses/[slug]/recovery/page.tsx            |   6 +-
+ app/businesses/[slug]/reports/page.tsx             | 547 +++++++++++----------
+ app/businesses/[slug]/rewards/page.tsx             |  43 +-
+ .../[slug]/scan/customer/[customerId]/page.tsx     |  16 +-
+ app/businesses/[slug]/scan/page.tsx                |  45 +-
+ app/businesses/[slug]/settings/page.tsx            |  55 ++-
+ app/businesses/[slug]/users/page.tsx               | 336 +++++++------
+ app/businesses/page.tsx                            |   2 +-
+ app/card/[token]/not-found.tsx                     |   9 +-
+ app/card/[token]/page.tsx                          |  16 +-
+ app/dashboard/page.tsx                             | 149 +++++-
+ app/join/[slug]/not-found.tsx                      |   7 +-
+ app/join/[slug]/page.tsx                           |  26 +-
+ app/login/page.tsx                                 |  35 +-
+ components/app-sidebar.tsx                         |  25 +-
+ components/app-topbar.tsx                          |   8 +-
+ components/business-settings-form.tsx              | 222 ++++++---
+ components/campaign-builder.tsx                    |  38 +-
+ .../customer-experience/public-card-actions.tsx    |  12 +-
+ .../customer-experience/public-page-shell.tsx      |   6 +-
+ components/experience-mode-switcher.tsx            |  34 +-
+ components/growth/growth-shell.tsx                 |  13 +-
+ components/language-switcher.tsx                   | 106 +---
+ components/mobile-bottom-navigation.tsx            |  17 +-
+ components/qr-scanner.tsx                          |  10 +-
+ components/scan-customer-search.tsx                |   6 +-
+ components/shell-icons.tsx                         |   2 +-
+ lib/app-shell-navigation.ts                        |  19 +-
+ tests/app-shell-navigation.test.ts                 |   9 +
+ tests/customer-u6-experience.test.ts               |   6 +-
+ tests/experience-mode.test.ts                      |   7 +-
+ tests/growth-u8.test.ts                            |   2 +-
+ 37 files changed, 1414 insertions(+), 922 deletions(-)
+
+===== CREATE SAFE ZIP =====
+✅ Safe ZIP created: /Users/apple/loyalflow-f18-final-safe-20260726-212348.zip
+
+===== PHASE 6 RESULT =====
+✅ F18 PHASE 6 CRITICAL RELEASE GATE PASSED
+Full browser suite result: PASS
+
+Next manual checkpoint after reviewing git diff:
+git add -A
+git commit -m 'complete F18 frontend redesign and release hardening'
+
+Finished: Sun Jul 26 21:31:26 EEST 2026
+Report: /Users/apple/loyalflow/F18_PHASE6_RELEASE_REPORT.txt
+Safe ZIP: /Users/apple/loyalflow-f18-final-safe-20260726-212348.zip

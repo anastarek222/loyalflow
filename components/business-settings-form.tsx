@@ -13,6 +13,7 @@ type CardLanguage = "AR" | "EN";
 type StaffAttributionMode = "OFF" | "OPTIONAL" | "REQUIRED";
 
 type BusinessSettingsFormProps = {
+  language: "AR" | "EN";
   business: {
     name: string;
     slug: string;
@@ -79,11 +80,13 @@ type BusinessSettingsFormProps = {
 };
 
 export default function BusinessSettingsForm({
+  language,
   business,
   saved,
   error,
   action,
 }: BusinessSettingsFormProps) {
+  const tr = (ar: string, en: string) => (language === "AR" ? ar : en);
   const [name, setName] = useState(business.name);
   const [logoUrl, setLogoUrl] = useState(
     business.logoUrl?.startsWith("http") ? business.logoUrl : "",
@@ -231,6 +234,21 @@ export default function BusinessSettingsForm({
 
   const businessInitial = name.trim().charAt(0).toUpperCase() || "L";
 
+  const themeOptions = [
+    { value: "DEFAULT", label: tr("نظيف", "Clean"), description: tr("فاتح ومتوازن وسهل", "Light, balanced and familiar"), swatches: ["#ffffff", "#f5f7fb", primaryColor] },
+    { value: "MINIMAL", label: tr("بسيط", "Minimal"), description: tr("زخرفة أقل وتركيز أكبر", "Less decoration, more focus"), swatches: ["#ffffff", "#fafafa", "#111827"] },
+    { value: "MODERN", label: tr("عصري", "Modern"), description: tr("أسطح هادئة بإحساس SaaS احترافي", "Soft surfaces for a premium SaaS feel"), swatches: ["#f7f8fc", "#ffffff", primaryColor] },
+    { value: "LUXURY", label: tr("أنيق", "Elegant"), description: tr("معالجة داكنة فاخرة لكارت العميل", "Dark premium customer-card treatment"), swatches: ["#161616", "#252525", primaryColor] },
+    { value: "DARK", label: tr("داكن", "Dark"), description: tr("تجربة داكنة موجهة للعميل", "Dark customer-facing experience"), swatches: ["#0f172a", "#1e293b", primaryColor] },
+    { value: "GRADIENT", label: tr("متدرج", "Gradient"), description: tr("لمسة هوية متدرجة وخفيفة", "Subtle branded customer-card accent"), swatches: ["#ffffff", primaryColor, secondaryColor] },
+  ] as const;
+
+  const cardStyleOptions = [
+    { value: "CLASSIC", label: tr("كلاسيكي", "Classic"), description: tr("توازن واضح للمعلومات", "Balanced information layout") },
+    { value: "COMPACT", label: tr("مضغوط", "Compact"), description: tr("أصغر وأسرع في القراءة", "Smaller and faster to scan") },
+    { value: "PREMIUM", label: tr("بريميوم", "Premium"), description: tr("تركيز بصري أكبر على الهوية", "More visual brand emphasis") },
+  ] as const;
+
   return (
     <>
       {saved && (
@@ -253,13 +271,13 @@ export default function BusinessSettingsForm({
           <h2 className="text-xl font-bold text-foreground">بيانات النشاط</h2>
 
           <p className="mt-1 text-sm text-foreground-subtle">
-            تعديل هوية النشاط وقواعد برنامج الولاء.
+            {tr("اجعل تجربة العمل اليومية بسيطة، وخصص هوية العميل عند الحاجة.", "Keep the daily experience simple, then customise the customer-facing brand when you need it.")}
           </p>
 
 
           <div className="mt-8 rounded-[var(--lf-radius-card)] border border-border p-6">
             <h3 className="text-lg font-black text-foreground">
-              🎨 هوية وتصميم الكارت
+              {tr("الهوية والمظهر", "Brand & appearance")}
             </h3>
 
             <div className="mt-6 space-y-6">
@@ -279,93 +297,151 @@ export default function BusinessSettingsForm({
 
 
               <div className="grid gap-4 sm:grid-cols-2">
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium">
-                    اللون الأساسي HEX
-                  </label>
-
-                  <div className="flex gap-2">
+                <label className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                  <span className="block text-sm font-bold text-foreground">{tr("اللون الأساسي للهوية", "Primary brand colour")}</span>
+                  <span className="mt-1 block text-xs text-foreground-subtle">{tr("يستخدم للإجراءات الأساسية وهوية العميل.", "Used for primary actions and customer branding.")}</span>
+                  <span className="mt-4 flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={primaryColor}
+                      onChange={(event) => setPrimaryColor(event.target.value)}
+                      className="h-11 w-14 cursor-pointer rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
+                      aria-label={tr("اللون الأساسي للهوية", "Primary brand colour")}
+                    />
                     <input
                       name="primaryColor"
                       value={primaryColor}
-                      onChange={(e)=>setPrimaryColor(e.target.value)}
-                      className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
-                      placeholder="#007BFF"
+                      onChange={(event) => setPrimaryColor(event.target.value)}
+                      className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-foreground"
+                      placeholder="#4F46E5"
                     />
+                  </span>
+                </label>
 
-                    <div
-                      className="h-12 w-12 rounded-[var(--lf-radius-input)] border"
-                      style={{backgroundColor: primaryColor}}
+                <label className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                  <span className="block text-sm font-bold text-foreground">{tr("اللون الثانوي للهوية", "Secondary brand colour")}</span>
+                  <span className="mt-1 block text-xs text-foreground-subtle">{tr("يستخدم للتفاصيل والأسطح الظاهرة للعملاء.", "Supports accents and customer-facing surfaces.")}</span>
+                  <span className="mt-4 flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(event) => setSecondaryColor(event.target.value)}
+                      className="h-11 w-14 cursor-pointer rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
+                      aria-label={tr("اللون الثانوي للهوية", "Secondary brand colour")}
                     />
-                  </div>
-                </div>
-
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium">
-                    اللون الثانوي HEX
-                  </label>
-
-                  <div className="flex gap-2">
                     <input
                       name="secondaryColor"
                       value={secondaryColor}
-                      onChange={(e)=>setSecondaryColor(e.target.value)}
-                      className="w-full rounded-[var(--lf-radius-input)] border px-4 py-4"
+                      onChange={(event) => setSecondaryColor(event.target.value)}
+                      className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-foreground"
                       placeholder="#FFFFFF"
                     />
+                  </span>
+                </label>
+              </div>
 
-                    <div
-                      className="h-12 w-12 rounded-[var(--lf-radius-input)] border"
-                      style={{backgroundColor: secondaryColor}}
-                    />
+              <div>
+                <div className="mb-3">
+                  <h4 className="text-sm font-bold text-foreground">{tr("اختر أسلوبًا بصريًا", "Choose a visual style")}</h4>
+                  <p className="mt-1 text-xs text-foreground-subtle">
+                    {tr("ابدأ بشكل بسيط ويمكنك ضبط التفاصيل لاحقًا.", "Start simple. You can fine-tune the details later.")}
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {themeOptions.map((option) => {
+                    const selected = themePreset === option.value;
+                    return (
+                      <label
+                        key={option.value}
+                        className={`cursor-pointer rounded-[var(--lf-radius-input)] border p-4 transition ${
+                          selected
+                            ? "border-primary bg-primary-subtle ring-2 ring-primary/10"
+                            : "border-border bg-white hover:border-primary/30"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="themePreset"
+                          value={option.value}
+                          checked={selected}
+                          onChange={() => setThemePreset(option.value)}
+                          className="sr-only"
+                        />
+                        <span className="flex items-start justify-between gap-3">
+                          <span>
+                            <span className="block text-sm font-bold text-foreground">{option.label}</span>
+                            <span className="mt-1 block text-xs leading-5 text-foreground-subtle">{option.description}</span>
+                          </span>
+                          <span
+                            aria-hidden="true"
+                            className={`mt-0.5 flex size-5 items-center justify-center rounded-full border text-[10px] font-black ${
+                              selected ? "border-primary bg-primary text-white" : "border-border"
+                            }`}
+                          >
+                            {selected ? "✓" : ""}
+                          </span>
+                        </span>
+                        <span className="mt-4 flex h-7 overflow-hidden rounded-md border border-border">
+                          {option.swatches.map((swatch, index) => (
+                            <span key={`${option.value}-${index}`} className="flex-1" style={{ backgroundColor: swatch }} />
+                          ))}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+                <div>
+                  <h4 className="mb-3 text-sm font-bold text-foreground">{tr("شكل الكارت الرقمي", "Digital card layout")}</h4>
+                  <div className="grid gap-2">
+                    {cardStyleOptions.map((option) => {
+                      const selected = cardStyle === option.value;
+                      return (
+                        <label
+                          key={option.value}
+                          className={`flex cursor-pointer items-center justify-between gap-4 rounded-[var(--lf-radius-input)] border px-4 py-3 ${
+                            selected ? "border-primary bg-primary-subtle" : "border-border bg-white hover:bg-surface-subtle"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="cardStyle"
+                            value={option.value}
+                            checked={selected}
+                            onChange={() => setCardStyle(option.value)}
+                            className="sr-only"
+                          />
+                          <span>
+                            <span className="block text-sm font-bold text-foreground">{option.label}</span>
+                            <span className="block text-xs text-foreground-subtle">{option.description}</span>
+                          </span>
+                          <span className={selected ? "text-primary" : "text-foreground-subtle"} aria-hidden="true">
+                            {selected ? "✓" : "○"}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
 
-              </div>
-
-
-              <div className="grid gap-4 sm:grid-cols-3">
-
-                <select
-                  name="themePreset"
-                  value={themePreset}
-                  onChange={(e)=>setThemePreset(e.target.value)}
-                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
-                >
-                  <option value="DEFAULT">Default</option>
-                  <option value="MINIMAL">Minimal</option>
-                  <option value="LUXURY">Luxury</option>
-                  <option value="DARK">Dark</option>
-                  <option value="MODERN">Modern</option>
-                  <option value="GRADIENT">Gradient</option>
-                </select>
-
-
-                <select
-                  name="cardStyle"
-                  value={cardStyle}
-                  onChange={(e)=>setCardStyle(e.target.value)}
-                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
-                >
-                  <option value="CLASSIC">Classic</option>
-                  <option value="COMPACT">Compact</option>
-                  <option value="PREMIUM">Premium</option>
-                </select>
-
-
-                <select
-                  name="fontFamily"
-                  value={fontFamily}
-                  onChange={(e)=>setFontFamily(e.target.value)}
-                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
-                >
-                  <option value="INTER">Inter</option>
-                  <option value="CAIRO">Cairo</option>
-                  <option value="POPPINS">Poppins</option>
-                </select>
-
+                <div>
+                  <label className="mb-2 block text-sm font-bold text-foreground">{tr("الخط", "Typography")}</label>
+                  <select
+                    name="fontFamily"
+                    value={fontFamily}
+                    onChange={(event) => setFontFamily(event.target.value)}
+                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground"
+                  >
+                    <option value="INTER">{tr("Inter — نظيف ومحايد", "Inter — clean and neutral")}</option>
+                    <option value="CAIRO">{tr("Cairo — مناسب للعربية", "Cairo — Arabic-first")}</option>
+                    <option value="POPPINS">{tr("Poppins — عصري وودود", "Poppins — friendly modern")}</option>
+                  </select>
+                  <p className="mt-2 text-xs leading-5 text-foreground-subtle">
+                    {tr("تتحدث معاينة الكارت فورًا لتسهيل المقارنة.", "The customer card preview updates immediately so the choice is easy to compare.")}
+                  </p>
+                </div>
               </div>
 
 

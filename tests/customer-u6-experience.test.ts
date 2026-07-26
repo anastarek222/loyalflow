@@ -34,7 +34,7 @@ test("U6 keeps advanced management and mutations unavailable to staff and viewer
   const businessId = "business-a";
   assert.equal(canPerform({ role: "STAFF", businessId }, businessId, "CUSTOMERS_EDIT"), false);
   assert.equal(canPerform({ role: "VIEWER", businessId }, businessId, "LOYALTY_EARN"), false);
-  assert.match(list, /canReviewDuplicates \? <section id="add-customer"/);
+  assert.match(list, /canReviewDuplicates && !isSimpleExperience \? <section id="add-customer"/);
   assert.match(detail, /canEarnLoyalty/);
   assert.match(detail, /canRedeemLoyalty/);
 });
@@ -56,8 +56,8 @@ test("U6 customer detail distinguishes visits, points, and sales amount loyalty 
 test("U6 retains dashboard-compatible reward-ready filters and direction-safe values", () => {
   assert.deepEqual(getCustomerSegmentWhere("REWARD_READY", 5), { isActive: true, balance: { gte: 5 } });
   assert.match(list, /segment=REWARD_READY/);
-  assert.match(list, /dir="ltr" className="mt-1 text-sm text-foreground-subtle"/);
-  assert.match(detail, /dir="ltr" className="rounded-full bg-white\/10/);
+  assert.match(list, /dir="ltr"/);
+  assert.match(detail, /dir="ltr" className="text-foreground-muted"/);
   assert.match(detail, /name="phone"[\s\S]{0,240}dir="ltr"/);
   assert.match(detail, /customerCode/);
 });

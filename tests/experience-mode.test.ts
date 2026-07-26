@@ -49,11 +49,14 @@ test("U5.1 simple owner navigation keeps daily operations and hides primary mana
   assert.ok(simple.some((entry) => entry.action === "switch-mode"));
 });
 
-test("U5.1 advanced owner navigation preserves the complete U3 hierarchy", () => {
+test("U5.1 advanced owner navigation keeps primary work visible and moves specialist tools into their parent surfaces", () => {
   const ids = entries(owner, "ADVANCED").map((entry) => entry.id);
-  for (const id of ["scan", "customers", "activity", "rewards", "offers", "campaigns", "recovery", "reports", "staffReports", "team", "branches", "settings", "playbooks"] as const) {
+  for (const id of ["scan", "customers", "activity", "rewards", "offers", "campaigns", "recovery", "reports", "team", "branches", "settings"] as const) {
     assert.ok(ids.includes(id));
   }
+  assert.equal(ids.includes("staffReports"), false);
+  assert.equal(ids.includes("playbooks"), false);
+  assert.equal(ids.includes("duplicates"), false);
 });
 
 test("U5.1 staff simple navigation retains permitted Scan and Customers without a useless switch", () => {

@@ -120,46 +120,54 @@ export default function CampaignBuilder({
 
   return (
     <>
-      <section aria-label={language === "AR" ? "إعداد الحملة" : "Campaign preparation"} className="grid gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface p-6 sm:grid-cols-3">
-        <label className="text-sm font-black text-foreground-muted">
+      <section aria-label={language === "AR" ? "إعداد الحملة" : "Campaign preparation"} className="grid gap-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 sm:grid-cols-3 sm:p-5">
+        <label className="text-sm font-black text-slate-700">
           {language === "AR" ? "نوع الحملة" : "Campaign type"}
-          <select value={trigger} onChange={(event) => onTriggerChange(event.target.value as CampaignTrigger)} className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground">
+          <select value={trigger} onChange={(event) => onTriggerChange(event.target.value as CampaignTrigger)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950">
             {campaignTriggers.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
           </select>
         </label>
-        <label className="text-sm font-black text-foreground-muted">
+        <label className="text-sm font-black text-slate-700">
           {language === "AR" ? "الجمهور" : "Audience"}
-          <select value={audience} onChange={(event) => setAudience(event.target.value as CampaignAudience)} className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground">
+          <select value={audience} onChange={(event) => setAudience(event.target.value as CampaignAudience)} className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950">
             {campaignAudiences.map((option) => <option key={option} value={option}>{labels[option]}</option>)}
           </select>
         </label>
-        {!simple ? <label className="text-sm font-black text-foreground-muted">
+        {!simple ? <label className="text-sm font-black text-slate-700">
           {language === "AR" ? "نص إضافي اختياري" : "Optional additional copy"}
-          <input value={offer} onChange={(event) => setOffer(event.target.value.slice(0, 300))} maxLength={300} placeholder={language === "AR" ? "مثال: خصم 10% عند الزيارة القادمة" : "Example: 10% off on your next visit"} className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground" />
+          <input value={offer} onChange={(event) => setOffer(event.target.value.slice(0, 300))} maxLength={300} placeholder={language === "AR" ? "مثال: خصم 10% عند الزيارة القادمة" : "Example: 10% off on your next visit"} className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950" />
         </label>
-        : <div className="text-sm text-foreground-muted">{language === "AR" ? "راجع الجمهور والمحتوى قبل النسخ." : "Review audience and content before copying."}</div>}
+        : <div className="text-sm text-slate-600">{language === "AR" ? "راجع الجمهور والمحتوى قبل النسخ." : "Review audience and content before copying."}</div>}
       </section>
 
-      <p className="mt-6 rounded-[var(--lf-radius-input)] bg-surface-subtle p-4 text-sm text-foreground-muted">{language === "AR" ? `${filteredCandidates.length} عميل في المعاينة. لا يتم حفظ حملة أو إرسال أي رسالة تلقائيًا.` : `${filteredCandidates.length} customers in this preview. No campaign is saved and no message is sent automatically.`}</p>
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 py-3 text-sm text-foreground-muted">
+        <span>{language === "AR" ? "عملاء المعاينة" : "Preview customers"}</span>
+        <strong dir="ltr" className="lf-type-numeric text-foreground">{filteredCandidates.length}</strong>
+      </div>
 
       <section className="mt-4 space-y-4">
         {filteredCandidates.length === 0 ? (
-          <p className="rounded-[var(--lf-radius-input)] border border-dashed border-border bg-surface-subtle p-6 text-foreground-muted">{language === "AR" ? "لا يوجد عملاء مطابقون لهذا الجمهور." : "No customers match this audience."}</p>
+          <p className="rounded-lg border border-dashed border-border bg-surface-subtle p-6 text-slate-600">{language === "AR" ? "لا يوجد عملاء مطابقون لهذا الجمهور." : "No customers match this audience."}</p>
         ) : filteredCandidates.map((candidate) => {
           const message = messageFor(candidate);
           return (
-            <article key={candidate.id} className="rounded-[var(--lf-radius-input)] border border-border bg-surface p-6">
+            <article key={candidate.id} className="rounded-lg border border-border bg-surface p-5">
               <div className="flex flex-col justify-between gap-4 sm:flex-row">
                 <div>
-                  <h2 className="font-black text-foreground">{candidate.name}</h2>
-                  <p dir="ltr" className="mt-1 text-sm text-foreground-subtle">{candidate.phone}</p>
+                  <h2 className="font-black text-slate-950">{candidate.name}</h2>
+                  <p dir="ltr" className="mt-1 text-sm text-slate-500">{candidate.phone}</p>
                 </div>
                 <div className="flex flex-wrap gap-2 sm:justify-end">
                   <CopyLinkButton value={message} label={language === "AR" ? "نسخ المسودة" : "Copy draft"} />
-                  <a aria-label={language === "AR" ? `فتح مسودة WhatsApp للعميل ${candidate.name}` : `Open WhatsApp draft for ${candidate.name}`} href={buildWhatsAppUrl(candidate.phone, message)} target="_blank" rel="noreferrer" className="rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-black text-[var(--lf-inverse)] hover:bg-success-subtle">{language === "AR" ? "فتح مسودة WhatsApp" : "Open WhatsApp draft"}</a>
+                  <a aria-label={language === "AR" ? `فتح مسودة WhatsApp للعميل ${candidate.name}` : `Open WhatsApp draft for ${candidate.name}`} href={buildWhatsAppUrl(candidate.phone, message)} target="_blank" rel="noreferrer" className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 text-sm font-bold text-white hover:bg-primary-hover">{language === "AR" ? "فتح مسودة WhatsApp" : "Open WhatsApp draft"}</a>
                 </div>
               </div>
-              <pre className="mt-4 whitespace-pre-wrap rounded-[var(--lf-radius-card)] bg-surface-subtle p-4 text-sm leading-6 text-foreground-muted">{message}</pre>
+              <details className="mt-4 rounded-[var(--lf-radius-input)] bg-surface-subtle">
+                <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-foreground-muted">
+                  {language === "AR" ? "معاينة الرسالة" : "Preview message"}
+                </summary>
+                <pre className="whitespace-pre-wrap border-t border-border p-4 text-sm leading-6 text-foreground-muted">{message}</pre>
+              </details>
             </article>
           );
         })}

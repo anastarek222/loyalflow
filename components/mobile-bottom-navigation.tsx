@@ -47,7 +47,22 @@ export default function MobileBottomNavigation({ language, experienceMode, user,
         {bottomItems.map((entry) => {
           const Icon = iconById[entry.id as keyof typeof iconById] ?? LayoutDashboard;
           const active = isNavigationItemActive(pathname, entry.href);
-          return <Link key={entry.href} href={entry.href} aria-current={active ? "page" : undefined} className={`flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] px-1 text-[11px] font-semibold ${active ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}><Icon size={19} aria-hidden="true" /><span className="truncate">{entry.label}</span></Link>;
+          const isScan = entry.id === "scan";
+          return (
+            <Link
+              key={entry.href}
+              href={entry.href}
+              aria-current={active ? "page" : undefined}
+              className={
+                isScan
+                  ? "relative -mt-4 flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-card)] bg-primary px-3 text-[11px] font-bold text-white shadow-lg shadow-black/10"
+                  : `flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] px-1 text-[11px] font-semibold ${active ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`
+              }
+            >
+              <Icon size={isScan ? 21 : 19} aria-hidden="true" />
+              <span className="truncate">{entry.label}</span>
+            </Link>
+          );
         })}
         <button type="button" aria-label={language === "AR" ? "فتح القائمة" : "Open full menu"} onClick={() => window.dispatchEvent(new CustomEvent("loyalflow:open-navigation"))} className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] px-1 text-[11px] font-semibold text-foreground-muted hover:bg-surface-subtle"><Menu size={19} aria-hidden="true" /><span>{language === "AR" ? "المزيد" : "More"}</span></button>
       </div>

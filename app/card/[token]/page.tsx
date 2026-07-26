@@ -440,15 +440,15 @@ export default async function PublicCardPage({
       <div className="mb-6">
         {showWelcome ? (
           <section
-            className="mb-5 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-4 text-center backdrop-blur-sm"
+            className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center"
           >
-            <h2 className="text-lg font-black text-emerald-100">
+            <h2 className="text-base font-black text-emerald-800">
               {language === "AR"
                 ? "🎉 تم إنشاء كارتك بنجاح"
                 : "🎉 Your card is ready"}
             </h2>
 
-            <p className="mt-1 text-sm leading-6 text-emerald-50/90">
+            <p className="mt-1 text-sm leading-6 text-emerald-700">
               {language === "AR"
                 ? `أهلاً بك في برنامج ولاء ${business.name}. كارتك جاهز للاستخدام.`
                 : `Welcome to ${business.name}'s loyalty program. Your digital card is ready to use.`}
@@ -557,7 +557,7 @@ export default async function PublicCardPage({
 
       {referralLink ? (
         <section
-          className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
+          className="mx-auto mb-4 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h2 className="font-black text-slate-950">
             {language === "AR"
@@ -607,7 +607,7 @@ export default async function PublicCardPage({
       ) : null}
 
       <section
-        className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
+        className="mx-auto mb-4 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
       >
         <h2 className="font-black text-slate-950">
           {language === "AR"
@@ -626,7 +626,7 @@ export default async function PublicCardPage({
             {publicOffers.map((offer) => (
               <article
                 key={offer.id}
-                className="rounded-2xl bg-violet-50 px-4 py-3"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
               >
                 <p className="font-black text-slate-950">
                   {offer.name}
@@ -639,7 +639,7 @@ export default async function PublicCardPage({
                 ) : null}
 
                 {offer.validUntil ? (
-                  <p className="mt-2 text-xs font-bold text-violet-700">
+                  <p className="mt-2 text-xs font-bold text-slate-600">
                     {language === "AR"
                       ? `متاح حتى ${dateFormatter.format(offer.validUntil)}`
                       : `Available until ${dateFormatter.format(offer.validUntil)}`}
@@ -653,7 +653,7 @@ export default async function PublicCardPage({
 
       {rewardExpiryStatuses.length > 0 ? (
         <section
-          className="mx-auto mb-6 w-full max-w-md rounded-3xl bg-white p-5 shadow-sm"
+          className="mx-auto mb-4 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <h2 className="font-black text-slate-950">
             {language === "AR"

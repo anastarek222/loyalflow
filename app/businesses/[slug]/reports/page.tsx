@@ -28,6 +28,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
 import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
@@ -85,13 +86,17 @@ function getReportRange(
   };
 }
 
-function getLoyaltyModeLabel(mode: string, language: "AR" | "EN") {
-  const labels: Record<string, { AR: string; EN: string }> = {
-    VISITS: { AR: "الزيارات", EN: "Visits" },
-    POINTS: { AR: "النقاط", EN: "Points" },
-    SALES_AMOUNT: { AR: "المبيعات", EN: "Sales" },
-  };
-  return labels[mode]?.[language] ?? mode;
+function getLoyaltyModeLabel(mode: string) {
+  switch (mode) {
+    case "VISITS":
+      return "الزيارات";
+    case "POINTS":
+      return "النقاط";
+    case "SALES_AMOUNT":
+      return "المبيعات";
+    default:
+      return mode;
+  }
 }
 
 function getCustomerName(customer: {
@@ -143,12 +148,14 @@ export default async function ReportsPage({
     notFound();
   }
 
+  const theme =
+    getBusinessTheme(business);
+
   const reportUser = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { id: true, language: true, role: true, experienceAccess: true },
   });
   const language = normalizeLanguage(reportUser?.language);
-  const t = (ar: string, en: string) => language === "AR" ? ar : en;
   const experienceMode = resolveExperienceMode(
     (await cookies()).get(getExperienceModeCookieName(session.user.id))?.value,
     reportUser?.role ?? session.user.role,
@@ -818,69 +825,78 @@ export default async function ReportsPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
+      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
     >
       <div className="mx-auto max-w-7xl" data-experience-mode={experienceMode}>
         <Link
           href={`/businesses/${business.slug}`}
-          className="text-sm font-medium text-primary hover:text-primary"
+          className="text-sm font-medium text-violet-600 hover:text-violet-800"
         >
-          {t("→ الرجوع إلى", "← Back to")} {business.name}
+          → الرجوع إلى {business.name}
         </Link>
 
-        <header
-          className={`mt-6 border p-6 text-white sm:p-8 rounded-[var(--lf-radius-card)] border-border`}
-        >
-          <p className="text-sm text-white/70">{copy.overview}</p>
-
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">
-            {business.name}
-          </h1>
-
-          <p className="mt-2 text-sm text-white/70">
-            {simple ? copy.simple : copy.advanced}
-          </p>
+        <header className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 sm:p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground-subtle">{copy.overview}</p>
+              <h1 className="mt-1 text-2xl font-black text-foreground sm:text-3xl">{language === "AR" ? "التقارير" : "Reports"}</h1>
+              <p dir="auto" className="mt-1 text-sm text-foreground-muted">{business.name}</p>
+            </div>
+            <span className="w-fit rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-foreground-muted">
+              {simple ? copy.simple : copy.advanced}
+            </span>
+          </div>
         </header>
 
         <ReportNavigation slug={business.slug} active="overview" query={reportQuery} language={language} />
 
 
-        <section
-          className="mt-6 grid gap-4 sm:grid-cols-2"
-        >
+        <section className="mt-5 flex flex-wrap gap-2">
           <Link
             href={`/businesses/${business.slug}/reports/staff?${reportQuery}`}
-            className={`rounded-[var(--lf-radius-input)] bg-primary text-[var(--lf-primary-foreground)] hover:bg-primary-hover p-6 text-center font-black text-white shadow-sm transition`}
+            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:border-primary/30 hover:text-primary"
           >
-            {t("👥 تقرير أداء الموظفين", "👥 Staff performance report")}
+            👥 تقرير أداء الموظفين
           </Link>
 
           {canExportData && (
             <a
             href={`/businesses/${business.slug}/reports/export?${reportQuery}`}
-            className="rounded-[var(--lf-radius-card)] bg-success p-6 text-center font-black text-[var(--lf-inverse)] shadow-sm transition hover:bg-success-subtle"
+            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:border-primary/30 hover:text-primary"
           >
-            {t("📥 تصدير حركات الفترة CSV", "📥 Export period transactions CSV")}
+            📥 تصدير حركات الفترة CSV
             </a>
           )}
           {!canExportData && (
-            <p role="status" className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-6 text-center text-sm font-semibold text-foreground-muted">
+            <p role="status" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 text-sm font-semibold text-foreground-subtle">
               {copy.exportUnavailable}
             </p>
           )}
         </section>
 
-        <form
-          method="get"
-          className={`mt-6 grid gap-4 border bg-white p-4 sm:mt-8 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto_auto] xl:items-end sm:p-6 rounded-[var(--lf-radius-card)] border-border`}
-        >
+        <details className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface" open={!simple}>
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+            <span>
+              <span className="block text-sm font-bold text-foreground">{language === "AR" ? "الفترة والفلاتر" : "Period & filters"}</span>
+              <span className="mt-0.5 block text-xs text-foreground-subtle">{language === "AR" ? "غيّر التاريخ أو الفرع أو الموظف عند الحاجة." : "Change dates, branch or staff only when needed."}</span>
+            </span>
+            <span className="text-xs font-semibold text-primary">{language === "AR" ? "تعديل" : "Edit"}</span>
+          </summary>
+          <form
+            method="get"
+            className="grid gap-4 border-t border-border p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3"
+          >
           <input name="period" type="hidden" value="custom" />
           <div>
             <label
               htmlFor="from"
-              className="mb-2 block text-sm font-medium text-foreground-muted"
+              className="mb-2 block text-sm font-medium text-slate-700"
             >
-              {t("من تاريخ", "From date")}
+              من تاريخ
             </label>
 
             <input
@@ -888,25 +904,25 @@ export default async function ReportsPage({
               name="from"
               type="date"
               defaultValue={fromInput}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="segment"
-              className="mb-2 block text-sm font-medium text-foreground-muted"
+              className="mb-2 block text-sm font-medium text-slate-700"
             >
-              {t("شريحة العملاء", "Customer segment")}
+              شريحة العملاء
             </label>
 
             <select
               id="segment"
               name="segment"
               defaultValue={segment ?? "all"}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             >
-              <option value="all">{t("كل الشرائح", "All segments")}</option>
+              <option value="all">كل الشرائح</option>
               {availableSegments.map((customerSegment) => (
                 <option
                   key={customerSegment}
@@ -921,20 +937,20 @@ export default async function ReportsPage({
           <div>
             <label
               htmlFor="loyaltyMode"
-              className="mb-2 block text-sm font-medium text-foreground-muted"
+              className="mb-2 block text-sm font-medium text-slate-700"
             >
-              {t("برنامج الولاء", "Loyalty programme")}
+              برنامج الولاء
             </label>
 
             <select
               id="loyaltyMode"
               name="loyaltyMode"
               defaultValue={loyaltyMode}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             >
-              <option value="all">{t("كل البرامج المتاحة", "All available programmes")}</option>
+              <option value="all">كل البرامج المتاحة</option>
               <option value={business.loyaltyMode}>
-                {getLoyaltyModeLabel(business.loyaltyMode, language)}
+                {getLoyaltyModeLabel(business.loyaltyMode)}
               </option>
             </select>
           </div>
@@ -942,9 +958,9 @@ export default async function ReportsPage({
           <div>
             <label
               htmlFor="to"
-              className="mb-2 block text-sm font-medium text-foreground-muted"
+              className="mb-2 block text-sm font-medium text-slate-700"
             >
-              {t("إلى تاريخ", "To date")}
+              إلى تاريخ
             </label>
 
             <input
@@ -952,28 +968,28 @@ export default async function ReportsPage({
               name="to"
               type="date"
               defaultValue={toInput}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             />
           </div>
 
           <div>
             <label
               htmlFor="branch"
-              className="mb-2 block text-sm font-medium text-foreground-muted"
+              className="mb-2 block text-sm font-medium text-slate-700"
             >
-              {t("الفرع", "Branch")}
+              الفرع
             </label>
 
             <select
               id="branch"
               name="branch"
               defaultValue={reportScope.branchId ?? "all"}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             >
-              <option value="all">{t("كل الفروع والسجل التاريخي", "All branches and historical records")}</option>
+              <option value="all">كل الفروع والسجل التاريخي</option>
               {reportBranches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.name}{branch.isActive ? "" : t(" (غير نشط)", " (inactive)")}
+                  {branch.name}{branch.isActive ? "" : " (غير نشط)"}
                 </option>
               ))}
             </select>
@@ -982,24 +998,24 @@ export default async function ReportsPage({
           <div>
             <label
               htmlFor="staff"
-              className="mb-2 block text-sm font-medium text-foreground-muted"
+              className="mb-2 block text-sm font-medium text-slate-700"
             >
-              {t("الموظف المنسوب إليه", "Attributed staff member")}
+              الموظف المنسوب إليه
             </label>
 
             <select
               id="staff"
               name="staff"
               defaultValue={reportScope.attributedStaffId ?? "all"}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
             >
-              <option value="all">{t("كل الموظفين والعمليات غير المنسوبة", "All staff and unattributed operations")}</option>
+              <option value="all">كل الموظفين والعمليات غير المنسوبة</option>
               {reportStaff.map((staffMember) => (
                 <option key={staffMember.id} value={staffMember.id}>
                   {[staffMember.firstName, staffMember.lastName]
                     .filter(Boolean)
-                    .join(" ") || t("مستخدم بدون اسم", "Unnamed user")}
-                  {staffMember.isActive ? "" : t(" (غير نشط)", " (inactive)")}
+                    .join(" ") || "مستخدم بدون اسم"}
+                  {staffMember.isActive ? "" : " (غير نشط)"}
                 </option>
               ))}
             </select>
@@ -1007,226 +1023,227 @@ export default async function ReportsPage({
 
           <button
             type="submit"
-            className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle sm:w-auto"
+            className="w-full rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 sm:w-auto"
           >
-            {t("تطبيق الفلتر", "Apply filter")}
+            تطبيق الفلتر
           </button>
 
           <div className="flex flex-wrap gap-2 xl:col-span-2">
             {[
-              ["today", t("اليوم", "Today")],
-              ["7d", t("آخر 7 أيام", "Last 7 days")],
-              ["30d", t("آخر 30 يومًا", "Last 30 days")],
+              ["today", "اليوم"],
+              ["7d", "آخر 7 أيام"],
+              ["30d", "آخر 30 يومًا"],
             ].map(([shortcut, label]) => (
               <Link
                 key={shortcut}
                 href={`/businesses/${business.slug}/reports?period=${shortcut}${reportFilterSuffix}`}
-                className={`rounded-[var(--lf-radius-input)] border px-4 py-4 text-center text-sm font-semibold transition ${
+                className={`rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
                   period === shortcut
-                    ? "border-primary/30 bg-primary text-[var(--lf-primary-foreground)]"
-                    : "border-border bg-white text-foreground-muted hover:border-primary/30"
+                    ? "border-violet-600 bg-violet-600 text-white"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-violet-400"
                 }`}
               >
                 {label}
               </Link>
             ))}
           </div>
-        </form>
+          </form>
+        </details>
 
-        <section aria-label={copy.summary} className="mt-6 grid gap-4 sm:grid-cols-3">
+        <section aria-label={copy.summary} className="mt-5 grid grid-cols-1 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface sm:grid-cols-3">
           {[
             { label: language === "AR" ? "عملاء جدد" : "New customers", value: newCustomers, detail: language === "AR" ? "خلال الفترة المحددة" : "In the selected period" },
             { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: `${numberFormatter.format(earnedAmount)} ${business.unitName}`, detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
             { label: language === "AR" ? "استبدالات المكافآت" : "Reward redemptions", value: numberFormatter.format(redeemed._count._all), detail: language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions" },
-          ].map((metric) => <article key={metric.label} className="rounded-[var(--lf-radius-input)] border border-border bg-surface p-6"><p className="text-sm font-semibold text-foreground-muted">{metric.label}</p><p className="mt-2 text-2xl font-bold text-foreground">{metric.value}</p><p className="mt-2 text-xs text-foreground-subtle">{metric.detail}</p></article>)}
+          ].map((metric) => <article key={metric.label} className="border-b border-border p-4 last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"><p className="text-sm font-semibold text-slate-600">{metric.label}</p><p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p><p className="mt-2 text-xs text-slate-500">{metric.detail}</p></article>)}
         </section>
 
-        {!simple && <section className="mt-6"><div className="mb-4"><h2 className="text-xl font-bold text-foreground">{copy.historical}</h2><p className="mt-1 text-sm text-foreground-muted">{copy.dateRange}</p></div><ReportCharts language={language} unitName={business.unitName} trends={historicalTrends} /></section>}
+        {!simple && <section className="mt-6"><div className="mb-3"><h2 className="text-xl font-bold text-slate-950">{copy.historical}</h2><p className="mt-1 text-sm text-slate-600">{copy.dateRange}</p></div><ReportCharts language={language} unitName={business.unitName} trends={historicalTrends} /></section>}
 
-        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3`}>
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("إجمالي العملاء", "Total customers")}</p>
+        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3`}>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">إجمالي العملاء</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {totalCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
+            <p className="mt-2 text-xs text-slate-400">
               {segment
-                ? t(`ضمن شريحة ${getCustomerSegmentLabel(segment)}`, `In segment ${getCustomerSegmentLabel(segment, language)}`)
-                : t("كل العملاء المسجلين", "All registered customers")}
+                ? `ضمن شريحة ${getCustomerSegmentLabel(segment)}`
+                : "كل العملاء المسجلين"}
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("العملاء الجدد", "New customers")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء الجدد</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {newCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("تم تسجيلهم خلال الفترة المحددة", "Registered during the selected period")}
+            <p className="mt-2 text-xs text-slate-400">
+              تم تسجيلهم خلال الفترة المحددة
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("العملاء النشطون", "Active customers")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء النشطون</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {activeCustomerGroups.length}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("عملاء لديهم حركات ولاء", "Customers with loyalty activity")}
+            <p className="mt-2 text-xs text-slate-400">
+              عملاء لديهم حركات ولاء
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("العملاء غير النشطين", "Inactive customers")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء غير النشطين</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {inactiveCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("حسب قاعدة عدم النشاط الحالية", "Based on the current inactivity rule")}
+            <p className="mt-2 text-xs text-slate-400">
+              حسب قاعدة عدم النشاط الحالية
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("عملاء معرّضون للتوقف", "At-risk customers")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">عملاء معرّضون للتوقف</p>
 
-            <p className="mt-4 text-4xl font-bold text-danger">
+            <p className="mt-3 text-4xl font-bold text-rose-600">
               {atRiskCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("توقف نشاطهم مؤخرًا ويحتاجون متابعة", "Their activity recently declined and needs follow-up")}
+            <p className="mt-2 text-xs text-slate-400">
+              توقف نشاطهم مؤخرًا ويحتاجون متابعة
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("الحركات", "Transactions")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">الحركات</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {transactionCount}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("عمليات الإضافة والاستبدال", "Earn and redeem operations")}
+            <p className="mt-2 text-xs text-slate-400">
+              عمليات الإضافة والاستبدال
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("رصيد الولاء المكتسب", "Loyalty earned")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">رصيد الولاء المكتسب</p>
 
-            <p className="mt-4 text-4xl font-bold text-success">
+            <p className="mt-3 text-4xl font-bold text-emerald-600">
               {earnedAmount}
             </p>
 
-            <p dir="auto" className="mt-2 text-xs text-foreground-subtle">
-              {earned._count._all} {t("عملية إضافة", "earn operations")} — {business.unitName}
+            <p dir="auto" className="mt-2 text-xs text-slate-400">
+              {earned._count._all} عملية إضافة — {business.unitName}
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("إجمالي الولاء المكتسب", "Lifetime loyalty earned")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">إجمالي الولاء المكتسب</p>
 
-            <p className="mt-4 text-4xl font-bold text-success">
+            <p className="mt-3 text-4xl font-bold text-emerald-700">
               {lifetimeEarnedAmount}
             </p>
 
-            <p dir="auto" className="mt-2 text-xs text-foreground-subtle">
-              {allTimeEarned._count._all} {t("عملية إضافة منذ بداية البرنامج", "earn operations since programme start")}
+            <p dir="auto" className="mt-2 text-xs text-slate-400">
+              {allTimeEarned._count._all} عملية إضافة منذ بداية البرنامج
             </p>
           </article>
 
           {business.loyaltyMode === "SALES_AMOUNT" && business.currency && (
-            <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-              <p className="text-sm text-foreground-subtle">{t("إجمالي الإنفاق المسجل", "Total recorded spend")}</p>
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">إجمالي الإنفاق المسجل</p>
 
-              <p className="mt-4 text-4xl font-bold text-success">
+              <p className="mt-3 text-4xl font-bold text-emerald-700">
                 {lifetimeTrackedSalesAmount}{business.currency ? ` ${business.currency}` : ""}
               </p>
 
-              <p className="mt-2 text-xs text-foreground-subtle">
-                {t("محسوب فقط من عمليات البيع المسجلة في LoyalFlow", "Calculated only from sales recorded in LoyalFlow")}
+              <p className="mt-2 text-xs text-slate-400">
+                محسوب فقط من عمليات البيع المسجلة في LoyalFlow
               </p>
             </article>
           )}
 
           {business.loyaltyMode === "VISITS" && (
-            <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-              <p className="text-sm text-foreground-subtle">{t("إجمالي الزيارات", "Total visits")}</p>
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">إجمالي الزيارات</p>
 
-              <p className="mt-4 text-4xl font-bold text-foreground">
+              <p className="mt-3 text-4xl font-bold text-slate-950">
                 {allTimeVisitCount}
               </p>
 
-              <p className="mt-2 text-xs text-foreground-subtle">
-                {t("كل عمليات الإضافة المسجلة كزيارة", "All earn operations recorded as visits")}
+              <p className="mt-2 text-xs text-slate-400">
+                كل عمليات الإضافة المسجلة كزيارة
               </p>
             </article>
           )}
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("متوسط الوقت لأول مكافأة", "Average time to first reward")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">متوسط الوقت لأول مكافأة</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {averageDaysToFirstReward === null
                 ? "—"
-                : `${averageDaysToFirstReward.toFixed(1)} ${t("يوم", "days")}`}
+                : `${averageDaysToFirstReward.toFixed(1)} يوم`}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("من إنشاء العميل حتى أول استبدال", "From customer creation to first redemption")}
+            <p className="mt-2 text-xs text-slate-400">
+              من إنشاء العميل حتى أول استبدال
             </p>
           </article>
 
           {business.loyaltyMode === "SALES_AMOUNT" && business.currency && (
-            <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-              <p className="text-sm text-foreground-subtle">{t("متوسط قيمة الشراء", "Average purchase value")}</p>
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">متوسط قيمة الشراء</p>
 
-              <p className="mt-4 text-4xl font-bold text-foreground">
+              <p className="mt-3 text-4xl font-bold text-slate-950">
                 {averagePurchaseAmount.toFixed(1)}{business.currency ? ` ${business.currency}` : ""}
               </p>
 
-              <p className="mt-2 text-xs text-foreground-subtle">
-                {t("متوسط عمليات الشراء المؤهلة خلال الفترة", "Average eligible purchases during the period")}
+              <p className="mt-2 text-xs text-slate-400">
+                متوسط عمليات الشراء المؤهلة خلال الفترة
               </p>
             </article>
           )}
 
           {business.loyaltyMode === "VISITS" && (
-            <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-              <p className="text-sm text-foreground-subtle">{t("متوسط الأيام بين الزيارات", "Average days between visits")}</p>
+            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-slate-500">متوسط الأيام بين الزيارات</p>
 
-              <p className="mt-4 text-4xl font-bold text-foreground">
+              <p className="mt-3 text-4xl font-bold text-slate-950">
                 {averageDaysBetweenVisits === null
                   ? "—"
-                  : `${averageDaysBetweenVisits.toFixed(1)} ${t("يوم", "days")}`}
+                  : `${averageDaysBetweenVisits.toFixed(1)} يوم`}
               </p>
 
-              <p className="mt-2 text-xs text-foreground-subtle">
-                {t("بين الزيارات المسجلة خلال الفترة المحددة", "Between recorded visits in the selected period")}
+              <p className="mt-2 text-xs text-slate-400">
+                بين الزيارات المسجلة خلال الفترة المحددة
               </p>
             </article>
           )}
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("المكافآت المستبدلة", "Rewards redeemed")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">المكافآت المستبدلة</p>
 
-            <p className="mt-4 text-4xl font-bold text-warning">
+            <p className="mt-3 text-4xl font-bold text-amber-600">
               {redeemed._count._all}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("إجمالي التكلفة خلال الفترة:", "Total period cost:")} {redeemedCost} — {t("الإجمالي منذ البداية:", "lifetime total:")} {allTimeRedeemed._count._all}
+            <p className="mt-2 text-xs text-slate-400">
+              إجمالي التكلفة خلال الفترة: {redeemedCost} — الإجمالي منذ البداية: {allTimeRedeemed._count._all}
             </p>
 
             {rewardDistribution.length > 0 && (
-              <ul className="mt-4 space-y-1 text-xs text-foreground-subtle">
+              <ul className="mt-3 space-y-1 text-xs text-slate-500">
                 {rewardDistribution.map((reward) => (
                   <li key={reward.rewardName}>
                     {reward.rewardName}: {reward._count._all}
@@ -1236,203 +1253,203 @@ export default async function ReportsPage({
             )}
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("مكافآت فُتحت", "Rewards unlocked")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">مكافآت فُتحت</p>
 
-            <p className="mt-4 text-4xl font-bold text-primary">
+            <p className="mt-3 text-4xl font-bold text-violet-600">
               {rewardUnlocks}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("مقياس على مستوى النشاط؛ لا يحمل فتح المكافأة فرعًا أو موظفًا في السجل الحالي.", "Business-level metric; reward unlocks do not currently carry branch or staff attribution.")}
+            <p className="mt-2 text-xs text-slate-400">
+              مقياس على مستوى النشاط؛ لا يحمل فتح المكافأة فرعًا أو موظفًا في السجل الحالي.
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("أرصدة العملاء الحالية", "Current customer balances")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">أرصدة العملاء الحالية</p>
 
-            <p className="mt-4 text-4xl font-bold text-primary">
+            <p className="mt-3 text-4xl font-bold text-violet-600">
               {currentBalance}
             </p>
 
-            <p dir="auto" className="mt-2 text-xs text-foreground-subtle">
-              {t("إجمالي", "Total")} {business.unitName} {t("المتاحة", "available")}
+            <p dir="auto" className="mt-2 text-xs text-slate-400">
+              إجمالي {business.unitName} المتاحة
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("العملاء العائدون", "Repeat customers")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء العائدون</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {returningCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("عميل لديه عمليتا إضافة أو أكثر خلال الفترة", "Customers with two or more earn operations during the period")}
+            <p className="mt-2 text-xs text-slate-400">
+              عميل لديه عمليتا إضافة أو أكثر خلال الفترة
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("معدل تكرار العملاء", "Repeat customer rate")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">معدل تكرار العملاء</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {repeatCustomerRate.toFixed(1)}%
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("العملاء ذوو عمليتي إضافة أو أكثر من العملاء النشطين بالولاء", "Customers with two or more earn operations among loyalty-active customers")}
+            <p className="mt-2 text-xs text-slate-400">
+              العملاء ذوو عمليتي إضافة أو أكثر من العملاء النشطين بالولاء
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("العملاء المستعادون", "Recovered customers")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">العملاء المستعادون</p>
 
-            <p className="mt-4 text-4xl font-bold text-success">
+            <p className="mt-3 text-4xl font-bold text-emerald-600">
               {recoveredCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("حسابات أعيد تفعيلها خلال الفترة", "Accounts reactivated during the period")}
+            <p className="mt-2 text-xs text-slate-400">
+              حسابات أعيد تفعيلها خلال الفترة
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("متوسط نشاط الولاء", "Average loyalty activity")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">متوسط نشاط الولاء</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {averageLoyaltyActivity.toFixed(1)}
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("عمليات إضافة لكل عميل نشط", "Earn operations per active customer")}
+            <p className="mt-2 text-xs text-slate-400">
+              عمليات إضافة لكل عميل نشط
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-6">
-            <p className="text-sm text-foreground-subtle">{t("معدل استبدال المكافآت", "Reward redemption rate")}</p>
+          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-slate-500">معدل استبدال المكافآت</p>
 
-            <p className="mt-4 text-4xl font-bold text-foreground">
+            <p className="mt-3 text-4xl font-bold text-slate-950">
               {redemptionRate.toFixed(1)}%
             </p>
 
-            <p className="mt-2 text-xs text-foreground-subtle">
-              {t("نسبة الاستبدالات إلى عمليات الإضافة", "Redemptions as a share of earn operations")}
+            <p className="mt-2 text-xs text-slate-400">
+              نسبة الاستبدالات إلى عمليات الإضافة
             </p>
           </article>
         </section>
 
-        <section className={`${simple ? "hidden " : ""}mt-8 rounded-[var(--lf-radius-card)] border border-border bg-foreground p-6 text-white shadow-sm sm:p-8`}>
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <section className={`${simple ? "hidden " : ""}mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7`}>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-black text-success">{t("أثر برنامج الولاء", "Loyalty programme impact")}</p>
-              <h2 className="mt-1 text-2xl font-black">{t("مؤشرات تشغيلية موثقة", "Documented operational indicators")}</h2>
+              <p className="text-sm font-black text-emerald-300">أثر برنامج الولاء</p>
+              <h2 className="mt-1 text-2xl font-black">مؤشرات تشغيلية موثقة</h2>
             </div>
 
-            <p className="max-w-xl text-sm leading-6 text-foreground-subtle">
-              {t("تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.", "These indicators show only what LoyalFlow recorded. They do not attribute revenue or return to the programme unless explicitly recorded as a sale.")}
+            <p className="max-w-xl text-sm leading-6 text-slate-300">
+              تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.
             </p>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {[
               {
-                label: t("عملاء عائدون", "Repeat customers"),
+                label: "عملاء عائدون",
                 value: returningCustomers,
-                detail: t("عمليتا إضافة أو أكثر خلال الفترة", "Two or more earn operations during the period"),
+                detail: "عمليتا إضافة أو أكثر خلال الفترة",
               },
               {
-                label: t("عملاء مستعادون", "Recovered customers"),
+                label: "عملاء مستعادون",
                 value: recoveredCustomers,
-                detail: t("حسابات أعيد تفعيلها خلال الفترة", "Accounts reactivated during the period"),
+                detail: "حسابات أعيد تفعيلها خلال الفترة",
               },
               {
-                label: t("حركات ولاء مسجلة", "Recorded loyalty operations"),
+                label: "حركات ولاء مسجلة",
                 value: transactionCount,
-                detail: t("إضافة، استبدال، أو تعديل ضمن الفترة", "Earn, redeem, or adjustment in the period"),
+                detail: "إضافة، استبدال، أو تعديل ضمن الفترة",
               },
               {
-                label: t("مكافآت مستبدلة", "Rewards redeemed"),
+                label: "مكافآت مستبدلة",
                 value: redeemed._count._all,
-                detail: t("استبدالات مسجلة خلال الفترة", "Redemptions recorded during the period"),
+                detail: "استبدالات مسجلة خلال الفترة",
               },
               {
-                label: t("معدل تكرار العملاء", "Repeat customer rate"),
+                label: "معدل تكرار العملاء",
                 value: `${repeatCustomerRate.toFixed(1)}%`,
-                detail: t("من العملاء ذوي نشاط الولاء", "Among loyalty-active customers"),
+                detail: "من العملاء ذوي نشاط الولاء",
               },
               ...(business.loyaltyMode === "SALES_AMOUNT" && business.currency
                 ? [
                     {
-                      label: t("مبيعات ولاء مسجلة", "Recorded loyalty sales"),
+                      label: "مبيعات ولاء مسجلة",
                       value: `${trackedSalesAmount}${business.currency ? ` ${business.currency}` : ""}`,
-                      detail: t("مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا", "Sales entered by staff during the period; not marketing attribution"),
+                      detail: "مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا",
                     },
                   ]
                 : []),
             ].map((metric) => (
-              <article key={metric.label} className="rounded-[var(--lf-radius-card)] bg-white/10 p-4">
-                <p className="text-sm text-foreground-subtle">{metric.label}</p>
+              <article key={metric.label} className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm text-slate-300">{metric.label}</p>
                 <p className="mt-2 text-3xl font-black text-white">{metric.value}</p>
-                <p className="mt-2 text-xs leading-5 text-foreground-subtle">{metric.detail}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-300">{metric.detail}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-6 lg:grid-cols-3`}>
+        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-5 lg:grid-cols-3`}>
           {[
             {
-              title: t("الأكثر نشاطًا", "Most active"),
-              description: t("حسب كل حركات الولاء خلال الفترة.", "Based on all loyalty operations in the period."),
+              title: "الأكثر نشاطًا",
+              description: "حسب كل حركات الولاء خلال الفترة.",
               items: mostActiveCustomers,
-              suffix: t("حركة", "operations"),
+              suffix: "حركة",
             },
             {
-              title: t("أعلى قيمة مكتسبة", "Highest earned value"),
-              description: t("حسب الرصيد المكتسب خلال الفترة.", "Based on loyalty earned during the period."),
+              title: "أعلى قيمة مكتسبة",
+              description: "حسب الرصيد المكتسب خلال الفترة.",
               items: highestValueEarnedCustomers,
               suffix: business.unitName,
             },
             {
-              title: t("الأكثر استبدالًا", "Most redemptions"),
-              description: t("حسب المكافآت المستبدلة خلال الفترة.", "Based on rewards redeemed during the period."),
+              title: "الأكثر استبدالًا",
+              description: "حسب المكافآت المستبدلة خلال الفترة.",
               items: mostRedeemedCustomers,
-              suffix: t("مكافأة", "rewards"),
+              suffix: "مكافأة",
             },
           ].map((ranking) => (
             <article
               key={ranking.title}
-              className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm"
+              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
             >
-              <h2 className="text-lg font-bold text-foreground">
+              <h2 className="text-lg font-bold text-slate-950">
                 {ranking.title}
               </h2>
 
-              <p className="mt-1 text-sm text-foreground-subtle">
+              <p className="mt-1 text-sm text-slate-500">
                 {ranking.description}
               </p>
 
-              <div className="mt-6 space-y-4">
+              <div className="mt-5 space-y-3">
                 {ranking.items.length === 0 ? (
-                  <p className="text-sm text-foreground-subtle">
-                    {t("لا توجد بيانات خلال هذه الفترة.", "There is no data for this period.")}
+                  <p className="text-sm text-slate-500">
+                    لا توجد بيانات خلال هذه الفترة.
                   </p>
                 ) : (
                   ranking.items.map(({ customer, value }, index) => (
                     <Link
                       key={customer.id}
                       href={`/businesses/${business.slug}/customers/${customer.id}`}
-                      className="flex items-center gap-4 rounded-[var(--lf-radius-card)] border border-border p-4 transition hover:border-primary/30 hover:bg-primary-subtle"
+                      className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 transition hover:border-violet-300 hover:bg-violet-50"
                     >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-bold text-white">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-bold text-white">
                         {index + 1}
                       </span>
 
-                      <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
+                      <span className="min-w-0 flex-1 truncate font-semibold text-slate-950">
                         {getCustomerName(customer)}
                       </span>
 
-                      <span className="text-sm font-bold text-primary">
+                      <span className="text-sm font-bold text-violet-700">
                         {value} {ranking.suffix}
                       </span>
                     </Link>
@@ -1444,35 +1461,35 @@ export default async function ReportsPage({
         </section>
 
         <section className={`${simple ? "hidden " : ""}mt-8 grid gap-8 xl:grid-cols-[1fr_360px]`}>
-          <div className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white shadow-sm">
-            <div className="border-b border-border px-4 py-6 sm:px-6">
-              <h2 className="text-xl font-bold text-foreground">{t("أحدث الحركات", "Latest transactions")}</h2>
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
+              <h2 className="text-xl font-bold text-slate-950">أحدث الحركات</h2>
 
-              <p className="mt-1 text-sm text-foreground-subtle">
-                {t("أحدث 50 عملية خلال الفترة المحددة.", "The latest 50 operations in the selected period.")}
+              <p className="mt-1 text-sm text-slate-500">
+                أحدث 50 عملية خلال الفترة المحددة.
               </p>
             </div>
 
             {recentTransactions.length === 0 ? (
-              <div className="p-10 text-center text-foreground-subtle">
-                {t("لا توجد حركات خلال هذه الفترة.", "There are no transactions in this period.")}
+              <div className="p-10 text-center text-slate-500">
+                لا توجد حركات خلال هذه الفترة.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full text-right text-sm">
-                  <thead className="bg-surface-subtle text-xs uppercase tracking-wide text-foreground-subtle">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-6 py-4">{t("العميل", "Customer")}</th>
+                      <th className="px-6 py-4">العميل</th>
 
-                      <th className="px-6 py-4">{t("النوع", "Type")}</th>
+                      <th className="px-6 py-4">النوع</th>
 
-                      <th className="px-6 py-4">{t("القيمة", "Value")}</th>
+                      <th className="px-6 py-4">القيمة</th>
 
-                      <th className="px-6 py-4">{t("الرصيد", "Balance")}</th>
+                      <th className="px-6 py-4">الرصيد</th>
 
-                      <th className="px-6 py-4">{t("الموظف", "Staff")}</th>
+                      <th className="px-6 py-4">الموظف</th>
 
-                      <th className="px-6 py-4">{t("التاريخ", "Date")}</th>
+                      <th className="px-6 py-4">التاريخ</th>
                     </tr>
                   </thead>
 
@@ -1492,19 +1509,19 @@ export default async function ReportsPage({
                           ]
                             .filter(Boolean)
                             .join(" ")
-                        : t("النظام", "System");
+                        : "النظام";
 
                       return (
-                        <tr key={transaction.id} className="hover:bg-surface-subtle">
+                        <tr key={transaction.id} className="hover:bg-slate-50">
                           <td className="px-6 py-4">
                             <Link
                               href={`/businesses/${business.slug}/customers/${transaction.customer.id}`}
-                              className="font-semibold text-foreground hover:text-primary"
+                              className="font-semibold text-slate-950 hover:text-violet-700"
                             >
                               {customerName}
                             </Link>
 
-                            <p className="mt-1 text-xs text-foreground-subtle">
+                            <p className="mt-1 text-xs text-slate-400">
                               {transaction.customer.customerCode}
                             </p>
                           </td>
@@ -1513,40 +1530,40 @@ export default async function ReportsPage({
                             <span
                               className={
                                 transaction.type === "EARN"
-                                  ? "rounded-full bg-success-subtle px-4 py-1 text-xs font-semibold text-success"
+                                  ? "rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
                                   : transaction.type === "REDEEM"
-                                    ? "rounded-full bg-warning-subtle px-4 py-1 text-xs font-semibold text-warning"
-                                    : "rounded-full bg-surface-subtle px-4 py-1 text-xs font-semibold text-foreground-muted"
+                                    ? "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700"
+                                    : "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
                               }
                             >
                               {transaction.type === "EARN"
-                                ? t("إضافة رصيد", "Earn")
+                                ? "إضافة رصيد"
                                 : transaction.type === "REDEEM"
-                                  ? t("استبدال مكافأة", "Reward redemption")
-                                  : t("تعديل رصيد", "Balance adjustment")}
+                                  ? "استبدال مكافأة"
+                                  : "تعديل رصيد"}
                             </span>
                           </td>
 
                           <td
                             className={`px-6 py-4 font-bold ${
                               transaction.amount >= 0
-                                ? "text-success"
-                                : "text-warning"
+                                ? "text-emerald-600"
+                                : "text-amber-600"
                             }`}
                           >
                             {transaction.amount > 0 ? "+" : ""}
                             {transaction.amount}
                           </td>
 
-                          <td className="px-6 py-4 font-semibold text-foreground-muted">
+                          <td className="px-6 py-4 font-semibold text-slate-700">
                             {transaction.balanceAfter}
                           </td>
 
-                          <td className="px-6 py-4 text-foreground-muted">
+                          <td className="px-6 py-4 text-slate-600">
                             {employeeName}
                           </td>
 
-                          <td className="whitespace-nowrap px-6 py-4 text-foreground-subtle">
+                          <td className="whitespace-nowrap px-6 py-4 text-slate-500">
                             {dateTimeFormatter.format(transaction.createdAt)}
                           </td>
                         </tr>
@@ -1558,17 +1575,17 @@ export default async function ReportsPage({
             )}
           </div>
 
-          <aside className="h-fit rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-foreground">{t("أفضل العملاء", "Top customers")}</h2>
+          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-slate-950">أفضل العملاء</h2>
 
-            <p className="mt-1 text-sm text-foreground-subtle">
-              {t("الترتيب حسب إجمالي رصيد الولاء المكتسب.", "Ranked by total loyalty earned.")}
+            <p className="mt-1 text-sm text-slate-500">
+              الترتيب حسب إجمالي رصيد الولاء المكتسب.
             </p>
 
             <div className="mt-6 space-y-4">
               {topCustomers.length === 0 ? (
-                <p className="text-sm text-foreground-subtle">
-                  {t("لا يوجد عملاء حتى الآن.", "There are no customers yet.")}
+                <p className="text-sm text-slate-500">
+                  لا يوجد عملاء حتى الآن.
                 </p>
               ) : (
                 topCustomers.map((customer, index) => {
@@ -1580,29 +1597,29 @@ export default async function ReportsPage({
                     <Link
                       key={customer.id}
                       href={`/businesses/${business.slug}/customers/${customer.id}`}
-                      className="flex items-center gap-4 rounded-[var(--lf-radius-card)] border border-border p-4 transition hover:border-primary/30 hover:bg-primary-subtle"
+                      className="flex items-center gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground font-bold text-white">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 font-bold text-white">
                         {index + 1}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-foreground">
+                        <p className="truncate font-semibold text-slate-950">
                           {customerName}
                         </p>
 
-                        <p className="mt-1 text-xs text-foreground-subtle">
+                        <p className="mt-1 text-xs text-slate-400">
                           {customer.customerCode}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <p className="font-bold text-primary">
+                        <p className="font-bold text-violet-700">
                           {customer.lifetimeEarned}
                         </p>
 
-                        <p className="text-xs text-foreground-subtle">
-                          {t("الرصيد", "Balance")} {customer.balance}
+                        <p className="text-xs text-slate-400">
+                          الرصيد {customer.balance}
                         </p>
                       </div>
                     </Link>

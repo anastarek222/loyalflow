@@ -373,7 +373,7 @@ export default async function CustomersPage({
 
   return (
     <main
-      className="min-h-screen bg-surface-subtle px-4 py-6 sm:px-8 sm:py-8"
+      className="min-h-full px-4 py-6 sm:px-6 sm:py-8"
       data-experience-mode={experienceMode}
       data-experience-customers={isSimpleExperience ? "simple" : "advanced"}
     >
@@ -386,8 +386,8 @@ export default async function CustomersPage({
           status={<span className="rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-semibold text-foreground-muted">{copy.customersCount(totalCustomers)}</span>}
           secondaryActions={<div className="flex flex-wrap items-center gap-2">
             <Link href={`/businesses/${business.slug}`} className="min-h-11 rounded-[var(--lf-radius-input)] px-4 py-2 text-sm font-semibold text-primary hover:bg-primary-subtle">{copy.backToBusiness}</Link>
-            {canReviewDuplicates ? <a href="#add-customer" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-primary bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">{copy.addCustomer}</a> : null}
-            {canScanCustomers ? <Link href={`/businesses/${business.slug}/scan`} className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-primary bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">{copy.scan}</Link> : null}
+            {canReviewDuplicates ? <a href="#add-customer" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">{copy.addCustomer}</a> : null}
+            {canScanCustomers ? <Link href={`/businesses/${business.slug}/scan`} className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground-muted hover:border-primary/30 hover:bg-surface-subtle">{copy.scan}</Link> : null}
             {canReviewDuplicates && (
               <Link
                 href={`/businesses/${business.slug}/duplicates`}
@@ -440,8 +440,35 @@ export default async function CustomersPage({
           </div>
         )}
 
-        <div className={`grid gap-6 lg:gap-8 ${canReviewDuplicates ? "lg:grid-cols-[minmax(18rem,24rem)_1fr]" : ""}`}>
-          {canReviewDuplicates ? <section id="add-customer" className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-6">
+        {isSimpleExperience && canReviewDuplicates ? (
+          <details id="add-customer" className="scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-bold text-foreground">
+              <span>{copy.addCustomer}</span>
+              <span className="text-sm font-semibold text-primary">+</span>
+            </summary>
+            <div className="border-t border-border p-5">
+              <p className="mb-4 text-sm text-foreground-subtle">{copy.customerCodeHint}</p>
+              <form action={createCustomer} className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="simpleFirstName" className="mb-2 block text-sm font-medium text-foreground-muted">{copy.firstName}</label>
+                  <input id="simpleFirstName" name="firstName" required minLength={2} maxLength={50} placeholder={copy.firstNamePlaceholder} dir="auto" className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />
+                </div>
+                <div>
+                  <label htmlFor="simpleLastName" className="mb-2 block text-sm font-medium text-foreground-muted">{copy.lastName}</label>
+                  <input id="simpleLastName" name="lastName" maxLength={50} placeholder={copy.lastNamePlaceholder} dir="auto" className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label htmlFor="simplePhone" className="mb-2 block text-sm font-medium text-foreground-muted">{copy.phone}</label>
+                  <input id="simplePhone" name="phone" type="tel" required dir="ltr" placeholder="+201000000000" className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />
+                </div>
+                <button type="submit" className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 font-semibold text-white hover:bg-primary-hover sm:col-span-2">{copy.addCustomer}</button>
+              </form>
+            </div>
+          </details>
+        ) : null}
+
+        <div className={`grid gap-6 lg:gap-8 ${canReviewDuplicates && !isSimpleExperience ? "lg:grid-cols-[minmax(18rem,22rem)_1fr]" : ""}`}>
+          {canReviewDuplicates && !isSimpleExperience ? <section id="add-customer" className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5">
             <h2 className="text-xl font-bold text-foreground">{copy.addCustomer}</h2>
 
             <p className="mt-1 text-sm text-foreground-subtle">
@@ -532,7 +559,7 @@ export default async function CustomersPage({
                 language={language}
               />
             ) : null}
-            <form className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-4 shadow-sm sm:p-6">
+            <form className={`mb-5 rounded-[var(--lf-radius-card)] border border-border bg-surface ${isSimpleExperience ? "p-4" : "p-4 sm:p-5"}`}>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_150px_150px_190px_auto]">
                 <div>
                   <label
@@ -756,7 +783,7 @@ export default async function CustomersPage({
                     return (
                       <article
                         key={customer.id}
-                        className="rounded-[var(--lf-radius-card)] border border-border bg-white p-4 shadow-sm sm:p-6"
+                        className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 transition hover:border-primary/25 sm:p-5"
                       >
                         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                           <div>
@@ -831,7 +858,7 @@ export default async function CustomersPage({
 
                         <Link
                           href={`/businesses/${business.slug}/customers/${customer.id}`}
-                          className="mt-4 inline-flex w-full justify-center rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-sm font-semibold text-white transition hover:bg-primary-subtle sm:w-auto"
+                          className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:text-primary sm:w-auto"
                         >
                           {copy.openCustomerProfile}
                         </Link>

@@ -144,16 +144,16 @@ export default async function JoinBusinessPage({
     <main
       lang={lang}
       dir={dir}
-      className="flex min-h-screen items-center justify-center px-4 py-10"
+      className="flex min-h-screen items-center justify-center px-4 py-6 sm:px-6 sm:py-10"
       style={{
         backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
       <section
-        className={`w-full max-w-lg overflow-hidden border bg-white ${theme.cardClass} ${theme.borderClass}`}
+        className={`w-full max-w-lg overflow-hidden border bg-white shadow-sm ${theme.cardClass} ${theme.borderClass}`}
       >
-        <div className="relative overflow-hidden px-6 py-8 text-white sm:px-8">
+        <div className="relative overflow-hidden px-5 py-6 text-white sm:px-7 sm:py-7">
           {business.coverImageUrl ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -178,7 +178,7 @@ export default async function JoinBusinessPage({
               <img
                 src={business.logoUrl}
                 alt={business.name}
-                className="mb-5 h-14 w-14 rounded-2xl bg-white/95 object-contain p-1 shadow-lg"
+                className="mb-4 size-12 rounded-[var(--lf-radius-input)] bg-white/95 object-contain p-1"
               />
             ) : null}
 
@@ -186,11 +186,11 @@ export default async function JoinBusinessPage({
               {programName}
             </p>
 
-            <h1 className="mt-1 text-3xl font-black">
+            <h1 className="mt-1 text-2xl font-black sm:text-3xl">
               {copy.join} {business.name}
             </h1>
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-white/85">
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/85">
               {business.industry ? (
                 <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
                   {business.industry}
@@ -212,7 +212,7 @@ export default async function JoinBusinessPage({
           </div>
         </div>
 
-        <div className="p-6 sm:p-8">
+        <div className="p-5 sm:p-7">
           {query.error && copy.errors[query.error as keyof typeof copy.errors] ? (
             <p
               className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
@@ -223,7 +223,7 @@ export default async function JoinBusinessPage({
           ) : null}
 
           <div
-            className="mb-6 rounded-2xl px-4 py-3 text-sm leading-6"
+            className="mb-5 rounded-[var(--lf-radius-input)] px-4 py-3 text-sm leading-6"
             style={{
               backgroundColor: `${theme.secondaryColor}CC`,
               color: theme.primaryColor,
@@ -238,7 +238,7 @@ export default async function JoinBusinessPage({
             </div>
           ) : null}
 
-          <form action={joinBusiness} className="space-y-5">
+          <form action={joinBusiness} className="space-y-4">
             {referralCode ? (
               <input type="hidden" name="ref" value={referralCode} />
             ) : null}
@@ -258,7 +258,7 @@ export default async function JoinBusinessPage({
                 autoComplete="given-name"
                 dir="auto"
                 placeholder={language === "AR" ? "محمد" : "Jane"}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
               />
             </div>
 
@@ -276,7 +276,7 @@ export default async function JoinBusinessPage({
                 autoComplete="family-name"
                 dir="auto"
                 placeholder={language === "AR" ? "أحمد" : "Smith"}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
               />
             </div>
 
@@ -299,7 +299,7 @@ export default async function JoinBusinessPage({
                 dir="ltr"
                 placeholder="+201000000000"
                 aria-describedby="phone-hint"
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
               />
               <p
                 id="phone-hint"
@@ -316,7 +316,7 @@ export default async function JoinBusinessPage({
             />
           </form>
 
-          <p className="mt-5 text-center text-xs leading-5 text-slate-500">
+          <p className="mt-5 text-center text-xs leading-5 text-foreground-subtle">
             {copy.privacy}
           </p>
         </div>

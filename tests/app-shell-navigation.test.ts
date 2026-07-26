@@ -34,6 +34,15 @@ test("business navigation URLs retain the active business slug and global routes
   assert.deepEqual(global.flatMap((group) => group.items).map((entry) => entry.href), ["/dashboard"]);
 });
 
+test("super admin global navigation exposes the platform businesses and owners directories", () => {
+  const superAdmin = { role: "SUPER_ADMIN" as const, businessId: null };
+  const global = buildShellNavigation({ language: "EN", user: superAdmin });
+  const ids = global.flatMap((group) => group.items).map((entry) => entry.id);
+  assert.ok(ids.includes("overview"));
+  assert.ok(ids.includes("businesses"));
+  assert.ok(ids.includes("owners"));
+});
+
 test("navigation is capability-derived and hides inaccessible administration", () => {
   const staffLinks = links(staff).map((entry) => entry.id);
   assert.ok(staffLinks.includes("scan"));

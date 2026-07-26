@@ -26,6 +26,7 @@ export type ShellNavigationItem = {
   icon:
     | "overview"
     | "businesses"
+    | "owners"
     | "scan"
     | "customers"
     | "activity"
@@ -45,6 +46,7 @@ export type ShellNavigationItem = {
 type NavigationId =
   | "overview"
   | "businesses"
+  | "owners"
   | "scan"
   | "customers"
   | "activity"
@@ -71,6 +73,7 @@ const labels = {
   AR: {
     overview: "الرئيسية",
     businesses: "الأنشطة التجارية",
+    owners: "ملاك الأنشطة",
     operations: "العمليات",
     growth: "النمو",
     analytics: "التحليلات",
@@ -96,6 +99,7 @@ const labels = {
   EN: {
     overview: "Overview",
     businesses: "Businesses",
+    owners: "Business owners",
     operations: "Operations",
     growth: "Growth",
     analytics: "Analytics",
@@ -145,6 +149,7 @@ export function buildShellNavigation({
 
   if (user.role === "SUPER_ADMIN") {
     globalItems.push(item(language, "businesses", "/businesses"));
+    globalItems.push(item(language, "owners", "/business-owners"));
   }
 
   if (!business) {
@@ -161,12 +166,7 @@ export function buildShellNavigation({
       ? [item(language, "scan", `${root}/scan`)]
       : []),
     ...(can("CUSTOMERS_VIEW")
-      ? [
-          item(language, "customers", `${root}/customers`),
-          ...(can("CUSTOMERS_EDIT")
-            ? [item(language, "duplicates", `${root}/duplicates`)]
-            : []),
-        ]
+      ? [item(language, "customers", `${root}/customers`)]
       : []),
     ...(can("REPORTS_VIEW")
       ? [item(language, "activity", `${root}/activity`)]
@@ -185,10 +185,7 @@ export function buildShellNavigation({
       : [];
 
   const analytics = can("REPORTS_VIEW")
-    ? [
-        item(language, "reports", `${root}/reports`),
-        item(language, "staffReports", `${root}/reports/staff`),
-      ]
+    ? [item(language, "reports", `${root}/reports`)]
     : [];
 
   const administration = [
@@ -199,7 +196,6 @@ export function buildShellNavigation({
       ? [
           item(language, "branches", `${root}/branches`),
           item(language, "settings", `${root}/settings`),
-          item(language, "playbooks", `${root}/playbooks`),
         ]
       : []),
   ];
@@ -277,6 +273,7 @@ export function getShellPageContext(
 ) {
   const text = labels[language];
   if (pathname === "/businesses") return { title: text.businesses, parent: undefined };
+  if (pathname === "/business-owners") return { title: text.owners, parent: undefined };
   if (pathname === "/dashboard") return { title: text.overview, parent: undefined };
   if (!business) return { title: "LoyalFlow", parent: undefined };
 

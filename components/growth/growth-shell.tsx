@@ -12,10 +12,15 @@ export function GrowthShell({ slug, businessName, area, language, experienceMode
   const simple = experienceMode === "SIMPLE";
   return <main className="min-h-full" dir={language === "AR" ? "rtl" : "ltr"} data-growth-area={area} data-experience-growth={simple ? "simple" : "advanced"}>
     <PageContainer variant="wide">
-      <Link href={`/businesses/${slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{copy.back}: {businessName}</Link>
-      <PageHeader eyebrow={copy.growth} title={title} description={description} status={<span className="rounded-full bg-surface-subtle px-4 py-1 text-xs font-semibold text-foreground-muted">{simple ? copy.simple : copy.advanced}</span>} primaryAction={action} />
-      <GrowthNavigation slug={slug} activeArea={area} language={language} />
-      {children}
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <Link href={`/businesses/${slug}`} className="inline-flex min-h-10 items-center text-sm font-semibold text-foreground-muted hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{copy.back}</Link>
+        <span dir="auto" className="max-w-[55%] truncate text-xs font-semibold text-foreground-subtle">{businessName}</span>
+      </div>
+      <PageHeader eyebrow={copy.growth} title={title} description={description} status={<span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-foreground-muted">{simple ? copy.simple : copy.advanced}</span>} primaryAction={action} />
+      <div className="mb-6 overflow-x-auto">
+        <GrowthNavigation slug={slug} activeArea={area} language={language} />
+      </div>
+      <div className="space-y-5">{children}</div>
     </PageContainer>
   </main>;
 }

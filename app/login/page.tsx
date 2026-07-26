@@ -26,34 +26,27 @@ export default async function LoginPage({
     (Array.isArray(errorValue) && errorValue.includes("invalid"));
 
   return (
-    <main lang="en" dir="ltr" className="relative flex min-h-screen items-center justify-center overflow-hidden bg-foreground px-4 py-12">
-      <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary-subtle/20 blur-3xl" />
-      <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-info-subtle/20 blur-3xl" />
-
-      <section className="relative w-full max-w-md rounded-[var(--lf-radius-card)] border border-white/10 bg-white/[0.07] p-8 shadow-2xl backdrop-blur-xl">
+    <main lang="en" dir="ltr" className="flex min-h-screen items-center justify-center bg-surface-subtle px-4 py-10 sm:px-6">
+      <section className="w-full max-w-md rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[var(--lf-radius-card)] bg-gradient-to-br from-violet-500 to-cyan-400 text-2xl font-black text-white">
-            L
-          </div>
+          <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary text-lg font-black text-white">L</div>
 
-          <h1 className="text-3xl font-bold text-white">LoyalFlow</h1>
+          <h1 className="text-2xl font-black text-foreground">LoyalFlow</h1>
 
-          <p className="mt-2 text-sm text-foreground-subtle">
-            Loyalty cards management
-          </p>
+          <p className="mt-2 text-sm text-foreground-subtle">Sign in to your workspace</p>
         </div>
 
         {hasError && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30/20 bg-danger-subtle/10 px-4 py-4 text-sm text-danger">
+          <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
             الإيميل أو كلمة المرور غير صحيحة.
           </div>
         )}
 
-        <form action={loginAction} className="space-y-6">
+        <form action={loginAction} className="space-y-5">
           <div>
             <label
               htmlFor="email"
-              className="mb-2 block text-sm font-medium text-white/80"
+              className="mb-2 block text-sm font-semibold text-foreground-muted"
             >
               Email address
             </label>
@@ -66,14 +59,14 @@ export default async function LoginPage({
               autoComplete="email"
               dir="ltr"
               placeholder="name@example.com"
-              className="auth-input w-full rounded-[var(--lf-radius-input)] border border-white/10 px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20/10"
+              className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="mb-2 block text-sm font-medium text-white/80"
+              className="mb-2 block text-sm font-semibold text-foreground-muted"
             >
               Password
             </label>
@@ -87,20 +80,20 @@ export default async function LoginPage({
               autoComplete="current-password"
               dir="ltr"
               placeholder="Enter your password"
-              className="auth-input w-full rounded-[var(--lf-radius-input)] border border-white/10 px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20/10"
+              className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full rounded-[var(--lf-radius-input)] bg-gradient-to-r from-violet-600 to-cyan-500 px-4 py-4 font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:scale-[1.01] active:scale-[0.99]"
+            className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white transition hover:bg-primary-hover"
           >
             Sign in
           </button>
         </form>
 
-        <p className="mt-8 text-center text-xs text-foreground-subtle">
-          LoyalFlow Agency Management System
+        <p className="mt-6 text-center text-xs text-foreground-subtle">
+          Secure LoyalFlow workspace
         </p>
       </section>
     </main>

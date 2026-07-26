@@ -2,12 +2,12 @@ import { auth } from "@/auth";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ListPageTemplate, PageHeader } from "@/components/page-layout";
+import { ListPageTemplate, PageHeader, StatCard, StatGrid } from "@/components/page-layout";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { getGlobalDashboardMode } from "@/lib/dashboard/overview";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { ArrowUpRight, Building2, ScanLine } from "lucide-react";
+import { ArrowUpRight, Building2, Plus, ScanLine, Store, UserCog, Users } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -19,7 +19,7 @@ function roleLabel(role: string, language: "AR" | "EN") {
   return labels[language][role as keyof typeof labels.EN] ?? role;
 }
 
-function copy(language: "AR" | "EN") {
+function workspaceCopy(language: "AR" | "EN") {
   return language === "AR"
     ? {
         eyebrow: "مساحة العمل", title: "مرحبًا", description: "اختر النشاط الذي تريد العمل عليه أو تابع من حيث توقفت.",
@@ -33,6 +33,61 @@ function copy(language: "AR" | "EN") {
       };
 }
 
+function adminCopy(language: "AR" | "EN") {
+  return language === "AR"
+    ? {
+        eyebrow: "إدارة المنصة",
+        title: "لوحة مدير النظام",
+        description: "صورة واضحة عن الأنشطة وملاكها والعملاء واستخدام LoyalFlow.",
+        businesses: "إجمالي الأنشطة",
+        activeBusinesses: "أنشطة نشطة",
+        owners: "ملاك الأنشطة",
+        customers: "عملاء الأنشطة",
+        staff: "حسابات الفريق",
+        branches: "الفروع",
+        activityToday: "عمليات الولاء اليوم",
+        redemptionsToday: "استبدالات اليوم",
+        recentBusinesses: "أحدث الأنشطة",
+        recentOwners: "أحدث ملاك الأنشطة",
+        viewAll: "عرض الكل",
+        addBusiness: "إضافة نشاط",
+        manageBusinesses: "إدارة الأنشطة",
+        manageOwners: "ملاك الأنشطة",
+        active: "نشط",
+        inactive: "موقوف",
+        open: "فتح",
+        noRecent: "لا توجد بيانات حديثة بعد.",
+      }
+    : {
+        eyebrow: "Platform administration",
+        title: "Super admin dashboard",
+        description: "A clear view of businesses, owners, customers, and LoyalFlow usage.",
+        businesses: "Total businesses",
+        activeBusinesses: "Active businesses",
+        owners: "Business owners",
+        customers: "Business customers",
+        staff: "Team accounts",
+        branches: "Branches",
+        activityToday: "Loyalty actions today",
+        redemptionsToday: "Redemptions today",
+        recentBusinesses: "Recent businesses",
+        recentOwners: "Recent business owners",
+        viewAll: "View all",
+        addBusiness: "Add business",
+        manageBusinesses: "Manage businesses",
+        manageOwners: "Business owners",
+        active: "Active",
+        inactive: "Inactive",
+        open: "Open",
+        noRecent: "There is no recent data yet.",
+      };
+}
+
+function startOfToday() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -44,22 +99,86 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const language = normalizeLanguage(user.language);
-  const dictionary = copy(language);
-  const businesses = user.role === "SUPER_ADMIN"
+  const locale = getLanguageLocale(language);
+  const formatter = new Intl.NumberFormat(locale);
+  const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || (language === "AR" ? "بك" : "there");
+
+  if (user.role === "SUPER_ADMIN") {
+    const dictionary = adminCopy(language);
+    const today = startOfToday();
+    const [
+      totalBusinesses,
+      activeBusinesses,
+      ownerCount,
+      customerCount,
+      teamCount,
+      branchCount,
+      activityToday,
+      redemptionsToday,
+      recentBusinesses,
+      recentOwners,
+    ] = await Promise.all([
+      prisma.business.count(),
+      prisma.business.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { role: "OWNER" } }),
+      prisma.customer.count(),
+      prisma.user.count({ where: { role: { in: ["MANAGER", "STAFF", "VIEWER"] } } }),
+      prisma.branch.count(),
+      prisma.loyaltyTransaction.count({ where: { createdAt: { gte: today } } }),
+      prisma.rewardRedemption.count({ where: { createdAt: { gte: today } } }),
+      prisma.business.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, name: true, slug: true, logoUrl: true, industry: true, isActive: true, createdAt: true, _count: { select: { customers: true, users: true } } },
+      }),
+      prisma.user.findMany({
+        where: { role: "OWNER" },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { id: true, firstName: true, lastName: true, email: true, isActive: true, createdAt: true, business: { select: { name: true, slug: true, isActive: true } } },
+      }),
+    ]);
+
+    return (
+      <ListPageTemplate
+        container="wide"
+        header={<PageHeader eyebrow={dictionary.eyebrow} title={dictionary.title} description={dictionary.description} metadata={<span>{name}</span>} primaryAction={<div className="flex flex-wrap gap-2"><Link href="/businesses#add-business" className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"><Plus size={17} aria-hidden="true" />{dictionary.addBusiness}</Link><Link href="/business-owners" className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground hover:border-primary"><UserCog size={17} aria-hidden="true" />{dictionary.manageOwners}</Link></div>} />}
+      >
+        <StatGrid>
+          <StatCard label={dictionary.businesses} value={formatter.format(totalBusinesses)} supportingText={`${formatter.format(activeBusinesses)} ${dictionary.activeBusinesses}`} status="info" icon={<Store size={18} />} />
+          <StatCard label={dictionary.owners} value={formatter.format(ownerCount)} supportingText={dictionary.manageOwners} status="neutral" icon={<UserCog size={18} />} />
+          <StatCard label={dictionary.customers} value={formatter.format(customerCount)} supportingText={dictionary.businesses} status="success" icon={<Users size={18} />} />
+          <StatCard label={dictionary.activityToday} value={formatter.format(activityToday)} supportingText={`${formatter.format(redemptionsToday)} ${dictionary.redemptionsToday}`} status="neutral" />
+        </StatGrid>
+
+        <section className="mt-6 grid gap-6 xl:grid-cols-2">
+          <Card>
+            <div className="flex items-center justify-between gap-4">
+              <div><h2 className="lf-type-section text-foreground">{dictionary.recentBusinesses}</h2><p className="mt-1 text-sm text-foreground-subtle">{formatter.format(branchCount)} {dictionary.branches} · {formatter.format(teamCount)} {dictionary.staff}</p></div>
+              <Link href="/businesses" className="text-sm font-semibold text-primary hover:underline">{dictionary.viewAll}</Link>
+            </div>
+            {recentBusinesses.length ? <div className="mt-4 divide-y divide-border">{recentBusinesses.map((business) => <div key={business.id} className="flex items-center gap-3 py-4 first:pt-0 last:pb-0"><Avatar name={business.name} src={business.logoUrl} className="size-10" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="truncate font-semibold text-foreground">{business.name}</p><Badge variant={business.isActive ? "success" : "neutral"}>{business.isActive ? dictionary.active : dictionary.inactive}</Badge></div><p className="mt-1 text-xs text-foreground-subtle">{business.industry || "—"} · {formatter.format(business._count.customers)} {dictionary.customers} · {formatter.format(business._count.users)} {dictionary.staff}</p></div><Link href={`/businesses/${business.slug}`} className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-primary hover:underline">{dictionary.open}<ArrowUpRight size={15} aria-hidden="true" /></Link></div>)}</div> : <p className="mt-4 text-sm text-foreground-muted">{dictionary.noRecent}</p>}
+          </Card>
+
+          <Card>
+            <div className="flex items-center justify-between gap-4"><h2 className="lf-type-section text-foreground">{dictionary.recentOwners}</h2><Link href="/business-owners" className="text-sm font-semibold text-primary hover:underline">{dictionary.viewAll}</Link></div>
+            {recentOwners.length ? <div className="mt-4 divide-y divide-border">{recentOwners.map((owner) => { const ownerName = [owner.firstName, owner.lastName].filter(Boolean).join(" "); const active = owner.isActive && (owner.business?.isActive ?? false); return <div key={owner.id} className="flex items-center gap-3 py-4 first:pt-0 last:pb-0"><Avatar name={ownerName || owner.email} className="size-10" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="truncate font-semibold text-foreground">{ownerName}</p><Badge variant={active ? "success" : "neutral"}>{active ? dictionary.active : dictionary.inactive}</Badge></div><p dir="ltr" className="truncate text-xs text-foreground-subtle">{owner.email}</p><p className="mt-1 text-xs text-foreground-subtle">{owner.business?.name ?? "—"} · {date.format(owner.createdAt)}</p></div>{owner.business ? <Link href={`/businesses/${owner.business.slug}`} className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-primary hover:underline">{dictionary.open}<ArrowUpRight size={15} aria-hidden="true" /></Link> : null}</div>; })}</div> : <p className="mt-4 text-sm text-foreground-muted">{dictionary.noRecent}</p>}
+          </Card>
+        </section>
+      </ListPageTemplate>
+    );
+  }
+
+  const dictionary = workspaceCopy(language);
+  const businesses = user.businessId
     ? await prisma.business.findMany({
+        where: { id: user.businessId },
         select: { id: true, name: true, slug: true, logoUrl: true, industry: true, city: true, country: true, isActive: true },
-        orderBy: { name: "asc" },
       })
-    : user.businessId
-      ? await prisma.business.findMany({
-          where: { id: user.businessId },
-          select: { id: true, name: true, slug: true, logoUrl: true, industry: true, city: true, country: true, isActive: true },
-        })
-      : [];
+    : [];
 
   const mode = getGlobalDashboardMode(businesses.length);
-  const name = [user.firstName, user.lastName].filter(Boolean).join(" ") || (language === "AR" ? "بك" : "there");
-  const formatter = new Intl.NumberFormat(getLanguageLocale(language));
   const primaryBusiness = businesses[0];
   const canScan = Boolean(primaryBusiness && primaryBusiness.isActive && canPerform(user, primaryBusiness.id, "LOYALTY_EARN"));
 
@@ -73,7 +192,6 @@ export default async function DashboardPage() {
         metadata={<><span>{roleLabel(user.role, language)}</span><span className="lf-type-numeric">{formatter.format(businesses.length)} {dictionary.businesses}</span></>}
       />}
     >
-
       {mode === "empty" ? (
         <Card className="max-w-2xl" role="status">
           <Building2 className="text-foreground-subtle" aria-hidden="true" size={24} />
@@ -84,7 +202,6 @@ export default async function DashboardPage() {
         <section aria-labelledby="workspace-heading">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
             <h2 id="workspace-heading" className="lf-type-section text-foreground">{mode === "single" ? dictionary.oneBusiness : dictionary.businesses}</h2>
-            {user.role === "SUPER_ADMIN" ? <Link href="/businesses" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary hover:underline">{dictionary.directory}<ArrowUpRight size={16} aria-hidden="true" /></Link> : null}
           </div>
           <div className={mode === "single" ? "max-w-3xl" : "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"}>
             {businesses.map((business) => {

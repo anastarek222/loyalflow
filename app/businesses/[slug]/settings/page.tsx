@@ -82,7 +82,7 @@ export default async function BusinessSettingsPage({
   });
 
   return (
-    <main className="min-h-screen bg-surface-subtle px-4 py-8 sm:px-8">
+    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-7xl">
         <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="settings" language={language} />
         <Link
@@ -112,8 +112,15 @@ export default async function BusinessSettingsPage({
           </div>
         )}
 
-        <section className="mb-8 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <details className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+            <span>
+              <span className="block text-sm font-bold text-foreground">{t("QR لانضمام العملاء", "Customer join QR")}</span>
+              <span className="mt-0.5 block text-xs text-foreground-subtle">{t("افتحه عند الطباعة أو مشاركة رابط التسجيل.", "Open it when printing or sharing the enrolment link.")}</span>
+            </span>
+            <span className="text-xs font-semibold text-primary">{t("عرض", "Show")}</span>
+          </summary>
+          <div className="flex flex-col gap-6 border-t border-border p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-black text-primary">
                 {t("التسجيل الذاتي", "Self-enrolment")}
@@ -145,9 +152,24 @@ export default async function BusinessSettingsPage({
               className="h-48 w-48 rounded-[var(--lf-radius-card)] border border-border bg-white p-2"
             />
           </div>
-        </section>
+        </details>
 
-        <section className="mb-8 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-warning/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <details className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+            <span>
+              <span className="block text-sm font-bold text-foreground">
+                {t("أدوات وإعدادات متقدمة", "Advanced tools & integrations")}
+              </span>
+              <span className="mt-0.5 block text-xs text-foreground-subtle">
+                {t("المكافآت والقوالب والمزامنة متاحة هنا عند الحاجة.", "Rewards, playbooks and data sync stay available here when you need them.")}
+              </span>
+            </span>
+            <span className="text-xs font-semibold text-primary">
+              {t("إظهار", "Show")}
+            </span>
+          </summary>
+          <div className="border-t border-border p-4 sm:p-5">
+        <section className="mb-4 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-warning/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-black text-warning">{t("كتالوج المكافآت", "Reward catalogue")}</p>
             <h2 className="mt-1 text-xl font-black text-foreground">
@@ -166,7 +188,7 @@ export default async function BusinessSettingsPage({
           </Link>
         </section>
 
-        <section className="mb-8 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-4 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-black text-primary">{t("انطلاقة أسرع", "Faster setup")}</p>
             <h2 className="mt-1 text-xl font-black text-foreground">
@@ -185,7 +207,7 @@ export default async function BusinessSettingsPage({
           </Link>
         </section>
 
-        <section className="mb-8 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <section className="mb-0 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-foreground">
               {t("النسخ الاحتياطي على Google Sheets", "Google Sheets backup")}
@@ -205,6 +227,9 @@ export default async function BusinessSettingsPage({
             </button>
           </form>
         </section>
+          </div>
+        </details>
+
 
         {query.cardSaved === "1" && (
           <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
@@ -218,6 +243,15 @@ export default async function BusinessSettingsPage({
           </div>
         )}
 
+        <details className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+            <span>
+              <span className="block text-sm font-bold text-foreground">{t("بيانات كارت العميل", "Customer card details")}</span>
+              <span className="mt-0.5 block text-xs text-foreground-subtle">{t("الهاتف والعنوان وشروط الكارت عند الحاجة.", "Phone, address and card terms when needed.")}</span>
+            </span>
+            <span className="text-xs font-semibold text-primary">{t("تعديل", "Edit")}</span>
+          </summary>
+          <div className="border-t border-border p-4 sm:p-5">
         <CardBusinessDetailsForm
           contactPhone={business.contactPhone ?? "01033196610"}
           address={
@@ -242,9 +276,11 @@ export default async function BusinessSettingsPage({
           }
           action={updateCardDetails}
         />
+          </div>
+        </details>
 
         {session.user.role === "SUPER_ADMIN" ? (
-          <section className="mb-6 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm sm:p-6">
+          <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 sm:p-6">
             <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
               <div>
                 <p className="text-sm font-black text-primary">
@@ -302,6 +338,7 @@ export default async function BusinessSettingsPage({
         )}
 
         <BusinessSettingsForm
+          language={language}
           business={{
             name: business.name,
             slug: business.slug,
