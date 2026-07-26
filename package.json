@@ -10,7 +10,7 @@
     "db:validate": "prisma validate",
     "db:migrate:status": "prisma migrate status",
     "db:migrate:deploy": "prisma migrate deploy",
-    "deploy:check": "npm run db:validate && npm run db:migrate:status && npm run build",
+    "deploy:check": "pnpm run db:validate && pnpm run db:migrate:status && pnpm run typecheck && pnpm run lint && pnpm test && pnpm run build",
     "lint": "eslint",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:financial-integrity": "tsx scripts/verify-financial-integrity.ts",
@@ -31,7 +31,9 @@
     "create-admin": "tsx scripts/create-super-admin.ts",
     "sync-sheets": "tsx scripts/sync-google-sheets.ts",
     "postinstall": "prisma generate",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "verify:production": "tsx scripts/verify-production-readiness.ts",
+    "release:check": "pnpm run db:validate && pnpm run db:migrate:status && pnpm run typecheck && pnpm run lint && pnpm test && pnpm run build"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
