@@ -62,6 +62,12 @@ application deployment available for rollback.
 pnpm run verify:production-smoke
 ```
 
+Then run the read-only operational snapshot:
+
+```bash
+pnpm run verify:operations
+```
+
 Then verify authentication and one disposable tenant workflow.
 
 ## 7. Rollback trigger
@@ -76,3 +82,12 @@ Rollback the application deployment immediately if any of these fail:
 - public card privacy
 
 Do not rewrite or delete applied migration history as an application rollback.
+
+
+## Incident references
+
+- `F19_INCIDENT_RESPONSE_RUNBOOK.md`
+- `F19_BACKUP_RECOVERY_CHECKLIST.md`
+
+Use application rollback for release regressions. Database recovery is a
+separate, explicitly verified operation.

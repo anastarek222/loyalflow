@@ -29,6 +29,7 @@ export type ShellNavigationItem = {
     | "overview"
     | "businesses"
     | "owners"
+    | "platformOps"
     | "scan"
     | "customers"
     | "activity"
@@ -49,6 +50,7 @@ type NavigationId =
   | "overview"
   | "businesses"
   | "owners"
+  | "platformOps"
   | "scan"
   | "customers"
   | "activity"
@@ -76,6 +78,7 @@ const labels = {
     overview: "الرئيسية",
     businesses: "الأنشطة التجارية",
     owners: "ملاك الأنشطة",
+    platformOps: "مركز التشغيل",
     plans: "الخطط والحدود",
     operations: "العمليات",
     growth: "النمو",
@@ -103,6 +106,7 @@ const labels = {
     overview: "Overview",
     businesses: "Businesses",
     owners: "Business owners",
+    platformOps: "Operations centre",
     plans: "Plans & limits",
     operations: "Operations",
     growth: "Growth",
@@ -154,6 +158,7 @@ export function buildShellNavigation({
   if (user.role === "SUPER_ADMIN") {
     globalItems.push(item(language, "businesses", "/businesses"));
     globalItems.push(item(language, "owners", "/business-owners"));
+    globalItems.push(item(language, "platformOps", "/operations"));
   }
 
   if (!business) {
@@ -280,6 +285,7 @@ export function getShellPageContext(
   const text = labels[language];
   if (pathname === "/businesses") return { title: text.businesses, parent: undefined };
   if (pathname === "/business-owners") return { title: text.owners, parent: undefined };
+  if (pathname === "/operations") return { title: text.platformOps, parent: undefined };
   if (pathname === "/plans") return { title: text.plans, parent: undefined };
   if (pathname === "/dashboard") return { title: text.overview, parent: undefined };
   if (!business) return { title: "LoyalFlow", parent: undefined };

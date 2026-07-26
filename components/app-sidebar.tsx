@@ -39,6 +39,7 @@ const icons: Record<ShellNavigationItem["icon"], React.ElementType> = {
   overview: LayoutDashboard,
   businesses: Building2,
   owners: UserCog,
+  platformOps: ShieldCheck,
   scan: ScanLine,
   customers: Users,
   activity: Radio,

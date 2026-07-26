@@ -4,7 +4,7 @@ import { BarChart3, Building2, FolderCog, Gift, GitBranch, LayoutDashboard, Mega
 import type { ShellNavigationItem } from "@/lib/app-shell-navigation";
 
 export const icons: Record<ShellNavigationItem["icon"], ElementType> = {
-  overview: LayoutDashboard, businesses: Building2, owners: UserCog, scan: ScanLine, customers: Users,
+  overview: LayoutDashboard, businesses: Building2, owners: UserCog, platformOps: ShieldCheck, scan: ScanLine, customers: Users,
   activity: Radio, rewards: Gift, offers: Tags, campaigns: Megaphone, recovery: ShieldCheck,
   reports: BarChart3, staffReports: BarChart3, team: UserCog, branches: GitBranch,
   settings: Settings, duplicates: Users, playbooks: FolderCog,

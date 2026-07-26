@@ -37,7 +37,8 @@
     "verify:f19-db-target": "tsx scripts/verify-f19-migration-target.ts",
     "verify:production-db": "tsx scripts/verify-production-database-target.ts",
     "verify:production-smoke": "tsx scripts/verify-production-smoke.ts",
-    "release:production-preflight": "pnpm run verify:production && pnpm run verify:production-db && pnpm run db:migrate:status"
+    "release:production-preflight": "pnpm run verify:production && pnpm run verify:production-db && pnpm run db:migrate:status",
+    "verify:operations": "tsx scripts/verify-operational-readiness.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
