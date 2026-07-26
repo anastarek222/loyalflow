@@ -9,6 +9,8 @@ import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { offerInputSchema, normalizeOfferInput } from "@/lib/offers/catalog";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -19,7 +21,7 @@ async function getOfferManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, plan: true },
   });
   if (!business || !canManageBusiness(session.user, business.id)) {
     redirect("/dashboard");
@@ -48,6 +50,16 @@ export async function createOfferAction(slug: string, formData: FormData) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsed = parseOfferForm(formData);
   if (!parsed.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  if (!hasFeatureEntitlement(business.plan, "OFFERS")) {
+    redirect(`/businesses/${business.slug}/offers?error=plan-feature`);
+  }
+  const [offerCount, planLimits] = await Promise.all([
+    prisma.offer.count({ where: { businessId: business.id } }),
+    getEffectivePlanLimits(business.plan),
+  ]);
+  if (!isWithinPlanLimit(business.plan, "OFFERS", offerCount, 1, planLimits)) {
+    redirect(`/businesses/${business.slug}/offers?error=plan-limit`);
+  }
 
   const activityContext = await getActivityRequestContext();
   await prisma.$transaction(async (transaction) => {

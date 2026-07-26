@@ -88,6 +88,7 @@ export async function createBusinessAction(formData: FormData) {
     paymentMethod: formData.get("paymentMethod") ?? "",
     billingNotes: formData.get("billingNotes") ?? "",
     adminNotes: formData.get("adminNotes") ?? "",
+    plan: formData.get("plan") ?? "FREE",
   });
 
 
@@ -175,6 +176,7 @@ try {
             paymentMethod: parsed.data.paymentMethod || null,
             billingNotes: parsed.data.billingNotes || null,
             adminNotes: parsed.data.adminNotes || null,
+            plan: parsed.data.plan,
 
             loyaltyMode: parsed.data.loyaltyMode,
             unitName: parsed.data.unitName,

@@ -7,6 +7,7 @@ import {
   parseDateOnly,
   parseMoneyToMinor,
 } from "@/lib/billing/subscription";
+import { isLoyalFlowPlan } from "@/lib/entitlements";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -119,6 +120,38 @@ export async function recordBusinessPaymentAction(businessId: string) {
 
   refreshPlatform();
   redirect("/business-owners?success=payment-recorded");
+}
+
+export async function updateBusinessPlanAction(
+  businessId: string,
+  formData: FormData,
+) {
+  await requireSuperAdmin();
+
+  const planValue = String(formData.get("plan") ?? "");
+  if (!isLoyalFlowPlan(planValue)) {
+    redirect("/business-owners?error=plan-invalid");
+  }
+
+  const business = await prisma.business.findUnique({
+    where: { id: businessId },
+    select: { id: true, plan: true },
+  });
+
+  if (!business) redirect("/business-owners?error=not-found");
+
+  if (business.plan !== planValue) {
+    await prisma.business.update({
+      where: { id: business.id },
+      data: {
+        plan: planValue,
+        planChangedAt: new Date(),
+      },
+    });
+  }
+
+  refreshPlatform();
+  redirect("/business-owners?success=plan-updated");
 }
 
 export async function setBusinessPlatformStatusAction(

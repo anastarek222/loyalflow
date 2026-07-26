@@ -8,6 +8,8 @@ import {
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import {
   normalizeRewardInput,
   rewardInputSchema,
@@ -25,7 +27,7 @@ async function getRewardManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, plan: true },
   });
 
   if (!business || !canManageBusiness(session.user, business.id)) {
@@ -58,6 +60,16 @@ export async function createRewardAction(
 
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
+  }
+  if (!hasFeatureEntitlement(business.plan, "REWARDS")) {
+    redirect(`/businesses/${business.slug}/rewards?error=plan-feature`);
+  }
+  const [rewardCount, planLimits] = await Promise.all([
+    prisma.reward.count({ where: { businessId: business.id } }),
+    getEffectivePlanLimits(business.plan),
+  ]);
+  if (!isWithinPlanLimit(business.plan, "REWARDS", rewardCount, 1, planLimits)) {
+    redirect(`/businesses/${business.slug}/rewards?error=plan-limit`);
   }
 
   const activityContext = await getActivityRequestContext();

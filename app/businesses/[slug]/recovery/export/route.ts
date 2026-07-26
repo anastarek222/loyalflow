@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { getWinBackAudienceWhere, type WinBackAudience, winBackAudiences } from "@/lib/campaigns/winback";
 import { canExportBusinessData } from "@/lib/permissions";
+import { hasFeatureEntitlement } from "@/lib/entitlements";
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -18,10 +19,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   const { slug } = await params;
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, rewardThreshold: true, earnAmount: true, allowOwnerDataExport: true },
+    select: { id: true, slug: true, rewardThreshold: true, earnAmount: true, allowOwnerDataExport: true, plan: true },
   });
   if (!business) return Response.json({ error: "Business not found" }, { status: 404 });
-  if (!canExportBusinessData(session.user, business.id, business.allowOwnerDataExport)) {
+  if (!canExportBusinessData(session.user, business.id, business.allowOwnerDataExport) || !hasFeatureEntitlement(business.plan, "CAMPAIGNS")) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
   const requested = new URL(request.url).searchParams.get("audience");

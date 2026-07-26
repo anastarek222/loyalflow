@@ -167,7 +167,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 33);
+  assert.equal(committedMigrations.length, 34);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types"
@@ -181,6 +181,10 @@ test("local database verifier requires the complete reviewed committed migration
   assert.ok(
     committedMigrations.includes("20260726220000_add_business_subscription_billing"),
     "The F19 subscription billing migration must be part of the reviewed history.",
+  );
+  assert.ok(
+    committedMigrations.includes("20260726224500_add_subscription_plan_entitlements"),
+    "The F19 plan entitlement migration must be part of the reviewed history.",
   );
   assert.match(verifier, /const REVIEWED_MIGRATIONS = \[/);
   assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);

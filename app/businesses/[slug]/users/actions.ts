@@ -18,6 +18,8 @@ import {
   isSuperAdmin as isSuperAdminRole,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { isWithinPlanLimit } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBusinessNotification } from "@/lib/notifications";
@@ -80,6 +82,7 @@ async function getManagementContext(
       select: {
         id: true,
         slug: true,
+        plan: true,
       },
     });
 
@@ -187,6 +190,14 @@ export async function createBusinessUserAction(
     redirect(
       `/businesses/${slug}/users?error=role`
     );
+  }
+
+  const [currentUserCount, planLimits] = await Promise.all([
+    prisma.user.count({ where: { businessId: business.id } }),
+    getEffectivePlanLimits(business.plan),
+  ]);
+  if (!isWithinPlanLimit(business.plan, "USERS", currentUserCount, 1, planLimits)) {
+    redirect(`/businesses/${slug}/users?error=plan-limit`);
   }
 
   if (parsed.data.role === "OWNER") {

@@ -76,4 +76,5 @@ export const businessCreationSchema = z.object({
   ]),
   cardStyle: z.enum(["CLASSIC", "COMPACT", "PREMIUM"]),
   fontFamily: z.enum(["INTER", "CAIRO", "POPPINS"]),
+  plan: z.enum(["FREE", "STARTER", "PRO", "BUSINESS"]).default("FREE"),
 }).and(billingInputSchema);

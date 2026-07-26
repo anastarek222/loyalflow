@@ -8,7 +8,14 @@ import {
   intervalLabel,
   type PaymentStatus,
 } from "@/lib/billing/subscription";
+import {
+  getPlanLimit,
+  isLoyalFlowPlan,
+  planCatalog,
+  type LoyalFlowPlan,
+} from "@/lib/entitlements";
 import { normalizeLanguage, getLanguageLocale } from "@/lib/i18n";
+import { getEffectivePlanLimitsMap } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { Building2, CalendarClock, Search, Users, WalletCards } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +25,7 @@ import {
   recordBusinessPaymentAction,
   setBusinessPlatformStatusAction,
   updateBusinessBillingAction,
+  updateBusinessPlanAction,
 } from "./actions";
 
 function dateInputValue(value: Date | null) {
@@ -38,6 +46,7 @@ export default async function BusinessOwnersPage({
     q?: string;
     status?: string;
     payment?: string;
+    plan?: string;
     success?: string;
     error?: string;
   }>;
@@ -70,8 +79,10 @@ export default async function BusinessOwnersPage({
   const payment = allowedPaymentStatuses.has(params.payment ?? "")
     ? (params.payment as PaymentStatus)
     : "all";
+  const plan = isLoyalFlowPlan(params.plan) ? params.plan : "all";
 
-  const owners = await prisma.user.findMany({
+  const [owners, planLimitsMap] = await Promise.all([
+    prisma.user.findMany({
     where: {
       role: "OWNER",
       ...(status === "all" ? {} : { isActive: status === "active" }),
@@ -85,9 +96,14 @@ export default async function BusinessOwnersPage({
             ],
           }
         : {}),
-      ...(payment === "all"
+      ...(payment === "all" && plan === "all"
         ? {}
-        : { business: { paymentStatus: payment } }),
+        : {
+            business: {
+              ...(payment === "all" ? {} : { paymentStatus: payment }),
+              ...(plan === "all" ? {} : { plan }),
+            },
+          }),
     },
     orderBy: { createdAt: "desc" },
     include: {
@@ -102,7 +118,9 @@ export default async function BusinessOwnersPage({
         },
       },
     },
-  });
+  }),
+    getEffectivePlanLimitsMap(),
+  ]);
 
   const number = new Intl.NumberFormat(locale);
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
@@ -122,6 +140,7 @@ export default async function BusinessOwnersPage({
           open: "فتح النشاط",
           none: "لا توجد نتائج مطابقة.",
           billing: "الاشتراك والدفع",
+          plan: "الخطة",
           manage: "إدارة الاشتراك",
           save: "حفظ بيانات الاشتراك",
           paid: "تسجيل دفعة الآن",
@@ -144,6 +163,7 @@ export default async function BusinessOwnersPage({
           open: "Open business",
           none: "No matching owners found.",
           billing: "Subscription & billing",
+          plan: "Plan",
           manage: "Manage subscription",
           save: "Save subscription",
           paid: "Record payment now",
@@ -162,12 +182,20 @@ export default async function BusinessOwnersPage({
           title={copy.title}
           description={copy.description}
           primaryAction={
-            <Link
-              href="/businesses#add-business"
-              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
-            >
-              {language === "AR" ? "إضافة نشاط ومالك" : "Add business & owner"}
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/plans"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground hover:border-primary"
+              >
+                {language === "AR" ? "إدارة الخطط والحدود" : "Manage plans & limits"}
+              </Link>
+              <Link
+                href="/businesses#add-business"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+              >
+                {language === "AR" ? "إضافة نشاط ومالك" : "Add business & owner"}
+              </Link>
+            </div>
           }
         />
       }
@@ -184,7 +212,7 @@ export default async function BusinessOwnersPage({
       ) : null}
 
       <Card>
-        <form className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]" action="/business-owners">
+        <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_11rem_11rem_11rem_auto]" action="/business-owners">
           <label className="relative">
             <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-foreground-subtle" size={18} aria-hidden="true" />
             <input
@@ -210,6 +238,14 @@ export default async function BusinessOwnersPage({
             <option value="DUE">Due</option>
             <option value="OVERDUE">Overdue</option>
             <option value="SUSPENDED">Suspended</option>
+          </select>
+
+          <select name="plan" defaultValue={plan} className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm">
+            <option value="all">{language === "AR" ? "كل الخطط" : "All plans"}</option>
+            <option value="FREE">Free</option>
+            <option value="STARTER">Starter</option>
+            <option value="PRO">Pro</option>
+            <option value="BUSINESS">Business</option>
           </select>
 
           <button className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover" type="submit">
@@ -257,6 +293,7 @@ export default async function BusinessOwnersPage({
                         <div className="mt-2 flex flex-wrap gap-2">
                           <Badge variant={active ? "success" : "neutral"}>{active ? copy.active : copy.inactive}</Badge>
                           <Badge variant={paymentBadgeVariant(derivedState)}>{derivedState.replace("_", " ")}</Badge>
+                          <Badge variant="info">{planCatalog[business.plan].name}</Badge>
                         </div>
                       </div>
                     </div>
@@ -303,7 +340,30 @@ export default async function BusinessOwnersPage({
                   <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-primary">
                     {copy.manage}
                   </summary>
-                  <div className="grid gap-5 border-t border-border bg-surface p-5 xl:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="grid gap-5 border-t border-border bg-surface p-5">
+                    <form action={updateBusinessPlanAction.bind(null, business.id)} className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">{copy.plan}</p>
+                          <p className="mt-1 text-sm text-foreground-muted">
+                            {planCatalog[business.plan].name} · {business._count.customers}/{getPlanLimit(business.plan, "CUSTOMERS", planLimitsMap.get(business.plan) ?? planCatalog[business.plan].limits) ?? "∞"} customers · {business._count.users}/{getPlanLimit(business.plan, "USERS", planLimitsMap.get(business.plan) ?? planCatalog[business.plan].limits) ?? "∞"} users · {business._count.branches}/{getPlanLimit(business.plan, "BRANCHES", planLimitsMap.get(business.plan) ?? planCatalog[business.plan].limits) ?? "∞"} branches
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <select name="plan" defaultValue={business.plan} className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm">
+                            <option value="FREE">Free</option>
+                            <option value="STARTER">Starter</option>
+                            <option value="PRO">Pro</option>
+                            <option value="BUSINESS">Business</option>
+                          </select>
+                          <button type="submit" className="min-h-11 rounded-[var(--lf-radius-input)] border border-primary px-4 text-sm font-semibold text-primary">
+                            {language === "AR" ? "تحديث الخطة" : "Update plan"}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+
+                    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto]">
                     <form action={updateBusinessBillingAction.bind(null, business.id)} className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                       <label className="text-xs font-semibold text-foreground-muted">
                         Billing cycle
@@ -355,6 +415,7 @@ export default async function BusinessOwnersPage({
                           {business.isActive ? copy.suspend : copy.reactivate}
                         </button>
                       </form>
+                    </div>
                     </div>
                   </div>
                 </details>

@@ -7,6 +7,8 @@ import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
 import { normalizeLanguage } from "@/lib/i18n";
+import { getPlanUsage, planCatalog } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -61,6 +63,22 @@ export default async function BusinessSettingsPage({
     redirect("/dashboard");
   }
 
+  const [customerCount, userCount, branchCount, offerCount, rewardCount, effectivePlanLimits] = await Promise.all([
+    prisma.customer.count({ where: { businessId: business.id } }),
+    prisma.user.count({ where: { businessId: business.id } }),
+    prisma.branch.count({ where: { businessId: business.id } }),
+    prisma.offer.count({ where: { businessId: business.id } }),
+    prisma.reward.count({ where: { businessId: business.id } }),
+    getEffectivePlanLimits(business.plan),
+  ]);
+  const planUsage = getPlanUsage(business.plan, {
+    CUSTOMERS: customerCount,
+    USERS: userCount,
+    BRANCHES: branchCount,
+    OFFERS: offerCount,
+    REWARDS: rewardCount,
+  }, effectivePlanLimits);
+
   const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
   const language = normalizeLanguage(currentUser?.language);
   const t = (ar: string, en: string) => language === "AR" ? ar : en;
@@ -99,6 +117,27 @@ export default async function BusinessSettingsPage({
             {t("تخصيص برنامج الولاء والكارت الرقمي.", "Configure the loyalty programme and digital card.")}
           </p>
         </header>
+
+        <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground-subtle">{t("الخطة الحالية", "Current plan")}</p>
+              <h2 className="mt-1 text-xl font-black text-foreground">{planCatalog[business.plan].name}</h2>
+              <p className="mt-1 text-sm text-foreground-muted">{t("الحدود تُطبق على الخادم. تغيير الخطة يتم بواسطة مدير المنصة.", "Limits are enforced server-side. Plan changes are managed by the platform administrator.")}</p>
+            </div>
+            {session.user.role === "SUPER_ADMIN" ? (
+              <Link href="/business-owners" className="text-sm font-semibold text-primary hover:underline">{t("إدارة الخطة", "Manage plan")}</Link>
+            ) : null}
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+            {planUsage.map((item) => (
+              <div key={item.resource} className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3">
+                <p className="text-[11px] font-semibold text-foreground-subtle">{item.resource.replaceAll("_", " ")}</p>
+                <p dir="ltr" className="mt-1 font-bold text-foreground">{item.used} / {item.limit ?? "∞"}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {query.sheetSync === "success" && (
           <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">

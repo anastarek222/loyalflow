@@ -237,6 +237,7 @@ async function createBusiness(input: {
       earnAmount: input.earnAmount,
       allowOwnerDataExport: true,
       cardDefaultLanguage: input.cardDefaultLanguage ?? "EN",
+      plan: "BUSINESS",
       isActive: input.isActive ?? true,
     },
   });

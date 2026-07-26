@@ -1,6 +1,7 @@
 import type { UserRole } from "@/generated/prisma/client";
 
 import { canPerform, type TenantUser } from "@/lib/permissions";
+import { hasFeatureEntitlement, type LoyalFlowPlan } from "@/lib/entitlements";
 import {
   getExperienceNavigationRules,
   type ExperienceAccess,
@@ -11,6 +12,7 @@ export type ShellBusiness = {
   id: string;
   name: string;
   slug: string;
+  plan?: LoyalFlowPlan;
 };
 
 export type ShellUser = TenantUser & {
@@ -74,6 +76,7 @@ const labels = {
     overview: "الرئيسية",
     businesses: "الأنشطة التجارية",
     owners: "ملاك الأنشطة",
+    plans: "الخطط والحدود",
     operations: "العمليات",
     growth: "النمو",
     analytics: "التحليلات",
@@ -100,6 +103,7 @@ const labels = {
     overview: "Overview",
     businesses: "Businesses",
     owners: "Business owners",
+    plans: "Plans & limits",
     operations: "Operations",
     growth: "Growth",
     analytics: "Analytics",
@@ -159,6 +163,8 @@ export function buildShellNavigation({
   const root = `/businesses/${business.slug}`;
   const can = (capability: Parameters<typeof canPerform>[2]) =>
     canPerform(user, business.id, capability);
+  const entitled = (feature: Parameters<typeof hasFeatureEntitlement>[1]) =>
+    hasFeatureEntitlement(business.plan ?? "BUSINESS", feature);
 
   const operations = [
     item(language, "overview", root),
@@ -175,16 +181,16 @@ export function buildShellNavigation({
 
   const growth = can("SETTINGS_EDIT")
     ? [
-        item(language, "rewards", `${root}/rewards`),
-        item(language, "offers", `${root}/offers`),
-        item(language, "campaigns", `${root}/campaigns`),
-        item(language, "recovery", `${root}/recovery`),
+        ...(entitled("REWARDS") ? [item(language, "rewards", `${root}/rewards`)] : []),
+        ...(entitled("OFFERS") ? [item(language, "offers", `${root}/offers`)] : []),
+        ...(entitled("CAMPAIGNS") ? [item(language, "campaigns", `${root}/campaigns`)] : []),
+        ...(entitled("CAMPAIGNS") ? [item(language, "recovery", `${root}/recovery`)] : []),
       ]
-    : can("CUSTOMERS_VIEW")
+    : can("CUSTOMERS_VIEW") && entitled("OFFERS")
       ? [item(language, "offers", `${root}/offers`)]
       : [];
 
-  const analytics = can("REPORTS_VIEW")
+  const analytics = can("REPORTS_VIEW") && entitled("REPORTING")
     ? [item(language, "reports", `${root}/reports`)]
     : [];
 
@@ -274,6 +280,7 @@ export function getShellPageContext(
   const text = labels[language];
   if (pathname === "/businesses") return { title: text.businesses, parent: undefined };
   if (pathname === "/business-owners") return { title: text.owners, parent: undefined };
+  if (pathname === "/plans") return { title: text.plans, parent: undefined };
   if (pathname === "/dashboard") return { title: text.overview, parent: undefined };
   if (!business) return { title: "LoyalFlow", parent: undefined };
 

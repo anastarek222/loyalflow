@@ -33,6 +33,7 @@ import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
 import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { reportCopy } from "@/lib/reports/presentation";
+import { hasFeatureEntitlement } from "@/lib/entitlements";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -141,6 +142,7 @@ export default async function ReportsPage({
       rewardName: true,
       rewardThreshold: true,
       earnAmount: true,
+      plan: true,
     },
   });
 
@@ -173,6 +175,10 @@ export default async function ReportsPage({
 
   if (!canViewReports) {
     redirect(`/businesses/${business.slug}`);
+  }
+
+  if (!hasFeatureEntitlement(business.plan, "REPORTING")) {
+    redirect(`/businesses/${business.slug}?error=plan-feature`);
   }
 
   const today = new Date();

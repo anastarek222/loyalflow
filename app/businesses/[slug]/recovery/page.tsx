@@ -9,6 +9,7 @@ import { getWinBackAudienceWhere, getWinBackMessage, type WinBackAudience, winBa
 import { getCustomerSegmentLabel } from "@/lib/customers/segments";
 import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { hasFeatureEntitlement } from "@/lib/entitlements";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { canExportBusinessData, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -17,8 +18,8 @@ import { buildWhatsAppUrl } from "@/lib/whatsapp-templates";
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ audience?: string }> };
 export default async function RecoveryPage({ params, searchParams }: Props) {
   const session = await auth(); if (!session?.user) redirect("/login"); const { slug } = await params; const query = await searchParams;
-  const [user, business] = await Promise.all([prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true, role: true, experienceAccess: true } }), prisma.business.findUnique({ where: { slug }, select: { id: true, slug: true, name: true, loyaltyMode: true, unitName: true, rewardName: true, rewardThreshold: true, earnAmount: true, allowOwnerDataExport: true, whatsappBalanceMessage: true } })]);
-  if (!business) notFound(); if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${slug}`);
+  const [user, business] = await Promise.all([prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true, role: true, experienceAccess: true } }), prisma.business.findUnique({ where: { slug }, select: { id: true, slug: true, name: true, loyaltyMode: true, unitName: true, rewardName: true, rewardThreshold: true, earnAmount: true, allowOwnerDataExport: true, whatsappBalanceMessage: true, plan: true } })]);
+  if (!business) notFound(); if (!canManageBusiness(session.user, business.id)) redirect(`/businesses/${slug}`); if (!hasFeatureEntitlement(business.plan, "CAMPAIGNS")) redirect(`/businesses/${slug}?error=plan-feature`);
   const language = normalizeLanguage(user?.language); const mode = resolveExperienceMode((await cookies()).get(getExperienceModeCookieName(session.user.id))?.value, user?.role ?? session.user.role, user?.experienceAccess);
   const audience: WinBackAudience = winBackAudiences.includes(query.audience as WinBackAudience) ? query.audience as WinBackAudience : "INACTIVE"; const now = new Date();
   const where: Prisma.CustomerWhereInput = { businessId: business.id, ...getWinBackAudienceWhere(audience, { rewardThreshold: business.rewardThreshold, earnAmount: business.earnAmount, now }) };

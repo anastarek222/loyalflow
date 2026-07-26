@@ -18,6 +18,8 @@ import {
 } from "@/lib/customers/bulk";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { isWithinPlanLimit } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -204,6 +206,7 @@ export async function createCustomerAction(
     select: {
       id: true,
       slug: true,
+      plan: true,
     },
   });
 
@@ -245,6 +248,14 @@ export async function createCustomerAction(
 
   if (existingCustomer) {
     redirect(`/businesses/${slug}/customers?error=duplicate`);
+  }
+
+  const [customerCount, planLimits] = await Promise.all([
+    prisma.customer.count({ where: { businessId: business.id } }),
+    getEffectivePlanLimits(business.plan),
+  ]);
+  if (!isWithinPlanLimit(business.plan, "CUSTOMERS", customerCount, 1, planLimits)) {
+    redirect(`/businesses/${slug}/customers?error=plan-limit`);
   }
 
   const customerCode = await generateCustomerCode(

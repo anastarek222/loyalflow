@@ -50,6 +50,7 @@ export default async function AuthenticatedLocaleShell({
           select: {
             slug: true,
             name: true,
+            plan: true,
           },
         },
       },
@@ -57,7 +58,7 @@ export default async function AuthenticatedLocaleShell({
 
   const businesses = user?.role === "SUPER_ADMIN"
     ? await prisma.business.findMany({
-        select: { id: true, name: true, slug: true },
+        select: { id: true, name: true, slug: true, plan: true },
         orderBy: { name: "asc" },
       })
     : user?.business
@@ -65,6 +66,7 @@ export default async function AuthenticatedLocaleShell({
           id: user.businessId!,
           name: user.business.name,
           slug: user.business.slug,
+          plan: user.business.plan,
         }]
       : [];
 
@@ -84,7 +86,7 @@ export default async function AuthenticatedLocaleShell({
       lang={lang}
       dir={dir}
       data-app-language={language}
-      className="min-h-screen bg-surface-subtle"
+      className="min-h-screen bg-slate-50"
     >
 
       <AuthenticatedAppShell

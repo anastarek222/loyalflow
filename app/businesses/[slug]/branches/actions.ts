@@ -13,6 +13,8 @@ import {
   normalizeBranchInput,
 } from "@/lib/branches/management";
 import prisma from "@/lib/prisma";
+import { isWithinPlanLimit } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -31,7 +33,7 @@ async function getBranchManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, plan: true },
   });
 
   if (!business || !canManageBranches(session.user, business.id)) {
@@ -60,6 +62,14 @@ export async function createBranchAction(slug: string, formData: FormData) {
   const { business, session } = await getBranchManagementContext(slug);
   const parsed = parseBranchForm(formData);
   if (!parsed.success) redirectWithError(business.slug, "invalid");
+
+  const [branchCount, planLimits] = await Promise.all([
+    prisma.branch.count({ where: { businessId: business.id } }),
+    getEffectivePlanLimits(business.plan),
+  ]);
+  if (!isWithinPlanLimit(business.plan, "BRANCHES", branchCount, 1, planLimits)) {
+    redirectWithError(business.slug, "plan-limit");
+  }
 
   try {
     const activityContext = await getActivityRequestContext();

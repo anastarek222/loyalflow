@@ -55,6 +55,7 @@ type ReviewData = {
   paymentMethod: string;
   billingNotes: string;
   adminNotes: string;
+  plan: string;
 
   loyaltyMode: string;
   unitName: string;
@@ -125,6 +126,13 @@ const paymentStatusLabels: Record<string, string> = {
   DUE: "Due",
   OVERDUE: "Overdue",
   SUSPENDED: "Suspended",
+};
+
+const planLabels: Record<string, string> = {
+  FREE: "Free",
+  STARTER: "Starter",
+  PRO: "Pro",
+  BUSINESS: "Business",
 };
 
 function getValue(
@@ -251,6 +259,7 @@ function getReviewData(
     paymentMethod: getValue(formData, "paymentMethod"),
     billingNotes: getValue(formData, "billingNotes"),
     adminNotes: getValue(formData, "adminNotes"),
+    plan: getValue(formData, "plan"),
 
     loyaltyMode: getValue(
       formData,
@@ -896,6 +905,16 @@ export default function BusinessSetupWizard({
             </p>
           </div>
 
+          <label className="block text-sm font-semibold text-slate-700">
+            Product plan
+            <select name="plan" defaultValue="FREE" className="mt-2 w-full rounded-xl border px-4 py-3">
+              <option value="FREE">Free</option>
+              <option value="STARTER">Starter</option>
+              <option value="PRO">Pro</option>
+              <option value="BUSINESS">Business</option>
+            </select>
+          </label>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700">
               Billing cycle
@@ -1344,6 +1363,7 @@ export default function BusinessSetupWizard({
                 title="Billing"
                 onEdit={() => editStep(2)}
                 rows={[
+                  ["Plan", planLabels[reviewData.plan] ?? reviewData.plan],
                   ["Cycle", billingIntervalLabels[reviewData.billingInterval] ?? reviewData.billingInterval],
                   ["Custom days", reviewData.billingCustomDays],
                   ["Amount", reviewData.subscriptionAmount ? `${reviewData.subscriptionAmount} ${reviewData.billingCurrency}` : ""],

@@ -9,6 +9,7 @@ import {
   type CustomerSegment,
 } from "@/lib/customers/segments";
 import { canExportBusinessData } from "@/lib/permissions";
+import { hasFeatureEntitlement } from "@/lib/entitlements";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -121,6 +122,8 @@ export async function GET(
         earnAmount: true,
         isActive:
           true,
+        plan:
+          true,
       },
     });
 
@@ -147,7 +150,7 @@ export async function GET(
       business.allowOwnerDataExport
     );
 
-  if (!canExportData) {
+  if (!canExportData || !hasFeatureEntitlement(business.plan, "REPORTING")) {
     return Response.json(
       {
         error:

@@ -12,9 +12,11 @@ import {
 import { getRedemptionMagnitude } from "@/lib/analytics/metrics";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessTheme } from "@/lib/theme";
 import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { reportCopy } from "@/lib/reports/presentation";
+import { hasFeatureEntitlement } from "@/lib/entitlements";
 import Link from "next/link";
 import { cookies } from "next/headers";
 
@@ -36,15 +38,28 @@ type StaffReportsPageProps = {
   }>;
 };
 
-function roleLabel(role: string, language: "AR" | "EN") {
-  const labels: Record<string, { AR: string; EN: string }> = {
-    OWNER: { AR: "مالك", EN: "Owner" },
-    MANAGER: { AR: "مدير", EN: "Manager" },
-    STAFF: { AR: "موظف / كاشير", EN: "Staff / cashier" },
-    VIEWER: { AR: "مشاهد", EN: "Viewer" },
-    SUPER_ADMIN: { AR: "مدير النظام", EN: "System administrator" },
-  };
-  return labels[role]?.[language] ?? role;
+function roleLabel(
+  role: string
+) {
+  switch (role) {
+    case "OWNER":
+      return "مالك";
+
+    case "MANAGER":
+      return "مدير";
+
+    case "STAFF":
+      return "موظف / كاشير";
+
+    case "VIEWER":
+      return "مشاهد";
+
+    case "SUPER_ADMIN":
+      return "مدير النظام";
+
+    default:
+      return role;
+  }
 }
 
 export default async function StaffReportsPage({
@@ -93,6 +108,8 @@ export default async function StaffReportsPage({
           true,
         isActive:
           true,
+        plan:
+          true,
       },
     });
 
@@ -100,9 +117,11 @@ export default async function StaffReportsPage({
     notFound();
   }
 
+  const theme =
+    getBusinessTheme(business);
+
   const reportUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { id: true, language: true, role: true, experienceAccess: true } });
   const language = normalizeLanguage(reportUser?.language);
-  const t = (ar: string, en: string) => language === "AR" ? ar : en;
   const experienceMode = resolveExperienceMode((await cookies()).get(getExperienceModeCookieName(session.user.id))?.value, reportUser?.role ?? session.user.role, reportUser?.experienceAccess);
   const simple = experienceMode === "SIMPLE";
   const copy = reportCopy(language);
@@ -118,6 +137,12 @@ export default async function StaffReportsPage({
   if (!canViewReports) {
     redirect(
       `/businesses/${business.slug}`
+    );
+  }
+
+  if (!hasFeatureEntitlement(business.plan, "REPORTING")) {
+    redirect(
+      `/businesses/${business.slug}?error=plan-feature`
     );
   }
 
@@ -290,7 +315,7 @@ export default async function StaffReportsPage({
           id:
             "system",
           name:
-            t("النظام أو مستخدم محذوف", "System or deleted user"),
+            "النظام أو مستخدم محذوف",
           email:
             "—",
           role:
@@ -359,7 +384,7 @@ export default async function StaffReportsPage({
     let row = creditedStaffId ? performance.get(creditedStaffId) : undefined;
     if (!row) {
       if (!systemRow) {
-        systemRow = { id: "system", name: language === "AR" ? t("النظام أو مستخدم محذوف", "System or deleted user") : "System or deleted user", email: "—", role: "SYSTEM", isActive: false, earnActions: 0, earnedAmount: 0, redeemActions: 0, redeemedAmount: 0, adjustmentActions: 0, rewardRedemptions: 0, customers: new Set<string>() };
+        systemRow = { id: "system", name: language === "AR" ? "النظام أو مستخدم محذوف" : "System or deleted user", email: "—", role: "SYSTEM", isActive: false, earnActions: 0, earnedAmount: 0, redeemActions: 0, redeemedAmount: 0, adjustmentActions: 0, rewardRedemptions: 0, customers: new Set<string>() };
       }
       row = systemRow;
     }
@@ -445,18 +470,26 @@ export default async function StaffReportsPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-6 sm:px-8 sm:py-8"
+      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
     >
       <div className="mx-auto max-w-7xl" data-experience-mode={experienceMode}>
         <Link
           href={`/businesses/${business.slug}/reports?${reportQuery}`}
-          className="text-sm font-bold text-primary hover:text-primary"
+          className="text-sm font-bold text-violet-700 hover:text-violet-900"
         >
-          {t("العودة إلى التقارير ←", "← Back to reports")}
+          العودة إلى التقارير ←
         </Link>
 
         <header
-          className={`mt-6 border p-6 text-white sm:p-8 rounded-[var(--lf-radius-card)] border-border`}
+          className={`mt-5 border p-5 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
+          style={{
+            backgroundColor:
+              theme.primaryColor,
+          }}
         >
           <p className="text-sm font-bold text-white/70">
             {copy.staff}
@@ -475,14 +508,14 @@ export default async function StaffReportsPage({
 
         <form
           method="get"
-          className={`mt-6 grid gap-4 border bg-white p-6 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6 rounded-[var(--lf-radius-card)] border-border`}
+          className={`mt-6 grid gap-4 border bg-white p-5 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6 ${theme.cardClass} ${theme.borderClass}`}
         >
           <div>
             <label
               htmlFor="from"
-              className="mb-2 block text-sm font-bold text-foreground-muted"
+              className="mb-2 block text-sm font-bold text-slate-700"
             >
-              {t("من تاريخ", "From date")}
+              من تاريخ
             </label>
 
             <input
@@ -492,44 +525,44 @@ export default async function StaffReportsPage({
               defaultValue={
                 fromInput
               }
-              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
             />
           </div>
 
           <div>
-            <label htmlFor="branch" className="mb-2 block text-sm font-bold text-foreground-muted">
-              {t("الفرع", "Branch")}
+            <label htmlFor="branch" className="mb-2 block text-sm font-bold text-slate-700">
+              الفرع
             </label>
             <select
               id="branch"
               name="branch"
               defaultValue={reportScope.branchId ?? "all"}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
             >
-              <option value="all">{t("كل الفروع والسجل التاريخي", "All branches and historical records")}</option>
+              <option value="all">كل الفروع والسجل التاريخي</option>
               {reportBranches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.name}{branch.isActive ? "" : t(" (غير نشط)", " (inactive)")}
+                  {branch.name}{branch.isActive ? "" : " (غير نشط)"}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label htmlFor="staff" className="mb-2 block text-sm font-bold text-foreground-muted">
-              {t("الموظف المنسوب إليه", "Attributed staff member")}
+            <label htmlFor="staff" className="mb-2 block text-sm font-bold text-slate-700">
+              الموظف المنسوب إليه
             </label>
             <select
               id="staff"
               name="staff"
               defaultValue={reportScope.attributedStaffId ?? "all"}
-              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
             >
-              <option value="all">{t("كل الموظفين والعمليات غير المنسوبة", "All staff and unattributed operations")}</option>
+              <option value="all">كل الموظفين والعمليات غير المنسوبة</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {[user.firstName, user.lastName].filter(Boolean).join(" ") || t("مستخدم بدون اسم", "Unnamed user")}
-                  {user.isActive ? "" : t(" (غير نشط)", " (inactive)")}
+                  {[user.firstName, user.lastName].filter(Boolean).join(" ") || "مستخدم بدون اسم"}
+                  {user.isActive ? "" : " (غير نشط)"}
                 </option>
               ))}
             </select>
@@ -538,9 +571,9 @@ export default async function StaffReportsPage({
           <div>
             <label
               htmlFor="to"
-              className="mb-2 block text-sm font-bold text-foreground-muted"
+              className="mb-2 block text-sm font-bold text-slate-700"
             >
-              {t("إلى تاريخ", "To date")}
+              إلى تاريخ
             </label>
 
             <input
@@ -550,62 +583,62 @@ export default async function StaffReportsPage({
               defaultValue={
                 toInput
               }
-              className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
             />
           </div>
 
           <button
             type="submit"
-            className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
+            className="rounded-xl bg-violet-600 px-6 py-3 font-bold text-white transition hover:bg-violet-700"
           >
-            {t("تطبيق الفترة", "Apply period")}
+            تطبيق الفترة
           </button>
 
           <Link
             href={`/businesses/${business.slug}/reports/staff`}
-            className="rounded-[var(--lf-radius-input)] border border-border px-6 py-4 text-center font-bold text-foreground-muted"
+            className="rounded-xl border border-slate-300 px-6 py-3 text-center font-bold text-slate-700"
           >
-            {t("آخر 30 يومًا", "Last 30 days")}
+            آخر 30 يومًا
           </Link>
         </form>
 
-        <p className="mt-4 text-sm text-foreground-muted" role="status">
+        <p className="mt-3 text-sm text-slate-600" role="status">
           {reportScope.branchId
             ? `${language === "AR" ? "سياق الفرع" : "Branch context"}: ${reportBranches.find((branch) => branch.id === reportScope.branchId)?.name ?? "—"}`
             : language === "AR" ? "يشمل التقرير العمليات التاريخية غير المنسوبة إلى فرع." : "This report includes historical operations with no branch attribution."}
         </p>
 
         <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-foreground-subtle">
-              {t("المستخدمون النشطون", "Active users")}
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              المستخدمون النشطون
             </p>
 
-            <p className="mt-4 text-3xl font-black text-foreground">
+            <p className="mt-3 text-3xl font-black text-slate-950">
               {numberFormatter.format(
                 activeUsers
               )}
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-foreground-subtle">
-              {t("إجمالي العمليات", "Total operations")}
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              إجمالي العمليات
             </p>
 
-            <p className="mt-4 text-3xl font-black text-foreground">
+            <p className="mt-3 text-3xl font-black text-slate-950">
               {numberFormatter.format(
                 totalActions
               )}
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-foreground-subtle">
-              {t("الرصيد المضاف", "Earned balance")}
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              الرصيد المضاف
             </p>
 
-            <p className="mt-4 text-3xl font-black text-success">
+            <p className="mt-3 text-3xl font-black text-emerald-700">
               {numberFormatter.format(
                 totalEarned
               )}
@@ -613,18 +646,18 @@ export default async function StaffReportsPage({
 
             <p
               dir="auto"
-              className="mt-1 text-xs text-foreground-subtle"
+              className="mt-1 text-xs text-slate-500"
             >
               {business.unitName}
             </p>
           </article>
 
-          <article className="rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold text-foreground-subtle">
-              {t("الرصيد المستبدل", "Redeemed balance")}
+          <article className="rounded-2xl bg-white p-5 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">
+              الرصيد المستبدل
             </p>
 
-            <p className="mt-4 text-3xl font-black text-warning">
+            <p className="mt-3 text-3xl font-black text-amber-700">
               {numberFormatter.format(
                 totalRedeemed
               )}
@@ -632,7 +665,7 @@ export default async function StaffReportsPage({
 
             <p
               dir="auto"
-              className="mt-1 text-xs text-foreground-subtle"
+              className="mt-1 text-xs text-slate-500"
             >
               {business.unitName}
             </p>
@@ -640,52 +673,52 @@ export default async function StaffReportsPage({
         </section>
 
         {rows.length === 0 ? (
-          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-10 text-center">
-            <h2 className="text-xl font-black text-foreground">
-              {t("لا يوجد مستخدمون", "No users")}
+          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
+            <h2 className="text-xl font-black text-slate-950">
+              لا يوجد مستخدمون
             </h2>
           </section>
         ) : (
           <>
-            <section className={`${simple ? "hidden" : "hidden lg:block"} mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white shadow-sm`}>
+            <section className={`${simple ? "hidden" : "hidden lg:block"} mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm`}>
               <div className="overflow-x-auto">
                 <table className="w-full text-right">
-                  <thead className="bg-foreground text-sm text-white">
+                  <thead className="bg-slate-950 text-sm text-white">
                     <tr>
-                      <th className="px-6 py-4">
-                        {t("المستخدم", "User")}
+                      <th className="px-5 py-4">
+                        المستخدم
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("العملاء", "Customers")}
+                      <th className="px-5 py-4">
+                        العملاء
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("إضافات", "Earn actions")}
+                      <th className="px-5 py-4">
+                        إضافات
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("القيمة المضافة", "Earned value")}
+                      <th className="px-5 py-4">
+                        القيمة المضافة
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("استبدالات", "Redemptions")}
+                      <th className="px-5 py-4">
+                        استبدالات
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("القيمة المستبدلة", "Redeemed value")}
+                      <th className="px-5 py-4">
+                        القيمة المستبدلة
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("مكافآت مستبدلة", "Rewards redeemed")}
+                      <th className="px-5 py-4">
+                        مكافآت مستبدلة
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("تعديلات", "Adjustments")}
+                      <th className="px-5 py-4">
+                        تعديلات
                       </th>
 
-                      <th className="px-6 py-4">
-                        {t("الإجمالي", "Total")}
+                      <th className="px-5 py-4">
+                        الإجمالي
                       </th>
                     </tr>
                   </thead>
@@ -695,87 +728,86 @@ export default async function StaffReportsPage({
                       (row) => (
                         <tr
                           key={row.id}
-                          className="hover:bg-surface-subtle"
+                          className="hover:bg-slate-50"
                         >
-                          <td className="px-6 py-4">
+                          <td className="px-5 py-4">
                             <p
                               dir="auto"
-                              className="font-black text-foreground"
+                              className="font-black text-slate-950"
                             >
                               {row.name}
                             </p>
 
                             <p
                               dir="ltr"
-                              className="mt-1 text-right text-xs text-foreground-subtle"
+                              className="mt-1 text-right text-xs text-slate-500"
                             >
                               {row.email}
                             </p>
 
                             <div className="mt-2 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-primary-subtle px-2.5 py-1 text-xs font-bold text-primary">
+                              <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-700">
                                 {roleLabel(
-                                  row.role,
-                                  language
+                                  row.role
                                 )}
                               </span>
 
                               <span
                                 className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                                   row.isActive
-                                    ? "bg-success-subtle text-success"
-                                    : "bg-surface-subtle text-foreground-subtle"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : "bg-slate-100 text-slate-500"
                                 }`}
                               >
                                 {row.isActive
-                                  ? t("نشط", "Active")
-                                  : t("غير نشط", "Inactive")}
+                                  ? "نشط"
+                                  : "غير نشط"}
                               </span>
                             </div>
                           </td>
 
-                          <td className="px-6 py-4 font-bold">
+                          <td className="px-5 py-4 font-bold">
                             {numberFormatter.format(
                               row.customersCount
                             )}
                           </td>
 
-                          <td className="px-6 py-4 font-bold">
+                          <td className="px-5 py-4 font-bold">
                             {numberFormatter.format(
                               row.earnActions
                             )}
                           </td>
 
-                          <td className="px-6 py-4 font-bold text-success">
+                          <td className="px-5 py-4 font-bold text-emerald-700">
                             {numberFormatter.format(
                               row.earnedAmount
                             )}
                           </td>
 
-                          <td className="px-6 py-4 font-bold">
+                          <td className="px-5 py-4 font-bold">
                             {numberFormatter.format(
                               row.redeemActions
                             )}
                           </td>
 
-                          <td className="px-6 py-4 font-bold text-warning">
+                          <td className="px-5 py-4 font-bold text-amber-700">
                             {numberFormatter.format(
                               row.redeemedAmount
                             )}
                           </td>
 
-                          <td className="px-6 py-4 font-bold">
+                          <td className="px-5 py-4 font-bold">
                             {numberFormatter.format(row.rewardRedemptions)}
                           </td>
 
-                          <td className="px-6 py-4 font-bold">
+                          <td className="px-5 py-4 font-bold">
                             {numberFormatter.format(
                               row.adjustmentActions
                             )}
                           </td>
 
-                          <td className="px-6 py-4">
-                            <span className="inline-flex min-w-12 justify-center rounded-full bg-foreground px-4 py-1.5 font-black text-white">
+                          <td className="px-5 py-4">
+                            <span className="inline-flex min-w-12 justify-center rounded-full bg-slate-950 px-3 py-1.5 font-black text-white">
                               {numberFormatter.format(
                                 row.totalActions
                               )}
@@ -794,37 +826,37 @@ export default async function StaffReportsPage({
                 (row) => (
                   <article
                     key={row.id}
-                    className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm"
+                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <h2
                           dir="auto"
-                          className="truncate text-lg font-black text-foreground"
+                          className="truncate text-lg font-black text-slate-950"
                         >
                           {row.name}
                         </h2>
 
                         <p
                           dir="ltr"
-                          className="mt-1 truncate text-right text-xs text-foreground-subtle"
+                          className="mt-1 truncate text-right text-xs text-slate-500"
                         >
                           {row.email}
                         </p>
                       </div>
 
-                      <span className="rounded-full bg-foreground px-4 py-1.5 text-sm font-black text-white">
+                      <span className="rounded-full bg-slate-950 px-3 py-1.5 text-sm font-black text-white">
                         {numberFormatter.format(
                           row.totalActions
                         )}{" "}
-                        {t("عملية", "operation")}
+                        عملية
                       </span>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                      <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                        <p className="text-foreground-subtle">
-                          {t("العملاء", "Customers")}
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <p className="text-slate-500">
+                          العملاء
                         </p>
 
                         <p className="mt-1 font-black">
@@ -834,41 +866,41 @@ export default async function StaffReportsPage({
                         </p>
                       </div>
 
-                      <div className="rounded-[var(--lf-radius-input)] bg-warning-subtle p-4">
-                        <p className="text-warning">{t("مكافآت مستبدلة", "Rewards redeemed")}</p>
-                        <p className="mt-1 font-black text-warning">{numberFormatter.format(row.rewardRedemptions)}</p>
+                      <div className="rounded-xl bg-amber-50 p-3">
+                        <p className="text-amber-800">مكافآت مستبدلة</p>
+                        <p className="mt-1 font-black text-amber-950">{numberFormatter.format(row.rewardRedemptions)}</p>
                       </div>
 
-                      <div className="rounded-[var(--lf-radius-input)] bg-success-subtle p-4">
-                        <p className="text-success">
-                          {t("الرصيد المضاف", "Earned balance")}
+                      <div className="rounded-xl bg-emerald-50 p-3">
+                        <p className="text-emerald-700">
+                          الرصيد المضاف
                         </p>
 
-                        <p className="mt-1 font-black text-success">
+                        <p className="mt-1 font-black text-emerald-900">
                           {numberFormatter.format(
                             row.earnedAmount
                           )}
                         </p>
                       </div>
 
-                      <div className="rounded-[var(--lf-radius-input)] bg-warning-subtle p-4">
-                        <p className="text-warning">
-                          {t("الرصيد المستبدل", "Redeemed balance")}
+                      <div className="rounded-xl bg-amber-50 p-3">
+                        <p className="text-amber-700">
+                          الرصيد المستبدل
                         </p>
 
-                        <p className="mt-1 font-black text-warning">
+                        <p className="mt-1 font-black text-amber-900">
                           {numberFormatter.format(
                             row.redeemedAmount
                           )}
                         </p>
                       </div>
 
-                      <div className="rounded-[var(--lf-radius-input)] bg-primary-subtle p-4">
-                        <p className="text-primary">
-                          {t("التعديلات", "Adjustments")}
+                      <div className="rounded-xl bg-violet-50 p-3">
+                        <p className="text-violet-700">
+                          التعديلات
                         </p>
 
-                        <p className="mt-1 font-black text-primary">
+                        <p className="mt-1 font-black text-violet-900">
                           {numberFormatter.format(
                             row.adjustmentActions
                           )}

@@ -49,6 +49,9 @@ model Business {
   billingNotes           String?
   adminNotes             String?
 
+  plan                   SubscriptionPlan @default(FREE)
+  planChangedAt          DateTime         @default(now())
+
   industry      String?
   website       String?
   email         String?
@@ -95,6 +98,20 @@ model Business {
   customerTags             CustomerTag[]
   offers                   Offer[]
   notifications            Notification[]
+}
+
+model PlanConfiguration {
+  id            String           @id @default(cuid())
+  plan          SubscriptionPlan @unique
+  customerLimit Int?
+  userLimit     Int?
+  branchLimit   Int?
+  offerLimit    Int?
+  rewardLimit   Int?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([plan])
 }
 
 model User {
@@ -568,6 +585,13 @@ enum PaymentStatus {
   DUE
   OVERDUE
   SUSPENDED
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  BUSINESS
 }
 
 enum OfferEligibility {
