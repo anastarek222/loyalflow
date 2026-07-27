@@ -7,6 +7,34 @@
   - A unique constraint covering the columns `[id,businessId]` on the table `Reward` will be added. If there are existing duplicate values, this will fail.
 
 */
+-- Normalize historical global-admin actor references before tenant-scoped actor FKs.
+-- SUPER_ADMIN users are global and intentionally have businessId = NULL.
+-- Current application code does not persist them as tenant createdBy relations.
+
+UPDATE "LoyaltyTransaction" lt
+SET "createdById" = NULL
+FROM "User" u
+WHERE lt."createdById" = u.id
+  AND u.role = 'SUPER_ADMIN'
+  AND u."businessId" IS NULL
+  AND lt."businessId" IS NOT NULL;
+
+UPDATE "BusinessActivity" ba
+SET "createdById" = NULL
+FROM "User" u
+WHERE ba."createdById" = u.id
+  AND u.role = 'SUPER_ADMIN'
+  AND u."businessId" IS NULL
+  AND ba."businessId" IS NOT NULL;
+
+UPDATE "RewardRedemption" rr
+SET "createdById" = NULL
+FROM "User" u
+WHERE rr."createdById" = u.id
+  AND u.role = 'SUPER_ADMIN'
+  AND u."businessId" IS NULL
+  AND rr."businessId" IS NOT NULL;
+
 -- DropForeignKey
 ALTER TABLE "BusinessActivity" DROP CONSTRAINT "BusinessActivity_branchId_fkey";
 
