@@ -4,6 +4,7 @@ import {
   EnvironmentValidationError,
   validateProductionEnvironment,
 } from "@/lib/server/environment";
+import { getGoogleSpreadsheetMetadata } from "@/lib/google-sheets";
 
 type CheckResult = {
   name: string;
@@ -92,11 +93,22 @@ async function main() {
       detail: environment.appUrl ?? "missing",
     });
 
-    checks.push({
-      name: "Google Sheets integration",
-      ok: true,
-      detail: environment.googleSheetsConfigured ? "configured" : "not configured (optional)",
-    });
+    if (!environment.googleSheetsConfigured) {
+      checks.push({
+        name: "Google Sheets integration",
+        ok: environment.googleSheetsConfigurationReason === "MISSING_SPREADSHEET_ID",
+        detail: environment.googleSheetsConfigurationReason === "MISSING_SPREADSHEET_ID"
+          ? "not configured (optional)"
+          : `incomplete: ${environment.googleSheetsConfigurationReason}`,
+      });
+    } else {
+      try {
+        const metadata = await getGoogleSpreadsheetMetadata();
+        checks.push({ name: "Google Sheets integration", ok: true, detail: `read-only authentication passed for ${metadata.title || "configured spreadsheet"}` });
+      } catch (error) {
+        checks.push({ name: "Google Sheets integration", ok: false, detail: error instanceof Error ? error.message : "read-only validation failed" });
+      }
+    }
 
     try {
       const prismaModule = await import("@/lib/prisma");

@@ -10,7 +10,9 @@ Copy `.env.example` to `.env` for local development. Never commit a populated
 | `NEXT_PUBLIC_APP_URL` | Yes in production | Canonical public application URL for card, QR, and Google Sheets links. | Must be an HTTPS origin without a trailing slash. This is intentionally public, so never place a secret here. |
 | `SHADOW_DATABASE_URL` | No at runtime | Prisma development-only shadow database. | Keep separate from runtime/production. It is not needed by the application or `prisma migrate deploy`. |
 | `AUTH_TRUST_HOST` | Confirm for the chosen NextAuth/Vercel deployment configuration. | Explicit host-trust configuration when required by the deployment topology. | LoyalFlow does not read it directly; verify it against the deployed canonical origin when the host requires it. |
-| `GOOGLE_SPREADSHEET_ID` | Optional | Enables the existing Google Sheets mirror. | Server-only. Leave unset to keep the optional sync disabled. |
+| `GOOGLE_SPREADSHEET_ID` | Optional | Enables the Google Sheets mirror. | Server-only. Leave unset to keep the optional sync disabled. |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Required when Sheets is enabled | Google service-account email. | Server-only Vercel environment variable. |
+| `GOOGLE_PRIVATE_KEY` | Required when Sheets is enabled | Google service-account private key. | Server-only Vercel environment variable; use literal `\n` escapes or a multiline secret. Never log it. |
 | `GOOGLE_WALLET_ENABLED` | Optional/reserved | Enables a future Wallet provider adapter. | Keep `false` for the current readiness-only implementation. |
 | `GOOGLE_WALLET_ISSUER_ID` | Future activation only | Google Wallet issuer identifier. | Leave unset until a separately approved issuer/API activation. |
 | `GOOGLE_WALLET_SERVICE_ACCOUNT_JSON` | Future activation only | Server-only Google Wallet service-account material. | Do not set, log, or commit until a separately approved provider adapter and secret-management review exist. |

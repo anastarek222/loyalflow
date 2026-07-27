@@ -1,19 +1,29 @@
-import { syncBusinessToGoogleSheet } from "@/lib/google-sheets-sync";
-import { validateRuntimeEnvironment } from "@/lib/server/environment";
+import { getGoogleSheetsConfiguration, GoogleSheetsConfigurationError, GoogleSheetsReadinessError } from "@/lib/google-sheets";
+import { GoogleSheetsSyncError, syncBusinessToGoogleSheet, type GoogleSheetsSyncFailureReason, type GoogleSheetsSyncResult } from "@/lib/google-sheets-sync";
+import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
 
-export async function syncBusinessToGoogleSheetSafely(
-  businessId: string
-) {
-  if (!validateRuntimeEnvironment().googleSheetsConfigured) {
-    return null;
-  }
+function failureReason(error: unknown): GoogleSheetsSyncFailureReason {
+  if (error instanceof GoogleSheetsConfigurationError || error instanceof GoogleSheetsReadinessError || error instanceof GoogleSheetsSyncError) return error.reason;
+  return "GOOGLE_API_FAILED";
+}
 
+export async function syncBusinessToGoogleSheetSafely(businessId: string): Promise<GoogleSheetsSyncResult> {
+  const configuration = getGoogleSheetsConfiguration();
   try {
-    return await syncBusinessToGoogleSheet(businessId);
+    if (!configuration.configured) throw new GoogleSheetsConfigurationError(configuration.reason);
+    const result = await syncBusinessToGoogleSheet(businessId);
+    await prisma.business.update({ where: { id: businessId }, data: { googleSheetsSyncState: "SUCCEEDED", googleSheetsLastSyncedAt: new Date(), googleSheetsLastAttemptAt: new Date(), googleSheetsLastError: null, googleSheetsRetryable: false } });
+    return result;
   } catch (error) {
-    logServerError("google_sheets_sync_failed", error);
-
-    return null;
+    const reason = failureReason(error);
+    const retryable = !(error instanceof GoogleSheetsSyncError) || error.retryable;
+    logServerError("google_sheets_sync_failed", new Error(`Google Sheets sync failed: ${reason}`), { businessId, reason, retryable });
+    try {
+      await prisma.business.update({ where: { id: businessId }, data: { googleSheetsSyncState: "FAILED", googleSheetsLastAttemptAt: new Date(), googleSheetsLastError: reason, googleSheetsRetryable: retryable } });
+    } catch (recordError) {
+      logServerError("google_sheets_sync_failure_record_failed", recordError, { businessId });
+    }
+    return { status: "failure", businessId, reason, retryable };
   }
 }

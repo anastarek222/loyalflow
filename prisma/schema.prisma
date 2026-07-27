@@ -81,6 +81,13 @@ model Business {
   rewardType               RewardType              @default(GIFT)
   rewardCode               String?
   rewardDescription        String?
+  googleSheetId            Int?      @unique
+  googleSheetTitle         String?
+  googleSheetsSyncState    GoogleSheetsSyncState @default(PENDING)
+  googleSheetsLastSyncedAt DateTime?
+  googleSheetsLastAttemptAt DateTime?
+  googleSheetsLastError    String?
+  googleSheetsRetryable    Boolean   @default(true)
   activities               BusinessActivity[]
   customers                Customer[]
   transactions             LoyaltyTransaction[]
@@ -98,6 +105,12 @@ model Business {
   customerTags             CustomerTag[]
   offers                   Offer[]
   notifications            Notification[]
+}
+
+enum GoogleSheetsSyncState {
+  PENDING
+  SUCCEEDED
+  FAILED
 }
 
 model PlanConfiguration {

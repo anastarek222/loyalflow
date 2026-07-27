@@ -11,9 +11,11 @@ async function main() {
     await syncAllBusinessesToGoogleSheets();
 
   for (const result of results) {
-    console.log(
-      `✅ ${result.businessName} → ${result.tabName} (${result.customersCount} customers)`
-    );
+    if (result.status === "success") {
+      console.log(`✅ ${result.businessId} → ${result.sheetTitle}`);
+    } else {
+      console.log(`❌ ${result.businessId} → ${result.reason}`);
+    }
   }
 
   console.log("\n✅ Google Sheets sync completed");

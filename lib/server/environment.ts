@@ -1,4 +1,5 @@
 import process from "node:process";
+import { getGoogleSheetsConfiguration, type GoogleSheetsConfigurationReason } from "@/lib/google-sheets";
 
 /**
  * Server-only runtime configuration. Do not import this module from Client
@@ -11,6 +12,7 @@ export type RuntimeEnvironment = Readonly<{
   releaseSha: string | null;
   productionDatabaseName: string | null;
   googleSheetsConfigured: boolean;
+  googleSheetsConfigurationReason: GoogleSheetsConfigurationReason | null;
 }>;
 
 type EnvironmentSource = Record<string, string | undefined>;
@@ -119,15 +121,18 @@ export function validateRuntimeEnvironment(
 
   }
 
+  const googleSheetsConfiguration = getGoogleSheetsConfiguration(environment);
+
   return {
     databaseUrl,
     appUrl,
     environmentName,
     releaseSha,
     productionDatabaseName,
-    googleSheetsConfigured: Boolean(
-      getTrimmedValue(environment, "GOOGLE_SPREADSHEET_ID")
-    ),
+    googleSheetsConfigured: googleSheetsConfiguration.configured,
+    googleSheetsConfigurationReason: googleSheetsConfiguration.configured
+      ? null
+      : googleSheetsConfiguration.reason,
   };
 }
 
@@ -156,4 +161,3 @@ export function validateProductionEnvironment(
 
   return resolved;
 }
-

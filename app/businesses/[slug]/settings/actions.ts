@@ -416,7 +416,7 @@ export async function syncGoogleSheetAction(slug: string) {
 
   redirect(
     `/businesses/${business.slug}/settings?sheetSync=${
-      result ? "success" : "error"
+      result.status === "success" ? "success" : "error"
     }`,
   );
 }

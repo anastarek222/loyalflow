@@ -9,6 +9,7 @@ import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
 import { normalizeLanguage } from "@/lib/i18n";
 import { getPlanUsage, planCatalog } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
+import { getGoogleSheetsConfiguration } from "@/lib/google-sheets";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -82,6 +83,14 @@ export default async function BusinessSettingsPage({
   const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
   const language = normalizeLanguage(currentUser?.language);
   const t = (ar: string, en: string) => language === "AR" ? ar : en;
+  const googleSheetsConfiguration = getGoogleSheetsConfiguration();
+  const googleSheetsStatus = !googleSheetsConfiguration.configured
+    ? t("غير مهيأ", "Not configured")
+    : business.googleSheetsSyncState === "SUCCEEDED"
+      ? t("آخر مزامنة نجحت", "Last sync succeeded")
+      : business.googleSheetsSyncState === "FAILED"
+        ? t("فشلت آخر مزامنة", "Last sync failed")
+        : t("المزامنة قيد الانتظار", "Sync pending");
 
   const updateSettings = updateBusinessSettingsAction.bind(null, business.slug);
 
@@ -255,6 +264,11 @@ export default async function BusinessSettingsPage({
             <p className="mt-1 text-sm text-foreground-subtle">
               {t("إرسال أحدث بيانات العملاء والأرصدة والمكافآت إلى ملف النشاط.", "Send the latest customers, balances, and rewards to the business sheet.")}
             </p>
+            <p className="mt-2 text-sm font-semibold text-foreground">
+              {t("الحالة: ", "Status: ")}{googleSheetsStatus}
+              {business.googleSheetsLastSyncedAt ? ` · ${t("آخر نجاح", "Last success")} ${business.googleSheetsLastSyncedAt.toLocaleString()}` : ""}
+              {business.googleSheetsSyncState === "FAILED" && business.googleSheetsRetryable ? ` · ${t("يمكن إعادة المحاولة", "Retry available")}` : ""}
+            </p>
           </div>
 
           <form action={syncGoogleSheet}>
@@ -262,7 +276,7 @@ export default async function BusinessSettingsPage({
               type="submit"
               className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
             >
-              {t("مزامنة Google Sheets", "Sync Google Sheets")}
+              {business.googleSheetsSyncState === "FAILED" ? t("إعادة محاولة المزامنة", "Retry sync") : t("مزامنة Google Sheets", "Sync Google Sheets")}
             </button>
           </form>
         </section>
