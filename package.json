@@ -29,6 +29,7 @@
     "cleanup:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
     "test:browser-uat": "playwright test --config=playwright.config.ts",
     "create-admin": "tsx scripts/create-super-admin.ts",
+    "reset:production-data": "tsx scripts/reset-production-data.ts",
     "sync-sheets": "tsx scripts/sync-google-sheets.ts",
     "postinstall": "prisma generate",
     "typecheck": "tsc --noEmit",
