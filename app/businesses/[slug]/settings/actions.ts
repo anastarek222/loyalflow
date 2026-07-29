@@ -22,6 +22,7 @@ import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -29,6 +30,44 @@ const cardBusinessDetailsSchema = z.object({
   address: z.string().trim().min(5).max(250),
 
   cardTerms: z.string().trim().min(5).max(1200),
+});
+
+const cardDesignSchema = z.object({
+  cardDesignMode: z.enum(["STANDARD", "CUSTOM"]),
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  themePreset: z.enum(["DEFAULT", "DARK"]),
+  standardCardArtworkEnabled: z.preprocess(
+    (value) => value === "on" || value === "true" || value === true,
+    z.boolean(),
+  ),
+  standardCardArtworkCategory: z.enum([
+    "BARBER",
+    "CAFE",
+    "RESTAURANT",
+    "FASHION",
+    "BEAUTY",
+    "GYM",
+    "RETAIL",
+    "OTHER",
+  ]),
+  customCardArtworkEnabled: z.preprocess(
+    (value) => value === "true" || value === true,
+    z.boolean(),
+  ),
+  customCardFrontArtworkUrl: z.string().trim().max(500).refine((value) => value === "" || isValidRemoteImageUrl(value)),
+  customCardBackArtworkUrl: z.string().trim().max(500).refine((value) => value === "" || isValidRemoteImageUrl(value)),
+  customCardSafeZoneVersion: z.literal("ID1_V1"),
+}).superRefine((value, context) => {
+  if (
+    value.cardDesignMode === "CUSTOM" &&
+    (!value.customCardArtworkEnabled || !value.customCardFrontArtworkUrl || !value.customCardBackArtworkUrl)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["cardDesignMode"],
+      message: "Custom Card requires approved front and back artwork.",
+    });
+  }
 });
 
 const settingsSchema = z.object({
@@ -62,21 +101,15 @@ const settingsSchema = z.object({
 industry: z.string().trim().max(100),
 
 website: z
-  .string()
-  .trim()
-  .max(300)
-  .refine((value) => {
-    if (value === "") {
-      return true;
-    }
-
-    try {
-      const url = new URL(value);
-      return url.protocol === "http:" || url.protocol === "https:";
-    } catch {
-      return false;
-    }
-  }),
+  .preprocess(
+    (value) => typeof value === "string"
+      ? normalizeWebsiteUrl(value) ?? value.trim()
+      : value,
+    z.string().trim().max(300).refine(
+      (value) => value === "" || normalizeWebsiteUrl(value) !== null,
+      "Enter a valid website, for example xtvco.com",
+    ),
+  ),
 
 email: z
   .string()
@@ -381,6 +414,72 @@ export async function updateBusinessSettingsAction(
   revalidatePath("/card/[token]", "page");
 
   redirect(`/businesses/${business.slug}/settings?saved=1`);
+}
+
+export async function updateBusinessCardDesignAction(
+  slug: string,
+  formData: FormData,
+) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { id: true, slug: true },
+  });
+  if (!business) redirect("/businesses");
+  if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
+
+  const parsed = cardDesignSchema.safeParse({
+    cardDesignMode: formData.get("cardDesignMode") ?? "STANDARD",
+    primaryColor: formData.get("primaryColor"),
+    themePreset: formData.get("themePreset") ?? "DEFAULT",
+    standardCardArtworkEnabled: formData.get("standardCardArtworkEnabled") ?? false,
+    standardCardArtworkCategory: formData.get("standardCardArtworkCategory") ?? "OTHER",
+    customCardArtworkEnabled: formData.get("customCardArtworkEnabled") ?? false,
+    customCardFrontArtworkUrl: formData.get("customCardFrontArtworkUrl") ?? "",
+    customCardBackArtworkUrl: formData.get("customCardBackArtworkUrl") ?? "",
+    customCardSafeZoneVersion: formData.get("customCardSafeZoneVersion") ?? "ID1_V1",
+  });
+
+  if (!parsed.success) redirect(`/businesses/${slug}/settings?cardDesign=invalid`);
+  if (parsed.data.cardDesignMode === "CUSTOM" && session.user.role !== "SUPER_ADMIN") {
+    redirect(`/businesses/${slug}/settings?cardDesign=forbidden`);
+  }
+
+  const activityContext = await getActivityRequestContext();
+  await prisma.$transaction([
+    prisma.business.update({
+      where: { id: business.id },
+      data: {
+        cardDesignMode: parsed.data.cardDesignMode,
+        primaryColor: parsed.data.primaryColor,
+        themePreset: parsed.data.themePreset,
+        standardCardArtworkEnabled: parsed.data.standardCardArtworkEnabled,
+        standardCardArtworkCategory: parsed.data.standardCardArtworkCategory,
+        customCardArtworkEnabled:
+          session.user.role === "SUPER_ADMIN" && parsed.data.cardDesignMode === "CUSTOM",
+        customCardFrontArtworkUrl:
+          session.user.role === "SUPER_ADMIN" ? parsed.data.customCardFrontArtworkUrl || null : undefined,
+        customCardBackArtworkUrl:
+          session.user.role === "SUPER_ADMIN" ? parsed.data.customCardBackArtworkUrl || null : undefined,
+        customCardSafeZoneVersion: parsed.data.customCardSafeZoneVersion,
+      },
+    }),
+    prisma.businessActivity.create({
+      data: {
+        type: "BUSINESS_SETTINGS_UPDATED",
+        description: "تم تحديث تصميم بطاقة الولاء",
+        businessId: business.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
+      },
+    }),
+  ]);
+
+  revalidatePath(`/businesses/${business.slug}/settings`);
+  revalidatePath("/card/[token]", "page");
+  redirect(`/businesses/${business.slug}/settings?cardDesign=saved`);
 }
 
 export async function syncGoogleSheetAction(slug: string) {

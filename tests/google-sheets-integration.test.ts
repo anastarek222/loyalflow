@@ -5,7 +5,7 @@ import test from "node:test";
 
 import { getGoogleSheetsConfiguration, normalizeGooglePrivateKey } from "@/lib/google-sheets";
 import { planLegacyGoogleSheetClaim } from "@/lib/google-sheets-legacy";
-import { getUniqueGoogleSheetTitle, sanitizeGoogleSheetTitle } from "@/lib/google-sheets-sync";
+import { getUniqueGoogleSheetTitle, sanitizeGoogleSheetTitle } from "@/lib/google-sheets-title";
 
 const root = process.cwd();
 const source = (file: string) => readFileSync(join(root, file), "utf8");

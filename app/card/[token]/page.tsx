@@ -3,7 +3,6 @@ import CopyLinkButton from "@/components/copy-link-button";
 import ShareLinkButton from "@/components/share-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { isPublicCardToken } from "@/lib/cards/public-token";
-import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
 import { getBusinessTheme } from "@/lib/theme";
@@ -14,7 +13,7 @@ import { notFound } from "next/navigation";
 import * as QRCode from "qrcode";
 
 import SalesProgressPanel from "@/components/sales-progress-panel";
-import AutoFlipMembershipCard from "@/components/auto-flip-membership-card";
+import { LoyaltyCard } from "@/components/loyalty-card";
 import { PublicCardActions } from "@/components/customer-experience/public-card-actions";
 import { PublicPageShell } from "@/components/customer-experience/public-page-shell";
 type PublicCardPageProps = {
@@ -113,61 +112,6 @@ const dateFormatter =
         "Africa/Cairo",
     }
   );
-
-function normalizeArabicVisitGrammar(
-  value: string
-) {
-  return value
-    .replace(
-      /\b1\s+زيارة\b/g,
-      "زيارة واحدة"
-    )
-    .replace(
-      /\b2\s+زيارة\b/g,
-      "زيارتان"
-    )
-    .replace(
-      /\b(3|4|5|6|7|8|9|10)\s+زيارة\b/g,
-      "$1 زيارات"
-    );
-}
-
-function renderCardTemplate(
-  template: string,
-  values: {
-    reward: string;
-    threshold: number;
-    unit: string;
-    earn: number;
-  }
-) {
-  const replacements = {
-    reward: values.reward,
-    threshold: String(
-      values.threshold
-    ),
-    unit: values.unit,
-    earn: String(values.earn),
-  };
-
-  return template.replace(
-    /\{([a-z_]+)\}/g,
-    (match, key: string) => {
-      if (
-        Object.prototype.hasOwnProperty.call(
-          replacements,
-          key
-        )
-      ) {
-        return replacements[
-          key as keyof typeof replacements
-        ];
-      }
-
-      return match;
-    }
-  );
-}
 
 export default async function PublicCardPage({
   params,
@@ -297,12 +241,6 @@ export default async function PublicCardPage({
       ? business.qrStyle
       : "CLASSIC";
 
-  const qrPosition =
-    business.qrPosition === "LEFT" ||
-    business.qrPosition === "RIGHT"
-      ? business.qrPosition
-      : "CENTER";
-
   let qrCode: string | null = null;
   try {
     qrCode = await QRCode.toDataURL(cardUrl, {
@@ -316,16 +254,6 @@ export default async function PublicCardPage({
     // The public page stays usable through its visible share/copy controls.
   }
 
-  /*
-   * البيانات المحسوبة لا يتم تخزينها،
-   * بل يتم حسابها مباشرة حتى تظل محدثة.
-   */
-  const { rewardAvailable } =
-    calculateRewardProgress(
-      customer.balance,
-      business.rewardThreshold
-    );
-
   const rewardExpiryStatuses = customer.rewardUnlocks
     .filter((unlock) => unlock.businessId === business.id && unlock.reward.isActive)
     .map((unlock) => ({
@@ -338,102 +266,12 @@ export default async function PublicCardPage({
         expiredAt: unlock.expiredAt,
       }),
     }));
-  const cardRewardAvailable =
-    rewardAvailable &&
-    (!rewardExpiryStatuses.some((reward) => reward.state === "EXPIRED") ||
-      rewardExpiryStatuses.some((reward) => reward.state === "ACTIVE"));
-
   const customerName = [
     customer.firstName,
     customer.lastName,
   ]
     .filter(Boolean)
     .join(" ");
-
-  /*
-   * شروط ثابتة لكل البراند،
-   * لكنها تدعم متغيرات تتحدث تلقائيًا:
-   *
-   * {reward}
-   * {threshold}
-   * {unit}
-   * {earn}
-   */
-  const defaultTerms = [
-    "كل عملية مؤهلة تضيف {earn} {unit}.",
-    "عند الوصول إلى {threshold} {unit} يحصل العميل على {reward}.",
-    "لا يمكن استبدال الرصيد نقدًا.",
-  ].join("\n");
-
-  const renderedTerms =
-    renderCardTemplate(
-      business.cardTerms?.trim() ||
-        defaultTerms,
-
-      {
-        reward:
-          business.rewardName,
-
-        threshold:
-          business.rewardThreshold,
-
-        unit:
-          business.unitName,
-
-        earn:
-          business.earnAmount,
-      }
-    )
-      .split(/\r?\n/)
-      .map((term) =>
-        normalizeArabicVisitGrammar(
-          term.trim()
-        )
-      )
-      .filter(Boolean);
-
-  /*
-   * آخر الحركات متغيرة تلقائيًا
-   * حسب سجل العميل.
-   */
-  const activities =
-    customer.transactions.map(
-      (transaction, index) => {
-        let label =
-          "تم تعديل الرصيد";
-
-        if (
-          transaction.type ===
-          "EARN"
-        ) {
-          label =
-            business.loyaltyMode ===
-            "VISITS"
-              ? "تمت إضافة زيارة"
-              : "تمت إضافة نقاط";
-        }
-
-        if (
-          transaction.type ===
-          "REDEEM"
-        ) {
-          label =
-            "تم استبدال المكافأة";
-        }
-
-        return {
-          id: `activity-${transaction.createdAt.getTime()}-${index}`,
-          label,
-          amount:
-            transaction.amount,
-
-          date:
-            dateFormatter.format(
-              transaction.createdAt
-            ),
-        };
-      }
-    );
 
   return (
     <PublicPageShell lang={lang} dir={dir} primaryColor={theme.primaryColor}>
@@ -456,96 +294,33 @@ export default async function PublicCardPage({
           </section>
         ) : null}
 
-        <AutoFlipMembershipCard
-          businessName={
-            business.name
-          }
-          logoUrl={
-            business.logoUrl
-          }
-          coverImageUrl={
-            business.coverImageUrl
-          }
-          primaryColor={
-            theme.primaryColor
-          }
-          secondaryColor={
-            business.secondaryColor
-          }
-          theme={
-            theme
-          }
-          customerName={
-            customerName
-          }
-          customerCode={
-            customer.customerCode
-          }
-          loyaltyProgramName={
-            business.loyaltyProgramName
-          }
-          membershipName={
-            business.membershipName
-          }
-          welcomeMessage={
-            business.welcomeMessage
-          }
-          balance={
-            customer.balance
-          }
-          unitName={
-            cardUnitName
-          }
-          loyaltyMode={
-            business.loyaltyMode
-          }
-          rewardName={
-            business.rewardName
-          }
-          rewardThreshold={
-            business.rewardThreshold
-          }
-          rewardType={
-            business.rewardType
-          }
-          rewardCode={
-            business.rewardCode
-          }
-          rewardDescription={
-            business.rewardDescription
-          }
-          rewardAvailable={
-            cardRewardAvailable
-          }
-          qrCode={
-            qrCode
-          }
-          qrStyle={
-            qrStyle
-          }
-          qrPosition={
-            qrPosition
-          }
-          terms={
-            renderedTerms
-          }
-          activities={
-            activities
-          }
-          redemptions={
-            customer._count.redemptions
-          }
-          businessPhone={
-            business.contactPhone ??
-            ""
-          }
-          businessAddress={
-            business.address ??
-            ""
-          }
-          defaultLanguage={
-            business.cardDefaultLanguage
-          }
+        <LoyaltyCard
+          businessName={business.name}
+          logoUrl={business.logoUrl}
+          primaryColor={theme.primaryColor}
+          themePreset={business.themePreset}
+          customerName={customerName}
+          customerId={customer.customerCode}
+          balance={customer.balance}
+          loyaltyMode={business.loyaltyMode}
+          unitName={cardUnitName}
+          currency={business.currency}
+          rewardName={business.rewardName}
+          rewardThreshold={business.rewardThreshold}
+          qrCode={qrCode}
+          artworkEnabled={business.standardCardArtworkEnabled}
+          artworkCategory={business.standardCardArtworkCategory}
+          businessPhone={business.contactPhone}
+          businessWebsite={business.website}
+          businessLocation={[business.city, business.country].filter(Boolean).join(", ")}
+          businessAddress={business.address}
+          businessSocial={business.instagramUrl}
+          language={business.cardDefaultLanguage}
+          designMode={business.cardDesignMode}
+          customDesignEnabled={business.customCardArtworkEnabled}
+          customFrontArtworkUrl={business.customCardFrontArtworkUrl}
+          customBackArtworkUrl={business.customCardBackArtworkUrl}
+          customSafeZoneVersion={business.customCardSafeZoneVersion}
         />
         <PublicCardActions cardUrl={cardUrl} businessName={business.name} customerName={customerName} language={language} />
       </div>

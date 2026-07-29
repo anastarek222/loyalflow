@@ -103,9 +103,10 @@ export default async function DashboardPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, firstName: true, lastName: true, role: true, businessId: true, language: true },
+    select: { id: true, firstName: true, lastName: true, role: true, businessId: true, language: true, onboardingStatus: true },
   });
   if (!user) redirect("/login");
+  if (user.role === "OWNER" && user.onboardingStatus === "PENDING") redirect("/onboarding");
 
   const language = normalizeLanguage(user.language);
   const locale = getLanguageLocale(language);

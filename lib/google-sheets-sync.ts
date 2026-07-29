@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getUniqueGoogleSheetTitle, sanitizeGoogleSheetTitle } from "@/lib/google-sheets-title";
 
 import {
   getGoogleSheetsClient,
@@ -25,21 +26,7 @@ export class GoogleSheetsSyncError extends Error {
   }
 }
 
-export function sanitizeGoogleSheetTitle(name: string, slug: string) {
-  const cleaned = name.replace(/[\[\]:*?/\\]/g, " ").replace(/\s+/g, " ").trim();
-  return (cleaned || slug).slice(0, 90);
-}
-
-export function getUniqueGoogleSheetTitle(baseTitle: string, existingTitles: Iterable<string>) {
-  const occupied = new Set(existingTitles);
-  if (!occupied.has(baseTitle)) return baseTitle;
-  for (let suffix = 2; suffix < 10_000; suffix += 1) {
-    const label = ` (${suffix})`;
-    const candidate = `${baseTitle.slice(0, 90 - label.length)}${label}`;
-    if (!occupied.has(candidate)) return candidate;
-  }
-  throw new GoogleSheetsSyncError("MAPPING_CONFLICT", false);
-}
+export { getUniqueGoogleSheetTitle, sanitizeGoogleSheetTitle } from "@/lib/google-sheets-title";
 
 function escapeTabName(name: string) {
   return `'${name.replaceAll("'", "''")}'`;
@@ -60,10 +47,15 @@ async function resolveMappedSheet(business: { id: string; name: string; slug: st
   }
 
   // A missing mapping deliberately never claims a same-named legacy tab.
-  const title = getUniqueGoogleSheetTitle(
-    sanitizeGoogleSheetTitle(business.name, business.slug),
-    metadata.sheets.map((sheet) => sheet.title),
-  );
+  let title: string;
+  try {
+    title = getUniqueGoogleSheetTitle(
+      sanitizeGoogleSheetTitle(business.name, business.slug),
+      metadata.sheets.map((sheet) => sheet.title),
+    );
+  } catch {
+    throw new GoogleSheetsSyncError("MAPPING_CONFLICT", false);
+  }
   const sheets = getGoogleSheetsClient();
   let created: { sheetId: number; title: string };
   try {

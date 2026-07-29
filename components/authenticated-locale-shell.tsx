@@ -46,6 +46,7 @@ export default async function AuthenticatedLocaleShell({
         role: true,
         experienceAccess: true,
         businessId: true,
+        onboardingStatus: true,
         business: {
           select: {
             slug: true,
@@ -55,6 +56,12 @@ export default async function AuthenticatedLocaleShell({
         },
       },
     });
+
+  // This shell wraps authenticated dashboard and tenant routes, but not
+  // /onboarding itself. Pending owners therefore cannot navigate around setup.
+  if (user?.role === "OWNER" && user.onboardingStatus === "PENDING") {
+    redirect("/onboarding");
+  }
 
   const businesses = user?.role === "SUPER_ADMIN"
     ? await prisma.business.findMany({

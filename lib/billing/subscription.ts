@@ -22,7 +22,9 @@ export type PaymentStatus = (typeof paymentStatuses)[number];
 
 export const billingInputSchema = z.object({
   billingInterval: z.enum(billingIntervals).default("MONTHLY"),
-  billingCustomDays: z.coerce.number().int().min(1).max(730).optional(),
+  // HTML number inputs submit an empty string. Coercing it directly becomes 0
+  // and leaks an irrelevant "too small" error into non-custom billing flows.
+  billingCustomDays: z.preprocess((value) => value === "" || value === null ? undefined : value, z.coerce.number().int().min(1).max(730).optional()),
   subscriptionStartDate: z.string().trim().optional().default(""),
   nextPaymentDate: z.string().trim().optional().default(""),
   lastPaymentDate: z.string().trim().optional().default(""),

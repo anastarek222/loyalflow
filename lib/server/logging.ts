@@ -29,3 +29,11 @@ export function logServerError(
     })
   );
 }
+
+/** Logs a compact lifecycle checkpoint. Context must contain identifiers only. */
+export function logServerEvent(
+  event: string,
+  context?: LogContext
+) {
+  console.info(JSON.stringify({ level: "info", event, ...context }));
+}

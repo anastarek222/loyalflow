@@ -1,0 +1,106 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+
+import { ownerInvitationSchema } from "@/lib/business/creation-input";
+import { isValidBusinessPhone, normalizePhone, optionalBusinessPhoneValue } from "@/lib/business-profile";
+import {
+  normalizeOwnerOnboardingPhone,
+  validateOwnerOnboardingStep,
+} from "@/lib/onboarding/owner-onboarding-validation";
+
+const root = process.cwd();
+const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
+
+test("phone selectors normalize local punctuation into the schema-compatible international form", () => {
+  assert.equal(normalizePhone("+20 (100) 000-0000"), "+201000000000");
+  assert.equal(optionalBusinessPhoneValue("+20 (100) 000-0000"), "+201000000000");
+  assert.equal(isValidBusinessPhone("+201000000000"), true);
+  assert.equal(isValidBusinessPhone("123"), false);
+});
+
+test("owner invitations enforce the same existing password policy", () => {
+  assert.equal(ownerInvitationSchema.safeParse({ ownerFirstName: "Mona", ownerLastName: "", ownerEmail: "mona@example.test", ownerPassword: "1234567890" }).success, true);
+  assert.equal(ownerInvitationSchema.safeParse({ ownerFirstName: "Mona", ownerLastName: "", ownerEmail: "mona@example.test", ownerPassword: "short" }).success, false);
+});
+
+test("invitation creation is super-admin only and does not attach a tenant", () => {
+  const action = source("app/businesses/actions.ts");
+  assert.match(action, /createOwnerInvitationAction/);
+  assert.match(action, /await requireSuperAdmin\(\)/);
+  assert.match(action, /onboardingStatus: "PENDING"/);
+  assert.doesNotMatch(action.match(/export async function createOwnerInvitationAction[\s\S]*?export async function createBusinessAction/)?.[0] ?? "", /businessId:/);
+});
+
+test("pending owners are routed to setup and standard card remains system-controlled", () => {
+  assert.match(source("components/authenticated-locale-shell.tsx"), /onboardingStatus === "PENDING"/);
+  assert.match(source("app/onboarding/actions.ts"), /onboardingStatus: "COMPLETE"/);
+  assert.match(source("components/owner-onboarding-wizard.tsx"), /Standard Card is enabled/);
+  assert.match(source("components/business-setup-wizard.tsx"), /name="cardStyle" value="CLASSIC"/);
+});
+
+test("mobile owner onboarding advances only after visible Step 1 validation", () => {
+  const valid = new FormData();
+  valid.set("name", "XTV");
+  valid.set("country", "Egypt");
+  valid.set("currency", "EGP");
+  valid.set("timezone", "Africa/Cairo");
+  valid.set("contactPhone", "01212312746");
+  assert.equal(validateOwnerOnboardingStep(0, valid), null);
+
+  const invalid = new FormData();
+  for (const [key, value] of valid.entries()) invalid.set(key, value);
+  invalid.set("name", "");
+  assert.deepEqual(validateOwnerOnboardingStep(0, invalid), {
+    field: "name",
+    message: "Enter a business name with at least 2 characters.",
+  });
+
+  const wizard = source("components/owner-onboarding-wizard.tsx");
+  assert.match(wizard, /onClick=\{goNext\}/);
+  assert.match(wizard, /role=\{Object\.keys\(fieldErrors\)\.length \? "alert" : "status"\}/);
+  assert.match(wizard, /scrollIntoView/);
+  assert.match(wizard, /\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(wizard, /noValidate/);
+  assert.match(wizard, /overflow-x-auto/);
+  assert.match(wizard, /data-testid="owner-mobile-step-header"/);
+  assert.match(wizard, /Step \{step \+ 1\} of \{sections\.length\}/);
+  assert.match(wizard, /role="progressbar"/);
+  assert.match(wizard, /className="hidden max-w-full gap-2 overflow-x-auto[^"]*sm:flex"/);
+  assert.match(wizard, /pb-\[max\(1rem,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(wizard, /grid min-w-0 grid-cols-2 gap-3 sm:flex/);
+  assert.match(wizard, /data-owner-step-panel="2"/);
+  assert.match(wizard, /type="button"\s+onClick=\{goNext\}/);
+  assert.match(wizard, /data-owner-next-checkpoint="OWNER_NEXT_CLICK"/);
+  assert.doesNotMatch(wizard, /setStep\(Math\.min\(5, step \+ 1\)\)/);
+});
+
+test("typed country text is validated instead of a stale hidden country value", () => {
+  const selector = source("components/onboarding/country-selector.tsx");
+  const wizard = source("components/owner-onboarding-wizard.tsx");
+  assert.match(selector, /name=\{name\}/);
+  assert.match(wizard, /<CountrySelector\s+name="country"/);
+  assert.doesNotMatch(wizard, /type="hidden" name="country"/);
+});
+
+test("owner mobile fields are searchable, width-safe, and normalize local phone input", () => {
+  assert.equal(normalizeOwnerOnboardingPhone("01212312746", "Egypt"), "+201212312746");
+  assert.equal(normalizeOwnerOnboardingPhone("+201212312746", "Egypt"), "+201212312746");
+  const wizard = source("components/owner-onboarding-wizard.tsx");
+  assert.match(wizard, /list="owner-currency-options"/);
+  assert.match(wizard, /list="owner-timezone-options"/);
+  assert.match(wizard, /SUPPORTED_CURRENCY_CODES\.map/);
+  assert.match(wizard, /timezoneOptions\.map/);
+  assert.match(wizard, /inputMode="tel"/);
+  assert.match(wizard, /Local numbers are converted using the selected country code/);
+  assert.match(wizard, /min-h-12 w-full/);
+  assert.match(source("app/onboarding/actions.ts"), /normalizeOwnerOnboardingPhone/);
+});
+
+test("Save progress remains a submit action and cannot advance the client step", () => {
+  const wizard = source("components/owner-onboarding-wizard.tsx");
+  const saveBlock = wizard.match(/type="submit"[\s\S]*?Save progress/)?.[0] ?? "";
+  assert.match(saveBlock, /saveAction\(formData\)/);
+  assert.doesNotMatch(saveBlock, /setStep/);
+});

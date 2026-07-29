@@ -4,8 +4,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Prisma } from "../../generated/prisma/client";
 
-import { createBusinessAction } from "./actions";
-import BusinessSetupWizard from "@/components/business-setup-wizard";
 
 type BusinessesPageProps = {
   searchParams: Promise<{
@@ -174,15 +172,12 @@ export default async function BusinessesPage({
             </p>
           </div>
 
-          <div className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-white">
-            <span className="text-sm text-foreground-subtle">Total businesses</span>
-            <strong className="ml-4 text-xl">{totalBusinesses}</strong>
-          </div>
+          <div className="flex items-center gap-3"><div className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-white"><span className="text-sm text-foreground-subtle">Total businesses</span><strong className="ml-4 text-xl">{totalBusinesses}</strong></div><Link href="/businesses/new" className="rounded-[var(--lf-radius-input)] bg-primary px-5 py-4 font-semibold text-white hover:bg-primary-hover">Add Business</Link></div>
         </header>
 
-        {params.created === "1" && (
+        {(params.created === "1" || params.created === "invitation") && (
           <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
-            Business created successfully.
+            {params.created === "invitation" ? "Owner invitation created. They can sign in to complete setup." : "Business created successfully."}
           </div>
         )}
 
@@ -203,26 +198,11 @@ export default async function BusinessesPage({
             An account with this owner email already exists.
           </div>
         )}
+        {params.error === "invitation-invalid" && <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">Check the owner invitation details.</div>}
+        {params.error === "invite-unavailable" && <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">The invitation could not be created. Please try again.</div>}
 
 
-        <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
-
-          <section id="add-business" className="h-fit scroll-mt-24 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-foreground">
-              Add new business
-            </h2>
-
-            <p className="mt-1 text-sm text-foreground-subtle">
-              Create an independent loyalty program for a client.
-            </p>
-
-            <BusinessSetupWizard
-              action={createBusinessAction}
-            />
-
-          </section>
-
-          <section>
+        <section>
             <form
               action="/businesses"
               className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm"
@@ -397,8 +377,7 @@ export default async function BusinessesPage({
                 )}
               </>
             )}
-          </section>
-        </div>
+        </section>
       </div>
     </main>
   );

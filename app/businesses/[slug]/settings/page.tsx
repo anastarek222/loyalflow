@@ -9,6 +9,7 @@ import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
 import { normalizeLanguage } from "@/lib/i18n";
 import { getPlanUsage, planCatalog } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
+import { StandardCardSetup } from "@/components/standard-card-setup";
 import { getGoogleSheetsConfiguration } from "@/lib/google-sheets";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -16,6 +17,7 @@ import * as QRCode from "qrcode";
 
 import {
   syncGoogleSheetAction,
+  updateBusinessCardDesignAction,
   updateBusinessCardDetailsAction,
   updateBusinessSettingsAction,
   updateBusinessExportPermissionAction,
@@ -30,6 +32,7 @@ type BusinessSettingsPageProps = {
     saved?: string;
     error?: string;
     sheetSync?: string;
+    cardDesign?: string;
     cardSaved?: string;
     cardError?: string;
   }>;
@@ -95,6 +98,7 @@ export default async function BusinessSettingsPage({
   const updateSettings = updateBusinessSettingsAction.bind(null, business.slug);
 
   const syncGoogleSheet = syncGoogleSheetAction.bind(null, business.slug);
+  const updateCardDesign = updateBusinessCardDesignAction.bind(null, business.slug);
 
   const updateCardDetails = updateBusinessCardDetailsAction.bind(
     null,
@@ -389,6 +393,48 @@ export default async function BusinessSettingsPage({
             </p>
           </section>
         )}
+
+        <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <p className="text-sm font-black text-primary">{t("بطاقة الولاء", "Loyalty Card")}</p>
+            <h2 className="mt-1 text-xl font-black text-foreground">{t("تصميم البطاقة ومعاينتها", "Card design and live preview")}</h2>
+            <p className="mt-2 text-sm text-foreground-muted">
+              {t("التصميم يخص النشاط ويُستخدم تلقائيًا لكل العملاء.", "This business-level design is reused automatically for every customer.")}
+            </p>
+            {query.cardDesign === "saved" ? <p className="mt-3 rounded-xl bg-success-subtle p-3 text-sm font-bold text-success">{t("تم حفظ تصميم البطاقة.", "Card design saved.")}</p> : null}
+            {query.cardDesign === "invalid" ? <p className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("راجع إعدادات التصميم.", "Check the card design settings.")}</p> : null}
+            {query.cardDesign === "forbidden" ? <p className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("التصميم المخصص متاح لمدير النظام فقط.", "Custom design is restricted to Super Admin.")}</p> : null}
+          </div>
+          <form action={updateCardDesign}>
+            <StandardCardSetup
+              allowCustom={session.user.role === "SUPER_ADMIN"}
+              language={language}
+              initial={{
+                businessName: business.name,
+                logoUrl: business.logoUrl ?? "",
+                primaryColor: business.primaryColor,
+                themePreset: business.themePreset,
+                artworkEnabled: business.standardCardArtworkEnabled,
+                artworkCategory: business.standardCardArtworkCategory,
+                loyaltyMode: business.loyaltyMode,
+                unitName: business.unitName,
+                currency: business.currency ?? "EGP",
+                businessPhone: business.contactPhone ?? "",
+                businessWebsite: business.website ?? "",
+                businessLocation: [business.city, business.country].filter(Boolean).join(", "),
+                rewardName: business.rewardName,
+                rewardThreshold: business.rewardThreshold,
+                designMode: business.cardDesignMode,
+                customDesignEnabled: business.customCardArtworkEnabled,
+                customFrontArtworkUrl: business.customCardFrontArtworkUrl ?? "",
+                customBackArtworkUrl: business.customCardBackArtworkUrl ?? "",
+              }}
+            />
+            <button type="submit" className="mt-5 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-black text-[var(--lf-primary-foreground)]">
+              {t("حفظ تصميم البطاقة", "Save card design")}
+            </button>
+          </form>
+        </section>
 
         <BusinessSettingsForm
           language={language}

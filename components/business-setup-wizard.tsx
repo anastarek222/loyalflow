@@ -5,10 +5,18 @@ import {
   useRef,
   useState,
 } from "react";
+import { useFormStatus } from "react-dom";
 
 import {
   MIN_PASSWORD_LENGTH,
 } from "@/lib/auth/password-policy";
+import { businessCreationSchema } from "@/lib/business/creation-input";
+import { CountrySelector } from "@/components/onboarding/country-selector";
+import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
+import { StandardCardSetup } from "@/components/standard-card-setup";
+import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
+import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
+import { getLoyaltyCardPreviewData } from "@/lib/cards/standard-card";
 
 type Props = {
   action: (
@@ -16,11 +24,26 @@ type Props = {
   ) => void | Promise<void>;
 };
 
+function CreateBusinessSubmitButton({ locked }: { locked: boolean }) {
+  const { pending } = useFormStatus();
+  const submitting = locked || pending;
+
+  return (
+    <button
+      type="submit"
+      disabled={submitting}
+      className="ml-auto rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-wait disabled:opacity-70"
+    >
+      {submitting ? "Creating business…" : "Create Business"}
+    </button>
+  );
+}
+
 const steps = [
   "Business",
   "Owner",
   "Billing",
-  "Loyalty",
+  "Loyalty Card",
   "Branding",
   "Review",
 ] as const;
@@ -69,6 +92,12 @@ type ReviewData = {
   cardStyle: string;
   fontFamily: string;
   logoPreview: string;
+  standardCardArtworkEnabled: boolean;
+  standardCardArtworkCategory: string;
+  cardDesignMode: "STANDARD" | "CUSTOM";
+  customCardArtworkEnabled: boolean;
+  customCardFrontArtworkUrl: string;
+  customCardBackArtworkUrl: string;
 };
 
 const loyaltyLabels: Record<
@@ -155,21 +184,7 @@ function isValidEmail(
 function isValidHttpUrl(
   value: string
 ) {
-  if (!value) {
-    return true;
-  }
-
-  try {
-    const url =
-      new URL(value);
-
-    return (
-      url.protocol === "http:" ||
-      url.protocol === "https:"
-    );
-  } catch {
-    return false;
-  }
+  return normalizeWebsiteUrl(value) !== null;
 }
 
 function isValidHexColor(
@@ -303,6 +318,12 @@ function getReviewData(
       "fontFamily"
     ),
     logoPreview,
+    standardCardArtworkEnabled: formData.get("standardCardArtworkEnabled") === "on",
+    standardCardArtworkCategory: getValue(formData, "standardCardArtworkCategory") || "OTHER",
+    cardDesignMode: getValue(formData, "cardDesignMode") === "CUSTOM" ? "CUSTOM" : "STANDARD",
+    customCardArtworkEnabled: getValue(formData, "customCardArtworkEnabled") === "true",
+    customCardFrontArtworkUrl: getValue(formData, "customCardFrontArtworkUrl"),
+    customCardBackArtworkUrl: getValue(formData, "customCardBackArtworkUrl"),
   };
 }
 
@@ -313,6 +334,8 @@ export default function BusinessSetupWizard({
     useRef<HTMLFormElement>(
       null
     );
+  const submissionLockRef = useRef(false);
+  const [submissionStarted, setSubmissionStarted] = useState(false);
 
   const [step, setStep] =
     useState(0);
@@ -330,11 +353,51 @@ export default function BusinessSetupWizard({
       null
     );
 
-  const [logoUrl, setLogoUrl] =
-    useState("");
-
   const [logoPreview, setLogoPreview] =
     useState("");
+  const [country, setCountry] = useState("Egypt");
+  const [currency, setCurrency] = useState("EGP");
+  const [timezone, setTimezone] = useState("Africa/Cairo");
+  const [timezoneNeedsChoice, setTimezoneNeedsChoice] = useState(false);
+  const [dialCode, setDialCode] = useState("+20");
+  const [businessPhone, setBusinessPhone] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [cardPreview, setCardPreview] = useState<{
+    businessName: string;
+    logoUrl: string;
+    loyaltyMode: "VISITS" | "POINTS" | "SALES_AMOUNT";
+    unitName: string;
+    currency: string;
+    businessPhone: string;
+    businessWebsite: string;
+    businessLocation: string;
+    rewardName: string;
+    rewardThreshold: number;
+    primaryColor?: string;
+    themePreset?: string;
+    artworkEnabled?: boolean;
+    artworkCategory?: string;
+    designMode?: "STANDARD" | "CUSTOM";
+    customDesignEnabled?: boolean;
+    customFrontArtworkUrl?: string;
+    customBackArtworkUrl?: string;
+  }>({ businessName: "Your Business", logoUrl: "", loyaltyMode: "VISITS", unitName: "Visit", currency: "EGP", businessPhone: "", businessWebsite: "", businessLocation: "", rewardName: "Free Reward", rewardThreshold: 5 });
+  const illustrativeCustomer = getLoyaltyCardPreviewData(cardPreview.loyaltyMode, cardPreview.rewardThreshold);
+
+  function fullPhone(local: string) {
+    const normalized = local.replace(/[^\d]/g, "").replace(/^0+/, "");
+    return normalized ? `${dialCode}${normalized}` : "";
+  }
+
+  function validateWholeForm(formData: FormData) {
+    const parsed = businessCreationSchema.safeParse(Object.fromEntries(formData));
+    if (parsed.success) return null;
+    const issue = parsed.error.issues[0];
+    const field = String(issue?.path[0] ?? "");
+    const stepForField: Record<string, number> = { name: 0, country: 0, currency: 0, timezone: 0, ownerFirstName: 1, ownerEmail: 1, ownerPassword: 1, billingCustomDays: 2, subscriptionAmount: 2, loyaltyMode: 3, unitName: 3, rewardName: 3, rewardThreshold: 3, earnAmount: 3, primaryColor: 4, themePreset: 4 };
+    const message: Record<string, string> = { billingCustomDays: "Billing: enter custom interval days between 1 and 730.", rewardThreshold: "Loyalty: reward target must be at least 1.", earnAmount: "Loyalty: earn amount must be at least 1." };
+    return { step: stepForField[field] ?? 0, field, message: message[field] ?? "Please check the highlighted field before creating the business." };
+  }
 
   function validateStep(
     currentStep: number,
@@ -369,6 +432,10 @@ export default function BusinessSetupWizard({
         return "Business name must contain at least 2 characters.";
       }
 
+      if (!country) return "Choose a country from the search results.";
+      if (!currency) return "Choose a currency.";
+      if (!timezone) return timezoneNeedsChoice ? "Choose a timezone for the selected country." : "Choose a timezone.";
+
       if (
         employeeCount &&
         (
@@ -399,7 +466,7 @@ export default function BusinessSetupWizard({
           website
         )
       ) {
-        return "Website must be a valid http:// or https:// URL.";
+        return "Enter a valid website, for example xtvco.com.";
       }
     }
 
@@ -624,6 +691,46 @@ export default function BusinessSetupWizard({
     <form
       ref={formRef}
       action={action}
+      onInput={(event) => {
+        const target = event.target as HTMLInputElement | HTMLSelectElement;
+        const key = target.name;
+        const previewKey: Record<string, string> = {
+          name: "businessName",
+          unitName: "unitName",
+          rewardName: "rewardName",
+          currency: "currency",
+          contactPhone: "businessPhone",
+          website: "businessWebsite",
+        };
+        if (previewKey[key]) {
+          setCardPreview((current) => ({ ...current, [previewKey[key]]: target.value }));
+        }
+        if (key === "city" || key === "country") {
+          const formData = new FormData(event.currentTarget);
+          const location = [getValue(formData, "city"), getValue(formData, "country")].filter(Boolean).join(", ");
+          setCardPreview((current) => ({ ...current, businessLocation: location }));
+        }
+        if (key === "loyaltyMode") setCardPreview((current) => ({ ...current, loyaltyMode: target.value as "VISITS" | "POINTS" | "SALES_AMOUNT" }));
+        if (key === "rewardThreshold") setCardPreview((current) => ({ ...current, rewardThreshold: Number(target.value) || 1 }));
+      }}
+      onSubmit={(event) => {
+        if (submissionLockRef.current) {
+          event.preventDefault();
+          return;
+        }
+        const data = new FormData(event.currentTarget);
+        const error = validateWholeForm(data);
+        if (error) {
+          event.preventDefault();
+          setValidationError(error.message);
+          setStep(error.step);
+          window.setTimeout(() => (document.querySelector(`[name="${error.field}"]`) as HTMLElement | null)?.focus(), 0);
+          return;
+        }
+        setValidationError("");
+        submissionLockRef.current = true;
+        setSubmissionStarted(true);
+      }}
       className="mt-6 space-y-5"
     >
       <div className="mb-6">
@@ -712,12 +819,8 @@ export default function BusinessSetupWizard({
             className="w-full rounded-xl border px-4 py-3"
           />
 
-          <input
-            name="contactPhone"
-            placeholder="Business phone"
-            maxLength={25}
-            className="w-full rounded-xl border px-4 py-3"
-          />
+          <input type="hidden" name="contactPhone" value={fullPhone(businessPhone)} />
+          <label className="block text-sm font-semibold text-slate-700">Business phone <span className="font-normal text-slate-500">(optional)</span><div className="mt-2 flex gap-2"><span className="rounded-xl border bg-slate-50 px-3 py-3 text-sm">{dialCode}</span><input value={businessPhone} onChange={(event) => { const value = event.target.value; setBusinessPhone(value); setCardPreview((current) => ({ ...current, businessPhone: fullPhone(value) })); }} inputMode="tel" placeholder="Local number" maxLength={20} className="min-w-0 flex-1 rounded-xl border px-4 py-3" /></div></label>
 
           <input
             name="industry"
@@ -729,32 +832,17 @@ export default function BusinessSetupWizard({
           <div className="grid gap-4 sm:grid-cols-2">
             <select
               name="currency"
-              defaultValue="EGP"
+              value={currency}
+              onChange={(event) => setCurrency(event.target.value)}
               className="w-full rounded-xl border px-4 py-3"
             >
-              <option value="EGP">
-                EGP — Egyptian Pound
-              </option>
-              <option value="USD">
-                USD — US Dollar
-              </option>
-              <option value="EUR">
-                EUR — Euro
-              </option>
-              <option value="GBP">
-                GBP — British Pound
-              </option>
-              <option value="SAR">
-                SAR — Saudi Riyal
-              </option>
-              <option value="AED">
-                AED — UAE Dirham
-              </option>
+              {SUPPORTED_CURRENCY_CODES.map((code) => <option key={code} value={code}>{code}</option>)}
             </select>
 
             <input
               name="timezone"
-              defaultValue="Africa/Cairo"
+              value={timezone}
+              onChange={(event) => setTimezone(event.target.value)}
               placeholder="Timezone"
               className="w-full rounded-xl border px-4 py-3"
             />
@@ -779,12 +867,7 @@ export default function BusinessSetupWizard({
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <input
-              name="country"
-              placeholder="Country"
-              maxLength={100}
-              className="w-full rounded-xl border px-4 py-3"
-            />
+            <><input type="hidden" name="country" value={country} /><CountrySelector value={country} required onChange={(selection) => { setCountry(selection.name); setDialCode(selection.dialCode); if (selection.currency) setCurrency(selection.currency); setTimezone(selection.timezone); setTimezoneNeedsChoice(selection.timezoneRequiresChoice); setCardPreview((current) => ({ ...current, currency: selection.currency || current.currency, businessLocation: [getValue(new FormData(formRef.current!), "city"), selection.name].filter(Boolean).join(", ") })); }} /></>
 
             <input
               name="city"
@@ -796,8 +879,11 @@ export default function BusinessSetupWizard({
 
           <input
             name="website"
-            type="url"
-            placeholder="https://example.com"
+            type="text"
+            inputMode="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            placeholder="example.com"
             maxLength={300}
             className="w-full rounded-xl border px-4 py-3"
           />
@@ -856,14 +942,8 @@ export default function BusinessSetupWizard({
             className="w-full rounded-xl border px-4 py-3"
           />
 
-          <input
-            name="ownerPhone"
-            type="tel"
-            inputMode="tel"
-            maxLength={25}
-            placeholder="Owner phone (optional)"
-            className="w-full rounded-xl border px-4 py-3"
-          />
+          <input type="hidden" name="ownerPhone" value={fullPhone(ownerPhone)} />
+          <label className="block text-sm font-semibold text-slate-700">Owner phone <span className="font-normal text-slate-500">(optional)</span><div className="mt-2 flex gap-2"><span className="rounded-xl border bg-slate-50 px-3 py-3 text-sm">{dialCode}</span><input value={ownerPhone} onChange={(event) => setOwnerPhone(event.target.value)} inputMode="tel" placeholder="Local number" maxLength={20} className="min-w-0 flex-1 rounded-xl border px-4 py-3" /></div></label>
 
           <input
             name="ownerPassword"
@@ -1064,6 +1144,20 @@ export default function BusinessSetupWizard({
             />
           </div>
 
+          <div className="pt-4">
+            <StandardCardSetup
+              allowCustom
+              initial={{
+                primaryColor: "#B98A4B",
+                themePreset: "DEFAULT",
+                artworkEnabled: true,
+                artworkCategory: "OTHER",
+                designMode: "STANDARD",
+              }}
+              preview={{ ...cardPreview, logoUrl: logoPreview }}
+              onPreviewChange={(next) => setCardPreview((current) => ({ ...current, ...next }))}
+            />
+          </div>
         </section>
       </div>
 
@@ -1085,17 +1179,27 @@ export default function BusinessSetupWizard({
             </p>
           </div>
 
-          <div>
+          <div className="grid gap-6 xl:grid-cols-[minmax(16rem,0.7fr)_minmax(28rem,1.3fr)]">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                Business Logo
+              </p>
+              <div className="mt-4 flex aspect-square max-w-44 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Current business logo preview" className="size-full object-contain p-3" />
+                ) : (
+                  <span className="text-5xl font-black text-slate-300">{cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}</span>
+                )}
+              </div>
             <label
               htmlFor="logoFile"
-              className="block text-sm font-semibold text-slate-700"
+                className="mt-5 block text-sm font-semibold text-slate-700"
             >
-              Logo (optional)
+                {logoPreview ? "Change Logo" : "Upload Logo"} <span className="font-normal text-slate-500">(optional)</span>
             </label>
 
             <input
               id="logoFile"
-              name="logoFile"
               type="file"
               accept="image/png,image/jpeg,image/webp"
               onChange={(event) => {
@@ -1118,140 +1222,59 @@ export default function BusinessSetupWizard({
                 }
 
                 setValidationError("");
-                setLogoUrl("");
 
                 const reader = new FileReader();
                 reader.onload = () => {
-                  setLogoPreview(
-                    typeof reader.result === "string" ? reader.result : ""
-                  );
+                  const preview = typeof reader.result === "string" ? reader.result : "";
+                  setLogoPreview(preview);
+                  setCardPreview((current) => ({ ...current, logoUrl: preview }));
                 };
                 reader.readAsDataURL(file);
               }}
               className="mt-2 w-full rounded-xl border bg-white px-4 py-3 text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:font-semibold file:text-white"
             />
+            <input
+              type="hidden"
+              name="logoDataUrl"
+              value={logoPreview.startsWith("data:image/") ? logoPreview : ""}
+            />
 
             <p className="mt-1 text-xs text-slate-500">
               PNG, JPEG, or WebP — up to 500KB.
             </p>
-          </div>
+            </div>
 
-          <div>
-            <label
-              htmlFor="logoUrl"
-              className="block text-sm font-semibold text-slate-700"
-            >
-              Or use a logo image URL
-            </label>
-
-            <input
-              id="logoUrl"
-              name="logoUrl"
-              type="url"
-              maxLength={500}
-              value={logoUrl}
-              onChange={(event) => {
-                const value = event.target.value;
-                setLogoUrl(value);
-                setLogoPreview(isValidHttpUrl(value) ? value : "");
-
-                const fileInput = document.getElementById("logoFile") as HTMLInputElement | null;
-                if (value && fileInput) {
-                  fileInput.value = "";
-                }
-              }}
-              placeholder="https://example.com/logo.png"
-              className="mt-2 w-full rounded-xl border px-4 py-3"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-700">
-              Primary color
-              <input
-                name="primaryColor"
-                type="color"
-                defaultValue="#111827"
-                className="mt-2 h-12 w-full rounded-xl border bg-white p-1"
+            <div className="min-w-0">
+              <p className="mb-3 text-sm font-bold text-slate-700">Card preview with this business logo</p>
+              <LoyaltyCardPreview
+                businessName={cardPreview.businessName}
+                logoUrl={logoPreview || null}
+                primaryColor={cardPreview.primaryColor || "#B98A4B"}
+                themePreset={cardPreview.themePreset}
+                {...illustrativeCustomer}
+                loyaltyMode={cardPreview.loyaltyMode}
+                unitName={cardPreview.unitName}
+                currency={cardPreview.currency}
+                rewardName={cardPreview.rewardName}
+                rewardThreshold={cardPreview.rewardThreshold}
+                artworkEnabled={cardPreview.artworkEnabled}
+                artworkCategory={cardPreview.artworkCategory}
+                businessPhone={cardPreview.businessPhone}
+                businessWebsite={cardPreview.businessWebsite}
+                businessLocation={cardPreview.businessLocation}
+                designMode={cardPreview.designMode}
+                customDesignEnabled={cardPreview.customDesignEnabled}
+                customFrontArtworkUrl={cardPreview.customFrontArtworkUrl}
+                customBackArtworkUrl={cardPreview.customBackArtworkUrl}
               />
-            </label>
-
-            <label className="text-sm font-semibold text-slate-700">
-              Secondary color
-              <input
-                name="secondaryColor"
-                type="color"
-                defaultValue="#ffffff"
-                className="mt-2 h-12 w-full rounded-xl border bg-white p-1"
-              />
-            </label>
+            </div>
           </div>
 
-          <label className="block text-sm font-semibold text-slate-700">
-            Theme
-            <select
-              name="themePreset"
-              defaultValue="DEFAULT"
-              className="mt-2 w-full rounded-xl border px-4 py-3"
-            >
-              <option value="DEFAULT">
-                Default
-              </option>
-              <option value="MINIMAL">
-                Minimal
-              </option>
-              <option value="LUXURY">
-                Luxury
-              </option>
-              <option value="DARK">
-                Dark
-              </option>
-              <option value="MODERN">
-                Modern
-              </option>
-              <option value="GRADIENT">
-                Gradient
-              </option>
-            </select>
-          </label>
+          <input type="hidden" name="logoUrl" value="" />
+          <input type="hidden" name="cardStyle" value="CLASSIC" />
+          <input type="hidden" name="secondaryColor" value="#FFFFFF" />
+          <input type="hidden" name="fontFamily" value="INTER" />
 
-          <label className="block text-sm font-semibold text-slate-700">
-            Card layout
-            <select
-              name="cardStyle"
-              defaultValue="CLASSIC"
-              className="mt-2 w-full rounded-xl border px-4 py-3"
-            >
-              <option value="CLASSIC">
-                Classic
-              </option>
-              <option value="COMPACT">
-                Compact
-              </option>
-              <option value="PREMIUM">
-                Premium
-              </option>
-            </select>
-          </label>
-
-          <label className="block text-sm font-semibold text-slate-700">
-            Font
-            <select
-              name="fontFamily"
-              defaultValue="INTER"
-              className="mt-2 w-full rounded-xl border px-4 py-3"
-            >
-              <option value="INTER">
-                Inter
-              </option>
-              <option value="CAIRO">
-                Cairo
-              </option>
-              <option value="POPPINS">
-                Poppins
-              </option>
-            </select>
-          </label>
         </section>
       </div>
 
@@ -1452,6 +1475,42 @@ export default function BusinessSetupWizard({
                 ]}
               />
 
+              <ReviewSection
+                title="Standard Card"
+                onEdit={() => editStep(4)}
+                rows={[
+                  ["Theme", reviewData.themePreset === "DARK" ? "Dark" : "Light"],
+                  ["Artwork", "Controlled category artwork"],
+                  ["Layout", "LoyalFlow Standard Card"],
+                ]}
+              />
+              <div className="max-w-2xl">
+                <LoyaltyCardPreview
+                  businessName={reviewData.name || "Your Business"}
+                  logoUrl={reviewData.logoPreview || null}
+                  primaryColor={reviewData.primaryColor || "#B98A4B"}
+                  themePreset={reviewData.themePreset}
+                  {...getLoyaltyCardPreviewData(
+                    (reviewData.loyaltyMode as "VISITS" | "POINTS" | "SALES_AMOUNT") || "VISITS",
+                    Number(reviewData.rewardThreshold) || 1,
+                  )}
+                  loyaltyMode={(reviewData.loyaltyMode as "VISITS" | "POINTS" | "SALES_AMOUNT") || "VISITS"}
+                  unitName={reviewData.unitName}
+                  currency={reviewData.currency}
+                  rewardName={reviewData.rewardName}
+                  rewardThreshold={Number(reviewData.rewardThreshold) || 1}
+                  artworkEnabled={reviewData.standardCardArtworkEnabled}
+                  artworkCategory={reviewData.standardCardArtworkCategory}
+                  businessPhone={reviewData.contactPhone}
+                  businessWebsite={reviewData.website}
+                  businessLocation={[reviewData.city, reviewData.country].filter(Boolean).join(", ")}
+                  designMode={reviewData.cardDesignMode}
+                  customDesignEnabled={reviewData.customCardArtworkEnabled}
+                  customFrontArtworkUrl={reviewData.customCardFrontArtworkUrl}
+                  customBackArtworkUrl={reviewData.customCardBackArtworkUrl}
+                />
+              </div>
+
               {reviewData.logoPreview ? (
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <img
@@ -1496,12 +1555,7 @@ export default function BusinessSetupWizard({
             Next
           </button>
         ) : (
-          <button
-            type="submit"
-            className="ml-auto rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
-          >
-            Create Business
-          </button>
+          <CreateBusinessSubmitButton locked={submissionStarted} />
         )}
       </div>
     </form>

@@ -12,6 +12,7 @@ const countries: CountryOption[] = [
   {
     iso2: "EG",
     name: "Egypt",
+    flag: "🇪🇬",
     dialCode: "+20",
     currency: "EGP",
     timezones: ["Africa/Cairo"],
@@ -19,6 +20,7 @@ const countries: CountryOption[] = [
   {
     iso2: "US",
     name: "United States",
+    flag: "🇺🇸",
     dialCode: "+1",
     currency: "USD",
     timezones: ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles"],
@@ -26,6 +28,7 @@ const countries: CountryOption[] = [
   {
     iso2: "AE",
     name: "United Arab Emirates",
+    flag: "🇦🇪",
     dialCode: "+971",
     currency: "AED",
     timezones: ["Asia/Dubai"],

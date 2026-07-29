@@ -1,23 +1,12 @@
-export const SUPPORTED_CURRENCIES = [
-  "AED",
-  "EGP",
-  "EUR",
-  "GBP",
-  "KWD",
-  "QAR",
-  "SAR",
-  "USD",
-] as const;
+import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
 
-export type SupportedCurrency =
-  (typeof SUPPORTED_CURRENCIES)[number];
+export const SUPPORTED_CURRENCIES = SUPPORTED_CURRENCY_CODES;
+export type SupportedCurrency = string;
 
 const MAX_SLUG_ATTEMPTS = 8;
 
 export function isSupportedCurrency(value: string) {
-  return SUPPORTED_CURRENCIES.includes(
-    value as SupportedCurrency
-  );
+  return SUPPORTED_CURRENCIES.includes(value);
 }
 
 export function isValidIanaTimezone(value: string) {
@@ -39,14 +28,19 @@ export function optionalProfileValue(value: string) {
 }
 
 export function isValidBusinessPhone(value: string) {
-  const normalized = value.trim();
+  return /^\+\d{8,15}$/.test(normalizePhone(value));
+}
 
-  return normalized.length >= 8 && normalized.length <= 25;
+/** Stores phones in E.164-like international form without display punctuation. */
+export function normalizePhone(value: string) {
+  const normalized = value.trim().replace(/[\s().-]/g, "");
+  if (!normalized) return "";
+  return normalized.startsWith("+") ? normalized : `+${normalized}`;
 }
 
 /** Normalizes an optional owner phone number without changing its country code. */
 export function normalizeOwnerPhone(value: string) {
-  return value.trim().replace(/[\s().-]/g, "");
+  return normalizePhone(value);
 }
 
 export function isValidOwnerPhone(value: string) {
@@ -56,6 +50,11 @@ export function isValidOwnerPhone(value: string) {
 export function optionalOwnerPhoneValue(value: string) {
   const normalized = normalizeOwnerPhone(value);
 
+  return normalized || null;
+}
+
+export function optionalBusinessPhoneValue(value: string) {
+  const normalized = normalizePhone(value);
   return normalized || null;
 }
 

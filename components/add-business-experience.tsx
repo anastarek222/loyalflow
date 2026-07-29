@@ -1,0 +1,12 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import BusinessSetupWizard from "@/components/business-setup-wizard";
+import { OwnerInvitationForm } from "@/components/owner-invitation-form";
+
+type Flow = "choose" | "custom" | "invite";
+export function AddBusinessExperience({ createBusinessAction, createOwnerInvitationAction }: { createBusinessAction: (formData: FormData) => void | Promise<void>; createOwnerInvitationAction: (formData: FormData) => void | Promise<void> }) {
+  const [flow, setFlow] = useState<Flow>("choose");
+  return <main className="min-h-screen bg-surface-subtle px-4 py-8 sm:px-8"><div className="mx-auto max-w-7xl"><Link href="/businesses" className="text-sm font-semibold text-primary hover:underline">← Back to Businesses</Link><header className="mt-4 mb-8"><h1 className="text-3xl font-bold text-foreground">Add Business</h1><p className="mt-2 text-foreground-muted">Choose how this business should be set up.</p></header>{flow === "choose" ? <div className="grid max-w-4xl gap-5 md:grid-cols-2"><button type="button" onClick={() => setFlow("custom")} className="rounded-2xl border border-border bg-surface p-7 text-start shadow-sm transition hover:border-primary hover:shadow-md"><h2 className="text-xl font-bold">Custom Setup</h2><p className="mt-2 text-sm text-foreground-muted">Create and configure the business yourself.</p></button><button type="button" onClick={() => setFlow("invite")} className="rounded-2xl border border-border bg-surface p-7 text-start shadow-sm transition hover:border-primary hover:shadow-md"><h2 className="text-xl font-bold">Owner Invitation</h2><p className="mt-2 text-sm text-foreground-muted">Create owner access and let them complete setup.</p></button></div> : <section className="w-full rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-8"><button type="button" onClick={() => setFlow("choose")} className="text-sm font-semibold text-primary hover:underline">← Change setup path</button>{flow === "custom" ? <BusinessSetupWizard action={createBusinessAction} /> : <div className="max-w-xl"><h2 className="mt-5 text-2xl font-bold">Owner Invitation</h2><p className="mt-2 text-foreground-muted">The owner receives access and completes their own business setup.</p><OwnerInvitationForm action={createOwnerInvitationAction} /></div>}</section>}</div></main>;
+}

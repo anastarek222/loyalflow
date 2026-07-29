@@ -8,6 +8,13 @@ import {
   isValidOwnerPhone,
 } from "@/lib/business-profile";
 import { z } from "zod";
+import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
+import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
+
+const formBoolean = z.preprocess(
+  (value) => value === true || value === "true" || value === "on",
+  z.boolean(),
+);
 
 function isValidHttpUrl(value: string) {
   try {
@@ -36,10 +43,15 @@ export const businessCreationSchema = z.object({
     .refine((value) => value === "" || isValidIanaTimezone(value)),
   industry: z.string().trim().max(100),
   website: z
-    .string()
-    .trim()
-    .max(300)
-    .refine((value) => value === "" || isValidHttpUrl(value)),
+    .preprocess(
+      (value) => typeof value === "string"
+        ? normalizeWebsiteUrl(value) ?? value.trim()
+        : value,
+      z.string().trim().max(300).refine(
+        (value) => value === "" || normalizeWebsiteUrl(value) !== null,
+        "Enter a valid website, for example xtvco.com",
+      ),
+    ),
   email: z.string().trim().max(255).email().or(z.literal("")),
   country: z.string().trim().max(100),
   city: z.string().trim().max(100),
@@ -76,5 +88,30 @@ export const businessCreationSchema = z.object({
   ]),
   cardStyle: z.enum(["CLASSIC", "COMPACT", "PREMIUM"]),
   fontFamily: z.enum(["INTER", "CAIRO", "POPPINS"]),
+  standardCardArtworkEnabled: formBoolean.default(true),
+  standardCardArtworkCategory: z.enum(STANDARD_CARD_ARTWORK_CATEGORIES).default("OTHER"),
+  cardDesignMode: z.enum(["STANDARD", "CUSTOM"]).default("STANDARD"),
+  customCardArtworkEnabled: formBoolean.default(false),
+  customCardFrontArtworkUrl: z.string().trim().max(500).refine((value) => value === "" || isValidHttpUrl(value)).default(""),
+  customCardBackArtworkUrl: z.string().trim().max(500).refine((value) => value === "" || isValidHttpUrl(value)).default(""),
+  customCardSafeZoneVersion: z.literal("ID1_V1").default("ID1_V1"),
   plan: z.enum(["FREE", "STARTER", "PRO", "BUSINESS"]).default("FREE"),
-}).and(billingInputSchema);
+}).and(billingInputSchema).superRefine((value, context) => {
+  if (
+    value.cardDesignMode === "CUSTOM" &&
+    (!value.customCardArtworkEnabled || !value.customCardFrontArtworkUrl || !value.customCardBackArtworkUrl)
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["cardDesignMode"],
+      message: "Custom Card requires approved front and back artwork.",
+    });
+  }
+});
+
+export const ownerInvitationSchema = z.object({
+  ownerFirstName: z.string().trim().min(2).max(80),
+  ownerLastName: z.string().trim().max(80),
+  ownerEmail: z.string().trim().max(255).email(),
+  ownerPassword: passwordValueSchema,
+});

@@ -18,6 +18,7 @@ import {
 } from "./actions";
 import { getBusinessTheme } from "@/lib/theme";
 import { normalizeLanguage } from "@/lib/i18n";
+import { logServerEvent } from "@/lib/server/logging";
 
 const USERS_PER_PAGE = 10;
 
@@ -61,6 +62,7 @@ type UsersPageProps = {
 
   searchParams: Promise<{
     created?: string;
+    sheetSync?: string;
     success?: string;
     error?: string;
     q?: string;
@@ -82,6 +84,7 @@ export default async function UsersPage({
   }
 
   const { slug } = await params;
+  logServerEvent("BUSINESS_DESTINATION_RENDER_STARTED", { slug });
   const query = await searchParams;
 
   const business = await prisma.business.findUnique({
@@ -284,6 +287,10 @@ export default async function UsersPage({
     sort !== "newest";
 
   const createUser = createBusinessUserAction.bind(null, business.slug);
+  logServerEvent("BUSINESS_DESTINATION_RENDER_OK", {
+    businessId: business.id,
+    slug: business.slug,
+  });
 
   return (
     <main
@@ -323,6 +330,13 @@ export default async function UsersPage({
           <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
             تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء
             الفريق.
+          </div>
+        )}
+
+        {query.created === "business" && query.sheetSync === "pending" && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+            تم حفظ النشاط بنجاح. مزامنة Google Sheets تعمل في الخلفية، ويمكن
+            متابعة حالتها أو إعادة المحاولة من إعدادات النشاط.
           </div>
         )}
 

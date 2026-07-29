@@ -73,6 +73,15 @@ model Business {
   qrStyle         String      @default("CLASSIC")
   qrPosition      String      @default("CENTER")
   fontFamily      String      @default("INTER")
+  // Standard Card is intentionally constrained. Custom artwork is reserved for
+  // a future super-admin workflow and is never an owner-facing editor.
+  standardCardArtworkEnabled  Boolean @default(true)
+  standardCardArtworkCategory String  @default("OTHER")
+  customCardArtworkEnabled    Boolean @default(false)
+  cardDesignMode              CardDesignMode @default(STANDARD)
+  customCardFrontArtworkUrl   String?
+  customCardBackArtworkUrl    String?
+  customCardSafeZoneVersion   String @default("ID1_V1")
 
   allowOwnerDataExport     Boolean                 @default(false)
   staffAttributionEnabled  Boolean                 @default(false)
@@ -113,6 +122,11 @@ enum GoogleSheetsSyncState {
   FAILED
 }
 
+enum CardDesignMode {
+  STANDARD
+  CUSTOM
+}
+
 model PlanConfiguration {
   id            String           @id @default(cuid())
   plan          SubscriptionPlan @unique
@@ -142,6 +156,8 @@ model User {
   updatedAt              DateTime                @updatedAt
   authVersion            Int                     @default(0)
   language               AppLanguage             @default(AR)
+  onboardingStatus       OwnerOnboardingStatus   @default(COMPLETE)
+  onboardingData         Json?
   activities             BusinessActivity[]      @relation("ActivityCreatedBy")
   transactions           LoyaltyTransaction[]    @relation("TransactionCreatedBy")
   attributedTransactions LoyaltyTransaction[]    @relation("TransactionAttributedStaff")
@@ -157,6 +173,11 @@ model User {
 
   @@unique([id, businessId])
   @@index([businessId])
+}
+
+enum OwnerOnboardingStatus {
+  PENDING
+  COMPLETE
 }
 
 model Customer {

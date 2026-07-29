@@ -1,6 +1,7 @@
 export type CountryOption = {
   iso2: string;
   name: string;
+  flag: string;
   dialCode: string;
   currency?: string;
   timezones?: readonly string[];

@@ -1,11 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
-import { imageFileToDataUrl } from "@/lib/branding/image-data";
-import { businessCreationSchema } from "@/lib/business/creation-input";
+import { getSafeImageDataUrl } from "@/lib/branding/image-data";
+import { businessCreationSchema, ownerInvitationSchema } from "@/lib/business/creation-input";
 import { parseDateOnly, parseMoneyToMinor } from "@/lib/billing/subscription";
 import {
   createWithGeneratedSlug,
+  isUniqueConstraintError,
+  optionalBusinessPhoneValue,
   optionalOwnerPhoneValue,
   optionalProfileValue,
 } from "@/lib/business-profile";
@@ -13,28 +15,52 @@ import prisma from "@/lib/prisma";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { hash } from "bcryptjs";
+import { randomUUID } from "node:crypto";
+import { logServerEvent } from "@/lib/server/logging";
+
+async function requireSuperAdmin() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "SUPER_ADMIN") redirect("/dashboard");
+}
+
+export async function createOwnerInvitationAction(formData: FormData) {
+  await requireSuperAdmin();
+  const parsed = ownerInvitationSchema.safeParse({
+    ownerFirstName: formData.get("ownerFirstName"), ownerLastName: formData.get("ownerLastName") ?? "",
+    ownerEmail: formData.get("ownerEmail"), ownerPassword: formData.get("ownerPassword"),
+  });
+  if (!parsed.success) redirect("/businesses?error=invitation-invalid");
+  const email = parsed.data.ownerEmail.toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (existing) redirect("/businesses?error=owner-email");
+  try {
+    await prisma.user.create({ data: {
+      firstName: parsed.data.ownerFirstName, lastName: parsed.data.ownerLastName || null, email,
+      passwordHash: await hash(parsed.data.ownerPassword, 12), role: "OWNER", isActive: true,
+      onboardingStatus: "PENDING",
+    } });
+  } catch (error) {
+    if (isUniqueConstraintError(error)) redirect("/businesses?error=owner-email");
+    redirect("/businesses?error=invite-unavailable");
+  }
+  revalidatePath("/businesses"); revalidatePath("/business-owners"); revalidatePath("/dashboard");
+  redirect("/businesses?created=invitation");
+}
 
 export async function createBusinessAction(formData: FormData) {
-  const session = await auth();
+  const creationAttemptId = randomUUID();
+  logServerEvent("BUSINESS_CREATE_SUBMIT_START", { creationAttemptId });
+  await requireSuperAdmin();
+  logServerEvent("BUSINESS_CREATE_ACTION_ENTERED", { creationAttemptId });
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+  const submittedLogoDataUrl = String(formData.get("logoDataUrl") ?? "");
+  const uploadedLogoDataUrl = getSafeImageDataUrl(submittedLogoDataUrl, 500 * 1024);
 
-  if (session.user.role !== "SUPER_ADMIN") {
-    redirect("/dashboard");
-  }
-
-  const logoFile = formData.get("logoFile");
-  let uploadedLogoDataUrl: string | null = null;
-
-  if (logoFile instanceof File && logoFile.size > 0) {
-    uploadedLogoDataUrl = await imageFileToDataUrl(logoFile, 500 * 1024);
-
-    if (!uploadedLogoDataUrl) {
-      redirect("/businesses?error=invalid");
-    }
+  if (submittedLogoDataUrl && !uploadedLogoDataUrl) {
+    redirect("/businesses?error=invalid");
   }
 
   const parsed = businessCreationSchema.safeParse({
@@ -75,6 +101,13 @@ export async function createBusinessAction(formData: FormData) {
 
     fontFamily:
       formData.get("fontFamily") ?? "INTER",
+    standardCardArtworkEnabled: formData.get("standardCardArtworkEnabled") ?? false,
+    standardCardArtworkCategory: formData.get("standardCardArtworkCategory") ?? "OTHER",
+    cardDesignMode: formData.get("cardDesignMode") ?? "STANDARD",
+    customCardArtworkEnabled: formData.get("customCardArtworkEnabled") ?? false,
+    customCardFrontArtworkUrl: formData.get("customCardFrontArtworkUrl") ?? "",
+    customCardBackArtworkUrl: formData.get("customCardBackArtworkUrl") ?? "",
+    customCardSafeZoneVersion: formData.get("customCardSafeZoneVersion") ?? "ID1_V1",
 
     billingInterval: formData.get("billingInterval") ?? "MONTHLY",
     billingCustomDays: formData.get("billingCustomDays") || undefined,
@@ -95,8 +128,13 @@ export async function createBusinessAction(formData: FormData) {
 if (!parsed.success) {
   redirect("/businesses?error=invalid");
 }
+logServerEvent("BUSINESS_CREATE_VALIDATION_OK", { creationAttemptId });
 
 const finalLogoUrl = uploadedLogoDataUrl ?? (parsed.data.logoUrl || null);
+logServerEvent("BUSINESS_CREATE_LOGO_OK", {
+  creationAttemptId,
+  logoConfigured: Boolean(finalLogoUrl),
+});
 
 const ownerEmail = parsed.data.ownerEmail.toLowerCase();
 
@@ -117,10 +155,12 @@ const ownerPasswordHash = await hash(
   parsed.data.ownerPassword,
   12
 );
+logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });
 
 let createdBusiness;
 
 try {
+  logServerEvent("BUSINESS_CREATE_TX_START", { creationAttemptId });
   createdBusiness = await createWithGeneratedSlug(
     parsed.data.name,
     (slug) =>
@@ -130,9 +170,7 @@ try {
             name: parsed.data.name,
             slug,
             logoUrl: finalLogoUrl,
-            contactPhone: optionalProfileValue(
-              parsed.data.contactPhone
-            ),
+            contactPhone: optionalBusinessPhoneValue(parsed.data.contactPhone),
             currency: optionalProfileValue(
               parsed.data.currency
             ),
@@ -194,10 +232,25 @@ try {
 
             fontFamily:
               parsed.data.fontFamily,
+            standardCardArtworkEnabled: parsed.data.standardCardArtworkEnabled,
+            standardCardArtworkCategory: parsed.data.standardCardArtworkCategory,
+            ...(parsed.data.cardDesignMode === "CUSTOM"
+              ? {
+                  cardDesignMode: parsed.data.cardDesignMode,
+                  customCardArtworkEnabled: parsed.data.customCardArtworkEnabled,
+                  customCardFrontArtworkUrl: parsed.data.customCardFrontArtworkUrl || null,
+                  customCardBackArtworkUrl: parsed.data.customCardBackArtworkUrl || null,
+                  customCardSafeZoneVersion: parsed.data.customCardSafeZoneVersion,
+                }
+              : {}),
           },
         });
+        logServerEvent("BUSINESS_CREATE_BUSINESS_CREATED", {
+          creationAttemptId,
+          businessId: business.id,
+        });
 
-        await transaction.user.create({
+        const owner = await transaction.user.create({
           data: {
             firstName: parsed.data.ownerFirstName,
             lastName: parsed.data.ownerLastName || null,
@@ -209,10 +262,19 @@ try {
             isActive: true,
           },
         });
+        logServerEvent("BUSINESS_CREATE_OWNER_CREATED", {
+          creationAttemptId,
+          businessId: business.id,
+          ownerId: owner.id,
+        });
 
         return business;
       })
   );
+  logServerEvent("BUSINESS_CREATE_TX_COMMITTED", {
+    creationAttemptId,
+    businessId: createdBusiness.id,
+  });
 } catch (error) {
   if (
     error instanceof Error &&
@@ -223,10 +285,20 @@ try {
 
   throw error;
 }
-  await syncBusinessToGoogleSheetSafely(createdBusiness.id);
+  after(async () => {
+    await syncBusinessToGoogleSheetSafely(createdBusiness.id);
+  });
+  logServerEvent("BUSINESS_CREATE_SYNC_SCHEDULED", {
+    creationAttemptId,
+    businessId: createdBusiness.id,
+  });
 
   revalidatePath("/businesses");
   revalidatePath("/dashboard");
 
-  redirect(`/businesses/${createdBusiness.slug}/users?created=business`);
+  logServerEvent("BUSINESS_CREATE_REDIRECT_STARTED", {
+    creationAttemptId,
+    businessId: createdBusiness.id,
+  });
+  redirect(`/businesses/${createdBusiness.slug}/users?created=business&sheetSync=pending`);
 }

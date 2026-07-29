@@ -11,7 +11,7 @@ const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 test("U11 retains one canonical public card and validates opaque tokens before lookup", () => {
   const page = source("app/card/[token]/page.tsx");
   const api = source("app/api/card/[token]/route.ts");
-  assert.match(page, /AutoFlipMembershipCard/);
+  assert.match(page, /LoyaltyCard/);
   assert.equal(isPublicCardToken("../../customer"), false);
   assert.equal(isPublicCardToken("short"), false);
   assert.match(api, /isPublicCardToken\(token\)/);

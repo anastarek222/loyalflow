@@ -33,18 +33,15 @@ test("settings persist supported QR styles", () => {
   );
 });
 
-test("public card uses persisted QR style", () => {
+test("public card keeps the QR destination but Standard Card owns its fixed QR safe zone", () => {
   const page = read("app/card/[token]/page.tsx");
-  const component = read(
-    "components/auto-flip-membership-card.tsx"
-  );
+  const component = read("components/standard-loyalty-card.tsx");
 
   assert.match(page, /business\.qrStyle/);
   assert.match(page, /errorCorrectionLevel/);
-  assert.match(page, /qrStyle=\{/);
+  assert.match(page, /LoyaltyCard/);
 
-  assert.match(component, /qrStyle\?/);
-  assert.match(component, /data-qr-style/);
+  assert.match(component, /data-safe-zone="qr-code"/);
 });
 
 test("public card API exposes QR style only as branding", () => {

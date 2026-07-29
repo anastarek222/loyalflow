@@ -578,11 +578,14 @@ export default function BusinessSettingsForm({
 
       <input
           name="website"
-          type="url"
+          type="text"
+          inputMode="url"
+          autoCapitalize="none"
+          autoCorrect="off"
           value={website}
           onChange={(event) => setWebsite(event.target.value)}
           maxLength={300}
-          placeholder="https://example.com"
+          placeholder="example.com"
           className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-left text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
         />
       </div>
@@ -1026,40 +1029,7 @@ export default function BusinessSettingsForm({
               </p>
             </div>
 
-            <div className="my-6 flex items-center gap-4">
-              <div className="h-px flex-1 bg-surface-subtle" />
-              <span className="text-xs font-semibold text-foreground-subtle">أو</span>
-              <div className="h-px flex-1 bg-surface-subtle" />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                رابط صورة الشعار
-              </label>
-
-              <input
-                name="logoUrl"
-                type="url"
-                value={logoUrl}
-                onChange={(event) => {
-                  const value = event.target.value;
-
-                  setLogoUrl(value);
-                  setRemoveLogo(false);
-                  setLogoPreview(value || business.logoUrl || "");
-
-                  const fileInput = document.getElementById(
-                    "logoFile",
-                  ) as HTMLInputElement | null;
-
-                  if (value && fileInput) {
-                    fileInput.value = "";
-                  }
-                }}
-                placeholder="https://example.com/logo.png"
-                className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
-              />
-            </div>
+            <input type="hidden" name="logoUrl" value={logoUrl} />
 
             <label className="flex cursor-pointer items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-4">
               <input
