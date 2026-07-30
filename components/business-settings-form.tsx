@@ -17,12 +17,8 @@ type BusinessSettingsFormProps = {
   business: {
     name: string;
     slug: string;
-    logoUrl: string | null;
     coverImageUrl: string | null;
-   
-    primaryColor: string;
-    secondaryColor: string;
-   
+
     currency: string | null;
     timezone: string | null;
 
@@ -41,9 +37,6 @@ type BusinessSettingsFormProps = {
     facebookUrl: string | null;
     tiktokUrl: string | null;
 
-    themePreset: string;
-    cardStyle: string;
-    fontFamily: string;
     qrStyle: string;
     qrPosition: string;
 
@@ -88,17 +81,6 @@ export default function BusinessSettingsForm({
 }: BusinessSettingsFormProps) {
   const tr = (ar: string, en: string) => (language === "AR" ? ar : en);
   const [name, setName] = useState(business.name);
-  const [logoUrl, setLogoUrl] = useState(
-    business.logoUrl?.startsWith("http") ? business.logoUrl : "",
-  );
-
-  const [logoPreview, setLogoPreview] = useState(business.logoUrl ?? "");
-
-  const [removeLogo, setRemoveLogo] = useState(false);
-
-  const [primaryColor, setPrimaryColor] = useState(business.primaryColor);
-
-  const [secondaryColor, setSecondaryColor] = useState(business.secondaryColor);
 
   const [currency, setCurrency] = useState(business.currency ?? "");
 
@@ -128,30 +110,6 @@ export default function BusinessSettingsForm({
     business.instagramUrl ?? "",
   );
 
-  const [facebookUrl, setFacebookUrl] = useState(
-    business.facebookUrl ?? "",
-  );
-
-  const [tiktokUrl, setTiktokUrl] = useState(
-    business.tiktokUrl ?? "",
-  );
-
-  const [themePreset, setThemePreset] = useState(
-    business.themePreset ?? "DEFAULT",
-  );
-
-  const [cardStyle, setCardStyle] = useState(
-    business.cardStyle ?? "CLASSIC",
-  );
-
-  const [fontFamily, setFontFamily] = useState(
-    business.fontFamily ?? "INTER",
-  );
-
-  const [qrStyle, setQrStyle] = useState(
-    business.qrStyle ?? "CLASSIC",
-  );
-
   const [coverImageUrl, setCoverImageUrl] = useState(
     business.coverImageUrl?.startsWith("http") ? business.coverImageUrl : "",
   );
@@ -167,10 +125,6 @@ export default function BusinessSettingsForm({
   );
 
   const [pointsName, setPointsName] = useState(business.pointsName ?? "");
-
-  const [membershipName, setMembershipName] = useState(
-    business.membershipName ?? "",
-  );
 
   const [welcomeMessage, setWelcomeMessage] = useState(
     business.welcomeMessage ?? "",
@@ -223,32 +177,6 @@ export default function BusinessSettingsForm({
     business.whatsappRewardMessage,
   );
 
-  const threshold = Math.max(1, Number(rewardThreshold) || 1);
-
-  const previewBalance = Math.max(1, Math.floor(threshold * 0.6));
-
-  const progress = Math.min(
-    100,
-    Math.floor((previewBalance / threshold) * 100),
-  );
-
-  const businessInitial = name.trim().charAt(0).toUpperCase() || "L";
-
-  const themeOptions = [
-    { value: "DEFAULT", label: tr("نظيف", "Clean"), description: tr("فاتح ومتوازن وسهل", "Light, balanced and familiar"), swatches: ["#ffffff", "#f5f7fb", primaryColor] },
-    { value: "MINIMAL", label: tr("بسيط", "Minimal"), description: tr("زخرفة أقل وتركيز أكبر", "Less decoration, more focus"), swatches: ["#ffffff", "#fafafa", "#111827"] },
-    { value: "MODERN", label: tr("عصري", "Modern"), description: tr("أسطح هادئة بإحساس SaaS احترافي", "Soft surfaces for a premium SaaS feel"), swatches: ["#f7f8fc", "#ffffff", primaryColor] },
-    { value: "LUXURY", label: tr("أنيق", "Elegant"), description: tr("معالجة داكنة فاخرة لكارت العميل", "Dark premium customer-card treatment"), swatches: ["#161616", "#252525", primaryColor] },
-    { value: "DARK", label: tr("داكن", "Dark"), description: tr("تجربة داكنة موجهة للعميل", "Dark customer-facing experience"), swatches: ["#0f172a", "#1e293b", primaryColor] },
-    { value: "GRADIENT", label: tr("متدرج", "Gradient"), description: tr("لمسة هوية متدرجة وخفيفة", "Subtle branded customer-card accent"), swatches: ["#ffffff", primaryColor, secondaryColor] },
-  ] as const;
-
-  const cardStyleOptions = [
-    { value: "CLASSIC", label: tr("كلاسيكي", "Classic"), description: tr("توازن واضح للمعلومات", "Balanced information layout") },
-    { value: "COMPACT", label: tr("مضغوط", "Compact"), description: tr("أصغر وأسرع في القراءة", "Smaller and faster to scan") },
-    { value: "PREMIUM", label: tr("بريميوم", "Premium"), description: tr("تركيز بصري أكبر على الهوية", "More visual brand emphasis") },
-  ] as const;
-
   return (
     <>
       {saved && (
@@ -263,7 +191,7 @@ export default function BusinessSettingsForm({
         </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_420px]">
+      <div>
         <form
           action={action}
           className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
@@ -273,21 +201,12 @@ export default function BusinessSettingsForm({
           <p className="mt-1 text-sm text-foreground-subtle">
             {tr("اجعل تجربة العمل اليومية بسيطة، وخصص هوية العميل عند الحاجة.", "Keep the daily experience simple, then customise the customer-facing brand when you need it.")}
           </p>
-          <p className="mt-3 rounded-[var(--lf-radius-input)] border border-primary/20 bg-primary-subtle p-3 text-sm text-primary">
-            {tr(
-              "تصميم البطاقة والشعار للعرض فقط هنا. عدّلهما من قسم بطاقة الولاء أعلاه.",
-              "Card design and the business logo are read-only here. Edit them in the Loyalty Card section above.",
-            )}
-          </p>
-
-
           <div className="mt-8 rounded-[var(--lf-radius-card)] border border-border p-6">
             <h3 className="text-lg font-black text-foreground">
-              {tr("الهوية والمظهر", "Brand & appearance")}
+              {tr("معلومات ظهور النشاط", "Customer-facing information")}
             </h3>
 
-            <div className="mt-6 space-y-6">
-
+            <div className="mt-6 grid gap-6 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground-muted">
                   وصف النشاط
@@ -301,223 +220,24 @@ export default function BusinessSettingsForm({
                 />
               </div>
 
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
-                  <span className="block text-sm font-bold text-foreground">{tr("اللون الأساسي للهوية", "Primary brand colour")}</span>
-                  <span className="mt-1 block text-xs text-foreground-subtle">{tr("يستخدم للإجراءات الأساسية وهوية العميل.", "Used for primary actions and customer branding.")}</span>
-                  <span className="mt-4 flex items-center gap-3">
-                    <input
-                      type="color"
-                      disabled
-                      value={primaryColor}
-                      onChange={(event) => setPrimaryColor(event.target.value)}
-                      className="h-11 w-14 cursor-pointer rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
-                      aria-label={tr("اللون الأساسي للهوية", "Primary brand colour")}
-                    />
-                    <input
-                      disabled
-                      value={primaryColor}
-                      onChange={(event) => setPrimaryColor(event.target.value)}
-                      className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-foreground"
-                      placeholder="#4F46E5"
-                    />
-                  </span>
-                </label>
-
-                <label className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
-                  <span className="block text-sm font-bold text-foreground">{tr("اللون الثانوي للهوية", "Secondary brand colour")}</span>
-                  <span className="mt-1 block text-xs text-foreground-subtle">{tr("يستخدم للتفاصيل والأسطح الظاهرة للعملاء.", "Supports accents and customer-facing surfaces.")}</span>
-                  <span className="mt-4 flex items-center gap-3">
-                    <input
-                      type="color"
-                      disabled
-                      value={secondaryColor}
-                      onChange={(event) => setSecondaryColor(event.target.value)}
-                      className="h-11 w-14 cursor-pointer rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
-                      aria-label={tr("اللون الثانوي للهوية", "Secondary brand colour")}
-                    />
-                    <input
-                      disabled
-                      value={secondaryColor}
-                      onChange={(event) => setSecondaryColor(event.target.value)}
-                      className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-foreground"
-                      placeholder="#FFFFFF"
-                    />
-                  </span>
-                </label>
-              </div>
-
-              <div>
-                <div className="mb-3">
-                  <h4 className="text-sm font-bold text-foreground">{tr("اختر أسلوبًا بصريًا", "Choose a visual style")}</h4>
-                  <p className="mt-1 text-xs text-foreground-subtle">
-                    {tr("ابدأ بشكل بسيط ويمكنك ضبط التفاصيل لاحقًا.", "Start simple. You can fine-tune the details later.")}
-                  </p>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {themeOptions.map((option) => {
-                    const selected = themePreset === option.value;
-                    return (
-                      <label
-                        key={option.value}
-                        className={`cursor-pointer rounded-[var(--lf-radius-input)] border p-4 transition ${
-                          selected
-                            ? "border-primary bg-primary-subtle ring-2 ring-primary/10"
-                            : "border-border bg-white hover:border-primary/30"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          disabled
-                          value={option.value}
-                          checked={selected}
-                          onChange={() => setThemePreset(option.value)}
-                          className="sr-only"
-                        />
-                        <span className="flex items-start justify-between gap-3">
-                          <span>
-                            <span className="block text-sm font-bold text-foreground">{option.label}</span>
-                            <span className="mt-1 block text-xs leading-5 text-foreground-subtle">{option.description}</span>
-                          </span>
-                          <span
-                            aria-hidden="true"
-                            className={`mt-0.5 flex size-5 items-center justify-center rounded-full border text-[10px] font-black ${
-                              selected ? "border-primary bg-primary text-white" : "border-border"
-                            }`}
-                          >
-                            {selected ? "✓" : ""}
-                          </span>
-                        </span>
-                        <span className="mt-4 flex h-7 overflow-hidden rounded-md border border-border">
-                          {option.swatches.map((swatch, index) => (
-                            <span key={`${option.value}-${index}`} className="flex-1" style={{ backgroundColor: swatch }} />
-                          ))}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-                <div>
-                  <h4 className="mb-3 text-sm font-bold text-foreground">{tr("شكل الكارت الرقمي", "Digital card layout")}</h4>
-                  <div className="grid gap-2">
-                    {cardStyleOptions.map((option) => {
-                      const selected = cardStyle === option.value;
-                      return (
-                        <label
-                          key={option.value}
-                          className={`flex cursor-pointer items-center justify-between gap-4 rounded-[var(--lf-radius-input)] border px-4 py-3 ${
-                            selected ? "border-primary bg-primary-subtle" : "border-border bg-white hover:bg-surface-subtle"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            disabled
-                            value={option.value}
-                            checked={selected}
-                            onChange={() => setCardStyle(option.value)}
-                            className="sr-only"
-                          />
-                          <span>
-                            <span className="block text-sm font-bold text-foreground">{option.label}</span>
-                            <span className="block text-xs text-foreground-subtle">{option.description}</span>
-                          </span>
-                          <span className={selected ? "text-primary" : "text-foreground-subtle"} aria-hidden="true">
-                            {selected ? "✓" : "○"}
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-foreground">{tr("الخط", "Typography")}</label>
-                  <select
-                    disabled
-                    value={fontFamily}
-                    onChange={(event) => setFontFamily(event.target.value)}
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground"
-                  >
-                    <option value="INTER">{tr("Inter — نظيف ومحايد", "Inter — clean and neutral")}</option>
-                    <option value="CAIRO">{tr("Cairo — مناسب للعربية", "Cairo — Arabic-first")}</option>
-                    <option value="POPPINS">{tr("Poppins — عصري وودود", "Poppins — friendly modern")}</option>
-                  </select>
-                  <p className="mt-2 text-xs leading-5 text-foreground-subtle">
-                    {tr("تتحدث معاينة الكارت فورًا لتسهيل المقارنة.", "The customer card preview updates immediately so the choice is easy to compare.")}
-                  </p>
-                </div>
-              </div>
-
-
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                  شكل رمز QR
+                  Instagram URL
                 </label>
-
-                <select
-                  name="qrStyle"
-                  value={qrStyle}
-                  onChange={(e) => setQrStyle(e.target.value)}
-                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4"
-                >
-                  <option value="CLASSIC">Classic</option>
-                  <option value="ROUNDED">Rounded</option>
-                  <option value="BRANDED">Branded</option>
-                </select>
-
-                <p className="mt-2 text-xs text-foreground-subtle">
-                  يتحكم في شكل QR الظاهر على كارت العميل.
-                </p>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                  مكان رمز QR
-                </label>
-
-                <select
-                  name="qrPosition"
-                  defaultValue={business.qrPosition ?? "CENTER"}
-                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4"
-                >
-                  <option value="LEFT">Left</option>
-                  <option value="CENTER">Center</option>
-                  <option value="RIGHT">Right</option>
-                </select>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-
                 <input
                   name="instagramUrl"
                   value={instagramUrl}
-                  onChange={(e)=>setInstagramUrl(e.target.value)}
-                  placeholder="Instagram URL"
-                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
+                  onChange={(event) => setInstagramUrl(event.target.value)}
+                  placeholder="https://instagram.com/example"
+                  className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4"
                 />
-
-                <input
-                  name="facebookUrl"
-                  value={facebookUrl}
-                  onChange={(e)=>setFacebookUrl(e.target.value)}
-                  placeholder="Facebook URL"
-                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
-                />
-
-                <input
-                  name="tiktokUrl"
-                  value={tiktokUrl}
-                  onChange={(e)=>setTiktokUrl(e.target.value)}
-                  placeholder="TikTok URL"
-                  className="rounded-[var(--lf-radius-input)] border px-4 py-4"
-                />
-
               </div>
 
+              <input type="hidden" name="facebookUrl" value={business.facebookUrl ?? ""} />
+              <input type="hidden" name="tiktokUrl" value={business.tiktokUrl ?? ""} />
+              <input type="hidden" name="qrStyle" value={business.qrStyle ?? "CLASSIC"} />
+              <input type="hidden" name="qrPosition" value={business.qrPosition ?? "CENTER"} />
+              <input type="hidden" name="membershipName" value={business.membershipName ?? ""} />
             </div>
           </div>
 
@@ -920,20 +640,6 @@ export default function BusinessSettingsForm({
                   />
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                    اسم العضوية
-                  </label>
-
-                  <input
-                    name="membershipName"
-                    value={membershipName}
-                    onChange={(event) => setMembershipName(event.target.value)}
-                    maxLength={50}
-                    placeholder="عضو مميز"
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30"
-                  />
-                </div>
               </div>
 
               <div className="mt-4">
@@ -990,111 +696,6 @@ export default function BusinessSettingsForm({
               <p className="mt-1 text-xs text-foreground-subtle">
                 لا يمكن تغيير رابط النشاط.
               </p>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                شعار النشاط
-              </label>
-
-              <input
-                id="logoFile"
-                disabled
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-
-                  if (!file) {
-                    return;
-                  }
-
-                  if (file.size > 500 * 1024) {
-                    window.alert("يجب أن يكون حجم الشعار أقل من 500KB.");
-
-                    event.target.value = "";
-                    return;
-                  }
-
-                  setLogoUrl("");
-                  setRemoveLogo(false);
-
-                  const reader = new FileReader();
-
-                  reader.onload = () => {
-                    setLogoPreview(
-                      typeof reader.result === "string" ? reader.result : "",
-                    );
-                  };
-
-                  reader.readAsDataURL(file);
-                }}
-                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground-muted file:mr-4 file:rounded-[var(--lf-radius-input)] file:border-0 file:bg-foreground file:px-4 file:py-2 file:font-semibold file:text-white"
-              />
-
-              <p className="mt-1 text-xs text-foreground-subtle">
-                يظهر في لوحة النشاط والكارت الرقمي. PNG أو JPG أو WebP — بحد أقصى 500KB.
-              </p>
-            </div>
-
-            <label className="flex cursor-pointer items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-4">
-              <input
-                disabled
-                type="checkbox"
-                checked={removeLogo}
-                onChange={(event) => {
-                  const checked = event.target.checked;
-
-                  setRemoveLogo(checked);
-
-                  const fileInput = document.getElementById(
-                    "logoFile",
-                  ) as HTMLInputElement | null;
-
-                  if (checked && fileInput) {
-                    fileInput.value = "";
-                  }
-
-                  setLogoPreview(
-                    checked ? "" : logoUrl || business.logoUrl || "",
-                  );
-                }}
-                className="h-4 w-4"
-              />
-
-              <span className="text-sm font-medium text-foreground-muted">
-                حذف الشعار الحالي
-              </span>
-            </label>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                  اللون الأساسي للهوية
-                </label>
-
-                <input
-                  disabled
-                  type="color"
-                  value={primaryColor}
-                  onChange={(event) => setPrimaryColor(event.target.value)}
-                  className="h-14 w-full rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground-muted">
-                  لون خلفية الكارت
-                </label>
-
-                <input
-                  disabled
-                  type="color"
-                  value={secondaryColor}
-                  onChange={(event) => setSecondaryColor(event.target.value)}
-                  className="h-14 w-full rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
-                />
-              </div>
             </div>
 
             <div>
@@ -1350,123 +951,6 @@ export default function BusinessSettingsForm({
           </div>
         </form>
 
-        <aside className="h-fit lg:sticky lg:top-8">
-          <p className="mb-4 text-sm font-semibold text-foreground-subtle">
-            معاينة مباشرة للكارت
-          </p>
-
-          <section
-            className="overflow-hidden rounded-[var(--lf-radius-card)] shadow-2xl sm:rounded-[32px]"
-            style={{
-              backgroundColor: secondaryColor,
-            }}
-          >
-            <header
-              className="p-6 text-white sm:p-8"
-              style={{
-                backgroundColor: primaryColor,
-              }}
-            >
-              <div className="flex items-center gap-4">
-                {logoPreview ? (
-                  <img
-                    src={logoPreview}
-                    alt={`${name} logo`}
-                    className="h-16 w-16 shrink-0 rounded-[var(--lf-radius-input)] border border-white/20 bg-white object-contain p-2 shadow-sm"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-white/20 text-2xl font-black">
-                    {businessInitial}
-                  </div>
-                )}
-
-                <div>
-                  <p className="text-xs text-white/70">كارت الولاء الرقمي</p>
-
-                  <h2 dir="auto" className="mt-1 text-xl font-bold sm:text-2xl">
-                    {name || "اسم النشاط"}
-                  </h2>
-                </div>
-              </div>
-            </header>
-
-            <div className="p-6 sm:p-8">
-              <p className="text-xs uppercase tracking-wider text-foreground-subtle">
-                Customer
-              </p>
-
-              <h3 className="mt-1 text-2xl font-bold text-foreground">
-                أحمد محمد
-              </h3>
-
-              <p className="mt-2 text-sm font-semibold text-primary">
-                CUS-A1B2C3
-              </p>
-
-              <div className="mt-8 flex items-end justify-between">
-                <div>
-                  <p className="text-5xl font-black text-foreground">
-                    {previewBalance}
-                  </p>
-
-                  <p dir="auto" className="mt-1 text-sm text-foreground-subtle">
-                    {unitName || "نقاط"}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-sm text-foreground-subtle">
-                    {loyaltyMode === "VISITS"
-                      ? "نظام الزيارات"
-                      : `${earnAmount || 1} نقطة لكل عملية`}
-                  </p>
-
-                  <p className="mt-1 text-sm font-semibold text-foreground-muted">
-                    الهدف: {threshold}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 h-3 overflow-hidden rounded-full bg-surface-subtle">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${progress}%`,
-                    backgroundColor: primaryColor,
-                  }}
-                />
-              </div>
-
-              <div className="mt-4 flex justify-between text-sm text-foreground-subtle">
-                <span>
-                  {previewBalance} / {threshold}
-                </span>
-
-                <span>{progress}%</span>
-              </div>
-
-              <div
-                dir="auto"
-                className="mt-6 rounded-[var(--lf-radius-card)] bg-surface-subtle p-6 text-center text-foreground-muted"
-              >
-                <p className="font-bold">
-                  متبقي {Math.max(0, threshold - previewBalance)} للحصول على
-                  الهدية
-                </p>
-
-                <p className="mt-1 text-sm">{rewardName || "المكافأة"}</p>
-              </div>
-
-              <div className="mx-auto mt-8 flex h-40 w-40 items-center justify-center rounded-[var(--lf-radius-card)] border-8 border-border bg-white text-center text-xs font-bold text-foreground">
-                رمز QR
-              </div>
-
-              <p className="mt-4 text-center text-xs text-foreground-subtle">
-                مدعوم بواسطة LoyalFlow
-              </p>
-            </div>
-          </section>
-        </aside>
       </div>
     </>
   );

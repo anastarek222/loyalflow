@@ -234,3 +234,30 @@ test("customer experience remains active without expanding internal theming", ()
   assert.match(themeSource, /@deprecated Authenticated app pages/);
 });
 
+test("Settings has one card editor and hides legacy compatibility fields", () => {
+  assert.equal(
+    (settingsPageSource.match(/<StandardCardSetup/g) ?? []).length,
+    1,
+  );
+  assert.doesNotMatch(settingsFormSource, /معاينة مباشرة للكارت|themeOptions|cardStyleOptions|logoFile/);
+  assert.doesNotMatch(
+    settingsFormSource,
+    /Facebook URL|TikTok URL|شكل رمز QR|مكان رمز QR|اسم العضوية|Typography/,
+  );
+
+  for (const field of [
+    "facebookUrl",
+    "tiktokUrl",
+    "qrStyle",
+    "qrPosition",
+    "membershipName",
+  ]) {
+    assert.match(
+      settingsFormSource,
+      new RegExp(`type="hidden" name="${field}"`),
+    );
+  }
+
+  assert.doesNotMatch(settingsPageSource, /href=\{`\/businesses\/\$\{business\.slug\}\/(?:rewards|playbooks)`\}/);
+  assert.match(settingsPageSource, /Google Sheets integration/);
+});

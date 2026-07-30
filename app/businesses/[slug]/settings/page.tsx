@@ -210,10 +210,10 @@ export default async function BusinessSettingsPage({
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
             <span>
               <span className="block text-sm font-bold text-foreground">
-                {t("أدوات وإعدادات متقدمة", "Advanced tools & integrations")}
+                {t("تكامل Google Sheets", "Google Sheets integration")}
               </span>
               <span className="mt-0.5 block text-xs text-foreground-subtle">
-                {t("المكافآت والقوالب والمزامنة متاحة هنا عند الحاجة.", "Rewards, playbooks and data sync stay available here when you need them.")}
+                {t("راجع حالة النسخ الاحتياطي وشغّل المزامنة عند الحاجة.", "Review backup status and run a sync when needed.")}
               </span>
             </span>
             <span className="text-xs font-semibold text-primary">
@@ -221,44 +221,6 @@ export default async function BusinessSettingsPage({
             </span>
           </summary>
           <div className="border-t border-border p-4 sm:p-5">
-        <section className="mb-4 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-warning/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-black text-warning">{t("كتالوج المكافآت", "Reward catalogue")}</p>
-            <h2 className="mt-1 text-xl font-black text-foreground">
-              {t("مكافآت متعددة قابلة للتفعيل", "Multiple configurable rewards")}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
-              {t("أضف مكافآت إضافية وحدد ما يظهر للموظفين عند استبدال رصيد العميل.", "Add rewards and control what staff see when redeeming customer balance.")}
-            </p>
-          </div>
-
-          <Link
-            href={`/businesses/${business.slug}/rewards`}
-            className="shrink-0 rounded-[var(--lf-radius-input)] bg-warning px-6 py-4 text-center font-black text-foreground transition hover:bg-warning-subtle"
-          >
-            {t("إدارة المكافآت", "Manage rewards")}
-          </Link>
-        </section>
-
-        <section className="mb-4 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-primary/30 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-black text-primary">{t("انطلاقة أسرع", "Faster setup")}</p>
-            <h2 className="mt-1 text-xl font-black text-foreground">
-              {t("قوالب تشغيل النشاط", "Business playbooks")}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
-              {t("عاين إعدادات مناسبة لنشاطك ثم طبّقها صراحةً. القالب لا ينشئ عروضًا أو Promotions أو رسائل تلقائية.", "Preview suitable business settings and apply them explicitly. Playbooks do not create offers, promotions, or automated messages.")}
-            </p>
-          </div>
-
-          <Link
-            href={`/businesses/${business.slug}/playbooks`}
-            className="shrink-0 rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 text-center font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
-          >
-            {t("استعرض القوالب", "Browse playbooks")}
-          </Link>
-        </section>
-
         <section className="mb-0 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-lg font-bold text-foreground">
@@ -483,10 +445,7 @@ export default async function BusinessSettingsPage({
           business={{
             name: business.name,
             slug: business.slug,
-            logoUrl: business.logoUrl,
             coverImageUrl: business.coverImageUrl,
-            primaryColor: business.primaryColor,
-            secondaryColor: business.secondaryColor,
             currency: business.currency,
             timezone: business.timezone,
         
@@ -503,9 +462,6 @@ export default async function BusinessSettingsPage({
             facebookUrl: business.facebookUrl,
             tiktokUrl: business.tiktokUrl,
 
-            themePreset: business.themePreset,
-            cardStyle: business.cardStyle,
-            fontFamily: business.fontFamily,
             qrStyle: business.qrStyle,
             qrPosition: business.qrPosition,
 
