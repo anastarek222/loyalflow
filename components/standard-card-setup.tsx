@@ -73,6 +73,8 @@ export function StandardCardSetup({
     customFrontArtworkUrl: initial.customFrontArtworkUrl || "",
     customBackArtworkUrl: initial.customBackArtworkUrl || "",
   });
+  const customReadOnly =
+    !allowCustom && initial.designMode === "CUSTOM";
   const values = useMemo(
     () => ({
       businessName: "Your Business",
@@ -88,11 +90,11 @@ export function StandardCardSetup({
       ...initial,
       ...preview,
       ...card,
-      designMode: allowCustom
+      designMode: allowCustom || customReadOnly
         ? card.designMode
         : ("STANDARD" as CardDesignMode),
     }),
-    [allowCustom, card, initial, preview],
+    [allowCustom, card, customReadOnly, initial, preview],
   );
 
   const update = <Key extends keyof typeof card>(
@@ -128,6 +130,16 @@ export function StandardCardSetup({
       <div className="order-2 space-y-5 xl:order-1">
         <fieldset className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
           <legend className="px-1 text-base font-black">Card design</legend>
+          {customReadOnly ? (
+            <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
+              <p className="font-black">Custom Card</p>
+              <p className="mt-1 text-sm text-foreground-muted">
+                This design is managed by LoyalFlow Super Admin. Its artwork
+                and protected safe-zone configuration are read-only for
+                Business Owners.
+              </p>
+            </div>
+          ) : (
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             <label
               className={`cursor-pointer rounded-xl border p-4 ${values.designMode === "STANDARD" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border"}`}
@@ -168,12 +180,21 @@ export function StandardCardSetup({
               </label>
             ) : null}
           </div>
-          {!allowCustom ? (
+          )}
+          {!allowCustom && !customReadOnly ? (
             <input type="hidden" name="cardDesignMode" value="STANDARD" />
           ) : null}
         </fieldset>
 
-        {values.designMode === "CUSTOM" && allowCustom ? (
+        {values.designMode === "CUSTOM" && customReadOnly ? (
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+            <p className="font-black">Custom artwork · read only</p>
+            <p className="mt-2 text-sm text-foreground-muted">
+              Saving other Business or Loyalty Program settings will preserve
+              this Custom Card exactly.
+            </p>
+          </div>
+        ) : values.designMode === "CUSTOM" && allowCustom ? (
           <fieldset className="space-y-4 rounded-2xl border border-border bg-surface p-5 shadow-sm">
             <legend className="px-1 font-black">Custom artwork</legend>
             <input
@@ -340,6 +361,11 @@ export function StandardCardSetup({
 
             <div>
               <p className="text-sm font-bold">Theme</p>
+              <input
+                type="hidden"
+                name="themePreset"
+                value={values.themePreset}
+              />
               <div className="mt-2 grid grid-cols-2 gap-3">
                 {(["DEFAULT", "DARK"] as const).map((theme) => (
                   <label
@@ -348,7 +374,6 @@ export function StandardCardSetup({
                   >
                     <input
                       type="radio"
-                      name="themePreset"
                       value={theme}
                       checked={values.themePreset === theme}
                       onChange={() => update("themePreset", theme)}

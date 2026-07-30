@@ -99,12 +99,15 @@ test("website input is friendly, canonical, and rejects dangerous protocols", ()
 
 test("business creation commits core state before scheduling optional Google Sheets sync", () => {
   const action = source("app/businesses/actions.ts");
+  const scheduler = source("lib/google-sheets-sync-scheduler.ts");
   const transaction = action.indexOf("prisma.$transaction");
-  const backgroundSync = action.indexOf("after(async () =>");
+  const backgroundSync = action.indexOf(
+    "scheduleBusinessGoogleSheetsSync(createdBusiness.id)",
+  );
 
   assert.ok(transaction >= 0 && backgroundSync > transaction);
-  assert.match(action, /after\(async \(\) => \{\s*await syncBusinessToGoogleSheetSafely/);
-  assert.doesNotMatch(action, /await syncBusinessToGoogleSheetSafely\(createdBusiness\.id\);\s*\n\s*revalidatePath/);
+  assert.match(scheduler, /after\(async \(\) => \{\s*await syncBusinessToGoogleSheetSafely/);
+  assert.doesNotMatch(action, /await syncBusinessToGoogleSheetSafely\(createdBusiness\.id\)/);
   assert.match(action, /sheetSync=pending/);
   assert.match(source("app/businesses/[slug]/users/page.tsx"), /مزامنة Google Sheets تعمل في الخلفية/);
 });

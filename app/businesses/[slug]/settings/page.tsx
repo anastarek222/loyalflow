@@ -404,6 +404,7 @@ export default async function BusinessSettingsPage({
             {query.cardDesign === "saved" ? <p className="mt-3 rounded-xl bg-success-subtle p-3 text-sm font-bold text-success">{t("تم حفظ تصميم البطاقة.", "Card design saved.")}</p> : null}
             {query.cardDesign === "invalid" ? <p className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("راجع إعدادات التصميم.", "Check the card design settings.")}</p> : null}
             {query.cardDesign === "forbidden" ? <p className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("التصميم المخصص متاح لمدير النظام فقط.", "Custom design is restricted to Super Admin.")}</p> : null}
+            {query.cardDesign === "readonly" ? <p className="mt-3 rounded-xl bg-primary/5 p-3 text-sm font-bold text-primary">{t("التصميم المخصص محفوظ كما هو وتتم إدارته بواسطة مدير النظام.", "The Custom Card was preserved unchanged and is managed by Super Admin.")}</p> : null}
           </div>
           <form action={updateCardDesign}>
             <StandardCardSetup
@@ -430,9 +431,11 @@ export default async function BusinessSettingsPage({
                 customBackArtworkUrl: business.customCardBackArtworkUrl ?? "",
               }}
             />
-            <button type="submit" className="mt-5 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-black text-[var(--lf-primary-foreground)]">
-              {t("حفظ تصميم البطاقة", "Save card design")}
-            </button>
+            {session.user.role === "SUPER_ADMIN" || business.cardDesignMode === "STANDARD" ? (
+              <button type="submit" className="mt-5 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-black text-[var(--lf-primary-foreground)]">
+                {t("حفظ تصميم البطاقة", "Save card design")}
+              </button>
+            ) : null}
           </form>
         </section>
 

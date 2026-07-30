@@ -49,6 +49,22 @@ export function findCountryByIso2(
   return countries.find((country) => country.iso2 === normalizedIso2) ?? null;
 }
 
+export function findCountryByCanonicalText(
+  countries: readonly CountryOption[],
+  value: string,
+) {
+  const normalizedValue = normalizeSearchValue(value);
+  if (!normalizedValue) return null;
+
+  return (
+    countries.find(
+      (country) =>
+        normalizeSearchValue(country.name) === normalizedValue ||
+        normalizeSearchValue(country.iso2) === normalizedValue,
+    ) ?? null
+  );
+}
+
 export function getCountryDefaults(country: CountryOption | null | undefined) {
   if (!country) {
     return {

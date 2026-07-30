@@ -12,10 +12,9 @@ import {
   optionalProfileValue,
 } from "@/lib/business-profile";
 import prisma from "@/lib/prisma";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { after } from "next/server";
 import { hash } from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { logServerEvent } from "@/lib/server/logging";
@@ -285,9 +284,7 @@ try {
 
   throw error;
 }
-  after(async () => {
-    await syncBusinessToGoogleSheetSafely(createdBusiness.id);
-  });
+  scheduleBusinessGoogleSheetsSync(createdBusiness.id);
   logServerEvent("BUSINESS_CREATE_SYNC_SCHEDULED", {
     creationAttemptId,
     businessId: createdBusiness.id,

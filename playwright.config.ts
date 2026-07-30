@@ -1,7 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
 const port = Number(process.env.BROWSER_UAT_PORT ?? 3100);
-const baseURL = `http://127.0.0.1:${port}`;
+const host = process.env.BROWSER_UAT_HOST ?? "127.0.0.1";
+const baseURL = `http://${host}:${port}`;
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -34,11 +35,22 @@ export default defineConfig({
       grep: /@mobile/,
       use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
     },
+    {
+      name: "owner-onboarding-chromium",
+      grep: /@owner-onboarding/,
+      use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+    },
+    {
+      name: "owner-onboarding-webkit",
+      grep: /@owner-onboarding/,
+      use: { browserName: "webkit", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+    },
   ],
   webServer: {
     command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
     url: `${baseURL}/api/health`,
-    reuseExistingServer: false,
+    reuseExistingServer:
+      process.env.BROWSER_UAT_REUSE_EXISTING_SERVER === "true",
     timeout: 120_000,
     env: {
       ...process.env,

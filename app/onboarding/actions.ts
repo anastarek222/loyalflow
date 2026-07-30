@@ -20,6 +20,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
 import { normalizeOwnerOnboardingPhone } from "@/lib/onboarding/owner-onboarding-validation";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { logServerEvent } from "@/lib/server/logging";
 
 const ownerDraftSchema = z
   .object({
@@ -190,5 +192,9 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
       return created;
     }),
   );
-  redirect(`/businesses/${business.slug}`);
+  scheduleBusinessGoogleSheetsSync(business.id);
+  logServerEvent("OWNER_ONBOARDING_SHEETS_SYNC_SCHEDULED", {
+    businessId: business.id,
+  });
+  redirect(`/businesses/${business.slug}?sheetSync=pending`);
 }

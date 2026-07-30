@@ -23,6 +23,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
+import { getAuthorizedCardDesignUpdate } from "@/lib/cards/card-design-permissions";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -425,7 +426,7 @@ export async function updateBusinessCardDesignAction(
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, cardDesignMode: true },
   });
   if (!business) redirect("/businesses");
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
@@ -443,28 +444,26 @@ export async function updateBusinessCardDesignAction(
   });
 
   if (!parsed.success) redirect(`/businesses/${slug}/settings?cardDesign=invalid`);
-  if (parsed.data.cardDesignMode === "CUSTOM" && session.user.role !== "SUPER_ADMIN") {
-    redirect(`/businesses/${slug}/settings?cardDesign=forbidden`);
+  const authorizedUpdate = getAuthorizedCardDesignUpdate({
+    role: session.user.role,
+    currentDesignMode: business.cardDesignMode,
+    submitted: parsed.data,
+  });
+  if (!authorizedUpdate.allowed) {
+    redirect(
+      `/businesses/${slug}/settings?cardDesign=${
+        authorizedUpdate.reason === "CUSTOM_READ_ONLY"
+          ? "readonly"
+          : "forbidden"
+      }`,
+    );
   }
 
   const activityContext = await getActivityRequestContext();
   await prisma.$transaction([
     prisma.business.update({
       where: { id: business.id },
-      data: {
-        cardDesignMode: parsed.data.cardDesignMode,
-        primaryColor: parsed.data.primaryColor,
-        themePreset: parsed.data.themePreset,
-        standardCardArtworkEnabled: parsed.data.standardCardArtworkEnabled,
-        standardCardArtworkCategory: parsed.data.standardCardArtworkCategory,
-        customCardArtworkEnabled:
-          session.user.role === "SUPER_ADMIN" && parsed.data.cardDesignMode === "CUSTOM",
-        customCardFrontArtworkUrl:
-          session.user.role === "SUPER_ADMIN" ? parsed.data.customCardFrontArtworkUrl || null : undefined,
-        customCardBackArtworkUrl:
-          session.user.role === "SUPER_ADMIN" ? parsed.data.customCardBackArtworkUrl || null : undefined,
-        customCardSafeZoneVersion: parsed.data.customCardSafeZoneVersion,
-      },
+      data: authorizedUpdate.data,
     }),
     prisma.businessActivity.create({
       data: {

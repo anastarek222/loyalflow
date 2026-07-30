@@ -1,9 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
-import { CountrySelector } from "@/components/onboarding/country-selector";
+import {
+  CountrySelector,
+  type CountrySelectorHandle,
+} from "@/components/onboarding/country-selector";
 import { StandardCardSetup } from "@/components/standard-card-setup";
 import {
   normalizeOwnerOnboardingPhone,
@@ -26,6 +29,12 @@ type Action = (
   formData: FormData,
 ) => Promise<{ saved?: boolean; error?: string }>;
 
+function ownerOnboardingDiagnostic(event: string) {
+  if (process.env.NODE_ENV === "development") {
+    console.debug(event);
+  }
+}
+
 export function OwnerOnboardingWizard({
   draft,
   saveAction,
@@ -36,6 +45,14 @@ export function OwnerOnboardingWizard({
   launchAction: (formData: FormData) => Promise<void>;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const setFormElement = useCallback((node: HTMLFormElement | null) => {
+    formRef.current = node;
+    if (node) node.dataset.ownerHydrated = "true";
+  }, []);
+  const countrySelectorRef = useRef<CountrySelectorHandle>(null);
+  const mobileHeadingRef = useRef<HTMLHeadingElement>(null);
+  const stepHeadingRefs = useRef<Array<HTMLHeadingElement | null>>([]);
+  const hasMountedRef = useRef(false);
   const [step, setStep] = useState(0);
   const [country, setCountry] = useState(String(draft.country || "Egypt"));
   const [currency, setCurrency] = useState(String(draft.currency || "EGP"));
@@ -54,7 +71,34 @@ export function OwnerOnboardingWizard({
   const timezoneOptions = selectedCountry?.timezones?.length
     ? selectedCountry.timezones
     : [timezone];
+  const transitionToStep = (nextStep: number) => {
+    const boundedStep = Math.max(0, Math.min(sections.length - 1, nextStep));
+    countrySelectorRef.current?.close();
+    if (boundedStep === 1) {
+      ownerOnboardingDiagnostic("OWNER_STEP_CHANGE_2");
+    }
+    setStep(boundedStep);
+  };
+
+  useLayoutEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (step === 1) {
+      ownerOnboardingDiagnostic("OWNER_STEP_RENDER_2");
+    }
+    const mobileHeading = mobileHeadingRef.current;
+    const target =
+      mobileHeading && mobileHeading.offsetParent !== null
+        ? mobileHeading
+        : stepHeadingRefs.current[step];
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [step]);
+
   const goNext = () => {
+    ownerOnboardingDiagnostic("OWNER_NEXT_CLICK");
     if (!formRef.current) return;
     const formData = new FormData(formRef.current);
     const normalizedPhone = normalizeOwnerOnboardingPhone(phone, country);
@@ -79,15 +123,18 @@ export function OwnerOnboardingWizard({
       });
       return;
     }
+    ownerOnboardingDiagnostic("OWNER_STEP1_VALID");
     setFieldErrors({});
     setNotice("");
-    setStep((current) => Math.min(5, current + 1));
+    transitionToStep(step + 1);
   };
 
   return (
     <form
-      ref={formRef}
+      ref={setFormElement}
       noValidate
+      data-owner-step={step + 1}
+      data-owner-hydrated="false"
       className="mx-auto min-w-0 max-w-2xl space-y-6 overflow-hidden rounded-2xl border border-border bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-sm sm:p-8"
     >
       <div
@@ -100,7 +147,13 @@ export function OwnerOnboardingWizard({
             <p className="text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
               Step {step + 1} of {sections.length}
             </p>
-            <h1 className="mt-1 text-xl font-black">{sections[step]}</h1>
+            <h1
+              ref={mobileHeadingRef}
+              tabIndex={-1}
+              className="mt-1 scroll-mt-4 text-xl font-black focus:outline-none"
+            >
+              {sections[step]}
+            </h1>
           </div>
           <span className="text-sm font-bold text-foreground-muted">
             {Math.round(((step + 1) / sections.length) * 100)}%
@@ -128,7 +181,7 @@ export function OwnerOnboardingWizard({
           <button
             type="button"
             key={section}
-            onClick={() => setStep(index)}
+            onClick={() => transitionToStep(index)}
             aria-current={step === index ? "step" : undefined}
             className={`min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 text-sm ${step === index ? "bg-primary text-white" : "bg-surface-subtle text-foreground-muted"}`}
           >
@@ -136,6 +189,9 @@ export function OwnerOnboardingWizard({
           </button>
         ))}
       </nav>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        Step {step + 1} of {sections.length}: {sections[step]}
+      </p>
       {notice ? (
         <p
           role={Object.keys(fieldErrors).length ? "alert" : "status"}
@@ -148,7 +204,15 @@ export function OwnerOnboardingWizard({
       <input type="hidden" name="timezone" value={timezone} />
 
       <section className={sectionClass(0)} data-owner-step-panel="1">
-        <h1 className="hidden text-2xl font-bold sm:block">Business</h1>
+        <h1
+          ref={(node) => {
+            stepHeadingRefs.current[0] = node;
+          }}
+          tabIndex={-1}
+          className="hidden scroll-mt-4 text-2xl font-bold focus:outline-none sm:block"
+        >
+          Business
+        </h1>
         <label className="block text-sm font-bold">
           Business name
           <input
@@ -172,6 +236,7 @@ export function OwnerOnboardingWizard({
         <div data-onboarding-field="countrySelector">
           <p className="mb-2 text-sm font-bold">Country</p>
           <CountrySelector
+            ref={countrySelectorRef}
             name="country"
             value={country}
             onChange={(item) => {
@@ -281,7 +346,15 @@ export function OwnerOnboardingWizard({
         </label>
       </section>
       <section className={sectionClass(1)} data-owner-step-panel="2">
-        <h1 className="hidden text-2xl font-bold sm:block">Loyalty Program</h1>
+        <h1
+          ref={(node) => {
+            stepHeadingRefs.current[1] = node;
+          }}
+          tabIndex={-1}
+          className="hidden scroll-mt-4 text-2xl font-bold focus:outline-none sm:block"
+        >
+          Loyalty Program
+        </h1>
         <label className="block text-sm font-bold">
           Loyalty mode
           <select
@@ -305,7 +378,15 @@ export function OwnerOnboardingWizard({
         </label>
       </section>
       <section className={sectionClass(2)}>
-        <h1 className="hidden text-2xl font-bold sm:block">Rewards</h1>
+        <h1
+          ref={(node) => {
+            stepHeadingRefs.current[2] = node;
+          }}
+          tabIndex={-1}
+          className="hidden scroll-mt-4 text-2xl font-bold focus:outline-none sm:block"
+        >
+          Rewards
+        </h1>
         <label className="block text-sm font-bold">
           Reward
           <input
@@ -336,8 +417,52 @@ export function OwnerOnboardingWizard({
         </label>
       </section>
       <section className={sectionClass(3)}>
-        <h1 className="hidden text-2xl font-bold sm:block">Brand Identity</h1>
+        <h1
+          ref={(node) => {
+            stepHeadingRefs.current[3] = node;
+          }}
+          tabIndex={-1}
+          className="hidden scroll-mt-4 text-2xl font-bold focus:outline-none sm:block"
+        >
+          Brand Identity
+        </h1>
         <div className="flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
+          <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
+            {logoPreview ? (
+              <img
+                src={logoPreview}
+                alt="Current business logo preview"
+                className="size-full object-contain p-2"
+              />
+            ) : (
+              <span className="text-3xl font-black text-foreground-subtle">
+                {String(draft.name || "L").slice(0, 1)}
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold">Business identity</p>
+            <p className="mt-1 text-sm text-foreground-muted">
+              Logo and card branding are configured once in Loyalty Card.
+            </p>
+          </div>
+        </div>
+      </section>
+      <section className={sectionClass(4)}>
+        <h1
+          ref={(node) => {
+            stepHeadingRefs.current[4] = node;
+          }}
+          tabIndex={-1}
+          className="hidden scroll-mt-4 text-2xl font-bold focus:outline-none sm:block"
+        >
+          Loyalty Card
+        </h1>
+        <p className="mt-1 text-sm text-foreground-muted">
+          Standard Card is enabled. Preview customer data is illustrative; the
+          saved card always uses each customer’s live details.
+        </p>
+        <div className="mt-4 flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
           <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
             {logoPreview ? (
               <img
@@ -383,27 +508,6 @@ export function OwnerOnboardingWizard({
           name="logoUrl"
           value={String(draft.logoUrl || "")}
         />
-        <input
-          name="primaryColor"
-          type="color"
-          defaultValue={String(draft.primaryColor || "#111827")}
-          className="h-12 w-full rounded-xl border"
-        />
-        <select
-          name="themePreset"
-          defaultValue={String(draft.themePreset || "DEFAULT")}
-          className="w-full rounded-xl border px-4 py-3"
-        >
-          <option value="DEFAULT">Light</option>
-          <option value="DARK">Dark</option>
-        </select>
-      </section>
-      <section className={sectionClass(4)}>
-        <h1 className="hidden text-2xl font-bold sm:block">Loyalty Card</h1>
-        <p className="mt-1 text-sm text-foreground-muted">
-          Standard Card is enabled. Preview customer data is illustrative; the
-          saved card always uses each customer’s live details.
-        </p>
         <div className="mt-4">
           <StandardCardSetup
             initial={{
@@ -427,7 +531,15 @@ export function OwnerOnboardingWizard({
         </div>
       </section>
       <section className={sectionClass(5)}>
-        <h1 className="hidden text-2xl font-bold sm:block">Review & Launch</h1>
+        <h1
+          ref={(node) => {
+            stepHeadingRefs.current[5] = node;
+          }}
+          tabIndex={-1}
+          className="hidden scroll-mt-4 text-2xl font-bold focus:outline-none sm:block"
+        >
+          Review & Launch
+        </h1>
         <p className="mt-2 text-sm text-foreground-muted">
           Your progress is saved safely to your account. Launch creates your
           isolated business only after required setup is complete.
@@ -436,7 +548,7 @@ export function OwnerOnboardingWizard({
       <div className="grid min-w-0 grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between">
         <button
           type="button"
-          onClick={() => setStep(Math.max(0, step - 1))}
+          onClick={() => transitionToStep(step - 1)}
           disabled={!step}
           className="min-h-12 w-full rounded-xl border px-4 py-3 disabled:opacity-50 sm:w-auto"
         >

@@ -76,11 +76,12 @@ test("mobile owner onboarding advances only after visible Step 1 validation", ()
   assert.doesNotMatch(wizard, /setStep\(Math\.min\(5, step \+ 1\)\)/);
 });
 
-test("typed country text is validated instead of a stale hidden country value", () => {
+test("country search submits a canonical selected value instead of raw query text", () => {
   const selector = source("components/onboarding/country-selector.tsx");
   const wizard = source("components/owner-onboarding-wizard.tsx");
-  assert.match(selector, /name=\{name\}/);
-  assert.match(wizard, /<CountrySelector\s+name="country"/);
+  assert.match(selector, /type="hidden" name=\{name\} value=\{value\}/);
+  assert.doesNotMatch(selector, /id=\{id\}\s+name=\{name\}/);
+  assert.match(wizard, /<CountrySelector[\s\S]*?name="country"/);
   assert.doesNotMatch(wizard, /type="hidden" name="country"/);
 });
 

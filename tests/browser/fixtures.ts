@@ -18,7 +18,7 @@ export type BrowserUatFixture = {
   publicEnrollmentPhone: string;
 };
 
-export function uatEmail(role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin", runId: string) {
+export function uatEmail(role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin" | "pending-owner", runId: string) {
   return `lf-uat-final-${role}-${runId}@example.test`;
 }
 

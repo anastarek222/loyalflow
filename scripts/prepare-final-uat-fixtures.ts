@@ -200,8 +200,12 @@ async function cleanup(run: string) {
 
     await transaction.user.deleteMany({
       where: {
-        email: `lf-uat-final-superadmin-${run}@example.test`,
-        role: "SUPER_ADMIN",
+        email: {
+          in: [
+            `lf-uat-final-superadmin-${run}@example.test`,
+            `lf-uat-final-pending-owner-${run}@example.test`,
+          ],
+        },
         businessId: null,
       },
     });
@@ -404,6 +408,7 @@ async function prepareFixtures() {
     prisma.user.create({ data: { firstName: "Final UAT Owner Sales", email: `lf-uat-final-owner-sales-${runId}@example.test`, passwordHash, role: "OWNER", businessId: businessSales.id } }),
     prisma.user.create({ data: { firstName: "Final UAT Inactive Owner", email: `lf-uat-final-inactive-owner-${runId}@example.test`, passwordHash, role: "OWNER", businessId: inactiveBusiness.id } }),
     prisma.user.create({ data: { firstName: "Final UAT Super Admin", email: `lf-uat-final-superadmin-${runId}@example.test`, passwordHash, role: "SUPER_ADMIN", language: "EN" } }),
+    prisma.user.create({ data: { firstName: "Final UAT Pending Owner", email: `lf-uat-final-pending-owner-${runId}@example.test`, passwordHash, role: "OWNER", onboardingStatus: "PENDING", language: "EN" } }),
   ]);
   const ownerA = createdUsers[0]!;
   const staffA = createdUsers[2]!;
