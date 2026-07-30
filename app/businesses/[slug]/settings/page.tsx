@@ -407,6 +407,45 @@ export default async function BusinessSettingsPage({
             {query.cardDesign === "readonly" ? <p className="mt-3 rounded-xl bg-primary/5 p-3 text-sm font-bold text-primary">{t("التصميم المخصص محفوظ كما هو وتتم إدارته بواسطة مدير النظام.", "The Custom Card was preserved unchanged and is managed by Super Admin.")}</p> : null}
           </div>
           <form action={updateCardDesign}>
+            {session.user.role === "SUPER_ADMIN" || business.cardDesignMode === "STANDARD" ? (
+              <fieldset className="mb-5 rounded-2xl border border-border bg-surface-subtle p-5">
+                <legend className="px-1 font-black">
+                  {t("شعار النشاط", "Business logo")}
+                </legend>
+                <p className="mb-4 text-sm text-foreground-muted">
+                  {t(
+                    "هذا هو المصدر الوحيد لشعار النشاط ويُستخدم تلقائيًا على البطاقة والأسطح العامة.",
+                    "This is the single business-logo source used by the card and public customer surfaces.",
+                  )}
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-sm font-bold text-foreground">
+                    {t("رفع شعار", "Upload logo")}
+                    <input
+                      name="logoFile"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                    />
+                  </label>
+                  <label className="text-sm font-bold text-foreground">
+                    {t("أو رابط الشعار", "Or logo URL")}
+                    <input
+                      name="logoUrl"
+                      type="url"
+                      defaultValue={business.logoUrl?.startsWith("http") ? business.logoUrl : ""}
+                      maxLength={500}
+                      placeholder="https://example.com/logo.png"
+                      className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                    />
+                  </label>
+                </div>
+                <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-foreground-muted">
+                  <input name="removeLogo" type="checkbox" className="size-4" />
+                  {t("إزالة الشعار الحالي", "Remove current logo")}
+                </label>
+              </fieldset>
+            ) : null}
             <StandardCardSetup
               allowCustom={session.user.role === "SUPER_ADMIN"}
               language={language}

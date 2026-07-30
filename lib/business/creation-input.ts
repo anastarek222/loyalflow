@@ -2,14 +2,15 @@ import { passwordValueSchema } from "@/lib/auth/password-policy";
 import { billingInputSchema } from "@/lib/billing/subscription";
 import { isValidRemoteImageUrl } from "@/lib/branding/image-data";
 import {
-  isSupportedCurrency,
-  isValidBusinessPhone,
-  isValidIanaTimezone,
   isValidOwnerPhone,
 } from "@/lib/business-profile";
 import { z } from "zod";
 import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
-import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
+import {
+  businessIdentityFields,
+  loyaltyProgramFields,
+  validateCountryProfile,
+} from "@/lib/business/domain-validation";
 
 const formBoolean = z.preprocess(
   (value) => value === true || value === "true" || value === "on",
@@ -27,36 +28,17 @@ function isValidHttpUrl(value: string) {
 }
 
 export const businessCreationSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  contactPhone: z
-    .string()
-    .trim()
-    .max(25)
-    .refine((value) => value === "" || isValidBusinessPhone(value)),
-  currency: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || isSupportedCurrency(value)),
-  timezone: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || isValidIanaTimezone(value)),
-  industry: z.string().trim().max(100),
-  website: z
-    .preprocess(
-      (value) => typeof value === "string"
-        ? normalizeWebsiteUrl(value) ?? value.trim()
-        : value,
-      z.string().trim().max(300).refine(
-        (value) => value === "" || normalizeWebsiteUrl(value) !== null,
-        "Enter a valid website, for example xtvco.com",
-      ),
-    ),
-  email: z.string().trim().max(255).email().or(z.literal("")),
-  country: z.string().trim().max(100),
-  city: z.string().trim().max(100),
-  taxNumber: z.string().trim().max(100),
-  employeeCount: z.coerce.number().int().min(0).max(100000),
+  name: businessIdentityFields.name,
+  contactPhone: businessIdentityFields.contactPhone,
+  currency: businessIdentityFields.currency,
+  timezone: businessIdentityFields.timezone,
+  industry: businessIdentityFields.industry,
+  website: businessIdentityFields.website,
+  email: businessIdentityFields.email,
+  country: businessIdentityFields.country,
+  city: businessIdentityFields.city,
+  taxNumber: businessIdentityFields.taxNumber,
+  employeeCount: businessIdentityFields.employeeCount,
   ownerFirstName: z.string().trim().min(2).max(80),
   ownerLastName: z.string().trim().max(80),
   ownerEmail: z.string().trim().max(255).email(),
@@ -71,11 +53,7 @@ export const businessCreationSchema = z.object({
     .trim()
     .max(500)
     .refine((value) => value === "" || isValidRemoteImageUrl(value)),
-  loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
-  unitName: z.string().trim().min(1).max(30),
-  rewardName: z.string().trim().min(2).max(100),
-  rewardThreshold: z.coerce.number().int().min(1).max(1000000),
-  earnAmount: z.coerce.number().int().min(1).max(1000000),
+  ...loyaltyProgramFields,
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   themePreset: z.enum([
@@ -97,6 +75,19 @@ export const businessCreationSchema = z.object({
   customCardSafeZoneVersion: z.literal("ID1_V1").default("ID1_V1"),
   plan: z.enum(["FREE", "STARTER", "PRO", "BUSINESS"]).default("FREE"),
 }).and(billingInputSchema).superRefine((value, context) => {
+  if (value.country && value.currency && value.timezone) {
+    const profileError = validateCountryProfile(value);
+    if (profileError) {
+      context.addIssue({
+        code: "custom",
+        path: [profileError.field],
+        message:
+          profileError.reason === "COUNTRY_TIMEZONE_MISMATCH"
+            ? "Choose a timezone for the selected country."
+            : `Choose a valid ${profileError.field}.`,
+      });
+    }
+  }
   if (
     value.cardDesignMode === "CUSTOM" &&
     (!value.customCardArtworkEnabled || !value.customCardFrontArtworkUrl || !value.customCardBackArtworkUrl)

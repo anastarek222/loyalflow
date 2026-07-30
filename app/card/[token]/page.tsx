@@ -5,7 +5,7 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
-import { getBusinessTheme } from "@/lib/theme";
+import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
 import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
 import prisma from "@/lib/prisma";
@@ -203,7 +203,7 @@ export default async function PublicCardPage({
   );
 
   const theme =
-    getBusinessTheme(business);
+    getCustomerExperienceTheme(business);
   const publicOffers = business.offers.filter((offer) =>
     isOfferEligible(
       offer,

@@ -1,9 +1,8 @@
 import {
-  isSupportedCurrency,
   isValidBusinessPhone,
-  isValidIanaTimezone,
 } from "@/lib/business-profile";
 import { COUNTRY_OPTIONS } from "@/lib/onboarding/countries";
+import { validateCountryProfile } from "@/lib/business/domain-validation";
 
 export type OwnerOnboardingFieldError = {
   field: string;
@@ -39,18 +38,23 @@ export function validateOwnerOnboardingStep(
       field: "name",
       message: "Enter a business name with at least 2 characters.",
     };
-  if (!COUNTRY_OPTIONS.some((option) => option.name === country)) {
+  const profileError = validateCountryProfile({
+    country,
+    currency,
+    timezone,
+  });
+  if (profileError?.field === "country") {
     return {
       field: "countrySelector",
       message: "Choose a country from the list.",
     };
   }
-  if (!isSupportedCurrency(currency))
+  if (profileError?.field === "currency")
     return {
       field: "currencyInput",
       message: "Enter a supported 3-letter currency code.",
     };
-  if (!isValidIanaTimezone(timezone))
+  if (profileError?.field === "timezone")
     return {
       field: "timezoneInput",
       message: "Enter a valid timezone for the selected country.",

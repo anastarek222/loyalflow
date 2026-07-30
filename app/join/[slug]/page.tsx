@@ -3,7 +3,7 @@ import JoinSubmitButton from "@/components/join-submit-button";
 import { joinBusinessAction } from "@/app/join/[slug]/actions";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import prisma from "@/lib/prisma";
-import { getBusinessTheme } from "@/lib/theme";
+import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
 import { notFound } from "next/navigation";
 
@@ -77,7 +77,7 @@ export default async function JoinBusinessPage({
   }
 
   const theme =
-    getBusinessTheme(business);
+    getCustomerExperienceTheme(business);
 
   const joinBusiness = joinBusinessAction.bind(null, business.slug);
   const referralCode = normalizeReferralCode(query.ref);

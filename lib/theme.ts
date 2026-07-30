@@ -22,7 +22,12 @@ export type BusinessTheme = {
 };
 
 
-export function getBusinessTheme(
+/**
+ * Resolves branding for public, customer-facing surfaces only.
+ * Authenticated LoyalFlow pages must use global design tokens; the legacy
+ * `getBusinessTheme` alias below exists only until those callers are removed.
+ */
+export function getCustomerExperienceTheme(
   business: BusinessThemeSource
 ): BusinessTheme {
 
@@ -135,3 +140,10 @@ export function getBusinessTheme(
         : "text-slate-950",
   };
 }
+
+/**
+ * @deprecated Authenticated app pages must not introduce new calls to this
+ * compatibility alias. Use global LoyalFlow tokens internally and
+ * `getCustomerExperienceTheme` only on public customer routes.
+ */
+export const getBusinessTheme = getCustomerExperienceTheme;

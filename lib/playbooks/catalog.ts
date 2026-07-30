@@ -1,4 +1,5 @@
 import type { LoyaltyMode, RewardType } from "@/generated/prisma/client";
+import { loyaltyProgramSchema } from "@/lib/business/domain-validation";
 
 export const businessPlaybookIds = [
   "BARBER",
@@ -191,8 +192,10 @@ export function playbookMatchesBusiness(playbook: BusinessPlaybook, state: Playb
 }
 
 export function getPlaybookBusinessUpdate(playbook: BusinessPlaybook) {
+  const defaultMilestone = loyaltyProgramSchema.parse(playbook.settings);
   return {
     ...playbook.settings,
+    ...defaultMilestone,
     rewardCode: null,
     welcomeMessage: null,
   };

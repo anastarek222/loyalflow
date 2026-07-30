@@ -49,10 +49,13 @@ test("U10 server actions retain tenant-scoped team and branch safeguards", () =>
 
 test("U10 preserves canonical profile, loyalty, branding, enrollment, and playbook contracts", () => {
   const settingsActions = source("app/businesses/[slug]/settings/actions.ts");
+  const domainValidation = source("lib/business/domain-validation.ts");
   const settings = source("app/businesses/[slug]/settings/page.tsx");
   const playbookActions = source("app/businesses/[slug]/playbooks/actions.ts");
-  assert.match(settingsActions, /isSupportedCurrency/);
-  assert.match(settingsActions, /isValidIanaTimezone/);
+  assert.match(settingsActions, /businessIdentityFields\.currency/);
+  assert.match(settingsActions, /businessIdentityFields\.timezone/);
+  assert.match(domainValidation, /isSupportedCurrency/);
+  assert.match(domainValidation, /isValidIanaTimezone/);
   assert.doesNotMatch(settingsActions, /slug:\s*parsed/);
   assert.match(settingsActions, /qrStyle:\s*parsed\.data\.qrStyle/);
   assert.match(settingsActions, /qrPosition:\s*parsed\.data\.qrPosition/);

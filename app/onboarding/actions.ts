@@ -4,9 +4,6 @@ import { auth } from "@/auth";
 import { z } from "zod";
 import {
   createWithGeneratedSlug,
-  isSupportedCurrency,
-  isValidBusinessPhone,
-  isValidIanaTimezone,
   optionalBusinessPhoneValue,
 } from "@/lib/business-profile";
 import {
@@ -14,7 +11,6 @@ import {
   imageFileToDataUrl,
   isValidRemoteImageUrl,
 } from "@/lib/branding/image-data";
-import { COUNTRY_OPTIONS } from "@/lib/onboarding/countries";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
@@ -22,21 +18,26 @@ import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
 import { normalizeOwnerOnboardingPhone } from "@/lib/onboarding/owner-onboarding-validation";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { logServerEvent } from "@/lib/server/logging";
+import {
+  businessIdentityFields,
+  loyaltyProgramFields,
+  validateCountryProfile,
+} from "@/lib/business/domain-validation";
 
 const ownerDraftSchema = z
   .object({
-    name: z.string().trim().max(80).default(""),
-    industry: z.string().trim().max(100).default(""),
-    country: z.string().trim().max(100).default(""),
-    city: z.string().trim().max(100).default(""),
-    contactPhone: z.string().trim().max(25).default(""),
-    currency: z.string().trim().max(3).default(""),
-    timezone: z.string().trim().max(100).default(""),
-    loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]).default("VISITS"),
-    unitName: z.string().trim().max(30).default("Visit"),
-    rewardName: z.string().trim().max(100).default("Reward"),
-    rewardThreshold: z.coerce.number().int().min(1).max(1_000_000).default(5),
-    earnAmount: z.coerce.number().int().min(1).max(1_000_000).default(1),
+    name: businessIdentityFields.name.or(z.literal("")).default(""),
+    industry: businessIdentityFields.industry.default(""),
+    country: businessIdentityFields.country.default(""),
+    city: businessIdentityFields.city.default(""),
+    contactPhone: businessIdentityFields.contactPhone.default(""),
+    currency: businessIdentityFields.currency.default(""),
+    timezone: businessIdentityFields.timezone.default(""),
+    loyaltyMode: loyaltyProgramFields.loyaltyMode.default("VISITS"),
+    unitName: loyaltyProgramFields.unitName.default("Visit"),
+    rewardName: loyaltyProgramFields.rewardName.default("Reward"),
+    rewardThreshold: loyaltyProgramFields.rewardThreshold.default(5),
+    earnAmount: loyaltyProgramFields.earnAmount.default(1),
     primaryColor: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
@@ -49,42 +50,15 @@ const ownerDraftSchema = z
       .default("OTHER"),
   })
   .superRefine((data, context) => {
-    const country = COUNTRY_OPTIONS.find(
-      (option) => option.name === data.country,
-    );
-    if (!country)
+    const profileError = validateCountryProfile(data);
+    if (profileError)
       context.addIssue({
         code: "custom",
-        path: ["country"],
-        message: "Choose a valid country.",
-      });
-    if (data.currency && !isSupportedCurrency(data.currency))
-      context.addIssue({
-        code: "custom",
-        path: ["currency"],
-        message: "Choose a valid currency.",
-      });
-    if (data.timezone && !isValidIanaTimezone(data.timezone))
-      context.addIssue({
-        code: "custom",
-        path: ["timezone"],
-        message: "Choose a valid timezone.",
-      });
-    if (
-      country?.timezones?.length &&
-      data.timezone &&
-      !country.timezones.includes(data.timezone)
-    )
-      context.addIssue({
-        code: "custom",
-        path: ["timezone"],
-        message: "Choose a timezone for the selected country.",
-      });
-    if (data.contactPhone && !isValidBusinessPhone(data.contactPhone))
-      context.addIssue({
-        code: "custom",
-        path: ["contactPhone"],
-        message: "Enter a valid international phone number.",
+        path: [profileError.field],
+        message:
+          profileError.reason === "COUNTRY_TIMEZONE_MISMATCH"
+            ? "Choose a timezone for the selected country."
+            : `Choose a valid ${profileError.field}.`,
       });
     if (
       data.logoUrl &&

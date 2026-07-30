@@ -11,8 +11,6 @@ import {
   isValidRemoteImageUrl,
 } from "@/lib/branding/image-data";
 import {
-  isSupportedCurrency,
-  isValidIanaTimezone,
   isValidBusinessPhone,
   optionalProfileValue,
 } from "@/lib/business-profile";
@@ -22,8 +20,11 @@ import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
 import { getAuthorizedCardDesignUpdate } from "@/lib/cards/card-design-permissions";
+import {
+  businessIdentityFields,
+  loyaltyProgramFields,
+} from "@/lib/business/domain-validation";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -34,6 +35,11 @@ const cardBusinessDetailsSchema = z.object({
 });
 
 const cardDesignSchema = z.object({
+  logoUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((value) => value === "" || isValidRemoteImageUrl(value)),
   cardDesignMode: z.enum(["STANDARD", "CUSTOM"]),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   themePreset: z.enum(["DEFAULT", "DARK"]),
@@ -72,13 +78,7 @@ const cardDesignSchema = z.object({
 });
 
 const settingsSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-
-  logoUrl: z
-    .string()
-    .trim()
-    .max(500)
-    .refine((value) => value === "" || isValidRemoteImageUrl(value)),
+  name: businessIdentityFields.name,
 
   coverImageUrl: z
     .string()
@@ -86,73 +86,28 @@ const settingsSchema = z.object({
     .max(500)
     .refine((value) => value === "" || isValidRemoteImageUrl(value)),
 
-  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  currency: businessIdentityFields.currency,
 
-  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  timezone: businessIdentityFields.timezone,
+  industry: businessIdentityFields.industry,
 
-  currency: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || isSupportedCurrency(value)),
+  website: businessIdentityFields.website,
 
-  timezone: z
-    .string()
-    .trim()
-    .refine((value) => value === "" || isValidIanaTimezone(value)),
-industry: z.string().trim().max(100),
+  email: businessIdentityFields.email,
 
-website: z
-  .preprocess(
-    (value) => typeof value === "string"
-      ? normalizeWebsiteUrl(value) ?? value.trim()
-      : value,
-    z.string().trim().max(300).refine(
-      (value) => value === "" || normalizeWebsiteUrl(value) !== null,
-      "Enter a valid website, for example xtvco.com",
-    ),
-  ),
+  country: businessIdentityFields.country,
 
-email: z
-  .string()
-  .trim()
-  .max(255)
-  .email()
-  .or(z.literal("")),
+  city: businessIdentityFields.city,
 
-country: z.string().trim().max(100),
+  taxNumber: businessIdentityFields.taxNumber,
 
-city: z.string().trim().max(100),
+  employeeCount: businessIdentityFields.employeeCount,
 
-taxNumber: z.string().trim().max(100),
-
-employeeCount: z.coerce.number().int().min(0).max(100000),
-
-  description: z.string().trim().max(500),
+  description: businessIdentityFields.description,
 
   instagramUrl: z.string().trim().max(300),
   facebookUrl: z.string().trim().max(300),
   tiktokUrl: z.string().trim().max(300),
-
-  themePreset: z.enum([
-    "DEFAULT",
-    "MINIMAL",
-    "LUXURY",
-    "DARK",
-    "MODERN",
-    "GRADIENT",
-  ]),
-
-  cardStyle: z.enum([
-    "CLASSIC",
-    "COMPACT",
-    "PREMIUM",
-  ]),
-
-  fontFamily: z.enum([
-    "INTER",
-    "CAIRO",
-    "POPPINS",
-  ]),
 
   qrStyle: z.enum([
     "CLASSIC",
@@ -175,11 +130,11 @@ employeeCount: z.coerce.number().int().min(0).max(100000),
 
   staffAttributionMode: z.enum(["OFF", "OPTIONAL", "REQUIRED"]),
 
-  loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
+  loyaltyMode: loyaltyProgramFields.loyaltyMode,
 
-  unitName: z.string().trim().min(1).max(30),
+  unitName: loyaltyProgramFields.unitName,
 
-  rewardName: z.string().trim().min(2).max(100),
+  rewardName: loyaltyProgramFields.rewardName,
 
   rewardType: z.enum(["GIFT", "PROMO_CODE", "DISCOUNT", "CUSTOM"]),
 
@@ -187,9 +142,9 @@ employeeCount: z.coerce.number().int().min(0).max(100000),
 
   rewardDescription: z.string().trim().max(300),
 
-  rewardThreshold: z.coerce.number().int().min(1).max(1000000),
+  rewardThreshold: loyaltyProgramFields.rewardThreshold,
 
-  earnAmount: z.coerce.number().int().min(1).max(1000000),
+  earnAmount: loyaltyProgramFields.earnAmount,
 
   whatsappWelcomeMessage: z.string().trim().min(1).max(1500),
 
@@ -215,7 +170,6 @@ export async function updateBusinessSettingsAction(
     select: {
       id: true,
       slug: true,
-      logoUrl: true,
       coverImageUrl: true,
     },
   });
@@ -230,25 +184,11 @@ export async function updateBusinessSettingsAction(
     redirect("/dashboard");
   }
 
-  const removeLogo = formData.get("removeLogo") === "on";
   const removeCoverImage = formData.get("removeCoverImage") === "on";
 
-  const logoFile = formData.get("logoFile");
   const coverImageFile = formData.get("coverImageFile");
 
-  let uploadedLogoDataUrl: string | null = null;
   let uploadedCoverImageDataUrl: string | null = null;
-
-  if (logoFile instanceof File && logoFile.size > 0) {
-    uploadedLogoDataUrl = await imageFileToDataUrl(
-      logoFile,
-      500 * 1024
-    );
-
-    if (!uploadedLogoDataUrl) {
-      redirect(`/businesses/${business.slug}/settings?error=invalid`);
-    }
-  }
 
   if (coverImageFile instanceof File && coverImageFile.size > 0) {
     uploadedCoverImageDataUrl = await imageFileToDataUrl(
@@ -263,10 +203,7 @@ export async function updateBusinessSettingsAction(
 
   const parsed = settingsSchema.safeParse({
     name: formData.get("name"),
-    logoUrl: formData.get("logoUrl") ?? "",
     coverImageUrl: formData.get("coverImageUrl") ?? "",
-    primaryColor: formData.get("primaryColor"),
-    secondaryColor: formData.get("secondaryColor"),
     currency: formData.get("currency") ?? "",
     timezone: formData.get("timezone") ?? "",
     industry: formData.get("industry") ?? "",
@@ -283,9 +220,6 @@ export async function updateBusinessSettingsAction(
     facebookUrl: formData.get("facebookUrl") ?? "",
     tiktokUrl: formData.get("tiktokUrl") ?? "",
 
-    themePreset: formData.get("themePreset") ?? "DEFAULT",
-    cardStyle: formData.get("cardStyle") ?? "CLASSIC",
-    fontFamily: formData.get("fontFamily") ?? "INTER",
     qrStyle: formData.get("qrStyle") ?? "CLASSIC",
     qrPosition: formData.get("qrPosition") ?? "CENTER",
 
@@ -319,12 +253,7 @@ export async function updateBusinessSettingsAction(
     redirect(`/businesses/${business.slug}/settings?error=invalid`);
   }
 
-  const submittedLogoUrl = parsed.data.logoUrl || null;
   const submittedCoverImageUrl = parsed.data.coverImageUrl || null;
-
-  const finalLogoUrl = removeLogo
-    ? null
-    : (uploadedLogoDataUrl ?? submittedLogoUrl ?? business.logoUrl);
 
   const finalCoverImageUrl = removeCoverImage
     ? null
@@ -343,10 +272,7 @@ export async function updateBusinessSettingsAction(
       },
       data: {
         name: parsed.data.name,
-        logoUrl: finalLogoUrl,
         coverImageUrl: finalCoverImageUrl,
-        primaryColor: parsed.data.primaryColor,
-        secondaryColor: parsed.data.secondaryColor,
         currency: optionalProfileValue(parsed.data.currency),
         timezone: optionalProfileValue(parsed.data.timezone),
 
@@ -364,9 +290,6 @@ export async function updateBusinessSettingsAction(
         facebookUrl: optionalProfileValue(parsed.data.facebookUrl),
         tiktokUrl: optionalProfileValue(parsed.data.tiktokUrl),
 
-        themePreset: parsed.data.themePreset,
-        cardStyle: parsed.data.cardStyle,
-        fontFamily: parsed.data.fontFamily,
         qrStyle: parsed.data.qrStyle,
         qrPosition: parsed.data.qrPosition,
 
@@ -426,12 +349,21 @@ export async function updateBusinessCardDesignAction(
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, cardDesignMode: true },
+    select: { id: true, slug: true, logoUrl: true, cardDesignMode: true },
   });
   if (!business) redirect("/businesses");
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
 
+  const logoFile = formData.get("logoFile");
+  let uploadedLogoDataUrl: string | null = null;
+  if (logoFile instanceof File && logoFile.size > 0) {
+    uploadedLogoDataUrl = await imageFileToDataUrl(logoFile, 500 * 1024);
+    if (!uploadedLogoDataUrl)
+      redirect(`/businesses/${slug}/settings?cardDesign=invalid`);
+  }
+
   const parsed = cardDesignSchema.safeParse({
+    logoUrl: formData.get("logoUrl") ?? "",
     cardDesignMode: formData.get("cardDesignMode") ?? "STANDARD",
     primaryColor: formData.get("primaryColor"),
     themePreset: formData.get("themePreset") ?? "DEFAULT",
@@ -458,12 +390,17 @@ export async function updateBusinessCardDesignAction(
       }`,
     );
   }
+  const submittedLogoUrl = uploadedLogoDataUrl ?? parsed.data.logoUrl;
+  const finalLogoUrl =
+    formData.get("removeLogo") === "on"
+      ? null
+      : submittedLogoUrl || business.logoUrl;
 
   const activityContext = await getActivityRequestContext();
   await prisma.$transaction([
     prisma.business.update({
       where: { id: business.id },
-      data: authorizedUpdate.data,
+      data: { ...authorizedUpdate.data, logoUrl: finalLogoUrl },
     }),
     prisma.businessActivity.create({
       data: {

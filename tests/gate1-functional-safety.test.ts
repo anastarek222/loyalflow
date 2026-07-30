@@ -101,7 +101,10 @@ test("Super Admin retains complete Standard and Custom Card control", () => {
 
 test("Owner card protection is enforced by persisted server state", () => {
   const action = source("app/businesses/[slug]/settings/actions.ts");
-  assert.match(action, /select: \{ id: true, slug: true, cardDesignMode: true \}/);
+  assert.match(
+    action,
+    /select: \{ id: true, slug: true, logoUrl: true, cardDesignMode: true \}/,
+  );
   assert.match(action, /getAuthorizedCardDesignUpdate/);
   assert.match(action, /currentDesignMode: business\.cardDesignMode/);
   assert.doesNotMatch(

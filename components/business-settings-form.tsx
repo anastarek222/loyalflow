@@ -273,6 +273,12 @@ export default function BusinessSettingsForm({
           <p className="mt-1 text-sm text-foreground-subtle">
             {tr("اجعل تجربة العمل اليومية بسيطة، وخصص هوية العميل عند الحاجة.", "Keep the daily experience simple, then customise the customer-facing brand when you need it.")}
           </p>
+          <p className="mt-3 rounded-[var(--lf-radius-input)] border border-primary/20 bg-primary-subtle p-3 text-sm text-primary">
+            {tr(
+              "تصميم البطاقة والشعار للعرض فقط هنا. عدّلهما من قسم بطاقة الولاء أعلاه.",
+              "Card design and the business logo are read-only here. Edit them in the Loyalty Card section above.",
+            )}
+          </p>
 
 
           <div className="mt-8 rounded-[var(--lf-radius-card)] border border-border p-6">
@@ -303,13 +309,14 @@ export default function BusinessSettingsForm({
                   <span className="mt-4 flex items-center gap-3">
                     <input
                       type="color"
+                      disabled
                       value={primaryColor}
                       onChange={(event) => setPrimaryColor(event.target.value)}
                       className="h-11 w-14 cursor-pointer rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
                       aria-label={tr("اللون الأساسي للهوية", "Primary brand colour")}
                     />
                     <input
-                      name="primaryColor"
+                      disabled
                       value={primaryColor}
                       onChange={(event) => setPrimaryColor(event.target.value)}
                       className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-foreground"
@@ -324,13 +331,14 @@ export default function BusinessSettingsForm({
                   <span className="mt-4 flex items-center gap-3">
                     <input
                       type="color"
+                      disabled
                       value={secondaryColor}
                       onChange={(event) => setSecondaryColor(event.target.value)}
                       className="h-11 w-14 cursor-pointer rounded-[var(--lf-radius-input)] border border-border bg-white p-1"
                       aria-label={tr("اللون الثانوي للهوية", "Secondary brand colour")}
                     />
                     <input
-                      name="secondaryColor"
+                      disabled
                       value={secondaryColor}
                       onChange={(event) => setSecondaryColor(event.target.value)}
                       className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 font-mono text-sm uppercase text-foreground"
@@ -361,7 +369,7 @@ export default function BusinessSettingsForm({
                       >
                         <input
                           type="radio"
-                          name="themePreset"
+                          disabled
                           value={option.value}
                           checked={selected}
                           onChange={() => setThemePreset(option.value)}
@@ -407,7 +415,7 @@ export default function BusinessSettingsForm({
                         >
                           <input
                             type="radio"
-                            name="cardStyle"
+                            disabled
                             value={option.value}
                             checked={selected}
                             onChange={() => setCardStyle(option.value)}
@@ -429,7 +437,7 @@ export default function BusinessSettingsForm({
                 <div>
                   <label className="mb-2 block text-sm font-bold text-foreground">{tr("الخط", "Typography")}</label>
                   <select
-                    name="fontFamily"
+                    disabled
                     value={fontFamily}
                     onChange={(event) => setFontFamily(event.target.value)}
                     className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground"
@@ -991,7 +999,7 @@ export default function BusinessSettingsForm({
 
               <input
                 id="logoFile"
-                name="logoFile"
+                disabled
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
                 onChange={(event) => {
@@ -1029,11 +1037,9 @@ export default function BusinessSettingsForm({
               </p>
             </div>
 
-            <input type="hidden" name="logoUrl" value={logoUrl} />
-
             <label className="flex cursor-pointer items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-4">
               <input
-                name="removeLogo"
+                disabled
                 type="checkbox"
                 checked={removeLogo}
                 onChange={(event) => {
@@ -1068,7 +1074,7 @@ export default function BusinessSettingsForm({
                 </label>
 
                 <input
-                  name="primaryColor"
+                  disabled
                   type="color"
                   value={primaryColor}
                   onChange={(event) => setPrimaryColor(event.target.value)}
@@ -1082,7 +1088,7 @@ export default function BusinessSettingsForm({
                 </label>
 
                 <input
-                  name="secondaryColor"
+                  disabled
                   type="color"
                   value={secondaryColor}
                   onChange={(event) => setSecondaryColor(event.target.value)}
