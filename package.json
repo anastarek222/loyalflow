@@ -25,6 +25,7 @@
     "verify:local-bulk-customer-operations": "tsx scripts/verify-local-bulk-customer-operations.ts",
     "verify:local-offers": "tsx scripts/verify-local-offers.ts",
     "verify:local-business-profile-foundation": "tsx scripts/verify-local-business-profile-foundation.ts",
+    "verify:local-business-deletion": "tsx scripts/verify-local-business-deletion.ts",
     "prepare:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
     "cleanup:final-uat": "tsx scripts/prepare-final-uat-fixtures.ts",
     "test:browser-uat": "playwright test --config=playwright.config.ts",

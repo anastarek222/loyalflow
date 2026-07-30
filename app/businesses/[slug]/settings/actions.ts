@@ -30,6 +30,14 @@ import {
   operationsSettingsSchema,
   programRulesSettingsSchema,
 } from "@/lib/business/settings-domains";
+import {
+  BusinessDeletionStaleError,
+  canDeleteBusiness,
+  deleteBusinessData,
+  validateBusinessDeletionConfirmation,
+} from "@/lib/business/deletion";
+import type { BusinessDeletionState } from "@/components/business-deletion-danger-zone";
+import { logServerError, logServerEvent } from "@/lib/server/logging";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -529,4 +537,78 @@ export async function updateBusinessExportPermissionAction(
   revalidatePath(`/businesses/${business.slug}/activity`);
 
   redirect(`/businesses/${business.slug}/settings?exportPermissionSaved=1`);
+}
+
+export async function deleteBusinessAction(
+  slug: string,
+  _previousState: BusinessDeletionState,
+  formData: FormData,
+): Promise<BusinessDeletionState> {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { id: true, name: true, slug: true },
+  });
+  if (!business) redirect("/dashboard?businessDelete=not-found");
+  if (!canDeleteBusiness(session.user, business.id)) redirect("/dashboard");
+
+  const confirmation = validateBusinessDeletionConfirmation(
+    {
+      businessName: formData.get("businessName"),
+      confirmationWord: formData.get("confirmationWord"),
+    },
+    business.name,
+  );
+  if (!confirmation.valid) {
+    return {
+      error:
+        confirmation.reason === "BUSINESS_NAME_MISMATCH"
+          ? "business-name"
+          : "confirmation-word",
+    };
+  }
+
+  logServerEvent("BUSINESS_DELETE_REQUESTED", {
+    actorUserId: session.user.id,
+    businessId: business.id,
+    businessName: business.name,
+    requestedAt: new Date().toISOString(),
+    source: "business-settings",
+  });
+
+  try {
+    await prisma.$transaction(async (transaction) => {
+      await deleteBusinessData(transaction, business.id, business.name);
+    });
+  } catch (error) {
+    if (error instanceof BusinessDeletionStaleError) {
+      redirect("/dashboard?businessDelete=not-found");
+    }
+    logServerError("BUSINESS_DELETE_FAILED", error, {
+      actorUserId: session.user.id,
+      businessId: business.id,
+    });
+    return { error: "failed" };
+  }
+
+  logServerEvent("BUSINESS_DELETE_SUCCEEDED", {
+    actorUserId: session.user.id,
+    businessId: business.id,
+    businessName: business.name,
+    deletedAt: new Date().toISOString(),
+    source: "business-settings",
+  });
+  revalidatePath("/dashboard");
+  revalidatePath("/businesses");
+  revalidatePath(`/businesses/${business.slug}`);
+  revalidatePath(`/businesses/${business.slug}/settings`);
+  revalidatePath("/card/[token]", "page");
+  revalidatePath("/join/[slug]", "page");
+  redirect(
+    session.user.role === "SUPER_ADMIN"
+      ? "/businesses?businessDelete=success"
+      : "/dashboard",
+  );
 }

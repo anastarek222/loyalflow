@@ -8,6 +8,7 @@ import type { Prisma } from "../../generated/prisma/client";
 type BusinessesPageProps = {
   searchParams: Promise<{
     created?: string;
+    businessDelete?: string;
     error?: string;
     q?: string;
     status?: string;
@@ -180,6 +181,14 @@ export default async function BusinessesPage({
             {params.created === "invitation" ? "Owner invitation created. They can sign in to complete setup." : "Business created successfully."}
           </div>
         )}
+        {params.businessDelete === "success" ? (
+          <div
+            role="status"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success"
+          >
+            Business deleted permanently. User accounts were preserved.
+          </div>
+        ) : null}
 
         {params.error === "invalid" && (
           <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">

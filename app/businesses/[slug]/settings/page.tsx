@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
 import BusinessSettingsForm from "@/components/business-settings-form";
 import CardBusinessDetailsForm from "@/components/card-business-details-form";
-import { AdministrationNavigation } from "@/components/administration/administration-navigation";
+import { BusinessDeletionDangerZone } from "@/components/business-deletion-danger-zone";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { canManageBusiness } from "@/lib/permissions";
+import { canDeleteBusiness } from "@/lib/business/deletion";
 import prisma from "@/lib/prisma";
 import { normalizeLanguage } from "@/lib/i18n";
 import { getPlanUsage, planCatalog } from "@/lib/entitlements";
@@ -15,6 +16,7 @@ import * as QRCode from "qrcode";
 
 import {
   syncGoogleSheetAction,
+  deleteBusinessAction,
   updateBusinessCardDetailsAction,
   updateBusinessProfileAction,
   updateBusinessExportPermissionAction,
@@ -100,6 +102,7 @@ export default async function BusinessSettingsPage({
     null,
     business.slug,
   );
+  const deleteBusiness = deleteBusinessAction.bind(null, business.slug);
 
   const syncGoogleSheet = syncGoogleSheetAction.bind(null, business.slug);
 
@@ -118,7 +121,6 @@ export default async function BusinessSettingsPage({
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-7xl">
-        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="settings" language={language} />
         <Link
           href={`/businesses/${business.slug}`}
           className="text-sm font-medium text-primary hover:text-primary"
@@ -400,6 +402,13 @@ export default async function BusinessSettingsPage({
             operations: updateOperationsSettings,
           }}
         />
+        {canDeleteBusiness(session.user, business.id) ? (
+          <BusinessDeletionDangerZone
+            action={deleteBusiness}
+            businessName={business.name}
+            language={language}
+          />
+        ) : null}
       </div>
     </main>
   );
