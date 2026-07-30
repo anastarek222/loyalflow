@@ -12,7 +12,6 @@ import {
 } from "@/lib/branding/image-data";
 import {
   isValidBusinessPhone,
-  optionalProfileValue,
 } from "@/lib/business-profile";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -22,9 +21,15 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAuthorizedCardDesignUpdate } from "@/lib/cards/card-design-permissions";
 import {
-  businessIdentityFields,
-  loyaltyProgramFields,
-} from "@/lib/business/domain-validation";
+  businessProfileSettingsSchema,
+  customerMessagesSettingsSchema,
+  getBusinessProfileUpdate,
+  getCustomerMessagesUpdate,
+  getOperationsSettingsUpdate,
+  getProgramRulesUpdate,
+  operationsSettingsSchema,
+  programRulesSettingsSchema,
+} from "@/lib/business/settings-domains";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -77,131 +82,82 @@ const cardDesignSchema = z.object({
   }
 });
 
-const settingsSchema = z.object({
-  name: businessIdentityFields.name,
-
-  coverImageUrl: z
-    .string()
-    .trim()
-    .max(500)
-    .refine((value) => value === "" || isValidRemoteImageUrl(value)),
-
-  currency: businessIdentityFields.currency,
-
-  timezone: businessIdentityFields.timezone,
-  industry: businessIdentityFields.industry,
-
-  website: businessIdentityFields.website,
-
-  email: businessIdentityFields.email,
-
-  country: businessIdentityFields.country,
-
-  city: businessIdentityFields.city,
-
-  taxNumber: businessIdentityFields.taxNumber,
-
-  employeeCount: businessIdentityFields.employeeCount,
-
-  description: businessIdentityFields.description,
-
-  instagramUrl: z.string().trim().max(300),
-  facebookUrl: z.string().trim().max(300),
-  tiktokUrl: z.string().trim().max(300),
-
-  qrStyle: z.enum([
-    "CLASSIC",
-    "ROUNDED",
-    "BRANDED",
-  ]),
-
-  qrPosition: z.enum([
-    "LEFT",
-    "CENTER",
-    "RIGHT",
-  ]),
-
-  loyaltyProgramName: z.string().trim().max(80),
-  pointsName: z.string().trim().max(30),
-  membershipName: z.string().trim().max(50),
-  welcomeMessage: z.string().trim().max(300),
-
-  cardDefaultLanguage: z.enum(["AR", "EN"]),
-
-  staffAttributionMode: z.enum(["OFF", "OPTIONAL", "REQUIRED"]),
-
-  loyaltyMode: loyaltyProgramFields.loyaltyMode,
-
-  unitName: loyaltyProgramFields.unitName,
-
-  rewardName: loyaltyProgramFields.rewardName,
-
-  rewardType: z.enum(["GIFT", "PROMO_CODE", "DISCOUNT", "CUSTOM"]),
-
-  rewardCode: z.string().trim().max(80),
-
-  rewardDescription: z.string().trim().max(300),
-
-  rewardThreshold: loyaltyProgramFields.rewardThreshold,
-
-  earnAmount: loyaltyProgramFields.earnAmount,
-
-  whatsappWelcomeMessage: z.string().trim().min(1).max(1500),
-
-  whatsappBalanceMessage: z.string().trim().min(1).max(1500),
-
-  whatsappRewardMessage: z.string().trim().min(1).max(1500),
-});
-
-export async function updateBusinessSettingsAction(
-  slug: string,
-  formData: FormData,
-) {
+async function getManagedBusiness(slug: string) {
   const session = await auth();
-
   if (!session?.user) {
     redirect("/login");
   }
-
   const business = await prisma.business.findUnique({
-    where: {
-      slug,
-    },
+    where: { slug },
     select: {
       id: true,
       slug: true,
       coverImageUrl: true,
     },
   });
-
   if (!business) {
     redirect("/businesses");
   }
-
-  const canManage = canManageBusiness(session.user, business.id);
-
-  if (!canManage) {
+  if (!canManageBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
+  return { business, session };
+}
 
+async function updateSettingsDomain(input: {
+  businessId: string;
+  slug: string;
+  user: Parameters<typeof activityActorFields>[0];
+  description: string;
+  data: Parameters<typeof prisma.business.update>[0]["data"];
+  syncSheet?: boolean;
+}) {
+  const activityContext = await getActivityRequestContext();
+  await prisma.$transaction([
+    prisma.business.update({
+      where: { id: input.businessId },
+      data: input.data,
+    }),
+    prisma.businessActivity.create({
+      data: {
+        type: "BUSINESS_SETTINGS_UPDATED",
+        description: input.description,
+        businessId: input.businessId,
+        ...activityActorFields(input.user, input.businessId),
+        ...activityRequestMetadata(activityContext),
+      },
+    }),
+  ]);
+  if (input.syncSheet) {
+    await syncBusinessToGoogleSheetSafely(input.businessId);
+  }
+  revalidatePath("/dashboard");
+  revalidatePath("/businesses");
+  revalidatePath(`/businesses/${input.slug}`);
+  revalidatePath(`/businesses/${input.slug}/customers`);
+  revalidatePath(`/businesses/${input.slug}/settings`);
+  revalidatePath(`/businesses/${input.slug}/activity`);
+  revalidatePath("/card/[token]", "page");
+}
+
+export async function updateBusinessProfileAction(
+  slug: string,
+  formData: FormData,
+) {
+  const { business, session } = await getManagedBusiness(slug);
   const removeCoverImage = formData.get("removeCoverImage") === "on";
-
   const coverImageFile = formData.get("coverImageFile");
-
   let uploadedCoverImageDataUrl: string | null = null;
-
   if (coverImageFile instanceof File && coverImageFile.size > 0) {
     uploadedCoverImageDataUrl = await imageFileToDataUrl(
       coverImageFile,
-      1024 * 1024
+      1024 * 1024,
     );
-
     if (!uploadedCoverImageDataUrl) {
-      redirect(`/businesses/${business.slug}/settings?error=invalid`);
+      redirect(`/businesses/${business.slug}/settings?profile=invalid`);
     }
   }
-
-  const parsed = settingsSchema.safeParse({
+  const parsed = businessProfileSettingsSchema.safeParse({
     name: formData.get("name"),
     coverImageUrl: formData.get("coverImageUrl") ?? "",
     currency: formData.get("currency") ?? "",
@@ -213,22 +169,39 @@ export async function updateBusinessSettingsAction(
     city: formData.get("city") ?? "",
     taxNumber: formData.get("taxNumber") ?? "",
     employeeCount: formData.get("employeeCount") ?? 0,
-
     description: formData.get("description") ?? "",
-
     instagramUrl: formData.get("instagramUrl") ?? "",
-    facebookUrl: formData.get("facebookUrl") ?? "",
-    tiktokUrl: formData.get("tiktokUrl") ?? "",
+  });
+  if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/settings?profile=invalid`);
+  }
+  const submittedCoverImageUrl = parsed.data.coverImageUrl || null;
+  const finalCoverImageUrl = removeCoverImage
+    ? null
+    : uploadedCoverImageDataUrl ??
+      submittedCoverImageUrl ??
+      business.coverImageUrl;
+  await updateSettingsDomain({
+    businessId: business.id,
+    slug: business.slug,
+    user: session.user,
+    description: "تم تحديث الملف التعريفي للنشاط",
+    data: getBusinessProfileUpdate(parsed.data, finalCoverImageUrl),
+    syncSheet: true,
+  });
+  redirect(`/businesses/${business.slug}/settings?profile=saved`);
+}
 
-    qrStyle: formData.get("qrStyle") ?? "CLASSIC",
-    qrPosition: formData.get("qrPosition") ?? "CENTER",
-
+export async function updateProgramRulesAction(
+  slug: string,
+  formData: FormData,
+) {
+  const { business, session } = await getManagedBusiness(slug);
+  const parsed = programRulesSettingsSchema.safeParse({
     loyaltyProgramName: formData.get("loyaltyProgramName") ?? "",
     pointsName: formData.get("pointsName") ?? "",
-    membershipName: formData.get("membershipName") ?? "",
     welcomeMessage: formData.get("welcomeMessage") ?? "",
     cardDefaultLanguage: formData.get("cardDefaultLanguage"),
-    staffAttributionMode: formData.get("staffAttributionMode"),
     loyaltyMode: formData.get("loyaltyMode"),
     unitName: formData.get("unitName"),
     rewardName: formData.get("rewardName"),
@@ -237,107 +210,63 @@ export async function updateBusinessSettingsAction(
     rewardDescription: formData.get("rewardDescription") ?? "",
     rewardThreshold: formData.get("rewardThreshold"),
     earnAmount: formData.get("earnAmount"),
+  });
+  if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/settings?program=invalid`);
+  }
+  await updateSettingsDomain({
+    businessId: business.id,
+    slug: business.slug,
+    user: session.user,
+    description: "تم تحديث قواعد برنامج الولاء",
+    data: getProgramRulesUpdate(parsed.data),
+    syncSheet: true,
+  });
+  redirect(`/businesses/${business.slug}/settings?program=saved`);
+}
+
+export async function updateCustomerMessagesAction(
+  slug: string,
+  formData: FormData,
+) {
+  const { business, session } = await getManagedBusiness(slug);
+  const parsed = customerMessagesSettingsSchema.safeParse({
     whatsappWelcomeMessage: formData.get("whatsappWelcomeMessage"),
     whatsappBalanceMessage: formData.get("whatsappBalanceMessage"),
     whatsappRewardMessage: formData.get("whatsappRewardMessage"),
   });
-
   if (!parsed.success) {
-    redirect(`/businesses/${business.slug}/settings?error=invalid`);
+    redirect(`/businesses/${business.slug}/settings?messages=invalid`);
   }
+  await updateSettingsDomain({
+    businessId: business.id,
+    slug: business.slug,
+    user: session.user,
+    description: "تم تحديث قوالب رسائل العملاء",
+    data: getCustomerMessagesUpdate(parsed.data),
+  });
+  redirect(`/businesses/${business.slug}/settings?messages=saved`);
+}
 
-  if (
-    parsed.data.rewardType === "PROMO_CODE" &&
-    parsed.data.rewardCode.length < 2
-  ) {
-    redirect(`/businesses/${business.slug}/settings?error=invalid`);
+export async function updateOperationsSettingsAction(
+  slug: string,
+  formData: FormData,
+) {
+  const { business, session } = await getManagedBusiness(slug);
+  const parsed = operationsSettingsSchema.safeParse({
+    staffAttributionMode: formData.get("staffAttributionMode"),
+  });
+  if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/settings?operations=invalid`);
   }
-
-  const submittedCoverImageUrl = parsed.data.coverImageUrl || null;
-
-  const finalCoverImageUrl = removeCoverImage
-    ? null
-    : (
-        uploadedCoverImageDataUrl ??
-        submittedCoverImageUrl ??
-        business.coverImageUrl
-      );
-
-  const activityContext = await getActivityRequestContext();
-
-  await prisma.$transaction([
-    prisma.business.update({
-      where: {
-        id: business.id,
-      },
-      data: {
-        name: parsed.data.name,
-        coverImageUrl: finalCoverImageUrl,
-        currency: optionalProfileValue(parsed.data.currency),
-        timezone: optionalProfileValue(parsed.data.timezone),
-
-        industry: optionalProfileValue(parsed.data.industry),
-        website: optionalProfileValue(parsed.data.website),
-        email: optionalProfileValue(parsed.data.email),
-        country: optionalProfileValue(parsed.data.country),
-        city: optionalProfileValue(parsed.data.city),
-        taxNumber: optionalProfileValue(parsed.data.taxNumber),
-        employeeCount: parsed.data.employeeCount,
-
-        description: optionalProfileValue(parsed.data.description),
-
-        instagramUrl: optionalProfileValue(parsed.data.instagramUrl),
-        facebookUrl: optionalProfileValue(parsed.data.facebookUrl),
-        tiktokUrl: optionalProfileValue(parsed.data.tiktokUrl),
-
-        qrStyle: parsed.data.qrStyle,
-        qrPosition: parsed.data.qrPosition,
-
-        loyaltyProgramName: parsed.data.loyaltyProgramName || null,
-        pointsName: parsed.data.pointsName || null,
-        membershipName: parsed.data.membershipName || null,
-        welcomeMessage: parsed.data.welcomeMessage || null,
-        cardDefaultLanguage: parsed.data.cardDefaultLanguage,
-        staffAttributionEnabled: parsed.data.staffAttributionMode !== "OFF",
-        staffAttributionRequired:
-          parsed.data.staffAttributionMode === "REQUIRED",
-        loyaltyMode: parsed.data.loyaltyMode,
-        unitName: parsed.data.unitName,
-        rewardName: parsed.data.rewardName,
-        rewardType: parsed.data.rewardType,
-        rewardCode: parsed.data.rewardCode || null,
-        rewardDescription: parsed.data.rewardDescription || null,
-        rewardThreshold: parsed.data.rewardThreshold,
-        earnAmount: parsed.data.earnAmount,
-        whatsappWelcomeMessage: parsed.data.whatsappWelcomeMessage,
-        whatsappBalanceMessage: parsed.data.whatsappBalanceMessage,
-        whatsappRewardMessage: parsed.data.whatsappRewardMessage,
-      },
-    }),
-
-    prisma.businessActivity.create({
-      data: {
-        type: "BUSINESS_SETTINGS_UPDATED",
-        description: "تم تحديث إعدادات النشاط",
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    }),
-  ]);
-
-  await syncBusinessToGoogleSheetSafely(business.id);
-
-  revalidatePath("/dashboard");
-  revalidatePath("/businesses");
-  revalidatePath(`/businesses/${business.slug}`);
-  revalidatePath(`/businesses/${business.slug}/customers`);
-  revalidatePath(`/businesses/${business.slug}/settings`);
-  revalidatePath(`/businesses/${business.slug}/activity`);
-
-  revalidatePath("/card/[token]", "page");
-
-  redirect(`/businesses/${business.slug}/settings?saved=1`);
+  await updateSettingsDomain({
+    businessId: business.id,
+    slug: business.slug,
+    user: session.user,
+    description: "تم تحديث إعدادات التشغيل",
+    data: getOperationsSettingsUpdate(parsed.data),
+  });
+  redirect(`/businesses/${business.slug}/settings?operations=saved`);
 }
 
 export async function updateBusinessCardDesignAction(

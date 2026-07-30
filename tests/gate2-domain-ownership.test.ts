@@ -51,7 +51,7 @@ test("domain ownership keeps one logo source and protects the legacy writer", ()
   );
 
   const legacyUpdate = settingsActionSource.slice(
-    settingsActionSource.indexOf("export async function updateBusinessSettingsAction"),
+    settingsActionSource.indexOf("export async function updateBusinessProfileAction"),
     settingsActionSource.indexOf("export async function updateBusinessCardDesignAction"),
   );
   assert.doesNotMatch(legacyUpdate, /logoUrl:\s*finalLogoUrl/);
@@ -234,7 +234,7 @@ test("customer experience remains active without expanding internal theming", ()
   assert.match(themeSource, /@deprecated Authenticated app pages/);
 });
 
-test("Settings has one card editor and hides legacy compatibility fields", () => {
+test("Settings has one card editor and omits legacy compatibility fields", () => {
   assert.equal(
     (settingsPageSource.match(/<StandardCardSetup/g) ?? []).length,
     1,
@@ -252,9 +252,9 @@ test("Settings has one card editor and hides legacy compatibility fields", () =>
     "qrPosition",
     "membershipName",
   ]) {
-    assert.match(
+    assert.doesNotMatch(
       settingsFormSource,
-      new RegExp(`type="hidden" name="${field}"`),
+      new RegExp(`name="${field}"`),
     );
   }
 

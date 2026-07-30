@@ -19,8 +19,11 @@ import {
   syncGoogleSheetAction,
   updateBusinessCardDesignAction,
   updateBusinessCardDetailsAction,
-  updateBusinessSettingsAction,
+  updateBusinessProfileAction,
+  updateCustomerMessagesAction,
   updateBusinessExportPermissionAction,
+  updateOperationsSettingsAction,
+  updateProgramRulesAction,
 } from "./actions";
 
 type BusinessSettingsPageProps = {
@@ -29,8 +32,10 @@ type BusinessSettingsPageProps = {
   }>;
 
   searchParams: Promise<{
-    saved?: string;
-    error?: string;
+    profile?: string;
+    program?: string;
+    messages?: string;
+    operations?: string;
     sheetSync?: string;
     cardDesign?: string;
     cardSaved?: string;
@@ -95,7 +100,22 @@ export default async function BusinessSettingsPage({
         ? t("فشلت آخر مزامنة", "Last sync failed")
         : t("المزامنة قيد الانتظار", "Sync pending");
 
-  const updateSettings = updateBusinessSettingsAction.bind(null, business.slug);
+  const updateBusinessProfile = updateBusinessProfileAction.bind(
+    null,
+    business.slug,
+  );
+  const updateProgramRules = updateProgramRulesAction.bind(
+    null,
+    business.slug,
+  );
+  const updateCustomerMessages = updateCustomerMessagesAction.bind(
+    null,
+    business.slug,
+  );
+  const updateOperationsSettings = updateOperationsSettingsAction.bind(
+    null,
+    business.slug,
+  );
 
   const syncGoogleSheet = syncGoogleSheetAction.bind(null, business.slug);
   const updateCardDesign = updateBusinessCardDesignAction.bind(null, business.slug);
@@ -459,15 +479,9 @@ export default async function BusinessSettingsPage({
 
             description: business.description,
             instagramUrl: business.instagramUrl,
-            facebookUrl: business.facebookUrl,
-            tiktokUrl: business.tiktokUrl,
-
-            qrStyle: business.qrStyle,
-            qrPosition: business.qrPosition,
 
             loyaltyProgramName: business.loyaltyProgramName,
             pointsName: business.pointsName,
-            membershipName: business.membershipName,
             welcomeMessage: business.welcomeMessage,
             cardDefaultLanguage: business.cardDefaultLanguage,
             staffAttributionEnabled: business.staffAttributionEnabled,
@@ -490,9 +504,30 @@ export default async function BusinessSettingsPage({
               business.whatsappRewardMessage ??
               DEFAULT_WHATSAPP_TEMPLATES.reward,
           }}
-          saved={query.saved === "1"}
-          error={query.error === "invalid"}
-          action={updateSettings}
+          status={{
+            profile:
+              query.profile === "saved" || query.profile === "invalid"
+                ? query.profile
+                : undefined,
+            program:
+              query.program === "saved" || query.program === "invalid"
+                ? query.program
+                : undefined,
+            messages:
+              query.messages === "saved" || query.messages === "invalid"
+                ? query.messages
+                : undefined,
+            operations:
+              query.operations === "saved" || query.operations === "invalid"
+                ? query.operations
+                : undefined,
+          }}
+          actions={{
+            profile: updateBusinessProfile,
+            program: updateProgramRules,
+            messages: updateCustomerMessages,
+            operations: updateOperationsSettings,
+          }}
         />
       </div>
     </main>
