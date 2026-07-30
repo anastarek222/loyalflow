@@ -113,7 +113,7 @@ export function ProgramRulesForm({
           <span className="mb-2 block">{t("نوع المكافأة", "Reward type")}</span>
           <select name="rewardType" defaultValue={business.rewardType} className={inputClass}>
             <option value="GIFT">{t("هدية", "Gift")}</option>
-            <option value="PROMO_CODE">Promo Code</option>
+            <option value="PROMO_CODE">{t("رمز ترويجي", "Promo Code")}</option>
             <option value="DISCOUNT">{t("خصم", "Discount")}</option>
             <option value="CUSTOM">{t("مكافأة مخصصة", "Custom")}</option>
           </select>

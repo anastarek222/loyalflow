@@ -79,8 +79,8 @@ export default async function LoyaltyProgramPage({
           </h1>
           <p className="mt-2 text-foreground-subtle">
             {t(
-              "أدر قواعد البرنامج وتصميم البطاقة من مساحة عمل واحدة.",
-              "Manage programme rules and card design in one workspace.",
+              "أدر قواعد البرنامج وتصميم البطاقة ورسائل العملاء من مساحة عمل واحدة.",
+              "Manage programme rules, card design, and customer messages in one workspace.",
             )}
           </p>
         </header>
@@ -115,10 +115,10 @@ export default async function LoyaltyProgramPage({
                 "This business-level design is reused automatically for every customer.",
               )}
             </p>
-            {query.cardDesign === "saved" ? <p className="mt-3 rounded-xl bg-success-subtle p-3 text-sm font-bold text-success">{t("تم حفظ تصميم البطاقة.", "Card design saved.")}</p> : null}
-            {query.cardDesign === "invalid" ? <p className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("راجع إعدادات التصميم.", "Check the card design settings.")}</p> : null}
-            {query.cardDesign === "forbidden" ? <p className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("التصميم المخصص متاح لمدير النظام فقط.", "Custom design is restricted to Super Admin.")}</p> : null}
-            {query.cardDesign === "readonly" ? <p className="mt-3 rounded-xl bg-primary/5 p-3 text-sm font-bold text-primary">{t("التصميم المخصص محفوظ وتتم إدارته بواسطة مدير النظام.", "The Custom Card is preserved and managed by Super Admin.")}</p> : null}
+            {query.cardDesign === "saved" ? <p role="status" aria-live="polite" className="mt-3 rounded-xl bg-success-subtle p-3 text-sm font-bold text-success">{t("تم حفظ تصميم البطاقة.", "Card design saved.")}</p> : null}
+            {query.cardDesign === "invalid" ? <p role="alert" className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("راجع إعدادات التصميم.", "Check the card design settings.")}</p> : null}
+            {query.cardDesign === "forbidden" ? <p role="alert" className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger">{t("التصميم المخصص متاح لمدير النظام فقط.", "Custom design is restricted to Super Admin.")}</p> : null}
+            {query.cardDesign === "readonly" ? <p role="status" aria-live="polite" className="mt-3 rounded-xl bg-primary/5 p-3 text-sm font-bold text-primary">{t("التصميم المخصص محفوظ وتتم إدارته بواسطة مدير النظام.", "The Custom Card is preserved and managed by Super Admin.")}</p> : null}
           </div>
           <form action={updateCardDesign}>
             {session.user.role === "SUPER_ADMIN" || business.cardDesignMode === "STANDARD" ? (

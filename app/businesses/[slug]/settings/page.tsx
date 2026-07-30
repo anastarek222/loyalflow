@@ -130,7 +130,10 @@ export default async function BusinessSettingsPage({
           <h1 className="text-3xl font-bold text-foreground">{t("إعدادات النشاط", "Business settings")}</h1>
 
           <p className="mt-1 text-foreground-subtle">
-            {t("تخصيص برنامج الولاء والكارت الرقمي.", "Configure the loyalty programme and digital card.")}
+            {t(
+              "إدارة الملف التعريفي والتشغيل والتكاملات الخاصة بالنشاط.",
+              "Manage the business profile, operations, and integrations.",
+            )}
           </p>
         </header>
 

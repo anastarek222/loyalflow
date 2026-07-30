@@ -13,14 +13,14 @@ export type AdministrationNavigationItem = {
 const copy = {
   AR: {
     settings: ["إعدادات النشاط", "الملف والتشغيل والتكاملات"],
-    program: ["برنامج الولاء", "قواعد الكسب وتصميم بطاقة العميل"],
+    program: ["برنامج الولاء", "قواعد الكسب وبطاقة العميل ورسائله"],
     users: ["الفريق", "الأدوار وحسابات الفريق ووصول الواجهة"],
     branches: ["الفروع", "الفروع والموظفون المكلّفون"],
     playbooks: ["قوالب التشغيل", "معاينة إعدادات قابلة للتطبيق بأمان"],
   },
   EN: {
     settings: ["Business settings", "Profile, operations, and integrations"],
-    program: ["Loyalty Program", "Earning rules and customer card design"],
+    program: ["Loyalty Program", "Earning rules, customer card, and messages"],
     users: ["Team", "Roles, team accounts, and interface access"],
     branches: ["Branches", "Locations and assigned staff"],
     playbooks: ["Playbooks", "Safely preview reusable configurations"],
