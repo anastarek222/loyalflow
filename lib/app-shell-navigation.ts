@@ -33,6 +33,7 @@ export type ShellNavigationItem = {
     | "scan"
     | "customers"
     | "activity"
+    | "program"
     | "rewards"
     | "offers"
     | "campaigns"
@@ -54,6 +55,7 @@ type NavigationId =
   | "scan"
   | "customers"
   | "activity"
+  | "program"
   | "rewards"
   | "offers"
   | "campaigns"
@@ -82,11 +84,13 @@ const labels = {
     plans: "الخطط والحدود",
     operations: "العمليات",
     growth: "النمو",
+    loyalty: "الولاء",
     analytics: "التحليلات",
     administration: "الإدارة",
     scan: "المسح",
     customers: "العملاء",
     activity: "النشاط",
+    program: "برنامج الولاء",
     rewards: "المكافآت",
     offers: "العروض",
     campaigns: "الحملات",
@@ -110,11 +114,13 @@ const labels = {
     plans: "Plans & limits",
     operations: "Operations",
     growth: "Growth",
+    loyalty: "Loyalty",
     analytics: "Analytics",
     administration: "Administration",
     scan: "Scan",
     customers: "Customers",
     activity: "Activity",
+    program: "Loyalty Program",
     rewards: "Rewards",
     offers: "Offers",
     campaigns: "Campaigns",
@@ -195,6 +201,10 @@ export function buildShellNavigation({
       ? [item(language, "offers", `${root}/offers`)]
       : [];
 
+  const loyalty = can("SETTINGS_EDIT")
+    ? [item(language, "program", `${root}/program`)]
+    : [];
+
   const analytics = can("REPORTS_VIEW") && entitled("REPORTING")
     ? [item(language, "reports", `${root}/reports`)]
     : [];
@@ -214,6 +224,9 @@ export function buildShellNavigation({
   const advancedNavigation = [
     { id: "global", items: globalItems },
     { id: "operations", label: labels[language].operations, items: operations },
+    ...(loyalty.length
+      ? [{ id: "loyalty", label: labels[language].loyalty, items: loyalty }]
+      : []),
     ...(growth.length
       ? [{ id: "growth", label: labels[language].growth, items: growth }]
       : []),
@@ -257,7 +270,9 @@ export function buildShellNavigation({
           id: "more",
           label: labels[language].more,
           items: [
-            ...advancedDestinations.filter((entry) => entry.id === "reports"),
+            ...advancedDestinations.filter(
+              (entry) => entry.id === "reports" || entry.id === "program",
+            ),
             ...(rules.showAdvancedToolsEntry
               ? [{ id: "advancedTools" as const, label: labels[language].advancedTools, icon: "settings" as const, href: "#experience-mode", action: "switch-mode" as const }]
               : []),
@@ -297,6 +312,7 @@ export function getShellPageContext(
     : suffix === "/duplicates" ? text.duplicates
     : suffix === "/scan" || suffix.startsWith("/scan/") ? text.scan
     : suffix === "/activity" ? text.activity
+    : suffix === "/program" ? text.program
     : suffix === "/rewards" ? text.rewards
     : suffix === "/offers" ? text.offers
     : suffix === "/campaigns" ? text.campaigns

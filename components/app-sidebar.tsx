@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  CreditCard,
   Building2,
   FolderCog,
   Gift,
@@ -43,6 +44,7 @@ const icons: Record<ShellNavigationItem["icon"], React.ElementType> = {
   scan: ScanLine,
   customers: Users,
   activity: Radio,
+  program: CreditCard,
   rewards: Gift,
   offers: Tags,
   campaigns: Megaphone,

@@ -6,7 +6,6 @@ import {
 import prisma from "@/lib/prisma";
 import type { Prisma, UserRole } from "@/generated/prisma/client";
 import Link from "next/link";
-import { AdministrationNavigation } from "@/components/administration/administration-navigation";
 import { ConfirmSubmitButton } from "@/components/administration/confirm-submit-button";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,7 +15,6 @@ import {
   setBusinessUserStatusAction,
   updateBusinessUserExperienceAccessAction,
 } from "./actions";
-import { getBusinessTheme } from "@/lib/theme";
 import { normalizeLanguage } from "@/lib/i18n";
 import { logServerEvent } from "@/lib/server/logging";
 
@@ -96,8 +94,6 @@ export default async function UsersPage({
   if (!business) {
     notFound();
   }
-
-  const theme = getBusinessTheme(business);
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -293,15 +289,8 @@ export default async function UsersPage({
   });
 
   return (
-    <main
-      style={{
-        background: theme.backgroundColor,
-        fontFamily: theme.fontFamily,
-      }}
-      className="min-h-screen px-4 py-5 sm:px-6 sm:py-8"
-    >
+    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-7xl">
-        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="users" language={language} />
         <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <Link

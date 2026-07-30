@@ -4,11 +4,8 @@ import {
   getBranchCount,
 } from "@/lib/branches/management";
 import prisma from "@/lib/prisma";
-import { getBusinessTheme } from "@/lib/theme";
 import Link from "next/link";
-import { AdministrationNavigation } from "@/components/administration/administration-navigation";
 import { ConfirmSubmitButton } from "@/components/administration/confirm-submit-button";
-import { normalizeLanguage } from "@/lib/i18n";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -42,20 +39,11 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
       id: true,
       name: true,
       slug: true,
-      primaryColor: true,
-      secondaryColor: true,
-      themePreset: true,
-      cardStyle: true,
-      fontFamily: true,
     },
   });
   if (!business) notFound();
   if (!canManageBranches(session.user, business.id)) redirect("/dashboard");
 
-  const currentUser = await prisma.user.findUnique({ where: { id: session.user.id }, select: { language: true } });
-  const language = normalizeLanguage(currentUser?.language);
-
-  const theme = getBusinessTheme(business);
   const [branches, eligibleStaff] = await Promise.all([
     prisma.branch.findMany({
       where: { businessId: business.id },
@@ -87,12 +75,8 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
   const createBranch = createBranchAction.bind(null, business.slug);
 
   return (
-    <main
-      style={{ background: theme.backgroundColor, fontFamily: theme.fontFamily }}
-      className="min-h-screen px-4 py-5 sm:px-6 sm:py-8"
-    >
+    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-6xl">
-        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="branches" language={language} />
         <Link href={`/businesses/${business.slug}`} className="text-sm font-medium text-violet-600 hover:text-violet-800">
           → الرجوع إلى {business.name}
         </Link>
@@ -132,7 +116,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
             <input name="name" required minLength={2} maxLength={80} placeholder="اسم الفرع" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500" />
             <input name="contactPhone" maxLength={25} placeholder="هاتف التواصل (اختياري)" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500" />
             <input name="address" maxLength={250} placeholder="العنوان (اختياري)" className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500" />
-            <button type="submit" className={`${theme.buttonClass} rounded-xl px-5 py-3 font-bold transition`}>
+            <button type="submit" className="rounded-xl bg-primary px-5 py-3 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover">
               إضافة الفرع
             </button>
           </form>

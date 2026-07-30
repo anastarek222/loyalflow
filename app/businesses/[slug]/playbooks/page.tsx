@@ -13,7 +13,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { applyBusinessPlaybookAction } from "./actions";
-import { AdministrationNavigation } from "@/components/administration/administration-navigation";
 import { normalizeLanguage } from "@/lib/i18n";
 
 type PlaybooksPageProps = {
@@ -86,12 +85,11 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
   return (
     <main className="min-h-screen px-4 py-6 sm:px-8 sm:py-8">
       <div className="mx-auto max-w-6xl">
-        <AdministrationNavigation user={session.user} businessId={business.id} slug={business.slug} active="playbooks" language={language} />
         <Link href={`/businesses/${business.slug}/settings`} className="text-sm font-bold text-primary hover:text-primary">{t("← الرجوع إلى إعدادات", "← Back to settings for")} {business.name}</Link>
-        <header className="mt-6 rounded-[var(--lf-radius-card)] p-6 text-white shadow-xl sm:p-8">
-          <p className="text-sm font-bold text-white/75">{t("انطلاقة سريعة", "Quick start")}</p>
-          <h1 className="mt-2 text-3xl font-black">{t("قوالب تشغيل النشاط", "Business playbooks")}</h1>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-white/90">{t("اختر قالبًا لمعاينة إعدادات عادية قابلة للتعديل. لا يُنشئ القالب مكافآت أو عروضًا أو Promotions أو رسائل أو أي خدمة مدفوعة تلقائيًا.", "Choose a playbook to preview editable standard settings. It does not automatically create rewards, offers, promotions, messages, or paid services.")}</p>
+        <header className="mt-6">
+          <p className="text-sm font-bold text-primary">{t("انطلاقة سريعة", "Quick start")}</p>
+          <h1 className="mt-2 text-3xl font-black text-foreground">{t("قوالب تشغيل النشاط", "Business playbooks")}</h1>
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-foreground-muted">{t("اختر قالبًا لمعاينة إعدادات عادية قابلة للتعديل. لا يُنشئ القالب مكافآت أو عروضًا أو Promotions أو رسائل أو أي خدمة مدفوعة تلقائيًا.", "Choose a playbook to preview editable standard settings. It does not automatically create rewards, offers, promotions, messages, or paid services.")}</p>
         </header>
         {query.saved === "1" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle px-6 py-4 font-bold text-success">{t("تم تطبيق القالب. راجع الإعدادات وعدّلها كما تريد.", "Playbook applied. Review the settings and adjust them as needed.")}</p> : null}
         {query.saved === "already" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle px-6 py-4 font-bold text-foreground-muted">{t("هذا القالب مطبق بالفعل؛ لم تُنشأ سجلات مكررة.", "This playbook is already applied; no duplicate records were created.")}</p> : null}

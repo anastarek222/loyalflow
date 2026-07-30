@@ -1,5 +1,4 @@
 import { auth } from "@/auth";
-import { AdministrationNavigation } from "@/components/administration/administration-navigation";
 import { CustomerMessagesForm } from "@/components/customer-messages-form";
 import { ProgramRulesForm } from "@/components/program-rules-form";
 import { StandardCardSetup } from "@/components/standard-card-setup";
@@ -57,13 +56,6 @@ export default async function LoyaltyProgramPage({
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto max-w-7xl">
-        <AdministrationNavigation
-          user={session.user}
-          businessId={business.id}
-          slug={business.slug}
-          active="program"
-          language={language}
-        />
         <Link
           href={`/businesses/${business.slug}`}
           className="text-sm font-medium text-primary hover:underline"

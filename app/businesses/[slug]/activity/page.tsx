@@ -493,18 +493,16 @@ export default async function ActivityPage({
           → الرجوع إلى {business.name}
         </Link>
 
-        <header
-          className={`mt-6 border p-8 text-white rounded-[var(--lf-radius-card)] border-border`}
-        >
-          <p className="text-sm text-white/70">
+        <header className="mt-6">
+          <p className="text-sm font-bold text-primary">
             سجل المراجعة
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold">
+          <h1 className="mt-2 text-3xl font-bold text-foreground">
             سجل النشاط
           </h1>
 
-          <p className="mt-2 text-sm text-white/70">
+          <p className="mt-2 text-sm text-foreground-muted">
             مراجعة العمليات التي نفذها المالك والموظفون والإدارة.
           </p>
         </header>
