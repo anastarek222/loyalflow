@@ -16,7 +16,7 @@ const businessB = "business-b";
 test("U10 keeps the canonical slug-preserving administration routes and shared navigation", () => {
   for (const route of ["settings", "users", "branches", "playbooks"]) assert.equal(existsSync(join(root, `app/businesses/[slug]/${route}/page.tsx`)), true);
   const nav = getAdministrationNavigation({ role: "OWNER", businessId: businessA }, businessA, "north-star", "EN");
-  assert.deepEqual(nav.map((item) => item.href), ["/businesses/north-star/settings", "/businesses/north-star/users", "/businesses/north-star/branches", "/businesses/north-star/playbooks"]);
+  assert.deepEqual(nav.map((item) => item.href), ["/businesses/north-star/settings", "/businesses/north-star/users", "/businesses/north-star/program", "/businesses/north-star/branches", "/businesses/north-star/playbooks"]);
   assert.equal(getAdministrationNavigation({ role: "MANAGER", businessId: businessA }, businessA, "north-star").length, 0);
   assert.match(source("components/administration/administration-navigation.tsx"), /aria-current/);
   assert.match(source("components/administration/administration-navigation.tsx"), /overflow-x-auto/);

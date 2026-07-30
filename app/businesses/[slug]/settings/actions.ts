@@ -136,6 +136,7 @@ async function updateSettingsDomain(input: {
   revalidatePath(`/businesses/${input.slug}`);
   revalidatePath(`/businesses/${input.slug}/customers`);
   revalidatePath(`/businesses/${input.slug}/settings`);
+  revalidatePath(`/businesses/${input.slug}/program`);
   revalidatePath(`/businesses/${input.slug}/activity`);
   revalidatePath("/card/[token]", "page");
 }
@@ -212,7 +213,7 @@ export async function updateProgramRulesAction(
     earnAmount: formData.get("earnAmount"),
   });
   if (!parsed.success) {
-    redirect(`/businesses/${business.slug}/settings?program=invalid`);
+    redirect(`/businesses/${business.slug}/program?program=invalid`);
   }
   await updateSettingsDomain({
     businessId: business.id,
@@ -222,7 +223,7 @@ export async function updateProgramRulesAction(
     data: getProgramRulesUpdate(parsed.data),
     syncSheet: true,
   });
-  redirect(`/businesses/${business.slug}/settings?program=saved`);
+  redirect(`/businesses/${business.slug}/program?program=saved`);
 }
 
 export async function updateCustomerMessagesAction(
@@ -236,7 +237,7 @@ export async function updateCustomerMessagesAction(
     whatsappRewardMessage: formData.get("whatsappRewardMessage"),
   });
   if (!parsed.success) {
-    redirect(`/businesses/${business.slug}/settings?messages=invalid`);
+    redirect(`/businesses/${business.slug}/program?messages=invalid`);
   }
   await updateSettingsDomain({
     businessId: business.id,
@@ -245,7 +246,7 @@ export async function updateCustomerMessagesAction(
     description: "تم تحديث قوالب رسائل العملاء",
     data: getCustomerMessagesUpdate(parsed.data),
   });
-  redirect(`/businesses/${business.slug}/settings?messages=saved`);
+  redirect(`/businesses/${business.slug}/program?messages=saved`);
 }
 
 export async function updateOperationsSettingsAction(
@@ -288,7 +289,7 @@ export async function updateBusinessCardDesignAction(
   if (logoFile instanceof File && logoFile.size > 0) {
     uploadedLogoDataUrl = await imageFileToDataUrl(logoFile, 500 * 1024);
     if (!uploadedLogoDataUrl)
-      redirect(`/businesses/${slug}/settings?cardDesign=invalid`);
+      redirect(`/businesses/${slug}/program?cardDesign=invalid`);
   }
 
   const parsed = cardDesignSchema.safeParse({
@@ -304,7 +305,7 @@ export async function updateBusinessCardDesignAction(
     customCardSafeZoneVersion: formData.get("customCardSafeZoneVersion") ?? "ID1_V1",
   });
 
-  if (!parsed.success) redirect(`/businesses/${slug}/settings?cardDesign=invalid`);
+  if (!parsed.success) redirect(`/businesses/${slug}/program?cardDesign=invalid`);
   const authorizedUpdate = getAuthorizedCardDesignUpdate({
     role: session.user.role,
     currentDesignMode: business.cardDesignMode,
@@ -312,7 +313,7 @@ export async function updateBusinessCardDesignAction(
   });
   if (!authorizedUpdate.allowed) {
     redirect(
-      `/businesses/${slug}/settings?cardDesign=${
+      `/businesses/${slug}/program?cardDesign=${
         authorizedUpdate.reason === "CUSTOM_READ_ONLY"
           ? "readonly"
           : "forbidden"
@@ -343,8 +344,9 @@ export async function updateBusinessCardDesignAction(
   ]);
 
   revalidatePath(`/businesses/${business.slug}/settings`);
+  revalidatePath(`/businesses/${business.slug}/program`);
   revalidatePath("/card/[token]", "page");
-  redirect(`/businesses/${business.slug}/settings?cardDesign=saved`);
+  redirect(`/businesses/${business.slug}/program?cardDesign=saved`);
 }
 
 export async function syncGoogleSheetAction(slug: string) {

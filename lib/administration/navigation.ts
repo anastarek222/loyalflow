@@ -1,7 +1,7 @@
 import type { TenantUser } from "@/lib/permissions";
 import { canManageBusiness, canPerform } from "@/lib/permissions";
 
-export type AdministrationSection = "settings" | "users" | "branches" | "playbooks";
+export type AdministrationSection = "settings" | "program" | "users" | "branches" | "playbooks";
 
 export type AdministrationNavigationItem = {
   id: AdministrationSection;
@@ -12,13 +12,15 @@ export type AdministrationNavigationItem = {
 
 const copy = {
   AR: {
-    settings: ["إعدادات النشاط", "الملف والولاء والهوية والتسجيل"],
+    settings: ["إعدادات النشاط", "الملف والتشغيل والتكاملات"],
+    program: ["برنامج الولاء", "قواعد الكسب وتصميم بطاقة العميل"],
     users: ["الفريق", "الأدوار وحسابات الفريق ووصول الواجهة"],
     branches: ["الفروع", "الفروع والموظفون المكلّفون"],
     playbooks: ["قوالب التشغيل", "معاينة إعدادات قابلة للتطبيق بأمان"],
   },
   EN: {
-    settings: ["Business settings", "Profile, loyalty, brand, and enrollment"],
+    settings: ["Business settings", "Profile, operations, and integrations"],
+    program: ["Loyalty Program", "Earning rules and customer card design"],
     users: ["Team", "Roles, team accounts, and interface access"],
     branches: ["Branches", "Locations and assigned staff"],
     playbooks: ["Playbooks", "Safely preview reusable configurations"],
@@ -36,6 +38,7 @@ export function getAdministrationNavigation(
   const items: AdministrationNavigationItem[] = [];
   if (canManageBusiness(user, businessId)) {
     items.push({ id: "settings", href: `/businesses/${slug}/settings`, label: labels.settings[0], description: labels.settings[1] });
+    items.push({ id: "program", href: `/businesses/${slug}/program`, label: labels.program[0], description: labels.program[1] });
     items.push({ id: "branches", href: `/businesses/${slug}/branches`, label: labels.branches[0], description: labels.branches[1] });
     items.push({ id: "playbooks", href: `/businesses/${slug}/playbooks`, label: labels.playbooks[0], description: labels.playbooks[1] });
   }

@@ -167,18 +167,16 @@ test("every domain action reuses tenant authorization and explicit parsing", () 
   }
 });
 
-test("Settings renders four independent forms with pending feedback", () => {
-  assert.equal((formSource.match(/<form action=\{actions\./g) ?? []).length, 4);
+test("Settings retains two independent PA-2 forms with pending feedback", () => {
+  assert.equal((formSource.match(/<form action=\{actions\./g) ?? []).length, 2);
   assert.match(formSource, /useFormStatus/);
   assert.match(formSource, /aria-live="polite"/);
   assert.match(pageSource, /profile: updateBusinessProfile/);
-  assert.match(pageSource, /program: updateProgramRules/);
-  assert.match(pageSource, /messages: updateCustomerMessages/);
   assert.match(pageSource, /operations: updateOperationsSettings/);
 });
 
-test("PA-1 removals and the canonical card editor remain intact", () => {
-  assert.equal((pageSource.match(/<StandardCardSetup/g) ?? []).length, 1);
+test("PA-1 removals remain intact after programme extraction", () => {
+  assert.equal((pageSource.match(/<StandardCardSetup/g) ?? []).length, 0);
   assert.doesNotMatch(
     formSource,
     /themeOptions|cardStyleOptions|معاينة مباشرة للكارت|name="qrStyle"|name="membershipName"/,

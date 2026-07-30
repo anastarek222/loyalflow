@@ -35,6 +35,10 @@ const settingsPageSource = readFileSync(
   new URL("../app/businesses/[slug]/settings/page.tsx", import.meta.url),
   "utf8",
 );
+const programPageSource = readFileSync(
+  new URL("../app/businesses/[slug]/program/page.tsx", import.meta.url),
+  "utf8",
+);
 const themeSource = readFileSync(
   new URL("../lib/theme.ts", import.meta.url),
   "utf8",
@@ -43,8 +47,8 @@ const themeSource = readFileSync(
 test("domain ownership keeps one logo source and protects the legacy writer", () => {
   assert.ok(BUSINESS_DOMAIN_FIELDS.CARD_DESIGN.includes("logoUrl"));
   assert.ok(LEGACY_SETTINGS_PROTECTED_FIELDS.includes("logoUrl"));
-  assert.match(settingsPageSource, /name="logoFile"/);
-  assert.match(settingsPageSource, /name="logoUrl"/);
+  assert.match(programPageSource, /name="logoFile"/);
+  assert.match(programPageSource, /name="logoUrl"/);
   assert.match(
     settingsActionSource,
     /data: \{ \.\.\.authorizedUpdate\.data, logoUrl: finalLogoUrl \}/,
@@ -229,16 +233,17 @@ test("Owner and Super Admin card permissions remain isolated", () => {
 test("customer experience remains active without expanding internal theming", () => {
   assert.match(settingsFormSource, /name="coverImageFile"/);
   assert.match(settingsFormSource, /name="instagramUrl"/);
-  assert.match(settingsFormSource, /name="cardDefaultLanguage"/);
+  assert.match(programPageSource, /ProgramRulesForm/);
   assert.match(themeSource, /getCustomerExperienceTheme/);
   assert.match(themeSource, /@deprecated Authenticated app pages/);
 });
 
-test("Settings has one card editor and omits legacy compatibility fields", () => {
+test("Program has one card editor and Settings omits legacy compatibility fields", () => {
   assert.equal(
-    (settingsPageSource.match(/<StandardCardSetup/g) ?? []).length,
+    (programPageSource.match(/<StandardCardSetup/g) ?? []).length,
     1,
   );
+  assert.doesNotMatch(settingsPageSource, /StandardCardSetup|ProgramRulesForm/);
   assert.doesNotMatch(settingsFormSource, /معاينة مباشرة للكارت|themeOptions|cardStyleOptions|logoFile/);
   assert.doesNotMatch(
     settingsFormSource,
