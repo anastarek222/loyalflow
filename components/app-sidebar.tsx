@@ -62,6 +62,15 @@ export default function AppSidebar({ language, experienceMode, user, business }:
   const pathname = usePathname();
   const groups = buildShellNavigation({ language, user, business, experienceMode });
 
+  const activeHref = groups
+    .flatMap((group) => group.items)
+    .filter(
+      (entry) =>
+        !entry.action &&
+        isNavigationItemActive(pathname, entry.href),
+    )
+    .sort((first, second) => second.href.length - first.href.length)[0]?.href;
+
   return (
     <aside className="lf-nav-sidebar sticky top-0 hidden h-screen w-64 shrink-0 border-e lg:flex lg:flex-col" aria-label={language === "AR" ? "التنقل الرئيسي" : "Primary navigation"}>
       <div className="border-b border-border px-5 py-5">
@@ -82,7 +91,7 @@ export default function AppSidebar({ language, experienceMode, user, business }:
           <ul className="space-y-1">
             {group.items.map((entry) => {
               const Icon = icons[entry.icon];
-              const active = isNavigationItemActive(pathname, entry.href);
+              const active = entry.href === activeHref;
               if (entry.action === "switch-mode") return <li key={entry.id}><button type="button" onClick={() => window.dispatchEvent(new CustomEvent("loyalflow:open-experience-mode"))} className="lf-nav-item flex min-h-11 w-full items-center gap-3 px-3 text-start text-sm font-semibold transition-colors"><Icon size={18} aria-hidden="true" /><span>{entry.label}</span></button></li>;
               return <li key={entry.href}><Link href={entry.href} aria-current={active ? "page" : undefined} className={`lf-nav-item flex min-h-11 items-center gap-3 px-3 text-sm font-semibold transition-colors ${active ? "lf-nav-item-active" : ""}`}><Icon size={18} aria-hidden="true" /><span>{entry.label}</span></Link></li>;
             })}

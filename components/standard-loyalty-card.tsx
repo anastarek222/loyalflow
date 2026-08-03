@@ -305,8 +305,8 @@ function BackBrand({
   muted: string;
   rtl: boolean;
 }) {
-  const logoX = rtl ? 750 : 42;
-  const textX = rtl ? 730 : 125;
+  const logoX = 42;
+  const textX = rtl ? 355 : 125;
   const nameSize =
     businessName.length > 30 ? 19 : businessName.length > 20 ? 22 : 25;
   return (
@@ -371,6 +371,11 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const side = props.side ?? "front";
   const language = props.language ?? "EN";
   const dir = language === "AR" ? "rtl" : "ltr";
+  const rtl = language === "AR";
+  const customerNameIsArabic = /[\u0600-\u06FF]/.test(props.customerName);
+  const customerNameX = customerNameIsArabic ? 355 : 42;
+  const customerNameAnchor = customerNameIsArabic ? "end" : "start";
+  const customerNameDirection = customerNameIsArabic ? "rtl" : "ltr";
   const dark = standardCardTheme(props.themePreset) === "dark";
   const accent = safeColor(props.primaryColor);
   const category = standardCardArtworkCategory(props.artworkCategory);
@@ -469,22 +474,28 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
       </g>
       <g data-safe-zone="loyalty-title">
         <text
-          x="42"
+          x={rtl ? 355 : 42}
           y="215"
           fill={accent}
           fontSize="46"
           fontWeight="900"
-          letterSpacing="4"
+          letterSpacing={rtl ? "0" : "4"}
+          textAnchor={rtl ? "end" : "start"}
+          direction={dir}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {labels.loyalty}
         </text>
         <text
-          x="43"
+          x={rtl ? 355 : 43}
           y="247"
           fill={muted}
           fontSize="13"
           fontWeight="600"
-          letterSpacing="4"
+          letterSpacing={rtl ? "0" : "4"}
+          textAnchor={rtl ? "end" : "start"}
+          direction={dir}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {labels.memberMessage}
         </text>
@@ -497,26 +508,29 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         stroke={accent}
         opacity="0.38"
       />
-      <g
-        data-safe-zone="customer-information"
-        style={{ direction: dir, unicodeBidi: "plaintext" }}
-      >
+      <g data-safe-zone="customer-information">
         <text
-          x="42"
+          x={rtl ? 355 : 42}
           y="327"
           fill={accent}
           fontSize="13"
           fontWeight="700"
-          letterSpacing="2"
+          letterSpacing={rtl ? "0" : "2"}
+          textAnchor={rtl ? "end" : "start"}
+          direction={dir}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {labels.member}
         </text>
         <text
-          x="42"
+          x={customerNameX}
           y="368"
           fill={foreground}
           fontSize={props.customerName.length > 25 ? "27" : "31"}
           fontWeight="800"
+          textAnchor={customerNameAnchor}
+          direction={customerNameDirection}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {boundedText(props.customerName, 30)}
         </text>
@@ -529,22 +543,27 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           opacity="0.8"
         />
         <text
-          x="42"
+          x={rtl ? 355 : 42}
           y="430"
           fill={accent}
           fontSize="13"
           fontWeight="700"
-          letterSpacing="2"
+          letterSpacing={rtl ? "0" : "2"}
+          textAnchor={rtl ? "end" : "start"}
+          direction={dir}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {labels.id}
         </text>
         <text
-          x="42"
+          x={rtl ? 355 : 42}
           y="469"
           fill={foreground}
           fontSize="25"
           fontWeight="500"
           letterSpacing="2"
+          textAnchor={rtl ? "end" : "start"}
+          direction="ltr"
         >
           {boundedText(props.customerId, 24)}
         </text>
@@ -566,7 +585,9 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           fill={accent}
           fontSize="14"
           fontWeight="800"
-          letterSpacing="2"
+          letterSpacing={rtl ? "0" : "2"}
+          direction={dir}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {labels.balance}
         </text>
@@ -576,6 +597,8 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           fill={foreground}
           fontSize={valueFontSize(metrics.currentText)}
           fontWeight="900"
+          direction="ltr"
+          style={{ unicodeBidi: "isolate" }}
         >
           {metrics.currentText}
         </text>
@@ -599,7 +622,15 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
             fill={`url(#${id}-progress)`}
           />
         </g>
-        <text x="452" y="410" fill={foreground} fontSize="15" fontWeight="750">
+        <text
+          x="452"
+          y="410"
+          fill={foreground}
+          fontSize="15"
+          fontWeight="750"
+          direction="ltr"
+          style={{ unicodeBidi: "isolate" }}
+        >
           {metrics.ratioText}
         </text>
         <text
@@ -608,6 +639,8 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           fill={metrics.rewardReady ? "#22C55E" : muted}
           fontSize="13"
           fontWeight="800"
+          direction={dir}
+          style={{ unicodeBidi: "plaintext" }}
         >
           {metrics.remainingText}
         </text>
@@ -615,7 +648,6 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
     </>
   );
 
-  const rtl = language === "AR";
   const backTextX = rtl ? 814 : 42;
   const backTextAnchor = rtl ? "end" : "start";
   const backProgressX = rtl ? 300 : 42;

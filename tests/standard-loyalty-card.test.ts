@@ -45,8 +45,8 @@ test("standard QR has fixed logical dimensions and defensive bounds", () => {
 test("protected Standard Front keeps its approved structural coordinates", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /x="430"\s+y="238"\s+width="378"\s+height="250"/);
-  assert.match(card, /x="42"\s+y="215"/);
-  assert.match(card, /x="42"\s+y="327"/);
+  assert.match(card, /x=\{rtl \? 355 : 42\}\s+y="215"/);
+  assert.match(card, /x=\{rtl \? 355 : 42\}\s+y="327"/);
   assert.match(card, /x="716"\s+y="27"\s+width="112"\s+height="112"/);
 });
 
