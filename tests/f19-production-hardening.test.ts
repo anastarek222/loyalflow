@@ -24,7 +24,7 @@ function productionEnvironment(
     DATABASE_URL:
       "postgresql://user:secret@db.example.test/loyalflow?sslmode=verify-full",
     AUTH_SECRET: "safe-test-secret",
-    NEXT_PUBLIC_APP_URL: "https://app.example.test",
+    NEXT_PUBLIC_APP_URL: "https://app.loyalflow.co",
     LOYALFLOW_ENVIRONMENT: "production",
     LOYALFLOW_PRODUCTION_DATABASE: "loyalflow",
     LOYALFLOW_RELEASE_SHA: "8c0362c",

@@ -23,7 +23,7 @@ function productionEnvironment(
     NODE_ENV: "production",
     DATABASE_URL: "postgresql://user:database-secret@db.example.test/loyalflow",
     AUTH_SECRET: "auth-secret-value",
-    NEXT_PUBLIC_APP_URL: "https://app.example.test",
+    NEXT_PUBLIC_APP_URL: "https://app.loyalflow.co",
     LOYALFLOW_ENVIRONMENT: "production",
     LOYALFLOW_PRODUCTION_DATABASE: "loyalflow",
     LOYALFLOW_RELEASE_SHA: "8c0362c",
@@ -65,7 +65,7 @@ test("optional integration configuration does not block a valid core runtime", (
   const environment = validateRuntimeEnvironment(productionEnvironment());
 
   assert.equal(environment.googleSheetsConfigured, false);
-  assert.equal(environment.appUrl, "https://app.example.test");
+  assert.equal(environment.appUrl, "https://app.loyalflow.co");
   assert.equal(environment.environmentName, "production");
   assert.equal(environment.productionDatabaseName, "loyalflow");
   assert.equal(environment.releaseSha, "8c0362c");

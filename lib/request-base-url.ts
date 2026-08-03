@@ -1,42 +1,27 @@
 import { headers } from "next/headers";
-
-function isLocalUrl(value: string) {
-  try {
-    const hostname =
-      new URL(value).hostname;
-
-    return (
-      hostname === "localhost" ||
-      hostname === "0.0.0.0" ||
-      hostname === "127.0.0.1"
-    );
-  } catch {
-    return true;
-  }
-}
+import {
+  getConfiguredPublicAppUrl,
+  isLocalAppHostname,
+} from "@/lib/public-app-url";
 
 function isLocalHost(host: string) {
-  const hostname =
-    host.split(":")[0];
+  const hostname = host
+    .replace(/^\[/, "")
+    .replace(/\](:\d+)?$/, "")
+    .split(":")[0];
 
-  return (
-    hostname === "localhost" ||
-    hostname === "0.0.0.0" ||
-    hostname === "127.0.0.1" ||
-    hostname.startsWith("192.168.") ||
-    hostname.startsWith("10.")
-  );
+  return isLocalAppHostname(hostname);
 }
 
 export async function getRequestBaseUrl() {
   const configuredUrl =
-    process.env.NEXT_PUBLIC_APP_URL
-      ?.trim()
-      .replace(/\/$/, "");
+    getConfiguredPublicAppUrl();
 
   if (
     configuredUrl &&
-    !isLocalUrl(configuredUrl)
+    !isLocalAppHostname(
+      new URL(configuredUrl).hostname
+    )
   ) {
     return configuredUrl;
   }

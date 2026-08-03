@@ -1,5 +1,6 @@
 import process from "node:process";
 import { getGoogleSheetsConfiguration, type GoogleSheetsConfigurationReason } from "@/lib/google-sheets";
+import { validatePublicAppOrigin } from "@/lib/public-app-url";
 
 /**
  * Server-only runtime configuration. Do not import this module from Client
@@ -70,19 +71,12 @@ function validateReleaseSha(value: string | null) {
 
 function validateProductionAppUrl(value: string) {
   try {
-    const url = new URL(value);
-
-    if (
-      url.protocol !== "https:" ||
-      url.username ||
-      url.password ||
-      url.origin !== value
-    ) {
-      throw new Error("invalid public origin");
-    }
+    return validatePublicAppOrigin(value, {
+      production: true,
+    });
   } catch {
     throw new EnvironmentValidationError(
-      "NEXT_PUBLIC_APP_URL must be an HTTPS origin without a trailing slash."
+      "NEXT_PUBLIC_APP_URL must be a real non-local HTTPS origin without credentials, path, query, fragment, trailing slash, or placeholder domain."
     );
   }
 }

@@ -17,7 +17,7 @@ Record the exact commit and result for each gate before approval:
 - [ ] `npm run typecheck`
 - [ ] `npm test`
 - [ ] `npm run test:browser-uat` using disposable, non-production fixtures
-- [ ] `NEXT_PUBLIC_APP_URL=https://uat.example.invalid npm run build`
+- [ ] `NEXT_PUBLIC_APP_URL=https://uat.loyalflow.co npm run build`
 - [ ] `npm audit --omit=dev --audit-level=high` (record remaining findings)
 - [ ] `git diff --check`
 

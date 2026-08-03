@@ -1,11 +1,12 @@
 import prisma from "@/lib/prisma";
 import { getUniqueGoogleSheetTitle, sanitizeGoogleSheetTitle } from "@/lib/google-sheets-title";
-
 import {
   getGoogleSheetsClient,
   getGoogleSpreadsheetMetadata,
   type GoogleSheetsConfigurationReason,
 } from "@/lib/google-sheets";
+import { getConfiguredPublicAppUrl } from "@/lib/public-app-url";
+
 
 export type GoogleSheetsSyncFailureReason =
   | GoogleSheetsConfigurationReason
@@ -87,7 +88,9 @@ export async function syncBusinessToGoogleSheet(businessId: string): Promise<Goo
 
   const sheet = await resolveMappedSheet(business);
   const headers = ["Customer ID", "Customer Name", "Phone Number", "Card Link", "Current Balance", "Unit", "Gifts Redeemed", "Lifetime Earned", "Lifetime Redeemed", "Status", "Registration Date", "Last Updated"];
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const baseUrl =
+    getConfiguredPublicAppUrl() ??
+    "http://localhost:3000";
   const rows = business.customers.map((customer) => [
     safeCellValue(customer.customerCode),
     safeCellValue([customer.firstName, customer.lastName].filter(Boolean).join(" ")),
