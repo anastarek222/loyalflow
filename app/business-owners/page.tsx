@@ -12,7 +12,6 @@ import {
   getPlanLimit,
   isLoyalFlowPlan,
   planCatalog,
-  type LoyalFlowPlan,
 } from "@/lib/entitlements";
 import { normalizeLanguage, getLanguageLocale } from "@/lib/i18n";
 import { getEffectivePlanLimitsMap } from "@/lib/entitlements-server";
