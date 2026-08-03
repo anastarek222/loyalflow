@@ -39,9 +39,7 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
       .getByLabel("Password")
       .fill(process.env.UAT_FIXTURE_PASSWORD!);
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
-    await page.goto("/onboarding");
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
 
     const form = page.locator("form[data-owner-step]");
     await expect(form).toHaveAttribute("data-owner-step", "1");

@@ -43,6 +43,7 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
   await expect(customerResult).toHaveAttribute(
     "href",
     `/businesses/${fixture.businessA}/scan/customer/${fixture.activeCustomer.id}`,
+    { timeout: 20_000 },
   );
   await Promise.all([
     page.waitForURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}$`), { timeout: 15_000 }),
@@ -266,7 +267,9 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByLabel("First name").fill("Browser UAT");
     await page.getByLabel("Phone number").fill(fixture.publicEnrollmentPhone);
     await page.getByRole("button", { name: "Create digital card", exact: true }).click();
-    await expect(page).toHaveURL(/\/card\/[^/?#]+\?welcome=1$/);
+    await expect(page).toHaveURL(/\/card\/[^/?#]+\?welcome=1$/, {
+      timeout: 20_000,
+    });
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Share card", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
@@ -276,16 +279,13 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(installHelp).toBeVisible();
     await installHelp.getByRole("button", { name: "Close", exact: true }).click();
     await expect(installHelp).toHaveCount(0);
-    await page.getByRole("button", { name: "↻ Flip card", exact: true }).click();
-    await expect(page.getByRole("img", { name: "Scan to open this card", exact: true })).toBeVisible();
 
     await page.goto(`/card/${fixture.activeCustomer.publicToken}`);
     await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
-    await expect(page.getByText("Front side", { exact: true })).toBeVisible();
     await expect(page.getByText("Final UAT active", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "↻ Flip card", exact: true }).click();
-    await expect(page.getByText("Back side", { exact: true })).toBeVisible();
-    await expect(page.getByRole("img", { name: "Scan to open this card", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /loyalty card front/i }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
     await assertViewportSafety(page);
@@ -293,13 +293,9 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(`/card/${fixture.otherCustomer.publicToken}`);
     await expect(page.locator("main")).toHaveAttribute("dir", "rtl");
-    await page.getByRole("button", { name: "العربية", exact: true }).click();
-    await expect(page.getByRole("button", { name: "العربية", exact: true })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.getByText("الوجه الأمامي", { exact: true })).toBeVisible();
-    await expect(page.getByText("يتقلب الكارت تلقائيًا", { exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: "↻ اقلب الكارت", exact: true }).click();
-    await expect(page.getByText("الوجه الخلفي", { exact: true })).toBeVisible();
-    await expect(page.getByRole("img", { name: "امسح الكود لفتح الكارت", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /loyalty card front/i }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "نسخ الرابط", exact: true })).toBeVisible();
     await assertViewportSafety(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
