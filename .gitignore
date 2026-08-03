@@ -55,3 +55,6 @@ scripts/uat-*.ts
 .claude/
 .claude/
 .f16-backup-*/
+
+# Local archives and handoff bundles
+*.zip
