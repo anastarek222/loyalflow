@@ -16,10 +16,10 @@ test("F19.6 release checkpoint requires a clean committed reproducible tree", ()
   assert.match(verifier, /rev-parse", "HEAD"/);
   assert.match(verifier, /pnpm-lock\.yaml/);
   assert.match(verifier, /\.env\.example/);
-  assert.match(verifier, /migrations\.length === 34/);
+  assert.match(verifier, /migrations\.length === 38/);
   assert.match(
     verifier,
-    /20260726224500_add_subscription_plan_entitlements/,
+    /20260729113000_add_custom_card_mode/,
   );
 });
 

@@ -104,8 +104,8 @@ function main() {
       return {
         name: "migration history",
         ok:
-          migrations.length === 34 &&
-          latest === "20260726224500_add_subscription_plan_entitlements",
+          migrations.length === 38 &&
+          latest === "20260729113000_add_custom_card_mode",
         detail: `${migrations.length} committed migrations; latest ${latest}`,
       };
     }),
