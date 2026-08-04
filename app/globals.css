@@ -296,11 +296,13 @@ input:-webkit-autofill:focus {
 
 /* html5-qrcode retains its external-widget overrides. */
 #loyalflow-qr-reader { color: var(--lf-foreground) !important; }
+#loyalflow-qr-reader,
+#loyalflow-qr-reader > * { max-width: 100%; }
 #loyalflow-qr-reader * { box-sizing: border-box; }
 #loyalflow-qr-reader button { min-height: 44px; border: 0 !important; border-radius: var(--lf-radius-md) !important; background-color: var(--lf-foreground) !important; padding: 10px 16px !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; font-weight: 700 !important; }
 #loyalflow-qr-reader select { min-height: 44px; border: 1px solid var(--lf-border-strong) !important; border-radius: var(--lf-radius-md) !important; background-color: #ffffff !important; padding: 8px 12px !important; color: #000000 !important; -webkit-text-fill-color: #000000 !important; }
 #loyalflow-qr-reader a { color: var(--lf-primary) !important; font-weight: 700; }
-#loyalflow-qr-reader video { width: 100% !important; border-radius: var(--lf-radius-lg); }
+#loyalflow-qr-reader :where(video, canvas) { display: block; width: 100% !important; max-width: 100% !important; height: auto !important; border-radius: var(--lf-radius-lg); }
 #loyalflow-qr-reader img { display: inline-block; }
 
 /* Dark login fields intentionally opt out of the application form surface. */

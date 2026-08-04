@@ -117,7 +117,14 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         const shouldRequestEnvironment = !requestedCameraId && !hasCameraLabels(availableCameras);
         const scanner = new Html5Qrcode("loyalflow-qr-reader", { formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE], verbose: false });
         scannerRef.current = scanner;
-        const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 };
+        const config = {
+          fps: 10,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const size = Math.max(180, Math.min(250, viewfinderWidth - 16, viewfinderHeight - 16));
+            return { width: size, height: size };
+          },
+          aspectRatio: 1,
+        };
         const onDecoded = (decodedText: string) => { void resolveScannedValue(decodedText); };
         const onDecodeMiss = () => {
           // Per-frame decode misses are expected and must not become camera errors.
@@ -186,13 +193,15 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   function submitManualValue(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); void resolveScannedValue(manualValue); }
   const cameraBusy = isInitializing || isSwitching || isProcessing;
 
-  return <div>
-    <div id="loyalflow-qr-reader" data-selected-camera={selectedCameraId ?? undefined} className="min-h-64 overflow-hidden rounded-[var(--lf-radius-input)] border border-border bg-white p-4 text-foreground" />
+  return <div className="min-w-0">
+    <div id="loyalflow-qr-reader" data-selected-camera={selectedCameraId ?? undefined} className="lf-qr-reader min-h-64 w-full max-w-full overflow-hidden rounded-[var(--lf-radius-input)] border border-border bg-white p-2 text-foreground sm:p-4" />
     <div role={isError ? "alert" : "status"} aria-live={isError ? "assertive" : "polite"} aria-atomic="true" aria-busy={cameraBusy} aria-label={copy.scannerStatus} className={`mt-4 rounded-[var(--lf-radius-input)] px-4 py-4 text-sm ${isError ? "border border-danger/30 bg-danger-subtle text-danger" : "border border-info/30 bg-info-subtle text-info"}`}>{status}</div>
-    {cameras.length > 1 && <button type="button" onClick={() => void switchCamera()} disabled={cameraBusy} aria-busy={isSwitching} className="mt-4 min-h-11 rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle disabled:cursor-not-allowed">{copy.switchCamera}</button>}
-    {cameraError && cameraError !== "secure" && <button type="button" onClick={() => void restartScanner()} disabled={cameraBusy} aria-busy={cameraBusy} className="mt-4 min-h-11 rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle disabled:cursor-not-allowed">{copy.retryCamera}</button>}
-    <details className="mt-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle">
-      <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-foreground-muted">{copy.manualDivider}</summary>
+    {(cameras.length > 1 || (cameraError && cameraError !== "secure")) && <div className="mt-4 flex flex-wrap gap-2">
+      {cameras.length > 1 && <button type="button" onClick={() => void switchCamera()} disabled={cameraBusy} aria-busy={isSwitching} className="flex min-h-11 flex-1 basis-36 items-center justify-center rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle disabled:cursor-not-allowed">{copy.switchCamera}</button>}
+      {cameraError && cameraError !== "secure" && <button type="button" onClick={() => void restartScanner()} disabled={cameraBusy} aria-busy={cameraBusy} className="flex min-h-11 flex-1 basis-36 items-center justify-center rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle disabled:cursor-not-allowed">{copy.retryCamera}</button>}
+    </div>}
+    <details className="mt-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center px-4 py-2 text-sm font-semibold text-foreground-muted">{copy.manualDivider}</summary>
       <form onSubmit={submitManualValue} className="space-y-3 border-t border-border p-4">
         <label htmlFor="manualQrValue" className="block text-sm font-medium text-foreground-muted">{copy.manualLabel}</label>
         <input id="manualQrValue" value={manualValue} onChange={(event) => setManualValue(event.target.value)} placeholder={copy.manualPlaceholder} dir="ltr" className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />

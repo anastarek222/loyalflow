@@ -18,6 +18,7 @@ const source = (path: string) => readFileSync(join(root, path), "utf8");
 const route = source("app/api/scan/customers/route.ts");
 const scanner = source("components/qr-scanner.tsx");
 const search = source("components/scan-customer-search.tsx");
+const scanPage = source("app/businesses/[slug]/scan/page.tsx");
 
 test("U7.2 has localized search and camera recovery copy", () => {
   for (const language of ["AR", "EN"] as const) {
@@ -96,6 +97,21 @@ test("U7.2 retains the camera that actually started when track settings omit a d
   assert.match(scanner, /startedCameraId = preferred\?\.id \?\? availableCameras\[0\]\.id;/);
   assert.match(scanner, /startedCameraId = fallback\.id;/);
   assert.match(scanner, /startedCameraId \?\? preferred\?\.id \?\? availableCameras\[0\]\?\.id \?\? null/);
+});
+
+test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
+  const scannerStyles = source("app/globals.css");
+  assert.match(scanner, /lf-qr-reader min-h-64 w-full max-w-full overflow-hidden/);
+  assert.match(scanner, /qrbox: \(viewfinderWidth: number, viewfinderHeight: number\)/);
+  assert.match(scanner, /flex flex-wrap gap-2/);
+  assert.match(scanner, /min-h-11 flex-1 basis-36/);
+  assert.match(search, /flex flex-wrap gap-2/);
+  assert.match(search, /flex-1 basis-48/);
+  assert.match(search, /block truncate text-xs text-foreground-subtle/);
+  assert.match(scannerStyles, /#loyalflow-qr-reader :where\(video, canvas\)/);
+  assert.match(scannerStyles, /max-width: 100% !important/);
+  assert.match(scanPage, /className="min-h-full py-4 sm:py-8"/);
+  assert.match(scanPage, /min-h-11 self-start/);
 });
 
 test("U7.2 makes no Prisma schema or migration change", () => {
