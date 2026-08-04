@@ -66,8 +66,26 @@ export function getPersistedRewardUnlockState({
   expiredAt: Date | null;
   now?: Date;
 }) {
+  return getRewardUnlockLifecycleState({ rewardActive: true, expiresAt, redeemedAt, expiredAt, now });
+}
+
+/** Redeemed and time-expired history takes precedence over reward deactivation. */
+export function getRewardUnlockLifecycleState({
+  rewardActive,
+  expiresAt,
+  redeemedAt,
+  expiredAt,
+  now = new Date(),
+}: {
+  rewardActive: boolean;
+  expiresAt: Date;
+  redeemedAt: Date | null;
+  expiredAt: Date | null;
+  now?: Date;
+}) {
   if (redeemedAt) return "REDEEMED" as const;
   if (expiredAt || now >= expiresAt) return "EXPIRED" as const;
+  if (!rewardActive) return "REWARD_INACTIVE" as const;
   return "ACTIVE" as const;
 }
 
@@ -78,7 +96,7 @@ export function isRewardUnlockActionable(input: {
   expiresAt: Date;
   now?: Date;
 }) {
-  return input.rewardActive && getPersistedRewardUnlockState(input) === "ACTIVE";
+  return getRewardUnlockLifecycleState(input) === "ACTIVE";
 }
 
 export function getRewardUnlockRedemptionState({

@@ -14,7 +14,7 @@ import {
 } from "@/lib/permissions";
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
 import { getRewardAvailability } from "@/lib/rewards/availability";
-import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
+import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
 import { calculateRetentionScore, getRetentionPresentation } from "@/lib/customers/retention-score";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import CopyLinkButton from "@/components/copy-link-button";
@@ -309,7 +309,8 @@ export default async function CustomerDetailsPage({
       ? rewardUnlocksByRewardId.get(reward.id)
       : undefined;
     const expirationState = unlock
-      ? getPersistedRewardUnlockState({
+      ? getRewardUnlockLifecycleState({
+          rewardActive: true,
           expiresAt: unlock.expiresAt,
           redeemedAt: unlock.redeemedAt,
           expiredAt: unlock.expiredAt,
@@ -327,7 +328,7 @@ export default async function CustomerDetailsPage({
       expirationState,
       expiresAt: unlock?.expiresAt ?? null,
       rewardAvailable:
-        progress.rewardAvailable && expirationState !== "EXPIRED",
+        progress.rewardAvailable && expirationState === "ACTIVE",
     };
   });
   const rewardAvailable = rewardStates.some(

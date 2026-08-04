@@ -4,7 +4,7 @@ import ShareLinkButton from "@/components/share-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
-import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
+import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
@@ -266,7 +266,8 @@ export default async function PublicCardPage({
       id: unlock.id,
       name: unlock.reward.name,
       expiresAt: unlock.expiresAt,
-      state: getPersistedRewardUnlockState({
+      state: getRewardUnlockLifecycleState({
+        rewardActive: unlock.reward.isActive,
         expiresAt: unlock.expiresAt,
         redeemedAt: unlock.redeemedAt,
         expiredAt: unlock.expiredAt,
