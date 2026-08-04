@@ -71,11 +71,11 @@ export default function AppTopbar({ language, experienceMode, experienceAccess, 
     return () => { document.removeEventListener("mousedown", closeWhenOutside); window.removeEventListener("keydown", closeOnEscape); window.removeEventListener("loyalflow:open-experience-mode", openExperienceMode); };
   }, []);
 
-  return <header className="lf-topbar sticky top-0 z-20 flex min-h-14 items-center justify-between gap-4 border-b px-4 py-2 sm:px-6" data-shell-topbar="true">
-    <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+  return <header className="lf-topbar sticky top-0 z-20 flex min-h-14 items-center justify-between gap-2 border-b px-3 py-2 sm:gap-4 sm:px-6" data-shell-topbar="true">
+    <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-4">
       <MobileSidebarWrapper language={language} experienceMode={experienceMode} user={{ ...user, experienceAccess }} business={activeBusiness} businesses={businesses} />
       <div className="min-w-0">
-        {context.parent && <p className="truncate text-xs font-medium text-foreground-subtle">{context.parent}</p>}
+        {context.parent && <p className="hidden truncate text-xs font-medium text-foreground-subtle sm:block">{context.parent}</p>}
         <p className="truncate text-base font-bold text-foreground sm:text-lg">{context.title}</p>
       </div>
       {activeBusiness && businesses.length > 1 && <div ref={businessRef} className="relative hidden sm:block" data-current-business-context="true">
@@ -83,7 +83,7 @@ export default function AppTopbar({ language, experienceMode, experienceAccess, 
         {businessOpen && <div role="menu" aria-label={language === "AR" ? "تبديل النشاط" : "Switch business"} className="absolute start-0 top-12 z-50 w-64 rounded-[var(--lf-radius-input)] border border-border bg-surface p-1 shadow-[var(--lf-shadow-overlay)]">{businesses.map((business) => <Link key={business.id} href={`/businesses/${business.slug}`} role="menuitem" onClick={() => setBusinessOpen(false)} className={`flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold ${business.slug === activeBusiness.slug ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}>{business.name}</Link>)}</div>}
       </div>}
     </div>
-    <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+    <div className="flex shrink-0 items-center gap-0 sm:gap-2">
       {activeBusiness && canScan && <Link href={`/businesses/${activeBusiness.slug}/scan`} aria-label={language === "AR" ? "فتح المسح" : "Open scan"} className="hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover sm:inline-flex"><ScanLine size={17} aria-hidden="true" /><span>{language === "AR" ? "مسح" : "Scan"}</span></Link>}
       {activeBusiness && <Link href={`/businesses/${activeBusiness.slug}?notifications=1`} aria-label={language === "AR" ? "الإشعارات" : "Notifications"} className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] text-foreground-muted hover:bg-surface-subtle"><Bell size={19} aria-hidden="true" /></Link>}
       <LanguageSwitcher language={language} />

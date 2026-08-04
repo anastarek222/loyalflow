@@ -178,7 +178,7 @@ useEffect(() => {
           role="dialog"
           aria-modal="true"
           aria-labelledby="notifications-title"
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-foreground/70 backdrop-blur-sm sm:items-center sm:p-6"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-foreground/70 p-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-6"
           onMouseDown={(event) => {
             if (
               event.target ===
@@ -188,8 +188,8 @@ useEffect(() => {
             }
           }}
         >
-          <section className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-[var(--lf-radius-card)]">
-            <header className="flex shrink-0 items-start justify-between gap-4 bg-foreground p-6 text-white sm:p-6">
+          <section className="flex h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] max-h-none w-full max-w-4xl flex-col overflow-hidden rounded-[var(--lf-radius-card)] bg-white shadow-2xl sm:h-auto sm:max-h-[92vh]">
+            <header className="flex shrink-0 items-start justify-between gap-3 bg-foreground p-4 text-white sm:gap-4 sm:p-6">
               <div>
                 <p className="text-sm font-bold text-primary">
                   مركز الإشعارات
@@ -197,12 +197,12 @@ useEffect(() => {
 
                 <h2
                   id="notifications-title"
-                  className="mt-1 text-2xl font-black"
+                  className="mt-1 text-xl font-black sm:text-2xl"
                 >
                   التنبيهات المهمة
                 </h2>
 
-                <p className="mt-2 text-sm text-white/65">
+                <p className="mt-1 hidden text-sm text-white/65 sm:block">
                   المكافآت الجاهزة وأحدث حركات العملاء.
                 </p>
               </div>
@@ -219,7 +219,7 @@ useEffect(() => {
               </button>
             </header>
 
-            <div className="flex shrink-0 flex-col gap-4 border-b border-border bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="flex shrink-0 flex-col gap-2 border-b border-border bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-danger-subtle px-4 py-1.5 text-sm font-black text-danger">
                   غير المقروء:{" "}
@@ -246,7 +246,7 @@ useEffect(() => {
                   visibleUnreadCount === 0 ||
                   isMarkingRead
                 }
-                className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 text-sm font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle sm:w-auto"
+                className="w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle sm:w-auto sm:px-6 sm:py-4"
               >
                 {isMarkingRead
                   ? "جاري الحفظ..."
@@ -256,7 +256,7 @@ useEffect(() => {
               </button>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface-subtle px-4 py-4 sm:px-6">
+            <div className="flex shrink-0 items-center gap-2 border-b border-border bg-surface-subtle px-3 py-2 sm:px-6 sm:py-4">
               <span className="ms-1 text-sm font-bold text-foreground-subtle">
                 عرض:
               </span>
@@ -327,7 +327,7 @@ useEffect(() => {
 
             <div
               id="business-notifications-content"
-              className="min-h-0 overflow-y-auto"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
             >
               {filter === "unread" &&
               visibleUnreadCount === 0 ? (

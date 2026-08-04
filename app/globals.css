@@ -77,6 +77,8 @@
   --lf-motion-fast: 120ms;
   --lf-motion-standard: 180ms;
   --lf-motion-overlay: 220ms;
+  /* Shared mobile shell reservation: content clears the nav and device inset. */
+  --lf-mobile-nav-height: calc(4rem + env(safe-area-inset-bottom));
 
   /* Legacy aliases retained while pages migrate to semantic primitives. */
   --lf-primary-soft: #1e293b;
@@ -251,14 +253,14 @@ form {
 .lf-title { color: var(--lf-text); font-size: 1.5rem; font-weight: 800; }
 .lf-muted { color: var(--lf-muted); }
 
-/* U3 navigation foundation: tokens/classes only; the existing shell is untouched. */
+/* Layering remains content < mobile nav (30) < sidebar (50) < dialogs (100). */
 .lf-nav-sidebar { background: var(--lf-surface); border-color: var(--lf-border); }
 .lf-nav-item { color: var(--lf-foreground-muted); border-radius: var(--lf-radius-md); }
 .lf-nav-item:hover { background: var(--lf-surface-subtle); color: var(--lf-foreground); }
 .lf-nav-item-active { background: var(--lf-primary); color: var(--lf-primary-foreground); }
 .lf-nav-group-label { color: var(--lf-foreground-subtle); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .lf-topbar { background: var(--lf-surface-raised); border-color: var(--lf-border); }
-.lf-mobile-nav { background: var(--lf-surface-raised); border-color: var(--lf-border); box-shadow: var(--lf-shadow-overlay); }
+.lf-mobile-nav { min-height: var(--lf-mobile-nav-height); background: var(--lf-surface-raised); border-color: var(--lf-border); box-shadow: var(--lf-shadow-overlay); }
 
 /* Existing forms keep their established light appearance during the migration. */
 input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
