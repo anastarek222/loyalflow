@@ -68,25 +68,34 @@ test("U7.2 search UI blocks short input and protects stale and duplicate request
   assert.match(search, /min-h-11/);
 });
 
-test("U7.2 ignores ordinary render decode misses without classifying NotFoundException as a camera failure", () => {
-  assert.match(scanner, /scanner\.render\([\s\S]*?\(\) => \{[\s\S]*?ordinary per-frame decode misses[\s\S]*?NotFoundException[\s\S]*?\}\);/);
-  assert.doesNotMatch(scanner, /scanner\.render\([^;]*,\s*\(error\)\s*=>/);
+test("U7.2 ignores ordinary per-frame decode misses without classifying them as a camera failure", () => {
+  assert.match(scanner, /const onDecodeMiss = \(\) => \{[\s\S]*?Per-frame decode misses are expected/);
   const cameraErrorClassifier = scanner.match(/function getCameraError\([\s\S]*?\n\}/)?.[0] ?? "";
   assert.doesNotMatch(cameraErrorClassifier, /notfound/i);
 });
 
 test("U7.2 catches scanner import and render failures, retries after cleanup, and retains resolve concurrency protection", () => {
   assert.match(scanner, /await import\("html5-qrcode"\)/);
-  assert.match(scanner, /scanner\.render\(/);
+  assert.match(scanner, /new Html5Qrcode\(/);
+  assert.match(scanner, /Html5Qrcode\.getCameras\(\)/);
+  assert.match(scanner, /scanner\.start\(/);
+  assert.match(scanner, /await scanner\.stop\(\)/);
   assert.match(scanner, /catch \(error\)/);
-  assert.match(scanner, /if \(!cancelled\) showCameraError\(error\);/);
+  assert.match(scanner, /if \(!mountedRef\.current\) return;/);
+  assert.match(scanner, /showCameraError\(error\);/);
   assert.match(scanner, /initializationPromiseRef\.current/);
-  assert.match(scanner, /clearingPromiseRef\.current/);
-  assert.match(scanner, /await clearScanner\(\)/);
+  assert.match(scanner, /stoppingPromiseRef\.current/);
+  assert.match(scanner, /await stopScanner\(\)/);
   assert.match(scanner, /setRestartAttempt/);
   assert.match(scanner, /processingRef\.current \|\| !value\.trim\(\)/);
-  assert.match(scanner, /supportedScanTypes/);
-  assert.match(scanner, /Html5QrcodeScanType\.SCAN_TYPE_FILE/);
+  assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
+});
+
+test("U7.2 retains the camera that actually started when track settings omit a device ID", () => {
+  assert.match(scanner, /let startedCameraId: string \| null = null;/);
+  assert.match(scanner, /startedCameraId = preferred\?\.id \?\? availableCameras\[0\]\.id;/);
+  assert.match(scanner, /startedCameraId = fallback\.id;/);
+  assert.match(scanner, /startedCameraId \?\? preferred\?\.id \?\? availableCameras\[0\]\?\.id \?\? null/);
 });
 
 test("U7.2 makes no Prisma schema or migration change", () => {
