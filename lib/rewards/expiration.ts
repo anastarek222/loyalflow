@@ -71,6 +71,16 @@ export function getPersistedRewardUnlockState({
   return "ACTIVE" as const;
 }
 
+export function isRewardUnlockActionable(input: {
+  rewardActive: boolean;
+  redeemedAt: Date | null;
+  expiredAt: Date | null;
+  expiresAt: Date;
+  now?: Date;
+}) {
+  return input.rewardActive && getPersistedRewardUnlockState(input) === "ACTIVE";
+}
+
 export function getRewardUnlockRedemptionState({
   expectedBusinessId,
   unlockBusinessId,

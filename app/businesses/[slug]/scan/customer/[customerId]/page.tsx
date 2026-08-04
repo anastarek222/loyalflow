@@ -13,6 +13,7 @@ import {
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
 import { earnActionLabel, formatLoyaltyAmount } from "@/lib/loyalty/presentation";
+import { isRewardUnlockActionable } from "@/lib/rewards/expiration";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { scanUiCopy } from "@/lib/scan/copy";
@@ -77,7 +78,7 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
       },
       rewardUnlocks: {
         where: { redeemedAt: null },
-        include: { reward: { select: { id: true, name: true, type: true, code: true } } },
+        include: { reward: { select: { id: true, name: true, type: true, code: true, isActive: true } } },
       },
       business: { select: { name: true, slug: true, loyaltyMode: true, earnAmount: true, unitName: true, currency: true } },
     },
@@ -101,6 +102,7 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
       ? { icon: "⚙️", title: copy.adjustmentActivity, color: "bg-warning-subtle" }
       : { icon: "⭐", title: copy.earnActivity, color: "bg-success-subtle" };
   const loyaltyPresentation = { loyaltyMode: customer.business.loyaltyMode, language, unitName: customer.business.unitName, currency: customer.business.currency, earnAmount: customer.business.earnAmount } as const;
+  const usableUnlocks = customer.rewardUnlocks.filter((unlock) => isRewardUnlockActionable({ ...unlock, rewardActive: unlock.reward.isActive }));
 
   return (
     <main className="min-h-full py-6 sm:py-8">
@@ -144,9 +146,9 @@ export default async function ScanCustomerPage({ params, searchParams }: PagePro
           </form>
         </Card> : null}
 
-        {customer.rewardUnlocks.length ? <section aria-label={copy.availableRewards}>
+        {usableUnlocks.length ? <section aria-label={copy.availableRewards}>
           <SectionHeader title={copy.availableRewards} />
-          <div className="mt-4 space-y-4">{customer.rewardUnlocks.map((unlock) => {
+          <div className="mt-4 space-y-4">{usableUnlocks.map((unlock) => {
             const redeemAction = redeemRewardAction.bind(null, slug, customer.id, unlock.reward.id);
             return <Card key={unlock.id} role="region" aria-labelledby={`scan-reward-${unlock.id}-title`} className="p-6">
               <p id={`scan-reward-${unlock.id}-title`} className="font-semibold text-foreground">{unlock.reward.name}</p>

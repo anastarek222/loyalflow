@@ -13,6 +13,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
 import { calculateRetentionScore, getRetentionPresentation } from "@/lib/customers/retention-score";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
@@ -291,6 +292,13 @@ export default async function CustomerDetailsPage({
       cost: business.rewardThreshold,
     }
   );
+  const canonicalAvailability = getRewardAvailability({
+    customerActive: customer.isActive,
+    balance: customer.balance,
+    rewardThreshold: business.rewardThreshold,
+    fallbackReward: { name: business.rewardName, cost: business.rewardThreshold },
+    catalogueRewards: business.rewards,
+  });
 
   const rewardUnlocksByRewardId = new Map(
     customer.rewardUnlocks.map((unlock) => [unlock.rewardId, unlock])
@@ -322,15 +330,12 @@ export default async function CustomerDetailsPage({
         progress.rewardAvailable && expirationState !== "EXPIRED",
     };
   });
-  const primaryRewardState = rewardStates[0]!;
   const rewardAvailable = rewardStates.some(
     (rewardState) => rewardState.rewardAvailable
   );
-  const remaining = primaryRewardState.remaining;
+  const remaining = canonicalAvailability.remaining;
   const loyaltyModeLabel = getLoyaltyModeLabel(language, business.loyaltyMode);
-  const messageReward =
-    rewardStates.find((rewardState) => rewardState.rewardAvailable)
-      ?.reward ?? primaryRewardState.reward;
+  const messageReward = canonicalAvailability.defaultReward;
 
   const updateCustomer = updateCustomerAction.bind(
     null,
@@ -398,6 +403,7 @@ export default async function CustomerDetailsPage({
     createdAt: customer.createdAt,
     score: retentionScore,
   });
+  const loyaltyPresentation = { loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, earnAmount: business.earnAmount } as const;
   const formatBalance = (amount: number) => formatLoyaltyAmount({ loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, amount });
 
   const whatsappContext = {
@@ -1368,7 +1374,7 @@ export default async function CustomerDetailsPage({
                           </p>
 
                           <p dir="ltr" className="text-xs text-foreground-subtle">
-                            {copy.balanceAfter(formatBalance(item.balanceAfter))}
+                            {copy.balanceAfter(item.balanceAfter === undefined ? undefined : formatBalance(item.balanceAfter))}
                           </p>
                         </div>
                       )}
