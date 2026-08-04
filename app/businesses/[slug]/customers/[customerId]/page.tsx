@@ -7,13 +7,14 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { getCampaignSuggestion } from "@/lib/campaigns/suggestions";
 import { isUnusualManualAdjustment } from "@/lib/loyalty/fraud";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import { formatLoyaltyAmount, operationalUnitLabel } from "@/lib/loyalty/presentation";
 import {
   canAccessBusiness,
   canPerform,
 } from "@/lib/permissions";
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
 import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
-import { calculateRetentionScore } from "@/lib/customers/retention-score";
+import { calculateRetentionScore, getRetentionPresentation } from "@/lib/customers/retention-score";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import CopyLinkButton from "@/components/copy-link-button";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
@@ -393,6 +394,11 @@ export default async function CustomerDetailsPage({
     earnAmount: business.earnAmount,
     rewardThreshold: business.rewardThreshold,
   });
+  const retentionPresentation = getRetentionPresentation({
+    createdAt: customer.createdAt,
+    score: retentionScore,
+  });
+  const formatBalance = (amount: number) => formatLoyaltyAmount({ loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, amount });
 
   const whatsappContext = {
     customer: customerName,
@@ -661,7 +667,7 @@ export default async function CustomerDetailsPage({
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">{copy.loyaltyToday}</p>
               <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                  <p className="text-4xl font-black text-foreground"><span dir="ltr" className="lf-type-numeric">{customer.balance}</span> <span dir="auto" className="text-base font-semibold text-foreground-muted">{business.unitName}</span></p>
+                  <p dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="text-4xl font-black text-foreground"><span className="lf-type-numeric">{formatBalance(customer.balance)}</span></p>
                   <p className="mt-1 text-sm text-foreground-muted">{rewardAvailable ? copy.rewardReadyNamed(messageReward.name) : copy.remainingForReward(remaining, messageReward.name)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -862,12 +868,8 @@ export default async function CustomerDetailsPage({
                 <div>
                   <p className="text-sm text-foreground-subtle">{loyaltyModeLabel} · {business.loyaltyMode === "SALES_AMOUNT" ? copy.eligibleSales : business.loyaltyMode === "VISITS" ? copy.visitsCount : copy.pointsBalance}</p>
 
-                  <p dir="ltr" className="mt-2 text-5xl font-bold text-foreground">
-                    {customer.balance}
-                  </p>
-
-                  <p dir="auto" className="mt-1 text-foreground-subtle">
-                    {business.unitName}
+                  <p dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="mt-2 text-5xl font-bold text-foreground">
+                    {formatBalance(customer.balance)}
                   </p>
                 </div>
 
@@ -906,7 +908,7 @@ export default async function CustomerDetailsPage({
                           {rewardState.reward.name}
                         </h2>
                         <p className="mt-1 text-sm text-foreground-subtle">
-                          <span dir="ltr" className="lf-type-numeric">{rewardState.reward.cost}</span> {business.unitName}
+                          {formatBalance(rewardState.reward.cost)}
                         </p>
                       </div>
 
@@ -936,7 +938,7 @@ export default async function CustomerDetailsPage({
                     </div>
 
                     <p className="mt-2 text-xs text-foreground-subtle">
-                      <span dir="ltr" className="lf-type-numeric">{customer.balance} / {rewardState.reward.cost}</span>
+                      <span dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="lf-type-numeric">{formatBalance(customer.balance)} / {formatBalance(rewardState.reward.cost)}</span>
                     </p>
 
                     {rewardState.expiresAt ? (
@@ -1025,7 +1027,7 @@ export default async function CustomerDetailsPage({
                         dir="auto"
                         className="flex items-center rounded-[var(--lf-radius-input)] bg-white px-4 font-black text-primary"
                       >
-                        {business.unitName}
+                        {operationalUnitLabel(loyaltyPresentation)}
                       </span>
                     </div>
                     </>
@@ -1182,7 +1184,7 @@ export default async function CustomerDetailsPage({
                   </p>
 
                   <p className="mt-4 text-sm font-semibold text-primary">
-                    {copy.currentBalance(customer.balance, business.unitName)}
+                    {copy.currentBalance(formatBalance(customer.balance), "")}
                   </p>
 
                   <form
@@ -1362,11 +1364,11 @@ export default async function CustomerDetailsPage({
                             }`}
                           >
                             {item.amount > 0 ? "+" : ""}
-                            {item.amount}
+                            {formatBalance(item.amount)}
                           </p>
 
                           <p dir="ltr" className="text-xs text-foreground-subtle">
-                            {copy.balanceAfter(item.balanceAfter)}
+                            {copy.balanceAfter(formatBalance(item.balanceAfter))}
                           </p>
                         </div>
                       )}
@@ -1396,11 +1398,13 @@ export default async function CustomerDetailsPage({
                   {retentionScore.score}/100
                 </p>
                 <p className="text-sm font-bold text-primary">
-                  {retentionScore.label === "Very Loyal"
+                  {retentionPresentation.label === "NEW"
+                    ? copy.newCustomer
+                    : retentionPresentation.label === "Very Loyal"
                     ? copy.veryLoyal
-                    : retentionScore.label === "Active"
+                    : retentionPresentation.label === "Active"
                       ? copy.retentionActive
-                      : retentionScore.label === "At Risk"
+                      : retentionPresentation.label === "At Risk"
                         ? copy.atRisk
                         : copy.highRisk}
                 </p>

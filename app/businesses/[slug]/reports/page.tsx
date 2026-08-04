@@ -33,6 +33,7 @@ import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
 import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { reportCopy } from "@/lib/reports/presentation";
+import { formatLoyaltyAmount, operationalUnitLabel } from "@/lib/loyalty/presentation";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
@@ -166,6 +167,7 @@ export default async function ReportsPage({
   const simple = experienceMode === "SIMPLE";
   const copy = reportCopy(language);
   const numberFormatter = new Intl.NumberFormat(getLanguageLocale(language));
+  const loyaltyPresentation = { loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency } as const;
 
   const canViewReports = canPerform(
     session.user,
@@ -1059,7 +1061,7 @@ export default async function ReportsPage({
         <section aria-label={copy.summary} className="mt-5 grid grid-cols-1 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface sm:grid-cols-3">
           {[
             { label: language === "AR" ? "عملاء جدد" : "New customers", value: newCustomers, detail: language === "AR" ? "خلال الفترة المحددة" : "In the selected period" },
-            { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: `${numberFormatter.format(earnedAmount)} ${business.unitName}`, detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
+            { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: formatLoyaltyAmount({ ...loyaltyPresentation, amount: earnedAmount }), detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
             { label: language === "AR" ? "استبدالات المكافآت" : "Reward redemptions", value: numberFormatter.format(redeemed._count._all), detail: language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions" },
           ].map((metric) => <article key={metric.label} className="border-b border-border p-4 last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"><p className="text-sm font-semibold text-slate-600">{metric.label}</p><p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p><p className="mt-2 text-xs text-slate-500">{metric.detail}</p></article>)}
         </section>
@@ -1145,11 +1147,11 @@ export default async function ReportsPage({
             <p className="text-sm text-slate-500">رصيد الولاء المكتسب</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-600">
-              {earnedAmount}
+              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: earnedAmount })}
             </p>
 
             <p dir="auto" className="mt-2 text-xs text-slate-400">
-              {earned._count._all} عملية إضافة — {business.unitName}
+              {earned._count._all} عملية إضافة — {operationalUnitLabel(loyaltyPresentation)}
             </p>
           </article>
 
@@ -1157,7 +1159,7 @@ export default async function ReportsPage({
             <p className="text-sm text-slate-500">إجمالي الولاء المكتسب</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-700">
-              {lifetimeEarnedAmount}
+              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: lifetimeEarnedAmount })}
             </p>
 
             <p dir="auto" className="mt-2 text-xs text-slate-400">
@@ -1170,7 +1172,7 @@ export default async function ReportsPage({
               <p className="text-sm text-slate-500">إجمالي الإنفاق المسجل</p>
 
               <p className="mt-3 text-4xl font-bold text-emerald-700">
-                {lifetimeTrackedSalesAmount}{business.currency ? ` ${business.currency}` : ""}
+                {formatLoyaltyAmount({ ...loyaltyPresentation, amount: lifetimeTrackedSalesAmount })}
               </p>
 
               <p className="mt-2 text-xs text-slate-400">
@@ -1275,11 +1277,11 @@ export default async function ReportsPage({
             <p className="text-sm text-slate-500">أرصدة العملاء الحالية</p>
 
             <p className="mt-3 text-4xl font-bold text-violet-600">
-              {currentBalance}
+              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: currentBalance })}
             </p>
 
             <p dir="auto" className="mt-2 text-xs text-slate-400">
-              إجمالي {business.unitName} المتاحة
+              إجمالي {operationalUnitLabel(loyaltyPresentation)} المتاحة
             </p>
           </article>
 
