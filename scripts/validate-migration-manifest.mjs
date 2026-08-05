@@ -27,13 +27,6 @@ function fail(messages) {
   process.exit(1);
 }
 
-function relativeToRepo(absolutePath) {
-  return absolutePath
-    .slice(repoRoot.length + 1)
-    .split(sep)
-    .join("/");
-}
-
 function sha256(filePath) {
   return createHash("sha256")
     .update(readFileSync(filePath))
