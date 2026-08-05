@@ -10,8 +10,11 @@ import { hash } from "bcryptjs";
 
 import { PrismaClient } from "../generated/prisma/client";
 import { logServerError } from "../lib/server/logging";
+import { assertDatabaseScriptEnvironment } from "../lib/server/database-script-guard";
 
 const connectionString = process.env.DATABASE_URL;
+
+assertDatabaseScriptEnvironment("seed-fixture");
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not configured");

@@ -1,5 +1,29 @@
 # LoyalFlow environment checklist
 
+## Environment identity and database-script safety
+
+`lib/server/environment-identity.ts` derives only safe metadata for development, test,
+preview, staging, and production. `LOYALFLOW_ENVIRONMENT` is the preferred explicit
+identity; supported deployment/Node signals are a fallback. Ambiguous identity fails
+closed for database-sensitive scripts and never returns database URLs, credentials, or
+raw environment values.
+
+Database scripts are classified as runtime application, migration deployer, development
+migration generator, seed/fixture, destructive reset, controlled operation, read-only
+verification, or backup/restore documentation. The reusable guard in
+`lib/server/database-script-guard.ts` permits fixture/destructive work only in the
+reviewed environment class. Preview and staging fixture/reset execution is refused;
+production destructive work requires the documented explicit override
+`LOYALFLOW_ALLOW_PRODUCTION_MUTATION=I_UNDERSTAND_PRODUCTION_MUTATION` plus existing
+script-specific confirmation and database identity checks. Super Admin creation and
+password reset are controlled operations, not fixtures, and use the same production
+override requirement.
+
+Public link origins are resolved only from `NEXT_PUBLIC_APP_URL` or the local/test
+fallback. Preview, staging, and production require an explicit canonical origin.
+Request `Host` and forwarded headers never select QR, card, join, icon, or manifest
+link origins.
+
 Copy `.env.example` to `.env` for local development. Never commit a populated
 `.env`, and never expose any server-only value with a `NEXT_PUBLIC_` prefix.
 

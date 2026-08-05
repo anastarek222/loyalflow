@@ -3,8 +3,11 @@ import bcrypt from "bcryptjs";
 import { password } from "@inquirer/prompts";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, UserRole } from "../generated/prisma/client";
+import { assertDatabaseScriptEnvironment } from "../lib/server/database-script-guard";
 
 const connectionString = process.env.DATABASE_URL;
+
+assertDatabaseScriptEnvironment("controlled-operation");
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not configured");

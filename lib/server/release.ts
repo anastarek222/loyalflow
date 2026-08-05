@@ -1,8 +1,5 @@
 import process from "node:process";
-
-function clean(value: string | undefined) {
-  return value?.trim() || null;
-}
+import { getEnvironmentIdentity } from "@/lib/server/environment-identity";
 
 function safeReleaseSha(value: string | null) {
   if (!value) return null;
@@ -24,16 +21,9 @@ export type PublicReleaseMetadata = Readonly<{
 export function getPublicReleaseMetadata(
   environment: NodeJS.ProcessEnv = process.env,
 ): PublicReleaseMetadata {
-  const environmentName = safeEnvironmentName(
-    clean(environment.LOYALFLOW_ENVIRONMENT) ??
-      (environment.NODE_ENV === "production" ? "production" : "development"),
-  );
-
-  const release = safeReleaseSha(
-    clean(environment.LOYALFLOW_RELEASE_SHA) ??
-      clean(environment.VERCEL_GIT_COMMIT_SHA) ??
-      clean(environment.GITHUB_SHA),
-  );
+  const identity = getEnvironmentIdentity(environment);
+  const environmentName = safeEnvironmentName(identity.environment);
+  const release = safeReleaseSha(identity.release);
 
   return {
     environment: environmentName,
