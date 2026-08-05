@@ -38,6 +38,7 @@ import {
 } from "@/lib/business/deletion";
 import type { BusinessDeletionState } from "@/components/business-deletion-danger-zone";
 import { logServerError, logServerEvent } from "@/lib/server/logging";
+import { isLoyaltyModeChangeBlocked } from "@/lib/loyalty/program-change-safety";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -223,6 +224,47 @@ export async function updateProgramRulesAction(
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/program?program=invalid`);
   }
+
+  const currentProgramme = await prisma.business.findUnique({
+    where: { id: business.id },
+    select: {
+      loyaltyMode: true,
+      customers: {
+        where: { balance: { not: 0 } },
+        select: { id: true },
+        take: 1,
+      },
+      _count: {
+        select: {
+          transactions: true,
+          rewards: true,
+          rewardUnlocks: true,
+          redemptions: true,
+        },
+      },
+    },
+  });
+
+  if (!currentProgramme) {
+    redirect("/businesses");
+  }
+
+  const modeChangeBlocked = isLoyaltyModeChangeBlocked({
+    currentMode: currentProgramme.loyaltyMode,
+    proposedMode: parsed.data.loyaltyMode,
+    history: {
+      customerWithBalance: currentProgramme.customers.length > 0,
+      transactionCount: currentProgramme._count.transactions,
+      rewardCount: currentProgramme._count.rewards,
+      unlockCount: currentProgramme._count.rewardUnlocks,
+      redemptionCount: currentProgramme._count.redemptions,
+    },
+  });
+
+  if (modeChangeBlocked) {
+    redirect(`/businesses/${business.slug}/program?program=mode-blocked`);
+  }
+
   await updateSettingsDomain({
     businessId: business.id,
     slug: business.slug,
