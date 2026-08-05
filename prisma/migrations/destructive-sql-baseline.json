@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "description": "Reviewed historical destructive SQL statements. New or changed matches require explicit review.",
+  "entryCount": 29,
+  "entries": [
+    {
+      "path": "prisma/migrations/20260713182630_add_owner_export_permission/migration.sql",
+      "line": 7,
+      "operation": "UPDATE_DATA",
+      "statement": "UPDATE \"Business\" SET \"allowOwnerDataExport\" = true;",
+      "sha256": "bf85b47049dd5daf86345480d76acb82f33bac0a54267df0151d050643fffcea"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 1,
+      "operation": "UPDATE_DATA",
+      "statement": "UPDATE \"LoyaltyTransaction\" lt SET \"createdById\" = NULL FROM \"User\" u WHERE lt.\"createdById\" = u.id AND u.role = 'SUPER_ADMIN' AND u.\"businessId\" IS NULL AND lt.\"businessId\" IS NOT NULL;",
+      "sha256": "e1093aa3ba92a283ad9949c1a26c81a91ebda94c00100b1f2d8f480d3c689b0e"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 20,
+      "operation": "UPDATE_DATA",
+      "statement": "UPDATE \"BusinessActivity\" ba SET \"createdById\" = NULL FROM \"User\" u WHERE ba.\"createdById\" = u.id AND u.role = 'SUPER_ADMIN' AND u.\"businessId\" IS NULL AND ba.\"businessId\" IS NOT NULL;",
+      "sha256": "2573cd1feb12aff707b15280dadfd8d1d4f17cde831098582e72388f4934121e"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 28,
+      "operation": "UPDATE_DATA",
+      "statement": "UPDATE \"RewardRedemption\" rr SET \"createdById\" = NULL FROM \"User\" u WHERE rr.\"createdById\" = u.id AND u.role = 'SUPER_ADMIN' AND u.\"businessId\" IS NULL AND rr.\"businessId\" IS NOT NULL;",
+      "sha256": "7ffac1dcaa66c0f6616e1d818bff46d18f494fcd8e8bcbee63ebf88ddc5de42e"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 39,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"BusinessActivity\" DROP CONSTRAINT \"BusinessActivity_branchId_fkey\";",
+      "sha256": "99e2256c452679faa929ea0a531c244ead4d4aa60dc763134b700d6ac47255d6"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 42,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"BusinessActivity\" DROP CONSTRAINT \"BusinessActivity_createdById_fkey\";",
+      "sha256": "488b694b17481b85421aeac0f30a16d6adbcb0ed74113ad5d2a18f7f95e7c45d"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 45,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"BusinessActivity\" DROP CONSTRAINT \"BusinessActivity_customerId_fkey\";",
+      "sha256": "f7b341658d83d2855232d9cb2d1ab39454a9479c8855abb393d8c031c9ce8969"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 48,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"CustomerNote\" DROP CONSTRAINT \"CustomerNote_createdById_fkey\";",
+      "sha256": "f2338d5d0785ceb60c9fde9f77fc0ea9d6371f54b02369ed17b97fa5292ac03a"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 51,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"CustomerNote\" DROP CONSTRAINT \"CustomerNote_updatedById_fkey\";",
+      "sha256": "7ed15ed47bb607168977d4afbc71b5c14dd146be76956fc2dac86e520f90dc59"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 54,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"CustomerReferralCode\" DROP CONSTRAINT \"CustomerReferralCode_customerId_fkey\";",
+      "sha256": "c8ba40939ce67ee94c5eda61098400d37745fe09ac0cb5bf8a4bc77bd7309ed9"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 57,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"LoyaltyTransaction\" DROP CONSTRAINT \"LoyaltyTransaction_attributedStaffId_fkey\";",
+      "sha256": "6a0b275d927f19221793fec95c0a8c224819b5d51686a13a3b6070a5c7b5191d"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 60,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"LoyaltyTransaction\" DROP CONSTRAINT \"LoyaltyTransaction_branchId_fkey\";",
+      "sha256": "b72fd0610aca61fec5e22fee5b69f40744e76881510525aca9c0b8c6ccb0d69b"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 63,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"LoyaltyTransaction\" DROP CONSTRAINT \"LoyaltyTransaction_createdById_fkey\";",
+      "sha256": "5574fece335e6a5bc9f5ff05fa1806f6affd76a7b07a638f3ec41ca44af58efd"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 66,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"LoyaltyTransaction\" DROP CONSTRAINT \"LoyaltyTransaction_customerId_fkey\";",
+      "sha256": "9caf6b81283a375f7dc8b27ce97a20c243264727b3f9037192532009c0182af2"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 69,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"Notification\" DROP CONSTRAINT \"Notification_userId_fkey\";",
+      "sha256": "8bccf1b0d72782560eb4947f8cf67e4bf8ce82da125cae69da62b322b67c1cfd"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 72,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"PromotionApplication\" DROP CONSTRAINT \"PromotionApplication_customerId_fkey\";",
+      "sha256": "43b7dd5cc71be5e96d837f7055dd0d3862d55925d00fdfa423a9268b4227ee01"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 75,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"PromotionApplication\" DROP CONSTRAINT \"PromotionApplication_promotionId_fkey\";",
+      "sha256": "818443b9d90435561ea538c4b866e4a9c3ca81f8871f06a1a57c0c9bf76cd189"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 78,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"PromotionApplication\" DROP CONSTRAINT \"PromotionApplication_transactionId_fkey\";",
+      "sha256": "69bdb787e8af49899ce52c79bc2735c4b205766e3a0848134b01f6eb47916d9b"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 81,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"Referral\" DROP CONSTRAINT \"Referral_referredCustomerId_fkey\";",
+      "sha256": "5b41a53c661db9dad5fc9101918824abcb605491b07574183e8596515b313b70"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 84,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"Referral\" DROP CONSTRAINT \"Referral_referrerCustomerId_fkey\";",
+      "sha256": "794b9f00aee67549d112b0e61cdf58236088d4f327bca1b884e94fdc0918bfc4"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 87,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardRedemption\" DROP CONSTRAINT \"RewardRedemption_attributedStaffId_fkey\";",
+      "sha256": "c99996bbefbbfe1e5d2c0ba817cb9f57b13c005e1613ffb91d431aacf6136328"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 90,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardRedemption\" DROP CONSTRAINT \"RewardRedemption_branchId_fkey\";",
+      "sha256": "cbf87a1d3d084c9f4b52697b6dce1a19ff784c3128e507b8796bd4d72f3925a9"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 93,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardRedemption\" DROP CONSTRAINT \"RewardRedemption_createdById_fkey\";",
+      "sha256": "0fee42b20d90ff2ccb208f4f6eba8e85094a2a5b71840f1528a4a7d382eb69b5"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 96,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardRedemption\" DROP CONSTRAINT \"RewardRedemption_customerId_fkey\";",
+      "sha256": "c7e4c5c37586b0de2cd4fca8932a6d0a781478b5b63fbadc7235febc048e3ce6"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 99,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardRedemption\" DROP CONSTRAINT \"RewardRedemption_rewardId_fkey\";",
+      "sha256": "7e05775cfc20e1831396b20450881d7fe576211d0cdddfb958c85090d3d18162"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 102,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardUnlock\" DROP CONSTRAINT \"RewardUnlock_customerId_fkey\";",
+      "sha256": "06129604259cf5c1e0be16c78b38ad36fdcbeaf87e12ecd7e17e61de6f62159d"
+    },
+    {
+      "path": "prisma/migrations/20260723044900_enforce_tenant_composite_foreign_keys/migration.sql",
+      "line": 105,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"RewardUnlock\" DROP CONSTRAINT \"RewardUnlock_rewardId_fkey\";",
+      "sha256": "7f2a0e738034c49879e4100df96d49d1ecaad7bd92aebc818febfba2513c7cbf"
+    },
+    {
+      "path": "prisma/migrations/20260726224500_add_subscription_plan_entitlements/migration.sql",
+      "line": 13,
+      "operation": "ALTER_COLUMN",
+      "statement": "ALTER TABLE \"Business\" ALTER COLUMN \"plan\" SET DEFAULT 'FREE';",
+      "sha256": "5c8ded250270953e77716321134a45abc5640ebba48f4203b3b7c0c5548218b8"
+    },
+    {
+      "path": "prisma/migrations/20260726224500_add_subscription_plan_entitlements/migration.sql",
+      "line": 13,
+      "operation": "UPDATE_DATA",
+      "statement": "UPDATE \"Business\" SET \"plan\" = 'BUSINESS';",
+      "sha256": "7fd7742f1098a01494c05640eba13f06c03a89437fece7a8caaa5ff9753d3127"
+    }
+  ]
+}
