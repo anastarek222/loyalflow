@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { input, password } from "@inquirer/prompts";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Prisma, PrismaClient, UserRole } from "../generated/prisma/client";
+import { assertDatabaseScriptEnvironment } from "../lib/server/database-script-guard";
 
 const REQUIRED_DATABASE = "neondb";
 const SUPER_ADMIN_EMAIL = "anstarek211@gmail.com";
@@ -45,6 +46,7 @@ type ForeignKey = {
 };
 
 function assertSafetyConfiguration() {
+  assertDatabaseScriptEnvironment("destructive-reset");
   if (process.env.LOYALFLOW_ENVIRONMENT !== "production") {
     throw new Error("LOYALFLOW_ENVIRONMENT must exactly equal production.");
   }

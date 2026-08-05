@@ -2,6 +2,8 @@ type PublicAppUrlOptions = Readonly<{
   production?: boolean;
 }>;
 
+import { getEnvironmentIdentity } from "@/lib/server/environment-identity";
+
 const LOCAL_HOSTNAMES = new Set([
   "localhost",
   "0.0.0.0",
@@ -99,7 +101,15 @@ export function getConfiguredPublicAppUrl(
 
   if (!value) return null;
 
-  return validatePublicAppOrigin(value, {
-    production: environment.NODE_ENV === "production",
-  });
+  return validatePublicAppOrigin(value, { production: getEnvironmentIdentity(environment).isProduction });
+}
+
+export function getCanonicalPublicAppUrl(
+  environment: Record<string, string | undefined> = process.env,
+) {
+  const identity = getEnvironmentIdentity(environment);
+  const configured = getConfiguredPublicAppUrl(environment);
+  if (configured) return configured;
+  if (identity.environment === "development" || identity.environment === "test") return "http://localhost:3000";
+  throw new Error("A canonical public application origin is required outside development and test.");
 }
