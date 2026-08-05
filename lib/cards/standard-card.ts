@@ -1,3 +1,5 @@
+import { loyaltyCurrency } from "@/lib/loyalty/presentation";
+
 export const STANDARD_CARD_ASPECT_RATIO = 85.6 / 53.98;
 export const CUSTOM_CARD_SAFE_ZONE_VERSION = "ID1_V1";
 
@@ -116,7 +118,7 @@ export function getLoyaltyCardMetrics(input: {
   const target = Math.max(1, safeWholeNumber(input.rewardThreshold));
   const remaining = Math.max(0, target - current);
   const rewardReady = current >= target;
-  const currency = (input.currency || "EGP").trim().toUpperCase().slice(0, 5);
+  const currency = loyaltyCurrency(input.currency).slice(0, 5);
   const fullUnit =
     input.loyaltyMode === "VISITS"
       ? (input.unitName || (language === "AR" ? "زيارة" : "VISIT")).trim()

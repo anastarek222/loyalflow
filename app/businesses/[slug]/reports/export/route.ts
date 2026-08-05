@@ -10,6 +10,7 @@ import {
 } from "@/lib/customers/segments";
 import { canExportBusinessData } from "@/lib/permissions";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
+import { formatLoyaltyNumber, operationalUnitLabel } from "@/lib/loyalty/presentation";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -117,6 +118,7 @@ export async function GET(
           true,
         unitName:
           true,
+        currency: true,
         loyaltyMode: true,
         rewardThreshold: true,
         earnAmount: true,
@@ -335,9 +337,9 @@ export async function GET(
             transaction.type
           ),
 
-          transaction.amount,
-          business.unitName,
-          transaction.balanceAfter,
+          formatLoyaltyNumber(transaction.amount, "AR"),
+          operationalUnitLabel({ loyaltyMode: business.loyaltyMode, language: "AR", unitName: business.unitName, currency: business.currency }),
+          formatLoyaltyNumber(transaction.balanceAfter, "AR"),
           transaction
             .customer
             .customerCode,

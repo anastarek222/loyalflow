@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
@@ -27,6 +27,11 @@ type Props = {
 export default function MobileSidebar({ open, onClose, language, experienceMode, user, business, businesses }: Props) {
   const pathname = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const [businessQuery, setBusinessQuery] = useState("");
+  const shouldShowBusinessSearch = businesses.length >= 7;
+  const visibleBusinesses = businesses.filter((candidate) =>
+    candidate.name.toLocaleLowerCase().includes(businessQuery.trim().toLocaleLowerCase()),
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +62,14 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
         <div><p className="font-black text-foreground">LoyalFlow</p><p className="text-xs text-foreground-subtle">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p></div>
         <button ref={closeRef} type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] text-foreground-muted hover:bg-surface-subtle"><X aria-hidden="true" /></button>
       </header>
-      {business && businesses.length > 1 && <div className="border-b border-border px-4 py-4"><p className="mb-2 text-xs font-semibold text-foreground-subtle">{language === "AR" ? "تبديل النشاط" : "Switch business"}</p><div className="flex flex-wrap gap-1">{businesses.map((candidate) => <Link key={candidate.id} href={`/businesses/${candidate.slug}`} onClick={onClose} className={`rounded-[var(--lf-radius-input)] px-2 py-1.5 text-xs font-semibold ${candidate.slug === business.slug ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}>{candidate.name}</Link>)}</div></div>}
+      {business && businesses.length > 1 && <section aria-labelledby="mobile-business-switcher-title" className="shrink-0 border-b border-border px-4 py-3">
+        <div className="flex items-baseline justify-between gap-3"><p id="mobile-business-switcher-title" className="text-xs font-semibold text-foreground-subtle">{language === "AR" ? "تبديل النشاط" : "Switch business"}</p><p className="max-w-40 truncate text-xs font-semibold text-primary">{business.name}</p></div>
+        {shouldShowBusinessSearch && <label className="mt-2 block"><span className="sr-only">{language === "AR" ? "البحث عن نشاط" : "Search businesses"}</span><input type="search" value={businessQuery} onChange={(event) => setBusinessQuery(event.target.value)} placeholder={language === "AR" ? "البحث عن نشاط" : "Search businesses"} className="min-h-10 w-full rounded-[var(--lf-radius-input)] border border-border px-3 text-sm" /></label>}
+        <ul className="mt-2 max-h-48 overflow-y-auto overscroll-contain pe-1" aria-label={language === "AR" ? "قائمة الأنشطة" : "Business list"}>
+          {visibleBusinesses.map((candidate) => <li key={candidate.id}><Link href={`/businesses/${candidate.slug}`} onClick={onClose} aria-current={candidate.slug === business.slug ? "page" : undefined} className={`flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-3 text-sm font-semibold ${candidate.slug === business.slug ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}><span className="truncate">{candidate.name}</span></Link></li>)}
+          {!visibleBusinesses.length && <li className="px-3 py-2 text-sm text-foreground-subtle">{language === "AR" ? "لا توجد نتائج" : "No businesses found"}</li>}
+        </ul>
+      </section>}
       <nav className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {groups.map((group) => <section key={group.id} className="mb-6 last:mb-0">
           {group.label && <h2 className="lf-nav-group-label mb-2 px-4">{group.label}</h2>}

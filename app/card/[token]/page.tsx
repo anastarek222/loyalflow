@@ -4,7 +4,8 @@ import ShareLinkButton from "@/components/share-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
-import { getPersistedRewardUnlockState } from "@/lib/rewards/expiration";
+import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
 import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
@@ -140,6 +141,7 @@ export default async function PublicCardPage({
         // Public cards expose loyalty data only, never internal CRM metadata.
         business: {
           include: {
+            rewards: { where: { isActive: true }, select: { id: true, name: true, cost: true, isActive: true, type: true, code: true, description: true } },
             offers: {
               orderBy: [{ validUntil: "asc" }, { createdAt: "asc" }],
             },
@@ -221,6 +223,10 @@ export default async function PublicCardPage({
   const cardUnitName =
     business.pointsName?.trim() ||
     business.unitName;
+  const rewardAvailability = getRewardAvailability({ customerActive: customer.isActive, balance: customer.balance, rewardThreshold: business.rewardThreshold, fallbackReward: { name: business.rewardName, cost: business.rewardThreshold }, catalogueRewards: business.rewards });
+  const cardReward = rewardAvailability.source === "CATALOGUE"
+    ? rewardAvailability.defaultReward
+    : { name: business.rewardName, cost: business.rewardThreshold, type: business.rewardType, code: business.rewardCode, description: business.rewardDescription };
 
   const baseUrl =
     await getRequestBaseUrl();
@@ -260,7 +266,8 @@ export default async function PublicCardPage({
       id: unlock.id,
       name: unlock.reward.name,
       expiresAt: unlock.expiresAt,
-      state: getPersistedRewardUnlockState({
+      state: getRewardUnlockLifecycleState({
+        rewardActive: unlock.reward.isActive,
         expiresAt: unlock.expiresAt,
         redeemedAt: unlock.redeemedAt,
         expiredAt: unlock.expiredAt,
@@ -305,8 +312,8 @@ export default async function PublicCardPage({
           loyaltyMode={business.loyaltyMode}
           unitName={cardUnitName}
           currency={business.currency}
-          rewardName={business.rewardName}
-          rewardThreshold={business.rewardThreshold}
+          rewardName={cardReward.name}
+          rewardThreshold={cardReward.cost}
           qrCode={qrCode}
           artworkEnabled={business.standardCardArtworkEnabled}
           artworkCategory={business.standardCardArtworkCategory}
@@ -472,22 +479,22 @@ export default async function PublicCardPage({
                 customer.balance
               }
               targetAmount={
-                business.rewardThreshold
+                cardReward.cost
               }
               unitName={
                 business.unitName
               }
               rewardName={
-                business.rewardName
+                cardReward.name
               }
               rewardType={
-                business.rewardType
+                cardReward.type ?? business.rewardType
               }
               rewardCode={
-                business.rewardCode
+                cardReward.code ?? null
               }
               rewardDescription={
-                business.rewardDescription
+                cardReward.description ?? null
               }
               primaryColor={
                 theme.primaryColor

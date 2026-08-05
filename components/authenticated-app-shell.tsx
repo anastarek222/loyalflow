@@ -53,7 +53,7 @@ export default function AuthenticatedAppShell({
         />
         <main
           id="app-content"
-          className="min-w-0 flex-1 px-4 py-6 pb-28 sm:px-6 sm:py-6 lg:px-8 lg:pb-8"
+          className="min-w-0 flex-1 px-4 py-6 pb-[calc(var(--lf-mobile-nav-height)+1rem)] sm:px-6 sm:py-6 lg:px-8 lg:pb-8"
         >
           {children}
         </main>

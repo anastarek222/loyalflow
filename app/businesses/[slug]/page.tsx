@@ -14,6 +14,7 @@ import { getActivityBadgeClass, activityLabels } from "@/lib/activity/presentati
 import { getBusinessOnboardingState } from "@/lib/business/onboarding";
 import { getDashboardSegmentShortcuts, DASHBOARD_RECENT_ACTIVITY_LIMIT, getBusinessDashboardActions, shouldShowOnboardingChecklist } from "@/lib/dashboard/overview";
 import { getCustomerSegmentLabel, getCustomerSegmentWhere } from "@/lib/customers/segments";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { getExperienceModeCookieName, getExperienceNavigationRules, resolveExperienceMode } from "@/lib/experience-mode";
 import {
@@ -133,6 +134,8 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   const chartStart = new Date();
   chartStart.setDate(chartStart.getDate() - 30);
   const segmentShortcuts = getDashboardSegmentShortcuts(business.loyaltyMode);
+  const activeRewards = await prisma.reward.findMany({ where: { businessId: business.id, isActive: true }, select: { id: true, name: true, cost: true, isActive: true } });
+  const rewardTargetCost = getRewardAvailability({ customerActive: true, balance: 0, rewardThreshold: business.rewardThreshold, fallbackReward: { name: business.rewardName, cost: business.rewardThreshold }, catalogueRewards: activeRewards }).targetCost;
 
   const [
     unreadNotificationCount, recentNotifications, rewardReadyCount, rewardReadyCustomers,
@@ -143,15 +146,15 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   ] = await Promise.all([
     prisma.notification.count({ where: { businessId: business.id, createdAt: { gt: notificationsLastReadAt }, OR: [{ userId: null }, { userId: user.id }], ...(individuallyReadDurableNotificationIds.length ? { NOT: { id: { in: individuallyReadDurableNotificationIds } } } : {}) } }),
     prisma.notification.findMany({ where: { businessId: business.id, OR: [{ userId: null }, { userId: user.id }] }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 20, select: { id: true, type: true, title: true, message: true, createdAt: true } }),
-    prisma.customer.count({ where: { businessId: business.id, isActive: true, balance: { gte: business.rewardThreshold } } }),
-    prisma.customer.findMany({ where: { businessId: business.id, isActive: true, balance: { gte: business.rewardThreshold } }, orderBy: [{ balance: "desc" }, { updatedAt: "desc" }], take: 5, select: { id: true, firstName: true, lastName: true, customerCode: true, balance: true, lifetimeRedeemed: true, updatedAt: true } }),
+    prisma.customer.count({ where: { businessId: business.id, isActive: true, balance: { gte: rewardTargetCost } } }),
+    prisma.customer.findMany({ where: { businessId: business.id, isActive: true, balance: { gte: rewardTargetCost } }, orderBy: [{ balance: "desc" }, { updatedAt: "desc" }], take: 5, select: { id: true, firstName: true, lastName: true, customerCode: true, balance: true, lifetimeRedeemed: true, updatedAt: true } }),
     prisma.businessActivity.count({ where: { businessId: business.id, type: "REWARD_REDEEMED" } }),
     prisma.businessActivity.findMany({ where: { businessId: business.id, type: "REWARD_REDEEMED" }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, createdAt: true, customer: { select: { id: true, firstName: true, lastName: true, customerCode: true } } } }),
     prisma.businessActivity.count({ where: { businessId: business.id, type: "BALANCE_ADJUSTED" } }),
     prisma.businessActivity.findMany({ where: { businessId: business.id, type: "BALANCE_ADJUSTED" }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, createdAt: true, customer: { select: { id: true, firstName: true, lastName: true, customerCode: true } } } }),
     prisma.businessActivity.count({ where: { businessId: business.id, type: "LOYALTY_EARNED" } }),
     prisma.businessActivity.findMany({ where: { businessId: business.id, type: "LOYALTY_EARNED" }, orderBy: { createdAt: "desc" }, take: 5, select: { id: true, createdAt: true, customer: { select: { id: true, firstName: true, lastName: true, customerCode: true } } } }),
-    prisma.customer.findMany({ where: { businessId: business.id, isActive: true, balance: { gte: business.rewardThreshold }, updatedAt: { gt: notificationsLastReadAt } }, select: { id: true, balance: true, lifetimeRedeemed: true, updatedAt: true } }),
+    prisma.customer.findMany({ where: { businessId: business.id, isActive: true, balance: { gte: rewardTargetCost }, updatedAt: { gt: notificationsLastReadAt } }, select: { id: true, balance: true, lifetimeRedeemed: true, updatedAt: true } }),
     prisma.businessActivity.findMany({ where: { businessId: business.id, type: { in: ["REWARD_REDEEMED", "BALANCE_ADJUSTED", "LOYALTY_EARNED"] }, createdAt: { gt: notificationsLastReadAt } }, select: { id: true, type: true, createdAt: true } }),
     prisma.customer.count({ where: { businessId: business.id, isActive: true } }),
     prisma.loyaltyTransaction.count({ where: { businessId: business.id, createdAt: { gte: today } } }),
@@ -193,7 +196,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
         <BusinessNotificationsContent
           slug={business.slug}
           unitName={business.unitName}
-          rewardThreshold={business.rewardThreshold}
+          rewardThreshold={rewardTargetCost}
           rewardReadyCount={rewardReadyCount}
           unreadRewardReadyCount={unreadRewardReadyCount}
           rewardReadyCustomers={rewardReadyCustomersWithReadState}

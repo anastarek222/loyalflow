@@ -18,6 +18,20 @@ export type RetentionScore = {
   label: "Very Loyal" | "Active" | "At Risk" | "High Risk / Inactive";
 };
 
+export type RetentionPresentation = Omit<RetentionScore, "label"> & {
+  label: RetentionScore["label"] | "NEW";
+};
+
+const NEW_CUSTOMER_WINDOW_MS = 30 * 86_400_000;
+
+export function getRetentionPresentation(input: { createdAt: Date; score: RetentionScore; now?: Date }): RetentionPresentation {
+  const now = input.now ?? new Date();
+  const customerAgeMs = now.getTime() - input.createdAt.getTime();
+  return customerAgeMs >= 0 && customerAgeMs <= NEW_CUSTOMER_WINDOW_MS
+    ? { ...input.score, label: "NEW" }
+    : input.score;
+}
+
 function clamp(value: number, maximum: number) {
   return Math.max(0, Math.min(maximum, value));
 }

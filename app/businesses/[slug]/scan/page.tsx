@@ -70,7 +70,7 @@ export default async function ScanPage({
 
   return (
     <main
-      className="min-h-full py-6 sm:py-8"
+      className="min-h-full py-4 sm:py-8"
     >
       <PageContainer variant="narrow" className="px-4 sm:px-6">
         <PageHeader
@@ -80,7 +80,7 @@ export default async function ScanPage({
           secondaryActions={
             <Link
               href={`/businesses/${business.slug}`}
-              className="inline-flex min-h-10 items-center rounded-[var(--lf-radius-input)] px-3 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
+              className="inline-flex min-h-11 self-start items-center rounded-[var(--lf-radius-input)] px-3 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
             >
               {copy.backToBusiness}
             </Link>
@@ -105,7 +105,7 @@ export default async function ScanPage({
               <p className="text-xs text-foreground-subtle">{copy.scanner}</p>
             </div>
           </div>
-          <div className="p-4 sm:p-6">
+          <div className="p-3 sm:p-6">
             <QrScanner businessId={business.id} language={language} />
             <ScanCustomerSearch businessId={business.id} language={language} />
           </div>

@@ -29,6 +29,22 @@ test("U12 shared navigation and mobile controls retain accessible responsive fou
   assert.doesNotMatch(sidebar, /\b(?:left|right)-0/);
 });
 
+test("U12 mobile shell keeps bounded, safe-area-aware overlays", () => {
+  const shell = source("components/authenticated-app-shell.tsx");
+  const sidebar = source("components/mobile-sidebar.tsx");
+  const bottomNavigation = source("components/mobile-bottom-navigation.tsx");
+  const notifications = source("components/business-notifications-dialog.tsx");
+  const css = source("app/globals.css");
+  assert.match(sidebar, /type="search"/);
+  assert.match(sidebar, /max-h-48 overflow-y-auto/);
+  assert.match(sidebar, /aria-current=/);
+  assert.match(css, /--lf-mobile-nav-height: calc\(4rem \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(shell, /pb-\[calc\(var\(--lf-mobile-nav-height\)\+1rem\)\]/);
+  assert.doesNotMatch(bottomNavigation, /-mt-4/);
+  assert.match(notifications, /100dvh-env\(safe-area-inset-top\)-env\(safe-area-inset-bottom\)/);
+  assert.match(notifications, /min-h-0 flex-1 overflow-y-auto/);
+});
+
 test("U12 primitives keep bounded dialogs, tables, motion, and long-content safety", () => {
   const css = source("app/globals.css");
   const dialog = source("components/ui/dialog.tsx");

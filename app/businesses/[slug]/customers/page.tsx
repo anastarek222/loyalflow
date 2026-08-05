@@ -6,7 +6,8 @@ import {
   getCustomerSegmentWhere,
   type CustomerSegment,
 } from "@/lib/customers/segments";
-import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import { getRewardAvailability } from "@/lib/rewards/availability";
+import { formatLoyaltyAmount } from "@/lib/loyalty/presentation";
 import { getCustomerTagWhere } from "@/lib/customers/notes-tags";
 import {
   canAccessBusiness,
@@ -92,6 +93,17 @@ export default async function CustomersPage({
   if (!canAccessBusiness(session.user, business.id)) {
     redirect("/dashboard");
   }
+
+  const activeRewards = await prisma.reward.findMany({
+    where: { businessId: business.id, isActive: true },
+    select: { id: true, name: true, cost: true, isActive: true },
+  });
+  const availabilityInput = {
+    rewardThreshold: business.rewardThreshold,
+    fallbackReward: { name: business.rewardName, cost: business.rewardThreshold },
+    catalogueRewards: activeRewards,
+  };
+  const canonicalTargetCost = getRewardAvailability({ ...availabilityInput, customerActive: true, balance: 0 }).targetCost;
 
   const search = query.q?.trim() ?? "";
 
@@ -201,7 +213,9 @@ export default async function CustomersPage({
     });
   }
 
-  if (segment) {
+  if (segment === "REWARD_READY") {
+    customerFilters.push({ isActive: true, balance: { gte: canonicalTargetCost } });
+  } else if (segment) {
     customerFilters.push(
       getCustomerSegmentWhere(
         segment,
@@ -748,12 +762,13 @@ export default async function CustomersPage({
                       </thead>
                       <tbody className="divide-y divide-border">
                         {customers.map((customer) => {
-                          const { progress, rewardAvailable } = calculateRewardProgress(customer.balance, business.rewardThreshold, customer.isActive);
+                          const availability = getRewardAvailability({ ...availabilityInput, customerActive: customer.isActive, balance: customer.balance });
+                          const { progress, rewardReady: rewardAvailable } = availability;
                           const customerSegment = getCustomerSegment({ isActive: customer.isActive, createdAt: customer.createdAt, lastActivityAt: customer.transactions[0]?.createdAt ?? null, lifetimeEarned: customer.lifetimeEarned, rewardThreshold: business.rewardThreshold });
                           return <tr key={customer.id} className="hover:bg-surface-subtle">
                             <td className="px-6 py-4"><Link href={`/businesses/${business.slug}/customers/${customer.id}`} className="font-semibold text-foreground hover:text-primary" dir="auto">{customer.firstName} {customer.lastName ?? ""}</Link><p dir="ltr" className="mt-1 text-xs text-foreground-subtle">{customer.customerCode}</p></td>
                             <td className="px-6 py-4 text-sm text-foreground-muted"><span dir="ltr">{customer.phone}</span></td>
-                            <td className="px-6 py-4"><p className="font-semibold text-foreground"><span dir="ltr" className="lf-type-numeric">{customer.balance}</span> <span dir="auto" className="text-sm font-normal text-foreground-muted">{business.unitName}</span></p><div className="mt-2 h-1.5 w-28 overflow-hidden rounded-full bg-surface-subtle" aria-label={copy.progress(progress)}><div className="h-full bg-primary" style={{ width: `${progress}%` }} /></div></td>
+                            <td className="px-6 py-4"><p dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="font-semibold text-foreground">{formatLoyaltyAmount({ loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, amount: customer.balance })}</p><div className="mt-2 h-1.5 w-28 overflow-hidden rounded-full bg-surface-subtle" aria-label={copy.progress(progress)}><div className="h-full bg-primary" style={{ width: `${progress}%` }} /></div></td>
                             <td className="px-6 py-4"><div className="flex flex-wrap gap-1"><span className="rounded-full bg-surface-subtle px-2 py-1 text-xs font-semibold text-foreground-muted">{getCustomerSegmentLabel(customerSegment, language)}</span>{rewardAvailable ? <span className="rounded-full bg-success-subtle px-2 py-1 text-xs font-semibold text-success">{copy.rewardReady}</span> : null}</div></td>
                             <td className="px-6 py-4 text-sm text-foreground-muted">{customer.transactions[0] ? customer.transactions[0].createdAt.toLocaleDateString(dateLocale) : copy.noActivity}</td>
                             <td className="px-6 py-4 text-end"><Link href={`/businesses/${business.slug}/customers/${customer.id}`} className="inline-flex min-h-10 items-center rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-primary hover:bg-primary-subtle">{copy.openProfile}</Link></td>
@@ -765,11 +780,8 @@ export default async function CustomersPage({
                 ) : null}
                 <div className={`space-y-4 ${isSimpleExperience ? "" : "lg:hidden"}`} aria-label={copy.mobileCustomerList}>
                   {customers.map((customer) => {
-                    const { progress } = calculateRewardProgress(
-                      customer.balance,
-                      business.rewardThreshold,
-                      customer.isActive
-                    );
+                    const availability = getRewardAvailability({ ...availabilityInput, customerActive: customer.isActive, balance: customer.balance });
+                    const { progress } = availability;
 
                     const customerSegment = getCustomerSegment({
                       isActive: customer.isActive,
@@ -830,12 +842,9 @@ export default async function CustomersPage({
 
                           <div className="sm:text-right">
                             <p className="text-2xl font-bold text-foreground">
-                              <span dir="ltr" className="lf-type-numeric">{customer.balance}</span>
+                              <span dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="lf-type-numeric">{formatLoyaltyAmount({ loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, amount: customer.balance })}</span>
                             </p>
 
-                            <p dir="auto" className="text-sm text-foreground-subtle">
-                              {business.unitName}
-                            </p>
                           </div>
                         </div>
 
@@ -850,10 +859,10 @@ export default async function CustomersPage({
                         </div>
 
                         <p className="mt-2 text-xs text-foreground-subtle">
-                          <span dir="ltr" className="lf-type-numeric">{customer.balance} / {business.rewardThreshold}</span> {copy.toReachReward}
+                          <span dir="ltr" className="lf-type-numeric">{customer.balance} / {availability.targetCost}</span> {copy.toReachReward}
                         </p>
 
-                        {progress === 100 ? <p className="mt-2 text-xs font-semibold text-success">{copy.rewardReadyToRedeem}</p> : null}
+                        {availability.rewardReady ? <p className="mt-2 text-xs font-semibold text-success">{copy.rewardReadyToRedeem}</p> : null}
                         <p className="mt-2 text-xs text-foreground-subtle">{customer.transactions[0] ? copy.lastActivityDate(customer.transactions[0].createdAt.toLocaleDateString(dateLocale)) : copy.noActivityYet}</p>
 
                         <Link

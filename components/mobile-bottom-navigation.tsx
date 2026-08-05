@@ -55,7 +55,7 @@ export default function MobileBottomNavigation({ language, experienceMode, user,
               aria-current={active ? "page" : undefined}
               className={
                 isScan
-                  ? "relative -mt-4 flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-card)] bg-primary px-3 text-[11px] font-bold text-white shadow-lg shadow-black/10"
+                  ? "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] bg-primary px-1 text-[11px] font-bold text-white shadow-[var(--lf-shadow-raised)]"
                   : `flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-[var(--lf-radius-input)] px-1 text-[11px] font-semibold ${active ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`
               }
             >

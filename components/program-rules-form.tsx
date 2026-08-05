@@ -3,6 +3,7 @@
 import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
+import { fallbackRewardHelp } from "@/lib/loyalty/presentation";
 
 type Props = {
   language: "AR" | "EN";
@@ -79,6 +80,7 @@ export function ProgramRulesForm({
           "Earning, target and default reward compatibility settings.",
         )}
       </p>
+      <p className="mt-2 text-sm text-foreground-subtle">{fallbackRewardHelp(language)}</p>
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         {fields.map(([name, label, value, maxLength]) => (
           <label key={name} className="text-sm font-medium text-foreground-muted">

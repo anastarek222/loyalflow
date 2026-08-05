@@ -80,11 +80,11 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
   }
 
   return (
-    <section aria-labelledby="scan-customer-search-heading" className="mt-6 border-t border-border pt-5">
+    <section aria-labelledby="scan-customer-search-heading" className="mt-5 border-t border-border pt-5">
       <h2 id="scan-customer-search-heading" className="text-base font-bold text-foreground">{copy.customerSearchHeading}</h2>
       <p className="mt-1 text-sm text-foreground-muted">{copy.customerSearchDescription}</p>
-      <div className="mt-3 flex gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="mt-3 flex flex-wrap gap-2">
+        <div className="min-w-0 flex-1 basis-48">
           <label htmlFor="scanCustomerSearch" className="sr-only">{copy.customerSearchLabel}</label>
           <input id="scanCustomerSearch" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.customerSearchPlaceholder} autoComplete="off" className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />
         </div>
@@ -96,7 +96,7 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
         {displayedState === "empty" && <p role="status" className="rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 py-4 text-sm text-foreground-muted">{copy.customerSearchEmpty}</p>}
         {displayedState === "error" && <p role="alert" className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-sm text-danger">{copy.customerSearchError}</p>}
         {displayedState === "results" && <ul className="space-y-2" aria-label={copy.customerSearchHeading}>
-          {displayedResults.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-sm hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-foreground" dir="auto">{customer.name}</span><span className="block text-xs text-foreground-subtle" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-primary">{copy.customerSearchOpen}</span></Link></li>)}
+          {displayedResults.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-sm hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-foreground" dir="auto">{customer.name}</span><span className="block truncate text-xs text-foreground-subtle" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-primary">{copy.customerSearchOpen}</span></Link></li>)}
         </ul>}
       </div>
     </section>

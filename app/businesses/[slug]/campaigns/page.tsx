@@ -3,7 +3,7 @@ import CampaignBuilder from "@/components/campaign-builder";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { getCustomerSegment } from "@/lib/customers/segments";
 import { parseSelectedExportIds } from "@/lib/customers/bulk";
-import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
@@ -29,7 +29,7 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
       id: true, slug: true, name: true, loyaltyMode: true, unitName: true,
       rewardName: true, rewardThreshold: true, earnAmount: true,
       whatsappWelcomeMessage: true, whatsappBalanceMessage: true, whatsappRewardMessage: true,
-      plan: true,
+      plan: true, rewards: { where: { isActive: true }, select: { id: true, name: true, cost: true, isActive: true } },
     },
   })]);
   if (!business) notFound();
@@ -67,7 +67,7 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
   });
   const baseUrl = await getRequestBaseUrl();
   const candidates = customers.map((customer) => {
-    const progress = calculateRewardProgress(customer.balance, business.rewardThreshold, customer.isActive);
+    const progress = getRewardAvailability({ customerActive: customer.isActive, balance: customer.balance, rewardThreshold: business.rewardThreshold, fallbackReward: { name: business.rewardName, cost: business.rewardThreshold }, catalogueRewards: business.rewards });
     return {
       id: customer.id,
       name: [customer.firstName, customer.lastName].filter(Boolean).join(" "),
@@ -82,8 +82,8 @@ export default async function CampaignsPage({ params, searchParams }: CampaignsP
         lifetimeEarned: customer.lifetimeEarned,
         rewardThreshold: business.rewardThreshold,
       }, now),
-      rewardReady: progress.rewardAvailable,
-      oneAway: customer.isActive && !progress.rewardAvailable && progress.remaining <= business.earnAmount,
+      rewardReady: progress.rewardReady,
+      oneAway: customer.isActive && !progress.rewardReady && progress.remaining <= business.earnAmount,
     };
   });
 
