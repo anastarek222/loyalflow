@@ -8,7 +8,7 @@ import { fallbackRewardHelp } from "@/lib/loyalty/presentation";
 type Props = {
   language: "AR" | "EN";
   business: ProgramRulesBusiness;
-  status: "saved" | "invalid" | undefined;
+  status: "saved" | "invalid" | "mode-blocked" | undefined;
   action: (formData: FormData) => void | Promise<void>;
 };
 
@@ -68,7 +68,12 @@ export function ProgramRulesForm({
         >
           {status === "saved"
             ? t("تم حفظ قواعد البرنامج.", "Programme rules saved.")
-            : t("راجع قواعد البرنامج.", "Review the programme rules.")}
+            : status === "mode-blocked"
+              ? t(
+                  "لا يمكن تغيير نوع برنامج الولاء بعد وجود رصيد أو عمليات أو مكافآت. يلزم مسار ترحيل مخصص.",
+                  "The loyalty programme type cannot be changed after balances, transactions, or rewards exist. A dedicated migration workflow is required.",
+                )
+              : t("راجع قواعد البرنامج.", "Review the programme rules.")}
         </p>
       ) : null}
       <h2 className="text-xl font-bold text-foreground">

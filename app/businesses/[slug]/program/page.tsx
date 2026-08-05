@@ -85,7 +85,9 @@ export default async function LoyaltyProgramPage({
             language={language}
             business={business}
             status={
-              query.program === "saved" || query.program === "invalid"
+              query.program === "saved" ||
+              query.program === "invalid" ||
+              query.program === "mode-blocked"
                 ? query.program
                 : undefined
             }
