@@ -45,7 +45,9 @@
     "release:manifest": "tsx scripts/print-release-manifest.ts",
     "release:final": "tsx scripts/run-final-release-gate.ts",
     "release:final:browser": "tsx scripts/run-final-release-gate.ts --browser",
-    "release:final:production-readonly": "pnpm run release:production-preflight && pnpm run verify:production-smoke && pnpm run verify:operations"
+    "release:final:production-readonly": "pnpm run release:production-preflight && pnpm run verify:production-smoke && pnpm run verify:operations",
+    "validate:migrations": "node scripts/validate-migration-manifest.mjs",
+    "validate:destructive-migrations": "node scripts/scan-destructive-migrations.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

@@ -1,0 +1,228 @@
+name: Migration Integrity
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/migration-integrity.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "prisma/**"
+      - "scripts/validate-migration-manifest.mjs"
+      - "scripts/scan-destructive-migrations.mjs"
+      - "tests/migration-manifest-validator.test.mjs"
+      - "tests/destructive-migration-scanner.test.mjs"
+      - "tests/migration-raw-sql-contracts.test.mjs"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/migration-integrity.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "prisma/**"
+      - "scripts/validate-migration-manifest.mjs"
+      - "scripts/scan-destructive-migrations.mjs"
+      - "tests/migration-manifest-validator.test.mjs"
+      - "tests/destructive-migration-scanner.test.mjs"
+      - "tests/migration-raw-sql-contracts.test.mjs"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-integrity-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migration-integrity:
+    name: Validate migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: loyalflow_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d loyalflow_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      CI: "true"
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/loyalflow_ci?schema=public
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate immutable migration manifest
+        run: pnpm run validate:migrations
+
+      - name: Scan destructive migration SQL
+        run: pnpm run validate:destructive-migrations
+
+      - name: Run focused migration integrity tests
+        run: |
+          node --test \
+            tests/migration-manifest-validator.test.mjs \
+            tests/destructive-migration-scanner.test.mjs \
+            tests/migration-raw-sql-contracts.test.mjs
+
+      - name: Exercise Prisma formatter safely
+        shell: bash
+        run: |
+          cp prisma/schema.prisma "$RUNNER_TEMP/schema.prisma"
+          pnpm exec prisma format --schema "$RUNNER_TEMP/schema.prisma"
+
+      - name: Validate Prisma schema
+        run: pnpm run db:validate
+
+      - name: Generate Prisma client
+        run: pnpm run db:generate
+
+      - name: Type-check project
+        run: pnpm run typecheck
+
+      - name: Deploy migrations to disposable PostgreSQL
+        run: pnpm run db:migrate:deploy
+
+      - name: Verify required database objects
+        shell: bash
+        run: |
+          pnpm exec prisma db execute --stdin <<'SQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1
+              FROM pg_indexes
+              WHERE schemaname = 'public'
+                AND indexname = 'RewardUnlock_one_live_per_customer_reward'
+                AND indexdef LIKE '%"customerId", "rewardId"%'
+                AND indexdef LIKE '%"redeemedAt" IS NULL%'
+                AND indexdef LIKE '%"expiredAt" IS NULL%'
+            ) THEN
+              RAISE EXCEPTION
+                'Missing or changed RewardUnlock_one_live_per_customer_reward index';
+            END IF;
+          END
+          $$;
+
+          DO $$
+          DECLARE
+            required_names text[] := ARRAY[
+              'CustomerNote_createdById_businessId_fkey',
+              'CustomerNote_updatedById_businessId_fkey',
+              'LoyaltyTransaction_branchId_businessId_fkey',
+              'LoyaltyTransaction_createdById_businessId_fkey',
+              'LoyaltyTransaction_attributedStaffId_businessId_fkey',
+              'LoyaltyTransaction_customerId_businessId_fkey',
+              'PromotionApplication_promotionId_businessId_fkey',
+              'PromotionApplication_customerId_businessId_fkey',
+              'PromotionApplication_transactionId_businessId_fkey',
+              'RewardRedemption_branchId_businessId_fkey',
+              'RewardRedemption_createdById_businessId_fkey',
+              'RewardRedemption_attributedStaffId_businessId_fkey',
+              'RewardRedemption_customerId_businessId_fkey',
+              'RewardRedemption_rewardId_businessId_fkey',
+              'RewardUnlock_customerId_businessId_fkey',
+              'RewardUnlock_rewardId_businessId_fkey',
+              'CustomerReferralCode_customerId_businessId_fkey',
+              'Referral_referrerCustomerId_businessId_fkey',
+              'Referral_referredCustomerId_businessId_fkey',
+              'BusinessActivity_branchId_businessId_fkey',
+              'BusinessActivity_createdById_businessId_fkey',
+              'BusinessActivity_customerId_businessId_fkey',
+              'Notification_userId_businessId_fkey'
+            ];
+            missing_names text[];
+          BEGIN
+            SELECT array_agg(required_name ORDER BY required_name)
+            INTO missing_names
+            FROM unnest(required_names) AS required_name
+            WHERE NOT EXISTS (
+              SELECT 1
+              FROM pg_constraint
+              WHERE conname = required_name
+                AND contype = 'f'
+            );
+
+            IF missing_names IS NOT NULL THEN
+              RAISE EXCEPTION
+                'Missing tenant composite foreign keys: %',
+                missing_names;
+            END IF;
+          END
+          $$;
+
+          DO $$
+          DECLARE
+            actual_values text[];
+          BEGIN
+            SELECT array_agg(enumlabel ORDER BY enumsortorder)
+            INTO actual_values
+            FROM pg_enum
+            JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+            WHERE pg_type.typname = 'SubscriptionPlan';
+
+            IF actual_values IS DISTINCT FROM
+              ARRAY['FREE', 'STARTER', 'PRO', 'BUSINESS']
+            THEN
+              RAISE EXCEPTION
+                'Unexpected SubscriptionPlan values: %',
+                actual_values;
+            END IF;
+
+            SELECT array_agg(enumlabel ORDER BY enumsortorder)
+            INTO actual_values
+            FROM pg_enum
+            JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+            WHERE pg_type.typname = 'LoyaltyMode';
+
+            IF actual_values IS DISTINCT FROM
+              ARRAY['VISITS', 'POINTS', 'SALES_AMOUNT']
+            THEN
+              RAISE EXCEPTION
+                'Unexpected LoyaltyMode values: %',
+                actual_values;
+            END IF;
+
+            SELECT array_agg(enumlabel ORDER BY enumsortorder)
+            INTO actual_values
+            FROM pg_enum
+            JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+            WHERE pg_type.typname = 'RewardType';
+
+            IF actual_values IS DISTINCT FROM
+              ARRAY['GIFT', 'PROMO_CODE', 'DISCOUNT', 'CUSTOM']
+            THEN
+              RAISE EXCEPTION
+                'Unexpected RewardType values: %',
+                actual_values;
+            END IF;
+          END
+          $$;
+          SQL
