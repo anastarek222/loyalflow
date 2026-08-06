@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-report:
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: docs/master-plan-report
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -43,15 +45,33 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Generate HTML, SVG mockups and PDF
+      - name: Generate report source and mockups
         run: node docs/report/generate-loyalflow-master-report.mjs
 
-      - name: Render mockups to PNG for Word
+      - name: Sanitize and render mockups for Word
         run: |
           for file in artifacts/loyalflow-master-report/mockups/*.svg; do
             perl -0pi -e 's/&(?![A-Za-z0-9#]+;)/&amp;/g' "$file"
             rsvg-convert "$file" -o "${file%.svg}.png"
           done
+
+      - name: Re-render final PDF with sanitized mockups
+        run: |
+          node --input-type=module <<'NODE'
+          import path from 'node:path';
+          import { chromium } from '@playwright/test';
+          const reportDir = path.resolve('artifacts/loyalflow-master-report');
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+          await page.goto(`file://${path.join(reportDir, 'LoyalFlow_Master_Plan_AR.html')}`, { waitUntil: 'networkidle' });
+          await page.pdf({
+            path: path.join(reportDir, 'LoyalFlow_Master_Plan_AR.pdf'),
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '0', bottom: '0', left: '0', right: '0' },
+          });
+          await browser.close();
+          NODE
 
       - name: Generate Microsoft Word document
         run: |
@@ -72,6 +92,19 @@ jobs:
           unzip -t artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
           ls -lh artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.pdf
           ls -lh artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
+
+      - name: Publish generated PDF and Word on report branch
+        run: |
+          mkdir -p docs/report/generated
+          cp artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.pdf docs/report/generated/
+          cp artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx docs/report/generated/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/report/generated
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: publish generated LoyalFlow master report [skip ci]"
+            git push origin HEAD:docs/master-plan-report
+          fi
 
       - name: Upload PDF and Word report
         uses: actions/upload-artifact@v4
