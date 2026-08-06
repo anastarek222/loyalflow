@@ -49,6 +49,7 @@ jobs:
       - name: Render mockups to PNG for Word
         run: |
           for file in artifacts/loyalflow-master-report/mockups/*.svg; do
+            perl -0pi -e 's/&(?![A-Za-z0-9#]+;)/&amp;/g' "$file"
             rsvg-convert "$file" -o "${file%.svg}.png"
           done
 
