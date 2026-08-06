@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import type { Prisma } from "@/generated/prisma/client";
 import {
   activityActorFields,
   activityRequestMetadata,
@@ -39,6 +40,7 @@ import {
 import type { BusinessDeletionState } from "@/components/business-deletion-danger-zone";
 import { logServerError, logServerEvent } from "@/lib/server/logging";
 import { isLoyaltyModeChangeBlocked } from "@/lib/loyalty/program-change-safety";
+import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -119,9 +121,16 @@ async function updateSettingsDomain(input: {
   user: Parameters<typeof activityActorFields>[0];
   description: string;
   data: Parameters<typeof prisma.business.update>[0]["data"];
+  metadata?: Prisma.InputJsonObject;
   syncSheet?: boolean;
 }) {
   const activityContext = await getActivityRequestContext();
+  const actorFields = activityActorFields(input.user, input.businessId);
+  const createdById =
+    "createdById" in actorFields ? actorFields.createdById : undefined;
+  const actorMetadata =
+    "metadata" in actorFields ? actorFields.metadata : undefined;
+
   await prisma.$transaction([
     prisma.business.update({
       where: { id: input.businessId },
@@ -132,7 +141,15 @@ async function updateSettingsDomain(input: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: input.description,
         businessId: input.businessId,
-        ...activityActorFields(input.user, input.businessId),
+        ...(createdById ? { createdById } : {}),
+        ...(actorMetadata || input.metadata
+          ? {
+              metadata: {
+                ...(actorMetadata ?? {}),
+                ...(input.metadata ?? {}),
+              },
+            }
+          : {}),
         ...activityRequestMetadata(activityContext),
       },
     }),
@@ -228,7 +245,18 @@ export async function updateProgramRulesAction(
   const currentProgramme = await prisma.business.findUnique({
     where: { id: business.id },
     select: {
+      loyaltyProgramName: true,
+      pointsName: true,
+      welcomeMessage: true,
+      cardDefaultLanguage: true,
       loyaltyMode: true,
+      unitName: true,
+      rewardName: true,
+      rewardType: true,
+      rewardCode: true,
+      rewardDescription: true,
+      rewardThreshold: true,
+      earnAmount: true,
       customers: {
         where: { balance: { not: 0 } },
         select: { id: true },
@@ -249,9 +277,25 @@ export async function updateProgramRulesAction(
     redirect("/businesses");
   }
 
+  const nextProgramme = getProgramRulesUpdate(parsed.data);
+  const currentProgrammeSnapshot = {
+    loyaltyProgramName: currentProgramme.loyaltyProgramName,
+    pointsName: currentProgramme.pointsName,
+    welcomeMessage: currentProgramme.welcomeMessage,
+    cardDefaultLanguage: currentProgramme.cardDefaultLanguage,
+    loyaltyMode: currentProgramme.loyaltyMode,
+    unitName: currentProgramme.unitName,
+    rewardName: currentProgramme.rewardName,
+    rewardType: currentProgramme.rewardType,
+    rewardCode: currentProgramme.rewardCode,
+    rewardDescription: currentProgramme.rewardDescription,
+    rewardThreshold: currentProgramme.rewardThreshold,
+    earnAmount: currentProgramme.earnAmount,
+  };
+
   const modeChangeBlocked = isLoyaltyModeChangeBlocked({
     currentMode: currentProgramme.loyaltyMode,
-    proposedMode: parsed.data.loyaltyMode,
+    proposedMode: nextProgramme.loyaltyMode,
     history: {
       customerWithBalance: currentProgramme.customers.length > 0,
       transactionCount: currentProgramme._count.transactions,
@@ -270,7 +314,11 @@ export async function updateProgramRulesAction(
     slug: business.slug,
     user: session.user,
     description: "تم تحديث قواعد برنامج الولاء",
-    data: getProgramRulesUpdate(parsed.data),
+    data: nextProgramme,
+    metadata: getLoyaltyProgramRulesAuditMetadata(
+      currentProgrammeSnapshot,
+      nextProgramme,
+    ),
     syncSheet: true,
   });
   redirect(`/businesses/${business.slug}/program?program=saved`);
