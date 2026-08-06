@@ -43,7 +43,11 @@ test("existing domain actions remain narrow and revalidate the programme route",
   const programAction = actions.slice(start, end);
   assert.match(programAction, /await getManagedBusiness\(slug\)/);
   assert.match(programAction, /programRulesSettingsSchema\.safeParse/);
-  assert.match(programAction, /data: getProgramRulesUpdate\(parsed\.data\)/);
+  assert.match(
+    programAction,
+    /const nextProgramme = getProgramRulesUpdate\(parsed\.data\)/,
+  );
+  assert.match(programAction, /data: nextProgramme/);
   assert.doesNotMatch(programAction, /name:|whatsappWelcomeMessage|staffAttributionEnabled/);
   assert.match(actions, /revalidatePath\(`\/businesses\/\$\{input\.slug\}\/program`\)/);
   assert.match(actions, /\/program\?program=saved/);
