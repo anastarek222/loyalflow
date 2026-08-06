@@ -1,0 +1,88 @@
+name: Generate LoyalFlow Master Report
+
+on:
+  push:
+    branches:
+      - docs/master-plan-report
+    paths:
+      - "docs/report/**"
+      - ".github/workflows/generate-loyalflow-master-report.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install project dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install document and font tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pandoc \
+            librsvg2-bin \
+            poppler-utils \
+            fonts-noto-core \
+            fonts-noto-extra \
+            fonts-noto-color-emoji
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Generate HTML, SVG mockups and PDF
+        run: node docs/report/generate-loyalflow-master-report.mjs
+
+      - name: Render mockups to PNG for Word
+        run: |
+          for file in artifacts/loyalflow-master-report/mockups/*.svg; do
+            rsvg-convert "$file" -o "${file%.svg}.png"
+          done
+
+      - name: Generate Microsoft Word document
+        run: |
+          pandoc \
+            artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.md \
+            --from=gfm+raw_html \
+            --resource-path=artifacts/loyalflow-master-report \
+            --metadata=lang:ar \
+            --toc \
+            --toc-depth=2 \
+            -o artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
+
+      - name: Validate generated files
+        run: |
+          test -s artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.pdf
+          test -s artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
+          pdfinfo artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.pdf
+          unzip -t artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
+          ls -lh artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.pdf
+          ls -lh artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
+
+      - name: Upload PDF and Word report
+        uses: actions/upload-artifact@v4
+        with:
+          name: LoyalFlow-Master-Plan-AR
+          path: |
+            artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.pdf
+            artifacts/loyalflow-master-report/LoyalFlow_Master_Plan_AR.docx
+            artifacts/loyalflow-master-report/mockups/*.png
+          if-no-files-found: error
+          retention-days: 30
