@@ -21,19 +21,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
 
-      - name: Install project dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install isolated report tooling
+        run: npm install --no-save --ignore-scripts @playwright/test@1.61.1
 
       - name: Install document and font tools
         run: |
@@ -47,7 +41,7 @@ jobs:
             fonts-noto-color-emoji
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Generate HTML, SVG mockups and PDF
         run: node docs/report/generate-loyalflow-master-report.mjs
