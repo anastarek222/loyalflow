@@ -100,6 +100,7 @@ model Business {
   activities               BusinessActivity[]
   customers                Customer[]
   transactions             LoyaltyTransaction[]
+  reversalExceptions       ReversalException[]
   notificationItemReads    NotificationItemRead[]
   notificationReadStates   NotificationReadState[]
   redemptions              RewardRedemption[]
@@ -199,6 +200,7 @@ model Customer {
   tagAssignments        CustomerTagAssignment[]
   notes                 CustomerNote[]
   transactions          LoyaltyTransaction[]
+  reversalExceptions    ReversalException[]
   redemptions           RewardRedemption[]
   rewardUnlocks         RewardUnlock[]
   promotionApplications PromotionApplication[]
@@ -325,6 +327,7 @@ model LoyaltyTransaction {
   reversals               LoyaltyTransaction[]  @relation("LoyaltyTransactionReversals")
   promotionApplication    PromotionApplication?
   rewardRedemption        RewardRedemption?
+  reversalExceptions      ReversalException[] @relation("ReversalExceptionOriginalTransaction")
 
   @@unique([businessId, idempotencyKey])
   @@unique([id, businessId])
@@ -335,6 +338,37 @@ model LoyaltyTransaction {
   @@index([businessId, reversalOfTransactionId, createdAt])
   @@index([createdById])
   @@index([attributedStaffId])
+}
+
+model ReversalException {
+  id                    String                   @id @default(cuid())
+  businessId            String
+  customerId            String
+  originalTransactionId String
+  operationId           String
+  reversalKind          ReversalKind
+  blockReason           ReversalExceptionReason
+  status                ReversalExceptionStatus @default(OPEN)
+  attemptedAmount       Int
+  attemptedSaleAmount   Int?
+  availableBalance      Int
+  reason                String
+  actorId               String?
+  actorRole             UserRole
+  branchId              String?
+  attributedStaffId     String?
+  resolvedAt            DateTime?
+  resolutionNote        String?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  business              Business                 @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer              Customer                 @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  originalTransaction   LoyaltyTransaction       @relation("ReversalExceptionOriginalTransaction", fields: [originalTransactionId, businessId], references: [id, businessId], onDelete: NoAction)
+
+  @@unique([businessId, operationId])
+  @@index([businessId, status, createdAt])
+  @@index([businessId, customerId, status, createdAt])
+  @@index([businessId, originalTransactionId, createdAt])
 }
 
 model Branch {
@@ -651,6 +685,15 @@ enum ReversalKind {
   EARN_REFUND
   EARN_VOID
   REDEMPTION_REVERSAL
+}
+
+enum ReversalExceptionReason {
+  INSUFFICIENT_BALANCE
+}
+
+enum ReversalExceptionStatus {
+  OPEN
+  RESOLVED
 }
 
 enum ActivityType {
