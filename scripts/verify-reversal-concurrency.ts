@@ -50,17 +50,40 @@ async function createCustomer(businessId: string, suffix: string) {
 }
 
 async function earn(customerId: string, businessId: string, amount: number) {
-  return inTransaction((transaction) =>
-    recordLoyaltyEarn(transaction, {
+  const idempotencyKey = randomUUID();
+
+  return inTransaction(async (transaction) => {
+    const balanceAfter = await recordLoyaltyEarn(transaction, {
       customerId,
       businessId,
       amount,
       sourceLoyaltyMode: "POINTS",
-      idempotencyKey: randomUUID(),
+      idempotencyKey,
       transactionNote: "Reversal concurrency fixture earn",
       activityDescription: "Reversal concurrency fixture earn",
-    }),
-  );
+    });
+
+    assert.notEqual(balanceAfter, null);
+
+    const ledgerTransaction = await transaction.loyaltyTransaction.findUnique({
+      where: {
+        businessId_idempotencyKey: {
+          businessId,
+          idempotencyKey,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    assert.ok(ledgerTransaction);
+
+    return {
+      balanceAfter,
+      transactionId: ledgerTransaction.id,
+    };
+  });
 }
 
 function reverse(
