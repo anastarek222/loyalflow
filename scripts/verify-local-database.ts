@@ -67,6 +67,7 @@ const REVIEWED_MIGRATIONS = [
   "20260729090000_add_owner_onboarding_foundation",
   "20260729100000_add_standard_card_preferences",
   "20260729113000_add_custom_card_mode",
+  "20260807064000_add_ledger_reversal_link",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;
