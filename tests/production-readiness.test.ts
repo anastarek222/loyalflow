@@ -173,7 +173,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 38);
+  assert.equal(committedMigrations.length, 39);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types"

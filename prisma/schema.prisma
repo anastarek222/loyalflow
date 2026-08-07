@@ -242,16 +242,16 @@ model CustomerTagAssignment {
 
 model CustomerNote {
   id          String   @id @default(cuid())
-  businessId  String
-  customerId  String
-  content     String
+  businessId String
+  customerId String
+  content String
   createdById String?
   updatedById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  customer    Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
-  createdBy   User?    @relation("CustomerNoteCreatedBy", fields: [createdById, businessId], references: [id, businessId], onDelete: NoAction)
-  updatedBy   User?    @relation("CustomerNoteUpdatedBy", fields: [updatedById, businessId], references: [id, businessId], onDelete: NoAction)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customer Customer @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  createdBy User? @relation("CustomerNoteCreatedBy", fields: [createdById, businessId], references: [id, businessId], onDelete: NoAction)
+  updatedBy User? @relation("CustomerNoteUpdatedBy", fields: [updatedById, businessId], references: [id, businessId], onDelete: NoAction)
 
   @@index([businessId, customerId, updatedAt])
   @@index([createdById])
@@ -299,27 +299,32 @@ model Offer {
 }
 
 model LoyaltyTransaction {
-  id                   String                @id @default(cuid())
-  type                 TransactionType
-  amount               Int
-  balanceAfter         Int
-  note                 String?
-  sourceLoyaltyMode    LoyaltyMode?
-  saleAmount           Int?
-  idempotencyKey       String?
-  customerId           String
-  businessId           String
-  branchId             String?
-  createdById          String?
-  attributedStaffId    String?
-  createdAt            DateTime              @default(now())
-  business             Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  branch               Branch?               @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
-  createdBy            User?                 @relation("TransactionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
-  attributedStaff      User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
-  customer             Customer              @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
-  promotionApplication PromotionApplication?
-  rewardRedemption     RewardRedemption?
+  id                      String                @id @default(cuid())
+  type                    TransactionType
+  amount                  Int
+  balanceAfter            Int
+  note                    String?
+  sourceLoyaltyMode       LoyaltyMode?
+  saleAmount              Int?
+  idempotencyKey          String?
+  reversalOfTransactionId String?
+  reversalKind            ReversalKind?
+  reversalReason          String?
+  customerId              String
+  businessId              String
+  branchId                String?
+  createdById             String?
+  attributedStaffId       String?
+  createdAt               DateTime              @default(now())
+  business                Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  branch                  Branch?               @relation(fields: [branchId, businessId], references: [id, businessId], onDelete: NoAction)
+  createdBy               User?                 @relation("TransactionCreatedBy", fields: [createdById, businessId], references: [id, businessId])
+  attributedStaff         User?                 @relation("TransactionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
+  customer                Customer              @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
+  reversalOf              LoyaltyTransaction?   @relation("LoyaltyTransactionReversals", fields: [reversalOfTransactionId, businessId], references: [id, businessId], onDelete: NoAction)
+  reversals               LoyaltyTransaction[]  @relation("LoyaltyTransactionReversals")
+  promotionApplication    PromotionApplication?
+  rewardRedemption        RewardRedemption?
 
   @@unique([businessId, idempotencyKey])
   @@unique([id, businessId])
@@ -327,6 +332,7 @@ model LoyaltyTransaction {
   @@index([businessId, createdAt])
   @@index([businessId, sourceLoyaltyMode, createdAt])
   @@index([businessId, branchId, createdAt])
+  @@index([businessId, reversalOfTransactionId, createdAt])
   @@index([createdById])
   @@index([attributedStaffId])
 }
@@ -638,6 +644,13 @@ enum TransactionType {
   EARN
   REDEEM
   ADJUSTMENT
+  REVERSAL
+}
+
+enum ReversalKind {
+  EARN_REFUND
+  EARN_VOID
+  REDEMPTION_REVERSAL
 }
 
 enum ActivityType {

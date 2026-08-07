@@ -1,7 +1,7 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "migrationCount": 38,
+  "migrationCount": 39,
   "migrations": [
     {
       "order": 1,
@@ -230,6 +230,12 @@
       "name": "20260729113000_add_custom_card_mode",
       "path": "prisma/migrations/20260729113000_add_custom_card_mode/migration.sql",
       "sha256": "4457dccb79f0a7586055495dd28f0f38fdbef319e142a16bfa628516ad820dc5"
+    },
+    {
+      "order": 39,
+      "name": "20260807064000_add_ledger_reversal_link",
+      "path": "prisma/migrations/20260807064000_add_ledger_reversal_link/migration.sql",
+      "sha256": "6d5573d8b048f913bb9db690d8de4a3aa1da82720415d7c6015eda61c23e72de"
     }
   ]
 }

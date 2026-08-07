@@ -1,3 +1,5 @@
+import type { AppLanguage } from "@/lib/i18n";
+
 type Actor = {
   firstName: string;
   lastName: string | null;
@@ -5,7 +7,7 @@ type Actor = {
 
 type TimelineTransaction = {
   id: string;
-  type: "EARN" | "REDEEM" | "ADJUSTMENT";
+  type: "EARN" | "REDEEM" | "ADJUSTMENT" | "REVERSAL";
   amount: number;
   balanceAfter: number;
   note: string | null;
@@ -43,14 +45,23 @@ function getActorName(actor: Actor, language: AppLanguage) {
     .join(" ");
 }
 
-function getTransactionTitle(type: TimelineTransaction["type"], language: AppLanguage) {
+function getTransactionTitle(
+  type: TimelineTransaction["type"],
+  language: AppLanguage,
+) {
   if (language === "EN") {
     switch (type) {
-      case "EARN": return "Loyalty balance added";
-      case "REDEEM": return "Reward redeemed";
-      case "ADJUSTMENT": return "Balance adjusted manually";
+      case "EARN":
+        return "Loyalty balance added";
+      case "REDEEM":
+        return "Reward redeemed";
+      case "ADJUSTMENT":
+        return "Balance adjusted manually";
+      case "REVERSAL":
+        return "Loyalty operation reversed";
     }
   }
+
   switch (type) {
     case "EARN":
       return "تمت إضافة رصيد ولاء";
@@ -58,16 +69,27 @@ function getTransactionTitle(type: TimelineTransaction["type"], language: AppLan
       return "تم استبدال مكافأة";
     case "ADJUSTMENT":
       return "تم تعديل الرصيد يدويًا";
+    case "REVERSAL":
+      return "تم عكس عملية ولاء";
   }
 }
 
 function getLifecycleTitle(type: string, language: AppLanguage) {
   if (language === "EN") {
     const labels: Record<string, string> = {
-      CUSTOMER_CREATED: "Customer joined", CUSTOMER_UPDATED: "Customer details updated", CUSTOMER_DEACTIVATED: "Customer account deactivated", CUSTOMER_REACTIVATED: "Customer account reactivated", CUSTOMER_TAG_ASSIGNED: "Customer tag added", CUSTOMER_TAG_REMOVED: "Customer tag removed", CUSTOMER_NOTE_CREATED: "Internal note added", CUSTOMER_NOTE_UPDATED: "Internal note updated", REFERRAL_RECORDED: "Customer referral recorded",
+      CUSTOMER_CREATED: "Customer joined",
+      CUSTOMER_UPDATED: "Customer details updated",
+      CUSTOMER_DEACTIVATED: "Customer account deactivated",
+      CUSTOMER_REACTIVATED: "Customer account reactivated",
+      CUSTOMER_TAG_ASSIGNED: "Customer tag added",
+      CUSTOMER_TAG_REMOVED: "Customer tag removed",
+      CUSTOMER_NOTE_CREATED: "Internal note added",
+      CUSTOMER_NOTE_UPDATED: "Internal note updated",
+      REFERRAL_RECORDED: "Customer referral recorded",
     };
     return labels[type] ?? "Customer updated";
   }
+
   switch (type) {
     case "CUSTOMER_CREATED":
       return "انضم العميل";
@@ -94,7 +116,7 @@ function getLifecycleTitle(type: string, language: AppLanguage) {
 
 // Transaction entries already carry the balance and audit note, so lifecycle
 // activities are the only activity rows added here. This avoids duplicating a
-// single earn/redemption/adjustment operation in the customer timeline.
+// single earn/redemption/adjustment/reversal operation in the customer timeline.
 export function buildCustomerTimeline(
   transactions: readonly TimelineTransaction[],
   activities: readonly TimelineActivity[],
@@ -122,7 +144,6 @@ export function buildCustomerTimeline(
   }));
 
   return [...transactionItems, ...lifecycleItems].sort(
-    (left, right) => right.createdAt.getTime() - left.createdAt.getTime()
+    (left, right) => right.createdAt.getTime() - left.createdAt.getTime(),
   );
 }
-import type { AppLanguage } from "@/lib/i18n";
