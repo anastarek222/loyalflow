@@ -1073,8 +1073,38 @@ export default async function ReportsPage({
             { label: language === "AR" ? "عملاء جدد" : "New customers", value: newCustomers, detail: language === "AR" ? "خلال الفترة المحددة" : "In the selected period" },
             { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: formatLoyaltyAmount({ ...loyaltyPresentation, amount: earnedAmount }), detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
             { label: language === "AR" ? "استبدالات المكافآت" : "Reward redemptions", value: numberFormatter.format(redeemed._count._all), detail: language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions" },
-            { label: language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals", value: numberFormatter.format(openReversalExceptions), detail: language === "AR" ? "رصيد غير كافٍ ويحتاج متابعة" : "Insufficient balance requires follow-up" },
-          ].map((metric) => <article key={metric.label} className="border-b border-border p-4 last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"><p className="text-sm font-semibold text-slate-600">{metric.label}</p><p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p><p className="mt-2 text-xs text-slate-500">{metric.detail}</p></article>)}
+            {
+              label: language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals",
+              value: numberFormatter.format(openReversalExceptions),
+              detail: language === "AR" ? "رصيد غير كافٍ ويحتاج متابعة" : "Insufficient balance requires follow-up",
+              href: `/businesses/${business.slug}/reports/reversal-exceptions`,
+            },
+          ].map((metric) => {
+            const content = (
+              <>
+                <p className="text-sm font-semibold text-slate-600">{metric.label}</p>
+                <p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p>
+                <p className="mt-2 text-xs text-slate-500">{metric.detail}</p>
+              </>
+            );
+
+            return metric.href ? (
+              <Link
+                key={metric.label}
+                href={metric.href}
+                className="border-b border-border p-4 transition hover:bg-surface-subtle last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"
+              >
+                {content}
+              </Link>
+            ) : (
+              <article
+                key={metric.label}
+                className="border-b border-border p-4 last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"
+              >
+                {content}
+              </article>
+            );
+          })}
         </section>
 
         {!simple && <section className="mt-6"><div className="mb-3"><h2 className="text-xl font-bold text-slate-950">{copy.historical}</h2><p className="mt-1 text-sm text-slate-600">{copy.dateRange}</p></div><ReportCharts language={language} unitName={business.unitName} trends={historicalTrends} /></section>}

@@ -30,6 +30,10 @@ function resolutionError(reason: ReversalExceptionResolutionBlockReason) {
   }
 }
 
+function resolutionWorkspace(slug: string) {
+  return `/businesses/${slug}/reports/reversal-exceptions`;
+}
+
 export async function resolveReversalExceptionAction(
   slug: string,
   formData: FormData,
@@ -45,7 +49,7 @@ export async function resolveReversalExceptionAction(
   });
 
   if (!parsedInput.success) {
-    redirect(`/businesses/${slug}/reports?error=reversal-exception-invalid`);
+    redirect(`${resolutionWorkspace(slug)}?error=reversal-exception-invalid`);
   }
 
   const business = await prisma.business.findUnique({
@@ -67,7 +71,7 @@ export async function resolveReversalExceptionAction(
     (actor.role === "OWNER" && actor.businessId === business.id);
 
   if (!actorAllowed) {
-    redirect(`/businesses/${slug}/reports?error=reversal-exception-permission`);
+    redirect(`${resolutionWorkspace(slug)}?error=reversal-exception-permission`);
   }
 
   let result: Awaited<ReturnType<typeof resolveReversalException>>;
@@ -82,24 +86,25 @@ export async function resolveReversalExceptionAction(
     );
   } catch (error) {
     if (isFinancialOperationContextError(error)) {
-      redirect(`/businesses/${slug}/reports?error=reversal-exception-context`);
+      redirect(`${resolutionWorkspace(slug)}?error=reversal-exception-context`);
     }
     if (isFinancialOperationAbortedError(error)) {
-      redirect(`/businesses/${slug}/reports?error=reversal-exception-aborted`);
+      redirect(`${resolutionWorkspace(slug)}?error=reversal-exception-aborted`);
     }
     throw error;
   }
 
   if (result.status === "BLOCKED") {
     redirect(
-      `/businesses/${slug}/reports?error=${resolutionError(result.reason)}`,
+      `${resolutionWorkspace(slug)}?error=${resolutionError(result.reason)}`,
     );
   }
 
   revalidatePath(`/businesses/${slug}/reports`);
+  revalidatePath(resolutionWorkspace(slug));
 
   redirect(
-    `/businesses/${slug}/reports?success=${
+    `${resolutionWorkspace(slug)}?success=${
       result.status === "REPLAYED"
         ? "reversal-exception-resolution-replayed"
         : "reversal-exception-resolved"
