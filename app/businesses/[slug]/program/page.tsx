@@ -33,9 +33,33 @@ export default async function LoyaltyProgramPage({
 
   const { slug } = await params;
   const query = await searchParams;
-  const business = await prisma.business.findUnique({ where: { slug } });
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    include: {
+      customers: {
+        where: { balance: { not: 0 } },
+        select: { id: true },
+        take: 1,
+      },
+      _count: {
+        select: {
+          transactions: true,
+          rewards: true,
+          rewardUnlocks: true,
+          redemptions: true,
+        },
+      },
+    },
+  });
   if (!business) notFound();
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
+
+  const hasProgrammeHistory =
+    business.customers.length > 0 ||
+    business._count.transactions > 0 ||
+    business._count.rewards > 0 ||
+    business._count.rewardUnlocks > 0 ||
+    business._count.redemptions > 0;
 
   const currentUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -84,10 +108,12 @@ export default async function LoyaltyProgramPage({
           <ProgramRulesForm
             language={language}
             business={business}
+            hasProgrammeHistory={hasProgrammeHistory}
             status={
               query.program === "saved" ||
               query.program === "invalid" ||
-              query.program === "mode-blocked"
+              query.program === "mode-blocked" ||
+              query.program === "economic-confirmation-required"
                 ? query.program
                 : undefined
             }

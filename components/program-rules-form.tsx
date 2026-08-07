@@ -1,14 +1,24 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
+import {
+  getLoyaltyEconomicRuleChanges,
+} from "@/lib/loyalty/program-change-safety";
 import { fallbackRewardHelp } from "@/lib/loyalty/presentation";
 
 type Props = {
   language: "AR" | "EN";
   business: ProgramRulesBusiness;
-  status: "saved" | "invalid" | "mode-blocked" | undefined;
+  hasProgrammeHistory: boolean;
+  status:
+    | "saved"
+    | "invalid"
+    | "mode-blocked"
+    | "economic-confirmation-required"
+    | undefined;
   action: (formData: FormData) => void | Promise<void>;
 };
 
@@ -37,10 +47,71 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
 export function ProgramRulesForm({
   language,
   business,
+  hasProgrammeHistory,
   status,
   action,
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
+
+  function confirmEconomicRuleChanges(
+    event: FormEvent<HTMLFormElement>,
+  ) {
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const confirmation = form.elements.namedItem(
+      "confirmEconomicRules",
+    ) as HTMLInputElement | null;
+
+    const changes = getLoyaltyEconomicRuleChanges(
+      {
+        earnAmount: business.earnAmount,
+        rewardThreshold: business.rewardThreshold,
+        rewardType: business.rewardType,
+      },
+      {
+        earnAmount: Number(formData.get("earnAmount")),
+        rewardThreshold: Number(formData.get("rewardThreshold")),
+        rewardType: String(formData.get("rewardType")),
+      },
+    );
+
+    if (
+      !hasProgrammeHistory ||
+      changes.length === 0 ||
+      confirmation?.value === "true"
+    ) {
+      return;
+    }
+
+    const labels = {
+      earnAmount: t("قيمة الإضافة", "Earn amount"),
+      rewardThreshold: t("هدف المكافأة", "Reward threshold"),
+      rewardType: t("نوع المكافأة", "Reward type"),
+    };
+    const impact = changes
+      .map(
+        (change) =>
+          `${labels[change.field]}: ${change.before} → ${change.after}`,
+      )
+      .join("\n");
+
+    const approved = window.confirm(
+      t(
+        `معاينة التأثير:\n${impact}\n\nسيتم تطبيق القيم الجديدة على العمليات والمكافآت المستقبلية، ولن تتم إعادة كتابة السجل السابق. هل تؤكد المتابعة؟`,
+        `Impact preview:\n${impact}\n\nThe new values will apply to future operations and rewards. Existing history will not be rewritten. Confirm this change?`,
+      ),
+    );
+
+    if (!approved) {
+      event.preventDefault();
+      return;
+    }
+
+    if (confirmation) {
+      confirmation.value = "true";
+    }
+  }
+
   const fields = [
     ["loyaltyProgramName", t("اسم برنامج الولاء", "Programme name"), business.loyaltyProgramName ?? "", 80],
     ["pointsName", t("اسم النقاط", "Points name"), business.pointsName ?? "", 30],
@@ -54,8 +125,14 @@ export function ProgramRulesForm({
   return (
     <form
       action={action}
+      onSubmit={confirmEconomicRuleChanges}
       className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
     >
+      <input
+        type="hidden"
+        name="confirmEconomicRules"
+        defaultValue="false"
+      />
       {status ? (
         <p
           role="status"
@@ -73,7 +150,12 @@ export function ProgramRulesForm({
                   "لا يمكن تغيير نوع برنامج الولاء بعد وجود رصيد أو عمليات أو مكافآت. يلزم مسار ترحيل مخصص.",
                   "The loyalty programme type cannot be changed after balances, transactions, or rewards exist. A dedicated migration workflow is required.",
                 )
-              : t("راجع قواعد البرنامج.", "Review the programme rules.")}
+              : status === "economic-confirmation-required"
+                ? t(
+                    "تغيير قيمة الإضافة أو هدف المكافأة أو نوعها بعد وجود سجل يحتاج معاينة التأثير والتأكيد الصريح.",
+                    "Changing the earn amount, reward threshold, or reward type after history exists requires an impact preview and explicit confirmation.",
+                  )
+                : t("راجع قواعد البرنامج.", "Review the programme rules.")}
         </p>
       ) : null}
       <h2 className="text-xl font-bold text-foreground">

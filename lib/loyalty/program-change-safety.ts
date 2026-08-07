@@ -28,3 +28,39 @@ export function isLoyaltyModeChangeBlocked(input: {
     hasLoyaltyProgramHistory(input.history)
   );
 }
+
+export const loyaltyEconomicRuleFields = [
+  "earnAmount",
+  "rewardThreshold",
+  "rewardType",
+] as const;
+
+export type LoyaltyEconomicRules = {
+  earnAmount: number;
+  rewardThreshold: number;
+  rewardType: string;
+};
+
+export function getLoyaltyEconomicRuleChanges(
+  current: LoyaltyEconomicRules,
+  proposed: LoyaltyEconomicRules,
+) {
+  return loyaltyEconomicRuleFields
+    .filter((field) => current[field] !== proposed[field])
+    .map((field) => ({
+      field,
+      before: current[field],
+      after: proposed[field],
+    }));
+}
+
+export function isLoyaltyEconomicRuleConfirmationRequired(input: {
+  current: LoyaltyEconomicRules;
+  proposed: LoyaltyEconomicRules;
+  history: LoyaltyProgramHistoryState;
+}) {
+  return (
+    getLoyaltyEconomicRuleChanges(input.current, input.proposed).length > 0 &&
+    hasLoyaltyProgramHistory(input.history)
+  );
+}

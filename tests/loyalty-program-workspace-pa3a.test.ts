@@ -15,7 +15,7 @@ const navigation = source("lib/administration/navigation.ts");
 test("PA-3A creates a protected tenant-scoped programme workspace", () => {
   assert.equal(existsSync(join(root, programPath)), true);
   assert.match(program, /const session = await auth\(\)/);
-  assert.match(program, /prisma\.business\.findUnique\(\{ where: \{ slug \} \}\)/);
+  assert.match(program, /prisma\.business\.findUnique\(\{\s*where: \{ slug \},\s*include:/);
   assert.match(program, /canManageBusiness\(session\.user, business\.id\)/);
   assert.match(program, /if \(!business\) notFound\(\)/);
   assert.match(program, /redirect\("\/dashboard"\)/);
