@@ -68,5 +68,5 @@ test("U8 introduces no Prisma or migration dependency", () => {
   for (const path of changedForbidden) assert.equal(source(path).includes("U8"), false);
   assert.doesNotMatch(source("app/businesses/[slug]/rewards/page.tsx"), /prisma\.\$transaction/);
   assert.match(source("app/businesses/[slug]/rewards/page.tsx"), /createRewardAction/);
-  assert.match(source("app/businesses/[slug]/recovery/page.tsx"), /calculateRewardProgress/);
+  assert.match(source("app/businesses/[slug]/recovery/page.tsx"), /getRewardAvailability/);
 });

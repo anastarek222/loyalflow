@@ -120,7 +120,9 @@ test("retains database protection and compatibility paths without mutating lifec
   assert.match(migration, /CREATE UNIQUE INDEX "RewardUnlock_one_live_per_customer_reward"/);
   assert.match(migration, /ON "RewardUnlock"\("customerId", "rewardId"\)\s+WHERE "redeemedAt" IS NULL AND "expiredAt" IS NULL/);
   const actions = readFileSync(join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/actions.ts"), "utf8");
+  const transactions = readFileSync(join(process.cwd(), "lib/loyalty/transactions.ts"), "utf8");
   assert.match(actions, /isActive: true,[\s\S]*expiresAfterDays: \{ not: null \}/);
   assert.match(actions, /No unlock means this balance predates enabling expiry/);
-  assert.match(actions, /expiresAt: \{ gt: new Date\(\) \}/);
+  assert.match(actions, /recordRewardRedemption/);
+  assert.match(transactions, /expiresAt: \{ gt: new Date\(\) \}/);
 });

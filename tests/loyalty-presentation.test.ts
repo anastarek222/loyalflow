@@ -43,9 +43,12 @@ test("CSV values stay localized numeric cells while the unit remains a separate 
 });
 
 test("staff, report, export, and card surfaces use the centralized presentation rules", () => {
-  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/scan/customer/[customerId]/page.tsx", "app/businesses/[slug]/reports/page.tsx", "app/businesses/[slug]/reports/export/route.ts"]) {
+  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/scan/customer/[customerId]/page.tsx", "app/businesses/[slug]/reports/page.tsx"]) {
     assert.match(source(file), /formatLoyaltyAmount/);
   }
+  const exportSource = source("app/businesses/[slug]/reports/export/route.ts");
+  assert.match(exportSource, /formatLoyaltyNumber/);
+  assert.match(exportSource, /operationalUnitLabel/);
   assert.match(source("components/program-rules-form.tsx"), /fallbackRewardHelp/);
   assert.match(source("lib/cards/standard-card.ts"), /loyaltyCurrency/);
 });
