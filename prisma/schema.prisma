@@ -170,6 +170,7 @@ model User {
   createdCustomerNotes   CustomerNote[]          @relation("CustomerNoteCreatedBy")
   updatedCustomerNotes   CustomerNote[]          @relation("CustomerNoteUpdatedBy")
   notifications          Notification[]
+  passwordResetTokens    PasswordResetToken[]
   business               Business?               @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([id, businessId])
@@ -179,6 +180,18 @@ model User {
 enum OwnerOnboardingStatus {
   PENDING
   COMPLETE
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt, usedAt])
 }
 
 model Customer {
