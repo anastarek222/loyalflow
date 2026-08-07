@@ -35,7 +35,7 @@ test("redemption reversal entry point and workspace are owner or super admin onl
 
 test("redemption reversal workspace reads bounded same-tenant redemption history", () => {
   assert.match(pageSource, /businessId: business\.id/);
-  assert.match(pageSource, /rewardRedemptions:/);
+  assert.match(pageSource, /redemptions:/);
   assert.match(pageSource, /take: 20/);
   assert.match(pageSource, /reversalKind: "REDEMPTION_REVERSAL"/);
 });
