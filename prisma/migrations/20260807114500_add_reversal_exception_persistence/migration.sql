@@ -22,7 +22,7 @@ CREATE TABLE "ReversalException" (
   "resolvedAt" TIMESTAMP(3),
   "resolutionNote" TEXT,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
 
   CONSTRAINT "ReversalException_pkey" PRIMARY KEY ("id")
 );
