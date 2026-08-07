@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import type { LoyaltyMode, TransactionType } from "@/generated/prisma/client";
 import { formatLoyaltyAmount } from "@/lib/loyalty/presentation";
 
 import { reverseRedemptionAction } from "./redemption-reversal-actions";
@@ -14,8 +15,8 @@ type RedemptionRow = {
   transactionId: string | null;
   transaction: {
     id: string;
-    type: "REDEEM";
-    sourceLoyaltyMode: "VISITS" | "POINTS" | "SALES_AMOUNT" | null;
+    type: TransactionType;
+    sourceLoyaltyMode: LoyaltyMode | null;
     reversals: Array<{ id: string }>;
   } | null;
 };
