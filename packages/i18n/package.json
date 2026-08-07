@@ -1,0 +1,8 @@
+{
+  "name": "@loyalflow/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reserved boundary for LoyalFlow locale messages and presentation formatting.",
+  "exports": {}
+}
