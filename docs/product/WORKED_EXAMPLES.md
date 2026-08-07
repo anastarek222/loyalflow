@@ -20,7 +20,7 @@ SALES_AMOUNT, EGP, threshold 2500. Sale 600 credits 600, stores source mode and 
 
 ## Idempotent retry
 
-The same operation key and identical intent commits once and returns the prior result on retry. Reusing the key with different customer, amount, mode, sale, reward, or promotion is a conflict.
+The same operation key and identical intent commits once and returns the prior result on retry. Reusing the key with different customer, amount, mode, sale, reward, promotion, original-operation reference, or reversal amount is a conflict.
 
 ## Concurrent redemption
 
@@ -36,7 +36,35 @@ VISITS balance 5 with historical transactions cannot be changed by normal save t
 
 ## Full sales refund target
 
-Original sale/credit 1000 remains unchanged. A linked reversal is created for the approved reversible amount. Balance is reduced only without violating the negative-balance policy. Reports show gross credit and refund separately.
+Original SALES_AMOUNT sale/credit 1000 remains unchanged. Current balance is 1400 and none of that earn has been reversed. A full refund of the original 1000 creates a linked reversal for 1000, leaving balance 400. Reports show gross earned 1000 and refund/reversal 1000 separately; the original earn remains visible.
+
+## Partial sales refund target
+
+Original SALES_AMOUNT sale/credit is 1000. A first approved partial refund of 250 reverses 250 loyalty and leaves 750 of the original earn reversible. A later approved refund of 300 reverses another 300. Cumulative commercial refund is 550 and cumulative loyalty reversal is 550. Neither operation uses current programme settings to reinterpret the original earn.
+
+## Repeated refund protection
+
+Original sale/credit is 1000 and 600 has already been successfully refunded/reversed. A new request for 500 is rejected because cumulative refund would exceed the original 1000. No balance, ledger, reward, notification, or audit-success side effect is committed for the rejected financial operation.
+
+## Refunded earn already spent
+
+Original sale/credit is 1000, but current customer balance is only 200 because 800 funded later rewards. A full automatic 1000 reversal would make the balance negative, so V1 blocks automatic completion, preserves the original earn and redemptions, and creates/exposes an unresolved exception for authorized review. It never deletes the redemption and never creates loyalty debt silently.
+
+## Visits cancellation target
+
+VISITS earn 1 was recorded for a specific visit operation. That visit is cancelled and the exact original earn is referenced. A linked reversal removes 1 if current balance permits it. The system does not search for an arbitrary historical `+1` by date or amount and does not use the current `earnAmount` if programme settings changed later.
+
+## Redemption reversal target
+
+A customer redeemed a reward for 50 points and fulfillment was later cancelled. With explicit OWNER/SUPER_ADMIN authority, mandatory reason, exact redemption reference, idempotency, and no prior reversal, a new compensating operation restores 50 points. The original REDEEM and RewardRedemption remain immutable. Unlock restoration is a separate explicit decision recorded in the reversal intent/audit.
+
+## Redemption reversal retry
+
+Two clients retry the same redemption reversal with the same operation key and identical intent. Exactly one compensating operation exists and both callers resolve to the same committed result. Reusing the key for a different redemption or amount is a conflict.
+
+## Cross-tenant reversal rejection
+
+Business A attempts to reverse an earn or redemption belonging to Business B. The original-operation reference fails tenant validation before any financial side effect is written.
 
 ## Expired unlock
 
