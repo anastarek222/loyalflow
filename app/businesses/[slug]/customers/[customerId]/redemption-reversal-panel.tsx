@@ -14,7 +14,7 @@ type RedemptionRow = {
   transactionId: string | null;
   transaction: {
     id: string;
-    type: "EARN" | "REDEEM" | "ADJUSTMENT" | "REVERSAL";
+    type: "REDEEM";
     sourceLoyaltyMode: "VISITS" | "POINTS" | "SALES_AMOUNT" | null;
     reversals: Array<{ id: string }>;
   } | null;
