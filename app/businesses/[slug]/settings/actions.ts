@@ -39,7 +39,10 @@ import {
 } from "@/lib/business/deletion";
 import type { BusinessDeletionState } from "@/components/business-deletion-danger-zone";
 import { logServerError, logServerEvent } from "@/lib/server/logging";
-import { isLoyaltyModeChangeBlocked } from "@/lib/loyalty/program-change-safety";
+import {
+  isLoyaltyEconomicRuleConfirmationRequired,
+  isLoyaltyModeChangeBlocked,
+} from "@/lib/loyalty/program-change-safety";
 import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
 
 const cardBusinessDetailsSchema = z.object({
@@ -293,20 +296,37 @@ export async function updateProgramRulesAction(
     earnAmount: currentProgramme.earnAmount,
   };
 
+  const programmeHistory = {
+    customerWithBalance: currentProgramme.customers.length > 0,
+    transactionCount: currentProgramme._count.transactions,
+    rewardCount: currentProgramme._count.rewards,
+    unlockCount: currentProgramme._count.rewardUnlocks,
+    redemptionCount: currentProgramme._count.redemptions,
+  };
+
   const modeChangeBlocked = isLoyaltyModeChangeBlocked({
     currentMode: currentProgramme.loyaltyMode,
     proposedMode: nextProgramme.loyaltyMode,
-    history: {
-      customerWithBalance: currentProgramme.customers.length > 0,
-      transactionCount: currentProgramme._count.transactions,
-      rewardCount: currentProgramme._count.rewards,
-      unlockCount: currentProgramme._count.rewardUnlocks,
-      redemptionCount: currentProgramme._count.redemptions,
-    },
+    history: programmeHistory,
   });
 
   if (modeChangeBlocked) {
     redirect(`/businesses/${business.slug}/program?program=mode-blocked`);
+  }
+
+  const economicConfirmationRequired =
+    isLoyaltyEconomicRuleConfirmationRequired({
+      current: currentProgrammeSnapshot,
+      proposed: nextProgramme,
+      history: programmeHistory,
+    });
+  const economicRulesConfirmed =
+    formData.get("confirmEconomicRules") === "true";
+
+  if (economicConfirmationRequired && !economicRulesConfirmed) {
+    redirect(
+      `/businesses/${business.slug}/program?program=economic-confirmation-required`,
+    );
   }
 
   await updateSettingsDomain({
@@ -315,10 +335,17 @@ export async function updateProgramRulesAction(
     user: session.user,
     description: "تم تحديث قواعد برنامج الولاء",
     data: nextProgramme,
-    metadata: getLoyaltyProgramRulesAuditMetadata(
-      currentProgrammeSnapshot,
-      nextProgramme,
-    ),
+    metadata: {
+      ...getLoyaltyProgramRulesAuditMetadata(
+        currentProgrammeSnapshot,
+        nextProgramme,
+      ),
+      economicRuleConfirmation: {
+        required: economicConfirmationRequired,
+        confirmed:
+          economicConfirmationRequired && economicRulesConfirmed,
+      },
+    },
     syncSheet: true,
   });
   redirect(`/businesses/${business.slug}/program?program=saved`);
