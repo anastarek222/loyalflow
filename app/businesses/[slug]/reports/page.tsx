@@ -34,6 +34,7 @@ import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experi
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { reportCopy } from "@/lib/reports/presentation";
 import { formatLoyaltyAmount, operationalUnitLabel } from "@/lib/loyalty/presentation";
+import { countOpenReversalExceptions } from "@/lib/loyalty/reversal-exception-reporting";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
@@ -302,6 +303,7 @@ export default async function ReportsPage({
     rewardDistribution,
     recoveredCustomerGroups,
     transactionCount,
+    openReversalExceptions,
     activeCustomerGroups,
     returningCustomerGroups,
     visitEvents,
@@ -496,6 +498,14 @@ export default async function ReportsPage({
 
     prisma.loyaltyTransaction.count({
       where: transactionWhere,
+    }),
+
+    countOpenReversalExceptions(prisma, {
+      businessId: business.id,
+      from: fromDate,
+      to: toDate,
+      ...operationScope,
+      ...(segment ? { customerWhere } : {}),
     }),
 
     prisma.loyaltyTransaction.groupBy({
@@ -1058,11 +1068,12 @@ export default async function ReportsPage({
           </form>
         </details>
 
-        <section aria-label={copy.summary} className="mt-5 grid grid-cols-1 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface sm:grid-cols-3">
+        <section aria-label={copy.summary} className="mt-5 grid grid-cols-1 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface sm:grid-cols-2 xl:grid-cols-4">
           {[
             { label: language === "AR" ? "عملاء جدد" : "New customers", value: newCustomers, detail: language === "AR" ? "خلال الفترة المحددة" : "In the selected period" },
             { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: formatLoyaltyAmount({ ...loyaltyPresentation, amount: earnedAmount }), detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
             { label: language === "AR" ? "استبدالات المكافآت" : "Reward redemptions", value: numberFormatter.format(redeemed._count._all), detail: language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions" },
+            { label: language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals", value: numberFormatter.format(openReversalExceptions), detail: language === "AR" ? "رصيد غير كافٍ ويحتاج متابعة" : "Insufficient balance requires follow-up" },
           ].map((metric) => <article key={metric.label} className="border-b border-border p-4 last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"><p className="text-sm font-semibold text-slate-600">{metric.label}</p><p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p><p className="mt-2 text-xs text-slate-500">{metric.detail}</p></article>)}
         </section>
 
