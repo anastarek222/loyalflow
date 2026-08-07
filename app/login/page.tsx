@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { loginAction } from "./actions";
@@ -6,6 +7,7 @@ import { loginAction } from "./actions";
 type LoginPageProps = {
   searchParams: Promise<{
     error?: string | string[];
+    reset?: string | string[];
   }>;
 };
 
@@ -20,6 +22,12 @@ export default async function LoginPage({
 
   const params = await searchParams;
   const errorValue = params.error;
+  const resetValue = params.reset;
+
+  const resetSucceeded =
+    resetValue === "success" ||
+    (Array.isArray(resetValue) &&
+      resetValue.includes("success"));
 
   const hasError =
     errorValue === "invalid" ||
@@ -35,6 +43,12 @@ export default async function LoginPage({
 
           <p className="mt-2 text-sm text-foreground-subtle">Sign in to your workspace</p>
         </div>
+
+        {resetSucceeded && (
+          <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">
+            Your password has been updated. Sign in with your new password.
+          </div>
+        )}
 
         {hasError && (
           <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
@@ -82,6 +96,15 @@ export default async function LoginPage({
               placeholder="Enter your password"
               className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
             />
+          </div>
+
+          <div className="text-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-semibold text-primary hover:underline"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <button
