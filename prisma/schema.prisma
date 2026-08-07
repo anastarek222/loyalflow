@@ -450,6 +450,7 @@ model RewardRedemption {
   rewardName        String
   cost              Int
   rewardId          String?
+  rewardUnlockId    String?
   transactionId     String?
   customerId        String
   businessId        String
@@ -463,9 +464,11 @@ model RewardRedemption {
   attributedStaff   User?               @relation("RedemptionAttributedStaff", fields: [attributedStaffId, businessId], references: [id, businessId], onDelete: NoAction)
   customer          Customer            @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
   reward            Reward?             @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: NoAction)
+  rewardUnlock      RewardUnlock?       @relation(fields: [rewardUnlockId, businessId], references: [id, businessId], onDelete: NoAction)
   transaction       LoyaltyTransaction? @relation(fields: [transactionId, businessId], references: [id, businessId], onDelete: Cascade)
 
   @@unique([transactionId, businessId])
+  @@unique([rewardUnlockId, businessId])
   @@index([customerId, createdAt])
   @@index([businessId, createdAt])
   @@index([businessId, branchId, createdAt])
@@ -488,7 +491,9 @@ model RewardUnlock {
   business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer   Customer  @relation(fields: [customerId, businessId], references: [id, businessId], onDelete: Cascade)
   reward     Reward    @relation(fields: [rewardId, businessId], references: [id, businessId], onDelete: Cascade)
+  redemption RewardRedemption?
 
+  @@unique([id, businessId])
   @@index([businessId, customerId, expiresAt])
   @@index([customerId, rewardId, redeemedAt, expiredAt])
   @@index([rewardId, expiresAt])

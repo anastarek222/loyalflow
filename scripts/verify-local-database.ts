@@ -69,6 +69,7 @@ const REVIEWED_MIGRATIONS = [
   "20260729113000_add_custom_card_mode",
   "20260807064000_add_ledger_reversal_link",
   "20260807114500_add_reversal_exception_persistence",
+  "20260807182500_add_reward_unlock_redemption_link",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;

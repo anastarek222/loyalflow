@@ -351,6 +351,7 @@ export async function recordRewardRedemption(
         rewardRedemption: {
           select: {
             rewardId: true,
+            rewardUnlockId: true,
             cost: true,
           },
         },
@@ -364,6 +365,7 @@ export async function recordRewardRedemption(
         existing.type !== "REDEEM" ||
         existing.amount !== -input.cost ||
         existing.rewardRedemption?.rewardId !== (input.rewardId ?? null) ||
+        existing.rewardRedemption?.rewardUnlockId !== (input.unlockId ?? null) ||
         existing.rewardRedemption?.cost !== input.cost
       ) {
         throw new FinancialOperationConflictError();
@@ -452,6 +454,7 @@ export async function recordRewardRedemption(
       rewardName: input.rewardLabel,
       cost: input.cost,
       ...(input.rewardId ? { rewardId: input.rewardId } : {}),
+      ...(input.unlockId ? { rewardUnlockId: input.unlockId } : {}),
       transactionId: redeemedTransaction.id,
       customerId: input.customerId,
       businessId: input.businessId,
