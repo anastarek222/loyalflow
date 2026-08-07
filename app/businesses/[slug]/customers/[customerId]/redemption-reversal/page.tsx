@@ -46,7 +46,7 @@ export default async function RedemptionReversalPage({
       firstName: true,
       lastName: true,
       balance: true,
-      rewardRedemptions: {
+      redemptions: {
         orderBy: { createdAt: "desc" },
         take: 20,
         select: {
@@ -102,7 +102,7 @@ export default async function RedemptionReversalPage({
           language={language}
           unitName={business.unitName}
           currency={business.currency}
-          redemptions={customer.rewardRedemptions}
+          redemptions={customer.redemptions}
         />
       </div>
     </main>
