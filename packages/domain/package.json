@@ -1,0 +1,8 @@
+{
+  "name": "@loyalflow/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reserved boundary for pure LoyalFlow business rules and use-case interfaces.",
+  "exports": {}
+}

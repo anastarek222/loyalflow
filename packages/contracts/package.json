@@ -1,0 +1,8 @@
+{
+  "name": "@loyalflow/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reserved boundary for transport-neutral LoyalFlow DTOs and problem codes.",
+  "exports": {}
+}
