@@ -113,6 +113,131 @@ async function getBalance(
   return customer?.balance ?? null;
 }
 
+async function getExistingException(
+  transaction: TransactionClient,
+  businessId: string,
+  operationId: string,
+) {
+  return transaction.reversalException.findUnique({
+    where: {
+      businessId_operationId: {
+        businessId,
+        operationId,
+      },
+    },
+    select: {
+      businessId: true,
+      customerId: true,
+      originalTransactionId: true,
+      operationId: true,
+      reversalKind: true,
+      blockReason: true,
+      attemptedAmount: true,
+      attemptedSaleAmount: true,
+      reason: true,
+      actorId: true,
+      actorRole: true,
+      branchId: true,
+      attributedStaffId: true,
+    },
+  });
+}
+
+type ExistingException = NonNullable<
+  Awaited<ReturnType<typeof getExistingException>>
+>;
+
+function exceptionMatchesIntent(
+  exception: ExistingException,
+  input: EarnReversalInput,
+  reason: string,
+  operationId: string,
+  branchId: string | undefined,
+  attributedStaffId: string | undefined,
+) {
+  return (
+    exception.businessId === input.businessId &&
+    exception.customerId === input.customerId &&
+    exception.originalTransactionId === input.originalTransactionId &&
+    exception.operationId === operationId &&
+    exception.reversalKind === input.kind &&
+    exception.blockReason === "INSUFFICIENT_BALANCE" &&
+    exception.attemptedAmount === input.amount &&
+    exception.attemptedSaleAmount === (input.saleAmount ?? null) &&
+    exception.reason === reason &&
+    exception.actorId === input.actor.id &&
+    exception.actorRole === input.actor.role &&
+    exception.branchId === (branchId ?? null) &&
+    exception.attributedStaffId === (attributedStaffId ?? null)
+  );
+}
+
+async function persistInsufficientBalanceException(
+  transaction: TransactionClient,
+  input: EarnReversalInput,
+  reason: string,
+  operationId: string,
+  availableBalance: number,
+  branchId: string | undefined,
+  attributedStaffId: string | undefined,
+) {
+  const exception = await transaction.reversalException.upsert({
+    where: {
+      businessId_operationId: {
+        businessId: input.businessId,
+        operationId,
+      },
+    },
+    create: {
+      businessId: input.businessId,
+      customerId: input.customerId,
+      originalTransactionId: input.originalTransactionId,
+      operationId,
+      reversalKind: input.kind,
+      blockReason: "INSUFFICIENT_BALANCE",
+      attemptedAmount: input.amount,
+      ...(input.saleAmount !== undefined
+        ? { attemptedSaleAmount: input.saleAmount }
+        : {}),
+      availableBalance,
+      reason,
+      actorId: input.actor.id,
+      actorRole: input.actor.role,
+      ...(branchId ? { branchId } : {}),
+      ...(attributedStaffId ? { attributedStaffId } : {}),
+    },
+    update: {},
+    select: {
+      businessId: true,
+      customerId: true,
+      originalTransactionId: true,
+      operationId: true,
+      reversalKind: true,
+      blockReason: true,
+      attemptedAmount: true,
+      attemptedSaleAmount: true,
+      reason: true,
+      actorId: true,
+      actorRole: true,
+      branchId: true,
+      attributedStaffId: true,
+    },
+  });
+
+  if (
+    !exceptionMatchesIntent(
+      exception,
+      input,
+      reason,
+      operationId,
+      branchId,
+      attributedStaffId,
+    )
+  ) {
+    throw new FinancialOperationConflictError();
+  }
+}
+
 export async function recordEarnReversal(
   transaction: TransactionClient,
   input: EarnReversalInput,
@@ -179,6 +304,29 @@ export async function recordEarnReversal(
       balanceAfter: existing.balanceAfter,
       transactionId: existing.id,
     };
+  }
+
+  const existingException = await getExistingException(
+    transaction,
+    input.businessId,
+    idempotencyKey,
+  );
+
+  if (existingException) {
+    if (
+      !exceptionMatchesIntent(
+        existingException,
+        input,
+        reason,
+        idempotencyKey,
+        operationContext.branchId,
+        operationContext.attributedStaffId,
+      )
+    ) {
+      throw new FinancialOperationConflictError();
+    }
+
+    return blocked("INSUFFICIENT_BALANCE");
   }
 
   const original = await transaction.loyaltyTransaction.findFirst({
@@ -261,6 +409,26 @@ export async function recordEarnReversal(
   });
 
   if (updateResult.count !== 1) {
+    const availableBalance = await getBalance(
+      transaction,
+      input.customerId,
+      input.businessId,
+    );
+
+    if (availableBalance === null) {
+      throw new FinancialOperationAbortedError();
+    }
+
+    await persistInsufficientBalanceException(
+      transaction,
+      input,
+      reason,
+      idempotencyKey,
+      availableBalance,
+      operationContext.branchId,
+      operationContext.attributedStaffId,
+    );
+
     return blocked("INSUFFICIENT_BALANCE");
   }
 
