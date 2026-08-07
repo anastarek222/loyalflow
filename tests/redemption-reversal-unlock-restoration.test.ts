@@ -58,6 +58,7 @@ function createTransaction(options: {
     reversalReason: string;
   } | null;
   unlockUpdateCount?: number;
+  existingRestoreUnlockRequested?: boolean;
 } = {}) {
   const calls = {
     unlockUpdates: [] as unknown[],
@@ -100,6 +101,12 @@ function createTransaction(options: {
       },
     },
     businessActivity: {
+      findFirst: async () => ({
+        metadata: {
+          unlockRestoreRequested:
+            options.existingRestoreUnlockRequested ?? true,
+        },
+      }),
       create: async (args: unknown) => {
         calls.activities.push(args);
         return {};
