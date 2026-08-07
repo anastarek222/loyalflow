@@ -3,7 +3,10 @@ import test from "node:test";
 
 import type { Prisma } from "../generated/prisma/client";
 import { recordEarnReversal } from "../lib/loyalty/earn-reversal";
-import { isFinancialOperationContextError } from "../lib/loyalty/transactions";
+import {
+  isFinancialOperationConflictError,
+  isFinancialOperationContextError,
+} from "../lib/loyalty/transactions";
 
 type OriginalEarn = {
   id: string;
@@ -25,9 +28,26 @@ type ExistingReversal = {
   reversalReason: string;
 };
 
+type ExistingException = {
+  businessId: string;
+  customerId: string;
+  originalTransactionId: string;
+  operationId: string;
+  reversalKind: "EARN_REFUND" | "EARN_VOID";
+  blockReason: "INSUFFICIENT_BALANCE";
+  attemptedAmount: number;
+  attemptedSaleAmount: number | null;
+  reason: string;
+  actorId: string | null;
+  actorRole: "OWNER" | "SUPER_ADMIN";
+  branchId: string | null;
+  attributedStaffId: string | null;
+};
+
 type Calls = {
   updates: unknown[];
   reversals: unknown[];
+  exceptions: unknown[];
   activities: unknown[];
   notifications: unknown[];
 };
@@ -41,6 +61,7 @@ const owner = {
 function createTransaction(options: {
   original?: OriginalEarn | null;
   existing?: ExistingReversal | null;
+  existingException?: ExistingException | null;
   priorAmount?: number;
   priorSaleAmount?: number;
   updateCount?: number;
@@ -50,6 +71,7 @@ function createTransaction(options: {
   const calls: Calls = {
     updates: [],
     reversals: [],
+    exceptions: [],
     activities: [],
     notifications: [],
   };
@@ -90,6 +112,43 @@ function createTransaction(options: {
       create: async (args: unknown) => {
         calls.reversals.push(args);
         return { id: "reversal-1" };
+      },
+    },
+    reversalException: {
+      findUnique: async () => options.existingException ?? null,
+      upsert: async (args: {
+        create: {
+          businessId: string;
+          customerId: string;
+          originalTransactionId: string;
+          operationId: string;
+          reversalKind: "EARN_REFUND" | "EARN_VOID";
+          blockReason: "INSUFFICIENT_BALANCE";
+          attemptedAmount: number;
+          attemptedSaleAmount?: number;
+          reason: string;
+          actorId?: string;
+          actorRole: "OWNER" | "SUPER_ADMIN";
+          branchId?: string;
+          attributedStaffId?: string;
+        };
+      }) => {
+        calls.exceptions.push(args);
+        return {
+          businessId: args.create.businessId,
+          customerId: args.create.customerId,
+          originalTransactionId: args.create.originalTransactionId,
+          operationId: args.create.operationId,
+          reversalKind: args.create.reversalKind,
+          blockReason: args.create.blockReason,
+          attemptedAmount: args.create.attemptedAmount,
+          attemptedSaleAmount: args.create.attemptedSaleAmount ?? null,
+          reason: args.create.reason,
+          actorId: args.create.actorId ?? null,
+          actorRole: args.create.actorRole,
+          branchId: args.create.branchId ?? null,
+          attributedStaffId: args.create.attributedStaffId ?? null,
+        };
       },
     },
     businessActivity: {
@@ -170,6 +229,7 @@ test("owner partial refund creates one linked REVERSAL without rewriting lifetim
       },
     },
   ]);
+  assert.equal(calls.exceptions.length, 0);
   assert.equal(calls.activities.length, 1);
   assert.equal(calls.notifications.length, 1);
 });
@@ -202,6 +262,7 @@ test("manager cannot run an earn reversal even though managers can adjust balanc
 
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
 });
 
 test("cumulative partial refunds cannot exceed the original earned amount", async () => {
@@ -224,10 +285,14 @@ test("cumulative partial refunds cannot exceed the original earned amount", asyn
   });
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
 });
 
-test("insufficient current balance blocks the refund without ledger or audit side effects", async () => {
-  const { transaction, calls } = createTransaction({ updateCount: 0 });
+test("insufficient balance creates durable exception evidence without ledger or audit side effects", async () => {
+  const { transaction, calls } = createTransaction({
+    updateCount: 0,
+    balanceAfter: 2,
+  });
 
   const result = await recordEarnReversal(transaction, {
     customerId: "customer-1",
@@ -247,6 +312,125 @@ test("insufficient current balance blocks the refund without ledger or audit sid
   assert.equal(calls.reversals.length, 0);
   assert.equal(calls.activities.length, 0);
   assert.equal(calls.notifications.length, 0);
+  assert.equal(calls.exceptions.length, 1);
+  assert.deepEqual(calls.exceptions[0], {
+    where: {
+      businessId_operationId: {
+        businessId: "business-1",
+        operationId: "refund-insufficient",
+      },
+    },
+    create: {
+      businessId: "business-1",
+      customerId: "customer-1",
+      originalTransactionId: "earn-1",
+      operationId: "refund-insufficient",
+      reversalKind: "EARN_REFUND",
+      blockReason: "INSUFFICIENT_BALANCE",
+      attemptedAmount: 4,
+      availableBalance: 2,
+      reason: "Refund after spend",
+      actorId: "owner-1",
+      actorRole: "OWNER",
+    },
+    update: {},
+    select: {
+      businessId: true,
+      customerId: true,
+      originalTransactionId: true,
+      operationId: true,
+      reversalKind: true,
+      blockReason: true,
+      attemptedAmount: true,
+      attemptedSaleAmount: true,
+      reason: true,
+      actorId: true,
+      actorRole: true,
+      branchId: true,
+      attributedStaffId: true,
+    },
+  });
+});
+
+test("same blocked operation ID replays the durable exception without another balance write", async () => {
+  const { transaction, calls } = createTransaction({
+    existingException: {
+      businessId: "business-1",
+      customerId: "customer-1",
+      originalTransactionId: "earn-1",
+      operationId: "refund-insufficient",
+      reversalKind: "EARN_REFUND",
+      blockReason: "INSUFFICIENT_BALANCE",
+      attemptedAmount: 4,
+      attemptedSaleAmount: null,
+      reason: "Refund after spend",
+      actorId: "owner-1",
+      actorRole: "OWNER",
+      branchId: null,
+      attributedStaffId: null,
+    },
+  });
+
+  const result = await recordEarnReversal(transaction, {
+    customerId: "customer-1",
+    businessId: "business-1",
+    originalTransactionId: "earn-1",
+    actor: owner,
+    kind: "EARN_REFUND",
+    amount: 4,
+    reason: "Refund after spend",
+    idempotencyKey: "refund-insufficient",
+  });
+
+  assert.deepEqual(result, {
+    status: "BLOCKED",
+    reason: "INSUFFICIENT_BALANCE",
+  });
+  assert.equal(calls.updates.length, 0);
+  assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
+});
+
+test("reusing a blocked operation ID with different immutable intent conflicts", async () => {
+  const { transaction, calls } = createTransaction({
+    existingException: {
+      businessId: "business-1",
+      customerId: "customer-1",
+      originalTransactionId: "earn-1",
+      operationId: "refund-insufficient",
+      reversalKind: "EARN_REFUND",
+      blockReason: "INSUFFICIENT_BALANCE",
+      attemptedAmount: 4,
+      attemptedSaleAmount: null,
+      reason: "Refund after spend",
+      actorId: "owner-1",
+      actorRole: "OWNER",
+      branchId: null,
+      attributedStaffId: null,
+    },
+  });
+
+  await assert.rejects(
+    () =>
+      recordEarnReversal(transaction, {
+        customerId: "customer-1",
+        businessId: "business-1",
+        originalTransactionId: "earn-1",
+        actor: owner,
+        kind: "EARN_REFUND",
+        amount: 5,
+        reason: "Refund after spend",
+        idempotencyKey: "refund-insufficient",
+      }),
+    (error: unknown) => {
+      assert.ok(isFinancialOperationConflictError(error));
+      return true;
+    },
+  );
+
+  assert.equal(calls.updates.length, 0);
+  assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
 });
 
 test("same operation ID with the same immutable reversal intent replays the prior result", async () => {
@@ -283,6 +467,7 @@ test("same operation ID with the same immutable reversal intent replays the prio
   });
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
 });
 
 test("void requires an untouched full original operation", async () => {
@@ -305,6 +490,7 @@ test("void requires an untouched full original operation", async () => {
   });
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
 });
 
 test("sales refunds require and cap the recorded sale portion independently", async () => {
@@ -337,4 +523,5 @@ test("sales refunds require and cap the recorded sale portion independently", as
   });
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
 });
