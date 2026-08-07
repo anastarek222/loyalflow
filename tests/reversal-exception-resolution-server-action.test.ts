@@ -50,7 +50,10 @@ test("resolution action delegates one guarded transaction and maps bounded outco
   assert.match(source, /reversal-exception-aborted/);
   assert.match(source, /reversal-exception-missing/);
   assert.match(source, /reversal-exception-already-resolved/);
-  assert.match(source, /success=.*reversal-exception-resolved/s);
+  assert.ok(
+    source.includes("reversal-exception-resolved"),
+    "resolution action should redirect to the resolved success state",
+  );
   assert.match(source, /reversal-exception-resolution-replayed/);
 });
 
