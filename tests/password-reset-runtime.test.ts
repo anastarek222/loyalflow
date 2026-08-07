@@ -13,7 +13,16 @@ test("password reset runtime uses opaque random tokens and persists only SHA-256
   assert.match(runtime, /randomBytes\(32\)/);
   assert.match(runtime, /createHash\("sha256"\)/);
   assert.match(runtime, /tokenHash/);
-  assert.doesNotMatch(runtime, /data:\s*\{[\s\S]*?token:\s*rawToken/);
+
+  const createStart = runtime.indexOf("transaction.passwordResetToken.create");
+  assert.notEqual(createStart, -1);
+
+  const createEnd = runtime.indexOf("return {", createStart);
+  assert.notEqual(createEnd, -1);
+
+  const createBlock = runtime.slice(createStart, createEnd);
+  assert.match(createBlock, /tokenHash/);
+  assert.doesNotMatch(createBlock, /\btoken:\s*rawToken\b/);
 });
 
 test("issuing a reset revokes prior unused tokens and creates a short-lived single-use token", () => {
@@ -30,7 +39,7 @@ test("consuming a reset token is atomic and rejects used or expired tokens", () 
   const runtime = source("lib/auth/password-reset.ts");
 
   assert.match(runtime, /\$transaction/);
-  assert.match(runtime, /expiresAt:\s*\{\s*gt:\s*now\s*\}/);
+  assert.match(runtime, /expiresAt:\s*\{\s*gt:\s*now,?\s*\}/);
   assert.match(runtime, /usedAt:\s*null/);
   assert.match(runtime, /passwordResetToken\.updateMany/);
   assert.match(runtime, /if\s*\(consumed\.count\s*!==\s*1\)/);
@@ -41,7 +50,7 @@ test("successful reset changes the password and invalidates existing JWT session
 
   assert.match(runtime, /hash\(newPassword,\s*12\)/);
   assert.match(runtime, /passwordHash/);
-  assert.match(runtime, /authVersion:\s*\{\s*increment:\s*1\s*\}/);
+  assert.match(runtime, /authVersion:\s*\{\s*increment:\s*1,?\s*\}/);
 });
 
 test("runtime validates reset passwords before database mutation", () => {
