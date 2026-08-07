@@ -13,7 +13,7 @@ test("password reset runtime uses opaque random tokens and persists only SHA-256
   assert.match(runtime, /randomBytes\(32\)/);
   assert.match(runtime, /createHash\("sha256"\)/);
   assert.match(runtime, /tokenHash/);
-  assert.doesNotMatch(runtime, /data:\s*\{[^}]*token:\s*rawToken/s);
+  assert.doesNotMatch(runtime, /data:\s*\{[\s\S]*?token:\s*rawToken/);
 });
 
 test("issuing a reset revokes prior unused tokens and creates a short-lived single-use token", () => {
