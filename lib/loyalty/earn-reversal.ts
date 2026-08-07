@@ -214,8 +214,8 @@ export async function recordEarnReversal(
     },
   });
 
-  const reversedAmount = Math.abs(priorReversals._sum.amount ?? 0);
-  const reversedSaleAmount = priorReversals._sum.saleAmount ?? 0;
+  const reversedAmount = Math.abs(priorReversals._sum?.amount ?? 0);
+  const reversedSaleAmount = priorReversals._sum?.saleAmount ?? 0;
   const remainingAmount = original.amount - reversedAmount;
 
   if (remainingAmount <= 0) {
