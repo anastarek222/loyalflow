@@ -84,6 +84,11 @@ function createTransaction(options: {
       },
     },
     businessActivity: {
+      findFirst: async () => ({
+        metadata: {
+          unlockRestoreRequested: false,
+        },
+      }),
       create: async (args: unknown) => {
         calls.activities.push(args);
         return {};

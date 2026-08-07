@@ -135,6 +135,17 @@ export async function recordRedemptionReversal(
       cost: true,
       rewardId: true,
       rewardName: true,
+      rewardUnlockId: true,
+      rewardUnlock: {
+        select: {
+          id: true,
+          businessId: true,
+          customerId: true,
+          rewardId: true,
+          redeemedAt: true,
+          expiredAt: true,
+        },
+      },
       transaction: {
         select: {
           id: true,
@@ -177,6 +188,35 @@ export async function recordRedemptionReversal(
   });
 
   if (existing) {
+    const existingActivity = await transaction.businessActivity.findFirst({
+      where: {
+        businessId: input.businessId,
+        customerId: input.customerId,
+        type: "BALANCE_ADJUSTED",
+        metadata: {
+          path: ["reversalTransactionId"],
+          equals: existing.id,
+        },
+      },
+      select: {
+        metadata: true,
+      },
+    });
+
+    const metadata =
+      existingActivity?.metadata &&
+      typeof existingActivity.metadata === "object" &&
+      !Array.isArray(existingActivity.metadata)
+        ? existingActivity.metadata
+        : null;
+
+    const persistedRestoreUnlock =
+      metadata &&
+      "unlockRestoreRequested" in metadata &&
+      typeof metadata.unlockRestoreRequested === "boolean"
+        ? metadata.unlockRestoreRequested
+        : null;
+
     if (
       existing.businessId !== input.businessId ||
       existing.customerId !== input.customerId ||
@@ -184,7 +224,9 @@ export async function recordRedemptionReversal(
       existing.amount !== original.cost ||
       existing.reversalOfTransactionId !== original.transaction.id ||
       existing.reversalKind !== "REDEMPTION_REVERSAL" ||
-      existing.reversalReason !== reason
+      existing.reversalReason !== reason ||
+      persistedRestoreUnlock === null ||
+      input.restoreUnlock !== persistedRestoreUnlock
     ) {
       throw new FinancialOperationConflictError();
     }
@@ -197,7 +239,22 @@ export async function recordRedemptionReversal(
   }
 
   if (input.restoreUnlock) {
-    return blocked("UNLOCK_RESTORE_UNSUPPORTED");
+    const unlock = original.rewardUnlock;
+    const canRestoreUnlock =
+      typeof original.rewardUnlockId === "string" &&
+      original.rewardUnlockId.length > 0 &&
+      unlock !== null &&
+      unlock !== undefined &&
+      unlock.id === original.rewardUnlockId &&
+      unlock.businessId === input.businessId &&
+      unlock.customerId === input.customerId &&
+      unlock.rewardId === original.rewardId &&
+      unlock.redeemedAt !== null &&
+      unlock.expiredAt === null;
+
+    if (!canRestoreUnlock) {
+      return blocked("UNLOCK_RESTORE_UNSUPPORTED");
+    }
   }
 
   const priorReversal = await transaction.loyaltyTransaction.findFirst({
@@ -213,6 +270,26 @@ export async function recordRedemptionReversal(
 
   if (priorReversal) {
     return blocked("ALREADY_REVERSED");
+  }
+
+  if (input.restoreUnlock && original.rewardUnlockId) {
+    const restoredUnlock = await transaction.rewardUnlock.updateMany({
+      where: {
+        id: original.rewardUnlockId,
+        businessId: input.businessId,
+        customerId: input.customerId,
+        ...(original.rewardId ? { rewardId: original.rewardId } : {}),
+        redeemedAt: { not: null },
+        expiredAt: null,
+      },
+      data: {
+        redeemedAt: null,
+      },
+    });
+
+    if (restoredUnlock.count !== 1) {
+      throw new FinancialOperationAbortedError();
+    }
   }
 
   const updateResult = await transaction.customer.updateMany({
@@ -261,6 +338,10 @@ export async function recordRedemptionReversal(
     },
   });
 
+  const unlockRestored =
+    input.restoreUnlock &&
+    typeof original.rewardUnlockId === "string" &&
+    original.rewardUnlockId.length > 0;
   const description = `تم عكس استبدال ${original.rewardName} وإعادة ${original.cost} إلى رصيد الولاء. السبب: ${reason}`;
 
   await transaction.businessActivity.create({
@@ -285,10 +366,11 @@ export async function recordRedemptionReversal(
         reversalKind: "REDEMPTION_REVERSAL",
         rewardId: original.rewardId,
         rewardName: original.rewardName,
+        rewardUnlockId: original.rewardUnlockId,
         amount: original.cost,
         reason,
         unlockRestoreRequested: input.restoreUnlock,
-        unlockRestored: false,
+        unlockRestored,
         actorId: input.actor.id,
         actorRole: input.actor.role,
         idempotencyOutcome: "APPLIED",
