@@ -35,6 +35,7 @@ import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { reportCopy } from "@/lib/reports/presentation";
 import { formatLoyaltyAmount, operationalUnitLabel } from "@/lib/loyalty/presentation";
 import { countOpenReversalExceptions } from "@/lib/loyalty/reversal-exception-reporting";
+import { summarizeLedgerOperations } from "@/lib/loyalty/ledger-reporting";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import type { Prisma } from "@/generated/prisma/client";
 import Link from "next/link";
@@ -304,6 +305,7 @@ export default async function ReportsPage({
     recoveredCustomerGroups,
     transactionCount,
     openReversalExceptions,
+    ledgerOperations,
     activeCustomerGroups,
     returningCustomerGroups,
     visitEvents,
@@ -508,6 +510,16 @@ export default async function ReportsPage({
       ...(segment ? { customerWhere } : {}),
     }),
 
+    prisma.loyaltyTransaction.findMany({
+      where: transactionWhere,
+      select: {
+        type: true,
+        amount: true,
+        saleAmount: true,
+        reversalKind: true,
+      },
+    }),
+
     prisma.loyaltyTransaction.groupBy({
       by: ["customerId"],
       where: transactionWhere,
@@ -669,6 +681,17 @@ export default async function ReportsPage({
       },
     }),
   ]);
+
+  const ledgerSummary = summarizeLedgerOperations(ledgerOperations, {
+    unresolvedExceptions: openReversalExceptions,
+  });
+
+  const salesPresentation = {
+    loyaltyMode: "SALES_AMOUNT",
+    language,
+    unitName: business.unitName,
+    currency: business.currency,
+  } as const;
 
   const earnedAmount = earned._sum.amount ?? 0;
 
@@ -1105,6 +1128,118 @@ export default async function ReportsPage({
               </article>
             );
           })}
+        </section>
+
+        <section
+          aria-label={language === "AR" ? "صافي عمليات الولاء" : "Ledger gross and net summary"}
+          className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 sm:p-5"
+        >
+          <div>
+            <h2 className="text-lg font-bold text-foreground">
+              {language === "AR" ? "الإجمالي والعكس والصافي" : "Gross, reversals & net"}
+            </h2>
+            <p className="mt-1 text-sm text-foreground-muted">
+              {language === "AR"
+                ? "الأرقام محسوبة من سجل الحركات للفترة والفلاتر الحالية بدون تعديل السجل التاريخي."
+                : "Calculated from the immutable ledger using the current period and filters."}
+            </p>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <article className="rounded-[var(--lf-radius-input)] border border-border p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
+                {language === "AR" ? "الولاء المكتسب" : "Earned loyalty"}
+              </p>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt>{language === "AR" ? "الإجمالي" : "Gross earned"}</dt>
+                  <dd className="font-semibold">
+                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.grossEarned })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt>{language === "AR" ? "عمليات العكس" : "Earn reversals"}</dt>
+                  <dd className="font-semibold">
+                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.earnReversed })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4 border-t border-border pt-2">
+                  <dt className="font-bold">{language === "AR" ? "الصافي" : "Net earned"}</dt>
+                  <dd className="font-bold">
+                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.netEarned })}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="rounded-[var(--lf-radius-input)] border border-border p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
+                {language === "AR" ? "الاستبدالات" : "Redemptions"}
+              </p>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt>{language === "AR" ? "إجمالي المستبدل" : "Gross redeemed"}</dt>
+                  <dd className="font-semibold">
+                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.grossRedeemed })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt>{language === "AR" ? "عكس الاستبدالات" : "Redemption reversals"}</dt>
+                  <dd className="font-semibold">
+                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.redemptionReversed })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4 border-t border-border pt-2">
+                  <dt className="font-bold">{language === "AR" ? "صافي المستبدل" : "Net redeemed"}</dt>
+                  <dd className="font-bold">
+                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.netRedeemed })}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+
+            <article className="rounded-[var(--lf-radius-input)] border border-border p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
+                {language === "AR" ? "المبيعات المسجلة" : "Recorded sales"}
+              </p>
+              <dl className="mt-3 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt>{language === "AR" ? "إجمالي المبيعات" : "Gross recorded sales"}</dt>
+                  <dd className="font-semibold">
+                    {formatLoyaltyAmount({ ...salesPresentation, amount: ledgerSummary.grossRecordedSales })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt>{language === "AR" ? "المبيعات المرتجعة" : "Refunded sales"}</dt>
+                  <dd className="font-semibold">
+                    {formatLoyaltyAmount({ ...salesPresentation, amount: ledgerSummary.refundedSales })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4 border-t border-border pt-2">
+                  <dt className="font-bold">{language === "AR" ? "صافي المبيعات" : "Net recorded sales"}</dt>
+                  <dd className="font-bold">
+                    {formatLoyaltyAmount({ ...salesPresentation, amount: ledgerSummary.netRecordedSales })}
+                  </dd>
+                </div>
+              </dl>
+            </article>
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
+              {language === "AR" ? "التعديلات اليدوية" : "Manual adjustments"}:{" "}
+              +{formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.adjustmentAdds })} / -
+              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.adjustmentSubtracts })}
+            </p>
+            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
+              {language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals"}:{" "}
+              {numberFormatter.format(ledgerSummary.unresolvedExceptions)}
+            </p>
+            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
+              {language === "AR" ? "حركات عكس غير صالحة" : "Invalid reversal rows"}:{" "}
+              {numberFormatter.format(ledgerSummary.invalidReversalCount)}
+            </p>
+          </div>
         </section>
 
         {!simple && <section className="mt-6"><div className="mb-3"><h2 className="text-xl font-bold text-slate-950">{copy.historical}</h2><p className="mt-1 text-sm text-slate-600">{copy.dateRange}</p></div><ReportCharts language={language} unitName={business.unitName} trends={historicalTrends} /></section>}

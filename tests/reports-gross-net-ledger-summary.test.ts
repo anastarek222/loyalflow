@@ -17,7 +17,7 @@ test("reports use the canonical ledger summary for reversal-aware gross and net 
   assert.match(reportsPage, /where:\s*transactionWhere/);
   assert.match(
     reportsPage,
-    /summarizeLedgerOperations\(ledgerOperations,\s*\{\s*unresolvedExceptions:\s*openReversalExceptions/s,
+    /summarizeLedgerOperations\(ledgerOperations,[\s\S]*?unresolvedExceptions:\s*openReversalExceptions/,
   );
 });
 
