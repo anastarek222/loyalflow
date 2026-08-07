@@ -41,6 +41,6 @@
     {"order":36,"name":"20260729090000_add_owner_onboarding_foundation","path":"prisma/migrations/20260729090000_add_owner_onboarding_foundation/migration.sql","sha256":"58b06fd8a2809b3e7440b4b08dcd2ffd7d26564b121b7da3437ff628f5efe76f"},
     {"order":37,"name":"20260729100000_add_standard_card_preferences","path":"prisma/migrations/20260729100000_add_standard_card_preferences/migration.sql","sha256":"26dc76a5b4d488e6722f846a1a774554448e4b0bff79b6c9ca32aa85a5d6fae0"},
     {"order":38,"name":"20260729113000_add_custom_card_mode","path":"prisma/migrations/20260729113000_add_custom_card_mode/migration.sql","sha256":"4457dccb79f0a7586055495dd28f0f38fdbef319e142a16bfa628516ad820dc5"},
-    {"order":39,"name":"20260807064000_add_ledger_reversal_link","path":"prisma/migrations/20260807064000_add_ledger_reversal_link/migration.sql","sha256":"0000000000000000000000000000000000000000000000000000000000000000"}
+    {"order":39,"name":"20260807064000_add_ledger_reversal_link","path":"prisma/migrations/20260807064000_add_ledger_reversal_link/migration.sql","sha256":"6d5573d8b048f913bb9db690d8de4a3aa1da82720415d7c6015eda61c23e72de"}
   ]
 }
