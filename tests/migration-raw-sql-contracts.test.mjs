@@ -76,6 +76,10 @@ const rolesMigration = read(
   "prisma/migrations/20260720230000_add_manager_and_viewer_roles/migration.sql"
 );
 
+const ledgerReversalMigration = read(
+  "prisma/migrations/20260807064000_add_ledger_reversal_link/migration.sql"
+);
+
 const schema = read("prisma/schema.prisma");
 
 test("RewardUnlock keeps one live unlock per customer and reward", () => {
@@ -254,6 +258,12 @@ test("critical Prisma enum values remain exact", () => {
       "EARN",
       "REDEEM",
       "ADJUSTMENT",
+      "REVERSAL",
+    ],
+    ReversalKind: [
+      "EARN_REFUND",
+      "EARN_VOID",
+      "REDEMPTION_REVERSAL",
     ],
     RewardType: [
       "GIFT",
@@ -338,5 +348,15 @@ test("migration history preserves later enum additions", () => {
   assert.match(
     normalizeSql(subscriptionMigration),
     /CREATE TYPE "SubscriptionPlan" AS ENUM \( 'FREE', 'STARTER', 'PRO', 'BUSINESS' \);/
+  );
+
+  assert.match(
+    ledgerReversalMigration,
+    /ALTER TYPE "TransactionType"\s+ADD VALUE IF NOT EXISTS 'REVERSAL';/
+  );
+
+  assert.match(
+    normalizeSql(ledgerReversalMigration),
+    /CREATE TYPE "ReversalKind" AS ENUM \( 'EARN_REFUND', 'EARN_VOID', 'REDEMPTION_REVERSAL' \);/
   );
 });
