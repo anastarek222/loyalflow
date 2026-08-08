@@ -33,7 +33,7 @@ compatible slices; no web/API split or critical ledger cutover is authorized yet
 |---|---|---:|---|---|
 | P0 Baseline and governance | In progress | 80% | architecture plan, environment guards, migration CI, this tracker | keep task/PR/gate links current |
 | P1 Loyalty and financial rules | Complete | 100% | PRs #7-#10 and reversal/ledger PRs through #30 | reopen only for an approved policy change |
-| P2 Ledger integrity | In progress | 95% | durable idempotency, reversals, locking, unlock provenance/restoration, exception handling, gross/net reporting, reconciliation implementation | run T002 against the isolated test database and record the report |
+| P2 Ledger integrity | Complete | 100% | durable idempotency, reversals, locking, unlock provenance/restoration, exception handling, gross/net reporting, reconciliation implementation, T002 verification | Verification complete; read-only/no-automatic-repair constraint preserved |
 | P3 Account and authentication | In progress | 45% | PRs #31-#33 secure password reset runtime, delivery, and public flow | change password, session controls, distributed rate limit, invite lifecycle, verification, notifications, Super Admin MFA |
 | P4 Database and operations | In progress | 50% | environment identity, 42-migration manifest, destructive scan, disposable PostgreSQL CI | backup/restore drill, RPO/RTO, staging isolation proof, monitoring and rehearsed runbooks |
 | P5 Architecture boundaries | In progress | 30% | PR #36 workspace skeleton; PR #37 first pure domain extraction | additional domain/contracts/validation slices, then API reads and safe writes |
@@ -65,7 +65,7 @@ compatible slices; no web/API split or critical ledger cutover is authorized yet
 | ID | Work item | State | Scope boundary | Required exit evidence |
 |---|---|---|---|---|
 | T001 | Create unified master tracker | Complete | documentation only | merged in PR #38 |
-| T002 | Ledger reconciliation | Verification pending | read-only calculation/reporting; no automatic repair and no production execution | run the merged command against the isolated test database and record the report |
+| T002 | Ledger reconciliation | Completed | read-only calculation/reporting; no automatic repair and no production execution | ran merged command against isolated test database: environment=test, scannedCustomers=1, matchingCustomers=1, mismatchCount=0, reportedMismatchCount=0, reportTruncated=false, mismatches=[] |
 | T003 | Authentication closeout | Queued | account/session security only; no auth-topology rewrite | change password, revoke sessions, verification/invite lifecycle, rate limit, security notifications, MFA decision |
 | T004 | Operational readiness closeout | Queued | backup/restore, RPO/RTO, isolation, monitoring and runbooks | isolated restore evidence and named operational owners |
 | T005 | I18N compatibility foundation | Queued | one small catalog/adapter slice; no mass copy rewrite | AR/EN parity, fallback, SSR/RTL/a11y and bundle evidence |
