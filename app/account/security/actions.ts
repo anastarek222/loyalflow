@@ -1,0 +1,62 @@
+"use server";
+
+import { auth, signOut } from "@/auth";
+import { parseActivityRequestContext } from "@/lib/activity/request-context";
+import { processPasswordChangeSubmission } from "@/lib/auth/password-change-action";
+import type { PasswordChangeError } from "@/lib/auth/password-change-copy";
+import { changeAuthenticatedUserPassword } from "@/lib/auth/password-change";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+export type ChangePasswordState = {
+  error?: PasswordChangeError;
+};
+
+export async function changePasswordAction(
+  _previousState: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+
+  const requestHeaders = await headers();
+  const result = await processPasswordChangeSubmission(
+    {
+      sessionUser: session.user,
+      clientAddress: getClientAddress(requestHeaders),
+      formData,
+    },
+    {
+      rateLimit(key) {
+        return rateLimit(key, {
+          limit: 5,
+          windowMs: 15 * 60 * 1000,
+        });
+      },
+      changePassword(input) {
+        return changeAuthenticatedUserPassword({
+          ...input,
+          activityContext: parseActivityRequestContext(requestHeaders),
+        });
+      },
+    },
+  );
+
+  if (result.status === "error") {
+    return { error: result.error };
+  }
+
+  if (result.status === "unauthenticated") {
+    redirect("/login");
+  }
+
+  await signOut({
+    redirectTo: `/login?password=changed&language=${result.language}`,
+  });
+
+  return {};
+}
