@@ -1,7 +1,8 @@
 # @loyalflow/domain
 
 Contains pure business rules, use cases, and ports. Extraction starts with the loyalty
-reward-progress calculation, while the root application keeps a compatibility re-export.
+reward-progress calculation and read-only ledger reconciliation, while the root
+application keeps compatibility where legacy imports already exist.
 
 Allowed future internal dependency: `@loyalflow/contracts` value types only.
 
