@@ -6,10 +6,20 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const expectedPackages = new Map([
-  ["packages/contracts", { name: "@loyalflow/contracts", allowedInternal: [] }],
-  ["packages/domain", { name: "@loyalflow/domain", allowedInternal: ["@loyalflow/contracts"] }],
-  ["packages/i18n", { name: "@loyalflow/i18n", allowedInternal: ["@loyalflow/contracts"] }],
-  ["packages/config", { name: "@loyalflow/config", allowedInternal: [] }],
+  ["packages/contracts", { name: "@loyalflow/contracts", allowedInternal: [], exports: {} }],
+  [
+    "packages/domain",
+    {
+      name: "@loyalflow/domain",
+      allowedInternal: ["@loyalflow/contracts"],
+      exports: { "./loyalty/progress": "./src/loyalty/progress.ts" },
+    },
+  ],
+  [
+    "packages/i18n",
+    { name: "@loyalflow/i18n", allowedInternal: ["@loyalflow/contracts"], exports: {} },
+  ],
+  ["packages/config", { name: "@loyalflow/config", allowedInternal: [], exports: {} }],
 ]);
 
 const forbiddenRuntimeImports = [
@@ -67,7 +77,7 @@ for (const [relativeDirectory, rules] of expectedPackages) {
   const manifest = await readJson(`${relativeDirectory}/package.json`);
   assert.equal(manifest.name, rules.name, `${relativeDirectory} must keep its reserved package name.`);
   assert.equal(manifest.private, true, `${rules.name} must remain private during extraction.`);
-  assert.deepEqual(manifest.exports, {}, `${rules.name} must not expose runtime modules in the skeleton phase.`);
+  assert.deepEqual(manifest.exports, rules.exports, `${rules.name} exposes an unexpected runtime module.`);
 
   const dependencies = internalDependencies(manifest);
   for (const dependency of dependencies) {
@@ -104,4 +114,4 @@ function visit(packageName) {
 
 for (const packageName of graph.keys()) visit(packageName);
 
-console.log("Workspace skeleton boundaries are valid (4 packages, no runtime exports, no cycles).");
+console.log("Workspace boundaries are valid (4 packages, 1 approved runtime export, no cycles).");
