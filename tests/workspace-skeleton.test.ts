@@ -19,5 +19,5 @@ test("workspace packages expose only approved runtime code and satisfy the impor
     encoding: "utf8",
   });
 
-  assert.match(output, /4 packages, 1 approved runtime export, no cycles/);
+  assert.match(output, /4 packages, 2 approved runtime exports, no cycles/);
 });

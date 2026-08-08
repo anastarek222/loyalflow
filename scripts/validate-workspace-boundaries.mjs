@@ -12,7 +12,10 @@ const expectedPackages = new Map([
     {
       name: "@loyalflow/domain",
       allowedInternal: ["@loyalflow/contracts"],
-      exports: { "./loyalty/progress": "./src/loyalty/progress.ts" },
+      exports: {
+        "./loyalty/progress": "./src/loyalty/progress.ts",
+        "./loyalty/reconciliation": "./src/loyalty/reconciliation.ts",
+      },
     },
   ],
   [
@@ -114,4 +117,4 @@ function visit(packageName) {
 
 for (const packageName of graph.keys()) visit(packageName);
 
-console.log("Workspace boundaries are valid (4 packages, 1 approved runtime export, no cycles).");
+console.log("Workspace boundaries are valid (4 packages, 2 approved runtime exports, no cycles).");

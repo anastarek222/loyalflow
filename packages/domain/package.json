@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Pure LoyalFlow business rules and use-case interfaces.",
   "exports": {
-    "./loyalty/progress": "./src/loyalty/progress.ts"
+    "./loyalty/progress": "./src/loyalty/progress.ts",
+    "./loyalty/reconciliation": "./src/loyalty/reconciliation.ts"
   }
 }
