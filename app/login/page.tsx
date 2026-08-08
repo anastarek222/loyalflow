@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getPasswordChangeCopy } from "@/lib/auth/password-change-copy";
+import { normalizeLanguage } from "@/lib/i18n";
 
 import { loginAction } from "./actions";
 
@@ -8,6 +10,8 @@ type LoginPageProps = {
   searchParams: Promise<{
     error?: string | string[];
     reset?: string | string[];
+    password?: string | string[];
+    language?: string | string[];
   }>;
 };
 
@@ -23,11 +27,19 @@ export default async function LoginPage({
   const params = await searchParams;
   const errorValue = params.error;
   const resetValue = params.reset;
+  const passwordValue = params.password;
+  const language = normalizeLanguage(
+    typeof params.language === "string" ? params.language : undefined,
+  );
 
   const resetSucceeded =
     resetValue === "success" ||
     (Array.isArray(resetValue) &&
       resetValue.includes("success"));
+
+  const passwordChanged =
+    passwordValue === "changed" ||
+    (Array.isArray(passwordValue) && passwordValue.includes("changed"));
 
   const hasError =
     errorValue === "invalid" ||
@@ -47,6 +59,12 @@ export default async function LoginPage({
         {resetSucceeded && (
           <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">
             Your password has been updated. Sign in with your new password.
+          </div>
+        )}
+
+        {passwordChanged && (
+          <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">
+            {getPasswordChangeCopy(language).success}
           </div>
         )}
 
