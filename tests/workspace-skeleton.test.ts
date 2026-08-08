@@ -14,10 +14,10 @@ test("workspace skeleton keeps the root Next application as the only runtime", (
   assert.doesNotMatch(workspace, /apps\/\*/);
 });
 
-test("workspace packages expose no runtime code and satisfy the import graph", () => {
+test("workspace packages expose only approved runtime code and satisfy the import graph", () => {
   const output = execFileSync(process.execPath, ["scripts/validate-workspace-boundaries.mjs"], {
     encoding: "utf8",
   });
 
-  assert.match(output, /4 packages, no runtime exports, no cycles/);
+  assert.match(output, /4 packages, 1 approved runtime export, no cycles/);
 });

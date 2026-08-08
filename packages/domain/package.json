@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Reserved boundary for pure LoyalFlow business rules and use-case interfaces.",
-  "exports": {}
+  "description": "Pure LoyalFlow business rules and use-case interfaces.",
+  "exports": {
+    "./loyalty/progress": "./src/loyalty/progress.ts"
+  }
 }

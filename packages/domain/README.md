@@ -1,7 +1,7 @@
 # @loyalflow/domain
 
-Reserved for pure business rules, use cases, and ports. This placeholder contains no
-runtime code and is not imported by the current application.
+Contains pure business rules, use cases, and ports. Extraction starts with the loyalty
+reward-progress calculation, while the root application keeps a compatibility re-export.
 
 Allowed future internal dependency: `@loyalflow/contracts` value types only.
 
