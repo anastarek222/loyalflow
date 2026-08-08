@@ -51,7 +51,7 @@ compatible slices; no web/API split or critical ledger cutover is authorized yet
 |---|---|---|
 | P0 Governance | Complete | PRs #4-#5 establish the governed baseline and environment/database guards. |
 | P1 Product rules | Complete | PR #7 plus rule-protection and ledger implementation slices. |
-| P2 DB/migration hardening | In progress | PR #6 and #34 protect 42 migrations; G02 remains open until backup/restore and RPO/RTO evidence exist. |
+| P2 DB/migration hardening | In progress | PR #6 and #34 protect 42 migrations; added backup/restore procedure, RPO/RTO runbook, guard, and verification wrapper; G02 remains open because measured disposable-database backup/restore evidence and recovery timing are still missing. |
 | P3 Workspace foundation | Complete | PR #36; root Next.js runtime remains authoritative. |
 | P4 Domain/contracts | In progress | PR #37 moves `calculateRewardProgress` to `@loyalflow/domain` with a compatibility re-export; G05 remains open for broader typed-contract evidence and owner review. |
 | P5 I18N foundation | Not started | next modernization slice after current product-safety closeout. |
