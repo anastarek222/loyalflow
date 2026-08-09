@@ -20,7 +20,7 @@ type SubmissionResult =
   | { status: "changed"; language: AppLanguage };
 
 type SubmissionDependencies = {
-  rateLimit(key: string): { allowed: boolean };
+  rateLimit(key: string): Promise<{ allowed: boolean }> | { allowed: boolean };
   changePassword(input: {
     userId: string;
     currentPassword: string;
@@ -41,7 +41,7 @@ export async function processPasswordChangeSubmission(
     return { status: "unauthenticated" };
   }
 
-  const limit = dependencies.rateLimit(
+  const limit = await dependencies.rateLimit(
     `password-change:${input.sessionUser.id}:${input.clientAddress}`,
   );
 
