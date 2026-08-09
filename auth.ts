@@ -190,6 +190,8 @@ export const {
       session.user.role = token.role;
       session.user.businessId =
         token.businessId;
+      session.user.authVersion =
+        token.authVersion;
 
       return session;
     },

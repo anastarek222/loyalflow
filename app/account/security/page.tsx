@@ -1,14 +1,16 @@
-import { KeyRound } from "lucide-react";
+import { KeyRound, LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
-import { Card } from "@/components/ui/card";
 import { PageContainer } from "@/components/page-layout/page-container";
+import { Card } from "@/components/ui/card";
+import { getLogoutEverywhereCopy } from "@/lib/auth/logout-everywhere-copy";
 import { getPasswordChangeCopy } from "@/lib/auth/password-change-copy";
 import { normalizeLanguage } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 
 import { ChangePasswordForm } from "./change-password-form";
+import { LogoutEverywhereForm } from "./logout-everywhere-form";
 
 export default async function AccountSecurityPage() {
   const session = await auth();
@@ -28,6 +30,7 @@ export default async function AccountSecurityPage() {
 
   const language = normalizeLanguage(user.language);
   const copy = getPasswordChangeCopy(language);
+  const logoutCopy = getLogoutEverywhereCopy(language);
 
   return (
     <PageContainer variant="narrow">
@@ -57,6 +60,24 @@ export default async function AccountSecurityPage() {
         </div>
 
         <ChangePasswordForm language={language} />
+      </Card>
+
+      <Card>
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-danger-subtle text-danger">
+            <LogOut size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-xl font-black text-foreground">
+              {logoutCopy.sectionTitle}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-foreground-muted">
+              {logoutCopy.sectionDescription}
+            </p>
+          </div>
+        </div>
+
+        <LogoutEverywhereForm language={language} />
       </Card>
     </PageContainer>
   );
