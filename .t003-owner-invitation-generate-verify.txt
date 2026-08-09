@@ -1,20 +1,146 @@
-commit=945fcd5e29142746d09ff5324415f41176f393fa
+commit=1f6a0a63efc91f5c2ee19f2ca6181d0dbd990d23
 install=success
-generate=failure
-generate_exit=1
-tests=skipped
-tests_exit=
-typecheck=skipped
-typecheck_exit=
-lint=skipped
-lint_exit=
+generate=success
+generate_exit=0
+tests=failure
+tests_exit=1
+typecheck=success
+typecheck_exit=0
+lint=success
+lint_exit=0
 
 === GENERATE TAIL ===
-◇ injected env (0) from .env.local // tip: ⌘ suppress logs { quiet: true }
-Failed to load config file "/home/runner/work/loyalflow/loyalflow" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+◇ injected env (0) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma.
+
+✔ Generated Prisma Client (7.9.0) to ./generated/prisma in 340ms
+
 
 === TESTS TAIL ===
+  type: 'test'
+  ...
+# Subtest: Back safely renders long and Arabic reward states with intentional RTL
+ok 706 - Back safely renders long and Arabic reward states with intentional RTL
+  ---
+  duration_ms: 7.411051
+  type: 'test'
+  ...
+# Subtest: customer and reward safe zones clamp realistic long values
+ok 707 - customer and reward safe zones clamp realistic long values
+  ---
+  duration_ms: 0.386102
+  type: 'test'
+  ...
+# Subtest: front reserves a large deterministic balance panel
+ok 708 - front reserves a large deterministic balance panel
+  ---
+  duration_ms: 0.288388
+  type: 'test'
+  ...
+# Subtest: Back keeps artwork secondary and fills RTL progress deliberately from the right
+ok 709 - Back keeps artwork secondary and fills RTL progress deliberately from the right
+  ---
+  duration_ms: 0.304328
+  type: 'test'
+  ...
+# Subtest: Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target
+ok 710 - Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target
+  ---
+  duration_ms: 1.417419
+  type: 'test'
+  ...
+# Subtest: custom artwork capability stays reserved for super-admin architecture
+ok 711 - custom artwork capability stays reserved for super-admin architecture
+  ---
+  duration_ms: 0.633344
+  type: 'test'
+  ...
+# Subtest: Custom UX is upload-oriented, storage-fenced, and preserves existing URLs
+ok 712 - Custom UX is upload-oriented, storage-fenced, and preserves existing URLs
+  ---
+  duration_ms: 0.57244
+  type: 'test'
+  ...
+# Subtest: public card is rendered from dynamic customer and business data
+ok 713 - public card is rendered from dynamic customer and business data
+  ---
+  duration_ms: 0.380741
+  type: 'test'
+  ...
+# Subtest: all Standard Card previews and the public card retain the canonical renderer
+ok 714 - all Standard Card previews and the public card retain the canonical renderer
+  ---
+  duration_ms: 0.643803
+  type: 'test'
+  ...
+# Subtest: assigns VIP tiers at deterministic reward-cycle thresholds
+ok 715 - assigns VIP tiers at deterministic reward-cycle thresholds
+  ---
+  duration_ms: 1.204672
+  type: 'test'
+  ...
+# Subtest: keeps tier qualification safe for invalid thresholds and values
+ok 716 - keeps tier qualification safe for invalid thresholds and values
+  ---
+  duration_ms: 0.201155
+  type: 'test'
+  ...
+# Subtest: Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values
+ok 717 - Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values
+  ---
+  duration_ms: 1.451101
+  type: 'test'
+  ...
+# Subtest: WhatsApp URL encoding round-trips Arabic and English text exactly
+ok 718 - WhatsApp URL encoding round-trips Arabic and English text exactly
+  ---
+  duration_ms: 0.522016
+  type: 'test'
+  ...
+# Subtest: WhatsApp URL safely supports a missing phone number
+ok 719 - WhatsApp URL safely supports a missing phone number
+  ---
+  duration_ms: 0.371374
+  type: 'test'
+  ...
+# Subtest: uses the existing deterministic inactive segmentation for a win-back audience
+ok 720 - uses the existing deterministic inactive segmentation for a win-back audience
+  ---
+  duration_ms: 1.564864
+  type: 'test'
+  ...
+# Subtest: renders a staff-reviewed win-back message without sending it
+ok 721 - renders a staff-reviewed win-back message without sending it
+  ---
+  duration_ms: 0.387935
+  type: 'test'
+  ...
+# Subtest: workspace skeleton keeps the root Next application as the only runtime
+ok 722 - workspace skeleton keeps the root Next application as the only runtime
+  ---
+  duration_ms: 1.256087
+  type: 'test'
+  ...
+# Subtest: workspace packages expose only approved runtime code and satisfy the import graph
+ok 723 - workspace packages expose only approved runtime code and satisfy the import graph
+  ---
+  duration_ms: 48.93647
+  type: 'test'
+  ...
+1..723
+# tests 723
+# suites 0
+# pass 722
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17380.769288
+[ELIFECYCLE] Test failed. See above for more details.
 
 === TYPECHECK TAIL ===
+$ tsc --noEmit
 
 === LINT TAIL ===
