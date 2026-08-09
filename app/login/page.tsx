@@ -12,7 +12,6 @@ type LoginPageProps = {
     reset?: string | string[];
     password?: string | string[];
     verification?: string | string[];
-    mfa?: string | string[];
     language?: string | string[];
   }>;
 };
@@ -26,7 +25,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const resetValue = params.reset;
   const passwordValue = params.password;
   const verificationValue = params.verification;
-  const mfaValue = params.mfa;
   const language = normalizeLanguage(
     typeof params.language === "string" ? params.language : undefined,
   );
@@ -34,7 +32,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const resetSucceeded = resetValue === "success" || (Array.isArray(resetValue) && resetValue.includes("success"));
   const passwordChanged = passwordValue === "changed" || (Array.isArray(passwordValue) && passwordValue.includes("changed"));
   const verificationSucceeded = verificationValue === "success" || (Array.isArray(verificationValue) && verificationValue.includes("success"));
-  const mfaEnabled = mfaValue === "enabled" || (Array.isArray(mfaValue) && mfaValue.includes("enabled"));
   const hasError = errorValue === "invalid" || (Array.isArray(errorValue) && errorValue.includes("invalid"));
 
   return (
@@ -49,7 +46,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {resetSucceeded && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">Your password has been updated. Sign in with your new password.</div>}
         {passwordChanged && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">{getPasswordChangeCopy(language).success}</div>}
         {verificationSucceeded && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">Your email has been verified. You can sign in now.</div>}
-        {mfaEnabled && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">MFA is enabled. Use the Super Admin sign-in page for your authenticator or recovery code.</div>}
         {hasError && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">بيانات تسجيل الدخول غير صحيحة.</div>}
 
         <form action={loginAction} className="space-y-5">
