@@ -1,0 +1,130 @@
+source_commit=c8a287df02770b1fa1b261eb7ce625271703c313
+workflow_commit=8411f24ba82a5557c868fa9bc3c1a7c598b8c714
+tests=success
+tests_exit=0
+lint=success
+lint_exit=0
+
+=== TESTS ===
+  duration_ms: 1.499768
+  type: 'test'
+  ...
+# Subtest: credentials login blocks only accounts explicitly enrolled as unverified
+ok 2 - credentials login blocks only accounts explicitly enrolled as unverified
+  ---
+  duration_ms: 0.394045
+  type: 'test'
+  ...
+# Subtest: verification resend is enumeration resistant and rate limited
+ok 3 - verification resend is enumeration resistant and rate limited
+  ---
+  duration_ms: 0.296343
+  type: 'test'
+  ...
+# Subtest: verification tokens are random, hashed at rest, and expire after 24 hours
+ok 4 - verification tokens are random, hashed at rest, and expire after 24 hours
+  ---
+  duration_ms: 2.149862
+  type: 'test'
+  ...
+# Subtest: a valid verification token atomically marks its user verified
+ok 5 - a valid verification token atomically marks its user verified
+  ---
+  duration_ms: 1.465495
+  type: 'test'
+  ...
+# Subtest: expired verification tokens cannot transition verification state
+ok 6 - expired verification tokens cannot transition verification state
+  ---
+  duration_ms: 0.527996
+  type: 'test'
+  ...
+# Subtest: verification tokens are single-use and replay is rejected
+ok 7 - verification tokens are single-use and replay is rejected
+  ---
+  duration_ms: 2.623163
+  type: 'test'
+  ...
+# Subtest: unknown plaintext tokens do not match stored hashes
+ok 8 - unknown plaintext tokens do not match stored hashes
+  ---
+  duration_ms: 0.69126
+  type: 'test'
+  ...
+# Subtest: public verification normalizes invalid, expired, and replayed tokens
+ok 9 - public verification normalizes invalid, expired, and replayed tokens
+  ---
+  duration_ms: 1.311478
+  type: 'test'
+  ...
+# Subtest: verification email uses existing Resend configuration and a 24-hour link
+ok 10 - verification email uses existing Resend configuration and a 24-hour link
+  ---
+  duration_ms: 0.366113
+  type: 'test'
+  ...
+# Subtest: verification runtime consumes token and marks state in one transaction
+ok 11 - verification runtime consumes token and marks state in one transaction
+  ---
+  duration_ms: 0.260497
+  type: 'test'
+  ...
+# Subtest: owner invitation redemption records mailbox possession as verified
+ok 12 - owner invitation redemption records mailbox possession as verified
+  ---
+  duration_ms: 0.214801
+  type: 'test'
+  ...
+# Subtest: login surfaces verification success and a generic resend recovery path
+ok 13 - login surfaces verification success and a generic resend recovery path
+  ---
+  duration_ms: 0.288519
+  type: 'test'
+  ...
+# Subtest: owner invitation token is random, stored only as a hash, and expires
+ok 14 - owner invitation token is random, stored only as a hash, and expires
+  ---
+  duration_ms: 1.483087
+  type: 'test'
+  ...
+# Subtest: redeeming a valid invitation consumes it exactly once and creates a pending owner
+ok 15 - redeeming a valid invitation consumes it exactly once and creates a pending owner
+  ---
+  duration_ms: 1.069696
+  type: 'test'
+  ...
+# Subtest: expired invitation cannot create an owner
+ok 16 - expired invitation cannot create an owner
+  ---
+  duration_ms: 0.464858
+  type: 'test'
+  ...
+# Subtest: schema and migration persist only a hashed invitation token
+ok 17 - schema and migration persist only a hashed invitation token
+  ---
+  duration_ms: 0.428339
+  type: 'test'
+  ...
+# Subtest: invitation creation never creates an active owner directly
+ok 18 - invitation creation never creates an active owner directly
+  ---
+  duration_ms: 0.354532
+  type: 'test'
+  ...
+# Subtest: runtime redemption consumes and creates the pending owner inside one transaction
+ok 19 - runtime redemption consumes and creates the pending owner inside one transaction
+  ---
+  duration_ms: 0.185295
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 489.860881
+
+=== LINT ===
