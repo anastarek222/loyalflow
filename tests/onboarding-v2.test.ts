@@ -35,7 +35,11 @@ test("invitation creation is super-admin only and does not attach a tenant", () 
 
 test("pending owners are routed to setup and standard card remains system-controlled", () => {
   assert.match(source("components/authenticated-locale-shell.tsx"), /onboardingStatus === "PENDING"/);
-  assert.match(source("app/onboarding/actions.ts"), /onboardingStatus: "COMPLETE"/);
+  assert.match(source("app/onboarding/actions.ts"), /claimPendingOwnerCompletion/);
+  assert.match(
+    source("lib/onboarding/pending-owner-lifecycle.ts"),
+    /onboardingStatus: "COMPLETE"/,
+  );
   assert.match(source("components/owner-onboarding-wizard.tsx"), /Standard Card is enabled/);
   assert.match(source("components/business-setup-wizard.tsx"), /name="cardStyle" value="CLASSIC"/);
 });

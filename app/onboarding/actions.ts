@@ -16,6 +16,11 @@ import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
 import { normalizeOwnerOnboardingPhone } from "@/lib/onboarding/owner-onboarding-validation";
+import {
+  canUsePendingOwnerOnboarding,
+  claimPendingOwnerCompletion,
+  savePendingOwnerDraft,
+} from "@/lib/onboarding/pending-owner-lifecycle";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { logServerEvent } from "@/lib/server/logging";
 import {
@@ -79,8 +84,7 @@ async function pendingOwner() {
     where: { id: session.user.id },
     select: { id: true, role: true, onboardingStatus: true, businessId: true },
   });
-  if (!user || user.role !== "OWNER") redirect("/dashboard");
-  if (user.onboardingStatus !== "PENDING" || user.businessId)
+  if (!user || !canUsePendingOwnerOnboarding(user))
     redirect("/dashboard");
   return user;
 }
@@ -110,10 +114,20 @@ export async function saveOwnerOnboardingAction(formData: FormData) {
   const user = await pendingOwner();
   const parsed = await draftFrom(formData);
   if (!parsed.success) return { error: "Check the saved fields." };
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { onboardingData: parsed.data },
-  });
+  const saved = await savePendingOwnerDraft(
+    {
+      userId: user.id,
+      onboardingData: parsed.data,
+    },
+    {
+      updateMany: (input) => prisma.user.updateMany(input),
+    },
+  );
+
+  if (!saved) {
+    return { error: "Owner onboarding is no longer available." };
+  }
+
   return { saved: true };
 }
 
@@ -155,14 +169,21 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
           standardCardArtworkCategory: data.standardCardArtworkCategory,
         },
       });
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
+      const ownerClaimed = await claimPendingOwnerCompletion(
+        {
+          userId: user.id,
           businessId: created.id,
-          onboardingStatus: "COMPLETE",
-          onboardingData: Prisma.JsonNull,
+          clearOnboardingData: Prisma.JsonNull,
         },
-      });
+        {
+          updateMany: (input) => tx.user.updateMany(input),
+        },
+      );
+
+      if (!ownerClaimed) {
+        throw new Error("Pending owner onboarding is no longer available");
+      }
+
       return created;
     }),
   );
