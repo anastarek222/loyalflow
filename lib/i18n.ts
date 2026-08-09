@@ -1,3 +1,6 @@
+import { translate } from "./i18n/catalog";
+import type { SupportedLocale } from "./i18n/config";
+
 export const APP_LANGUAGES = [
   "AR",
   "EN",
@@ -69,26 +72,29 @@ export function getLanguageLocale(
     : "en-US";
 }
 
-export const sharedDictionary = {
-  AR: {
-    arabic: "العربية",
-    english: "English",
-    language: "اللغة",
-    switchToArabic:
-      "تغيير اللغة إلى العربية",
-    switchToEnglish:
-      "Change language to English",
-  },
+function toSupportedLocale(language: AppLanguage): SupportedLocale {
+  return language === "AR" ? "ar" : "en";
+}
 
-  EN: {
-    arabic: "العربية",
-    english: "English",
-    language: "Language",
-    switchToArabic:
-      "تغيير اللغة إلى العربية",
-    switchToEnglish:
-      "Change language to English",
-  },
+function createSharedDictionary(language: AppLanguage) {
+  const locale = toSupportedLocale(language);
+
+  return {
+    arabic: translate(locale, "common.arabic"),
+    english: translate(locale, "common.english"),
+    language: translate(locale, "common.language"),
+    switchToArabic: translate(locale, "common.switchToArabic"),
+    switchToEnglish: translate(locale, "common.switchToEnglish"),
+  };
+}
+
+/**
+ * Compatibility adapter for legacy uppercase AR/EN callers. User-facing copy
+ * lives in the typed catalog under lib/i18n/catalog.ts.
+ */
+export const sharedDictionary = {
+  AR: createSharedDictionary("AR"),
+  EN: createSharedDictionary("EN"),
 } satisfies Record<
   AppLanguage,
   Record<string, string>
