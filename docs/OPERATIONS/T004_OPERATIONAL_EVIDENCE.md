@@ -89,6 +89,14 @@ Current state: **TABLETOP REHEARSAL RECORDED**
 
 `T004_TABLETOP_REHEARSAL_2026-08-09.md` records the bounded tabletop exercise. It checks application rollback separately from database recovery and reviews the incident decision path without claiming a live production rollback.
 
+## 6. Build verification
+
+Current state: **PREVIEW BUILD VERIFIED FOR CURRENT RUNTIME TREE; LATEST-HEAD FULL GATES STILL OPEN**
+
+Vercel deployment `dpl_9uDe2bLke9wcs1rVEaMJrbhKP6Np` for commit `d4df2502078d409f0a2e2cc9aa3404606296e2f3` completed successfully. The build generated all 26 static pages and completed deployment without a build error. The current branch head after this evidence differs only by documentation/tracker commits, but the repository still requires explicit latest-head typecheck, lint, and full test evidence before Draft PR.
+
+Do not treat the Vercel build as a substitute for unrun local/CI test and lint gates.
+
 ## Closeout rule
 
 T004 remains open until all required closeout evidence is resolved. Current unresolved items are principally:
