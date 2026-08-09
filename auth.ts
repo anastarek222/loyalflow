@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 
 import { isCurrentAuthVersion } from "@/lib/auth/auth-version";
+import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
 import prisma from "@/lib/prisma";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
@@ -91,6 +92,10 @@ export const {
           );
 
         if (!passwordMatches) {
+          return null;
+        }
+
+        if (!(await isEmailVerificationSatisfied(user.id))) {
           return null;
         }
 
