@@ -44,3 +44,14 @@ test("owner invitation redemption records mailbox possession as verified", () =>
   assert.match(runtime, /\$\{owner\.id\}/);
   assert.match(runtime, /\$\{atomicInput\.now\}/);
 });
+
+test("login surfaces verification success and a generic resend recovery path", () => {
+  const login = source("app/login/page.tsx");
+  const resend = source("app/verify-email/resend/actions.ts");
+
+  assert.match(login, /verificationValue/);
+  assert.match(login, /Your email has been verified/);
+  assert.match(login, /href="\/verify-email\/resend"/);
+  assert.match(resend, /email_verification_resend_failed/);
+  assert.doesNotMatch(resend, /throw error/);
+});
