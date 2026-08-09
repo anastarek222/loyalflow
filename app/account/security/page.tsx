@@ -1,4 +1,4 @@
-import { KeyRound, LogOut } from "lucide-react";
+import { KeyRound, LogOut, ShieldAlert } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
@@ -19,10 +19,23 @@ export default async function AccountSecurityPage() {
     redirect("/login");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { language: true },
-  });
+  const [user, securityNotifications] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { language: true },
+    }),
+    prisma.securityNotification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        title: true,
+        message: true,
+        createdAt: true,
+      },
+    }),
+  ]);
 
   if (!user) {
     redirect("/login");
@@ -31,6 +44,18 @@ export default async function AccountSecurityPage() {
   const language = normalizeLanguage(user.language);
   const copy = getPasswordChangeCopy(language);
   const logoutCopy = getLogoutEverywhereCopy(language);
+  const securityCopy =
+    language === "AR"
+      ? {
+          title: "آخر تنبيهات الأمان",
+          description: "أحداث أمان حديثة مرتبطة بحسابك فقط.",
+          empty: "لا توجد تنبيهات أمان حتى الآن.",
+        }
+      : {
+          title: "Recent security alerts",
+          description: "Recent security events scoped only to your account.",
+          empty: "No security alerts yet.",
+        };
 
   return (
     <PageContainer variant="narrow">
@@ -78,6 +103,50 @@ export default async function AccountSecurityPage() {
         </div>
 
         <LogoutEverywhereForm language={language} />
+      </Card>
+
+      <Card>
+        <div className="flex items-start gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary-subtle text-primary">
+            <ShieldAlert size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h2 className="text-xl font-black text-foreground">
+              {securityCopy.title}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-foreground-muted">
+              {securityCopy.description}
+            </p>
+          </div>
+        </div>
+
+        {securityNotifications.length === 0 ? (
+          <p className="mt-5 text-sm text-foreground-muted">{securityCopy.empty}</p>
+        ) : (
+          <ol className="mt-5 space-y-3">
+            {securityNotifications.map((notification) => (
+              <li
+                key={notification.id}
+                className="rounded-[var(--lf-radius-input)] border border-border px-4 py-3"
+              >
+                <p className="text-sm font-bold text-foreground">
+                  {notification.title}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-foreground-muted">
+                  {notification.message}
+                </p>
+                <time
+                  dateTime={notification.createdAt.toISOString()}
+                  className="mt-2 block text-xs text-foreground-muted"
+                >
+                  {notification.createdAt.toLocaleString(
+                    language === "AR" ? "ar-EG" : "en-US",
+                  )}
+                </time>
+              </li>
+            ))}
+          </ol>
+        )}
       </Card>
     </PageContainer>
   );
