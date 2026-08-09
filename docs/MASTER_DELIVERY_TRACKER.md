@@ -8,9 +8,11 @@ Latest merged authentication-slice verification: 751/751 tests, TypeScript, full
 and 2 pre-existing warnings, and Prisma Client generation all passing for the Security
 Notifications slice. T004 branch evidence now additionally includes a successful disposable-local
 PostgreSQL backup/restore exercise, verified Preview isolation/runtime identity, a rehearsed
-incident/rollback tabletop, and verified external uptime alert delivery. These T004 facts are branch
-evidence and are not yet merged. Production/service RPO/RTO remain unverified, and no production
-database migration, backup, restore, or schema operation was executed by the T004 slice.
+incident/rollback tabletop, verified external uptime alert delivery, and read-only verification of
+provider-native production recovery posture with 6-hour retained history/PITR capability. These T004
+facts are branch evidence and are not yet merged. Proposed service RPO/RTO targets remain unmeasured,
+and no production database migration, backup, restore, schema operation, or provider configuration
+mutation was executed by the T004 slice.
 
 ## How to use this tracker
 
@@ -31,12 +33,13 @@ operational or UX evidence. Percentages are planning estimates, not CI measureme
 **T004 — Operational readiness closeout is in progress.** The active branch has recorded a
 successful guarded disposable-local backup/restore drill, Preview database/environment isolation,
 application-level Preview identity, named primary operational ownership including Recovery Operator,
-a bounded incident/application-rollback tabletop, and external `/api/health` uptime monitoring with
-verified DOWN and UP/recovery notification delivery to the accountable On-call Operator. Remaining
-closeout items are production/service RPO/RTO evidence or an explicitly accepted launch posture,
-Independent Reviewer assignment/review, continuity/back-up ownership resolution, and latest-head
-quality gates. Modernization continues in small, compatible slices; no web/API split or critical
-ledger cutover is authorized yet.
+a bounded incident/application-rollback tabletop, external `/api/health` uptime monitoring with
+verified DOWN and UP/recovery notification delivery, and read-only verification that the production
+Neon project exposes provider-native retained-history/PITR recovery capability with a 6-hour history
+window. Remaining closeout items are whether measured production/service RPO/RTO proof is required
+now or deferred to the launch gate, Independent Reviewer assignment/review, continuity/back-up
+ownership resolution, and exact-head standalone typecheck/lint reconfirmation. Modernization
+continues in small, compatible slices; no web/API split or critical ledger cutover is authorized yet.
 
 ## Product delivery P0-P12
 
@@ -46,14 +49,14 @@ ledger cutover is authorized yet.
 | P1 Loyalty and financial rules | Complete | 100% | PRs #7-#10 and reversal/ledger PRs through #30 | reopen only for an approved policy change |
 | P2 Ledger integrity | Complete | 100% | durable idempotency, reversals, locking, unlock provenance/restoration, exception handling, gross/net reporting, reconciliation implementation, T002 verification | Verification complete; read-only/no-automatic-repair constraint preserved |
 | P3 Account and authentication | Complete | 100% | secure password reset, self-service password change, logout-everywhere PR #42, pending-owner lifecycle PR #43, Owner Invitation PR #44, Email Verification PR #46, Super Admin MFA PR #47, distributed auth rate limiting PR #48, Security Notifications PR #49 | reopen only for an approved authentication/security policy change |
-| P4 Database and operations | In progress | 82% | environment identity, 46-migration manifest, destructive scan, guarded disposable PostgreSQL recovery drill, Preview isolation/runtime identity, operational ownership, tabletop rehearsal, external `/api/health` monitor with verified DOWN/UP notification delivery | production/service RPO/RTO posture, Independent Reviewer, continuity/back-up ownership, latest-head gates and closeout review |
+| P4 Database and operations | In progress | 88% | environment identity, 46-migration manifest, destructive scan, guarded disposable PostgreSQL recovery drill, Preview isolation/runtime identity, operational ownership, tabletop rehearsal, external `/api/health` monitor with verified DOWN/UP notification delivery, provider-native production recovery posture verified read-only | measured production/service RPO/RTO treatment, Independent Reviewer, continuity/back-up ownership, exact-head lint/typecheck and closeout review |
 | P5 Architecture boundaries | In progress | 30% | PR #36 workspace skeleton; PR #37 first pure domain extraction | additional domain/contracts/validation slices, then API reads and safe writes |
 | P6 UX, design system, languages | Foundation present | 55% | shared UI foundations, partial AR/EN and RTL, responsive operational flows | one i18n source, key parity, bidi, state library, full accessibility/device gate |
 | P7 Marketing website | Foundation present | 15% | auth entry surfaces and initial identity | public marketing routes, SEO, analytics, demo/trial conversion |
 | P8 Business onboarding | Foundation present | 50% | custom/invitation foundations, draft flow, presets, loyalty configuration | complete path selection, inline errors, live card preview, reviewed presets and artwork policy |
 | P9 Role experiences | Foundation present | 75% | Super Admin, Owner, Staff/Scan, Customer Card, reports and permissions | shell/navigation cleanup, role parity, mobile and browser UAT |
 | P10 Staging and Closed Beta | In progress | 35% | strong unit/contracts, real PostgreSQL tests, isolated Vercel Preview path and non-production Neon resource | full staging gate, E2E/performance matrix, production-grade recovery evidence, 5-10 business beta and Go/No-Go |
-| P11 Public-launch readiness | Foundation present | 38% | reset email, Email Verification, mandatory Super Admin MFA, distributed auth rate limiting, Security Notifications, external uptime alert route, plan/billing foundations, release and health scripts | signup, legal/data lifecycle, production backup/RPO-RTO, subscription lifecycle, payment and final release gate |
+| P11 Public-launch readiness | Foundation present | 40% | reset email, Email Verification, mandatory Super Admin MFA, distributed auth rate limiting, Security Notifications, external uptime alert route, provider-native production recovery posture, plan/billing foundations, release and health scripts | signup, legal/data lifecycle, measured production RPO/RTO decision/evidence, subscription lifecycle, payment and final release gate |
 | P12 Post-launch scale | Deferred | 15% | offers, referrals, campaigns, rewards, multi-branch, events foundations | only demand-driven workers, webhooks, API keys, POS, wallet/tiers and physical service split |
 
 ## Modernization P0-P25
@@ -62,7 +65,7 @@ ledger cutover is authorized yet.
 |---|---|---|
 | P0 Governance | Complete | PRs #4-#5 establish the governed baseline and environment/database guards. |
 | P1 Product rules | Complete | PR #7 plus rule-protection and ledger implementation slices. |
-| P2 DB/migration hardening | In progress | PR #6 and #34 protect the reviewed migration history; Owner Invitation, Email Verification, Super Admin MFA, and Security Notifications bring the committed manifest to 46 migrations. The guarded disposable-local backup/restore drill now has measured repeat evidence (95 ms backup, 53 ms restore, validated synthetic restore), closing the former local G02 execution-evidence gap. Production/service RPO/RTO remain unverified and are not inferred from local timings. |
+| P2 DB/migration hardening | In progress | PR #6 and #34 protect the reviewed migration history; Owner Invitation, Email Verification, Super Admin MFA, and Security Notifications bring the committed manifest to 46 migrations. The guarded disposable-local backup/restore drill now has measured repeat evidence (95 ms backup, 53 ms restore, validated synthetic restore), closing the former local G02 execution-evidence gap. Provider-native production retained-history/PITR posture is also verified read-only; proposed production/service RPO/RTO remain unmeasured and are not inferred from local timings or provider retention alone. |
 | P3 Workspace foundation | Complete | PR #36; root Next.js runtime remains authoritative. |
 | P4 Domain/contracts | In progress | PR #37 moves `calculateRewardProgress` to `@loyalflow/domain` with a compatibility re-export; G05 remains open for broader typed-contract evidence and owner review. |
 | P5 I18N foundation | Not started | next modernization slice after current product-safety closeout. |
@@ -78,7 +81,7 @@ ledger cutover is authorized yet.
 | T001 | Create unified master tracker | Complete | documentation only | merged in PR #38 |
 | T002 | Ledger reconciliation | Completed | read-only calculation/reporting; no automatic repair and no production execution | ran merged command against isolated test database: environment=test, scannedCustomers=1, matchingCustomers=1, mismatchCount=0, reportedMismatchCount=0, reportTruncated=false, mismatches=[] |
 | T003 | Authentication closeout | Completed | account/session security only; no auth-topology rewrite | merged through PR #49: password lifecycle, session revocation, owner invitation, email verification, mandatory Super Admin MFA, distributed auth rate limiting, and account-scoped security notifications; latest merged local gates 751/751 + typecheck + lint 0 errors |
-| T004 | Operational readiness closeout | In progress | backup/restore, RPO/RTO, isolation, monitoring and runbooks | local restore evidence recorded; Preview isolation verified; external alert delivery verified; primary operational owners named; still requires production/service RPO/RTO posture, Independent Reviewer/review, continuity ownership and latest-head gates |
+| T004 | Operational readiness closeout | In progress | backup/restore, RPO/RTO, isolation, monitoring and runbooks | local restore evidence recorded; Preview isolation verified; external alert delivery verified; production recovery posture verified read-only; primary operational owners named; still requires measured RPO/RTO treatment, Independent Reviewer/review, continuity ownership and exact-head lint/typecheck |
 | T005 | I18N compatibility foundation | Queued | one small catalog/adapter slice; no mass copy rewrite | AR/EN parity, fallback, SSR/RTL/a11y and bundle evidence |
 | T006 | Marketing and onboarding completion | Queued | public website and owner setup; no payment cutover | conversion routes, SEO/analytics, inline validation, live preview and browser UAT |
 | T007 | Isolated staging and Closed Beta | Blocked | non-production only | staging gates, 5-10 business beta, issue log and Go/No-Go |
