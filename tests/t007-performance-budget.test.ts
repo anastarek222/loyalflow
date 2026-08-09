@@ -36,7 +36,7 @@ test("T007 performance budget fails closed when evidence is undersampled", () =>
 test("T007 performance budget rejects excessive latency and errors", () => {
   const samples = Array.from({ length: 20 }, (_, index) => ({
     status: index < 2 ? 500 : 200,
-    durationMs: index === 19 ? 2200 : 400,
+    durationMs: index >= 18 ? 2200 : 400,
   }));
 
   const result = evaluatePerformanceBudget(samples, budget);
@@ -51,6 +51,19 @@ test("T007 performance budget ignores malformed duration samples instead of trea
   const samples = [
     ...Array.from({ length: 19 }, () => ({ status: 200, durationMs: 400 })),
     { status: 200, durationMs: Number.NaN },
+  ];
+
+  const result = evaluatePerformanceBudget(samples, budget);
+
+  assert.equal(result.allowed, false);
+  assert.equal(result.sampleCount, 19);
+  assert.ok(result.reasons.includes("insufficient_samples"));
+});
+
+test("T007 performance budget ignores malformed HTTP statuses instead of treating them as healthy evidence", () => {
+  const samples = [
+    ...Array.from({ length: 19 }, () => ({ status: 200, durationMs: 400 })),
+    { status: Number.NaN, durationMs: 400 },
   ];
 
   const result = evaluatePerformanceBudget(samples, budget);
