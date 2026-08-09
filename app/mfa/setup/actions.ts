@@ -118,5 +118,5 @@ export async function confirmMfaEnrollmentAction(
   const enabled = await enableSuperAdminMfa(parsed.data);
   if (!enabled) return { error: "expired" };
 
-  redirect("/login?mfa=enabled");
+  redirect("/login/super-admin?mfa=enabled");
 }
