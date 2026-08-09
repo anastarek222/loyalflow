@@ -23,23 +23,19 @@ This audit checks T006 against the master-plan exit evidence without changing pr
 |---|---|---|
 | conversion routes | Complete | `/` -> `/get-started`; supported destinations remain `/login` and `/accept-owner-invitation` |
 | SEO | Complete | localized metadata, canonical routes, public indexing; private onboarding remains noindex |
-| analytics | BLOCKED — USER DECISION REQUIRED | no approved marketing analytics provider or first-party measurement policy is currently present |
+| analytics | Deferred by explicit product decision | deferred from T006 to the public-launch gate; no provider, dependency, environment variable, consent behavior, or external data processing was introduced |
 | inline validation | Complete | locale-aware owner-onboarding validation merged |
 | live preview | Complete | onboarding draft feeds the canonical Standard Card preview |
 | browser UAT | Complete for bounded T006 public conversion scope | targeted Playwright 3/3 passing on desktop/mobile and locale direction switching |
 
-## Analytics boundary
+## Analytics decision
 
-Repository audit found no approved marketing analytics provider integration. Closing this item by adding a provider may require one or more of: a new dependency, provider account/configuration, environment variables, consent/privacy behavior, or external data processing. Those are approval-gated changes and are intentionally not introduced by this audit.
+On 2026-08-09 the product owner explicitly selected the policy to defer marketing analytics from T006 to the later public-launch gate. This is a scope decision, not analytics implementation evidence.
 
-A valid closeout decision must explicitly choose one of these policies before T006 can be marked complete:
+The later launch gate must still make an explicit analytics decision before claiming launch measurement readiness, including provider or first-party design, configuration, retention/privacy behavior, consent requirements where applicable, and verification. This closeout does not silently select a provider or authorize dependency, environment-variable, or production-data changes.
 
-1. Approve a named analytics provider and its required dependency/configuration/privacy behavior.
-2. Approve a bounded first-party measurement design with explicit persistence/retention/privacy rules.
-3. Explicitly defer analytics from T006 to a later launch gate and accept T006 closure without analytics provider evidence.
+## Closeout status
 
-## Current status
+`READY FOR DRAFT PR`
 
-`BLOCKED — USER DECISION REQUIRED`
-
-All other listed T006 exit evidence is present. No claim is made that the full repository fixture-dependent browser suite passed; the T006 public-conversion browser gate was intentionally bounded and passed 3/3.
+T006 is considered complete for its current execution gate with marketing analytics explicitly deferred to the public-launch gate. No claim is made that the full repository fixture-dependent browser suite passed; the T006 public-conversion browser gate was intentionally bounded and passed 3/3.
