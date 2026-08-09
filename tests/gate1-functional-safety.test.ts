@@ -116,13 +116,15 @@ test("Owner card protection is enforced by persisted server state", () => {
 test("Owner onboarding has one canonical writer for card brand fields", () => {
   const wizard = source("components/owner-onboarding-wizard.tsx");
   const setup = source("components/standard-card-setup.tsx");
+  const onboardingCopy = source("lib/onboarding/owner-onboarding-copy.ts");
 
   assert.equal(wizard.match(/name="logoFile"/g)?.length, 1);
   assert.equal(wizard.match(/name="logoUrl"/g)?.length, 1);
   assert.equal(wizard.match(/name="primaryColor"/g)?.length ?? 0, 0);
   assert.equal(wizard.match(/name="themePreset"/g)?.length ?? 0, 0);
+  assert.match(wizard, /copy\.identityHint/);
   assert.match(
-    wizard,
+    onboardingCopy,
     /Logo and card branding are configured once in Loyalty Card/,
   );
   assert.match(setup, /name="primaryColor"/);
