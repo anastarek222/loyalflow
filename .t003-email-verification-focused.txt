@@ -7,73 +7,73 @@ lint_exit=0
 === TESTS ===
 ok 4 - verification tokens are single-use and replay is rejected
   ---
-  duration_ms: 2.046377
+  duration_ms: 0.549491
   type: 'test'
   ...
 # Subtest: unknown plaintext tokens do not match stored hashes
 ok 5 - unknown plaintext tokens do not match stored hashes
   ---
-  duration_ms: 0.289756
+  duration_ms: 0.344867
   type: 'test'
   ...
 # Subtest: public verification normalizes invalid, expired, and replayed tokens
 ok 6 - public verification normalizes invalid, expired, and replayed tokens
   ---
-  duration_ms: 1.229697
+  duration_ms: 1.637753
   type: 'test'
   ...
 # Subtest: verification email uses existing Resend configuration and a 24-hour link
 ok 7 - verification email uses existing Resend configuration and a 24-hour link
   ---
-  duration_ms: 0.333934
+  duration_ms: 0.4259
   type: 'test'
   ...
 # Subtest: verification runtime consumes token and marks state in one transaction
 ok 8 - verification runtime consumes token and marks state in one transaction
   ---
-  duration_ms: 0.282101
+  duration_ms: 0.295123
   type: 'test'
   ...
 # Subtest: owner invitation redemption records mailbox possession as verified
 ok 9 - owner invitation redemption records mailbox possession as verified
   ---
-  duration_ms: 0.210252
+  duration_ms: 0.294102
   type: 'test'
   ...
 # Subtest: owner invitation token is random, stored only as a hash, and expires
 ok 10 - owner invitation token is random, stored only as a hash, and expires
   ---
-  duration_ms: 1.888911
+  duration_ms: 2.418286
   type: 'test'
   ...
 # Subtest: redeeming a valid invitation consumes it exactly once and creates a pending owner
 ok 11 - redeeming a valid invitation consumes it exactly once and creates a pending owner
   ---
-  duration_ms: 1.127479
+  duration_ms: 1.707373
   type: 'test'
   ...
 # Subtest: expired invitation cannot create an owner
 ok 12 - expired invitation cannot create an owner
   ---
-  duration_ms: 0.553003
+  duration_ms: 0.712917
   type: 'test'
   ...
 # Subtest: schema and migration persist only a hashed invitation token
 ok 13 - schema and migration persist only a hashed invitation token
   ---
-  duration_ms: 0.585833
+  duration_ms: 0.702167
   type: 'test'
   ...
 # Subtest: invitation creation never creates an active owner directly
 ok 14 - invitation creation never creates an active owner directly
   ---
-  duration_ms: 0.39707
+  duration_ms: 0.531628
   type: 'test'
   ...
 # Subtest: runtime redemption consumes and creates the pending owner inside one transaction
 ok 15 - runtime redemption consumes and creates the pending owner inside one transaction
   ---
-  duration_ms: 0.227499
+  duration_ms: 0.293291
   type: 'test'
   ...
 1..15
@@ -84,6 +84,6 @@ ok 15 - runtime redemption consumes and creates the pending owner inside one tra
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 290.16133
+# duration_ms 361.708195
 
 === LINT ===
