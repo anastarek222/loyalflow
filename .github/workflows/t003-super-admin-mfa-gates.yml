@@ -1,0 +1,100 @@
+name: T003 Super Admin MFA Gates
+
+on:
+  push:
+    branches:
+      - verify/t003-super-admin-mfa-gates
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: postgresql://verification:verification@127.0.0.1:5432/verification
+      SUPER_ADMIN_MFA_ROOT_SECRET: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prisma generate
+        id: prisma
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm exec prisma generate > .gate-prisma.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Full tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm test > .gate-tests.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm typecheck > .gate-typecheck.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm lint > .gate-lint.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Record evidence
+        if: always()
+        run: |
+          {
+            echo "source_commit=8d13ef3eae7e7a980a4a269a1c9a6ef49ff4542b"
+            echo "prisma=${{ steps.prisma.outcome }}"
+            echo "prisma_exit=${{ steps.prisma.outputs.exit_code }}"
+            echo "tests=${{ steps.tests.outcome }}"
+            echo "tests_exit=${{ steps.tests.outputs.exit_code }}"
+            echo "typecheck=${{ steps.typecheck.outcome }}"
+            echo "typecheck_exit=${{ steps.typecheck.outputs.exit_code }}"
+            echo "lint=${{ steps.lint.outcome }}"
+            echo "lint_exit=${{ steps.lint.outputs.exit_code }}"
+            echo
+            echo "=== PRISMA ==="
+            tail -n 80 .gate-prisma.log 2>/dev/null || true
+            echo
+            echo "=== TESTS ==="
+            tail -n 120 .gate-tests.log 2>/dev/null || true
+            echo
+            echo "=== TYPECHECK ==="
+            tail -n 100 .gate-typecheck.log 2>/dev/null || true
+            echo
+            echo "=== LINT ==="
+            tail -n 100 .gate-lint.log 2>/dev/null || true
+          } > .t003-super-admin-mfa-gates.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .t003-super-admin-mfa-gates.txt
+          git commit -m "chore(ci): record super admin mfa gates [skip ci]" || true
+          git push
+      - name: Enforce
+        if: always()
+        run: |
+          test "${{ steps.prisma.outcome }}" = "success"
+          test "${{ steps.tests.outcome }}" = "success"
+          test "${{ steps.typecheck.outcome }}" = "success"
+          test "${{ steps.lint.outcome }}" = "success"
