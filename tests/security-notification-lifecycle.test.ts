@@ -3,7 +3,10 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import { recordSecurityNotification } from "../lib/auth/security-notification";
+import {
+  getSecurityNotificationCopy,
+  recordSecurityNotification,
+} from "../lib/auth/security-notification";
 
 const root = process.cwd();
 const source = (relativePath: string) =>
@@ -42,6 +45,28 @@ test("notification helper stores bounded copy without secret material", async ()
   const serialized = JSON.stringify(writes[0]);
   assert.match(serialized, /MFA_RECOVERY_CODE_USED/);
   assert.doesNotMatch(serialized, /passwordHash|tokenHash|secretCiphertext|recoveryHash/i);
+});
+
+test("security notification display copy supports Arabic and English with safe legacy fallback", () => {
+  const english = getSecurityNotificationCopy("PASSWORD_CHANGED", "EN", {
+    title: "fallback",
+    message: "fallback",
+  });
+  const arabic = getSecurityNotificationCopy("PASSWORD_CHANGED", "AR", {
+    title: "fallback",
+    message: "fallback",
+  });
+  const legacy = getSecurityNotificationCopy("FUTURE_EVENT", "AR", {
+    title: "Legacy title",
+    message: "Legacy message",
+  });
+
+  assert.equal(english.title, "Password changed");
+  assert.match(arabic.title, /كلمة المرور/);
+  assert.deepEqual(legacy, {
+    title: "Legacy title",
+    message: "Legacy message",
+  });
 });
 
 test("password and session lifecycle writes security notifications only after successful mutation", () => {
