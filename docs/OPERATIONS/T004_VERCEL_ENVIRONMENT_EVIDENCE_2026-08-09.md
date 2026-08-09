@@ -69,18 +69,19 @@ A Vercel deployment screenshot shows a production deployment in `Ready Latest` s
 
 On 2026-08-09, the project owner explicitly approved separating the Preview `DATABASE_URL` from Production.
 
-This approval is limited to Vercel/provider configuration needed to ensure Preview uses a distinct non-production database connection. It does **not** authorise any production database command, migration, data copy, backfill, schema change, destructive database action, production deployment, or unrelated provider mutation.
+The project owner then explicitly approved proceeding with a new **Neon PostgreSQL non-production database for Preview only**. This provisioning approval is limited to creating and connecting that isolated Preview database. It does **not** authorise any production database command, migration, production data copy, backfill, schema change, destructive database action, production deployment, or unrelated provider mutation.
 
 Execution is partially verified:
 
 - [x] Production `DATABASE_URL` is scoped to Production only.
 - [x] Preview has its own `DATABASE_URL` scoped to Preview only.
-- [ ] The Preview value is proven to point to a distinct non-production database target.
+- [ ] Neon non-production Preview database is provisioned and connected.
+- [ ] The Preview value is proven to point to that distinct non-production target.
 - [ ] No production customer data is intentionally copied into the Preview database as part of this change.
 - [ ] A fresh Preview deployment after the corrected variable is configured succeeds and is verified.
 
 ## T004 conclusion
 
-Status: **VARIABLE SCOPE ISOLATION VERIFIED — DATABASE TARGET IDENTITY STILL REQUIRED**.
+Status: **NEON PREVIEW DATABASE PROVISIONING APPROVED — EXECUTION IN PROGRESS**.
 
-The repository must not claim that staging/preview database isolation is complete until the Preview database target is independently verified as non-production and a fresh Preview deployment using the corrected configuration is observed.
+The repository must not claim that staging/preview database isolation is complete until the Neon Preview database target is independently verified as non-production and a fresh Preview deployment using the corrected configuration is observed.
