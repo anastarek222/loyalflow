@@ -11,6 +11,7 @@ type LoginPageProps = {
     error?: string | string[];
     reset?: string | string[];
     password?: string | string[];
+    verification?: string | string[];
     language?: string | string[];
   }>;
 };
@@ -28,6 +29,7 @@ export default async function LoginPage({
   const errorValue = params.error;
   const resetValue = params.reset;
   const passwordValue = params.password;
+  const verificationValue = params.verification;
   const language = normalizeLanguage(
     typeof params.language === "string" ? params.language : undefined,
   );
@@ -40,6 +42,10 @@ export default async function LoginPage({
   const passwordChanged =
     passwordValue === "changed" ||
     (Array.isArray(passwordValue) && passwordValue.includes("changed"));
+
+  const verificationSucceeded =
+    verificationValue === "success" ||
+    (Array.isArray(verificationValue) && verificationValue.includes("success"));
 
   const hasError =
     errorValue === "invalid" ||
@@ -65,6 +71,12 @@ export default async function LoginPage({
         {passwordChanged && (
           <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">
             {getPasswordChangeCopy(language).success}
+          </div>
+        )}
+
+        {verificationSucceeded && (
+          <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">
+            Your email has been verified. You can sign in now.
           </div>
         )}
 
@@ -116,10 +128,16 @@ export default async function LoginPage({
             />
           </div>
 
-          <div className="text-end">
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <Link
+              href="/verify-email/resend"
+              className="font-semibold text-primary hover:underline"
+            >
+              Resend verification
+            </Link>
             <Link
               href="/forgot-password"
-              className="text-sm font-semibold text-primary hover:underline"
+              className="font-semibold text-primary hover:underline"
             >
               Forgot password?
             </Link>
