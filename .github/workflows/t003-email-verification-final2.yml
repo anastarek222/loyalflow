@@ -1,0 +1,90 @@
+name: T003 Email Verification Final 2
+
+on:
+  push:
+    branches:
+      - verify/t003-email-verification-final2
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Focused behavioral tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          node --import tsx --test \
+            tests/email-verification-lifecycle.test.ts \
+            tests/email-verification-public-flow.test.ts \
+            tests/email-verification-enrollment.test.ts \
+            tests/owner-invitation-lifecycle.test.ts \
+            > .verify-tests.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Lint slice
+        id: lint
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm exec eslint \
+            auth.ts \
+            app/businesses/actions.ts \
+            app/verify-email/actions.ts \
+            app/verify-email/page.tsx \
+            app/verify-email/resend/actions.ts \
+            app/verify-email/resend/page.tsx \
+            lib/auth/email-verification.ts \
+            lib/auth/email-verification-access.ts \
+            lib/auth/email-verification-runtime.ts \
+            lib/auth/email-verification-email.ts \
+            lib/auth/owner-invitation-runtime.ts \
+            scripts/verify-local-database.ts \
+            tests/email-verification-lifecycle.test.ts \
+            tests/email-verification-public-flow.test.ts \
+            tests/email-verification-enrollment.test.ts \
+            tests/production-readiness.test.ts \
+            > .verify-lint.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Record evidence
+        if: always()
+        run: |
+          {
+            echo "source_commit=7c3ee33b7efdf3775aa80375c2fbce1356555c45"
+            echo "workflow_commit=${GITHUB_SHA}"
+            echo "tests=${{ steps.tests.outcome }}"
+            echo "tests_exit=${{ steps.tests.outputs.exit_code }}"
+            echo "lint=${{ steps.lint.outcome }}"
+            echo "lint_exit=${{ steps.lint.outputs.exit_code }}"
+            echo
+            echo "=== TESTS ==="
+            tail -n 100 .verify-tests.log 2>/dev/null || true
+            echo
+            echo "=== LINT ==="
+            tail -n 100 .verify-lint.log 2>/dev/null || true
+          } > .t003-email-verification-final2.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .t003-email-verification-final2.txt
+          git commit -m "chore(ci): record final email verification checks [skip ci]" || true
+          git push
+      - name: Enforce
+        if: always()
+        run: |
+          test "${{ steps.tests.outcome }}" = "success"
+          test "${{ steps.lint.outcome }}" = "success"
