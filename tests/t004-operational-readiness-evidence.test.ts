@@ -50,6 +50,22 @@ test("operational ownership matrix records the approved primary owner without br
   assert.match(ownership, /must not be marked complete while Recovery Operator and Independent Reviewer remain `UNASSIGNED`/);
 });
 
+test("disposable recovery runner is hard-bound to synthetic localhost test databases", () => {
+  const runner = source("scripts/run-t004-disposable-recovery-exercise.ts");
+
+  assert.match(runner, /const HOST = "127\.0\.0\.1"/);
+  assert.match(runner, /const PORT = "5432"/);
+  assert.match(runner, /loyalflow_t004_\$\{suffix\}_source_test/);
+  assert.match(runner, /loyalflow_t004_\$\{suffix\}_restore_test/);
+  assert.match(runner, /LOYALFLOW_ALLOW_DISPOSABLE_DB !== "1"/);
+  assert.match(runner, /process\.argv\[2\] !== "--execute"/);
+  assert.match(runner, /Synthetic source validation failed before backup/);
+  assert.match(runner, /Restore validation failed/);
+  assert.match(runner, /synthetic disposable-local exercise only; this is not production RPO\/RTO evidence/);
+  assert.doesNotMatch(runner, /DATABASE_URL/);
+  assert.doesNotMatch(runner, /production database/i);
+});
+
 test("backup and incident runbooks preserve database recovery safety boundaries", () => {
   const backup = source("F19_BACKUP_RECOVERY_CHECKLIST.md");
   const incident = source("F19_INCIDENT_RESPONSE_RUNBOOK.md");
