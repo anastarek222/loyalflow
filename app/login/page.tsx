@@ -49,8 +49,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {resetSucceeded && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">Your password has been updated. Sign in with your new password.</div>}
         {passwordChanged && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">{getPasswordChangeCopy(language).success}</div>}
         {verificationSucceeded && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">Your email has been verified. You can sign in now.</div>}
-        {mfaEnabled && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">MFA is enabled. Super Admin sign-in now requires an authenticator or recovery code.</div>}
-        {hasError && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">بيانات تسجيل الدخول أو رمز الأمان غير صحيحة.</div>}
+        {mfaEnabled && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">MFA is enabled. Use the Super Admin sign-in page for your authenticator or recovery code.</div>}
+        {hasError && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">بيانات تسجيل الدخول غير صحيحة.</div>}
 
         <form action={loginAction} className="space-y-5">
           <div>
@@ -63,15 +63,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <input id="password" name="password" type="password" required minLength={10} autoComplete="current-password" dir="ltr" placeholder="Enter your password" className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15" />
           </div>
 
-          <div>
-            <label htmlFor="mfaCode" className="mb-2 block text-sm font-semibold text-foreground-muted">Authenticator or recovery code <span className="font-normal text-foreground-subtle">(Super Admin)</span></label>
-            <input id="mfaCode" name="mfaCode" type="text" autoComplete="one-time-code" dir="ltr" placeholder="123456 or recovery code" maxLength={64} className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15" />
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <Link href="/mfa/setup" className="font-semibold text-primary hover:underline">Set up Super Admin MFA</Link>
-            <Link href="/verify-email/resend" className="font-semibold text-primary hover:underline">Resend verification</Link>
+          <div className="flex items-center justify-between gap-3 text-sm">
             <Link href="/forgot-password" className="font-semibold text-primary hover:underline">Forgot password?</Link>
+            <Link href="/login/super-admin" className="text-foreground-subtle hover:text-primary hover:underline">Super Admin sign-in</Link>
           </div>
 
           <button type="submit" className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white transition hover:bg-primary-hover">Sign in</button>
