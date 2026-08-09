@@ -4,11 +4,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { createEmailVerificationToken } from "@/lib/auth/email-verification";
 import {
   EmailVerificationEmailError,
   sendEmailVerificationEmail,
 } from "@/lib/auth/email-verification-email";
+import { issueEmailVerificationToken } from "@/lib/auth/email-verification-runtime";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
@@ -48,17 +48,8 @@ export async function resendEmailVerificationAction(formData: FormData) {
     redirect("/verify-email/resend?sent=1");
   }
 
-  const token = createEmailVerificationToken();
-
-  await prisma.$executeRaw`
-    INSERT INTO "EmailVerificationToken" (
-      "id", "userId", "tokenHash", "expiresAt", "usedAt", "createdAt"
-    ) VALUES (
-      ${token.id}, ${user.id}, ${token.tokenHash}, ${token.expiresAt}, NULL, CURRENT_TIMESTAMP
-    )
-  `;
-
   try {
+    const token = await issueEmailVerificationToken({ userId: user.id });
     await sendEmailVerificationEmail({ email, token: token.token });
   } catch (error) {
     if (error instanceof EmailVerificationEmailError) {
