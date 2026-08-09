@@ -1,16 +1,27 @@
 # T007 E2E and Performance Matrix Verification
 
-Status: verification pending executable gate evidence.
+Status: executable quality gates passed for the current runtime/test/config head.
 
-Runtime/test/config head: `5faaeb9be7367fd2add1febd301e36c8cf02fc7e`.
+Runtime/test/config head: `7a11b2410a455b4b48c14f7709d65418de899837`.
 
-Static review before executable verification found and fixed two material issues:
+Verification supplied by the accountable owner on 2026-08-09:
 
-- the p95 rejection test originally used only one slow sample out of twenty, which does not exceed the nearest-rank p95; the fixture now uses two slow samples so the asserted p95 failure is real;
-- the staging performance probe originally accepted any HTTPS host; it now performs a read-only `/api/health` preflight and requires `ok: true`, `status: "ready"`, and `environment: "staging"` before collecting performance samples.
+- `pnpm run typecheck`: PASS.
+- `pnpm run lint`: PASS with 0 errors and 2 pre-existing warnings in `app/account/security/actions.ts` for unused `_previousState` and `_formData` parameters.
+- `pnpm test`: PASS — 795/795 tests, 0 failures.
+- T007 performance-budget behavioral coverage passed for healthy evidence, undersampling, latency/error rejection, malformed durations, and malformed HTTP statuses.
+- Prisma Client generation: PASS — Prisma Client 7.9.0.
+- Next.js production build: PASS — Next.js 16.2.11 (webpack).
+- Production build compilation and TypeScript phases completed successfully.
+- Static generation: PASS — 26/26 pages.
+- Build used the process-scoped `NEXT_PUBLIC_APP_URL=https://loyalflow-gray.vercel.app` override.
 
-Performance samples now also reject malformed HTTP status values as evidence.
+Provider/runtime note:
 
-This record intentionally does not claim typecheck, lint, unit tests, build, browser E2E, or staging performance as passing until those commands have actually executed against this head (or a documented evidence-only descendant with no runtime/config changes).
+- The Vercel status for this branch remains blocked by the account build-rate limit, not by a repository code failure.
+- The actual isolated staging performance probe is intentionally not claimed as executed because a provider-side isolated staging host is not yet activated.
+- No Production deployment, database command, migration execution, schema/seed/reset/backfill work, environment-variable mutation, provider configuration change, dependency change, or lockfile change was performed for this verification.
 
-Provider note: Vercel attempted verification for this branch but is blocked by the account build-rate limit. No Production deployment, database command, migration execution, environment-variable mutation, or provider configuration change is authorized by this record.
+Slice status: `READY FOR REVIEW`.
+
+This verification closes the repository-local implementation quality gates for the E2E/performance matrix foundation only. T007 as a whole still requires provider-side isolated staging activation/runtime proof, actual staging E2E/performance evidence, 5-10 business Closed Beta evidence, issue log, and Go/No-Go decision.
