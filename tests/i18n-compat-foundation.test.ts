@@ -8,6 +8,7 @@ import {
   normalizeLocale,
   SUPPORTED_LOCALES,
 } from "../lib/i18n/config";
+import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "../lib/i18n/request";
 
 test("T005 supports exactly English and Arabic with English fallback", () => {
   assert.deepEqual(SUPPORTED_LOCALES, ["en", "ar"]);
@@ -35,4 +36,12 @@ test("T005 resolves typed messages from the selected locale", () => {
 
   assert.equal(translate("en", key), "Sign in");
   assert.equal(translate("ar", key), "تسجيل الدخول");
+});
+
+test("T005 resolves the SSR locale only from the bounded locale cookie", () => {
+  assert.equal(LOCALE_COOKIE_NAME, "loyalflow_locale");
+  assert.equal(resolveRequestLocale(undefined), "en");
+  assert.equal(resolveRequestLocale("fr"), "en");
+  assert.equal(resolveRequestLocale("ar"), "ar");
+  assert.equal(resolveRequestLocale("AR-eg"), "ar");
 });
