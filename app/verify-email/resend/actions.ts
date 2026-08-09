@@ -8,7 +8,10 @@ import { sendEmailVerificationEmail } from "@/lib/auth/email-verification-email"
 import { issueEmailVerificationToken } from "@/lib/auth/email-verification-runtime";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
 
 const resendSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -16,7 +19,7 @@ const resendSchema = z.object({
 
 export async function resendEmailVerificationAction(formData: FormData) {
   const requestHeaders = await headers();
-  const limit = rateLimit(
+  const limit = await distributedRateLimit(
     `email-verification-resend:${getClientAddress(requestHeaders)}`,
     { limit: 5, windowMs: 15 * 60 * 1000 },
   );
