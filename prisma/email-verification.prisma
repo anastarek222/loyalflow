@@ -7,7 +7,7 @@ model EmailVerificationState {
 
 model EmailVerificationToken {
   id        String   @id @default(cuid())
-  userId    String
+  userId    String   @unique
   tokenHash String   @unique
   expiresAt DateTime
   usedAt    DateTime?
