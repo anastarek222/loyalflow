@@ -30,10 +30,21 @@ However, the screenshot shows `DATABASE_URL` as a single Vercel variable scoped 
 
 `LOYALFLOW_ENVIRONMENT` is visible only for Production. No provider-side evidence in these screenshots establishes a dedicated `staging` environment identity.
 
+## Approved corrective action
+
+On 2026-08-09, the project owner explicitly approved separating the Preview `DATABASE_URL` from Production.
+
+This approval is limited to Vercel/provider configuration needed to ensure Preview uses a distinct non-production database connection. It does **not** authorise any production database command, migration, data copy, backfill, schema change, destructive database action, production deployment, or unrelated provider mutation.
+
+Execution remains incomplete until provider evidence shows:
+
+- the Production `DATABASE_URL` is scoped to Production only;
+- Preview has its own `DATABASE_URL` value scoped to Preview only;
+- the Preview value points to a non-production database target;
+- no production customer data is intentionally copied into the Preview database as part of this change.
+
 ## T004 conclusion
 
-Status: **ISOLATION NOT VERIFIED**.
+Status: **CORRECTIVE CHANGE APPROVED — EXECUTION NOT YET VERIFIED**.
 
-The repository must not claim that staging/preview database isolation is complete from these screenshots. Before T004 closeout, provider evidence must demonstrate that non-production deployments cannot use the production database or production customer data.
-
-A corrective provider change, if chosen, is a separately controlled action because it changes environment-variable/provider configuration. This evidence file authorises no Vercel mutation, secret change, deployment, or database command.
+The repository must not claim that staging/preview database isolation is complete until post-change provider evidence is captured and reviewed.
