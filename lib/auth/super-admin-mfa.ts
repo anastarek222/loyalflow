@@ -153,3 +153,14 @@ export function createRecoveryCodes(count = 10) {
     return `${raw.slice(0, 6)}-${raw.slice(6)}`;
   });
 }
+
+export function isSuperAdminMfaLoginAllowed(input: {
+  role: string;
+  enabled: boolean;
+  hasCode: boolean;
+  rateAllowed: boolean;
+  codeValid: boolean;
+}) {
+  if (input.role !== "SUPER_ADMIN") return true;
+  return input.enabled && input.hasCode && input.rateAllowed && input.codeValid;
+}
