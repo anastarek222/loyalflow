@@ -7,6 +7,7 @@ import {
   createTotpUri,
   generateTotpCode,
   hashRecoveryCode,
+  isSuperAdminMfaLoginAllowed,
   openTotpSecret,
   sealTotpSecret,
   verifyTotpCode,
@@ -31,19 +32,11 @@ test("TOTP verification accepts current code and bounded clock skew only", () =>
 
   assert.equal(verifyTotpCode({ secret, code: current, now }), true);
   assert.equal(
-    verifyTotpCode({
-      secret,
-      code: generateTotpCode(secret, now - 30_000),
-      now,
-    }),
+    verifyTotpCode({ secret, code: generateTotpCode(secret, now - 30_000), now }),
     true,
   );
   assert.equal(
-    verifyTotpCode({
-      secret,
-      code: generateTotpCode(secret, now - 90_000),
-      now,
-    }),
+    verifyTotpCode({ secret, code: generateTotpCode(secret, now - 90_000), now }),
     false,
   );
   assert.equal(verifyTotpCode({ secret, code: "12345", now }), false);
@@ -69,4 +62,35 @@ test("recovery codes are one-time material designed for hash-only persistence", 
   const hash = hashRecoveryCode(codes[0]);
   assert.match(hash, /^[a-f0-9]{64}$/);
   assert.equal(hashRecoveryCode(codes[0].replace("-", "").toLowerCase()), hash);
+});
+
+test("Super Admin login is denied until enrollment and a valid rate-limited second factor succeed", () => {
+  const allowed = (overrides: Partial<Parameters<typeof isSuperAdminMfaLoginAllowed>[0]> = {}) =>
+    isSuperAdminMfaLoginAllowed({
+      role: "SUPER_ADMIN",
+      enabled: true,
+      hasCode: true,
+      rateAllowed: true,
+      codeValid: true,
+      ...overrides,
+    });
+
+  assert.equal(allowed(), true);
+  assert.equal(allowed({ enabled: false }), false);
+  assert.equal(allowed({ hasCode: false }), false);
+  assert.equal(allowed({ rateAllowed: false }), false);
+  assert.equal(allowed({ codeValid: false }), false);
+});
+
+test("MFA enforcement does not alter non-Super-Admin login policy", () => {
+  assert.equal(
+    isSuperAdminMfaLoginAllowed({
+      role: "OWNER",
+      enabled: false,
+      hasCode: false,
+      rateAllowed: false,
+      codeValid: false,
+    }),
+    true,
+  );
 });
