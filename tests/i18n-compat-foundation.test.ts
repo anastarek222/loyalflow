@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFile } from "node:fs/promises";
 
 import { messages, translate, type MessageKey } from "../lib/i18n/catalog";
 import {
@@ -36,6 +37,8 @@ test("T005 resolves typed messages from the selected locale", () => {
 
   assert.equal(translate("en", key), "Sign in");
   assert.equal(translate("ar", key), "تسجيل الدخول");
+  assert.equal(translate("ar", "auth.email"), "البريد الإلكتروني");
+  assert.equal(translate("en", "auth.forgotPassword"), "Forgot password?");
 });
 
 test("T005 resolves the SSR locale only from the bounded locale cookie", () => {
@@ -44,4 +47,30 @@ test("T005 resolves the SSR locale only from the bounded locale cookie", () => {
   assert.equal(resolveRequestLocale("fr"), "en");
   assert.equal(resolveRequestLocale("ar"), "ar");
   assert.equal(resolveRequestLocale("AR-eg"), "ar");
+});
+
+test("T005 login entrypoint reads the locale cookie and renders locale-aware direction", async () => {
+  const source = await readFile(new URL("../app/login/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /cookieStore\.get\(LOCALE_COOKIE_NAME\)/);
+  assert.match(source, /const direction = getLocaleDirection\(locale\)/);
+  assert.match(source, /<main lang=\{locale\} dir=\{direction\}/);
+  assert.match(source, /<LanguageSwitcher locale=\{locale\} \/>/);
+  assert.match(source, /translate\(locale, "auth\.signIn"\)/);
+  assert.match(source, /translate\(locale, "auth\.email"\)/);
+  assert.match(source, /translate\(locale, "auth\.password"\)/);
+});
+
+test("T005 language switcher persists only the bounded locale cookie and refreshes SSR", async () => {
+  const source = await readFile(
+    new URL("../components/i18n/language-switcher.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /document\.cookie = `\$\{LOCALE_COOKIE_NAME\}=\$\{nextLocale\}/);
+  assert.match(source, /Path=\//);
+  assert.match(source, /SameSite=Lax/);
+  assert.match(source, /router\.refresh\(\)/);
+  assert.match(source, /setLocale\("en"\)/);
+  assert.match(source, /setLocale\("ar"\)/);
 });
