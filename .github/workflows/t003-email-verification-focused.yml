@@ -1,0 +1,116 @@
+name: T003 Email Verification Focused
+
+on:
+  push:
+    branches:
+      - codex/t003-email-verification
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Register migration history
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          verifier = Path("scripts/verify-local-database.ts")
+          text = verifier.read_text()
+          anchor = '  "20260809033000_add_owner_invitation_lifecycle",\n'
+          addition = anchor + '  "20260809044000_add_email_verification_lifecycle",\n'
+          if '"20260809044000_add_email_verification_lifecycle"' not in text:
+              if anchor not in text:
+                  raise SystemExit("migration verifier anchor not found")
+              verifier.write_text(text.replace(anchor, addition, 1))
+
+          readiness = Path("tests/production-readiness.test.ts")
+          text = readiness.read_text()
+          text = text.replace(
+              "assert.equal(committedMigrations.length, 43);",
+              "assert.equal(committedMigrations.length, 44);",
+              1,
+          )
+          anchor = '''  assert.ok(\n    committedMigrations.includes("20260809033000_add_owner_invitation_lifecycle"),\n    "Owner invitation lifecycle must be part of the reviewed migration history.",\n  );\n'''
+          addition = anchor + '''  assert.ok(\n    committedMigrations.includes("20260809044000_add_email_verification_lifecycle"),\n    "Email verification lifecycle must be part of the reviewed migration history.",\n  );\n'''
+          if 'Email verification lifecycle must be part of the reviewed migration history.' not in text:
+              if anchor not in text:
+                  raise SystemExit("readiness anchor not found")
+              text = text.replace(anchor, addition, 1)
+          readiness.write_text(text)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/verify-local-database.ts tests/production-readiness.test.ts
+          git commit -m "test(db): register email verification migration [skip ci]" || true
+          git push
+      - name: Focused tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          node --import tsx --test \
+            tests/email-verification-lifecycle.test.ts \
+            tests/email-verification-public-flow.test.ts \
+            tests/owner-invitation-lifecycle.test.ts \
+            > .t003-email-verification-tests.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Lint slice
+        id: lint
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm exec eslint \
+            app/verify-email/actions.ts \
+            app/verify-email/page.tsx \
+            lib/auth/email-verification.ts \
+            lib/auth/email-verification-runtime.ts \
+            lib/auth/email-verification-email.ts \
+            lib/auth/owner-invitation-runtime.ts \
+            tests/email-verification-lifecycle.test.ts \
+            tests/email-verification-public-flow.test.ts \
+            tests/production-readiness.test.ts \
+            scripts/verify-local-database.ts \
+            > .t003-email-verification-lint.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Record evidence
+        if: always()
+        run: |
+          {
+            echo "source_commit=513a43b64942e4a12e997568848ce856fa05ce04"
+            echo "tests=${{ steps.tests.outcome }}"
+            echo "tests_exit=${{ steps.tests.outputs.exit_code }}"
+            echo "lint=${{ steps.lint.outcome }}"
+            echo "lint_exit=${{ steps.lint.outputs.exit_code }}"
+            echo
+            echo "=== TESTS ==="
+            tail -n 80 .t003-email-verification-tests.log 2>/dev/null || true
+            echo
+            echo "=== LINT ==="
+            tail -n 80 .t003-email-verification-lint.log 2>/dev/null || true
+          } > .t003-email-verification-focused.txt
+          git add .t003-email-verification-focused.txt
+          git commit -m "chore(ci): record email verification focused checks [skip ci]" || true
+          git push
+      - name: Enforce
+        if: always()
+        run: |
+          test "${{ steps.tests.outcome }}" = "success"
+          test "${{ steps.lint.outcome }}" = "success"
