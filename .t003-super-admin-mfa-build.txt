@@ -1,0 +1,34 @@
+source_commit=HEAD^
+build=failure
+=== BUILD ===
+$ prisma generate && next build --webpack
+◇ injected env (0) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma.
+
+✔ Generated Prisma Client (7.9.0) to ./generated/prisma in 356ms
+
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+▲ Next.js 16.2.11 (webpack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 40s
+  Running TypeScript ...
+  Finished TypeScript in 25.1s ...
+  Collecting page data using 3 workers ...
+Error [EnvironmentValidationError]: Missing required server environment variable: NEXT_PUBLIC_APP_URL.
+    at k (.next/server/chunks/7962.js:1:305166)
+    at <unknown> (.next/server/chunks/7962.js:1:305830)
+
+> Build error occurred
+Error: Failed to collect page data for /api/analytics
+    at ignore-listed frames {
+  type: 'Error'
+}
+[ELIFECYCLE] Command failed with exit code 1.
