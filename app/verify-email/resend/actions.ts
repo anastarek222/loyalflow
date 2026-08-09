@@ -4,10 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import {
-  EmailVerificationEmailError,
-  sendEmailVerificationEmail,
-} from "@/lib/auth/email-verification-email";
+import { sendEmailVerificationEmail } from "@/lib/auth/email-verification-email";
 import { issueEmailVerificationToken } from "@/lib/auth/email-verification-runtime";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
@@ -52,13 +49,9 @@ export async function resendEmailVerificationAction(formData: FormData) {
     const token = await issueEmailVerificationToken({ userId: user.id });
     await sendEmailVerificationEmail({ email, token: token.token });
   } catch (error) {
-    if (error instanceof EmailVerificationEmailError) {
-      logServerError("EMAIL_VERIFICATION_RESEND_DELIVERY_FAILED", error, {
-        userId: user.id,
-      });
-      redirect("/verify-email/resend?sent=1");
-    }
-    throw error;
+    logServerError("email_verification_resend_failed", error, {
+      userId: user.id,
+    });
   }
 
   redirect("/verify-email/resend?sent=1");
