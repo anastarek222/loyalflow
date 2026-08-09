@@ -68,23 +68,20 @@ This closes the T004 Preview/staging isolation requirement covered by the record
 
 ## 4. Monitoring and alert routing
 
-Current state: **PARTIAL — external alert delivery not verified**
+Current state: **VERIFIED — external monitor and alert delivery confirmed**
 
 Repository review confirms that `/api/health` is suitable as an uptime/readiness monitor target because it performs a real database readiness probe and returns HTTP `503` with `status: "unavailable"` when the probe fails. The endpoint is dynamic and marked `Cache-Control: no-store`, so a monitor will not be satisfied by a stale cached success response.
 
-The repository and Vercel evidence also show Runtime Logs, Observability surfaces, and incident runbooks. They do not establish a configured external alert policy or delivered alert to an accountable recipient.
+Sanitized external-monitoring evidence is recorded in `T004_EXTERNAL_MONITORING_EVIDENCE_2026-08-09.md` and establishes:
 
-Still required before T004 closeout:
+- UptimeRobot HTTP/S monitor configured against `https://loyalflow-gray.vercel.app/api/health`.
+- Check interval: 5 minutes.
+- Account-associated e-mail notification channel enabled for the accountable On-call Operator; the private address is not stored in the repository.
+- Provider UI showed the monitor `Up` and 100% uptime at the time of capture.
+- UptimeRobot built-in test notification was sent.
+- User-supplied delivery evidence showed both synthetic `TEST: Monitor is DOWN` and `TEST: Monitor is UP` notifications received through Gmail.
 
-- External uptime/error monitoring or an approved equivalent configured for the intended environment.
-- Primary target: `/api/health`.
-- Trigger condition should include timeout/network failure or non-2xx response, including the readiness `503` path.
-- Alert severity mapped to the incident runbook.
-- Accountable recipient: current On-call Operator, Anas Tarek (`anastarek222`), without storing private contact data in the repository.
-- Sanitized test-alert or equivalent routing verification with timestamp and outcome.
-- No API key, webhook secret, private contact detail, or provider credential committed.
-
-Configuration of a provider or external monitoring service remains a separately controlled provider mutation and is not authorized by this document.
+This closes the external uptime monitoring and end-to-end alert-delivery evidence gap without requiring a real production outage.
 
 ## 5. Incident and rollback rehearsal
 
@@ -98,7 +95,7 @@ T004 remains open until all required closeout evidence is resolved. Current unre
 
 1. Production/service RPO/RTO remain unverified; local procedure timings must not be promoted to production targets achieved.
 2. Independent Reviewer is named and reviews the evidence.
-3. External monitoring/alert routing is configured and delivery is verified.
-4. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
+3. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
+4. Normal latest-head code-quality gates are run and pass before Draft PR.
 
 Until then, the valid completion status is **NOT READY FOR DRAFT PR** for T004 closeout.
