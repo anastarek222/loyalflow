@@ -2,6 +2,7 @@
 
 import { auth, signOut } from "@/auth";
 import { parseActivityRequestContext } from "@/lib/activity/request-context";
+import { isValidAuthVersion } from "@/lib/auth/auth-version";
 import { processPasswordChangeSubmission } from "@/lib/auth/password-change-action";
 import type { PasswordChangeError } from "@/lib/auth/password-change-copy";
 import { changeAuthenticatedUserPassword } from "@/lib/auth/password-change";
@@ -72,8 +73,12 @@ export async function logoutEverywhereAction(
 ): Promise<LogoutEverywhereState> {
   const session = await auth();
 
-  if (!session?.user?.id || typeof session.user.authVersion !== "number") {
+  if (!session?.user?.id) {
     redirect("/login");
+  }
+
+  if (!isValidAuthVersion(session.user.authVersion)) {
+    return { error: "failed" };
   }
 
   try {
