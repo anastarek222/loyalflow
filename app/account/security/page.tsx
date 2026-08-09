@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/page-layout/page-container";
 import { Card } from "@/components/ui/card";
 import { getLogoutEverywhereCopy } from "@/lib/auth/logout-everywhere-copy";
 import { getPasswordChangeCopy } from "@/lib/auth/password-change-copy";
+import { getSecurityNotificationCopy } from "@/lib/auth/security-notification";
 import { normalizeLanguage } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 
@@ -30,6 +31,7 @@ export default async function AccountSecurityPage() {
       take: 10,
       select: {
         id: true,
+        eventType: true,
         title: true,
         message: true,
         createdAt: true,
@@ -124,27 +126,38 @@ export default async function AccountSecurityPage() {
           <p className="mt-5 text-sm text-foreground-muted">{securityCopy.empty}</p>
         ) : (
           <ol className="mt-5 space-y-3">
-            {securityNotifications.map((notification) => (
-              <li
-                key={notification.id}
-                className="rounded-[var(--lf-radius-input)] border border-border px-4 py-3"
-              >
-                <p className="text-sm font-bold text-foreground">
-                  {notification.title}
-                </p>
-                <p className="mt-1 text-sm leading-6 text-foreground-muted">
-                  {notification.message}
-                </p>
-                <time
-                  dateTime={notification.createdAt.toISOString()}
-                  className="mt-2 block text-xs text-foreground-muted"
+            {securityNotifications.map((notification) => {
+              const notificationCopy = getSecurityNotificationCopy(
+                notification.eventType,
+                language,
+                {
+                  title: notification.title,
+                  message: notification.message,
+                },
+              );
+
+              return (
+                <li
+                  key={notification.id}
+                  className="rounded-[var(--lf-radius-input)] border border-border px-4 py-3"
                 >
-                  {notification.createdAt.toLocaleString(
-                    language === "AR" ? "ar-EG" : "en-US",
-                  )}
-                </time>
-              </li>
-            ))}
+                  <p className="text-sm font-bold text-foreground">
+                    {notificationCopy.title}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-foreground-muted">
+                    {notificationCopy.message}
+                  </p>
+                  <time
+                    dateTime={notification.createdAt.toISOString()}
+                    className="mt-2 block text-xs text-foreground-muted"
+                  >
+                    {notification.createdAt.toLocaleString(
+                      language === "AR" ? "ar-EG" : "en-US",
+                    )}
+                  </time>
+                </li>
+              );
+            })}
           </ol>
         )}
       </Card>
