@@ -1,6 +1,6 @@
 # T004 Vercel Environment Evidence — 2026-08-09
 
-Source: user-provided read-only screenshots of the Vercel project Environment Variables, Storage, and Deployment pages plus pasted Vercel build logs. Secret values were not inspected or recorded.
+Source: user-provided read-only screenshots of the Vercel project Environment Variables, Storage, Neon integration, and Deployment pages plus pasted Vercel build logs. Secret values were not inspected or recorded.
 
 ## Observed environment scoping
 
@@ -21,23 +21,37 @@ Earlier screenshots showed:
 
 The original evidence also showed `DATABASE_URL` scoped to both Production and Preview. The project owner approved separating the Preview database connection from Production.
 
-Later screenshots captured after that corrective change now show:
+Later screenshots captured after that corrective change showed:
 
 - one `DATABASE_URL` entry scoped to **Production only**;
-- a separate `DATABASE_URL` entry scoped to **Preview only**;
-- Vercel confirms the Preview-scoped variable was added successfully and requires a new deployment before the change takes effect.
+- a separate Preview-only placeholder `DATABASE_URL`, which was subsequently removed before connecting Neon;
+- no production scope selected while connecting the new Neon resource.
 
-No secret value was inspected or recorded. The provider-side target behind the Preview value is still not independently identified by the available evidence.
+No secret value was inspected or recorded.
 
 ## Storage/provider evidence
 
-The Vercel project Storage page shows no connected database resource and offers only `Connect Database` / `Create Database`. Therefore the current Preview `DATABASE_URL` is not backed by a Vercel-managed database resource visible in the project Storage inventory.
+The Vercel project initially had no connected database resource. The project owner approved provisioning a new **Neon PostgreSQL non-production database for Preview only**.
 
-This means the underlying Preview database target must be identified outside this Storage page before T004 can claim an isolated non-production database boundary.
+Provider-side screenshots then show:
+
+- Neon resource created successfully: `neon-alizarin-pendant`;
+- Neon status: `Available`;
+- plan: `Free`;
+- region: Washington, D.C., USA (East) / `iad1`;
+- Neon Auth disabled;
+- the connection configuration selected `Preview` only;
+- `Production` was explicitly not selected;
+- `Development` was not selected;
+- `Create Database Branch For Deployment` had `Preview` enabled and `Production` disabled;
+- the resource was connected to the Vercel project `loyalflow`;
+- Neon/Vercel exposes a masked `DATABASE_URL` and related PostgreSQL connection variables for the connected resource.
+
+These screenshots establish that the provider resource used for Preview is a newly provisioned Neon PostgreSQL resource and not the existing production database resource. No production customer data was copied as part of the provisioning flow shown in the evidence.
 
 ## Preview deployment evidence
 
-A Preview deployment from branch `docs/t004-operational-readiness-audit` at commit `8baa28b` failed during dependency installation.
+An earlier Preview deployment from branch `docs/t004-operational-readiness-audit` at commit `8baa28b` failed during dependency installation.
 
 Relevant sanitized build-log facts:
 
@@ -47,19 +61,24 @@ Relevant sanitized build-log facts:
 - Prisma failed before application build with `PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL`;
 - Vercel reported `Command "pnpm install" exited with 1`.
 
-This failure is useful evidence: the Preview deployment did **not** consume a usable Preview `DATABASE_URL` at that deployment attempt. No application database connection, migration, or data operation occurred in the shown failure path; the failure happened while loading Prisma configuration during `prisma generate`.
+This failure occurred before the Neon Preview database was connected and therefore does not represent the corrected configuration. No application database connection, migration, or data operation occurred in that failure path.
 
-Because the visible failed deployment used commit `8baa28b`, while the later screenshot showing the Preview-only `DATABASE_URL` was added after that point, this failure does not by itself prove the newly added Preview variable is still unavailable. A fresh Preview deployment is required after the corrected Preview variable is configured with a real non-production target.
+A fresh Preview deployment is still required after the Neon connection so that the corrected Preview environment can be observed in use.
 
 ## Security interpretation
 
-The provider evidence now proves that Production and Preview no longer share the same Vercel `DATABASE_URL` entry. This closes the environment-variable scope defect.
+Provider evidence now demonstrates a real non-production PostgreSQL boundary for Preview:
 
-Preview/Staging database isolation is still **not fully verified** because the available screenshots do not prove that the Preview-only value points to a distinct non-production database target. A separate environment-variable entry is necessary but not sufficient: the underlying database identity must also be non-production and must not contain production customer data.
+- Production retains its own Production-only `DATABASE_URL` entry;
+- Preview is connected to a separately provisioned Neon PostgreSQL resource;
+- the Neon connection was scoped to Preview only;
+- Production was explicitly excluded from the Neon connection;
+- Preview deployment database branching is enabled;
+- no production customer data was intentionally copied into the new resource during provisioning.
 
-The separate Production and Preview entries for `AUTH_SECRET` and `JWT_SECRET` remain positive evidence of a distinct secret boundary for those credentials.
+This closes the provider target identity gap for staging/preview database isolation.
 
-`LOYALFLOW_ENVIRONMENT` remains visible only for Production in the provided evidence. No provider-side evidence yet establishes a dedicated `staging` identity.
+`LOYALFLOW_ENVIRONMENT` remains visible only for Production in the earlier evidence, so a dedicated application-level staging identity is not yet independently verified. A fresh Preview deployment is also still required to prove the corrected environment is consumable by the application build/runtime.
 
 ## Production deployment evidence
 
@@ -69,19 +88,23 @@ A Vercel deployment screenshot shows a production deployment in `Ready Latest` s
 
 On 2026-08-09, the project owner explicitly approved separating the Preview `DATABASE_URL` from Production.
 
-The project owner then explicitly approved proceeding with a new **Neon PostgreSQL non-production database for Preview only**. This provisioning approval is limited to creating and connecting that isolated Preview database. It does **not** authorise any production database command, migration, production data copy, backfill, schema change, destructive database action, production deployment, or unrelated provider mutation.
+The project owner then explicitly approved proceeding with a new **Neon PostgreSQL non-production database for Preview only**. This provisioning approval was limited to creating and connecting that isolated Preview database. It did **not** authorise any production database command, migration, production data copy, backfill, schema change, destructive database action, production deployment, or unrelated provider mutation.
 
-Execution is partially verified:
+Execution status:
 
 - [x] Production `DATABASE_URL` is scoped to Production only.
-- [x] Preview has its own `DATABASE_URL` scoped to Preview only.
-- [ ] Neon non-production Preview database is provisioned and connected.
-- [ ] The Preview value is proven to point to that distinct non-production target.
-- [ ] No production customer data is intentionally copied into the Preview database as part of this change.
-- [ ] A fresh Preview deployment after the corrected variable is configured succeeds and is verified.
+- [x] Preview placeholder `DATABASE_URL` removed before provider connection.
+- [x] Neon non-production Preview database provisioned.
+- [x] Neon resource connected to `loyalflow` with Preview only.
+- [x] Production excluded from the Neon connection.
+- [x] Preview database branching enabled.
+- [x] Preview target is proven to be a distinct Neon non-production PostgreSQL resource.
+- [x] No production customer data was intentionally copied during the provisioning flow.
+- [ ] Fresh Preview deployment after the Neon connection succeeds and is verified.
+- [ ] Dedicated application-level staging/preview environment identity is verified.
 
 ## T004 conclusion
 
-Status: **NEON PREVIEW DATABASE PROVISIONING APPROVED — EXECUTION IN PROGRESS**.
+Status: **PREVIEW DATABASE ISOLATION VERIFIED — FRESH PREVIEW DEPLOYMENT STILL REQUIRED**.
 
-The repository must not claim that staging/preview database isolation is complete until the Neon Preview database target is independently verified as non-production and a fresh Preview deployment using the corrected configuration is observed.
+The repository must not claim T004 staging/preview readiness complete until a fresh Preview deployment using the connected Neon resource succeeds and the application-level environment identity is confirmed.
