@@ -13,8 +13,8 @@ import {
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
 import {
+  distributedRateLimit,
   getClientAddress,
-  rateLimit,
 } from "@/lib/utils/rate-limiter";
 
 const forgotPasswordSchema = z.object({
@@ -26,7 +26,7 @@ export async function forgotPasswordAction(
 ) {
   const requestHeaders = await headers();
 
-  const limit = rateLimit(
+  const limit = await distributedRateLimit(
     `password-reset-request:${getClientAddress(requestHeaders)}`,
     {
       limit: 5,
