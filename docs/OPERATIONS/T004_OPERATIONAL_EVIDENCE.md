@@ -41,11 +41,10 @@ Current state: **PARTIAL**
 
 The authoritative assignment matrix is `T004_OPERATIONAL_OWNERSHIP.md`.
 
-Explicitly assigned to Anas Tarek (`anastarek222`): Incident Commander, Release Operator, Database Owner, Platform Owner, On-call Operator, and Security Owner.
+Explicitly assigned to Anas Tarek (`anastarek222`): Incident Commander, Release Operator, Database Owner, Recovery Operator, Platform Owner, On-call Operator, and Security Owner.
 
 Still open:
 
-- Recovery Operator: `UNASSIGNED`.
 - Independent Reviewer: `UNASSIGNED`.
 - Backup/alternate owners remain unresolved where continuity requires them.
 
@@ -71,15 +70,21 @@ This closes the T004 Preview/staging isolation requirement covered by the record
 
 Current state: **PARTIAL — external alert delivery not verified**
 
-The repository and Vercel evidence show health endpoints, Runtime Logs, Observability surfaces, and incident runbooks. They do not establish a configured external alert policy or delivered alert to an accountable recipient.
+Repository review confirms that `/api/health` is suitable as an uptime/readiness monitor target because it performs a real database readiness probe and returns HTTP `503` with `status: "unavailable"` when the probe fails. The endpoint is dynamic and marked `Cache-Control: no-store`, so a monitor will not be satisfied by a stale cached success response.
+
+The repository and Vercel evidence also show Runtime Logs, Observability surfaces, and incident runbooks. They do not establish a configured external alert policy or delivered alert to an accountable recipient.
 
 Still required before T004 closeout:
 
 - External uptime/error monitoring or an approved equivalent configured for the intended environment.
+- Primary target: `/api/health`.
+- Trigger condition should include timeout/network failure or non-2xx response, including the readiness `503` path.
 - Alert severity mapped to the incident runbook.
-- An accountable named recipient.
+- Accountable recipient: current On-call Operator, Anas Tarek (`anastarek222`), without storing private contact data in the repository.
 - Sanitized test-alert or equivalent routing verification with timestamp and outcome.
 - No API key, webhook secret, private contact detail, or provider credential committed.
+
+Configuration of a provider or external monitoring service remains a separately controlled provider mutation and is not authorized by this document.
 
 ## 5. Incident and rollback rehearsal
 
@@ -92,9 +97,8 @@ Current state: **TABLETOP REHEARSAL RECORDED**
 T004 remains open until all required closeout evidence is resolved. Current unresolved items are principally:
 
 1. Production/service RPO/RTO remain unverified; local procedure timings must not be promoted to production targets achieved.
-2. Recovery Operator is named.
-3. Independent Reviewer is named and reviews the evidence.
-4. External monitoring/alert routing is configured and delivery is verified.
-5. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
+2. Independent Reviewer is named and reviews the evidence.
+3. External monitoring/alert routing is configured and delivery is verified.
+4. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
 
 Until then, the valid completion status is **NOT READY FOR DRAFT PR** for T004 closeout.
