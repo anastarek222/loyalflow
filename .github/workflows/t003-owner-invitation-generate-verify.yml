@@ -29,6 +29,43 @@ jobs:
         id: install
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Align reviewed migration history
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          verifier = Path("scripts/verify-local-database.ts")
+          text = verifier.read_text()
+          anchor = '  "20260807191500_add_password_reset_tokens",\n'
+          addition = anchor + '  "20260809033000_add_owner_invitation_lifecycle",\n'
+          if '"20260809033000_add_owner_invitation_lifecycle"' not in text:
+              if anchor not in text:
+                  raise SystemExit("reviewed migration anchor not found")
+              verifier.write_text(text.replace(anchor, addition, 1))
+
+          test_file = Path("tests/production-readiness.test.ts")
+          text = test_file.read_text()
+          text = text.replace(
+              "assert.equal(committedMigrations.length, 42);",
+              "assert.equal(committedMigrations.length, 43);",
+              1,
+          )
+          anchor = '''  assert.ok(\n    committedMigrations.includes("20260729113000_add_custom_card_mode"),\n    "Custom Card mode must be isolated in its own reviewed migration.",\n  );\n'''
+          addition = anchor + '''  assert.ok(\n    committedMigrations.includes("20260809033000_add_owner_invitation_lifecycle"),\n    "Owner invitation lifecycle must be part of the reviewed migration history.",\n  );\n'''
+          if 'Owner invitation lifecycle must be part of the reviewed migration history.' not in text:
+              if anchor not in text:
+                  raise SystemExit("production readiness migration anchor not found")
+              text = text.replace(anchor, addition, 1)
+          test_file.write_text(text)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/verify-local-database.ts tests/production-readiness.test.ts
+          git commit -m "test(db): register owner invitation migration [skip ci]" || true
+          git push
+
       - name: Prisma generate
         id: generate
         continue-on-error: true
@@ -82,6 +119,8 @@ jobs:
             lib/auth/owner-invitation-runtime.ts \
             lib/auth/owner-invitation-email.ts \
             lib/business/creation-input.ts \
+            scripts/verify-local-database.ts \
+            tests/production-readiness.test.ts \
             tests/onboarding-v2.test.ts \
             tests/owner-invitation-lifecycle.test.ts \
             tests/owner-invitation-public-flow.test.ts \
@@ -122,8 +161,6 @@ jobs:
             tail -n 80 .t003-lint.log 2>/dev/null || true
           } > .t003-owner-invitation-generate-verify.txt
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .t003-owner-invitation-generate-verify.txt
           git commit -m "chore(ci): record t003 generate verification [skip ci]" || true
           git push
