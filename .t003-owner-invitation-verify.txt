@@ -1,5 +1,334 @@
-commit=29aed45ca2a9fb1c1303b8908ff2679a834f841b
+commit=f43d12f69066f68f78ef4b8a12e7d952c908cde8
 install=success
 tests=failure
+tests_exit=1
 typecheck=failure
+typecheck_exit=2
 lint=success
+lint_exit=0
+
+=== TESTS TAIL ===
+# Subtest: builder preview identity and balances are explicit and deterministic
+ok 662 - builder preview identity and balances are explicit and deterministic
+  ---
+  duration_ms: 0.350755
+  type: 'test'
+  ...
+# Subtest: editor QR is deterministic while public cards can supply the real token QR
+ok 663 - editor QR is deterministic while public cards can supply the real token QR
+  ---
+  duration_ms: 0.223567
+  type: 'test'
+  ...
+# Subtest: category motifs are controlled SVG artwork rather than owner supplied artwork
+ok 664 - category motifs are controlled SVG artwork rather than owner supplied artwork
+  ---
+  duration_ms: 0.212226
+  type: 'test'
+  ...
+# Subtest: long customer and business names are constrained within the card
+ok 665 - long customer and business names are constrained within the card
+  ---
+  duration_ms: 0.15517
+  type: 'test'
+  ...
+# Subtest: long units retain semantic meaning while using bounded display labels
+ok 666 - long units retain semantic meaning while using bounded display labels
+  ---
+  duration_ms: 0.545057
+  type: 'test'
+  ...
+# Subtest: card contacts are conditional and website display is human readable
+ok 667 - card contacts are conditional and website display is human readable
+  ---
+  duration_ms: 0.274282
+  type: 'test'
+  ...
+# Subtest: Back hides unavailable contacts and renders only supplied phone website and location
+ok 668 - Back hides unavailable contacts and renders only supplied phone website and location
+  ---
+  duration_ms: 15.538299
+  type: 'test'
+  ...
+# Subtest: Back safely renders long and Arabic reward states with intentional RTL
+ok 669 - Back safely renders long and Arabic reward states with intentional RTL
+  ---
+  duration_ms: 7.266311
+  type: 'test'
+  ...
+# Subtest: customer and reward safe zones clamp realistic long values
+ok 670 - customer and reward safe zones clamp realistic long values
+  ---
+  duration_ms: 0.267399
+  type: 'test'
+  ...
+# Subtest: front reserves a large deterministic balance panel
+ok 671 - front reserves a large deterministic balance panel
+  ---
+  duration_ms: 0.256709
+  type: 'test'
+  ...
+# Subtest: Back keeps artwork secondary and fills RTL progress deliberately from the right
+ok 672 - Back keeps artwork secondary and fills RTL progress deliberately from the right
+  ---
+  duration_ms: 0.227174
+  type: 'test'
+  ...
+# Subtest: Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target
+ok 673 - Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target
+  ---
+  duration_ms: 1.902079
+  type: 'test'
+  ...
+# Subtest: custom artwork capability stays reserved for super-admin architecture
+ok 674 - custom artwork capability stays reserved for super-admin architecture
+  ---
+  duration_ms: 0.731134
+  type: 'test'
+  ...
+# Subtest: Custom UX is upload-oriented, storage-fenced, and preserves existing URLs
+ok 675 - Custom UX is upload-oriented, storage-fenced, and preserves existing URLs
+  ---
+  duration_ms: 0.614456
+  type: 'test'
+  ...
+# Subtest: public card is rendered from dynamic customer and business data
+ok 676 - public card is rendered from dynamic customer and business data
+  ---
+  duration_ms: 0.468814
+  type: 'test'
+  ...
+# Subtest: all Standard Card previews and the public card retain the canonical renderer
+ok 677 - all Standard Card previews and the public card retain the canonical renderer
+  ---
+  duration_ms: 0.77687
+  type: 'test'
+  ...
+# Subtest: assigns VIP tiers at deterministic reward-cycle thresholds
+ok 678 - assigns VIP tiers at deterministic reward-cycle thresholds
+  ---
+  duration_ms: 1.17885
+  type: 'test'
+  ...
+# Subtest: keeps tier qualification safe for invalid thresholds and values
+ok 679 - keeps tier qualification safe for invalid thresholds and values
+  ---
+  duration_ms: 0.202838
+  type: 'test'
+  ...
+# Subtest: Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values
+ok 680 - Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values
+  ---
+  duration_ms: 1.831077
+  type: 'test'
+  ...
+# Subtest: WhatsApp URL encoding round-trips Arabic and English text exactly
+ok 681 - WhatsApp URL encoding round-trips Arabic and English text exactly
+  ---
+  duration_ms: 0.564303
+  type: 'test'
+  ...
+# Subtest: WhatsApp URL safely supports a missing phone number
+ok 682 - WhatsApp URL safely supports a missing phone number
+  ---
+  duration_ms: 0.378716
+  type: 'test'
+  ...
+# Subtest: uses the existing deterministic inactive segmentation for a win-back audience
+ok 683 - uses the existing deterministic inactive segmentation for a win-back audience
+  ---
+  duration_ms: 2.369242
+  type: 'test'
+  ...
+# Subtest: renders a staff-reviewed win-back message without sending it
+ok 684 - renders a staff-reviewed win-back message without sending it
+  ---
+  duration_ms: 0.41806
+  type: 'test'
+  ...
+# Subtest: workspace skeleton keeps the root Next application as the only runtime
+ok 685 - workspace skeleton keeps the root Next application as the only runtime
+  ---
+  duration_ms: 1.348768
+  type: 'test'
+  ...
+# Subtest: workspace packages expose only approved runtime code and satisfy the import graph
+ok 686 - workspace packages expose only approved runtime code and satisfy the import graph
+  ---
+  duration_ms: 53.834081
+  type: 'test'
+  ...
+1..686
+# tests 686
+# suites 0
+# pass 679
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16860.840929
+[ELIFECYCLE] Test failed. See above for more details.
+
+=== TYPECHECK TAIL ===
+app/businesses/[slug]/rewards/actions.ts(76,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/[slug]/rewards/actions.ts(129,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/[slug]/rewards/actions.ts(172,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/[slug]/rewards/page.tsx(51,235): error TS7006: Parameter 'r' implicitly has an 'any' type.
+app/businesses/[slug]/rewards/page.tsx(53,341): error TS7006: Parameter 'reward' implicitly has an 'any' type.
+app/businesses/[slug]/scan/customer/[customerId]/page.tsx(105,56): error TS7006: Parameter 'unlock' implicitly has an 'any' type.
+app/businesses/[slug]/scan/customer/[customerId]/page.tsx(151,63): error TS7006: Parameter 'unlock' implicitly has an 'any' type.
+app/businesses/[slug]/scan/customer/[customerId]/page.tsx(169,132): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/[slug]/settings/actions.ts(4,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+app/businesses/[slug]/settings/actions.ts(699,38): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/[slug]/settings/page.tsx(146,72): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type 'Record<"FREE" | "STARTER" | "PRO" | "BUSINESS", Readonly<{ name: string; features: readonly ("LOYALTY_CORE" | "REWARDS" | "PROMOTIONS" | "OFFERS" | "CAMPAIGNS" | "REFERRALS" | "REPORTING" | "MULTI_BRANCH" | "CUSTOMER_NOTES_TAGS" | "CUSTOMER_BULK_OPERATIONS" | "GOOGLE_WALLET_READINESS")[]; limits: Readonly<...>; }>>'.
+app/businesses/[slug]/users/actions.ts(249,12): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/[slug]/users/page.tsx(7,39): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+app/businesses/[slug]/users/page.tsx(643,29): error TS7006: Parameter 'user' implicitly has an 'any' type.
+app/businesses/actions.ts(208,34): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/businesses/actions.ts(317,17): error TS18046: 'createdBusiness' is of type 'unknown'.
+app/businesses/actions.ts(329,36): error TS18046: 'createdBusiness' is of type 'unknown'.
+app/businesses/actions.ts(332,17): error TS18046: 'createdBusiness' is of type 'unknown'.
+app/businesses/actions.ts(340,17): error TS18046: 'createdBusiness' is of type 'unknown'.
+app/businesses/actions.ts(342,27): error TS18046: 'createdBusiness' is of type 'unknown'.
+app/businesses/page.tsx(5,29): error TS2307: Cannot find module '../../generated/prisma/client' or its corresponding type declarations.
+app/businesses/page.tsx(77,60): error TS7031: Binding element 'industry' implicitly has an 'any' type.
+app/businesses/page.tsx(78,59): error TS7031: Binding element 'country' implicitly has an 'any' type.
+app/businesses/page.tsx(79,60): error TS7031: Binding element 'currency' implicitly has an 'any' type.
+app/businesses/page.tsx(299,36): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/card/[token]/page.tsx(209,48): error TS7006: Parameter 'offer' implicitly has an 'any' type.
+app/card/[token]/page.tsx(264,14): error TS7006: Parameter 'unlock' implicitly has an 'any' type.
+app/card/[token]/page.tsx(265,11): error TS7006: Parameter 'unlock' implicitly has an 'any' type.
+app/card/[token]/page.tsx(408,32): error TS7006: Parameter 'offer' implicitly has an 'any' type.
+app/card/[token]/page.tsx(447,40): error TS7006: Parameter 'reward' implicitly has an 'any' type.
+app/dashboard/page.tsx(165,50): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/dashboard/page.tsx(173,56): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/dashboard/page.tsx(174,56): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/dashboard/page.tsx(175,58): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/dashboard/page.tsx(176,79): error TS7006: Parameter 'totals' implicitly has an 'any' type.
+app/dashboard/page.tsx(176,87): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/dashboard/page.tsx(186,30): error TS18046: 'value' is of type 'unknown'.
+app/dashboard/page.tsx(188,52): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'number | null | undefined'.
+app/dashboard/page.tsx(216,108): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/dashboard/page.tsx(221,100): error TS7006: Parameter 'owner' implicitly has an 'any' type.
+app/dashboard/page.tsx(262,30): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/join/[slug]/actions.ts(91,14): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+app/onboarding/actions.ts(15,24): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+app/onboarding/actions.ts(147,32): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+app/onboarding/actions.ts(190,36): error TS18046: 'business' is of type 'unknown'.
+app/onboarding/actions.ts(192,17): error TS18046: 'business' is of type 'unknown'.
+app/onboarding/actions.ts(194,27): error TS18046: 'business' is of type 'unknown'.
+app/operations/page.tsx(69,6): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/operations/page.tsx(72,48): error TS7006: Parameter 'business' implicitly has an 'any' type.
+app/operations/page.tsx(81,6): error TS7006: Parameter 'state' implicitly has an 'any' type.
+app/operations/page.tsx(84,6): error TS7006: Parameter 'state' implicitly has an 'any' type.
+app/operations/page.tsx(190,34): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+app/plans/page.tsx(65,22): error TS7006: Parameter 'row' implicitly has an 'any' type.
+components/business-sales-kpis.tsx(387,16): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+lib/activity/business-activity.ts(1,35): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/activity/presentation.ts(1,35): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/analytics/dashboard.ts(1,38): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/app-shell-navigation.ts(1,31): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/auth/owner-invitation-runtime.ts(65,45): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+lib/auth/password-change.ts(52,41): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+lib/auth/password-reset.ts(42,37): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+lib/auth/password-reset.ts(108,37): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+lib/branches/management.ts(1,31): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/business/deletion.ts(1,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/campaigns/winback.ts(1,42): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/customers/notes-tags.ts(1,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/customers/retention-score.ts(1,34): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/customers/segments.ts(1,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/customers/segments.ts(2,34): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/customers/ui-copy.ts(1,34): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/dashboard/overview.ts(1,34): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/experience-mode.ts(1,75): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/google-sheets-sync.ts(94,40): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+lib/google-sheets-sync.ts(128,38): error TS7006: Parameter 'business' implicitly has an 'any' type.
+lib/loyalty/earn-reversal.ts(1,43): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/fraud.ts(1,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/operation-context.ts(1,53): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/operation-context.ts(124,23): error TS2339: Property 'id' does not exist on type 'never'.
+lib/loyalty/operations.ts(4,8): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/presentation.ts(1,34): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/redemption-reversal.ts(1,24): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/reversal-exception-reporting.ts(1,43): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/reversal-exception-resolution.ts(1,24): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/staff-attribution.ts(1,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/loyalty/transactions.ts(1,42): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/offers/eligibility.ts(1,39): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/permissions.ts(1,31): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/playbooks/catalog.ts(1,46): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/prisma.ts(2,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+lib/promotions/engine.ts(1,34): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/rewards/availability.ts(1,33): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+lib/rewards/catalog.ts(1,28): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+scripts/create-super-admin.ts(5,40): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/prepare-final-uat-fixtures.ts(11,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/prepare-final-uat-fixtures.ts(157,39): error TS7006: Parameter 'business' implicitly has an 'any' type.
+scripts/prepare-final-uat-fixtures.ts(159,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/prepare-final-uat-fixtures.ts(167,40): error TS7006: Parameter 'user' implicitly has an 'any' type.
+scripts/prepare-final-uat-fixtures.ts(170,25): error TS7006: Parameter 'user' implicitly has an 'any' type.
+scripts/reconcile-ledger.ts(5,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/reset-production-data.ts(8,48): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/reset-production-data.ts(256,38): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/reset-super-admin-password.ts(5,40): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-financial-integrity.ts(11,8): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-financial-integrity.ts(209,41): error TS7006: Parameter 'result' implicitly has an 'any' type.
+scripts/verify-local-bulk-customer-operations.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-bulk-customer-operations.ts(60,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-business-deletion.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-business-deletion.ts(33,34): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-business-deletion.ts(172,30): error TS7006: Parameter 'databaseTransaction' implicitly has an 'any' type.
+scripts/verify-local-business-profile-foundation.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-business-profile-foundation.ts(89,20): error TS18046: 'created' is of type 'unknown'.
+scripts/verify-local-business-profile-foundation.ts(100,20): error TS18046: 'duplicate' is of type 'unknown'.
+scripts/verify-local-business-profile-foundation.ts(106,16): error TS18046: 'created' is of type 'unknown'.
+scripts/verify-local-business-profile-foundation.ts(107,16): error TS18046: 'duplicate' is of type 'unknown'.
+scripts/verify-local-business-profile-foundation.ts(110,18): error TS18046: 'created' is of type 'unknown'.
+scripts/verify-local-business-profile-foundation.ts(125,18): error TS18046: 'created' is of type 'unknown'.
+scripts/verify-local-customer-notes-tags.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-database.ts(12,8): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-database.ts(166,39): error TS7006: Parameter 'migration' implicitly has an 'any' type.
+scripts/verify-local-database.ts(461,26): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(7,38): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-multi-branch.ts(274,37): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(275,37): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(281,31): error TS7006: Parameter 'activity' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(282,31): error TS7006: Parameter 'activity' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(284,26): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(288,26): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(298,24): error TS7006: Parameter 'total' implicitly has an 'any' type.
+scripts/verify-local-multi-branch.ts(302,24): error TS7006: Parameter 'total' implicitly has an 'any' type.
+scripts/verify-local-offers.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-promotions.ts(10,8): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-referrals.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-referrals.ts(53,36): error TS7006: Parameter 'transaction' implicitly has an 'any' type.
+scripts/verify-local-referrals.ts(66,29): error TS7006: Parameter 'customer' implicitly has an 'any' type.
+scripts/verify-local-reward-expiration.ts(7,50): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-local-staff-permissions.ts(7,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-operational-readiness.ts(34,48): error TS7006: Parameter 'business' implicitly has an 'any' type.
+scripts/verify-operational-readiness.ts(46,8): error TS7006: Parameter 'business' implicitly has an 'any' type.
+scripts/verify-operational-readiness.ts(50,8): error TS7006: Parameter 'state' implicitly has an 'any' type.
+scripts/verify-operational-readiness.ts(53,8): error TS7006: Parameter 'state' implicitly has an 'any' type.
+scripts/verify-password-reset-runtime.ts(8,30): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-redemption-unlock-restoration.ts(11,8): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-reversal-concurrency.ts(7,43): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+scripts/verify-reversal-concurrency.ts(159,27): error TS7006: Parameter 'result' implicitly has an 'any' type.
+scripts/verify-reversal-concurrency.ts(206,30): error TS7006: Parameter 'result' implicitly has an 'any' type.
+scripts/verify-reversal-concurrency.ts(211,8): error TS7006: Parameter 'result' implicitly has an 'any' type.
+scripts/verify-reversal-concurrency.ts(273,8): error TS7006: Parameter 'result' implicitly has an 'any' type.
+tests/branch-audit-activity.test.ts(113,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/earn-reversal.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/loyalty-transactions.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/open-reversal-exception-reporting.test.ts(4,35): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/operation-context.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/redemption-reversal-unlock-restoration.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/redemption-reversal.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/reversal-exception-resolution.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/reward-catalog.test.ts(4,28): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+tests/safe-business-deletion-danger1.test.ts(6,29): error TS2307: Cannot find module '@/generated/prisma/client' or its corresponding type declarations.
+tests/staff-attribution.test.ts(4,29): error TS2307: Cannot find module '../generated/prisma/client' or its corresponding type declarations.
+[ELIFECYCLE] Command failed with exit code 2.
+
+=== LINT TAIL ===
