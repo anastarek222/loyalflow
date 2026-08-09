@@ -38,6 +38,21 @@ Evidence is recorded in `docs/OPERATIONS/T004_DISPOSABLE_RECOVERY_EVIDENCE_2026-
 
 This closes the missing local procedural-execution evidence only. It does **not** establish production/service achieved RPO or RTO. The 15-minute RPO and 30-minute RTO remain proposed and unverified for production/service operation.
 
+### Production recovery posture
+
+**Provider-native recovery posture verified read-only; achieved RPO/RTO not measured.** With explicit owner approval, Neon project metadata was inspected without running SQL, creating a restore branch, changing configuration, or accessing customer data.
+
+Verified provider evidence establishes:
+
+- the production Neon branch is the primary/default branch and is `ready`;
+- project history retention is `21600` seconds (6 hours);
+- provider-native retained-history/PITR capability is therefore present within the provider retention window;
+- no production restore exercise was executed.
+
+Evidence is recorded in `docs/OPERATIONS/T004_PRODUCTION_RECOVERY_POSTURE_EVIDENCE_2026-08-09.md`.
+
+This closes the missing production recovery-capability/posture check. It does **not** prove that the proposed 15-minute RPO or 30-minute RTO has been achieved in practice; those service objectives still require a separately approved measured production-grade recovery exercise or an explicit decision to defer measured proof to the launch gate.
+
 ### Operational ownership
 
 **Substantially assigned; independent review intentionally deferred.** By explicit owner approval, Anas Tarek (`anastarek222`) is recorded as Incident Commander, Release Operator, Database Owner, Recovery Operator, Platform Owner, On-call Operator, and Security Owner.
@@ -93,20 +108,20 @@ This is not a live production rollback and does not establish measured productio
 
 ## Remaining smallest execution order
 
-1. Keep the Independent Reviewer assignment deferred until the owner supplies a real reviewer; do not infer one.
-2. Decide whether production/provider backup/PITR and service-level RPO/RTO verification are mandatory for T004 closeout or explicitly remain a launch-gate item.
-3. Resolve continuity/back-up ownership or explicitly accept the current single-owner operational posture.
-4. Run normal code-quality gates for the latest T004 branch head before Draft PR.
-5. Reconcile the master tracker with the verified T004 evidence.
+1. Decide whether measured production/service RPO/RTO proof is mandatory for T004 closeout or explicitly defer measured proof to the later launch gate now that provider-native recovery posture is verified.
+2. Resolve continuity/back-up ownership or explicitly accept the current single-owner operational posture for T004.
+3. Keep the Independent Reviewer assignment deferred until the owner supplies a real reviewer; do not infer one.
+4. Reconfirm exact-current-head standalone typecheck and lint before Draft PR.
+5. Reconcile the master tracker with the final T004 closeout decision.
 6. Close T004 only when the required evidence is reproducible and no mandatory closeout gate remains unresolved.
 
 ## Protected decisions / approvals still required
 
-The completed disposable-local exercise, Preview evidence, and external-monitoring configuration do not authorise broader database or provider work. Separate approval is still required for:
+The completed disposable-local exercise, read-only production recovery-posture verification, Preview evidence, and external-monitoring configuration do not authorise broader database or provider work. Separate approval is still required for:
 
 - any production, staging, preview, shared, or remote database command;
 - migration execution against any environment;
-- production database backup/PITR configuration or restore action;
+- production database restore action or backup/PITR configuration mutation;
 - secrets or environment-variable changes;
 - production deployment.
 
@@ -114,4 +129,4 @@ The completed disposable-local exercise, Preview evidence, and external-monitori
 
 **NOT READY FOR DRAFT PR** for T004 closeout.
 
-Verified evidence now includes disposable-local backup/restore execution, Preview environment isolation/runtime identity, named Recovery Operator, bounded incident/rollback tabletop, and end-to-end external monitoring alert delivery. Remaining closeout questions are production/service RPO-RTO posture, Independent Reviewer assignment, continuity/back-up ownership, and latest-head quality gates.
+Verified evidence now includes disposable-local backup/restore execution, provider-native production recovery posture, Preview environment isolation/runtime identity, named Recovery Operator, bounded incident/rollback tabletop, end-to-end external monitoring alert delivery, 765/765 tests, and a successful local production build. Remaining closeout decisions are measured production/service RPO-RTO treatment, continuity/back-up ownership, Independent Reviewer assignment, and exact-head standalone typecheck/lint reconfirmation.
