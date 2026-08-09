@@ -106,6 +106,9 @@ jobs:
             echo "lint=${{ steps.lint.outcome }}"
             echo "lint_exit=${{ steps.lint.outputs.exit_code }}"
             echo
+            echo "=== FAILING TEST CONTEXT ==="
+            grep -n -B 12 -A 24 -E '^not ok|AssertionError|ERR_ASSERTION|failing tests:' .t003-tests.log 2>/dev/null || true
+            echo
             echo "=== GENERATE TAIL ==="
             tail -n 80 .t003-generate.log 2>/dev/null || true
             echo
