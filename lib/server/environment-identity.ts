@@ -23,40 +23,41 @@ function safeTimestamp(value: string | null) {
   return value && !Number.isNaN(Date.parse(value)) ? new Date(value).toISOString() : null;
 }
 
+function explicitEnvironment(value: string | null): Exclude<EnvironmentName, "unknown"> | null {
+  return value === "development" || value === "test" || value === "preview" || value === "staging" || value === "production"
+    ? value
+    : null;
+}
+
 export function getEnvironmentIdentity(
   environment: Record<string, string | undefined> = process.env,
 ): EnvironmentIdentity {
-  const explicit = clean(environment.LOYALFLOW_ENVIRONMENT)?.toLowerCase();
-  const vercel = clean(environment.VERCEL_ENV)?.toLowerCase();
-  const node = clean(environment.NODE_ENV)?.toLowerCase();
-  const explicitCandidates = [explicit, vercel].filter(
-    (value): value is Exclude<EnvironmentName, "unknown"> =>
-      value === "development" || value === "test" || value === "preview" || value === "staging" || value === "production",
-  );
-  // NODE_ENV=production is a runtime mode on both preview and production hosts;
-  // it is not a conflicting deployment identity when an explicit platform signal exists.
-  const candidates = explicitCandidates.length > 0
-    ? explicitCandidates
-    : [node].filter(
-        (value): value is Exclude<EnvironmentName, "unknown"> =>
-          value === "development" || value === "test" || value === "preview" || value === "staging" || value === "production",
-      );
-  const environmentName: EnvironmentName =
-    new Set(candidates).size > 1
-      ? "unknown"
-      : explicit === "development" || explicit === "test" || explicit === "preview" || explicit === "staging" || explicit === "production"
-      ? explicit
-      : vercel === "preview" || vercel === "production"
-        ? vercel
-        : node === "test" || node === "development" || node === "production"
-          ? node
-          : "unknown";
+  const explicit = explicitEnvironment(clean(environment.LOYALFLOW_ENVIRONMENT)?.toLowerCase() ?? null);
+  const vercel = clean(environment.VERCEL_ENV)?.toLowerCase() ?? null;
+  const node = clean(environment.NODE_ENV)?.toLowerCase() ?? null;
+
+  let environmentName: EnvironmentName = "unknown";
+
+  if (explicit) {
+    const compatibleVercel =
+      !vercel ||
+      (explicit === "production" && vercel === "production") ||
+      (explicit === "preview" && vercel === "preview") ||
+      (explicit === "staging" && vercel === "preview") ||
+      ((explicit === "development" || explicit === "test") && vercel !== "production");
+
+    environmentName = compatibleVercel ? explicit : "unknown";
+  } else if (vercel === "preview" || vercel === "production") {
+    environmentName = vercel;
+  } else if (node === "test" || node === "development" || node === "production") {
+    environmentName = node;
+  }
 
   return {
     environment: environmentName,
     deploymentType: environmentName === "development" ? "local" : environmentName === "test" ? "ci" : environmentName === "preview" ? "preview" : environmentName === "staging" ? "staging" : environmentName === "production" ? "production" : "unknown",
     isProduction: environmentName === "production",
-    isPreview: environmentName === "preview",
+    isPreview: environmentName === "preview" || environmentName === "staging",
     release: safeRelease(clean(environment.LOYALFLOW_RELEASE_SHA) ?? clean(environment.VERCEL_GIT_COMMIT_SHA) ?? clean(environment.GITHUB_SHA)),
     buildTimestamp: safeTimestamp(clean(environment.LOYALFLOW_BUILD_TIMESTAMP)),
   };
