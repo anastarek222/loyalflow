@@ -1,0 +1,20 @@
+commit=945fcd5e29142746d09ff5324415f41176f393fa
+install=success
+generate=failure
+generate_exit=1
+tests=skipped
+tests_exit=
+typecheck=skipped
+typecheck_exit=
+lint=skipped
+lint_exit=
+
+=== GENERATE TAIL ===
+◇ injected env (0) from .env.local // tip: ⌘ suppress logs { quiet: true }
+Failed to load config file "/home/runner/work/loyalflow/loyalflow" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+
+=== TESTS TAIL ===
+
+=== TYPECHECK TAIL ===
+
+=== LINT TAIL ===
