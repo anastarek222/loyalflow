@@ -10,7 +10,7 @@ type SecurityNotificationCopy = {
   message: string;
 };
 
-const COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
+const EN_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
   PASSWORD_CHANGED: {
     title: "Password changed",
     message: "Your LoyalFlow account password was changed.",
@@ -32,6 +32,42 @@ const COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
     message: "A one-time MFA recovery code was used to sign in to your Super Admin account.",
   },
 };
+
+const AR_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
+  PASSWORD_CHANGED: {
+    title: "تم تغيير كلمة المرور",
+    message: "تم تغيير كلمة مرور حساب LoyalFlow الخاص بك.",
+  },
+  PASSWORD_RESET: {
+    title: "تمت إعادة تعيين كلمة المرور",
+    message: "تمت إعادة تعيين كلمة مرور حساب LoyalFlow باستخدام مسار الاسترداد.",
+  },
+  SESSIONS_REVOKED: {
+    title: "تم إنهاء الجلسات الأخرى",
+    message: "تم تسجيل خروج جلسات LoyalFlow الأخرى الخاصة بحسابك.",
+  },
+  MFA_ENABLED: {
+    title: "تم تفعيل المصادقة متعددة العوامل",
+    message: "تم تفعيل المصادقة متعددة العوامل لحساب Super Admin الخاص بك.",
+  },
+  MFA_RECOVERY_CODE_USED: {
+    title: "تم استخدام رمز استرداد MFA",
+    message: "تم استخدام رمز استرداد MFA لمرة واحدة لتسجيل الدخول إلى حساب Super Admin الخاص بك.",
+  },
+};
+
+function isSecurityNotificationEvent(value: string): value is SecurityNotificationEvent {
+  return Object.prototype.hasOwnProperty.call(EN_COPY, value);
+}
+
+export function getSecurityNotificationCopy(
+  eventType: string,
+  language: "AR" | "EN",
+  fallback: SecurityNotificationCopy,
+): SecurityNotificationCopy {
+  if (!isSecurityNotificationEvent(eventType)) return fallback;
+  return language === "AR" ? AR_COPY[eventType] : EN_COPY[eventType];
+}
 
 type NotificationStore = {
   securityNotification: {
@@ -55,7 +91,7 @@ export async function recordSecurityNotification(
     metadata?: Record<string, string>;
   },
 ) {
-  const copy = COPY[input.event];
+  const copy = EN_COPY[input.event];
 
   await store.securityNotification.create({
     data: {
