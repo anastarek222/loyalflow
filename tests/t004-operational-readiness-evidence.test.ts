@@ -27,27 +27,28 @@ test("T004 evidence template starts unexecuted and cannot be mistaken for measur
   assert.match(evidence, /T004 remains incomplete/);
 });
 
-test("operational ownership matrix records the approved primary owner without broadening permissions", () => {
+test("operational ownership matrix records approved owners without broadening permissions", () => {
   const ownership = source("docs/OPERATIONS/T004_OPERATIONAL_OWNERSHIP.md");
 
   for (const role of [
     "Incident Commander",
     "Release Operator",
     "Database Owner",
+    "Recovery Operator",
     "Platform Owner",
     "On-call Operator",
     "Security Owner",
   ]) {
     assert.ok(
       ownership.includes(`| ${role} | Anas Tarek (\`anastarek222\`) |`),
-      `${role} should be assigned to the approved primary operational owner`,
+      `${role} should be assigned to the explicitly approved operational owner`,
     );
   }
 
-  assert.match(ownership, /Recovery Operator \| `UNASSIGNED`/);
   assert.match(ownership, /Independent Reviewer \| `UNASSIGNED`/);
+  assert.match(ownership, /backup owner.*`UNASSIGNED`/i);
   assert.match(ownership, /does not itself authorise database commands, production access, provider mutations, secrets access/i);
-  assert.match(ownership, /must not be marked complete while Recovery Operator and Independent Reviewer remain `UNASSIGNED`/);
+  assert.match(ownership, /must not be marked complete while Independent Reviewer remains `UNASSIGNED`, or while required continuity\/back-up ownership remains unresolved/i);
 });
 
 test("disposable recovery runner is hard-bound to synthetic localhost test databases", () => {
