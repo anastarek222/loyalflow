@@ -38,7 +38,10 @@ test("operational ownership matrix records the approved primary owner without br
     "On-call Operator",
     "Security Owner",
   ]) {
-    assert.match(ownership, new RegExp(`${role}.*Anas Tarek \\(\\`anastarek222\\`\\).*Assigned`));
+    assert.ok(
+      ownership.includes(`| ${role} | Anas Tarek (\`anastarek222\`) |`),
+      `${role} should be assigned to the approved primary operational owner`,
+    );
   }
 
   assert.match(ownership, /Recovery Operator \| `UNASSIGNED`/);
