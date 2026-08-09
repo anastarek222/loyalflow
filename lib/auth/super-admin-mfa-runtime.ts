@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import prisma from "@/lib/prisma";
 import {
@@ -11,15 +11,22 @@ import {
   verifyTotpCode,
 } from "@/lib/auth/super-admin-mfa";
 
+const ENROLLMENT_TTL_MS = 15 * 60 * 1000;
+
 function getMfaRootSecret() {
   const value = process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim();
   if (!value) throw new Error("MFA encryption root secret is not configured");
   return value;
 }
 
+function hashEnrollmentToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
 export async function beginSuperAdminMfaEnrollment(input: {
   userId: string;
   email: string;
+  now?: Date;
 }) {
   const user = await prisma.user.findUnique({
     where: { id: input.userId },
@@ -32,18 +39,37 @@ export async function beginSuperAdminMfaEnrollment(input: {
   const secret = createTotpSecret();
   const sealedSecret = sealTotpSecret(secret, getMfaRootSecret());
   const recoveryCodes = createRecoveryCodes();
+  const enrollmentToken = randomBytes(32).toString("base64url");
+  const enrollmentTokenHash = hashEnrollmentToken(enrollmentToken);
+  const now = input.now ?? new Date();
+  const enrollmentExpiresAt = new Date(now.getTime() + ENROLLMENT_TTL_MS);
 
   await prisma.$transaction(async (transaction) => {
+    const existing = await transaction.$queryRaw<Array<{ enabledAt: Date | null }>>`
+      SELECT "enabledAt"
+      FROM "SuperAdminMfa"
+      WHERE "userId" = ${user.id}
+      FOR UPDATE
+    `;
+
+    if (existing[0]?.enabledAt) {
+      throw new Error("Super Admin MFA is already enabled");
+    }
+
     await transaction.$executeRaw`
       INSERT INTO "SuperAdminMfa" (
-        "userId", "secretCiphertext", "enabledAt", "createdAt", "updatedAt"
+        "userId", "secretCiphertext", "enrollmentTokenHash", "enrollmentExpiresAt",
+        "enabledAt", "createdAt", "updatedAt"
       ) VALUES (
-        ${user.id}, ${sealedSecret}, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        ${user.id}, ${sealedSecret}, ${enrollmentTokenHash}, ${enrollmentExpiresAt},
+        NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
       ON CONFLICT ("userId") DO UPDATE SET
         "secretCiphertext" = EXCLUDED."secretCiphertext",
-        "enabledAt" = NULL,
+        "enrollmentTokenHash" = EXCLUDED."enrollmentTokenHash",
+        "enrollmentExpiresAt" = EXCLUDED."enrollmentExpiresAt",
         "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "SuperAdminMfa"."enabledAt" IS NULL
     `;
 
     await transaction.$executeRaw`
@@ -62,6 +88,8 @@ export async function beginSuperAdminMfaEnrollment(input: {
   });
 
   return {
+    enrollmentToken,
+    enrollmentExpiresAt,
     secret,
     otpauthUri: createTotpUri({ secret, email: input.email }),
     recoveryCodes,
@@ -69,28 +97,50 @@ export async function beginSuperAdminMfaEnrollment(input: {
 }
 
 export async function enableSuperAdminMfa(input: {
-  userId: string;
+  enrollmentToken: string;
   code: string;
-  now?: number;
+  now?: Date;
 }) {
-  const rows = await prisma.$queryRaw<Array<{ secretCiphertext: string }>>`
-    SELECT "secretCiphertext"
+  const tokenHash = hashEnrollmentToken(input.enrollmentToken);
+  const now = input.now ?? new Date();
+  const rows = await prisma.$queryRaw<
+    Array<{ userId: string; secretCiphertext: string }>
+  >`
+    SELECT "userId", "secretCiphertext"
     FROM "SuperAdminMfa"
-    WHERE "userId" = ${input.userId} AND "enabledAt" IS NULL
+    WHERE "enrollmentTokenHash" = ${tokenHash}
+      AND "enrollmentExpiresAt" > ${now}
+      AND "enabledAt" IS NULL
     LIMIT 1
   `;
   const row = rows[0];
   if (!row) return false;
 
   const secret = openTotpSecret(row.secretCiphertext, getMfaRootSecret());
-  if (!verifyTotpCode({ secret, code: input.code, now: input.now })) return false;
+  if (!verifyTotpCode({ secret, code: input.code, now: now.getTime() })) return false;
 
-  const changed = await prisma.$executeRaw`
-    UPDATE "SuperAdminMfa"
-    SET "enabledAt" = CURRENT_TIMESTAMP, "updatedAt" = CURRENT_TIMESTAMP
-    WHERE "userId" = ${input.userId} AND "enabledAt" IS NULL
-  `;
-  return changed === 1;
+  return prisma.$transaction(async (transaction) => {
+    const changed = await transaction.$executeRaw`
+      UPDATE "SuperAdminMfa"
+      SET "enabledAt" = CURRENT_TIMESTAMP,
+          "enrollmentTokenHash" = NULL,
+          "enrollmentExpiresAt" = NULL,
+          "updatedAt" = CURRENT_TIMESTAMP
+      WHERE "userId" = ${row.userId}
+        AND "enrollmentTokenHash" = ${tokenHash}
+        AND "enrollmentExpiresAt" > ${now}
+        AND "enabledAt" IS NULL
+    `;
+
+    if (changed !== 1) return false;
+
+    await transaction.user.update({
+      where: { id: row.userId },
+      data: { authVersion: { increment: 1 } },
+    });
+
+    return true;
+  });
 }
 
 export async function isSuperAdminMfaEnabled(userId: string) {
