@@ -2,106 +2,99 @@
 
 Status: **OPEN — evidence collection in progress**
 
-This file is the repository-owned evidence record for T004. It must never be used to imply that a control is achieved before the corresponding evidence is recorded and independently reviewable.
+This file is the repository-owned summary for T004. It must not imply that a control is achieved before the corresponding evidence is recorded and reviewable.
 
 ## Safety boundary
 
-This template does not authorize any database connection, backup, restore, provider mutation, production/staging access, secret or environment change, monitoring-service configuration, or deployment.
+This summary does not authorize any database connection, backup, restore, provider mutation, production/staging access, secret or environment change, monitoring-service configuration, or deployment.
 
 ## 1. Backup and restore drill
 
-Current state: **NOT MEASURED**
+Current state: **MEASURED LOCALLY / PRODUCTION RPO-RTO UNVERIFIED**
 
 Planning targets only:
 
 - Proposed RPO: 15 minutes.
 - Proposed RTO: 30 minutes.
-- Achieved RPO: unknown until a measured disposable-database exercise is completed.
-- Achieved RTO: unknown until a measured disposable-database exercise is completed.
+- Achieved production/service RPO: unknown and unverified.
+- Achieved production/service RTO: unknown and unverified.
 
-Required sanitized evidence after an explicitly approved drill:
+Sanitized disposable-local evidence is recorded in `T004_DISPOSABLE_RECOVERY_EVIDENCE_2026-08-09.md`.
 
-- Exercise date/time and timezone.
-- Operator identity.
-- Source commit/release SHA.
-- Disposable database identity ending in `_test` with no credential or host secret disclosed.
-- Backup start/end timestamps.
-- Backup artifact size and SHA-256 checksum.
-- Statement that the backup artifact was stored in an independent failure domain for the exercise, if applicable.
-- Restore start/end timestamps.
-- Validation result after restore.
-- Measured recovery point.
-- Measured recovery duration.
-- Final pass/fail against the planning targets.
-- Corrective actions for any miss.
+Latest successful repeat:
 
-Do not record plaintext credentials, connection strings, tokens, customer data, password hashes, or production identifiers here.
+- PostgreSQL client/server: 18.4 / 18.4.
+- Local host: `127.0.0.1:5432`.
+- Source and restore database identities ended in `_test`.
+- Backup duration: `95 ms`.
+- Backup artifact size: `1891 bytes`.
+- Backup SHA-256 recorded in the evidence file.
+- Restore duration: `53 ms`.
+- Restored validation: 3 synthetic rows, markers `alpha,beta,gamma`.
+- Result: `PASS`.
+
+These timings validate the guarded local procedure only. They are not production RPO/RTO evidence.
 
 ## 2. Operational ownership
 
-Current state: **UNASSIGNED**
+Current state: **PARTIAL**
 
-The following roles must have explicit named owners before T004 closeout. Do not infer or invent a person.
+The authoritative assignment matrix is `T004_OPERATIONAL_OWNERSHIP.md`.
 
-| Operational role | Named owner | Backup/alternate | Evidence/status |
-|---|---|---|---|
-| Incident commander | UNASSIGNED | UNASSIGNED | Owner decision required |
-| Application rollback operator | UNASSIGNED | UNASSIGNED | Owner decision required |
-| Database recovery operator | UNASSIGNED | UNASSIGNED | Owner decision required |
-| Hosting/provider escalation owner | UNASSIGNED | UNASSIGNED | Owner decision required |
-| Monitoring/alert recipient | UNASSIGNED | UNASSIGNED | Owner decision required |
+Explicitly assigned to Anas Tarek (`anastarek222`): Incident Commander, Release Operator, Database Owner, Platform Owner, On-call Operator, and Security Owner.
 
-## 3. Staging isolation
+Still open:
 
-Current state: **NOT PROVEN**
+- Recovery Operator: `UNASSIGNED`.
+- Independent Reviewer: `UNASSIGNED`.
+- Backup/alternate owners remain unresolved where continuity requires them.
 
-Evidence required before closeout:
+Do not infer or invent a person for an open role.
 
-- Staging environment has a distinct environment identity.
-- Staging database identity is distinct from production.
-- Staging secrets are isolated from production secrets.
-- Staging cannot read or mutate production customer data.
-- Release verification records the staging commit/release SHA.
-- Any destructive or data-bearing test uses explicitly disposable non-production data only.
+## 3. Staging / Preview isolation
 
-Provider screenshots, secret values, database URLs, or customer records must not be committed to this repository. Record only sanitized evidence and references.
+Current state: **VERIFIED FOR PREVIEW ISOLATION**
+
+Sanitized provider/runtime evidence is recorded in `T004_VERCEL_ENVIRONMENT_EVIDENCE_2026-08-09.md` and establishes:
+
+- Production retains a Production-only `DATABASE_URL` entry.
+- Preview uses a separately provisioned Neon PostgreSQL resource.
+- The Neon connection was scoped to Preview only; Production was excluded.
+- Preview database branching is enabled.
+- No production customer data was intentionally copied during the provisioning flow.
+- A fresh Preview deployment completed successfully.
+- `/api/health` reported `environment: "preview"` and `status: "ready"` for the verified release lineage.
+
+This closes the T004 Preview/staging isolation requirement covered by the recorded provider and runtime evidence.
 
 ## 4. Monitoring and alert routing
 
-Current state: **PARTIAL — repository health/operations checks exist; external alert delivery is not evidenced here**
+Current state: **PARTIAL — external alert delivery not verified**
 
-Evidence required before closeout:
+The repository and Vercel evidence show health endpoints, Runtime Logs, Observability surfaces, and incident runbooks. They do not establish a configured external alert policy or delivered alert to an accountable recipient.
 
-- External uptime/error monitoring or an approved equivalent is configured for the intended environment.
-- Alert severity maps to the incident runbook.
-- An accountable named recipient is recorded in the ownership matrix.
-- A sanitized test alert or equivalent routing verification is recorded with timestamp and outcome.
-- No API key, webhook secret, phone number, private email address, or provider credential is committed.
+Still required before T004 closeout:
+
+- External uptime/error monitoring or an approved equivalent configured for the intended environment.
+- Alert severity mapped to the incident runbook.
+- An accountable named recipient.
+- Sanitized test-alert or equivalent routing verification with timestamp and outcome.
+- No API key, webhook secret, private contact detail, or provider credential committed.
 
 ## 5. Incident and rollback rehearsal
 
-Current state: **NOT REHEARSED**
+Current state: **TABLETOP REHEARSAL RECORDED**
 
-Required evidence:
-
-- Rehearsal/tabletop timestamp.
-- Operator/incident commander.
-- Source release SHA.
-- Scenario exercised.
-- Application rollback path checked separately from database recovery.
-- Tenant-isolation and loyalty-write incident branches reviewed.
-- Outcome and time to decision/recovery, where measured.
-- Corrective actions and owners.
+`T004_TABLETOP_REHEARSAL_2026-08-09.md` records the bounded tabletop exercise. It checks application rollback separately from database recovery and reviews the incident decision path without claiming a live production rollback.
 
 ## Closeout rule
 
-T004 remains open until all of the following are true:
+T004 remains open until all required closeout evidence is resolved. Current unresolved items are principally:
 
-1. Backup/restore has measured sanitized evidence from an explicitly approved disposable exercise.
-2. Achieved RPO/RTO are based on measurements, not planning targets.
-3. Operational roles have named owners.
-4. Staging isolation has reproducible sanitized proof.
-5. Monitoring/alert routing has verified delivery evidence.
-6. Incident/rollback rehearsal evidence is recorded.
+1. Production/service RPO/RTO remain unverified; local procedure timings must not be promoted to production targets achieved.
+2. Recovery Operator is named.
+3. Independent Reviewer is named and reviews the evidence.
+4. External monitoring/alert routing is configured and delivery is verified.
+5. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
 
-Until then, the only valid closeout status is **NOT READY FOR DRAFT PR** for T004 completion.
+Until then, the valid completion status is **NOT READY FOR DRAFT PR** for T004 closeout.
