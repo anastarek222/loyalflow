@@ -63,20 +63,23 @@ This verifies the Preview isolation and application-level environment identity r
 
 ### Monitoring and alert routing
 
-**Open — current primary T004 operational blocker.** LoyalFlow has:
+**Verified.** The owner explicitly approved bounded external monitoring configuration for the LoyalFlow health endpoint. Vercel native Alerts were observed to require a Pro plan, so a separate UptimeRobot HTTP/S monitor was configured instead.
 
-- public health/readiness endpoints;
-- Vercel Runtime Logs;
-- Vercel Observability surfaces;
-- a Super Admin read-only operations centre;
-- an operational snapshot verifier;
-- incident severity and response rules.
+Verified evidence now establishes:
 
-Provider evidence also showed Speed Insights and Web Analytics as not enabled on the observed Production deployment.
+- production target: `https://loyalflow-gray.vercel.app/api/health`;
+- external provider: UptimeRobot;
+- check interval: 5 minutes;
+- monitor state: `Up` with 100% uptime at capture time;
+- notification route: account-associated e-mail channel for the accountable On-call Operator, with the private address intentionally omitted from repository evidence;
+- UptimeRobot built-in test notification reported `Test notification sent`;
+- end-to-end receipt of both synthetic `TEST: Monitor is DOWN` and `TEST: Monitor is UP` messages was demonstrated on the operator's device.
 
-No evidence currently proves a configured external alert policy, notification recipient/channel, or delivered test alert. Therefore external alert routing remains unverified.
+Read-only verification of the production health target returned HTTP `200`, `service: "loyalflow"`, `status: "ready"`, and `environment: "production"`. Repository behavior also ensures readiness failure returns HTTP `503`.
 
-Configuring provider/external alerts is a provider mutation and requires separate explicit approval before execution.
+Evidence is recorded in `docs/OPERATIONS/T004_EXTERNAL_MONITORING_EVIDENCE_2026-08-09.md`.
+
+This closes the external monitoring and alert-delivery gap without requiring a real production outage.
 
 ### Rehearsed incident and rollback runbook
 
@@ -90,27 +93,25 @@ This is not a live production rollback and does not establish measured productio
 
 ## Remaining smallest execution order
 
-1. Audit current monitoring/health/operations surfaces and document what is already available without mutating providers.
-2. Obtain separate explicit approval before enabling or configuring external monitoring/alert delivery.
-3. Configure one bounded alert route and deliver one sanitized test alert to the accountable On-call Operator, if approved.
-4. Keep the Independent Reviewer assignment deferred until the owner supplies a real reviewer; do not infer one.
-5. Run normal code-quality gates for the latest T004 branch head before Draft PR.
-6. Reconcile the master tracker with the verified T004 evidence.
-7. Close T004 only when the required evidence is reproducible and no mandatory closeout gate remains unresolved.
+1. Keep the Independent Reviewer assignment deferred until the owner supplies a real reviewer; do not infer one.
+2. Decide whether production/provider backup/PITR and service-level RPO/RTO verification are mandatory for T004 closeout or explicitly remain a launch-gate item.
+3. Resolve continuity/back-up ownership or explicitly accept the current single-owner operational posture.
+4. Run normal code-quality gates for the latest T004 branch head before Draft PR.
+5. Reconcile the master tracker with the verified T004 evidence.
+6. Close T004 only when the required evidence is reproducible and no mandatory closeout gate remains unresolved.
 
 ## Protected decisions / approvals still required
 
-The completed disposable-local exercise and Preview evidence do not authorise broader database or provider work. Separate approval is still required for:
+The completed disposable-local exercise, Preview evidence, and external-monitoring configuration do not authorise broader database or provider work. Separate approval is still required for:
 
 - any production, staging, preview, shared, or remote database command;
 - migration execution against any environment;
-- production or staging provider configuration;
+- production database backup/PITR configuration or restore action;
 - secrets or environment-variable changes;
-- external monitoring/alert service configuration;
 - production deployment.
 
 ## Current status
 
 **NOT READY FOR DRAFT PR** for T004 closeout.
 
-Verified evidence now includes disposable-local backup/restore execution, Preview environment isolation/runtime identity, named Recovery Operator, and a bounded incident/rollback tabletop. The primary unresolved operational evidence is external alert delivery. Independent Reviewer assignment is intentionally deferred, and normal latest-head branch gates have not yet been proven.
+Verified evidence now includes disposable-local backup/restore execution, Preview environment isolation/runtime identity, named Recovery Operator, bounded incident/rollback tabletop, and end-to-end external monitoring alert delivery. Remaining closeout questions are production/service RPO-RTO posture, Independent Reviewer assignment, continuity/back-up ownership, and latest-head quality gates.
