@@ -32,16 +32,16 @@ test("T004 evidence records the measured local drill without promoting it to pro
   assert.match(recovery, /Result: `PASS`/);
 });
 
-test("T004 evidence preserves named ownership and open independent roles", () => {
+test("T004 evidence preserves approved recovery ownership and open independent review", () => {
   const evidence = source("docs/OPERATIONS/T004_OPERATIONAL_EVIDENCE.md");
   const ownership = source("docs/OPERATIONS/T004_OPERATIONAL_OWNERSHIP.md");
 
   assert.match(evidence, /Anas Tarek \(`anastarek222`\)/);
-  assert.match(evidence, /Recovery Operator: `UNASSIGNED`/);
+  assert.match(evidence, /Recovery Operator/);
   assert.match(evidence, /Independent Reviewer: `UNASSIGNED`/);
   assert.match(evidence, /Do not infer or invent a person/i);
-  assert.match(ownership, /Recovery Operator \| `UNASSIGNED`/);
-  assert.match(ownership, /Independent Reviewer \| `UNASSIGNED`/);
+  assert.match(ownership, /Database recovery execution \| Recovery Operator \| Anas Tarek \(`anastarek222`\)/);
+  assert.match(ownership, /Operational evidence review \| Independent Reviewer \| `UNASSIGNED`/);
 });
 
 test("T004 evidence records Preview isolation while keeping alert routing open", () => {
@@ -51,6 +51,7 @@ test("T004 evidence records Preview isolation while keeping alert routing open",
   assert.match(evidence, /separately provisioned Neon PostgreSQL resource/i);
   assert.match(evidence, /environment: \"preview\"/i);
   assert.match(evidence, /external alert delivery not verified/i);
+  assert.match(evidence, /Primary target: `\/api\/health`/i);
   assert.match(evidence, /test-alert or equivalent routing verification/i);
 });
 
