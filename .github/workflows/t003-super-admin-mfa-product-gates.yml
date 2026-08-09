@@ -1,5 +1,6 @@
 name: T003 Super Admin MFA Product Gates
 
+# Temporary verification workflow for the current bounded T003 slice.
 on:
   push:
     branches:
