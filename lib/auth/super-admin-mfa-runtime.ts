@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import prisma from "@/lib/prisma";
+import { recordSecurityNotification } from "@/lib/auth/security-notification";
 import {
   createRecoveryCodes,
   createTotpSecret,
@@ -139,6 +140,11 @@ export async function enableSuperAdminMfa(input: {
       data: { authVersion: { increment: 1 } },
     });
 
+    await recordSecurityNotification(transaction, {
+      userId: row.userId,
+      event: "MFA_ENABLED",
+    });
+
     return true;
   });
 }
@@ -171,12 +177,23 @@ export async function verifySuperAdminMfa(input: {
   if (verifyTotpCode({ secret, code: input.code, now: input.now })) return true;
 
   const recoveryHash = hashRecoveryCode(input.code);
-  const consumed = await prisma.$executeRaw`
-    UPDATE "SuperAdminMfaRecoveryCode"
-    SET "usedAt" = CURRENT_TIMESTAMP
-    WHERE "userId" = ${input.userId}
-      AND "codeHash" = ${recoveryHash}
-      AND "usedAt" IS NULL
-  `;
-  return consumed === 1;
+
+  return prisma.$transaction(async (transaction) => {
+    const consumed = await transaction.$executeRaw`
+      UPDATE "SuperAdminMfaRecoveryCode"
+      SET "usedAt" = CURRENT_TIMESTAMP
+      WHERE "userId" = ${input.userId}
+        AND "codeHash" = ${recoveryHash}
+        AND "usedAt" IS NULL
+    `;
+
+    if (consumed !== 1) return false;
+
+    await recordSecurityNotification(transaction, {
+      userId: input.userId,
+      event: "MFA_RECOVERY_CODE_USED",
+    });
+
+    return true;
+  });
 }
