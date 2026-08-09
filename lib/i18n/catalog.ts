@@ -35,6 +35,12 @@ export const messages = {
     "marketing.workflowOne": "Set up your business and loyalty program.",
     "marketing.workflowTwo": "Invite your team and run customer operations.",
     "marketing.workflowThree": "Track results and improve retention with reports and campaigns.",
+    "onboarding.metaTitle": "Owner onboarding | LoyalFlow",
+    "onboarding.metaDescription": "Complete the private LoyalFlow owner setup flow.",
+    "onboarding.eyebrow": "Owner setup",
+    "onboarding.title": "Set up your LoyalFlow workspace",
+    "onboarding.description": "Complete your business profile, loyalty program, rewards, branding, and card setup before launch.",
+    "onboarding.privateNote": "This setup is private to your account and is not indexed by search engines.",
   },
   ar: {
     "common.brand": "LoyalFlow",
@@ -70,6 +76,12 @@ export const messages = {
     "marketing.workflowOne": "جهّز نشاطك وبرنامج الولاء.",
     "marketing.workflowTwo": "ادعُ فريقك وابدأ تشغيل عمليات العملاء.",
     "marketing.workflowThree": "تابع النتائج وحسّن الاحتفاظ بالعملاء عبر التقارير والحملات.",
+    "onboarding.metaTitle": "إعداد المالك | LoyalFlow",
+    "onboarding.metaDescription": "أكمل إعداد المالك الخاص بك في LoyalFlow.",
+    "onboarding.eyebrow": "إعداد المالك",
+    "onboarding.title": "جهّز مساحة عمل LoyalFlow الخاصة بك",
+    "onboarding.description": "أكمل بيانات النشاط وبرنامج الولاء والمكافآت والهوية والبطاقة قبل الإطلاق.",
+    "onboarding.privateNote": "هذا الإعداد خاص بحسابك ولا تتم فهرسته في محركات البحث.",
   },
 } as const;
 
