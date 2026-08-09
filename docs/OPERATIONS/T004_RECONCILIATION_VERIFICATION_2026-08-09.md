@@ -31,6 +31,10 @@ The branch remains bounded to operational-readiness reconciliation and does not 
 
 ## Governance status
 
-Technical reconciliation gates are complete for this head.
+Technical reconciliation gates are complete for the verified runtime/test/config head.
 
-Independent Review remains unresolved for T004. The governance exception previously granted for T005 does not apply to T004. Therefore T004 remains `NOT READY FOR DRAFT PR` until a real Independent Reviewer completes the required review or the accountable owner explicitly grants a separate T004 governance exception.
+On 2026-08-09, after confirming that no real Independent Reviewer was available, the accountable owner explicitly approved a T004-specific governance exception allowing T004 closeout and merge without an Independent Reviewer. This exception is limited to T004 and does not waive future launch-gate recovery evidence, production/service RPO-RTO measurement, or reviewer requirements for unrelated work.
+
+The exception does not convert proposed recovery objectives into achieved evidence. Production/service RPO remains unverified, Production/service RTO remains unverified, and measured proof remains deferred to the public-launch gate.
+
+With this explicit exception recorded, the Independent Review blocker is waived for T004 closeout. The valid project status for the reconciled branch is `READY FOR DRAFT PR` subject to confirming that the branch head contains only this documentation-only governance update after the verified runtime/test/config head.
