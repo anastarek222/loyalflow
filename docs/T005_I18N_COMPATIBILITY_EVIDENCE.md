@@ -2,7 +2,7 @@
 
 Date: 2026-08-09
 Branch: `feat/t005-i18n-compat-foundation`
-Verified source head before evidence-only commit: `684af8796110130cf49cc32f40a67c6e955d68bc`
+Verified runtime/test/config head: `9bc57fce5c4ca9688885f79b206cff077428a713`
 
 ## Scope verified
 
@@ -12,24 +12,26 @@ Verified source head before evidence-only commit: `684af8796110130cf49cc32f40a67
 - Root `<html>` language and text direction wiring (`ar`/`rtl`, `en`/`ltr`).
 - Login entrypoint localization for the first bounded UI slice.
 - EN/AR language switcher that persists only the locale cookie and refreshes the server-rendered route.
+- Legacy `lib/i18n.ts` preserved as a compatibility adapter over the typed catalog instead of maintaining a second copy source.
 - No dependency, database, migration, auth-topology, or production-deploy change in this slice.
 
 ## Local verification
 
-The verification command was run after deleting stale local `.next` generated output. The first typecheck attempt had failed only because stale `.next/types` still referenced a route from another branch; clearing `.next` removed that generated-cache artifact.
+Verification was rerun after the compatibility-adapter fix and after clearing stale local `.next` generated output.
 
-The successful chained verification reached every gate, so `typecheck` and `lint` both exited successfully before tests and build ran.
+The chained verification reached every gate, so `typecheck` and `lint` both exited successfully before tests and build ran.
 
 - TypeScript: PASS (`pnpm run typecheck`).
 - ESLint: PASS (`pnpm run lint`).
-- Tests: PASS — 758/758, 0 failed, duration 13080.584718 ms.
+- Tests: PASS — 759/759, 0 failed, duration 13236.358137 ms.
 - Prisma Client generation: PASS — Prisma Client 7.9.0 generated successfully.
 - Next.js production build: PASS — Next.js 16.2.11 (webpack).
-- Compilation: PASS — 55s.
-- Build TypeScript phase: PASS — 33.4s.
+- Compilation: PASS — 51s.
+- Build TypeScript phase: PASS — 33.8s.
 - Page-data collection: PASS — 3.6s.
-- Static generation: PASS — 25/25 pages.
-- Build traces/finalization: PASS.
+- Static generation: PASS — 25/25 pages in 6.8s.
+- Build traces: PASS — 14.0s.
+- Finalization: PASS — 14.0s.
 
 The build used a one-process `NEXT_PUBLIC_APP_URL=https://loyalflow-gray.vercel.app` override only; no repository environment file or provider setting was changed.
 
@@ -39,6 +41,6 @@ Vercel status on this branch is not treated as a code failure: the account curre
 
 ## Gate interpretation
 
-This evidence-only documentation commit does not modify runtime, test, configuration, dependency, or database files. Therefore the successful gates above remain valid for the verified T005 code tree and do not require an endless rerun solely because this evidence file was added.
+This evidence-only documentation commit does not modify runtime, test, configuration, dependency, or database files. Therefore the successful gates above remain valid for the verified T005 code tree and do not require another rerun solely because this evidence file was updated.
 
 Status after local quality gates: `READY FOR REVIEW`.
