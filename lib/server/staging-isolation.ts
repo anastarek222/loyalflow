@@ -62,10 +62,7 @@ export function evaluateStagingIsolation(
     return { required: true, allowed: false, reason: "invalid_database_url" };
   }
 
-  if (
-    (productionDatabase && expectedDatabase === productionDatabase && productionHost && expectedHost === productionHost) ||
-    (productionDatabase && currentDatabase === productionDatabase && productionHost && currentHost === productionHost)
-  ) {
+  if (productionDatabase && productionHost && expectedDatabase === productionDatabase && expectedHost === productionHost) {
     return { required: true, allowed: false, reason: "production_database_match" };
   }
 
