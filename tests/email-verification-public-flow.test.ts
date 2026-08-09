@@ -45,13 +45,15 @@ test("owner invitation redemption records mailbox possession as verified", () =>
   assert.match(runtime, /\$\{atomicInput\.now\}/);
 });
 
-test("login surfaces verification success and a generic resend recovery path", () => {
+test("login surfaces verification success while resend recovery remains a dedicated public flow", () => {
   const login = source("app/login/page.tsx");
-  const resend = source("app/verify-email/resend/actions.ts");
+  const resendPage = source("app/verify-email/resend/page.tsx");
+  const resendAction = source("app/verify-email/resend/actions.ts");
 
   assert.match(login, /verificationValue/);
   assert.match(login, /Your email has been verified/);
-  assert.match(login, /href="\/verify-email\/resend"/);
-  assert.match(resend, /email_verification_resend_failed/);
-  assert.doesNotMatch(resend, /throw error/);
+  assert.doesNotMatch(login, /href="\/verify-email\/resend"/);
+  assert.match(resendPage, /resendVerificationAction/);
+  assert.match(resendAction, /email_verification_resend_failed/);
+  assert.doesNotMatch(resendAction, /throw error/);
 });
