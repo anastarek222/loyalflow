@@ -20,17 +20,19 @@ test("phone selectors normalize local punctuation into the schema-compatible int
   assert.equal(isValidBusinessPhone("123"), false);
 });
 
-test("owner invitations enforce the same existing password policy", () => {
-  assert.equal(ownerInvitationSchema.safeParse({ ownerFirstName: "Mona", ownerLastName: "", ownerEmail: "mona@example.test", ownerPassword: "1234567890" }).success, true);
-  assert.equal(ownerInvitationSchema.safeParse({ ownerFirstName: "Mona", ownerLastName: "", ownerEmail: "mona@example.test", ownerPassword: "short" }).success, false);
+test("owner invitations collect identity only and never an admin-selected password", () => {
+  assert.equal(ownerInvitationSchema.safeParse({ ownerFirstName: "Mona", ownerLastName: "", ownerEmail: "mona@example.test" }).success, true);
+  assert.equal(ownerInvitationSchema.safeParse({ ownerFirstName: "Mona", ownerLastName: "", ownerEmail: "not-an-email" }).success, false);
 });
 
-test("invitation creation is super-admin only and does not attach a tenant", () => {
+test("invitation creation is super-admin only and creates no owner or tenant", () => {
   const action = source("app/businesses/actions.ts");
-  assert.match(action, /createOwnerInvitationAction/);
-  assert.match(action, /await requireSuperAdmin\(\)/);
-  assert.match(action, /onboardingStatus: "PENDING"/);
-  assert.doesNotMatch(action.match(/export async function createOwnerInvitationAction[\s\S]*?export async function createBusinessAction/)?.[0] ?? "", /businessId:/);
+  const invitationAction = action.match(/export async function createOwnerInvitationAction[\s\S]*?export async function createBusinessAction/)?.[0] ?? "";
+  assert.match(invitationAction, /await requireSuperAdmin\(\)/);
+  assert.match(invitationAction, /OwnerInvitation/);
+  assert.doesNotMatch(invitationAction, /prisma\.user\.create/);
+  assert.doesNotMatch(invitationAction, /businessId:/);
+  assert.doesNotMatch(invitationAction, /ownerPassword/);
 });
 
 test("pending owners are routed to setup and standard card remains system-controlled", () => {
