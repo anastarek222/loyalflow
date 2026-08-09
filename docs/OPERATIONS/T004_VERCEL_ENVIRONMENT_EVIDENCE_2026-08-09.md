@@ -51,19 +51,29 @@ These screenshots establish that the provider resource used for Preview is a new
 
 ## Preview deployment evidence
 
-An earlier Preview deployment from branch `docs/t004-operational-readiness-audit` at commit `8baa28b` failed during dependency installation.
+An earlier Preview deployment from branch `docs/t004-operational-readiness-audit` at commit `8baa28b` failed during dependency installation because `DATABASE_URL` was not available to Prisma configuration. That failure occurred before the Neon Preview database was connected and therefore does not represent the corrected configuration.
 
-Relevant sanitized build-log facts:
+A fresh Preview deployment after the Neon connection was then observed at commit `51dbc65` from branch `docs/t004-operational-readiness-audit`.
+
+Relevant sanitized build/deployment facts:
 
 - environment: `Preview`;
-- Vercel cloned branch `docs/t004-operational-readiness-audit`, commit `8baa28b`;
-- `pnpm install` ran and triggered `postinstall$ prisma generate`;
-- Prisma failed before application build with `PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL`;
-- Vercel reported `Command "pnpm install" exited with 1`.
+- Vercel cloned `docs/t004-operational-readiness-audit`, commit `51dbc65`;
+- Neon provisioning integration completed before build output deployment;
+- `pnpm install` completed successfully;
+- `postinstall$ prisma generate` loaded `prisma.config.ts` successfully;
+- Prisma schema loaded successfully;
+- Prisma Client `7.9.0` generated successfully;
+- `pnpm run build` completed successfully;
+- Next.js `16.2.11` compiled successfully;
+- TypeScript completed successfully;
+- all static pages generated successfully;
+- Vercel reported `Build Completed` and `Deployment completed`;
+- deployment UI shows status `Ready Latest` and environment `Preview`;
+- deployment source is commit `51dbc65` on the T004 branch;
+- deployment region is `iad1` and deployment protection is enabled.
 
-This failure occurred before the Neon Preview database was connected and therefore does not represent the corrected configuration. No application database connection, migration, or data operation occurred in that failure path.
-
-A fresh Preview deployment is still required after the Neon connection so that the corrected Preview environment can be observed in use.
+No migration, seed, schema mutation, or application database write is shown in the provided deployment logs. The successful Prisma generation/build proves that the corrected Preview environment now supplies a usable database connection value to application configuration during build.
 
 ## Security interpretation
 
@@ -74,11 +84,12 @@ Provider evidence now demonstrates a real non-production PostgreSQL boundary for
 - the Neon connection was scoped to Preview only;
 - Production was explicitly excluded from the Neon connection;
 - Preview deployment database branching is enabled;
-- no production customer data was intentionally copied into the new resource during provisioning.
+- no production customer data was intentionally copied into the new resource during provisioning;
+- a fresh Preview deployment successfully consumed the corrected configuration and reached `Ready Latest`.
 
-This closes the provider target identity gap for staging/preview database isolation.
+This closes the provider target identity and build-consumption gaps for staging/preview database isolation.
 
-`LOYALFLOW_ENVIRONMENT` remains visible only for Production in the earlier evidence, so a dedicated application-level staging identity is not yet independently verified. A fresh Preview deployment is also still required to prove the corrected environment is consumable by the application build/runtime.
+`LOYALFLOW_ENVIRONMENT` remains visible only for Production in the earlier evidence, so a dedicated application-level staging/preview identity is still not independently verified. The successful deployment alone does not prove runtime identity semantics inside the application.
 
 ## Production deployment evidence
 
@@ -100,11 +111,11 @@ Execution status:
 - [x] Preview database branching enabled.
 - [x] Preview target is proven to be a distinct Neon non-production PostgreSQL resource.
 - [x] No production customer data was intentionally copied during the provisioning flow.
-- [ ] Fresh Preview deployment after the Neon connection succeeds and is verified.
+- [x] Fresh Preview deployment after the Neon connection succeeded and is verified.
 - [ ] Dedicated application-level staging/preview environment identity is verified.
 
 ## T004 conclusion
 
-Status: **PREVIEW DATABASE ISOLATION VERIFIED — FRESH PREVIEW DEPLOYMENT STILL REQUIRED**.
+Status: **PREVIEW DATABASE ISOLATION AND DEPLOYMENT VERIFIED — APPLICATION-LEVEL PREVIEW IDENTITY STILL REQUIRED**.
 
-The repository must not claim T004 staging/preview readiness complete until a fresh Preview deployment using the connected Neon resource succeeds and the application-level environment identity is confirmed.
+The repository may now treat provider-side Preview database isolation and Preview deployment consumption as verified. T004 staging/preview readiness is not yet complete until application-level environment identity is independently confirmed.
