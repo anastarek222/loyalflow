@@ -1,6 +1,8 @@
 CREATE TABLE "SuperAdminMfa" (
     "userId" TEXT NOT NULL,
     "secretCiphertext" TEXT NOT NULL,
+    "enrollmentTokenHash" TEXT,
+    "enrollmentExpiresAt" TIMESTAMP(3),
     "enabledAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -17,6 +19,9 @@ CREATE TABLE "SuperAdminMfaRecoveryCode" (
 
     CONSTRAINT "SuperAdminMfaRecoveryCode_pkey" PRIMARY KEY ("id")
 );
+
+CREATE UNIQUE INDEX "SuperAdminMfa_enrollmentTokenHash_key"
+ON "SuperAdminMfa"("enrollmentTokenHash");
 
 CREATE UNIQUE INDEX "SuperAdminMfaRecoveryCode_codeHash_key"
 ON "SuperAdminMfaRecoveryCode"("codeHash");
