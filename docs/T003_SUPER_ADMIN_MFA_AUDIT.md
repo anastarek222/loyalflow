@@ -4,21 +4,25 @@ Baseline: `main` at `680b59747ad6d86c957f9b82f0545898653d3e66` (merged PR #46).
 
 ## Scope
 
-Product/security decision record for the remaining T003 `Super Admin MFA decision` exit item. This slice records the approved enforcement direction and the bounded follow-up contract; it does not itself change authentication behavior, schema, dependencies, environment variables, secrets, or production configuration.
+Product/security decision record for the remaining T003 `Super Admin MFA decision` exit item. This slice records the approved enforcement direction and the bounded follow-up contract.
 
 ## Current repository evidence
 
 - LoyalFlow uses NextAuth credentials authentication with JWT sessions.
 - Credentials login validates email/password, account/business active state, email-verification state, and the current auth-version before issuing/continuing a session.
-- `SUPER_ADMIN` is a privileged application role, but the current credentials flow has no second-factor challenge or MFA enrollment state.
-- Repository search found no TOTP, authenticator, WebAuthn/passkey, recovery-code, or two-factor implementation.
+- `SUPER_ADMIN` is a privileged application role, but the baseline credentials flow has no second-factor challenge or MFA enrollment state.
+- Baseline repository search found no TOTP, authenticator, WebAuthn/passkey, recovery-code, or two-factor implementation.
 - Login rate limiting exists, but rate limiting is not a substitute for a second factor on a privileged account.
 
 ## Approved product/security decision
 
 **Require MFA for every `SUPER_ADMIN` before Public Launch.**
 
-This decision was explicitly approved on 2026-08-09. It closes the product-choice portion of the T003 MFA item, but it does not claim that MFA enforcement is implemented yet.
+This decision was explicitly approved on 2026-08-09.
+
+## Approved persistence boundary
+
+A bounded schema/migration for the Super Admin MFA lifecycle was explicitly approved on 2026-08-09. This authorizes schema and migration authoring only. It does **not** authorize executing a migration, connecting to a database, running seeds, or changing production data.
 
 ## Bounded implementation direction
 
@@ -35,6 +39,10 @@ Preferred first mechanism: standards-based TOTP with recovery codes. The impleme
 - keep non-`SUPER_ADMIN` authentication behavior unchanged;
 - include behavioral tests for enrollment, valid/invalid/replayed recovery, rate limiting, and enforcement.
 
+## Current implementation foundation
+
+The implementation branch now contains authored MFA persistence models/migration plus dependency-free TOTP, authenticated secret-envelope, recovery-code, and runtime lifecycle primitives. The TOTP secret is sealed with AES-256-GCM using a domain-separated key derived from the existing auth secret at runtime; no new environment variable or repository secret was introduced.
+
 ## Non-goals
 
 - No broad NextAuth/auth-topology rewrite.
@@ -42,10 +50,10 @@ Preferred first mechanism: standards-based TOTP with recovery codes. The impleme
 - No production rollout or migration execution in the implementation PR.
 - No dependency, lockfile, environment, or secret changes without their separate approval boundary.
 
-## Remaining approval boundary
+## Remaining protected boundary
 
-Implementing the approved direction requires persistent MFA enrollment/recovery state. That means a bounded schema/migration change is still required before implementation can proceed. Migration authoring may be approved separately from migration execution; executing any migration against a database remains a separate protected action.
+Migration execution remains separately protected. Prisma Client generation for this new schema also remains a verification step requiring its targeted approval under the current operating contract.
 
 ## T003 status impact
 
-The **MFA decision is resolved**: MFA is mandatory for `SUPER_ADMIN` before Public Launch. T003 remains open until the approved lifecycle is implemented and verified, alongside the remaining distributed rate limiting and security-notification work.
+The **MFA decision is resolved** and the lifecycle foundation is in progress. T003 remains open until end-to-end Super Admin enrollment/challenge enforcement is implemented and verified, alongside distributed rate limiting and security-notification work.
