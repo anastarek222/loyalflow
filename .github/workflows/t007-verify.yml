@@ -1,0 +1,48 @@
+name: T007 Verify
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/server/staging-isolation.ts"
+      - "tests/t007-staging-isolation.test.ts"
+      - ".github/workflows/t007-verify.yml"
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_APP_URL: https://loyalflow-gray.vercel.app
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/loyalflow_ci
+      AUTH_SECRET: t007-ci-only-auth-secret-not-for-runtime-0123456789abcdef
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm run build
