@@ -1,6 +1,6 @@
 # T004 Vercel Environment Evidence — 2026-08-09
 
-Source: user-provided read-only screenshots of the Vercel project Environment Variables and Deployment pages. Secret values were not inspected or recorded.
+Source: user-provided read-only screenshots of the Vercel project Environment Variables, Storage, and Deployment pages plus pasted Vercel build logs. Secret values were not inspected or recorded.
 
 ## Observed environment scoping
 
@@ -29,11 +29,33 @@ Later screenshots captured after that corrective change now show:
 
 No secret value was inspected or recorded. The provider-side target behind the Preview value is still not independently identified by the available evidence.
 
+## Storage/provider evidence
+
+The Vercel project Storage page shows no connected database resource and offers only `Connect Database` / `Create Database`. Therefore the current Preview `DATABASE_URL` is not backed by a Vercel-managed database resource visible in the project Storage inventory.
+
+This means the underlying Preview database target must be identified outside this Storage page before T004 can claim an isolated non-production database boundary.
+
+## Preview deployment evidence
+
+A Preview deployment from branch `docs/t004-operational-readiness-audit` at commit `8baa28b` failed during dependency installation.
+
+Relevant sanitized build-log facts:
+
+- environment: `Preview`;
+- Vercel cloned branch `docs/t004-operational-readiness-audit`, commit `8baa28b`;
+- `pnpm install` ran and triggered `postinstall$ prisma generate`;
+- Prisma failed before application build with `PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL`;
+- Vercel reported `Command "pnpm install" exited with 1`.
+
+This failure is useful evidence: the Preview deployment did **not** consume a usable Preview `DATABASE_URL` at that deployment attempt. No application database connection, migration, or data operation occurred in the shown failure path; the failure happened while loading Prisma configuration during `prisma generate`.
+
+Because the visible failed deployment used commit `8baa28b`, while the later screenshot showing the Preview-only `DATABASE_URL` was added after that point, this failure does not by itself prove the newly added Preview variable is still unavailable. A fresh Preview deployment is required after the corrected Preview variable is configured with a real non-production target.
+
 ## Security interpretation
 
 The provider evidence now proves that Production and Preview no longer share the same Vercel `DATABASE_URL` entry. This closes the environment-variable scope defect.
 
-Preview/Staging database isolation is still **not fully verified** because the available screenshot does not prove that the Preview-only value points to a distinct non-production database target. A separate environment-variable entry is necessary but not sufficient: the underlying database identity must also be non-production and must not contain production customer data.
+Preview/Staging database isolation is still **not fully verified** because the available screenshots do not prove that the Preview-only value points to a distinct non-production database target. A separate environment-variable entry is necessary but not sufficient: the underlying database identity must also be non-production and must not contain production customer data.
 
 The separate Production and Preview entries for `AUTH_SECRET` and `JWT_SECRET` remain positive evidence of a distinct secret boundary for those credentials.
 
@@ -55,10 +77,10 @@ Execution is partially verified:
 - [x] Preview has its own `DATABASE_URL` scoped to Preview only.
 - [ ] The Preview value is proven to point to a distinct non-production database target.
 - [ ] No production customer data is intentionally copied into the Preview database as part of this change.
-- [ ] A new Preview deployment has consumed the corrected configuration and been verified.
+- [ ] A fresh Preview deployment after the corrected variable is configured succeeds and is verified.
 
 ## T004 conclusion
 
 Status: **VARIABLE SCOPE ISOLATION VERIFIED — DATABASE TARGET IDENTITY STILL REQUIRED**.
 
-The repository must not claim that staging/preview database isolation is complete until the Preview database target is independently verified as non-production and a Preview deployment using the corrected configuration is observed.
+The repository must not claim that staging/preview database isolation is complete until the Preview database target is independently verified as non-production and a fresh Preview deployment using the corrected configuration is observed.
