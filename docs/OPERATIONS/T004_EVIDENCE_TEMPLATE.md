@@ -13,6 +13,17 @@ Use this file only to record sanitized evidence from an explicitly authorised op
 
 Allowed state progression is `NOT_EXECUTED` -> `EXECUTED_UNVERIFIED` -> `VERIFIED`. Do not set `VERIFIED` unless every required item below has reproducible evidence.
 
+## Attempt log
+
+### 2026-08-09 — blocked before database access
+
+- Approved scope: disposable local PostgreSQL backup/restore exercise only.
+- Command reached the exercise tool check and stopped with `psql is unavailable: spawnSync psql ENOENT`.
+- No disposable source database was created.
+- No restore database was created.
+- No `pg_dump`, `pg_restore`, validation query, migration command, or application database command ran.
+- This attempt is not measured recovery evidence and does not change the evidence state from `NOT_EXECUTED`.
+
 ## Backup evidence
 
 - Approved disposable target identifier: `UNSET`
