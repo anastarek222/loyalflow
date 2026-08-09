@@ -18,39 +18,43 @@ test("RPO/RTO runbook keeps planning targets explicitly unverified", () => {
   assert.match(runbook, /(not achieved|not verified|unverified|unknown)/i);
 });
 
-test("T004 evidence cannot claim measured recovery before an approved exercise", () => {
+test("T004 evidence records the measured local drill without promoting it to production RPO/RTO", () => {
   const evidence = source("docs/OPERATIONS/T004_OPERATIONAL_EVIDENCE.md");
+  const recovery = source("docs/OPERATIONS/T004_DISPOSABLE_RECOVERY_EVIDENCE_2026-08-09.md");
 
-  assert.match(evidence, /Current state: \*\*NOT MEASURED\*\*/);
-  assert.match(evidence, /Achieved RPO: unknown/i);
-  assert.match(evidence, /Achieved RTO: unknown/i);
-  assert.match(evidence, /explicitly approved drill/i);
-  assert.match(evidence, /database identity ending in `_test`/i);
-  assert.match(evidence, /SHA-256 checksum/i);
+  assert.match(evidence, /MEASURED LOCALLY \/ PRODUCTION RPO-RTO UNVERIFIED/);
+  assert.match(evidence, /Backup duration: `95 ms`/);
+  assert.match(evidence, /Restore duration: `53 ms`/);
+  assert.match(evidence, /not production RPO\/RTO evidence/i);
+  assert.match(recovery, /source_test/);
+  assert.match(recovery, /restore_test/);
+  assert.match(recovery, /SHA-256/i);
+  assert.match(recovery, /Result: `PASS`/);
 });
 
-test("T004 evidence requires named owners instead of invented assignments", () => {
+test("T004 evidence preserves named ownership and open independent roles", () => {
   const evidence = source("docs/OPERATIONS/T004_OPERATIONAL_EVIDENCE.md");
+  const ownership = source("docs/OPERATIONS/T004_OPERATIONAL_OWNERSHIP.md");
 
-  assert.match(evidence, /Incident commander \| UNASSIGNED/);
-  assert.match(evidence, /Application rollback operator \| UNASSIGNED/);
-  assert.match(evidence, /Database recovery operator \| UNASSIGNED/);
-  assert.match(evidence, /Hosting\/provider escalation owner \| UNASSIGNED/);
-  assert.match(evidence, /Monitoring\/alert recipient \| UNASSIGNED/);
+  assert.match(evidence, /Anas Tarek \(`anastarek222`\)/);
+  assert.match(evidence, /Recovery Operator: `UNASSIGNED`/);
+  assert.match(evidence, /Independent Reviewer: `UNASSIGNED`/);
   assert.match(evidence, /Do not infer or invent a person/i);
+  assert.match(ownership, /Recovery Operator \| `UNASSIGNED`/);
+  assert.match(ownership, /Independent Reviewer \| `UNASSIGNED`/);
 });
 
-test("T004 evidence requires staging isolation and alert-routing proof", () => {
+test("T004 evidence records Preview isolation while keeping alert routing open", () => {
   const evidence = source("docs/OPERATIONS/T004_OPERATIONAL_EVIDENCE.md");
 
-  assert.match(evidence, /Staging database identity is distinct from production/i);
-  assert.match(evidence, /Staging secrets are isolated from production secrets/i);
-  assert.match(evidence, /cannot read or mutate production customer data/i);
-  assert.match(evidence, /External uptime\/error monitoring/i);
-  assert.match(evidence, /sanitized test alert/i);
+  assert.match(evidence, /VERIFIED FOR PREVIEW ISOLATION/);
+  assert.match(evidence, /separately provisioned Neon PostgreSQL resource/i);
+  assert.match(evidence, /environment: \"preview\"/i);
+  assert.match(evidence, /external alert delivery not verified/i);
+  assert.match(evidence, /test-alert or equivalent routing verification/i);
 });
 
-test("T004 evidence keeps provider and database mutations outside template authority", () => {
+test("T004 evidence keeps provider and database mutations outside summary authority", () => {
   const evidence = source("docs/OPERATIONS/T004_OPERATIONAL_EVIDENCE.md");
 
   assert.match(evidence, /does not authorize any database connection/i);
