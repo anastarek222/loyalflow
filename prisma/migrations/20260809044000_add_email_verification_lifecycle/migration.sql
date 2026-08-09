@@ -18,6 +18,9 @@ CREATE TABLE "EmailVerificationToken" (
   CONSTRAINT "EmailVerificationToken_pkey" PRIMARY KEY ("id")
 );
 
+CREATE UNIQUE INDEX "EmailVerificationToken_userId_key"
+ON "EmailVerificationToken"("userId");
+
 CREATE UNIQUE INDEX "EmailVerificationToken_tokenHash_key"
 ON "EmailVerificationToken"("tokenHash");
 
