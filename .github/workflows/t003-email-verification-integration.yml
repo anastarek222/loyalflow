@@ -168,7 +168,7 @@ test("verification resend is enumeration resistant and rate limited", () => {
   assert.match(action, /email-verification-resend:/);
   assert.match(action, /limit: 5/);
   assert.match(action, /\/verify-email\/resend\?sent=1/);
-  assert.match(action, /createEmailVerificationToken\(\)/);
+  assert.match(action, /issueEmailVerificationToken/);
   assert.match(action, /sendEmailVerificationEmail/);
 });
 ''')
@@ -177,7 +177,7 @@ test("verification resend is enumeration resistant and rate limited", () => {
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app/businesses/actions.ts tests/email-verification-enrollment.test.ts
-          git commit -m "feat(auth): enroll custom owners for email verification [skip ci]"
+          git commit -m "feat(auth): enroll custom owners for email verification [skip ci]" || true
           git push
       - name: Install
         run: pnpm install --frozen-lockfile --ignore-scripts
