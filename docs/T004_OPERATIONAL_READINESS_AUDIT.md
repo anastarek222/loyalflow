@@ -22,7 +22,17 @@ LoyalFlow already has substantial operational safety material:
 
 ### G02 — measured backup/restore evidence
 
-**Partial evidence obtained.** An explicitly approved synthetic disposable-local PostgreSQL 18.4 exercise completed successfully on 2026-08-09. The recorded evidence includes backup/restore timestamps, a 1,891-byte backup artifact, SHA-256 checksum, 148 ms backup duration, 61 ms restore duration, and successful validation of three synthetic rows and markers.
+**Local procedural evidence verified.** An explicitly approved synthetic disposable-local PostgreSQL 18.4 exercise completed successfully on 2026-08-09.
+
+Latest recorded execution evidence:
+
+- backup duration: 95 ms;
+- restore duration: 53 ms;
+- backup artifact size: 1,891 bytes;
+- SHA-256: `7af650eb586058aaf60bee1f476d34e1f1c1b41f9e44de4fc072c12d8192e4b2`;
+- validated rows: 3;
+- validated markers: `alpha,beta,gamma`;
+- source and restore databases were generated disposable local `_test` databases on `127.0.0.1:5432`.
 
 Evidence is recorded in `docs/OPERATIONS/T004_DISPOSABLE_RECOVERY_EVIDENCE_2026-08-09.md`.
 
@@ -30,38 +40,69 @@ This closes the missing local procedural-execution evidence only. It does **not*
 
 ### Operational ownership
 
-**Partial.** By explicit owner approval, Anas Tarek (`anastarek222`) is recorded as Primary Operational Owner for Incident Commander, Release Operator, Database Owner, Platform Owner, On-call Operator, and Security Owner. `Recovery Operator` and `Independent Reviewer` remain intentionally `UNASSIGNED` and must not be inferred.
+**Substantially assigned; independent review intentionally deferred.** By explicit owner approval, Anas Tarek (`anastarek222`) is recorded as Incident Commander, Release Operator, Database Owner, Recovery Operator, Platform Owner, On-call Operator, and Security Owner.
 
-The assignment itself does not grant database, production, provider, secrets, or deployment permissions.
+`Independent Reviewer` remains intentionally `UNASSIGNED` after the owner chose to defer that assignment. It must not be inferred or silently self-assigned.
 
-### Staging isolation evidence
+These assignments do not grant database, production, provider, secrets, or deployment permissions.
 
-**Open.** Existing production guards and release scripts are strong, but there is still no reproducible evidence proving an isolated staging environment with a staging-only database identity, secrets boundary, and no production data access. Creating or mutating hosting/database environments requires separate approval.
+### Staging / Preview isolation evidence
+
+**Verified for the current Preview boundary.** Provider and runtime evidence establish that:
+
+- Production retains a Production-only `DATABASE_URL`;
+- Preview uses a separately provisioned Neon PostgreSQL non-production resource;
+- the Neon connection is scoped to Preview only and excludes Production;
+- Preview database branching is enabled;
+- a fresh Preview deployment succeeded after the Neon connection;
+- `/api/health` returned `status: "ready"` and `environment: "preview"` for release lineage `51dbc65...`.
+
+Evidence is recorded in `docs/OPERATIONS/T004_VERCEL_ENVIRONMENT_EVIDENCE_2026-08-09.md`.
+
+This verifies the Preview isolation and application-level environment identity requirements covered by T004. It does not authorise migrations or other database commands against the Preview Neon resource.
 
 ### Monitoring and alert routing
 
-**Partial.** LoyalFlow has public health endpoints, a Super Admin read-only operations centre, an operational snapshot verifier, and incident severity rules. These are useful observability foundations, but they are not proof of external uptime/error monitoring or delivered alert routing to an accountable operator.
+**Open — current primary T004 operational blocker.** LoyalFlow has:
+
+- public health/readiness endpoints;
+- Vercel Runtime Logs;
+- Vercel Observability surfaces;
+- a Super Admin read-only operations centre;
+- an operational snapshot verifier;
+- incident severity and response rules.
+
+Provider evidence also showed Speed Insights and Web Analytics as not enabled on the observed Production deployment.
+
+No evidence currently proves a configured external alert policy, notification recipient/channel, or delivered test alert. Therefore external alert routing remains unverified.
+
+Configuring provider/external alerts is a provider mutation and requires separate explicit approval before execution.
 
 ### Rehearsed incident and rollback runbook
 
-**Documented, not rehearsed.** The incident response and backup recovery documents are present and correctly separate application rollback from database recovery. There is no recorded tabletop/rehearsal evidence with timestamps, operator, release SHA, outcome, and corrective actions.
+**Tabletop rehearsal completed.** A documentation-only incident/application-rollback rehearsal was recorded on 2026-08-09 with Anas Tarek as Incident Commander.
+
+The rehearsal passed the documented decision path and confirmed separation between application rollback and database recovery, including explicit stop conditions for destructive database commands.
+
+Evidence is recorded in `docs/OPERATIONS/T004_TABLETOP_REHEARSAL_2026-08-09.md`.
+
+This is not a live production rollback and does not establish measured production recovery time.
 
 ## Remaining smallest execution order
 
-1. Preserve and independently review the sanitized disposable-local recovery evidence.
-2. Assign a distinct Recovery Operator and Independent Reviewer, or formally define approved teams for those responsibilities.
-3. Obtain separate approval before creating/changing staging or external monitoring/provider configuration.
-4. Capture staging isolation evidence without production-data access.
-5. Produce a delivered external test alert to the accountable on-call route.
-6. Run a bounded incident/application-rollback tabletop or rehearsal and record timestamps/outcome.
-7. Run normal code-quality gates for the T004 branch before Draft PR.
-8. Close T004 only when all required evidence is reproducible and independently reviewed.
+1. Audit current monitoring/health/operations surfaces and document what is already available without mutating providers.
+2. Obtain separate explicit approval before enabling or configuring external monitoring/alert delivery.
+3. Configure one bounded alert route and deliver one sanitized test alert to the accountable On-call Operator, if approved.
+4. Keep the Independent Reviewer assignment deferred until the owner supplies a real reviewer; do not infer one.
+5. Run normal code-quality gates for the latest T004 branch head before Draft PR.
+6. Reconcile the master tracker with the verified T004 evidence.
+7. Close T004 only when the required evidence is reproducible and no mandatory closeout gate remains unresolved.
 
 ## Protected decisions / approvals still required
 
-The completed disposable-local exercise does not authorise any broader database work. Separate approval is still required for:
+The completed disposable-local exercise and Preview evidence do not authorise broader database or provider work. Separate approval is still required for:
 
-- any production, staging, preview, shared, or remote database connection or command;
+- any production, staging, preview, shared, or remote database command;
 - migration execution against any environment;
 - production or staging provider configuration;
 - secrets or environment-variable changes;
@@ -70,4 +111,6 @@ The completed disposable-local exercise does not authorise any broader database 
 
 ## Current status
 
-**NOT READY FOR DRAFT PR** for T004 closeout. Local disposable backup/restore execution evidence now exists, but Independent Reviewer/Recovery Operator assignment, staging isolation proof, monitoring/alert delivery evidence, rehearsal evidence, and normal branch gates remain unresolved.
+**NOT READY FOR DRAFT PR** for T004 closeout.
+
+Verified evidence now includes disposable-local backup/restore execution, Preview environment isolation/runtime identity, named Recovery Operator, and a bounded incident/rollback tabletop. The primary unresolved operational evidence is external alert delivery. Independent Reviewer assignment is intentionally deferred, and normal latest-head branch gates have not yet been proven.
