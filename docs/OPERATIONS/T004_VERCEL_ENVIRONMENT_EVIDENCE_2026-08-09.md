@@ -21,17 +21,19 @@ Earlier screenshots showed:
 
 The original evidence also showed `DATABASE_URL` scoped to both Production and Preview. The project owner approved separating the Preview database connection from Production.
 
-A later screenshot captured after that corrective change now shows:
+Later screenshots captured after that corrective change now show:
 
-- `DATABASE_URL` — **Production only**.
+- one `DATABASE_URL` entry scoped to **Production only**;
+- a separate `DATABASE_URL` entry scoped to **Preview only**;
+- Vercel confirms the Preview-scoped variable was added successfully and requires a new deployment before the change takes effect.
 
-No secret value was revealed in the evidence.
+No secret value was inspected or recorded. The provider-side target behind the Preview value is still not independently identified by the available evidence.
 
 ## Security interpretation
 
-The provider evidence now proves that the production `DATABASE_URL` is no longer exposed to Preview through the same Vercel environment-variable entry. This closes the first half of the database-scope defect.
+The provider evidence now proves that Production and Preview no longer share the same Vercel `DATABASE_URL` entry. This closes the environment-variable scope defect.
 
-However, Preview/Staging database isolation is still **not fully verified** because there is not yet evidence of a separate Preview-only `DATABASE_URL` that points to a non-production database target. Until that exists, Preview deployments may simply lack a database connection rather than having an isolated non-production database.
+Preview/Staging database isolation is still **not fully verified** because the available screenshot does not prove that the Preview-only value points to a distinct non-production database target. A separate environment-variable entry is necessary but not sufficient: the underlying database identity must also be non-production and must not contain production customer data.
 
 The separate Production and Preview entries for `AUTH_SECRET` and `JWT_SECRET` remain positive evidence of a distinct secret boundary for those credentials.
 
@@ -50,12 +52,13 @@ This approval is limited to Vercel/provider configuration needed to ensure Previ
 Execution is partially verified:
 
 - [x] Production `DATABASE_URL` is scoped to Production only.
-- [ ] Preview has its own `DATABASE_URL` scoped to Preview only.
-- [ ] The Preview value points to a non-production database target.
+- [x] Preview has its own `DATABASE_URL` scoped to Preview only.
+- [ ] The Preview value is proven to point to a distinct non-production database target.
 - [ ] No production customer data is intentionally copied into the Preview database as part of this change.
+- [ ] A new Preview deployment has consumed the corrected configuration and been verified.
 
 ## T004 conclusion
 
-Status: **PARTIAL ISOLATION VERIFIED — PREVIEW DATABASE STILL REQUIRED**.
+Status: **VARIABLE SCOPE ISOLATION VERIFIED — DATABASE TARGET IDENTITY STILL REQUIRED**.
 
-The repository must not claim that staging/preview database isolation is complete until a separate non-production Preview database connection is configured and provider evidence is captured and reviewed.
+The repository must not claim that staging/preview database isolation is complete until the Preview database target is independently verified as non-production and a Preview deployment using the corrected configuration is observed.
