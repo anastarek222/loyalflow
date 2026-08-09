@@ -1,11 +1,12 @@
 # LoyalFlow Master Delivery Tracker
 
-Last verified: 2026-08-08
+Last verified: 2026-08-09
 
-Baseline: `main` at `b2d6d1a` (merged PR #37)
+Baseline: `main` at `144b654` (merged PR #44)
 
-Automated baseline: 669/669 tests, TypeScript, ESLint, production build, Vercel Preview,
-and disposable PostgreSQL Migration Integrity all passing.
+Latest authentication-slice verification: 723/723 tests, TypeScript, changed-slice ESLint,
+Prisma Client generation, and Vercel Preview all passing. No migration or production database
+operation was executed for the Owner Invitation slice.
 
 ## How to use this tracker
 
@@ -23,9 +24,11 @@ Percentages are planning estimates, not CI measurements.
 
 ## Current decision
 
-The next executable item is **T002 — Ledger reconciliation**, followed by the remaining
-authentication and operational-readiness closeout. Modernization continues in small,
-compatible slices; no web/API split or critical ledger cutover is authorized yet.
+The next executable item is **T003 — Authentication closeout**. Change password, session
+revocation, pending-owner lifecycle safety, and the Owner Invitation lifecycle are merged;
+remaining work is verification, distributed rate limiting, security notifications, and the
+Super Admin MFA decision. Modernization continues in small, compatible slices; no web/API
+split or critical ledger cutover is authorized yet.
 
 ## Product delivery P0-P12
 
@@ -34,8 +37,8 @@ compatible slices; no web/API split or critical ledger cutover is authorized yet
 | P0 Baseline and governance | In progress | 80% | architecture plan, environment guards, migration CI, this tracker | keep task/PR/gate links current |
 | P1 Loyalty and financial rules | Complete | 100% | PRs #7-#10 and reversal/ledger PRs through #30 | reopen only for an approved policy change |
 | P2 Ledger integrity | Complete | 100% | durable idempotency, reversals, locking, unlock provenance/restoration, exception handling, gross/net reporting, reconciliation implementation, T002 verification | Verification complete; read-only/no-automatic-repair constraint preserved |
-| P3 Account and authentication | In progress | 45% | PRs #31-#33 secure password reset runtime, delivery, and public flow | change password, session controls, distributed rate limit, invite lifecycle, verification, notifications, Super Admin MFA |
-| P4 Database and operations | In progress | 50% | environment identity, 42-migration manifest, destructive scan, disposable PostgreSQL CI | backup/restore drill, RPO/RTO, staging isolation proof, monitoring and rehearsed runbooks |
+| P3 Account and authentication | In progress | 70% | secure password reset, self-service password change, logout-everywhere PR #42, pending-owner lifecycle PR #43, secure Owner Invitation lifecycle PR #44 | verification, distributed rate limit, security notifications, Super Admin MFA decision |
+| P4 Database and operations | In progress | 50% | environment identity, 43-migration manifest, destructive scan, disposable PostgreSQL CI | backup/restore drill, RPO/RTO, staging isolation proof, monitoring and rehearsed runbooks |
 | P5 Architecture boundaries | In progress | 30% | PR #36 workspace skeleton; PR #37 first pure domain extraction | additional domain/contracts/validation slices, then API reads and safe writes |
 | P6 UX, design system, languages | Foundation present | 55% | shared UI foundations, partial AR/EN and RTL, responsive operational flows | one i18n source, key parity, bidi, state library, full accessibility/device gate |
 | P7 Marketing website | Foundation present | 15% | auth entry surfaces and initial identity | public marketing routes, SEO, analytics, demo/trial conversion |
@@ -51,7 +54,7 @@ compatible slices; no web/API split or critical ledger cutover is authorized yet
 |---|---|---|
 | P0 Governance | Complete | PRs #4-#5 establish the governed baseline and environment/database guards. |
 | P1 Product rules | Complete | PR #7 plus rule-protection and ledger implementation slices. |
-| P2 DB/migration hardening | In progress | PR #6 and #34 protect 42 migrations; added backup/restore procedure, RPO/RTO runbook, guard, and verification wrapper; G02 remains open because measured disposable-database backup/restore evidence and recovery timing are still missing. |
+| P2 DB/migration hardening | In progress | PR #6 and #34 protect the reviewed migration history; the Owner Invitation migration brings the committed manifest to 43 migrations. Backup/restore procedure, RPO/RTO runbook, guard, and verification wrapper are present; G02 remains open because measured disposable-database backup/restore evidence and recovery timing are still missing. |
 | P3 Workspace foundation | Complete | PR #36; root Next.js runtime remains authoritative. |
 | P4 Domain/contracts | In progress | PR #37 moves `calculateRewardProgress` to `@loyalflow/domain` with a compatibility re-export; G05 remains open for broader typed-contract evidence and owner review. |
 | P5 I18N foundation | Not started | next modernization slice after current product-safety closeout. |
@@ -66,7 +69,7 @@ compatible slices; no web/API split or critical ledger cutover is authorized yet
 |---|---|---|---|---|
 | T001 | Create unified master tracker | Complete | documentation only | merged in PR #38 |
 | T002 | Ledger reconciliation | Completed | read-only calculation/reporting; no automatic repair and no production execution | ran merged command against isolated test database: environment=test, scannedCustomers=1, matchingCustomers=1, mismatchCount=0, reportedMismatchCount=0, reportTruncated=false, mismatches=[] |
-| T003 | Authentication closeout | Queued | account/session security only; no auth-topology rewrite | change password, revoke sessions, verification/invite lifecycle, rate limit, security notifications, MFA decision |
+| T003 | Authentication closeout | In progress | account/session security only; no auth-topology rewrite | verification, distributed rate limit, security notifications, MFA decision; change password, revoke sessions, and invite lifecycle are merged |
 | T004 | Operational readiness closeout | Queued | backup/restore, RPO/RTO, isolation, monitoring and runbooks | isolated restore evidence and named operational owners |
 | T005 | I18N compatibility foundation | Queued | one small catalog/adapter slice; no mass copy rewrite | AR/EN parity, fallback, SSR/RTL/a11y and bundle evidence |
 | T006 | Marketing and onboarding completion | Queued | public website and owner setup; no payment cutover | conversion routes, SEO/analytics, inline validation, live preview and browser UAT |
