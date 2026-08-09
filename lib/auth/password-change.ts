@@ -5,6 +5,7 @@ import {
   type PasswordChangeResult,
 } from "@/lib/auth/password-change-core";
 import { persistPasswordChangeWithinTransaction } from "@/lib/auth/password-change-persistence";
+import { recordSecurityNotification } from "@/lib/auth/security-notification";
 import prisma from "@/lib/prisma";
 
 type PasswordChangeActor = {
@@ -50,7 +51,7 @@ export async function changeAuthenticatedUserPassword(input: {
       const usedAt = new Date();
 
       return prisma.$transaction(async (transaction) => {
-        return persistPasswordChangeWithinTransaction(
+        const changed = await persistPasswordChangeWithinTransaction(
           {
             userId,
             businessId,
@@ -102,6 +103,15 @@ export async function changeAuthenticatedUserPassword(input: {
                 }
               : undefined,
           });
+
+        if (changed) {
+          await recordSecurityNotification(transaction, {
+            userId,
+            event: "PASSWORD_CHANGED",
+          });
+        }
+
+        return changed;
       });
     },
   });
