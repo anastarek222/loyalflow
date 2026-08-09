@@ -53,7 +53,7 @@ test("login surfaces verification success while resend recovery remains a dedica
   assert.match(login, /verificationValue/);
   assert.match(login, /Your email has been verified/);
   assert.doesNotMatch(login, /href="\/verify-email\/resend"/);
-  assert.match(resendPage, /resendVerificationAction/);
+  assert.match(resendPage, /resendEmailVerificationAction/);
   assert.match(resendAction, /email_verification_resend_failed/);
   assert.doesNotMatch(resendAction, /throw error/);
 });
