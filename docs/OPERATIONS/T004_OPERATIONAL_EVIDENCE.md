@@ -100,20 +100,20 @@ Current state: **TABLETOP REHEARSAL RECORDED**
 
 ## 6. Build and code-quality verification
 
-Current state: **LOCAL TESTS AND BUILD VERIFIED; FINAL EXACT-HEAD LINT/TYPECHECK RECONFIRMATION OPEN**
+Current state: **QUALITY GATES VERIFIED FOR THE CURRENT BRANCH HEAD USED BY LOCAL CHECKS**
 
 Recorded local evidence on 2026-08-09:
 
-- `pnpm run typecheck`: PASS before the two subsequent test-only assertion-fix commits.
-- `pnpm run lint`: PASS with 0 errors and 2 pre-existing warnings before the two subsequent test-only assertion-fix commits.
+- `pnpm run typecheck`: PASS on branch head after fast-forward to `0f156c4...`; `tsc --noEmit` completed with no errors.
+- `pnpm run lint`: PASS on the same branch head with 0 errors and 2 pre-existing warnings in `app/account/security/actions.ts` for unused `_previousState` and `_formData` parameters.
 - `pnpm test`: PASS on commit `fcadb62ba0a7fbbf48da8c45c88c38419cf73f1d`: 765/765 tests, 0 failures.
-- `pnpm run build`: PASS on the same local head after applying a process-scoped temporary `NEXT_PUBLIC_APP_URL=https://loyalflow-gray.vercel.app`; no `.env.local` or provider environment setting was changed. Prisma Client generation succeeded, Next.js 16.2.11 compiled successfully, TypeScript finished successfully, page data collection succeeded, and 26/26 static pages were generated.
+- `pnpm run build`: PASS on the same runtime/test tree after applying a process-scoped temporary `NEXT_PUBLIC_APP_URL=https://loyalflow-gray.vercel.app`; no `.env.local` or provider environment setting was changed. Prisma Client generation succeeded, Next.js 16.2.11 compiled successfully, TypeScript finished successfully, page data collection succeeded, and 26/26 static pages were generated.
+
+The branch changes after `fcadb62...` were documentation-only, so the successful test/build evidence continues to cover the unchanged runtime and test tree. The latest standalone typecheck/lint commands were run after pulling those documentation commits and therefore confirm the current branch head's TypeScript and ESLint state.
 
 The prior local build failure was caused only by an invalid local `NEXT_PUBLIC_APP_URL` value loaded from `.env.local`; it was not a source-code compilation failure. The successful rerun used a one-command environment override only.
 
 Vercel deployment `dpl_9uDe2bLke9wcs1rVEaMJrbhKP6Np` for commit `d4df2502078d409f0a2e2cc9aa3404606296e2f3` also completed successfully and generated all 26 static pages.
-
-Because the branch gained test-only and documentation commits after the last standalone lint/typecheck commands, T004 does not yet claim an exact-current-head standalone lint/typecheck gate even though the latest build's TypeScript phase passed.
 
 ## Closeout rule
 
@@ -122,6 +122,5 @@ T004 remains open until all required closeout evidence is resolved. Current unre
 1. Achieved Production/service RPO/RTO remain unverified even though provider-native PITR posture is now verified read-only.
 2. Independent Reviewer is named and reviews the evidence.
 3. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
-4. Exact-current-head standalone lint/typecheck are reconfirmed before Draft PR.
 
 Until then, the valid completion status is **NOT READY FOR DRAFT PR** for T004 closeout.
