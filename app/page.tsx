@@ -75,7 +75,7 @@ export default async function HomePage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/login"
+                href="/get-started"
                 className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-semibold text-white transition hover:bg-primary-hover"
               >
                 {translate(locale, "marketing.primaryCta")}
