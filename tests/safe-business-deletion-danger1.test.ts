@@ -227,7 +227,7 @@ test("DANGER-1 neutralizes orphaned tenant accounts and invalidates active sessi
   assert.match(source("auth.ts"), /if \(!currentUser\.isActive\) \{\s*return null;/);
   assert.match(
     source("auth.ts"),
-    /token\.authVersion !==\s*currentUser\.authVersion[\s\S]*?return null;/,
+    /isCurrentAuthVersion\(\s*token\.authVersion,\s*currentUser\.authVersion,\s*\)[\s\S]*?return null;/,
   );
   assert.match(
     source("lib/permissions.ts"),
