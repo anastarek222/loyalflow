@@ -1,4 +1,5 @@
 name: T003 Super Admin MFA Final V2
+# Trigger after workflow exists on the verification branch.
 on:
   push:
     branches: [verify/t003-super-admin-mfa-final-v2]
