@@ -9,15 +9,15 @@ This matrix defines the minimum accountable roles needed for LoyalFlow operation
 | Incident command | Incident Commander | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
 | Application deployment rollback | Release Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
 | Database backup/recovery approval | Database Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Database recovery execution | Recovery Operator | `UNASSIGNED` | `UNASSIGNED` | Open |
+| Database recovery execution | Recovery Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
 | Hosting/provider escalation | Platform Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
 | Monitoring/alert response | On-call Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
 | Security incident escalation | Security Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
 | Operational evidence review | Independent Reviewer | `UNASSIGNED` | `UNASSIGNED` | Open |
 
-Primary operational ownership was explicitly approved on 2026-08-09 for Anas Tarek (`anastarek222`) for the six assigned roles above. This assignment does not itself authorise database commands, production access, provider mutations, secrets access, or external monitoring configuration.
+Primary operational ownership was explicitly approved on 2026-08-09 for Anas Tarek (`anastarek222`) for the six primary roles above. On the same date, Anas Tarek explicitly approved assignment as Recovery Operator. These assignments do not themselves authorise database commands, production access, provider mutations, secrets access, or external monitoring configuration.
 
-T004 must not be marked complete while Recovery Operator and Independent Reviewer remain `UNASSIGNED`, or while required continuity/back-up ownership remains unresolved.
+T004 must not be marked complete while Independent Reviewer remains `UNASSIGNED`, or while required continuity/back-up ownership remains unresolved.
 
 ## Role boundaries
 
