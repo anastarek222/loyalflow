@@ -13,6 +13,8 @@ jobs:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      DATABASE_URL: postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder?schema=public
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
