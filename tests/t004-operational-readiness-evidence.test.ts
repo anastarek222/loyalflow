@@ -46,8 +46,8 @@ test("operational ownership matrix records approved owners without broadening pe
   }
 
   assert.match(ownership, /Independent Reviewer \| `UNASSIGNED`/);
-  assert.match(ownership, /backup owner.*`UNASSIGNED`/i);
-  assert.match(ownership, /does not itself authorise database commands, production access, provider mutations, secrets access/i);
+  assert.match(ownership, /Incident Commander \| Anas Tarek \(`anastarek222`\) \| `UNASSIGNED`/);
+  assert.match(ownership, /These assignments do not themselves authorise database commands, production access, provider mutations, secrets access/i);
   assert.match(ownership, /must not be marked complete while Independent Reviewer remains `UNASSIGNED`, or while required continuity\/back-up ownership remains unresolved/i);
 });
 
