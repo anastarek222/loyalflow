@@ -10,7 +10,7 @@ This summary does not authorize any database connection, backup, restore, provid
 
 ## 1. Backup and restore drill
 
-Current state: **MEASURED LOCALLY / PRODUCTION RPO-RTO UNVERIFIED**
+Current state: **LOCAL RESTORE MEASURED / PRODUCTION PROVIDER PITR POSTURE VERIFIED READ-ONLY / ACHIEVED RPO-RTO UNVERIFIED**
 
 Planning targets only:
 
@@ -34,6 +34,15 @@ Latest successful repeat:
 - Result: `PASS`.
 
 These timings validate the guarded local procedure only. They are not production RPO/RTO evidence.
+
+Read-only Production-provider evidence is recorded in `T004_PRODUCTION_RECOVERY_POSTURE_EVIDENCE_2026-08-09.md` and establishes:
+
+- The Production Neon project is on PostgreSQL 18 and reports a 6-hour (`21600` second) history-retention window.
+- The `production` branch is the primary/default branch and was `ready` at verification time.
+- Neon retained history supports provider-native point-in-time recovery within the configured retention window.
+- No restore, snapshot, branch, SQL/data query, migration, secret, or provider configuration mutation was performed.
+
+This verifies Production recovery **capability/posture**, but it does not convert the proposed 15-minute RPO or 30-minute RTO into achieved targets. A retention window is not a measured recovery point, and no Production restore timing was exercised.
 
 ## 2. Operational ownership
 
@@ -104,13 +113,13 @@ The prior local build failure was caused only by an invalid local `NEXT_PUBLIC_A
 
 Vercel deployment `dpl_9uDe2bLke9wcs1rVEaMJrbhKP6Np` for commit `d4df2502078d409f0a2e2cc9aa3404606296e2f3` also completed successfully and generated all 26 static pages.
 
-Because the branch gained test-only commits after the last standalone lint/typecheck commands, T004 does not yet claim an exact-current-head standalone lint/typecheck gate even though the latest build's TypeScript phase passed.
+Because the branch gained test-only and documentation commits after the last standalone lint/typecheck commands, T004 does not yet claim an exact-current-head standalone lint/typecheck gate even though the latest build's TypeScript phase passed.
 
 ## Closeout rule
 
 T004 remains open until all required closeout evidence is resolved. Current unresolved items are principally:
 
-1. Production/service RPO/RTO remain unverified; local procedure timings must not be promoted to production targets achieved.
+1. Achieved Production/service RPO/RTO remain unverified even though provider-native PITR posture is now verified read-only.
 2. Independent Reviewer is named and reviews the evidence.
 3. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
 4. Exact-current-head standalone lint/typecheck are reconfirmed before Draft PR.
