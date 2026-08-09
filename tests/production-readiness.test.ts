@@ -173,7 +173,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 45);
+  assert.equal(committedMigrations.length, 46);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types"
@@ -211,6 +211,10 @@ test("local database verifier requires the complete reviewed committed migration
   assert.ok(
     committedMigrations.includes("20260809081000_add_super_admin_mfa_lifecycle"),
     "Super Admin MFA lifecycle must be part of the reviewed migration history.",
+  );
+  assert.ok(
+    committedMigrations.includes("20260809084500_add_security_notification_lifecycle"),
+    "Security notification lifecycle must be part of the reviewed migration history.",
   );
   assert.ok(
     committedMigrations.includes("20260726224500_add_subscription_plan_entitlements"),
