@@ -1,0 +1,46 @@
+name: T003 Owner Invitation Verify
+
+on:
+  push:
+    branches:
+      - codex/t003-owner-invitation-lifecycle
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Full test suite
+        run: pnpm test
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint changed slice
+        run: >-
+          pnpm exec eslint
+          app/accept-owner-invitation/actions.ts
+          app/accept-owner-invitation/page.tsx
+          app/businesses/actions.ts
+          components/owner-invitation-form.tsx
+          lib/auth/owner-invitation.ts
+          lib/auth/owner-invitation-runtime.ts
+          lib/auth/owner-invitation-email.ts
+          lib/business/creation-input.ts
+          tests/onboarding-v2.test.ts
+          tests/owner-invitation-lifecycle.test.ts
+          tests/owner-invitation-public-flow.test.ts
