@@ -1,0 +1,46 @@
+name: T003 MFA Register Migration
+
+on:
+  push:
+    branches:
+      - codex/t003-super-admin-mfa-lifecycle
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Register reviewed migration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          script = Path('scripts/verify-local-database.ts')
+          text = script.read_text()
+          anchor = '  "20260809044000_add_email_verification_lifecycle",\n'
+          addition = anchor + '  "20260809081000_add_super_admin_mfa_lifecycle",\n'
+          if '20260809081000_add_super_admin_mfa_lifecycle' not in text:
+              if anchor not in text:
+                  raise SystemExit('migration anchor missing')
+              script.write_text(text.replace(anchor, addition, 1))
+
+          test = Path('tests/production-readiness.test.ts')
+          text = test.read_text()
+          text = text.replace('assert.equal(committedMigrations.length, 44);', 'assert.equal(committedMigrations.length, 45);', 1)
+          anchor = '''  assert.ok(\n    committedMigrations.includes("20260809044000_add_email_verification_lifecycle"),\n    "Email verification lifecycle must be part of the reviewed migration history.",\n  );\n'''
+          addition = anchor + '''  assert.ok(\n    committedMigrations.includes("20260809081000_add_super_admin_mfa_lifecycle"),\n    "Super Admin MFA lifecycle must be part of the reviewed migration history.",\n  );\n'''
+          if 'Super Admin MFA lifecycle must be part' not in text:
+              if anchor not in text:
+                  raise SystemExit('test anchor missing')
+              text = text.replace(anchor, addition, 1)
+          test.write_text(text)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/verify-local-database.ts tests/production-readiness.test.ts
+          git commit -m "test(db): register Super Admin MFA migration [skip ci]"
+          git push
