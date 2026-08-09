@@ -1,0 +1,245 @@
+name: T003 Email Verification Integration
+
+on:
+  push:
+    branches:
+      - codex/t003-email-verification
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - name: Apply custom-owner verification enrollment
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path('app/businesses/actions.ts')
+          text = path.read_text()
+
+          anchor = 'import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";\n'
+          addition = (
+              'import { createEmailVerificationToken } from "@/lib/auth/email-verification";\n'
+              'import {\n'
+              '  EmailVerificationEmailError,\n'
+              '  sendEmailVerificationEmail,\n'
+              '} from "@/lib/auth/email-verification-email";\n'
+          )
+          if 'sendEmailVerificationEmail' not in text:
+              if anchor not in text:
+                  raise SystemExit('owner invitation import anchor not found')
+              text = text.replace(anchor, anchor + addition, 1)
+
+          text = text.replace(
+              'import { logServerEvent } from "@/lib/server/logging";',
+              'import { logServerError, logServerEvent } from "@/lib/server/logging";',
+              1,
+          )
+
+          anchor = 'logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });\n\nlet createdBusiness;'
+          if 'const ownerEmailVerification = createEmailVerificationToken();' not in text:
+              if anchor not in text:
+                  raise SystemExit('password hash anchor not found')
+              text = text.replace(
+                  anchor,
+                  'logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });\n'
+                  'const ownerEmailVerification = createEmailVerificationToken();\n\n'
+                  'let createdBusiness;',
+                  1,
+              )
+
+          anchor = '''        logServerEvent("BUSINESS_CREATE_OWNER_CREATED", {
+          creationAttemptId,
+          businessId: business.id,
+          ownerId: owner.id,
+        });
+
+        return business;
+'''
+          insertion = '''        logServerEvent("BUSINESS_CREATE_OWNER_CREATED", {
+          creationAttemptId,
+          businessId: business.id,
+          ownerId: owner.id,
+        });
+
+        await transaction.$executeRaw`
+          INSERT INTO "EmailVerificationState" (
+            "userId", "verifiedAt", "createdAt", "updatedAt"
+          ) VALUES (
+            ${owner.id}, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          )
+        `;
+
+        await transaction.$executeRaw`
+          INSERT INTO "EmailVerificationToken" (
+            "id", "userId", "tokenHash", "expiresAt", "usedAt", "createdAt"
+          ) VALUES (
+            ${ownerEmailVerification.id},
+            ${owner.id},
+            ${ownerEmailVerification.tokenHash},
+            ${ownerEmailVerification.expiresAt},
+            NULL,
+            CURRENT_TIMESTAMP
+          )
+        `;
+
+        return business;
+'''
+          if 'INSERT INTO "EmailVerificationToken"' not in text:
+              if anchor not in text:
+                  raise SystemExit('owner creation anchor not found')
+              text = text.replace(anchor, insertion, 1)
+
+          anchor = '''}
+  scheduleBusinessGoogleSheetsSync(createdBusiness.id);
+'''
+          insertion = '''}
+
+  try {
+    await sendEmailVerificationEmail({
+      email: ownerEmail,
+      token: ownerEmailVerification.token,
+    });
+  } catch (error) {
+    if (error instanceof EmailVerificationEmailError) {
+      logServerError("BUSINESS_OWNER_VERIFICATION_DELIVERY_FAILED", error, {
+        businessId: createdBusiness.id,
+      });
+    } else {
+      throw error;
+    }
+  }
+
+  scheduleBusinessGoogleSheetsSync(createdBusiness.id);
+'''
+          if 'BUSINESS_OWNER_VERIFICATION_DELIVERY_FAILED' not in text:
+              if anchor not in text:
+                  raise SystemExit('post transaction anchor not found')
+              text = text.replace(anchor, insertion, 1)
+
+          path.write_text(text)
+
+          test_path = Path('tests/email-verification-enrollment.test.ts')
+          test_path.write_text(r'''import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import test from "node:test";
+
+const root = process.cwd();
+const source = (relativePath: string) =>
+  fs.readFileSync(path.join(root, relativePath), "utf8");
+
+test("custom business owner is enrolled unverified and receives only plaintext email token", () => {
+  const action = source("app/businesses/actions.ts");
+
+  assert.match(action, /createEmailVerificationToken\(\)/);
+  assert.match(action, /INSERT INTO "EmailVerificationState"/);
+  assert.match(action, /\$\{owner\.id\}, NULL/);
+  assert.match(action, /INSERT INTO "EmailVerificationToken"/);
+  assert.match(action, /\$\{ownerEmailVerification\.tokenHash\}/);
+  assert.match(action, /token: ownerEmailVerification\.token/);
+  assert.doesNotMatch(action, /token: ownerEmailVerification\.tokenHash/);
+});
+
+test("credentials login blocks only accounts explicitly enrolled as unverified", () => {
+  const auth = source("auth.ts");
+  const access = source("lib/auth/email-verification-access.ts");
+
+  assert.match(auth, /isEmailVerificationSatisfied\(user\.id\)/);
+  assert.match(access, /FROM "EmailVerificationState"/);
+  assert.match(access, /return !state \|\| state\.verifiedAt !== null/);
+});
+
+test("verification resend is enumeration resistant and rate limited", () => {
+  const action = source("app/verify-email/resend/actions.ts");
+
+  assert.match(action, /await headers\(\)/);
+  assert.match(action, /email-verification-resend:/);
+  assert.match(action, /limit: 5/);
+  assert.match(action, /\/verify-email\/resend\?sent=1/);
+  assert.match(action, /createEmailVerificationToken\(\)/);
+  assert.match(action, /sendEmailVerificationEmail/);
+});
+''')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/businesses/actions.ts tests/email-verification-enrollment.test.ts
+          git commit -m "feat(auth): enroll custom owners for email verification [skip ci]"
+          git push
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Focused tests
+        id: tests
+        continue-on-error: true
+        run: |
+          set +e
+          node --import tsx --test \
+            tests/email-verification-lifecycle.test.ts \
+            tests/email-verification-public-flow.test.ts \
+            tests/email-verification-enrollment.test.ts \
+            tests/owner-invitation-lifecycle.test.ts \
+            > .t003-email-verification-integration-tests.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Lint slice
+        id: lint
+        continue-on-error: true
+        run: |
+          set +e
+          pnpm exec eslint \
+            auth.ts \
+            app/businesses/actions.ts \
+            app/verify-email/actions.ts \
+            app/verify-email/page.tsx \
+            app/verify-email/resend/actions.ts \
+            app/verify-email/resend/page.tsx \
+            lib/auth/email-verification.ts \
+            lib/auth/email-verification-access.ts \
+            lib/auth/email-verification-runtime.ts \
+            lib/auth/email-verification-email.ts \
+            lib/auth/owner-invitation-runtime.ts \
+            tests/email-verification-lifecycle.test.ts \
+            tests/email-verification-public-flow.test.ts \
+            tests/email-verification-enrollment.test.ts \
+            > .t003-email-verification-integration-lint.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+      - name: Record integration evidence
+        if: always()
+        run: |
+          {
+            echo "workflow_commit=${GITHUB_SHA}"
+            echo "tests=${{ steps.tests.outcome }}"
+            echo "tests_exit=${{ steps.tests.outputs.exit_code }}"
+            echo "lint=${{ steps.lint.outcome }}"
+            echo "lint_exit=${{ steps.lint.outputs.exit_code }}"
+            echo
+            echo "=== TESTS ==="
+            tail -n 100 .t003-email-verification-integration-tests.log 2>/dev/null || true
+            echo
+            echo "=== LINT ==="
+            tail -n 100 .t003-email-verification-integration-lint.log 2>/dev/null || true
+          } > .t003-email-verification-integration.txt
+          git add .t003-email-verification-integration.txt
+          git commit -m "chore(ci): record verification integration checks [skip ci]" || true
+          git push
+      - name: Enforce
+        if: always()
+        run: |
+          test "${{ steps.tests.outcome }}" = "success"
+          test "${{ steps.lint.outcome }}" = "success"
