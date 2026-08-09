@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 
+import { isCurrentAuthVersion } from "@/lib/auth/auth-version";
 import prisma from "@/lib/prisma";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
@@ -165,8 +166,10 @@ export const {
       }
 
       if (
-        token.authVersion !==
-        currentUser.authVersion
+        !isCurrentAuthVersion(
+          token.authVersion,
+          currentUser.authVersion,
+        )
       ) {
         return null;
       }
@@ -190,6 +193,8 @@ export const {
       session.user.role = token.role;
       session.user.businessId =
         token.businessId;
+      session.user.authVersion =
+        token.authVersion;
 
       return session;
     },

@@ -551,6 +551,6 @@ test("old JWT invalidation remains enforced through authVersion", () => {
 
   assert.match(
     authentication,
-    /token\.authVersion !==\s*currentUser\.authVersion[\s\S]*?return null/,
+    /isCurrentAuthVersion\(\s*token\.authVersion,\s*currentUser\.authVersion,\s*\)[\s\S]*?return null/,
   );
 });
