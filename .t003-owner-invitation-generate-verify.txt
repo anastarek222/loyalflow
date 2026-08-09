@@ -1,195 +1,146 @@
-commit=e7b0d0ea56346767be7768f2036a00f44475243f
+commit=2c67a694f534d21a5ffca16f1f7e51040b53db43
 install=success
 generate=success
 generate_exit=0
-tests=failure
-tests_exit=1
+tests=success
+tests_exit=0
 typecheck=success
 typecheck_exit=0
 lint=success
 lint_exit=0
 
 === FAILING TEST CONTEXT ===
-2914-ok 486 - verification scripts do not print raw error stacks
-2915-  ---
-2916-  duration_ms: 1.110438
-2917-  type: 'test'
-2918-  ...
-2919-# Subtest: UAT fixtures require but never print their disposable password
-2920-ok 487 - UAT fixtures require but never print their disposable password
-2921-  ---
-2922-  duration_ms: 2.547439
-2923-  type: 'test'
-2924-  ...
-2925-# Subtest: local database verifier requires the complete reviewed committed migration history
-2926:not ok 488 - local database verifier requires the complete reviewed committed migration history
-2927-  ---
-2928-  duration_ms: 5.560123
-2929-  type: 'test'
-2930-  location: '/home/runner/work/loyalflow/loyalflow/tests/production-readiness.test.ts:1:5491'
-2931-  failureType: 'testCodeFailure'
-2932-  error: |-
-2933-    Expected values to be strictly equal:
-2934-    
-2935-    43 !== 42
-2936-    
-2937:  code: 'ERR_ASSERTION'
-2938:  name: 'AssertionError'
-2939-  expected: 42
-2940-  actual: 43
-2941-  operator: 'strictEqual'
-2942-  stack: |-
-2943-    TestContext.<anonymous> (/home/runner/work/loyalflow/loyalflow/tests/production-readiness.test.ts:176:10)
-2944-    Test.runInAsyncScope (node:async_hooks:214:14)
-2945-    Test.run (node:internal/test_runner/test:1047:25)
-2946-    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
-2947-    Test.postRun (node:internal/test_runner/test:1173:19)
-2948-    Test.run (node:internal/test_runner/test:1101:12)
-2949-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
-2950-  ...
-2951-# Subtest: final UAT transaction fixtures enforce customer-business consistency
-2952-ok 489 - final UAT transaction fixtures enforce customer-business consistency
-2953-  ---
-2954-  duration_ms: 0.416934
-2955-  type: 'test'
-2956-  ...
-2957-# Subtest: selects only an eligible promotion from the current tenant
-2958-ok 490 - selects only an eligible promotion from the current tenant
-2959-  ---
-2960-  duration_ms: 2.814632
-2961-  type: 'test'
-2962-  ...
 
 === GENERATE TAIL ===
-◇ injected env (0) from .env.local // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
 Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma.
 
-✔ Generated Prisma Client (7.9.0) to ./generated/prisma in 347ms
+✔ Generated Prisma Client (7.9.0) to ./generated/prisma in 345ms
 
 
 === TESTS TAIL ===
+  duration_ms: 19.471924
   type: 'test'
   ...
 # Subtest: Back safely renders long and Arabic reward states with intentional RTL
 ok 706 - Back safely renders long and Arabic reward states with intentional RTL
   ---
-  duration_ms: 12.211003
+  duration_ms: 7.322599
   type: 'test'
   ...
 # Subtest: customer and reward safe zones clamp realistic long values
 ok 707 - customer and reward safe zones clamp realistic long values
   ---
-  duration_ms: 0.559041
+  duration_ms: 0.412569
   type: 'test'
   ...
 # Subtest: front reserves a large deterministic balance panel
 ok 708 - front reserves a large deterministic balance panel
   ---
-  duration_ms: 0.349176
+  duration_ms: 0.287807
   type: 'test'
   ...
 # Subtest: Back keeps artwork secondary and fills RTL progress deliberately from the right
 ok 709 - Back keeps artwork secondary and fills RTL progress deliberately from the right
   ---
-  duration_ms: 0.385205
+  duration_ms: 0.292745
   type: 'test'
   ...
 # Subtest: Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target
 ok 710 - Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target
   ---
-  duration_ms: 1.870917
+  duration_ms: 1.401542
   type: 'test'
   ...
 # Subtest: custom artwork capability stays reserved for super-admin architecture
 ok 711 - custom artwork capability stays reserved for super-admin architecture
   ---
-  duration_ms: 0.750321
+  duration_ms: 0.634753
   type: 'test'
   ...
 # Subtest: Custom UX is upload-oriented, storage-fenced, and preserves existing URLs
 ok 712 - Custom UX is upload-oriented, storage-fenced, and preserves existing URLs
   ---
-  duration_ms: 0.653228
+  duration_ms: 0.572838
   type: 'test'
   ...
 # Subtest: public card is rendered from dynamic customer and business data
 ok 713 - public card is rendered from dynamic customer and business data
   ---
-  duration_ms: 0.49468
+  duration_ms: 0.388905
   type: 'test'
   ...
 # Subtest: all Standard Card previews and the public card retain the canonical renderer
 ok 714 - all Standard Card previews and the public card retain the canonical renderer
   ---
-  duration_ms: 0.776249
+  duration_ms: 0.664999
   type: 'test'
   ...
 # Subtest: assigns VIP tiers at deterministic reward-cycle thresholds
 ok 715 - assigns VIP tiers at deterministic reward-cycle thresholds
   ---
-  duration_ms: 1.100228
+  duration_ms: 0.822162
   type: 'test'
   ...
 # Subtest: keeps tier qualification safe for invalid thresholds and values
 ok 716 - keeps tier qualification safe for invalid thresholds and values
   ---
-  duration_ms: 0.188956
+  duration_ms: 0.149058
   type: 'test'
   ...
 # Subtest: Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values
 ok 717 - Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values
   ---
-  duration_ms: 1.79785
+  duration_ms: 1.63097
   type: 'test'
   ...
 # Subtest: WhatsApp URL encoding round-trips Arabic and English text exactly
 ok 718 - WhatsApp URL encoding round-trips Arabic and English text exactly
   ---
-  duration_ms: 0.584288
+  duration_ms: 0.540958
   type: 'test'
   ...
 # Subtest: WhatsApp URL safely supports a missing phone number
 ok 719 - WhatsApp URL safely supports a missing phone number
   ---
-  duration_ms: 0.376988
+  duration_ms: 0.323824
   type: 'test'
   ...
 # Subtest: uses the existing deterministic inactive segmentation for a win-back audience
 ok 720 - uses the existing deterministic inactive segmentation for a win-back audience
   ---
-  duration_ms: 2.363062
+  duration_ms: 1.98473
   type: 'test'
   ...
 # Subtest: renders a staff-reviewed win-back message without sending it
 ok 721 - renders a staff-reviewed win-back message without sending it
   ---
-  duration_ms: 0.454344
+  duration_ms: 0.417909
   type: 'test'
   ...
 # Subtest: workspace skeleton keeps the root Next application as the only runtime
 ok 722 - workspace skeleton keeps the root Next application as the only runtime
   ---
-  duration_ms: 1.022021
+  duration_ms: 1.301065
   type: 'test'
   ...
 # Subtest: workspace packages expose only approved runtime code and satisfy the import graph
 ok 723 - workspace packages expose only approved runtime code and satisfy the import graph
   ---
-  duration_ms: 46.953397
+  duration_ms: 48.030895
   type: 'test'
   ...
 1..723
 # tests 723
 # suites 0
-# pass 722
-# fail 1
+# pass 723
+# fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 17628.145588
-[ELIFECYCLE] Test failed. See above for more details.
+# duration_ms 17257.288153
 
 === TYPECHECK TAIL ===
 $ tsc --noEmit
