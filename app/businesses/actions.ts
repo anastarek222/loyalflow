@@ -1,6 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
+import { createEmailVerificationToken } from "@/lib/auth/email-verification";
+import {
+  EmailVerificationEmailError,
+  sendEmailVerificationEmail,
+} from "@/lib/auth/email-verification-email";
 import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
 import {
   OwnerInvitationEmailError,
@@ -22,7 +27,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { hash } from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import { logServerEvent } from "@/lib/server/logging";
+import { logServerError, logServerEvent } from "@/lib/server/logging";
 
 async function requireSuperAdmin() {
   const session = await auth();
@@ -118,12 +123,12 @@ export async function createBusinessAction(formData: FormData) {
     taxNumber: formData.get("taxNumber") ?? "",
 
     employeeCount: formData.get("employeeCount") ?? 0,
-   
+
     ownerFirstName: formData.get("ownerFirstName"),
     ownerLastName: formData.get("ownerLastName") ?? "",
     ownerEmail: formData.get("ownerEmail"),
     ownerPhone: formData.get("ownerPhone") ?? "",
-    ownerPassword: formData.get("ownerPassword"),   
+    ownerPassword: formData.get("ownerPassword"),
     logoUrl: formData.get("logoUrl") ?? "",
 
     loyaltyMode: formData.get("loyaltyMode"),
@@ -197,6 +202,7 @@ const ownerPasswordHash = await hash(
   12
 );
 logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });
+const ownerEmailVerification = createEmailVerificationToken();
 
 let createdBusiness;
 
@@ -309,6 +315,27 @@ try {
           ownerId: owner.id,
         });
 
+        await transaction.$executeRaw`
+          INSERT INTO "EmailVerificationState" (
+            "userId", "verifiedAt", "createdAt", "updatedAt"
+          ) VALUES (
+            ${owner.id}, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+          )
+        `;
+
+        await transaction.$executeRaw`
+          INSERT INTO "EmailVerificationToken" (
+            "id", "userId", "tokenHash", "expiresAt", "usedAt", "createdAt"
+          ) VALUES (
+            ${ownerEmailVerification.id},
+            ${owner.id},
+            ${ownerEmailVerification.tokenHash},
+            ${ownerEmailVerification.expiresAt},
+            NULL,
+            CURRENT_TIMESTAMP
+          )
+        `;
+
         return business;
       })
   );
@@ -326,6 +353,22 @@ try {
 
   throw error;
 }
+
+  try {
+    await sendEmailVerificationEmail({
+      email: ownerEmail,
+      token: ownerEmailVerification.token,
+    });
+  } catch (error) {
+    if (error instanceof EmailVerificationEmailError) {
+      logServerError("BUSINESS_OWNER_VERIFICATION_DELIVERY_FAILED", error, {
+        businessId: createdBusiness.id,
+      });
+    } else {
+      throw error;
+    }
+  }
+
   scheduleBusinessGoogleSheetsSync(createdBusiness.id);
   logServerEvent("BUSINESS_CREATE_SYNC_SCHEDULED", {
     creationAttemptId,
