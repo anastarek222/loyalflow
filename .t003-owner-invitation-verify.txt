@@ -1,0 +1,5 @@
+commit=29aed45ca2a9fb1c1303b8908ff2679a834f841b
+install=success
+tests=failure
+typecheck=failure
+lint=success
