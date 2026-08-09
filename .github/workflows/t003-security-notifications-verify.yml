@@ -1,0 +1,45 @@
+name: T003 Security Notifications Verify
+
+on:
+  push:
+    branches:
+      - codex/t003-security-notifications
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      AUTH_SECRET: verification-only-root-secret-0123456789abcdef0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prisma generate
+        run: pnpm exec prisma generate
+      - name: Tests
+        run: pnpm test
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Record evidence
+        if: always()
+        run: |
+          printf 'verification_commit=%s\n' "$GITHUB_SHA" > .t003-security-notifications-verify.txt
+          printf 'completed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> .t003-security-notifications-verify.txt
+          git status --short >> .t003-security-notifications-verify.txt
+          git config user.name loyalflow-verifier
+          git config user.email actions@users.noreply.github.com
+          git add .t003-security-notifications-verify.txt
+          git commit -m "test(t003): record security notification gate evidence" || true
+          git push || true
