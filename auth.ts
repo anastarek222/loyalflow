@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { isCurrentAuthVersion } from "@/lib/auth/auth-version";
 import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
+import { isSuperAdminMfaLoginAllowed } from "@/lib/auth/super-admin-mfa";
 import {
   isSuperAdminMfaEnabled,
   verifySuperAdminMfa,
@@ -65,18 +66,26 @@ export const {
         if (!(await isEmailVerificationSatisfied(user.id))) return null;
 
         if (user.role === "SUPER_ADMIN") {
-          if (!(await isSuperAdminMfaEnabled(user.id))) return null;
-
+          const enabled = await isSuperAdminMfaEnabled(user.id);
           const mfaLimit = rateLimit(
             `super-admin-mfa-login:${clientAddress}:${user.id}`,
             { limit: 5, windowMs: 5 * 60 * 1000 },
           );
-          if (!mfaLimit.allowed || !parsed.data.mfaCode) return null;
+          const codeValid =
+            enabled && parsed.data.mfaCode && mfaLimit.allowed
+              ? await verifySuperAdminMfa({
+                  userId: user.id,
+                  code: parsed.data.mfaCode,
+                })
+              : false;
 
-          if (!(await verifySuperAdminMfa({
-            userId: user.id,
-            code: parsed.data.mfaCode,
-          }))) {
+          if (!isSuperAdminMfaLoginAllowed({
+            role: user.role,
+            enabled,
+            hasCode: Boolean(parsed.data.mfaCode),
+            rateAllowed: mfaLimit.allowed,
+            codeValid,
+          })) {
             return null;
           }
         }
