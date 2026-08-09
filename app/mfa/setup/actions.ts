@@ -11,7 +11,10 @@ import {
   enableSuperAdminMfa,
 } from "@/lib/auth/super-admin-mfa-runtime";
 import prisma from "@/lib/prisma";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
 
 export type BeginMfaState = {
   error?: "invalid" | "unavailable";
@@ -47,10 +50,13 @@ export async function beginMfaEnrollmentAction(
 
   const requestHeaders = await headers();
   const clientAddress = getClientAddress(requestHeaders);
-  const attempt = rateLimit(`super-admin-mfa-enroll:${clientAddress}`, {
-    limit: 5,
-    windowMs: 15 * 60 * 1000,
-  });
+  const attempt = await distributedRateLimit(
+    `super-admin-mfa-enroll:${clientAddress}`,
+    {
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    },
+  );
   if (!attempt.allowed) return { error: "unavailable" };
 
   const email = parsed.data.email.toLowerCase();
@@ -103,7 +109,7 @@ export async function confirmMfaEnrollmentAction(
   if (!parsed.success) return { error: "invalid" };
 
   const requestHeaders = await headers();
-  const attempt = rateLimit(
+  const attempt = await distributedRateLimit(
     `super-admin-mfa-enroll-confirm:${getClientAddress(requestHeaders)}`,
     { limit: 8, windowMs: 15 * 60 * 1000 },
   );

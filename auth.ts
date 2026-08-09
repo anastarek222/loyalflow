@@ -11,7 +11,10 @@ import {
   verifySuperAdminMfa,
 } from "@/lib/auth/super-admin-mfa-runtime";
 import prisma from "@/lib/prisma";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
@@ -46,7 +49,7 @@ export const {
         if (!parsed.success) return null;
 
         const clientAddress = getClientAddress(request.headers);
-        const limit = rateLimit(
+        const limit = await distributedRateLimit(
           `credentials-login:${clientAddress}`,
           { limit: 10, windowMs: 15 * 60 * 1000 },
         );
@@ -67,7 +70,7 @@ export const {
 
         if (user.role === "SUPER_ADMIN") {
           const enabled = await isSuperAdminMfaEnabled(user.id);
-          const mfaLimit = rateLimit(
+          const mfaLimit = await distributedRateLimit(
             `super-admin-mfa-login:${clientAddress}:${user.id}`,
             { limit: 5, windowMs: 5 * 60 * 1000 },
           );

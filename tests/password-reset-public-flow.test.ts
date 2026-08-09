@@ -11,7 +11,7 @@ test("forgot-password request stays enumeration-safe and rate limited", () => {
   const actions = source("app/forgot-password/actions.ts");
 
   assert.match(actions, /getClientAddress/);
-  assert.match(actions, /rateLimit/);
+  assert.match(actions, /distributedRateLimit/);
   assert.match(actions, /password-reset-request:/);
   assert.match(actions, /findUnique/);
   assert.match(actions, /issuePasswordResetToken/);
