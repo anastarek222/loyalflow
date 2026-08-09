@@ -6,18 +6,20 @@ This matrix defines the minimum accountable roles needed for LoyalFlow operation
 
 | Responsibility | Required accountable role | Named owner | Backup owner | Current state |
 |---|---|---|---|---|
-| Incident command | Incident Commander | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Application deployment rollback | Release Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Database backup/recovery approval | Database Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Database recovery execution | Recovery Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Hosting/provider escalation | Platform Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Monitoring/alert response | On-call Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
-| Security incident escalation | Security Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned |
+| Incident command | Incident Commander | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
+| Application deployment rollback | Release Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
+| Database backup/recovery approval | Database Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
+| Database recovery execution | Recovery Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
+| Hosting/provider escalation | Platform Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
+| Monitoring/alert response | On-call Operator | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
+| Security incident escalation | Security Owner | Anas Tarek (`anastarek222`) | `UNASSIGNED` | Assigned — single-owner posture accepted |
 | Operational evidence review | Independent Reviewer | `UNASSIGNED` | `UNASSIGNED` | Open |
 
-Primary operational ownership was explicitly approved on 2026-08-09 for Anas Tarek (`anastarek222`) for the six primary roles above. On the same date, Anas Tarek explicitly approved assignment as Recovery Operator. These assignments do not themselves authorise database commands, production access, provider mutations, secrets access, or external monitoring configuration.
+Primary operational ownership was explicitly approved on 2026-08-09 for Anas Tarek (`anastarek222`) for the primary roles above. On the same date, Anas Tarek explicitly approved assignment as Recovery Operator. On 2026-08-09 the accountable owner also accepted the temporary single-owner continuity posture for T004 closeout, meaning backup/alternate owners remain unassigned by deliberate decision rather than by omission.
 
-T004 must not be marked complete while Independent Reviewer remains `UNASSIGNED`, or while required continuity/back-up ownership remains unresolved.
+This acceptance is a documented operational risk decision only. It does not create redundancy, does not claim continuity if the primary owner is unavailable, and does not authorise database commands, production access, provider mutations, secrets access, or external monitoring configuration. Backup/alternate ownership should be revisited before public launch or earlier if another qualified operator becomes available.
+
+T004 must not be marked complete while Independent Reviewer remains `UNASSIGNED` if independent review is retained as a mandatory closeout requirement.
 
 ## Role boundaries
 
@@ -55,6 +57,8 @@ Checks sanitized evidence after exercises and confirms that completion claims ar
 
 ## Assignment rule
 
-A valid assignment must identify a real accountable person or formally recognised team and a backup owner where operational continuity requires one. Do not infer assignments from GitHub usernames, commit authors, billing contacts, or environment access.
+A valid assignment must identify a real accountable person or formally recognised team. For T004, backup/alternate owners are intentionally unassigned under the accepted temporary single-owner posture; this does not satisfy true redundancy and is a tracked risk for later launch-readiness work.
+
+Do not infer assignments from GitHub usernames, commit authors, billing contacts, or environment access.
 
 No assignment in this document authorises access to secrets, production, databases, hosting providers, or external monitoring services.
