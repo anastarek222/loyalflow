@@ -112,7 +112,9 @@ export const {
         return token;
       }
 
-      if (!token.id) return null;
+      if (!token.id) {
+        return null;
+      }
 
       const currentUser = await prisma.user.findUnique({
         where: { id: token.id },
@@ -129,9 +131,26 @@ export const {
         },
       });
 
-      if (!currentUser || !currentUser.isActive) return null;
-      if (currentUser.business && !currentUser.business.isActive) return null;
-      if (!isCurrentAuthVersion(token.authVersion, currentUser.authVersion)) return null;
+      if (!currentUser) {
+        return null;
+      }
+
+      if (!currentUser.isActive) {
+        return null;
+      }
+
+      if (currentUser.business && !currentUser.business.isActive) {
+        return null;
+      }
+
+      if (
+        !isCurrentAuthVersion(
+          token.authVersion,
+          currentUser.authVersion,
+        )
+      ) {
+        return null;
+      }
 
       token.role = currentUser.role;
       token.businessId = currentUser.businessId;
