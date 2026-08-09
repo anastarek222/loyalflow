@@ -7,6 +7,7 @@ import { superAdminLoginAction } from "../actions";
 type SuperAdminLoginPageProps = {
   searchParams: Promise<{
     error?: string | string[];
+    mfa?: string | string[];
   }>;
 };
 
@@ -16,7 +17,9 @@ export default async function SuperAdminLoginPage({ searchParams }: SuperAdminLo
 
   const params = await searchParams;
   const errorValue = params.error;
+  const mfaValue = params.mfa;
   const hasError = errorValue === "invalid" || (Array.isArray(errorValue) && errorValue.includes("invalid"));
+  const mfaEnabled = mfaValue === "enabled" || (Array.isArray(mfaValue) && mfaValue.includes("enabled"));
 
   return (
     <main lang="en" dir="ltr" className="flex min-h-screen items-center justify-center bg-surface-subtle px-4 py-10 sm:px-6">
@@ -27,6 +30,7 @@ export default async function SuperAdminLoginPage({ searchParams }: SuperAdminLo
           <p className="mt-2 text-sm text-foreground-subtle">Use your password and authenticator or recovery code.</p>
         </div>
 
+        {mfaEnabled && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm font-medium text-foreground-muted">MFA is enabled. Sign in with your authenticator or a recovery code.</div>}
         {hasError && <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">بيانات تسجيل الدخول أو رمز الأمان غير صحيحة.</div>}
 
         <form action={superAdminLoginAction} className="space-y-5">
