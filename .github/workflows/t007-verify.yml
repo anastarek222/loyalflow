@@ -16,6 +16,7 @@ jobs:
     env:
       NEXT_PUBLIC_APP_URL: https://loyalflow-gray.vercel.app
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/loyalflow_ci
+      AUTH_SECRET: t007-ci-only-auth-secret-not-for-runtime-0123456789abcdef
     steps:
       - name: Checkout
         uses: actions/checkout@v4
