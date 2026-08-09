@@ -10,12 +10,36 @@ if (baseUrl.protocol !== "https:") {
   throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
 }
 
+const healthUrl = new URL("/api/health", baseUrl);
+const preflight = await fetch(healthUrl, {
+  cache: "no-store",
+  redirect: "error",
+});
+
+if (!preflight.ok) {
+  throw new Error("Staging health preflight failed.");
+}
+
+const preflightBody = (await preflight.json()) as {
+  ok?: unknown;
+  status?: unknown;
+  environment?: unknown;
+};
+
+if (
+  preflightBody.ok !== true ||
+  preflightBody.status !== "ready" ||
+  preflightBody.environment !== "staging"
+) {
+  throw new Error("STAGING_UAT_BASE_URL must identify an isolated ready staging environment.");
+}
+
 const sampleCount = 20;
 const samples = [];
 
 for (let index = 0; index < sampleCount; index += 1) {
   const startedAt = performance.now();
-  const response = await fetch(new URL("/api/health", baseUrl), {
+  const response = await fetch(healthUrl, {
     cache: "no-store",
     redirect: "error",
   });
