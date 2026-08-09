@@ -1,0 +1,12 @@
+model SecurityNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  eventType String
+  title     String
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+}

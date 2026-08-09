@@ -109,7 +109,7 @@ test("logout everywhere leaves other users, password hashes, and reset tokens un
 test("production revocation adapter is conditional on id, expected authVersion, and active state", () => {
   const adapter = source("lib/auth/logout-everywhere.ts");
 
-  assert.match(adapter, /prisma\.user\.updateMany\(\{/);
+  assert.match(adapter, /transaction\.user\.updateMany\(\{/);
   assert.match(adapter, /id:\s*conditionalInput\.userId/);
   assert.match(
     adapter,
@@ -117,6 +117,7 @@ test("production revocation adapter is conditional on id, expected authVersion, 
   );
   assert.match(adapter, /isActive:\s*true/);
   assert.match(adapter, /authVersion:\s*\{\s*increment:\s*1/);
+  assert.match(adapter, /if \(updated\.count === 1\)[\s\S]*SESSIONS_REVOKED/);
   assert.doesNotMatch(adapter, /passwordHash/);
   assert.doesNotMatch(adapter, /passwordResetToken/);
 });

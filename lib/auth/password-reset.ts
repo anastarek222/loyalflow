@@ -4,6 +4,7 @@ import { hash } from "bcryptjs";
 import { z } from "zod";
 
 import prisma from "@/lib/prisma";
+import { recordSecurityNotification } from "@/lib/auth/security-notification";
 
 export const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 
@@ -173,6 +174,11 @@ export async function consumePasswordResetToken(input: {
           increment: 1,
         },
       },
+    });
+
+    await recordSecurityNotification(transaction, {
+      userId: resetToken.userId,
+      event: "PASSWORD_RESET",
     });
 
     return {
