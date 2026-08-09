@@ -1,6 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
+import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
+import {
+  OwnerInvitationEmailError,
+  sendOwnerInvitationEmail,
+} from "@/lib/auth/owner-invitation-email";
 import { getSafeImageDataUrl } from "@/lib/branding/image-data";
 import { businessCreationSchema, ownerInvitationSchema } from "@/lib/business/creation-input";
 import { parseDateOnly, parseMoneyToMinor } from "@/lib/billing/subscription";
@@ -27,25 +32,62 @@ async function requireSuperAdmin() {
 
 export async function createOwnerInvitationAction(formData: FormData) {
   await requireSuperAdmin();
+
   const parsed = ownerInvitationSchema.safeParse({
-    ownerFirstName: formData.get("ownerFirstName"), ownerLastName: formData.get("ownerLastName") ?? "",
-    ownerEmail: formData.get("ownerEmail"), ownerPassword: formData.get("ownerPassword"),
+    ownerFirstName: formData.get("ownerFirstName"),
+    ownerLastName: formData.get("ownerLastName") ?? "",
+    ownerEmail: formData.get("ownerEmail"),
   });
+
   if (!parsed.success) redirect("/businesses?error=invitation-invalid");
+
   const email = parsed.data.ownerEmail.toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) redirect("/businesses?error=owner-email");
+
+  const invitation = createOwnerInvitationToken();
+
   try {
-    await prisma.user.create({ data: {
-      firstName: parsed.data.ownerFirstName, lastName: parsed.data.ownerLastName || null, email,
-      passwordHash: await hash(parsed.data.ownerPassword, 12), role: "OWNER", isActive: true,
-      onboardingStatus: "PENDING",
-    } });
+    await prisma.$executeRaw`
+      INSERT INTO "OwnerInvitation" (
+        "id", "firstName", "lastName", "email", "tokenHash", "expiresAt", "usedAt", "createdAt"
+      )
+      VALUES (
+        ${invitation.id},
+        ${parsed.data.ownerFirstName},
+        ${parsed.data.ownerLastName || null},
+        ${email},
+        ${invitation.tokenHash},
+        ${invitation.expiresAt},
+        NULL,
+        CURRENT_TIMESTAMP
+      )
+      ON CONFLICT ("email") DO UPDATE SET
+        "firstName" = EXCLUDED."firstName",
+        "lastName" = EXCLUDED."lastName",
+        "tokenHash" = EXCLUDED."tokenHash",
+        "expiresAt" = EXCLUDED."expiresAt",
+        "usedAt" = NULL
+    `;
+
+    await sendOwnerInvitationEmail({
+      email,
+      token: invitation.token,
+    });
   } catch (error) {
-    if (isUniqueConstraintError(error)) redirect("/businesses?error=owner-email");
-    redirect("/businesses?error=invite-unavailable");
+    if (
+      isUniqueConstraintError(error) ||
+      error instanceof OwnerInvitationEmailError
+    ) {
+      redirect("/businesses?error=invite-unavailable");
+    }
+
+    throw error;
   }
-  revalidatePath("/businesses"); revalidatePath("/business-owners"); revalidatePath("/dashboard");
+
+  revalidatePath("/businesses");
+  revalidatePath("/business-owners");
+  revalidatePath("/dashboard");
   redirect("/businesses?created=invitation");
 }
 

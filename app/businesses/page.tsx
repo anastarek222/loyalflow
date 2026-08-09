@@ -178,7 +178,7 @@ export default async function BusinessesPage({
 
         {(params.created === "1" || params.created === "invitation") && (
           <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
-            {params.created === "invitation" ? "Owner invitation created. They can sign in to complete setup." : "Business created successfully."}
+            {params.created === "invitation" ? "Owner invitation sent. The owner must use the email link to activate their account and complete setup." : "Business created successfully."}
           </div>
         )}
         {params.businessDelete === "success" ? (

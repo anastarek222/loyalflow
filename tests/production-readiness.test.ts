@@ -173,7 +173,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 42);
+  assert.equal(committedMigrations.length, 43);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types"
@@ -199,6 +199,10 @@ test("local database verifier requires the complete reviewed committed migration
   assert.ok(
     committedMigrations.includes("20260729113000_add_custom_card_mode"),
     "Custom Card mode must be isolated in its own reviewed migration.",
+  );
+  assert.ok(
+    committedMigrations.includes("20260809033000_add_owner_invitation_lifecycle"),
+    "Owner invitation lifecycle must be part of the reviewed migration history.",
   );
   assert.ok(
     committedMigrations.includes("20260726224500_add_subscription_plan_entitlements"),
