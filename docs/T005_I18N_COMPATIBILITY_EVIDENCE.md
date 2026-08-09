@@ -39,8 +39,14 @@ The build used a one-process `NEXT_PUBLIC_APP_URL=https://loyalflow-gray.vercel.
 
 Vercel status on this branch is not treated as a code failure: the account currently reports a build-rate-limit / upgrade gate. No Vercel build pass is claimed from that status.
 
+## Governance exception
+
+No independent GitHub reviewer was available for this repository. On 2026-08-09, the repository owner explicitly chose the governance-exception path and authorized merging T005 without an Independent Reviewer approval after being told that this waives the normal review gate for this task only.
+
+This exception does not waive the recorded quality gates above and does not authorize any production deploy, database command, migration, dependency change, or unrelated governance exception.
+
 ## Gate interpretation
 
 This evidence-only documentation commit does not modify runtime, test, configuration, dependency, or database files. Therefore the successful gates above remain valid for the verified T005 code tree and do not require another rerun solely because this evidence file was updated.
 
-Status after local quality gates: `READY FOR REVIEW`.
+Status: `READY FOR MERGE — OWNER-APPROVED REVIEW EXCEPTION`.
