@@ -1,0 +1,133 @@
+name: T003 Owner Invitation Generate Verify
+
+on:
+  push:
+    branches:
+      - codex/t003-owner-invitation-lifecycle
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies without lifecycle scripts
+        id: install
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Prisma generate
+        id: generate
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          pnpm exec prisma generate > .t003-generate.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+
+      - name: Full test suite
+        id: tests
+        if: steps.generate.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          pnpm test > .t003-tests.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+
+      - name: Typecheck
+        id: typecheck
+        if: steps.generate.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          pnpm typecheck > .t003-typecheck.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+
+      - name: Lint changed slice
+        id: lint
+        if: steps.generate.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          pnpm exec eslint \
+            app/accept-owner-invitation/actions.ts \
+            app/accept-owner-invitation/page.tsx \
+            app/businesses/actions.ts \
+            components/owner-invitation-form.tsx \
+            lib/auth/owner-invitation.ts \
+            lib/auth/owner-invitation-runtime.ts \
+            lib/auth/owner-invitation-email.ts \
+            lib/business/creation-input.ts \
+            tests/onboarding-v2.test.ts \
+            tests/owner-invitation-lifecycle.test.ts \
+            tests/owner-invitation-public-flow.test.ts \
+            > .t003-lint.log 2>&1
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit $code
+
+      - name: Record verification evidence
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "commit=${GITHUB_SHA}"
+            echo "install=${{ steps.install.outcome }}"
+            echo "generate=${{ steps.generate.outcome }}"
+            echo "generate_exit=${{ steps.generate.outputs.exit_code }}"
+            echo "tests=${{ steps.tests.outcome }}"
+            echo "tests_exit=${{ steps.tests.outputs.exit_code }}"
+            echo "typecheck=${{ steps.typecheck.outcome }}"
+            echo "typecheck_exit=${{ steps.typecheck.outputs.exit_code }}"
+            echo "lint=${{ steps.lint.outcome }}"
+            echo "lint_exit=${{ steps.lint.outputs.exit_code }}"
+            echo
+            echo "=== GENERATE TAIL ==="
+            tail -n 80 .t003-generate.log 2>/dev/null || true
+            echo
+            echo "=== TESTS TAIL ==="
+            tail -n 120 .t003-tests.log 2>/dev/null || true
+            echo
+            echo "=== TYPECHECK TAIL ==="
+            tail -n 120 .t003-typecheck.log 2>/dev/null || true
+            echo
+            echo "=== LINT TAIL ==="
+            tail -n 80 .t003-lint.log 2>/dev/null || true
+          } > .t003-owner-invitation-generate-verify.txt
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .t003-owner-invitation-generate-verify.txt
+          git commit -m "chore(ci): record t003 generate verification [skip ci]" || true
+          git push
+
+      - name: Enforce verification gates
+        if: always()
+        run: |
+          test "${{ steps.install.outcome }}" = "success"
+          test "${{ steps.generate.outcome }}" = "success"
+          test "${{ steps.tests.outcome }}" = "success"
+          test "${{ steps.typecheck.outcome }}" = "success"
+          test "${{ steps.lint.outcome }}" = "success"
