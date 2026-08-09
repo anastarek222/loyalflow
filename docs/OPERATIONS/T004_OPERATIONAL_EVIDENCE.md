@@ -1,6 +1,6 @@
 # T004 Operational Readiness Evidence
 
-Status: **OPEN — evidence collection in progress**
+Status: **OPEN — independent review still pending**
 
 This file is the repository-owned summary for T004. It must not imply that a control is achieved before the corresponding evidence is recorded and reviewable.
 
@@ -10,9 +10,9 @@ This summary does not authorize any database connection, backup, restore, provid
 
 ## 1. Backup and restore drill
 
-Current state: **LOCAL RESTORE MEASURED / PRODUCTION PROVIDER PITR POSTURE VERIFIED READ-ONLY / ACHIEVED RPO-RTO UNVERIFIED**
+Current state: **LOCAL RESTORE MEASURED / PRODUCTION PROVIDER PITR POSTURE VERIFIED READ-ONLY / MEASURED PRODUCTION RPO-RTO DEFERRED TO LAUNCH GATE**
 
-Planning targets only:
+Planning targets remain:
 
 - Proposed RPO: 15 minutes.
 - Proposed RTO: 30 minutes.
@@ -44,20 +44,23 @@ Read-only Production-provider evidence is recorded in `T004_PRODUCTION_RECOVERY_
 
 This verifies Production recovery **capability/posture**, but it does not convert the proposed 15-minute RPO or 30-minute RTO into achieved targets. A retention window is not a measured recovery point, and no Production restore timing was exercised.
 
+On 2026-08-09 the accountable owner explicitly chose to defer a measured Production/service RPO-RTO exercise to the public-launch readiness gate rather than run a Production restore exercise during T004. Therefore T004 may carry this as a documented launch-gate dependency; P11/T008 must not treat the 15-minute/30-minute targets as achieved until measured evidence exists.
+
 ## 2. Operational ownership
 
-Current state: **PARTIAL**
+Current state: **PRIMARY OWNERSHIP ASSIGNED / TEMPORARY SINGLE-OWNER CONTINUITY POSTURE ACCEPTED / INDEPENDENT REVIEWER OPEN**
 
 The authoritative assignment matrix is `T004_OPERATIONAL_OWNERSHIP.md`.
 
 Explicitly assigned to Anas Tarek (`anastarek222`): Incident Commander, Release Operator, Database Owner, Recovery Operator, Platform Owner, On-call Operator, and Security Owner.
 
+On 2026-08-09 the accountable owner explicitly accepted a temporary single-owner continuity posture for T004 closeout. Backup/alternate owners therefore remain `UNASSIGNED` by deliberate risk acceptance, not by accidental omission. This does not create redundancy and must be revisited before public launch or earlier if another qualified operator becomes available.
+
 Still open:
 
 - Independent Reviewer: `UNASSIGNED`.
-- Backup/alternate owners remain unresolved where continuity requires them.
 
-Do not infer or invent a person for an open role.
+Do not infer or invent a reviewer.
 
 ## 3. Staging / Preview isolation
 
@@ -117,10 +120,10 @@ Vercel deployment `dpl_9uDe2bLke9wcs1rVEaMJrbhKP6Np` for commit `d4df2502078d409
 
 ## Closeout rule
 
-T004 remains open until all required closeout evidence is resolved. Current unresolved items are principally:
+T004 has resolved its technical evidence, Production recovery-posture, monitoring, Preview isolation, primary ownership, temporary continuity posture, and quality-gate items. Measured Production/service RPO-RTO is explicitly deferred to the public-launch gate and is not claimed as achieved.
 
-1. Achieved Production/service RPO/RTO remain unverified even though provider-native PITR posture is now verified read-only.
-2. Independent Reviewer is named and reviews the evidence.
-3. Required continuity/back-up ownership is resolved or explicitly accepted by the accountable owner.
+The remaining T004 closeout blocker is:
 
-Until then, the valid completion status is **NOT READY FOR DRAFT PR** for T004 closeout.
+1. Independent Reviewer is named and reviews the sanitized evidence, if independent review remains a mandatory T004 completion requirement.
+
+Until that review requirement is resolved, the valid completion status is **NOT READY FOR DRAFT PR**.
