@@ -1,0 +1,43 @@
+source_commit=8d13ef3eae7e7a980a4a269a1c9a6ef49ff4542b
+tests=success
+tests_exit=0
+lint=success
+lint_exit=0
+
+=== TESTS ===
+TAP version 13
+# Subtest: TOTP secrets are random and produce standards-shaped otpauth URIs
+ok 1 - TOTP secrets are random and produce standards-shaped otpauth URIs
+  ---
+  duration_ms: 1.315352
+  type: 'test'
+  ...
+# Subtest: TOTP verification accepts current code and bounded clock skew only
+ok 2 - TOTP verification accepts current code and bounded clock skew only
+  ---
+  duration_ms: 1.187453
+  type: 'test'
+  ...
+# Subtest: TOTP secret envelope is authenticated and reversible only with the root secret
+ok 3 - TOTP secret envelope is authenticated and reversible only with the root secret
+  ---
+  duration_ms: 1.521637
+  type: 'test'
+  ...
+# Subtest: recovery codes are one-time material designed for hash-only persistence
+ok 4 - recovery codes are one-time material designed for hash-only persistence
+  ---
+  duration_ms: 0.640486
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 191.328711
+
+=== LINT ===
