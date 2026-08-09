@@ -26,3 +26,5 @@ jobs:
           git add package.json pnpm-lock.yaml .github/workflows/t003-distributed-rate-limit-deps.yml
           git commit -m "chore(rate-limit): add Upstash Redis client"
           git push
+
+# trigger dependency install
