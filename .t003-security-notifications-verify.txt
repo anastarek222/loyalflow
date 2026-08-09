@@ -1,0 +1,3 @@
+verification_commit=8eaa2230e9b6c8d0ec7aa5d2acf2ca12c591c027
+completed_at=2026-08-09T08:46:23Z
+?? .t003-security-notifications-verify.txt
