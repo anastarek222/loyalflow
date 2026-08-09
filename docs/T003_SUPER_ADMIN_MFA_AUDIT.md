@@ -4,7 +4,7 @@ Baseline: `main` at `680b59747ad6d86c957f9b82f0545898653d3e66` (merged PR #46).
 
 ## Scope
 
-Read-only product/security audit for the remaining T003 `Super Admin MFA decision` exit item. This slice does not change authentication behavior, schema, dependencies, environment variables, secrets, or production configuration.
+Product/security decision record for the remaining T003 `Super Admin MFA decision` exit item. This slice records the approved enforcement direction and the bounded follow-up contract; it does not itself change authentication behavior, schema, dependencies, environment variables, secrets, or production configuration.
 
 ## Current repository evidence
 
@@ -14,28 +14,38 @@ Read-only product/security audit for the remaining T003 `Super Admin MFA decisio
 - Repository search found no TOTP, authenticator, WebAuthn/passkey, recovery-code, or two-factor implementation.
 - Login rate limiting exists, but rate limiting is not a substitute for a second factor on a privileged account.
 
-## Decision options
+## Approved product/security decision
 
-### A. Require MFA for Super Admin
+**Require MFA for every `SUPER_ADMIN` before Public Launch.**
 
-Require a second factor before a `SUPER_ADMIN` session becomes fully authenticated. This gives the strongest protection for the highest-privilege account and matches the T003 account-security objective.
+This decision was explicitly approved on 2026-08-09. It closes the product-choice portion of the T003 MFA item, but it does not claim that MFA enforcement is implemented yet.
 
-A bounded first implementation should prefer standards-based TOTP or WebAuthn/passkeys, include recovery handling, and avoid weakening tenant/session controls. The exact mechanism must be chosen before code changes because it affects persistence, secret handling, recovery UX, and authentication control flow.
+## Bounded implementation direction
 
-### B. Defer MFA
+The smallest compatible follow-up is a dedicated Super Admin MFA lifecycle rather than an auth-topology rewrite.
 
-Keep password + email verification + rate limiting only and defer MFA to a later launch-readiness phase. This avoids current auth/schema work but leaves Super Admin protected by a single knowledge factor after email verification is complete.
+Preferred first mechanism: standards-based TOTP with recovery codes. The implementation must:
 
-## Recommendation
+- require a second factor before a `SUPER_ADMIN` session becomes fully authenticated;
+- support enrollment and recovery without weakening existing password, email-verification, auth-version, or session-revocation controls;
+- store only hashed recovery codes;
+- protect the TOTP secret at rest rather than storing it in plaintext;
+- rate-limit MFA verification attempts;
+- invalidate or rotate relevant sessions when MFA enrollment/recovery state changes;
+- keep non-`SUPER_ADMIN` authentication behavior unchanged;
+- include behavioral tests for enrollment, valid/invalid/replayed recovery, rate limiting, and enforcement.
 
-Choose **A — require MFA for Super Admin before public launch**.
+## Non-goals
 
-For the smallest compatible T003 follow-up, use a dedicated MFA lifecycle rather than rewriting the existing auth topology. Do not enable enforcement until enrollment/recovery behavior, schema, secret handling, and rollback are explicitly approved and verified.
+- No broad NextAuth/auth-topology rewrite.
+- No MFA requirement for Owner, Staff, or Customer in this T003 slice.
+- No production rollout or migration execution in the implementation PR.
+- No dependency, lockfile, environment, or secret changes without their separate approval boundary.
 
-## Approval boundary
+## Remaining approval boundary
 
-The recommendation is not an authorization to implement MFA. Enforcing MFA or adding its persistence/secret lifecycle changes authentication behavior and requires an explicit product/security decision plus any required schema/dependency/environment approvals.
+Implementing the approved direction requires persistent MFA enrollment/recovery state. That means a bounded schema/migration change is still required before implementation can proceed. Migration authoring may be approved separately from migration execution; executing any migration against a database remains a separate protected action.
 
 ## T003 status impact
 
-This audit resolves the technical unknowns but does **not** close the `Super Admin MFA decision` item until the product choice (require vs defer, and if required the mechanism) is explicitly approved.
+The **MFA decision is resolved**: MFA is mandatory for `SUPER_ADMIN` before Public Launch. T003 remains open until the approved lifecycle is implemented and verified, alongside the remaining distributed rate limiting and security-notification work.
