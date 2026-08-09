@@ -1,0 +1,12 @@
+model OwnerInvitation {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String?
+  email     String   @unique
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email, expiresAt, usedAt])
+}
