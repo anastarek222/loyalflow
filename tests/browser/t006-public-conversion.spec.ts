@@ -30,7 +30,7 @@ test("@desktop public conversion selector switches from English LTR to Arabic RT
 
   const languageSwitcher = page.locator('[aria-label="Language"]');
   await expect(languageSwitcher).toBeVisible();
-  await languageSwitcher.getByRole("button", { name: /Arabic/i }).click();
+  await languageSwitcher.getByRole("button", { name: "العربية" }).click();
 
   await expectLocale(page, "ar", "rtl");
   await expect(page.locator('a[href="/login"]')).toHaveCount(1);
