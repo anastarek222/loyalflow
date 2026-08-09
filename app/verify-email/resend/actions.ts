@@ -1,7 +1,8 @@
 "use server";
 
-import { z } from "zod";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { createEmailVerificationToken } from "@/lib/auth/email-verification";
 import {
@@ -13,19 +14,20 @@ import { logServerError } from "@/lib/server/logging";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
 const resendSchema = z.object({
-  email: z.string().trim().email(),
+  email: z.string().trim().email().max(254),
 });
 
 export async function resendEmailVerificationAction(formData: FormData) {
+  const requestHeaders = await headers();
+  const limit = rateLimit(
+    `email-verification-resend:${getClientAddress(requestHeaders)}`,
+    { limit: 5, windowMs: 15 * 60 * 1000 },
+  );
+
+  if (!limit.allowed) redirect("/verify-email/resend?sent=1");
+
   const parsed = resendSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) redirect("/verify-email/resend?sent=1");
-
-  const headers = new Headers();
-  const limit = rateLimit(`email-verification-resend:${getClientAddress(headers)}`, {
-    limit: 5,
-    windowMs: 15 * 60 * 1000,
-  });
-  if (!limit.allowed) redirect("/verify-email/resend?sent=1");
 
   const email = parsed.data.email.toLowerCase();
   const user = await prisma.user.findUnique({
