@@ -1,6 +1,6 @@
 # T004 Vercel Environment Evidence — 2026-08-09
 
-Source: user-provided read-only screenshots of the Vercel project Environment Variables, Storage, Neon integration, and Deployment pages plus pasted Vercel build logs. Secret values were not inspected or recorded.
+Source: user-provided read-only screenshots of the Vercel project Environment Variables, Storage, Neon integration, Deployment pages, and `/api/health`, plus pasted Vercel build logs. Secret values were not inspected or recorded.
 
 ## Observed environment scoping
 
@@ -75,9 +75,21 @@ Relevant sanitized build/deployment facts:
 
 No migration, seed, schema mutation, or application database write is shown in the provided deployment logs. The successful Prisma generation/build proves that the corrected Preview environment now supplies a usable database connection value to application configuration during build.
 
+## Runtime environment identity evidence
+
+The user opened the fresh Preview deployment's `/api/health` endpoint and captured the following response:
+
+```json
+{"ok":true,"service":"loyalflow","status":"ready","environment":"preview","release":"51dbc65c2290"}
+```
+
+This is direct runtime evidence that the deployed application identifies itself as `preview`, reports `ready`, and is serving the expected T004 release lineage (`51dbc65...`).
+
+The runtime response closes the application-level environment identity gap that remained after provider configuration and build verification.
+
 ## Security interpretation
 
-Provider evidence now demonstrates a real non-production PostgreSQL boundary for Preview:
+Provider and runtime evidence now demonstrate a real non-production PostgreSQL boundary and application identity for Preview:
 
 - Production retains its own Production-only `DATABASE_URL` entry;
 - Preview is connected to a separately provisioned Neon PostgreSQL resource;
@@ -85,11 +97,10 @@ Provider evidence now demonstrates a real non-production PostgreSQL boundary for
 - Production was explicitly excluded from the Neon connection;
 - Preview deployment database branching is enabled;
 - no production customer data was intentionally copied into the new resource during provisioning;
-- a fresh Preview deployment successfully consumed the corrected configuration and reached `Ready Latest`.
+- a fresh Preview deployment successfully consumed the corrected configuration and reached `Ready Latest`;
+- `/api/health` reports `environment: "preview"` at runtime.
 
-This closes the provider target identity and build-consumption gaps for staging/preview database isolation.
-
-`LOYALFLOW_ENVIRONMENT` remains visible only for Production in the earlier evidence, so a dedicated application-level staging/preview identity is still not independently verified. The successful deployment alone does not prove runtime identity semantics inside the application.
+This closes the staging/preview isolation and application-level identity requirements covered by T004 evidence.
 
 ## Production deployment evidence
 
@@ -112,10 +123,10 @@ Execution status:
 - [x] Preview target is proven to be a distinct Neon non-production PostgreSQL resource.
 - [x] No production customer data was intentionally copied during the provisioning flow.
 - [x] Fresh Preview deployment after the Neon connection succeeded and is verified.
-- [ ] Dedicated application-level staging/preview environment identity is verified.
+- [x] Dedicated application-level Preview environment identity is verified at runtime.
 
 ## T004 conclusion
 
-Status: **PREVIEW DATABASE ISOLATION AND DEPLOYMENT VERIFIED — APPLICATION-LEVEL PREVIEW IDENTITY STILL REQUIRED**.
+Status: **STAGING/PREVIEW ISOLATION VERIFIED**.
 
-The repository may now treat provider-side Preview database isolation and Preview deployment consumption as verified. T004 staging/preview readiness is not yet complete until application-level environment identity is independently confirmed.
+The repository may now treat T004 staging/preview readiness as verified for provider isolation, successful Preview deployment consumption, and runtime environment identity. Remaining T004 closeout work is outside this isolation slice, including external alert-routing evidence and unresolved operational owner assignments.
