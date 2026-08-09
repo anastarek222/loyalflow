@@ -7,7 +7,10 @@ import { processPasswordChangeSubmission } from "@/lib/auth/password-change-acti
 import type { PasswordChangeError } from "@/lib/auth/password-change-copy";
 import { changeAuthenticatedUserPassword } from "@/lib/auth/password-change";
 import { revokeAuthenticatedUserSessions } from "@/lib/auth/logout-everywhere";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -38,7 +41,7 @@ export async function changePasswordAction(
     },
     {
       rateLimit(key) {
-        return rateLimit(key, {
+        return distributedRateLimit(key, {
           limit: 5,
           windowMs: 15 * 60 * 1000,
         });
