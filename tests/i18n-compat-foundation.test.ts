@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
+import { getSharedDictionary } from "../lib/i18n";
 import { messages, translate, type MessageKey } from "../lib/i18n/catalog";
 import {
   DEFAULT_LOCALE,
@@ -39,6 +40,19 @@ test("T005 resolves typed messages from the selected locale", () => {
   assert.equal(translate("ar", key), "تسجيل الدخول");
   assert.equal(translate("ar", "auth.email"), "البريد الإلكتروني");
   assert.equal(translate("en", "auth.forgotPassword"), "Forgot password?");
+});
+
+test("T005 keeps legacy shared dictionary callers on the typed catalog source", () => {
+  assert.equal(getSharedDictionary("AR").language, translate("ar", "common.language"));
+  assert.equal(getSharedDictionary("EN").language, translate("en", "common.language"));
+  assert.equal(
+    getSharedDictionary("AR").switchToEnglish,
+    translate("ar", "common.switchToEnglish"),
+  );
+  assert.equal(
+    getSharedDictionary("EN").switchToArabic,
+    translate("en", "common.switchToArabic"),
+  );
 });
 
 test("T005 resolves the SSR locale only from the bounded locale cookie", () => {
