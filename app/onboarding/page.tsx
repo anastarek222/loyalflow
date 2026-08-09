@@ -70,6 +70,7 @@ export default async function OwnerOnboardingPage() {
       </div>
 
       <OwnerOnboardingWizard
+        locale={locale}
         draft={(user.onboardingData as Record<string, unknown> | null) ?? {}}
         saveAction={saveOwnerOnboardingAction}
         launchAction={launchOwnerOnboardingAction}
