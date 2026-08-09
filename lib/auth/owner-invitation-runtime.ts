@@ -81,6 +81,18 @@ export async function redeemOwnerInvitation(input: {
               select: { id: true },
             });
 
+            await transaction.$executeRaw`
+              INSERT INTO "EmailVerificationState" (
+                "userId", "verifiedAt", "createdAt", "updatedAt"
+              )
+              VALUES (
+                ${owner.id}, ${atomicInput.now}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+              )
+              ON CONFLICT ("userId") DO UPDATE SET
+                "verifiedAt" = COALESCE("EmailVerificationState"."verifiedAt", EXCLUDED."verifiedAt"),
+                "updatedAt" = CURRENT_TIMESTAMP
+            `;
+
             return {
               status: "success" as const,
               userId: owner.id,
