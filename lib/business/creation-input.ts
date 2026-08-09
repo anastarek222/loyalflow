@@ -104,5 +104,4 @@ export const ownerInvitationSchema = z.object({
   ownerFirstName: z.string().trim().min(2).max(80),
   ownerLastName: z.string().trim().max(80),
   ownerEmail: z.string().trim().max(255).email(),
-  ownerPassword: passwordValueSchema,
 });
