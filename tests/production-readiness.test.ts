@@ -119,7 +119,8 @@ test("health routes expose safe readiness and liveness behavior", () => {
   const livenessRoute = source("app/api/health/live/route.ts");
 
   assert.match(readinessRoute, /checkReadiness/);
-  assert.match(readinessRoute, /\$queryRaw`SELECT 1`/);
+  assert.match(readinessRoute, /\$queryRaw[\s\S]*SELECT current_database\(\)/);
+  assert.match(readinessRoute, /evaluateStagingIsolation\(process\.env, currentDatabase\)/);
   assert.doesNotMatch(readinessRoute, /database:\s*["'](connected|disconnected)/);
   assert.match(livenessRoute, /status:\s*["']live["']/);
   assert.doesNotMatch(livenessRoute, /lib\/prisma/);
