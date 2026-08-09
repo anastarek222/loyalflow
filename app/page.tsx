@@ -3,16 +3,32 @@ import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+async function getMarketingLocale() {
+  const cookieStore = await cookies();
+  return resolveRequestLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getMarketingLocale();
+
+  return {
+    title: translate(locale, "marketing.metaTitle"),
+    description: translate(locale, "marketing.metaDescription"),
+    alternates: { canonical: "/" },
+    robots: { index: true, follow: true },
+  };
+}
 
 export default async function HomePage() {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
-  const cookieStore = await cookies();
-  const locale = resolveRequestLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+  const locale = await getMarketingLocale();
   const direction = getLocaleDirection(locale);
 
   const features = [
