@@ -24,12 +24,16 @@ test("T006 get-started page reuses canonical locale and direction behavior", () 
   assert.match(page, /<main lang=\{locale\} dir=\{direction\}/);
 });
 
-test("T006 path selector exposes only supported existing-account and owner-invitation flows", () => {
+test("T006 path selector exposes only supported existing-account and owner-invitation destinations", () => {
   const page = source("app/get-started/page.tsx");
+  const hrefs = [...page.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
 
-  assert.match(page, /href="\/login"/);
-  assert.match(page, /href="\/accept-owner-invitation"/);
-  assert.doesNotMatch(page, /signup|register|checkout|stripe|payment/i);
+  assert.ok(hrefs.includes("/login"));
+  assert.ok(hrefs.includes("/accept-owner-invitation"));
+  assert.deepEqual(
+    [...new Set(hrefs)].sort(),
+    ["/", "/accept-owner-invitation", "/login"].sort(),
+  );
 });
 
 test("T006 path selector is indexable and uses localized metadata", () => {
