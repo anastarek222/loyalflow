@@ -152,7 +152,7 @@ test("verified auth session carries the JWT authVersion used by revocation", () 
   assert.match(authTypes, /interface Session[\s\S]*?authVersion:\s*number/);
   assert.match(
     authSource,
-    /token\.authVersion !==\s*currentUser\.authVersion[\s\S]*?return null/,
+    /isCurrentAuthVersion\(\s*token\.authVersion,\s*currentUser\.authVersion,\s*\)[\s\S]*?return null/,
   );
 });
 
