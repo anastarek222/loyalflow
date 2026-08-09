@@ -24,13 +24,21 @@ function percentile95(values: readonly number[]) {
   return sorted[index] ?? null;
 }
 
+function isValidSample(sample: PerformanceSample) {
+  return (
+    Number.isInteger(sample.status) &&
+    sample.status >= 100 &&
+    sample.status <= 599 &&
+    Number.isFinite(sample.durationMs) &&
+    sample.durationMs >= 0
+  );
+}
+
 export function evaluatePerformanceBudget(
   samples: readonly PerformanceSample[],
   budget: PerformanceBudget,
 ): PerformanceBudgetResult {
-  const validSamples = samples.filter(
-    (sample) => Number.isFinite(sample.durationMs) && sample.durationMs >= 0,
-  );
+  const validSamples = samples.filter(isValidSample);
   const reasons: string[] = [];
 
   if (validSamples.length < budget.minSamples) {
