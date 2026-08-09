@@ -72,6 +72,7 @@ const REVIEWED_MIGRATIONS = [
   "20260807182500_add_reward_unlock_redemption_link",
   "20260807191500_add_password_reset_tokens",
   "20260809033000_add_owner_invitation_lifecycle",
+  "20260809044000_add_email_verification_lifecycle",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;
