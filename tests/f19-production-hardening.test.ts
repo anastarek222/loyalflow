@@ -92,7 +92,13 @@ test("F19.4 health routes expose only safe release identity", () => {
   assert.match(live, /getPublicReleaseMetadata/);
   assert.match(ready, /getPublicReleaseMetadata/);
   assert.doesNotMatch(live, /DATABASE_URL|AUTH_SECRET/);
-  assert.doesNotMatch(ready, /DATABASE_URL|AUTH_SECRET/);
+  assert.doesNotMatch(ready, /AUTH_SECRET/);
+  assert.equal(ready.match(/process\.env\.DATABASE_URL/g)?.length, 1);
+  assert.match(
+    ready,
+    /evaluateStagingIsolation\(\s*process\.env,\s*process\.env\.DATABASE_URL,?\s*\)/,
+  );
+  assert.doesNotMatch(ready, /DATABASE_URL\s*:/);
 });
 
 test("F19.4 production DB guard requires exact identity and rejects non-production-looking names", () => {
