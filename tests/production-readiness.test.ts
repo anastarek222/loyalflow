@@ -17,7 +17,7 @@ function source(file: string) {
 }
 
 function productionEnvironment(
-  overrides: Record<string, string | undefined> = {}
+  overrides: Record<string, string | undefined> = {},
 ) {
   return {
     NODE_ENV: "production",
@@ -32,7 +32,8 @@ function productionEnvironment(
 }
 
 test("runtime environment validation reports missing production values without secrets", () => {
-  const databaseUrl = "postgresql://user:database-secret@db.example.test/loyalflow";
+  const databaseUrl =
+    "postgresql://user:database-secret@db.example.test/loyalflow";
   const authSecret = "auth-secret-value";
 
   assert.throws(
@@ -41,7 +42,7 @@ test("runtime environment validation reports missing production values without s
         productionEnvironment({
           DATABASE_URL: undefined,
           AUTH_SECRET: authSecret,
-        })
+        }),
       ),
     (error: unknown) => {
       assert.ok(error instanceof EnvironmentValidationError);
@@ -49,15 +50,15 @@ test("runtime environment validation reports missing production values without s
       assert.doesNotMatch(error.message, new RegExp(databaseUrl));
       assert.doesNotMatch(error.message, new RegExp(authSecret));
       return true;
-    }
+    },
   );
 
   assert.throws(
     () =>
       validateRuntimeEnvironment(
-        productionEnvironment({ AUTH_SECRET: undefined })
+        productionEnvironment({ AUTH_SECRET: undefined }),
       ),
-    /AUTH_SECRET/
+    /AUTH_SECRET/,
   );
 });
 
@@ -73,12 +74,20 @@ test("optional integration configuration does not block a valid core runtime", (
 
 test("server environment validation is not imported by Client Components", () => {
   const componentsDirectory = path.join(root, "components");
-  const components = fs.readdirSync(componentsDirectory).filter((file) => file.endsWith(".tsx"));
+  const components = fs
+    .readdirSync(componentsDirectory)
+    .filter((file) => file.endsWith(".tsx"));
 
   for (const file of components) {
-    const component = fs.readFileSync(path.join(componentsDirectory, file), "utf8");
+    const component = fs.readFileSync(
+      path.join(componentsDirectory, file),
+      "utf8",
+    );
 
-    if (component.startsWith('"use client"') || component.startsWith("'use client'")) {
+    if (
+      component.startsWith('"use client"') ||
+      component.startsWith("'use client'")
+    ) {
       assert.doesNotMatch(component, /lib\/server\/environment/);
     }
   }
@@ -87,7 +96,9 @@ test("server environment validation is not imported by Client Components", () =>
 test("readiness is dependency-aware while its public body omits database details", async () => {
   const ready = await checkReadiness(async () => undefined);
   const unavailable = await checkReadiness(async () => {
-    throw new Error("postgresql://user:database-secret@db.example.test/loyalflow");
+    throw new Error(
+      "postgresql://user:database-secret@db.example.test/loyalflow",
+    );
   });
 
   assert.deepEqual(ready, {
@@ -99,14 +110,17 @@ test("readiness is dependency-aware while its public body omits database details
     status: 503,
   });
 
-  assert.doesNotMatch(JSON.stringify(unavailable.body), /database|postgres|host/i);
+  assert.doesNotMatch(
+    JSON.stringify(unavailable.body),
+    /database|postgres|host/i,
+  );
 });
 
 test("server error logging redacts connection strings and assigned secrets", () => {
   const message = getSafeErrorMessage(
     new Error(
-      "database=postgresql://user:password@db.example.test/loyalflow token=auth-secret-value"
-    )
+      "database=postgresql://user:password@db.example.test/loyalflow token=auth-secret-value",
+    ),
   );
 
   assert.doesNotMatch(message, /password@db\.example\.test/);
@@ -119,9 +133,15 @@ test("health routes expose safe readiness and liveness behavior", () => {
   const livenessRoute = source("app/api/health/live/route.ts");
 
   assert.match(readinessRoute, /checkReadiness/);
-  assert.match(readinessRoute, /\$queryRaw[\s\S]*SELECT current_database\(\)/);
-  assert.match(readinessRoute, /evaluateStagingIsolation\(process\.env, currentDatabase\)/);
-  assert.doesNotMatch(readinessRoute, /database:\s*["'](connected|disconnected)/);
+  assert.match(readinessRoute, /\$queryRaw[\s\S]*SELECT 1/);
+  assert.match(
+    readinessRoute,
+    /evaluateStagingIsolation\(\s*process\.env,\s*process\.env\.DATABASE_URL,?\s*\)/,
+  );
+  assert.doesNotMatch(
+    readinessRoute,
+    /database:\s*["'](connected|disconnected)/,
+  );
   assert.match(livenessRoute, /status:\s*["']live["']/);
   assert.doesNotMatch(livenessRoute, /lib\/prisma/);
 });
@@ -140,16 +160,30 @@ test("deployment configuration retains security headers and safe migration comma
   assert.match(config, /Content-Security-Policy/);
   assert.match(config, /frame-ancestors 'none'/);
 
-  assert.equal(packageJson.scripts["db:migrate:deploy"], "prisma migrate deploy");
-  assert.doesNotMatch(packageJson.scripts["db:migrate:deploy"], /migrate dev|db push|migrate reset/);
-  assert.doesNotMatch(packageJson.scripts["deploy:check"], /migrate deploy|migrate dev|db push|migrate reset/);
+  assert.equal(
+    packageJson.scripts["db:migrate:deploy"],
+    "prisma migrate deploy",
+  );
+  assert.doesNotMatch(
+    packageJson.scripts["db:migrate:deploy"],
+    /migrate dev|db push|migrate reset/,
+  );
+  assert.doesNotMatch(
+    packageJson.scripts["deploy:check"],
+    /migrate deploy|migrate dev|db push|migrate reset/,
+  );
   assert.match(prismaConfig, /SHADOW_DATABASE_URL\?\.trim\(\)/);
-  assert.doesNotMatch(prismaConfig, /shadowDatabaseUrl:\s*env\("SHADOW_DATABASE_URL"\)/);
+  assert.doesNotMatch(
+    prismaConfig,
+    /shadowDatabaseUrl:\s*env\("SHADOW_DATABASE_URL"\)/,
+  );
 });
 
 test("verification scripts do not print raw error stacks", () => {
   const scriptsDirectory = path.join(root, "scripts");
-  const scripts = fs.readdirSync(scriptsDirectory).filter((file) => file.endsWith(".ts"));
+  const scripts = fs
+    .readdirSync(scriptsDirectory)
+    .filter((file) => file.endsWith(".ts"));
 
   for (const file of scripts) {
     const script = fs.readFileSync(path.join(scriptsDirectory, file), "utf8");
@@ -177,24 +211,30 @@ test("local database verifier requires the complete reviewed committed migration
   assert.equal(committedMigrations.length, 46);
   assert.ok(
     committedMigrations.includes(
-      "20260723103415_add_branch_audit_activity_types"
+      "20260723103415_add_branch_audit_activity_types",
     ),
-    "The F3 branch audit activity migration must be part of the reviewed history."
+    "The F3 branch audit activity migration must be part of the reviewed history.",
   );
   assert.ok(
     committedMigrations.includes("20260724090000_add_experience_access"),
     "The U6.2 experience-access migration must be part of the reviewed history.",
   );
   assert.ok(
-    committedMigrations.includes("20260726220000_add_business_subscription_billing"),
+    committedMigrations.includes(
+      "20260726220000_add_business_subscription_billing",
+    ),
     "The F19 subscription billing migration must be part of the reviewed history.",
   );
   assert.ok(
-    committedMigrations.includes("20260729090000_add_owner_onboarding_foundation"),
+    committedMigrations.includes(
+      "20260729090000_add_owner_onboarding_foundation",
+    ),
     "Owner onboarding state must be part of the reviewed migration history.",
   );
   assert.ok(
-    committedMigrations.includes("20260729100000_add_standard_card_preferences"),
+    committedMigrations.includes(
+      "20260729100000_add_standard_card_preferences",
+    ),
     "Standard Card preferences must be part of the reviewed migration history.",
   );
   assert.ok(
@@ -202,23 +242,33 @@ test("local database verifier requires the complete reviewed committed migration
     "Custom Card mode must be isolated in its own reviewed migration.",
   );
   assert.ok(
-    committedMigrations.includes("20260809033000_add_owner_invitation_lifecycle"),
+    committedMigrations.includes(
+      "20260809033000_add_owner_invitation_lifecycle",
+    ),
     "Owner invitation lifecycle must be part of the reviewed migration history.",
   );
   assert.ok(
-    committedMigrations.includes("20260809044000_add_email_verification_lifecycle"),
+    committedMigrations.includes(
+      "20260809044000_add_email_verification_lifecycle",
+    ),
     "Email verification lifecycle must be part of the reviewed migration history.",
   );
   assert.ok(
-    committedMigrations.includes("20260809081000_add_super_admin_mfa_lifecycle"),
+    committedMigrations.includes(
+      "20260809081000_add_super_admin_mfa_lifecycle",
+    ),
     "Super Admin MFA lifecycle must be part of the reviewed migration history.",
   );
   assert.ok(
-    committedMigrations.includes("20260809084500_add_security_notification_lifecycle"),
+    committedMigrations.includes(
+      "20260809084500_add_security_notification_lifecycle",
+    ),
     "Security notification lifecycle must be part of the reviewed migration history.",
   );
   assert.ok(
-    committedMigrations.includes("20260726224500_add_subscription_plan_entitlements"),
+    committedMigrations.includes(
+      "20260726224500_add_subscription_plan_entitlements",
+    ),
     "The F19 plan entitlement migration must be part of the reviewed history.",
   );
   assert.ok(
@@ -229,7 +279,7 @@ test("local database verifier requires the complete reviewed committed migration
   assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);
   assert.match(
     verifier,
-    /JSON\.stringify\(migrationNames\) === JSON\.stringify\(REVIEWED_MIGRATIONS\)/
+    /JSON\.stringify\(migrationNames\) === JSON\.stringify\(REVIEWED_MIGRATIONS\)/,
   );
 
   for (const migration of committedMigrations) {
@@ -242,14 +292,14 @@ test("final UAT transaction fixtures enforce customer-business consistency", () 
 
   assert.match(
     uatFixtures,
-    /assert\.equal\(\s*input\.customer\.businessId,\s*input\.businessId/
+    /assert\.equal\(\s*input\.customer\.businessId,\s*input\.businessId/,
   );
   assert.match(
     uatFixtures,
-    /const salesCustomer = await createCustomer\(\{\s*businessId: businessSales\.id/
+    /const salesCustomer = await createCustomer\(\{\s*businessId: businessSales\.id/,
   );
   assert.match(
     uatFixtures,
-    /businessId: businessSales\.id, customer: salesCustomer, amount: 100/
+    /businessId: businessSales\.id, customer: salesCustomer, amount: 100/,
   );
 });

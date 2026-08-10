@@ -6,36 +6,75 @@ export type StagingIsolationResult = Readonly<{
   reason:
     | "not_staging"
     | "ok"
-    | "missing_expected_database"
-    | "missing_expected_database_host"
+    | "missing_staging_host"
+    | "invalid_staging_host"
+    | "missing_production_host"
+    | "invalid_production_host"
+    | "missing_database_url"
     | "invalid_database_url"
-    | "production_database_match"
-    | "production_database_host_match"
-    | "database_mismatch"
-    | "database_host_mismatch";
+    | "staging_production_host_match"
+    | "production_host_match"
+    | "staging_host_mismatch";
 }>;
 
-function clean(value: string | undefined) {
-  return value?.trim() || null;
+type HostIdentity =
+  | Readonly<{ status: "missing" }>
+  | Readonly<{ status: "invalid" }>
+  | Readonly<{ status: "valid"; identity: string }>;
+
+const DNS_LABEL = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+const NEON_POOLER_LABEL = /^(ep-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)-pooler$/;
+
+function normalizeHost(value: string | undefined): HostIdentity {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return { status: "missing" };
+  }
+
+  const host = (
+    trimmed.endsWith(".") ? trimmed.slice(0, -1) : trimmed
+  ).toLowerCase();
+  const labels = host.split(".");
+
+  if (host.length > 253 || labels.some((label) => !DNS_LABEL.test(label))) {
+    return { status: "invalid" };
+  }
+
+  const neonPooler = labels[0]?.match(NEON_POOLER_LABEL);
+  if (neonPooler) {
+    labels[0] = neonPooler[1];
+  }
+
+  return { status: "valid", identity: labels.join(".") };
 }
 
-function normalizeHost(value: string | null) {
-  return value?.trim().toLowerCase().replace(/\.$/, "") || null;
-}
+function getRuntimeHost(databaseUrl: string | undefined): HostIdentity {
+  const trimmed = databaseUrl?.trim();
 
-function databaseHost(databaseUrl: string | null) {
-  if (!databaseUrl) return null;
+  if (!trimmed) {
+    return { status: "missing" };
+  }
 
   try {
-    return normalizeHost(new URL(databaseUrl).hostname);
+    const url = new URL(trimmed);
+
+    if (
+      (url.protocol !== "postgres:" && url.protocol !== "postgresql:") ||
+      !url.hostname
+    ) {
+      return { status: "invalid" };
+    }
+
+    return normalizeHost(url.hostname);
   } catch {
-    return null;
+    return { status: "invalid" };
   }
 }
 
 export function evaluateStagingIsolation(
   environment: Record<string, string | undefined>,
-  currentDatabase: string | null,
+  databaseUrl: string | undefined,
 ): StagingIsolationResult {
   const identity = getEnvironmentIdentity(environment);
 
@@ -43,39 +82,57 @@ export function evaluateStagingIsolation(
     return { required: false, allowed: true, reason: "not_staging" };
   }
 
-  const expectedDatabase = clean(environment.LOYALFLOW_STAGING_DATABASE);
-  const productionDatabase = clean(environment.LOYALFLOW_PRODUCTION_DATABASE);
-  const expectedHost = normalizeHost(clean(environment.LOYALFLOW_STAGING_DATABASE_HOST));
-  const productionHost = normalizeHost(clean(environment.LOYALFLOW_PRODUCTION_DATABASE_HOST));
-  const configuredDatabaseUrl = clean(environment.DATABASE_URL);
-  const currentHost = databaseHost(configuredDatabaseUrl);
-
-  if (!expectedDatabase) {
-    return { required: true, allowed: false, reason: "missing_expected_database" };
+  const staging = normalizeHost(environment.LOYALFLOW_STAGING_DATABASE_HOST);
+  if (staging.status === "missing") {
+    return { required: true, allowed: false, reason: "missing_staging_host" };
   }
 
-  if (!expectedHost) {
-    return { required: true, allowed: false, reason: "missing_expected_database_host" };
+  if (staging.status === "invalid") {
+    return { required: true, allowed: false, reason: "invalid_staging_host" };
   }
 
-  if (configuredDatabaseUrl && !currentHost) {
+  const production = normalizeHost(
+    environment.LOYALFLOW_PRODUCTION_DATABASE_HOST,
+  );
+  if (production.status === "missing") {
+    return {
+      required: true,
+      allowed: false,
+      reason: "missing_production_host",
+    };
+  }
+
+  if (production.status === "invalid") {
+    return {
+      required: true,
+      allowed: false,
+      reason: "invalid_production_host",
+    };
+  }
+
+  if (staging.identity === production.identity) {
+    return {
+      required: true,
+      allowed: false,
+      reason: "staging_production_host_match",
+    };
+  }
+
+  const runtime = getRuntimeHost(databaseUrl);
+  if (runtime.status === "missing") {
+    return { required: true, allowed: false, reason: "missing_database_url" };
+  }
+
+  if (runtime.status === "invalid") {
     return { required: true, allowed: false, reason: "invalid_database_url" };
   }
 
-  if (productionDatabase && productionHost && expectedDatabase === productionDatabase && expectedHost === productionHost) {
-    return { required: true, allowed: false, reason: "production_database_match" };
+  if (runtime.identity === production.identity) {
+    return { required: true, allowed: false, reason: "production_host_match" };
   }
 
-  if (productionHost && (expectedHost === productionHost || currentHost === productionHost)) {
-    return { required: true, allowed: false, reason: "production_database_host_match" };
-  }
-
-  if (!currentDatabase || currentDatabase !== expectedDatabase) {
-    return { required: true, allowed: false, reason: "database_mismatch" };
-  }
-
-  if (!currentHost || currentHost !== expectedHost) {
-    return { required: true, allowed: false, reason: "database_host_mismatch" };
+  if (runtime.identity !== staging.identity) {
+    return { required: true, allowed: false, reason: "staging_host_mismatch" };
   }
 
   return { required: true, allowed: true, reason: "ok" };

@@ -9,37 +9,32 @@ import { evaluateStagingIsolation } from "@/lib/server/staging-isolation";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function noStoreJson(
-  body: Record<string, unknown>,
-  status = 200
-) {
+function noStoreJson(body: Record<string, unknown>, status = 200) {
   const response = NextResponse.json(body, {
     status,
   });
 
-  response.headers.set(
-    "Cache-Control",
-    "no-store, max-age=0"
-  );
+  response.headers.set("Cache-Control", "no-store, max-age=0");
 
   return response;
 }
 
 export async function GET() {
-  let currentDatabase: string | null = null;
   const readiness = await checkReadiness(async () => {
-    const rows = await prisma.$queryRaw<Array<{ current_database: string }>>`SELECT current_database()`;
-    currentDatabase = rows[0]?.current_database ?? null;
+    await prisma.$queryRaw`SELECT 1`;
   });
 
   if (readiness.status === 503) {
     logServerError(
       "database_readiness_probe_failed",
-      new Error("Database readiness probe failed")
+      new Error("Database readiness probe failed"),
     );
   }
 
-  const isolation = evaluateStagingIsolation(process.env, currentDatabase);
+  const isolation = evaluateStagingIsolation(
+    process.env,
+    process.env.DATABASE_URL,
+  );
   if (!isolation.allowed) {
     logServerError(
       "staging_isolation_guard_failed",
@@ -56,5 +51,8 @@ export async function GET() {
     );
   }
 
-  return noStoreJson({ ...readiness.body, ...getPublicReleaseMetadata() }, readiness.status);
+  return noStoreJson(
+    { ...readiness.body, ...getPublicReleaseMetadata() },
+    readiness.status,
+  );
 }
