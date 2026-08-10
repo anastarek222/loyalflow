@@ -33,6 +33,23 @@ test("T007 treats an explicit staging identity on a Vercel Preview host as stagi
   assert.equal(identity.isPreview, true);
 });
 
+test("T007 prefers the Vercel deployment SHA over a stale explicit release", () => {
+  const identity = getEnvironmentIdentity({
+    LOYALFLOW_RELEASE_SHA: "918f2e72d6da",
+    VERCEL_GIT_COMMIT_SHA: "98e54e5262967b691175b05fe749251378631ff5",
+  });
+
+  assert.equal(identity.release, "98e54e526296");
+});
+
+test("T007 retains the explicit release SHA outside Vercel", () => {
+  const identity = getEnvironmentIdentity({
+    LOYALFLOW_RELEASE_SHA: "918f2e72d6da",
+  });
+
+  assert.equal(identity.release, "918f2e72d6da");
+});
+
 test("T007 refuses a staging identity that conflicts with a Vercel Production host", () => {
   const identity = getEnvironmentIdentity({
     LOYALFLOW_ENVIRONMENT: "staging",

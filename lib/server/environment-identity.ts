@@ -58,7 +58,11 @@ export function getEnvironmentIdentity(
     deploymentType: environmentName === "development" ? "local" : environmentName === "test" ? "ci" : environmentName === "preview" ? "preview" : environmentName === "staging" ? "staging" : environmentName === "production" ? "production" : "unknown",
     isProduction: environmentName === "production",
     isPreview: environmentName === "preview" || environmentName === "staging",
-    release: safeRelease(clean(environment.LOYALFLOW_RELEASE_SHA) ?? clean(environment.VERCEL_GIT_COMMIT_SHA) ?? clean(environment.GITHUB_SHA)),
+    release: safeRelease(
+      clean(environment.VERCEL_GIT_COMMIT_SHA) ??
+        clean(environment.LOYALFLOW_RELEASE_SHA) ??
+        clean(environment.GITHUB_SHA),
+    ),
     buildTimestamp: safeTimestamp(clean(environment.LOYALFLOW_BUILD_TIMESTAMP)),
   };
 }
