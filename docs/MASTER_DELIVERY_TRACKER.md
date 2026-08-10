@@ -1,10 +1,10 @@
 # LoyalFlow Master Delivery Tracker
 
-Last verified: 2026-08-09
+Last verified: 2026-08-10
 
 Baseline: `main` at `f2bf363bc289a177be7a36c02a7c26ea04446cdc` (merged PR #63)
 
-Latest T007 verification: repository-local gates for the E2E/performance foundation passed with 795/795 tests, TypeScript passing, ESLint 0 errors with 2 pre-existing warnings, Prisma Client 7.9.0 generation passing, and Next.js 16.2.11 production build passing with 26/26 static pages. A dedicated Neon `staging` branch (`br-late-leaf-adwhj06g`) has been provisioned and inspected. Vercel runtime activation is not yet proven because current branch deployments are blocked by the account build-rate limit and the latest known READY non-production runtime still reports `environment: preview`, not `staging`.
+Latest T007 verification: the isolated Vercel runtime is READY on release `fa5b9f07449d`; live/readiness health return HTTP 200 with `environment: staging`. The eleven reviewed pending migrations were applied only to Neon Staging and read-only verification now reports 46/46 applied with no incomplete migration; Production remains at its 35-migration baseline. Fresh protected-Staging public browser evidence passed 4/4 across desktop/mobile. After isolated Upstash configuration was added and Staging was redeployed, authenticated Owner UAT passed 1/1, covering an invalid login, a valid login, Dashboard and reports, customer search, exact-once Earn from 4 to 5 across reload, and Redeem. The disposable fixture was fully cleaned (0 businesses/users/customers). The latest 20-request performance sample still had 0% errors but p95 8,739 ms against the 1,500 ms budget.
 
 ## How to use this tracker
 
@@ -17,9 +17,9 @@ This file joins two different planning views without treating them as interchang
 
 ## Current decision
 
-**T004, T005, and T006 are complete for their current execution gates. T007 is in progress.** T007 now has the staging isolation contract, E2E/performance matrix foundation, Closed Beta operating pack, beta issue-log and Go/No-Go templates, staging activation checklist, runtime-proof template, and a dedicated Neon staging branch. T007 is not complete because a stable Vercel runtime has not yet been activated with `staging` identity/config bound to the isolated staging database, staging runtime/performance proof has not been recorded, and the 5-10 business Closed Beta has not run.
+**T004, T005, and T006 are complete for their current execution gates. T007 is in progress.** T007 now has an active isolated Vercel/Neon Staging runtime, schema parity, passing public browser evidence, working isolated Redis-backed authentication, and a passing authenticated Owner Earn/Redeem UAT. T007 is not complete because performance exceeds budget, the remaining role/onboarding browser matrix and Super Admin MFA fixture are open, and rollback rehearsal plus the 5-10 business Closed Beta have not run.
 
-The next executable T007 step is **activate and prove the isolated staging runtime when Vercel environment configuration/build capacity is available**, then run staging health/E2E/performance/rollback evidence before any real beta participant enrollment. T008 remains blocked until T007 exit evidence and an explicit Go/No-Go decision exist.
+The next executable T007 step is **complete the remaining authenticated role/onboarding matrix and disposable Super Admin MFA fixture, then remeasure and diagnose the failing performance budget**. Record rollback evidence before any real beta participant enrollment. Production execution remains forbidden. T008 remains blocked until T007 exit evidence and an explicit Go/No-Go decision exist.
 
 ## Product delivery P0-P12
 

@@ -27,6 +27,14 @@ export async function prepareBrowserUat(baseURL: string): Promise<{ fixture: Bro
     throw new Error("UAT_FIXTURE_PASSWORD is required for browser UAT; no fixtures were created.");
   }
 
+  const remoteManifestPath = process.env.STAGING_UAT_MANIFEST_PATH?.trim();
+  if (remoteManifestPath) {
+    return {
+      fixture: JSON.parse(await readFile(remoteManifestPath, "utf8")) as BrowserUatFixture,
+      manifestPath: remoteManifestPath,
+    };
+  }
+
   const manifestPath = join(tmpdir(), `loyalflow-browser-uat-${randomUUID()}.json`);
   try {
     await execFileAsync("npm", ["run", "prepare:final-uat", "--", `--base-url=${baseURL}`, `--manifest=${manifestPath}`], {
@@ -42,6 +50,8 @@ export async function prepareBrowserUat(baseURL: string): Promise<{ fixture: Bro
 }
 
 export async function cleanupBrowserUat(runId: string, manifestPath: string) {
+  if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;
+
   try {
     await execFileAsync("npm", ["run", "cleanup:final-uat", "--", `--cleanup=${runId}`], {
       cwd: process.cwd(), env: process.env, maxBuffer: 1024 * 1024,

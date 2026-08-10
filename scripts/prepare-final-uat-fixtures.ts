@@ -14,7 +14,8 @@ import { assertDatabaseScriptEnvironment } from "../lib/server/database-script-g
 
 const connectionString = process.env.DATABASE_URL;
 
-assertDatabaseScriptEnvironment("seed-fixture");
+const stagingFixture = process.env.LOYALFLOW_ENVIRONMENT === "staging";
+assertDatabaseScriptEnvironment(stagingFixture ? "staging-seed-fixture" : "seed-fixture");
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not configured");
@@ -120,10 +121,16 @@ async function assertSafeDatabaseTarget() {
   const identity = await prisma.$queryRaw<Array<{ database: string }>>
     `SELECT current_database() AS database`;
 
+  const expectedDatabase = stagingFixture
+    ? process.env.LOYALFLOW_STAGING_DATABASE?.trim()
+    : "loyalflow_test";
+  assert.ok(expectedDatabase, "LOYALFLOW_STAGING_DATABASE is required for staging fixture execution.");
   assert.equal(
     identity[0]?.database,
-    "loyalflow_test",
-    "Refusing to create UAT fixtures outside the explicit loyalflow_test database."
+    expectedDatabase,
+    stagingFixture
+      ? "Refusing to create UAT fixtures outside the explicit staging database."
+      : "Refusing to create UAT fixtures outside the explicit loyalflow_test database."
   );
 
   const migration = await prisma.$queryRaw<Array<{ migration_name: string }>>
@@ -321,7 +328,7 @@ function printFixtureDetails(input: {
 
   console.log("\nFINAL UAT FIXTURES READY");
   console.log(`Run ID: ${runId}`);
-  console.log("Database guard: loyalflow_test only");
+  console.log(stagingFixture ? "Database guard: isolated staging host and database verified" : "Database guard: loyalflow_test only");
   console.log("Shared disposable password: supplied securely outside this script");
   console.log("\nLogin accounts:");
   console.log(`  Owner A: lf-uat-final-owner-a-${runId}@example.test`);
