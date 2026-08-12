@@ -197,6 +197,16 @@ lifecycle contract without runtime or database integration. Persistence,
 verified provider-event consumption, checkout, and provider activation remain
 deferred and are not completion evidence for TC4.
 
+TC5 decisions approved on 2026-08-12 select a same-origin Next.js BFF hosted in
+the current Vercel application, current NextAuth sessions as the only protected
+identity source, server-derived tenant/role/capability context, and path-based
+`/api/v1` versioning. The first bounded TC5 slice adds pure transport-neutral
+envelopes plus additive internal-foundation version/liveness reads. It does not
+publish an external stability commitment, change legacy APIs, introduce an
+independent backend, or include writes, schema, migrations, credentials, or
+Production work. See
+[`TC5_API_FOUNDATION_AUDIT.md`](./TC5_API_FOUNDATION_AUDIT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
