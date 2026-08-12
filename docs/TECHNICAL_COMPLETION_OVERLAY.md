@@ -192,9 +192,10 @@ TC4 audit evidence on 2026-08-12 is recorded in
 [`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
 Completed account/auth foundations, validated business settings, deterministic
 plan entitlements, and manual provider-neutral billing fields are present. TC4
-completion is `BLOCKED_PRODUCT_DECISION` because the Launch V1 signup, trial,
-subscription, billing, cancellation, and entitlement-transition state machine
-is not approved. No runtime or database change is claimed by the audit.
+pure foundation is implemented from the approved Launch V1 subscription
+lifecycle contract without runtime or database integration. Persistence,
+verified provider-event consumption, checkout, and provider activation remain
+deferred and are not completion evidence for TC4.
 
 ## 7. Technical Launch V1 definition
 

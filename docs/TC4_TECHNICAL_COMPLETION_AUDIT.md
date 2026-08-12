@@ -2,7 +2,7 @@
 
 Date: 2026-08-12
 
-Status: `BLOCKED_PRODUCT_DECISION`
+Status: `PURE_FOUNDATION_IMPLEMENTED`; persistence and provider activation deferred
 
 ## Scope
 
@@ -64,13 +64,28 @@ payment-provider activation. Gates G09, G16, and G19 remain binding.
 | Existing accounts/auth | Must remain unchanged. |
 | Existing plans/billing | Preserve current manual state and entitlement behavior until an approved transition contract exists. |
 
-## Decision required
+## Approved lifecycle decision
 
-TC4 implementation is blocked pending an approved provider-neutral lifecycle
-contract covering the states, transitions, actors, entitlement consequences,
-failure recovery, and audit/idempotency requirements above. Payment-provider
-selection can remain later, but the product lifecycle itself must be decided
-before code changes.
+The product owner approved the provider-neutral states and transitions on
+2026-08-12. The pure policy is implemented in
+`@loyalflow/domain/billing/subscription-lifecycle` with no runtime or storage
+dependency. It defines application-owned transitions, fail-closed invalid
+transition handling, and access policy for paid features, expansion, purchase,
+data preservation, roles, and tenant isolation.
+
+`TRIALING` and `ACTIVE` receive full plan features. `PAST_DUE` retains the
+grace-period feature set while blocking expansion and new purchase. `SUSPENDED`
+and `EXPIRED` permit safe read/export only. `CANCELED` retains current-period
+access until its period-expiry transition. No transition deletes data or changes
+authorization or tenant isolation.
+
+## Deferred persistence and provider activation
+
+Persisting lifecycle state, consuming verified provider events, applying the
+policy to runtime entitlement checks, checkout, webhooks, invoices, and payment
+activation remain deferred. Those changes require a separately reviewed
+persistence/idempotency design and may require additive schema and migration
+work. No payment provider is selected or activated by this foundation.
 
 No runtime, schema, migration, environment, credential, deployment, database,
 or Production change is included in this audit.

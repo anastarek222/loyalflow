@@ -23,6 +23,7 @@ const expectedPackages = new Map([
       name: "@loyalflow/domain",
       allowedInternal: ["@loyalflow/contracts"],
       exports: {
+        "./billing/subscription-lifecycle": "./src/billing/subscription-lifecycle.ts",
         "./loyalty/progress": "./src/loyalty/progress.ts",
         "./loyalty/reconciliation": "./src/loyalty/reconciliation.ts",
       },
