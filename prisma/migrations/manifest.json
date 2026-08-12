@@ -1,7 +1,7 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "migrationCount": 42,
+  "migrationCount": 46,
   "migrations": [
     {
       "order": 1,
@@ -254,6 +254,30 @@
       "name": "20260807191500_add_password_reset_tokens",
       "path": "prisma/migrations/20260807191500_add_password_reset_tokens/migration.sql",
       "sha256": "ef4d6d5482f63623f59926f0748119186f462719be0eb7ef42b0da615af917d2"
+    },
+    {
+      "order": 43,
+      "name": "20260809033000_add_owner_invitation_lifecycle",
+      "path": "prisma/migrations/20260809033000_add_owner_invitation_lifecycle/migration.sql",
+      "sha256": "9a154b6936ce250280b94ffc19647c8b7e2fb9ecfd2bd0f1018c2536dcab332c"
+    },
+    {
+      "order": 44,
+      "name": "20260809044000_add_email_verification_lifecycle",
+      "path": "prisma/migrations/20260809044000_add_email_verification_lifecycle/migration.sql",
+      "sha256": "709fbb80ed549dbe4e1cce180d6a1d269da116bddf4870e6973d7d2d30e583fa"
+    },
+    {
+      "order": 45,
+      "name": "20260809081000_add_super_admin_mfa_lifecycle",
+      "path": "prisma/migrations/20260809081000_add_super_admin_mfa_lifecycle/migration.sql",
+      "sha256": "21762a2ab717a2d80584398128a024e0b87c1013388212dda2f38967a4124b87"
+    },
+    {
+      "order": 46,
+      "name": "20260809084500_add_security_notification_lifecycle",
+      "path": "prisma/migrations/20260809084500_add_security_notification_lifecycle/migration.sql",
+      "sha256": "ad254b82dc4819b14722e642415a43593f88fd9bef8cc8897973fc62b9afa990"
     }
   ]
 }
