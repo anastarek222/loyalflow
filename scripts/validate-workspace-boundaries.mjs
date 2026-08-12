@@ -12,6 +12,7 @@ const expectedPackages = new Map([
       name: "@loyalflow/contracts",
       allowedInternal: [],
       exports: {
+        "./api/v1": "./src/api/v1.ts",
         "./customers/public-membership": "./src/customers/public-membership.ts",
         "./cards/public-card": "./src/cards/public-card.ts",
       },
