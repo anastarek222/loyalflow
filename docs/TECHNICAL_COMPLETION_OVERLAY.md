@@ -170,6 +170,32 @@ with 0 errors and 2 pre-existing warnings, and the Next.js 16.2.11 production
 build pass. There is no schema, migration, database write, commit, PR, Preview,
 Staging, merge, or deployment claim.
 
+Merged execution evidence on 2026-08-12: PR #69 merged TC1.1, TC2.1, TC3.1,
+and TC3.2 into `staging` with merge commit
+`3f739dba9960ad6574385a8bfd5086276fc468e5`. Required PR checks passed and the
+automatic Vercel `staging` Preview reached Ready for the same commit.
+Authenticated Owner UAT for this PR was not completed because fixture creation
+could not prove the database identity and protection-bypass requirements of the
+fail-closed T007 guards. No fixture was created, and that UAT remains required
+before Production.
+
+TC3 Custom Card upload, storage, versioning, publishing, retention, and deletion
+is `DEFERRED_PRODUCT_DECISION`. No Object Storage provider is selected or
+connected, and no credential, schema, migration, or asset mutation is
+authorized. Standard Card remains the only operational authoring path. Existing
+Custom Card data and artwork references must be preserved without modification
+or deletion. The deferred capability may resume only after the Object Storage
+provider and retention/versioning/deletion policy are approved; deferral is not
+completion or failure evidence.
+
+TC4 audit evidence on 2026-08-12 is recorded in
+[`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
+Completed account/auth foundations, validated business settings, deterministic
+plan entitlements, and manual provider-neutral billing fields are present. TC4
+completion is `BLOCKED_PRODUCT_DECISION` because the Launch V1 signup, trial,
+subscription, billing, cancellation, and entitlement-transition state machine
+is not approved. No runtime or database change is claimed by the audit.
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
