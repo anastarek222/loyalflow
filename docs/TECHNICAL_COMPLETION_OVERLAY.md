@@ -230,6 +230,18 @@ API migration, or external publication. Unsupported-method `no-store`,
 authenticated Preview UAT, and bounded duplication follow-ups remain recorded
 in [`TC5_COMPLETION_AUDIT.md`](./TC5_COMPLETION_AUDIT.md).
 
+TC6.1 introduces a pure provider-neutral integration-health contract and
+deterministic aggregate function for the existing `PENDING`, `SUCCEEDED`, and
+`FAILED` Google Sheets state. Failures map to `RETRYABLE` or `TERMINAL`; valid
+non-failures use `NONE`. Pending aging uses `fresh`, `delayed`, and `stale`
+buckets, but their numerical boundaries remain required caller inputs because
+no durations are approved. The DTO contains aggregate counts only, unknown or
+inconsistent values fail closed, and existing persistence/runtime code is
+unchanged. Severity, SLOs, alerts, durable execution, runtime reads, endpoints,
+providers, schema, migrations, credentials, and Production remain deferred.
+See
+[`TC6_1_INTEGRATION_HEALTH_CONTRACT.md`](./TC6_1_INTEGRATION_HEALTH_CONTRACT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
