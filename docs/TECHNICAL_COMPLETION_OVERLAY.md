@@ -242,6 +242,15 @@ providers, schema, migrations, credentials, and Production remain deferred.
 See
 [`TC6_1_INTEGRATION_HEALTH_CONTRACT.md`](./TC6_1_INTEGRATION_HEALTH_CONTRACT.md).
 
+TC6.2 adds the next bounded pure integration slice: a deterministic retry
+eligibility decision derived only from the TC6.1 failure classification.
+`RETRYABLE` is eligible, `TERMINAL` is denied, `NONE` is not applicable, and
+unknown values fail closed. This is not retry execution and defines no attempt,
+backoff, timing, provider, severity, SLO, or alert policy. The preferred runtime
+health read adapter remains deferred because it would require a new database
+read and an approved `pendingSinceMs` source. See
+[`TC6_2_RETRY_DECISION_CONTRACT.md`](./TC6_2_RETRY_DECISION_CONTRACT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final

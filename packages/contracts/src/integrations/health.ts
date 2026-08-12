@@ -16,6 +16,15 @@ export const integrationFailureClassifications = [
 export type IntegrationFailureClassification =
   (typeof integrationFailureClassifications)[number];
 
+export const integrationRetryDecisions = [
+  "RETRY_ELIGIBLE",
+  "DO_NOT_RETRY",
+  "NOT_APPLICABLE",
+] as const;
+
+export type IntegrationRetryDecision =
+  (typeof integrationRetryDecisions)[number];
+
 export const pendingAgingBuckets = ["fresh", "delayed", "stale"] as const;
 
 export type PendingAgingBucket = (typeof pendingAgingBuckets)[number];
