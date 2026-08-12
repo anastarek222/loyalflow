@@ -220,6 +220,16 @@ effective identifier lists for the session business. It exposes no billing,
 usage, customer, contact, note, credential, or provider data. See
 [`TC5_READ_EXTRACTION_3_AUDIT.md`](./TC5_READ_EXTRACTION_3_AUDIT.md).
 
+TC5 read-foundation completion audit on 2026-08-13 confirms that the approved
+current-consumption boundary is complete: four read-only `/api/v1` endpoints,
+transport-neutral contracts, safe envelopes/request IDs/cache defaults, and
+session-derived tenant/capability adapters are present. The UI currently has no
+`/api/v1` consumer, and Server Components/Actions continue to use server-only
+domain/query paths as approved. This is not completion of TC5 writes, legacy
+API migration, or external publication. Unsupported-method `no-store`,
+authenticated Preview UAT, and bounded duplication follow-ups remain recorded
+in [`TC5_COMPLETION_AUDIT.md`](./TC5_COMPLETION_AUDIT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
