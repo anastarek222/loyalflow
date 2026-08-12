@@ -45,3 +45,22 @@ export type ApiLivenessRead = Readonly<{
   environment: string;
   release: string | null;
 }>;
+
+export type ApiBusinessSummaryRead = Readonly<{
+  business: Readonly<{
+    id: string;
+    name: string;
+    slug: string;
+    isActive: boolean;
+  }>;
+  program: Readonly<{
+    loyaltyMode: "VISITS" | "POINTS" | "SALES_AMOUNT";
+    unitName: string;
+    rewardName: string;
+    rewardThreshold: number;
+  }>;
+  counts: Readonly<{
+    customers: number;
+    branches: number;
+  }>;
+}>;
