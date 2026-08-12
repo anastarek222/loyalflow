@@ -5,6 +5,7 @@ import {
   type IntegrationFailureClassification,
   type IntegrationHealthAggregationResult,
   type IntegrationHealthObservation,
+  type IntegrationRetryDecision,
   type PendingAgingBucket,
   type PendingAgingThresholds,
 } from "@loyalflow/contracts/integrations/health";
@@ -85,6 +86,19 @@ function classifyPendingAge(
   if (ageMs >= thresholds.staleAfterMs) return "stale";
   if (ageMs >= thresholds.delayedAfterMs) return "delayed";
   return "fresh";
+}
+
+/**
+ * Pure eligibility decision only. It does not schedule, execute, delay, limit,
+ * or count a retry and deliberately contains no provider policy.
+ */
+export function decideIntegrationRetry(
+  failureClassification: unknown,
+): IntegrationRetryDecision | null {
+  if (!isFailureClassification(failureClassification)) return null;
+  if (failureClassification === "RETRYABLE") return "RETRY_ELIGIBLE";
+  if (failureClassification === "TERMINAL") return "DO_NOT_RETRY";
+  return "NOT_APPLICABLE";
 }
 
 /**
