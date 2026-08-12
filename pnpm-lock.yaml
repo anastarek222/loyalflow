@@ -143,7 +143,11 @@ importers:
 
   packages/contracts: {}
 
-  packages/domain: {}
+  packages/domain:
+    dependencies:
+      '@loyalflow/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/i18n: {}
 

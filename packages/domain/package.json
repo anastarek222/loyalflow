@@ -4,8 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Pure LoyalFlow business rules and use-case interfaces.",
+  "dependencies": {
+    "@loyalflow/contracts": "workspace:*"
+  },
   "exports": {
     "./billing/subscription-lifecycle": "./src/billing/subscription-lifecycle.ts",
+    "./integrations/health": "./src/integrations/health.ts",
     "./loyalty/progress": "./src/loyalty/progress.ts",
     "./loyalty/reconciliation": "./src/loyalty/reconciliation.ts"
   }

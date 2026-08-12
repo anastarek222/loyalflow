@@ -15,6 +15,7 @@ const expectedPackages = new Map([
         "./api/v1": "./src/api/v1.ts",
         "./customers/public-membership": "./src/customers/public-membership.ts",
         "./cards/public-card": "./src/cards/public-card.ts",
+        "./integrations/health": "./src/integrations/health.ts",
       },
     },
   ],
@@ -25,6 +26,7 @@ const expectedPackages = new Map([
       allowedInternal: ["@loyalflow/contracts"],
       exports: {
         "./billing/subscription-lifecycle": "./src/billing/subscription-lifecycle.ts",
+        "./integrations/health": "./src/integrations/health.ts",
         "./loyalty/progress": "./src/loyalty/progress.ts",
         "./loyalty/reconciliation": "./src/loyalty/reconciliation.ts",
       },
@@ -135,4 +137,4 @@ function visit(packageName) {
 
 for (const packageName of graph.keys()) visit(packageName);
 
-console.log("Workspace boundaries are valid (4 packages, 5 approved runtime exports, no cycles).");
+console.log("Workspace boundaries are valid (4 packages, 7 approved runtime exports, no cycles).");
