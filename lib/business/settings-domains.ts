@@ -30,7 +30,6 @@ export const businessProfileSettingsSchema = z.object({
 export const programRulesSettingsSchema = z
   .object({
     loyaltyProgramName: z.string().trim().max(80),
-    pointsName: z.string().trim().max(30),
     welcomeMessage: z.string().trim().max(300),
     cardDefaultLanguage: z.enum(["AR", "EN"]),
     loyaltyMode: loyaltyProgramFields.loyaltyMode,
@@ -88,7 +87,6 @@ export function getProgramRulesUpdate(
 ) {
   return {
     loyaltyProgramName: value.loyaltyProgramName || null,
-    pointsName: value.pointsName || null,
     welcomeMessage: value.welcomeMessage || null,
     cardDefaultLanguage: value.cardDefaultLanguage,
     loyaltyMode: value.loyaltyMode,

@@ -47,11 +47,13 @@ test("owner invitation redemption records mailbox possession as verified", () =>
 
 test("login surfaces verification success and a generic resend recovery path", () => {
   const login = source("app/login/page.tsx");
+  const form = source("app/login/login-form.tsx");
+  const catalog = source("lib/i18n/catalog.ts");
   const resend = source("app/verify-email/resend/actions.ts");
 
-  assert.match(login, /verificationValue/);
-  assert.match(login, /Your email has been verified/);
-  assert.match(login, /href="\/verify-email\/resend"/);
+  assert.match(login, /includesValue\(params\.verification, "success"\)/);
+  assert.match(catalog, /Your email has been verified/);
+  assert.match(form, /href="\/verify-email\/resend"/);
   assert.match(resend, /email_verification_resend_failed/);
   assert.doesNotMatch(resend, /throw error/);
 });

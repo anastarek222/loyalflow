@@ -4,9 +4,7 @@ import type { FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
-import {
-  getLoyaltyEconomicRuleChanges,
-} from "@/lib/loyalty/program-change-safety";
+import { getLoyaltyEconomicRuleChanges } from "@/lib/loyalty/program-change-safety";
 import { fallbackRewardHelp } from "@/lib/loyalty/presentation";
 
 type Props = {
@@ -23,7 +21,7 @@ type Props = {
 };
 
 const inputClass =
-  "w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20";
+  "w-full min-h-12 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
 
 function SaveButton({ language }: { language: "AR" | "EN" }) {
   const { pending } = useFormStatus();
@@ -31,7 +29,7 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
     <button
       type="submit"
       disabled={pending}
-      className="mt-6 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary disabled:cursor-wait disabled:opacity-60"
+      className="mt-7 min-h-12 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
     >
       {pending
         ? language === "AR"
@@ -53,9 +51,7 @@ export function ProgramRulesForm({
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
 
-  function confirmEconomicRuleChanges(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  function confirmEconomicRuleChanges(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const confirmation = form.elements.namedItem(
@@ -113,26 +109,42 @@ export function ProgramRulesForm({
   }
 
   const fields = [
-    ["loyaltyProgramName", t("اسم برنامج الولاء", "Programme name"), business.loyaltyProgramName ?? "", 80],
-    ["pointsName", t("اسم النقاط", "Points name"), business.pointsName ?? "", 30],
+    [
+      "loyaltyProgramName",
+      t("اسم برنامج الولاء", "Programme name"),
+      business.loyaltyProgramName ?? "",
+      80,
+    ],
     ["unitName", t("اسم الوحدة", "Unit name"), business.unitName, 30],
-    ["earnAmount", t("قيمة الإضافة", "Earn amount"), business.earnAmount, undefined],
+    [
+      "earnAmount",
+      t("قيمة الإضافة", "Earn amount"),
+      business.earnAmount,
+      undefined,
+    ],
     ["rewardName", t("اسم المكافأة", "Reward name"), business.rewardName, 100],
-    ["rewardThreshold", t("الرصيد المطلوب للمكافأة", "Reward threshold"), business.rewardThreshold, undefined],
-    ["rewardCode", t("كود المكافأة", "Reward code"), business.rewardCode ?? "", 80],
+    [
+      "rewardThreshold",
+      t("الرصيد المطلوب للمكافأة", "Reward threshold"),
+      business.rewardThreshold,
+      undefined,
+    ],
+    [
+      "rewardCode",
+      t("كود المكافأة", "Reward code"),
+      business.rewardCode ?? "",
+      80,
+    ],
   ] as const;
 
   return (
     <form
       action={action}
       onSubmit={confirmEconomicRuleChanges}
-      className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
+      className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-8"
+      data-program-rules-form
     >
-      <input
-        type="hidden"
-        name="confirmEconomicRules"
-        defaultValue="false"
-      />
+      <input type="hidden" name="confirmEconomicRules" defaultValue="false" />
       {status ? (
         <p
           role="status"
@@ -158,7 +170,7 @@ export function ProgramRulesForm({
                 : t("راجع قواعد البرنامج.", "Review the programme rules.")}
         </p>
       ) : null}
-      <h2 className="text-xl font-bold text-foreground">
+      <h2 className="text-xl font-black text-foreground">
         {t("قواعد برنامج الولاء", "Loyalty programme rules")}
       </h2>
       <p className="mt-1 text-sm text-foreground-subtle">
@@ -167,40 +179,74 @@ export function ProgramRulesForm({
           "Earning, target and default reward compatibility settings.",
         )}
       </p>
-      <p className="mt-2 text-sm text-foreground-subtle">{fallbackRewardHelp(language)}</p>
-      <div className="mt-6 grid gap-5 sm:grid-cols-2">
+      <div className="mt-4 rounded-[var(--lf-radius-input)] border border-primary/10 bg-primary-subtle/40 px-4 py-3 text-sm leading-6 text-primary">
+        {fallbackRewardHelp(language)}
+      </div>
+      <div className="mt-6 grid gap-5 rounded-[var(--lf-radius-card)] bg-surface-subtle/60 p-4 sm:grid-cols-2 sm:p-6">
         {fields.map(([name, label, value, maxLength]) => (
-          <label key={name} className="text-sm font-medium text-foreground-muted">
+          <label
+            key={name}
+            className="text-sm font-medium text-foreground-muted"
+          >
             <span className="mb-2 block">{label}</span>
             <input
               name={name}
-              type={name === "earnAmount" || name === "rewardThreshold" ? "number" : "text"}
-              min={name === "earnAmount" || name === "rewardThreshold" ? 1 : undefined}
+              type={
+                name === "earnAmount" || name === "rewardThreshold"
+                  ? "number"
+                  : "text"
+              }
+              min={
+                name === "earnAmount" || name === "rewardThreshold"
+                  ? 1
+                  : undefined
+              }
               defaultValue={value}
-              required={["unitName", "earnAmount", "rewardName", "rewardThreshold"].includes(name)}
+              required={[
+                "unitName",
+                "earnAmount",
+                "rewardName",
+                "rewardThreshold",
+              ].includes(name)}
               maxLength={maxLength}
               className={inputClass}
             />
           </label>
         ))}
         <label className="text-sm font-medium text-foreground-muted">
-          <span className="mb-2 block">{t("لغة الكارت الافتراضية", "Default card language")}</span>
-          <select name="cardDefaultLanguage" defaultValue={business.cardDefaultLanguage} className={inputClass}>
+          <span className="mb-2 block">
+            {t("لغة الكارت الافتراضية", "Default card language")}
+          </span>
+          <select
+            name="cardDefaultLanguage"
+            defaultValue={business.cardDefaultLanguage}
+            className={inputClass}
+          >
             <option value="AR">العربية (RTL)</option>
             <option value="EN">English (LTR)</option>
           </select>
         </label>
         <label className="text-sm font-medium text-foreground-muted">
           <span className="mb-2 block">{t("نظام الولاء", "Loyalty mode")}</span>
-          <select name="loyaltyMode" defaultValue={business.loyaltyMode} className={inputClass}>
+          <select
+            name="loyaltyMode"
+            defaultValue={business.loyaltyMode}
+            className={inputClass}
+          >
             <option value="VISITS">{t("زيارات / أختام", "Visits")}</option>
             <option value="POINTS">{t("نقاط", "Points")}</option>
-            <option value="SALES_AMOUNT">{t("إجمالي المبيعات", "Sales amount")}</option>
+            <option value="SALES_AMOUNT">
+              {t("إجمالي المبيعات", "Sales amount")}
+            </option>
           </select>
         </label>
         <label className="text-sm font-medium text-foreground-muted">
           <span className="mb-2 block">{t("نوع المكافأة", "Reward type")}</span>
-          <select name="rewardType" defaultValue={business.rewardType} className={inputClass}>
+          <select
+            name="rewardType"
+            defaultValue={business.rewardType}
+            className={inputClass}
+          >
             <option value="GIFT">{t("هدية", "Gift")}</option>
             <option value="PROMO_CODE">{t("رمز ترويجي", "Promo Code")}</option>
             <option value="DISCOUNT">{t("خصم", "Discount")}</option>
@@ -208,12 +254,28 @@ export function ProgramRulesForm({
           </select>
         </label>
         <label className="text-sm font-medium text-foreground-muted sm:col-span-2">
-          <span className="mb-2 block">{t("رسالة الترحيب داخل الكارت", "In-card welcome message")}</span>
-          <textarea name="welcomeMessage" defaultValue={business.welcomeMessage ?? ""} maxLength={300} rows={3} className={inputClass} />
+          <span className="mb-2 block">
+            {t("رسالة الترحيب داخل الكارت", "In-card welcome message")}
+          </span>
+          <textarea
+            name="welcomeMessage"
+            defaultValue={business.welcomeMessage ?? ""}
+            maxLength={300}
+            rows={3}
+            className={`${inputClass} resize-y`}
+          />
         </label>
         <label className="text-sm font-medium text-foreground-muted sm:col-span-2">
-          <span className="mb-2 block">{t("وصف المكافأة", "Reward description")}</span>
-          <textarea name="rewardDescription" defaultValue={business.rewardDescription ?? ""} maxLength={300} rows={3} className={inputClass} />
+          <span className="mb-2 block">
+            {t("وصف المكافأة", "Reward description")}
+          </span>
+          <textarea
+            name="rewardDescription"
+            defaultValue={business.rewardDescription ?? ""}
+            maxLength={300}
+            rows={3}
+            className={`${inputClass} resize-y`}
+          />
         </label>
       </div>
       <SaveButton language={language} />

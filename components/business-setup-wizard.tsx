@@ -14,9 +14,7 @@ import { businessCreationSchema } from "@/lib/business/creation-input";
 import { CountrySelector } from "@/components/onboarding/country-selector";
 import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
 import { StandardCardSetup } from "@/components/standard-card-setup";
-import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
 import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
-import { getLoyaltyCardPreviewData } from "@/lib/cards/standard-card";
 
 type Props = {
   action: (
@@ -43,8 +41,8 @@ const steps = [
   "Business",
   "Owner",
   "Billing",
-  "Loyalty Card",
-  "Branding",
+  "Loyalty",
+  "Card Design",
   "Review",
 ] as const;
 
@@ -87,17 +85,11 @@ type ReviewData = {
   earnAmount: string;
 
   primaryColor: string;
-  secondaryColor: string;
   themePreset: string;
-  cardStyle: string;
-  fontFamily: string;
   logoPreview: string;
   standardCardArtworkEnabled: boolean;
   standardCardArtworkCategory: string;
   cardDesignMode: "STANDARD" | "CUSTOM";
-  customCardArtworkEnabled: boolean;
-  customCardFrontArtworkUrl: string;
-  customCardBackArtworkUrl: string;
 };
 
 const loyaltyLabels: Record<
@@ -120,25 +112,6 @@ const themeLabels: Record<
   MODERN: "Modern",
   GRADIENT: "Gradient",
 };
-
-const cardStyleLabels: Record<
-  string,
-  string
-> = {
-  CLASSIC: "Classic",
-  COMPACT: "Compact",
-  PREMIUM: "Premium",
-};
-
-const fontLabels: Record<
-  string,
-  string
-> = {
-  INTER: "Inter",
-  CAIRO: "Cairo",
-  POPPINS: "Poppins",
-};
-
 
 const billingIntervalLabels: Record<string, string> = {
   FIFTEEN_DAYS: "Every 15 days",
@@ -301,29 +274,14 @@ function getReviewData(
       formData,
       "primaryColor"
     ),
-    secondaryColor: getValue(
-      formData,
-      "secondaryColor"
-    ),
     themePreset: getValue(
       formData,
       "themePreset"
-    ),
-    cardStyle: getValue(
-      formData,
-      "cardStyle"
-    ),
-    fontFamily: getValue(
-      formData,
-      "fontFamily"
     ),
     logoPreview,
     standardCardArtworkEnabled: formData.get("standardCardArtworkEnabled") === "on",
     standardCardArtworkCategory: getValue(formData, "standardCardArtworkCategory") || "OTHER",
     cardDesignMode: getValue(formData, "cardDesignMode") === "CUSTOM" ? "CUSTOM" : "STANDARD",
-    customCardArtworkEnabled: getValue(formData, "customCardArtworkEnabled") === "true",
-    customCardFrontArtworkUrl: getValue(formData, "customCardFrontArtworkUrl"),
-    customCardBackArtworkUrl: getValue(formData, "customCardBackArtworkUrl"),
   };
 }
 
@@ -382,8 +340,6 @@ export default function BusinessSetupWizard({
     customFrontArtworkUrl?: string;
     customBackArtworkUrl?: string;
   }>({ businessName: "Your Business", logoUrl: "", loyaltyMode: "VISITS", unitName: "Visit", currency: "EGP", businessPhone: "", businessWebsite: "", businessLocation: "", rewardName: "Free Reward", rewardThreshold: 5 });
-  const illustrativeCustomer = getLoyaltyCardPreviewData(cardPreview.loyaltyMode, cardPreview.rewardThreshold);
-
   function fullPhone(local: string) {
     const normalized = local.replace(/[^\d]/g, "").replace(/^0+/, "");
     return normalized ? `${dialCode}${normalized}` : "";
@@ -1144,20 +1100,6 @@ export default function BusinessSetupWizard({
             />
           </div>
 
-          <div className="pt-4">
-            <StandardCardSetup
-              allowCustom
-              initial={{
-                primaryColor: "#B98A4B",
-                themePreset: "DEFAULT",
-                artworkEnabled: true,
-                artworkCategory: "OTHER",
-                designMode: "STANDARD",
-              }}
-              preview={{ ...cardPreview, logoUrl: logoPreview }}
-              onPreviewChange={(next) => setCardPreview((current) => ({ ...current, ...next }))}
-            />
-          </div>
         </section>
       </div>
 
@@ -1171,16 +1113,15 @@ export default function BusinessSetupWizard({
         <section className="space-y-5">
           <div>
             <h3 className="text-lg font-black">
-              Branding
+              Card Design
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
-              Choose the initial visual identity. It can be changed later.
+              Configure the one card design used for every customer.
             </p>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(16rem,0.7fr)_minmax(28rem,1.3fr)]">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
                 Business Logo
               </p>
@@ -1242,33 +1183,22 @@ export default function BusinessSetupWizard({
             <p className="mt-1 text-xs text-slate-500">
               PNG, JPEG, or WebP — up to 500KB.
             </p>
-            </div>
-
-            <div className="min-w-0">
-              <p className="mb-3 text-sm font-bold text-slate-700">Card preview with this business logo</p>
-              <LoyaltyCardPreview
-                businessName={cardPreview.businessName}
-                logoUrl={logoPreview || null}
-                primaryColor={cardPreview.primaryColor || "#B98A4B"}
-                themePreset={cardPreview.themePreset}
-                {...illustrativeCustomer}
-                loyaltyMode={cardPreview.loyaltyMode}
-                unitName={cardPreview.unitName}
-                currency={cardPreview.currency}
-                rewardName={cardPreview.rewardName}
-                rewardThreshold={cardPreview.rewardThreshold}
-                artworkEnabled={cardPreview.artworkEnabled}
-                artworkCategory={cardPreview.artworkCategory}
-                businessPhone={cardPreview.businessPhone}
-                businessWebsite={cardPreview.businessWebsite}
-                businessLocation={cardPreview.businessLocation}
-                designMode={cardPreview.designMode}
-                customDesignEnabled={cardPreview.customDesignEnabled}
-                customFrontArtworkUrl={cardPreview.customFrontArtworkUrl}
-                customBackArtworkUrl={cardPreview.customBackArtworkUrl}
-              />
-            </div>
           </div>
+
+          <StandardCardSetup
+            allowCustom
+            initial={{
+              primaryColor: "#B98A4B",
+              themePreset: "DEFAULT",
+              artworkEnabled: true,
+              artworkCategory: "OTHER",
+              designMode: "STANDARD",
+            }}
+            preview={{ ...cardPreview, logoUrl: logoPreview }}
+            onPreviewChange={(next) =>
+              setCardPreview((current) => ({ ...current, ...next }))
+            }
+          />
 
           <input type="hidden" name="logoUrl" value="" />
           <input type="hidden" name="cardStyle" value="CLASSIC" />
@@ -1434,7 +1364,7 @@ export default function BusinessSetupWizard({
               />
 
               <ReviewSection
-                title="Branding"
+                title="Card Design"
                 onEdit={() =>
                   editStep(4)
                 }
@@ -1447,69 +1377,27 @@ export default function BusinessSetupWizard({
                       reviewData.themePreset,
                   ],
                   [
-                    "Card",
-                    cardStyleLabels[
-                      reviewData.cardStyle
-                    ] ??
-                      reviewData.cardStyle,
-                  ],
-                  [
-                    "Font",
-                    fontLabels[
-                      reviewData.fontFamily
-                    ] ??
-                      reviewData.fontFamily,
-                  ],
-                  [
                     "Primary",
                     reviewData.primaryColor,
-                  ],
-                  [
-                    "Secondary",
-                    reviewData.secondaryColor,
                   ],
                   [
                     "Logo",
                     reviewData.logoPreview ? "Configured" : "Not set",
                   ],
+                  [
+                    "Design",
+                    reviewData.cardDesignMode === "CUSTOM"
+                      ? "Custom Card"
+                      : "LoyalFlow Standard Card",
+                  ],
+                  [
+                    "Artwork",
+                    reviewData.standardCardArtworkEnabled
+                      ? reviewData.standardCardArtworkCategory
+                      : "Disabled",
+                  ],
                 ]}
               />
-
-              <ReviewSection
-                title="Standard Card"
-                onEdit={() => editStep(4)}
-                rows={[
-                  ["Theme", reviewData.themePreset === "DARK" ? "Dark" : "Light"],
-                  ["Artwork", "Controlled category artwork"],
-                  ["Layout", "LoyalFlow Standard Card"],
-                ]}
-              />
-              <div className="max-w-2xl">
-                <LoyaltyCardPreview
-                  businessName={reviewData.name || "Your Business"}
-                  logoUrl={reviewData.logoPreview || null}
-                  primaryColor={reviewData.primaryColor || "#B98A4B"}
-                  themePreset={reviewData.themePreset}
-                  {...getLoyaltyCardPreviewData(
-                    (reviewData.loyaltyMode as "VISITS" | "POINTS" | "SALES_AMOUNT") || "VISITS",
-                    Number(reviewData.rewardThreshold) || 1,
-                  )}
-                  loyaltyMode={(reviewData.loyaltyMode as "VISITS" | "POINTS" | "SALES_AMOUNT") || "VISITS"}
-                  unitName={reviewData.unitName}
-                  currency={reviewData.currency}
-                  rewardName={reviewData.rewardName}
-                  rewardThreshold={Number(reviewData.rewardThreshold) || 1}
-                  artworkEnabled={reviewData.standardCardArtworkEnabled}
-                  artworkCategory={reviewData.standardCardArtworkCategory}
-                  businessPhone={reviewData.contactPhone}
-                  businessWebsite={reviewData.website}
-                  businessLocation={[reviewData.city, reviewData.country].filter(Boolean).join(", ")}
-                  designMode={reviewData.cardDesignMode}
-                  customDesignEnabled={reviewData.customCardArtworkEnabled}
-                  customFrontArtworkUrl={reviewData.customCardFrontArtworkUrl}
-                  customBackArtworkUrl={reviewData.customCardBackArtworkUrl}
-                />
-              </div>
 
               {reviewData.logoPreview ? (
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">

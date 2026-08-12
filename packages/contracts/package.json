@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Reserved boundary for transport-neutral LoyalFlow DTOs and problem codes.",
-  "exports": {}
+  "description": "Transport-neutral LoyalFlow DTOs, value types, and problem codes.",
+  "exports": {
+    "./customers/public-membership": "./src/customers/public-membership.ts",
+    "./cards/public-card": "./src/cards/public-card.ts"
+  }
 }

@@ -61,6 +61,6 @@ test("programme updates persist audit metadata without replacing actor metadata"
   assert.match(actions, /getLoyaltyProgramRulesAuditMetadata/);
   assert.match(
     actions,
-    /getLoyaltyProgramRulesAuditMetadata\(\s*currentProgrammeSnapshot,\s*nextProgramme,?\s*\)/,
+    /getLoyaltyProgramRulesAuditMetadata\(\s*currentProgrammeSnapshot,\s*nextProgrammeSnapshot,?\s*\)/,
   );
 });

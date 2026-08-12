@@ -1,10 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import {
-  getEarnDetails,
-  getRewardLabel,
-} from "@/lib/loyalty/operations";
+import { getEarnDetails, getRewardLabel } from "@/lib/loyalty/operations";
 import {
   getRapidEarnRateLimitKey,
   getRapidEarnWhere,
@@ -41,6 +38,10 @@ import {
   customerTagNameSchema,
 } from "@/lib/customers/notes-tags";
 import {
+  canManageCustomerNotesTags,
+  canUseCustomerReferrals,
+} from "@/lib/customers/feature-access";
+import {
   canAccessBusiness,
   canPerform,
   type Capability,
@@ -58,7 +59,10 @@ import {
 } from "@/lib/activity/business-activity";
 import { createBusinessNotification } from "@/lib/notifications";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
-import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import {
+  actionBooleanSchema,
+  opaqueIdSchema,
+} from "@/lib/validation/action-input";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -69,21 +73,13 @@ const customerSchema = z.object({
 const adjustmentSchema = z.object({
   direction: z.enum(["ADD", "SUBTRACT"]),
 
-  amount: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(1000000),
+  amount: z.coerce.number().int().min(1).max(1000000),
 
   reason: z.string().trim().min(3).max(200),
 });
 
 const saleAmountSchema = z.object({
-  saleAmount: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(1000000000),
+  saleAmount: z.coerce.number().int().min(1).max(1000000000),
 });
 
 const financialOperationSchema = z.string().uuid();
@@ -104,7 +100,7 @@ async function createRewardUnlocksForEarn(
     customerId: string;
     createdById: string;
     balanceAfter: number;
-  }
+  },
 ) {
   const now = new Date();
   const expiringRewards = await transaction.reward.findMany({
@@ -187,10 +183,7 @@ async function createRewardUnlocksForEarn(
       }
     }
 
-    const expiresAt = getRewardExpiryDate(
-      now,
-      reward.expiresAfterDays
-    );
+    const expiresAt = getRewardExpiryDate(now, reward.expiresAfterDays);
     try {
       await transaction.rewardUnlock.create({
         data: {
@@ -204,7 +197,12 @@ async function createRewardUnlocksForEarn(
     } catch (error) {
       // A concurrent earn may have unlocked this same reward first. Keep the
       // earned balance and do not create a duplicate entitlement or activity.
-      if (!(typeof error === "object" && error && "code" in error && error.code === "P2002")) {
+      if (!(
+        typeof error === "object" &&
+        error &&
+        "code" in error &&
+        error.code === "P2002"
+      )) {
         throw error;
       }
       continue;
@@ -219,15 +217,12 @@ async function createRewardUnlocksForEarn(
       },
     });
 
-    await createBusinessNotification(
-      transaction,
-      {
-        type: "REWARD_UNLOCKED",
-        title: "تم فتح مكافأة جديدة",
-        message: `تم فتح ${reward.name} للعميل`,
-        businessId: input.businessId,
-      }
-    );
+    await createBusinessNotification(transaction, {
+      type: "REWARD_UNLOCKED",
+      title: "تم فتح مكافأة جديدة",
+      message: `تم فتح ${reward.name} للعميل`,
+      businessId: input.businessId,
+    });
   }
 }
 
@@ -260,6 +255,7 @@ async function getBusinessAccess(slug: string) {
       loyaltyMode: true,
       staffAttributionEnabled: true,
       staffAttributionRequired: true,
+      plan: true,
     },
   });
 
@@ -289,13 +285,14 @@ async function getActionContext(
     redirect(`/businesses/${slug}/customers`);
   }
 
-  const { session, business } =
-    await getBusinessAccess(slug);
+  const { session, business } = await getBusinessAccess(slug);
 
   if (!canPerform(session.user, business.id, capability)) {
-    redirect(operationPresentationPath(origin, slug, customerId, {
-      ...(origin === "SCAN" ? { error: "permission" } : {}),
-    }));
+    redirect(
+      operationPresentationPath(origin, slug, customerId, {
+        ...(origin === "SCAN" ? { error: "permission" } : {}),
+      }),
+    );
   }
 
   const customer = await prisma.customer.findFirst({
@@ -341,7 +338,9 @@ function operationPath(
 }
 
 function scanContextError(reason: string): ScanOperationError {
-  return reason === "INVALID_BRANCH" || reason === "BRANCH_REQUIRED_FOR_STAFF" || reason === "INVALID_BRANCH_ASSIGNMENT"
+  return reason === "INVALID_BRANCH" ||
+    reason === "BRANCH_REQUIRED_FOR_STAFF" ||
+    reason === "INVALID_BRANCH_ASSIGNMENT"
     ? "invalid-branch"
     : reason === "ATTRIBUTION_REQUIRED" || reason === "INVALID_STAFF"
       ? "invalid-staff"
@@ -351,7 +350,7 @@ function scanContextError(reason: string): ScanOperationError {
 async function getManagementContext(
   slug: string,
   customerId: string,
-  capability: Capability = "CUSTOMERS_EDIT"
+  capability: Capability = "CUSTOMERS_EDIT",
 ) {
   const parsedCustomerId = opaqueIdSchema.safeParse(customerId);
 
@@ -359,13 +358,10 @@ async function getManagementContext(
     redirect(`/businesses/${slug}/customers`);
   }
 
-  const { session, business } =
-    await getBusinessAccess(slug);
+  const { session, business } = await getBusinessAccess(slug);
 
   if (!canPerform(session.user, business.id, capability)) {
-    redirect(
-      `/businesses/${slug}/customers/${customerId}`
-    );
+    redirect(`/businesses/${slug}/customers/${customerId}`);
   }
 
   const customer = await prisma.customer.findFirst({
@@ -393,14 +389,30 @@ async function getManagementContext(
   };
 }
 
+async function getNotesTagsManagementContext(slug: string, customerId: string) {
+  const context = await getManagementContext(
+    slug,
+    customerId,
+    "CUSTOMERS_EDIT",
+  );
+  if (
+    !canManageCustomerNotesTags(
+      context.session.user,
+      context.business.id,
+      context.business.plan,
+    )
+  ) {
+    redirect(`/businesses/${slug}/customers/${customerId}`);
+  }
+  return context;
+}
+
 function revalidateCustomerPages(
   slug: string,
   customerId: string,
-  publicToken: string
+  publicToken: string,
 ) {
-  revalidatePath(
-    `/businesses/${slug}/customers/${customerId}`
-  );
+  revalidatePath(`/businesses/${slug}/customers/${customerId}`);
   revalidatePath(`/businesses/${slug}/scan/customer/${customerId}`);
   revalidatePath(`/businesses/${slug}/customers`);
   revalidatePath(`/businesses/${slug}`);
@@ -413,63 +425,48 @@ function revalidateCustomerPages(
 export async function updateCustomerAction(
   slug: string,
   customerId: string,
-  formData: FormData
+  formData: FormData,
 ) {
-  const {
-    session,
-    business,
-    customer,
-  } = await getManagementContext(
+  const { session, business, customer } = await getManagementContext(
     slug,
     customerId,
-    "LOYALTY_ADJUST"
+    "LOYALTY_ADJUST",
   );
 
   const parsed = customerSchema.safeParse({
     firstName: formData.get("firstName"),
-    lastName:
-      formData.get("lastName") || undefined,
+    lastName: formData.get("lastName") || undefined,
     phone: formData.get("phone"),
   });
 
   if (!parsed.success) {
-    redirect(
-      `/businesses/${slug}/customers/${customerId}?error=invalid`
-    );
+    redirect(`/businesses/${slug}/customers/${customerId}?error=invalid`);
   }
 
   const phone = normalizePhone(parsed.data.phone);
 
   if (!/^\+?\d{8,15}$/.test(phone)) {
-    redirect(
-      `/businesses/${slug}/customers/${customerId}?error=phone`
-    );
+    redirect(`/businesses/${slug}/customers/${customerId}?error=phone`);
   }
 
-  const duplicateCustomer =
-    await prisma.customer.findFirst({
-      where: {
-        businessId: business.id,
-        phone,
-        id: {
-          not: customer.id,
-        },
+  const duplicateCustomer = await prisma.customer.findFirst({
+    where: {
+      businessId: business.id,
+      phone,
+      id: {
+        not: customer.id,
       },
-      select: {
-        id: true,
-      },
-    });
+    },
+    select: {
+      id: true,
+    },
+  });
 
   if (duplicateCustomer) {
-    redirect(
-      `/businesses/${slug}/customers/${customerId}?error=duplicate`
-    );
+    redirect(`/businesses/${slug}/customers/${customerId}?error=duplicate`);
   }
 
-  const updatedCustomerName = [
-    parsed.data.firstName,
-    parsed.data.lastName,
-  ]
+  const updatedCustomerName = [parsed.data.firstName, parsed.data.lastName]
     .filter(Boolean)
     .join(" ");
   const activityContext = await getActivityRequestContext();
@@ -498,25 +495,17 @@ export async function updateCustomerAction(
     }),
   ]);
 
-  await syncBusinessToGoogleSheetSafely(
-    business.id
-  );
+  await syncBusinessToGoogleSheetSafely(business.id);
 
-  revalidateCustomerPages(
-    slug,
-    customer.id,
-    customer.publicToken
-  );
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
 
-  redirect(
-    `/businesses/${slug}/customers/${customer.id}?success=updated`
-  );
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=updated`);
 }
 
 export async function setCustomerStatusAction(
   slug: string,
   customerId: string,
-  isActive: boolean
+  isActive: boolean,
 ) {
   const parsedStatus = actionBooleanSchema.safeParse(isActive);
 
@@ -524,13 +513,9 @@ export async function setCustomerStatusAction(
     redirect(`/businesses/${slug}/customers/${customerId}?error=invalid`);
   }
 
-  const {
-    session,
-    business,
-    customer,
-  } = await getManagementContext(
+  const { session, business, customer } = await getManagementContext(
     slug,
-    customerId
+    customerId,
   );
   const activityContext = await getActivityRequestContext();
 
@@ -560,35 +545,25 @@ export async function setCustomerStatusAction(
     }),
   ]);
 
-  await syncBusinessToGoogleSheetSafely(
-    business.id
-  );
+  await syncBusinessToGoogleSheetSafely(business.id);
 
-  revalidateCustomerPages(
-    slug,
-    customer.id,
-    customer.publicToken
-  );
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
 
   redirect(
     `/businesses/${slug}/customers/${customer.id}?success=${
       parsedStatus.data ? "reactivated" : "deactivated"
-    }`
+    }`,
   );
 }
 
 export async function adjustCustomerBalanceAction(
   slug: string,
   customerId: string,
-  formData: FormData
+  formData: FormData,
 ) {
-  const {
-    session,
-    business,
-    customer,
-  } = await getManagementContext(
+  const { session, business, customer } = await getManagementContext(
     slug,
-    customerId
+    customerId,
   );
 
   const parsed = adjustmentSchema.safeParse({
@@ -599,7 +574,7 @@ export async function adjustCustomerBalanceAction(
 
   if (!parsed.success) {
     redirect(
-      `/businesses/${slug}/customers/${customerId}?error=adjustment-invalid`
+      `/businesses/${slug}/customers/${customerId}?error=adjustment-invalid`,
     );
   }
 
@@ -613,26 +588,27 @@ export async function adjustCustomerBalanceAction(
     );
   }
 
-  const adjustmentActivityContext =
-    await getActivityRequestContext();
+  const adjustmentActivityContext = await getActivityRequestContext();
 
   let newBalance: number | null;
 
   try {
-    newBalance = await prisma.$transaction(
-      (transaction) =>
-        recordBalanceAdjustment(transaction, {
-          customerId: customer.id,
-          businessId: business.id,
-          actor: getFinancialActor(session),
-          branchId: getOptionalOperationId(formData, "branchId"),
-          attributedStaffId: getOptionalOperationId(formData, "attributedStaffId"),
-          activityContext: adjustmentActivityContext,
-          direction: parsed.data.direction,
-          amount: parsed.data.amount,
-          reason: parsed.data.reason,
-          idempotencyKey: parsedOperation.data,
-        }),
+    newBalance = await prisma.$transaction((transaction) =>
+      recordBalanceAdjustment(transaction, {
+        customerId: customer.id,
+        businessId: business.id,
+        actor: getFinancialActor(session),
+        branchId: getOptionalOperationId(formData, "branchId"),
+        attributedStaffId: getOptionalOperationId(
+          formData,
+          "attributedStaffId",
+        ),
+        activityContext: adjustmentActivityContext,
+        direction: parsed.data.direction,
+        amount: parsed.data.amount,
+        reason: parsed.data.reason,
+        idempotencyKey: parsedOperation.data,
+      }),
     );
   } catch (error) {
     if (isFinancialOperationConflictError(error)) {
@@ -648,34 +624,30 @@ export async function adjustCustomerBalanceAction(
     redirect(
       parsed.data.direction === "SUBTRACT"
         ? `/businesses/${slug}/customers/${customerId}?error=adjustment-negative`
-        : `/businesses/${slug}/customers/${customerId}?error=adjustment-invalid`
+        : `/businesses/${slug}/customers/${customerId}?error=adjustment-invalid`,
     );
   }
 
-  await syncBusinessToGoogleSheetSafely(
-    business.id
-  );
+  await syncBusinessToGoogleSheetSafely(business.id);
 
-  revalidateCustomerPages(
-    slug,
-    customer.id,
-    customer.publicToken
-  );
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
 
-  redirect(
-    `/businesses/${slug}/customers/${customer.id}?success=adjusted`
-  );
+  redirect(`/businesses/${slug}/customers/${customer.id}?success=adjusted`);
 }
 
 export async function createCustomerReferralCodeAction(
   slug: string,
-  customerId: string
+  customerId: string,
 ) {
-  const { business, customer } = await getManagementContext(
+  const { session, business, customer } = await getManagementContext(
     slug,
     customerId,
-    "CUSTOMERS_EDIT"
+    "CUSTOMERS_EDIT",
   );
+
+  if (!canUseCustomerReferrals(session.user, business.id, business.plan)) {
+    redirect(`/businesses/${slug}/customers/${customer.id}`);
+  }
 
   const existing = await prisma.customerReferralCode.findUnique({
     where: {
@@ -700,7 +672,12 @@ export async function createCustomerReferralCodeAction(
         });
         created = true;
       } catch (error) {
-        if (!(typeof error === "object" && error && "code" in error && error.code === "P2002")) {
+        if (!(
+          typeof error === "object" &&
+          error &&
+          "code" in error &&
+          error.code === "P2002"
+        )) {
           throw error;
         }
         const codeCreatedByAnotherRequest =
@@ -723,18 +700,19 @@ export async function createCustomerReferralCodeAction(
   }
 
   revalidateCustomerPages(slug, customer.id, customer.publicToken);
-  redirect(`/businesses/${slug}/customers/${customer.id}?success=referral-link`);
+  redirect(
+    `/businesses/${slug}/customers/${customer.id}?success=referral-link`,
+  );
 }
 
 export async function createAndAssignCustomerTagAction(
   slug: string,
   customerId: string,
-  formData: FormData
+  formData: FormData,
 ) {
-  const { session, business, customer } = await getManagementContext(
+  const { session, business, customer } = await getNotesTagsManagementContext(
     slug,
     customerId,
-    "CUSTOMERS_EDIT"
   );
   const parsed = customerTagNameSchema.safeParse(formData.get("tagName"));
 
@@ -795,7 +773,7 @@ export async function createAndAssignCustomerTagAction(
 export async function assignCustomerTagAction(
   slug: string,
   customerId: string,
-  tagId: string
+  tagId: string,
 ) {
   const parsedTagId = opaqueIdSchema.safeParse(tagId);
 
@@ -803,10 +781,9 @@ export async function assignCustomerTagAction(
     redirect(`/businesses/${slug}/customers/${customerId}?error=tag-invalid`);
   }
 
-  const { session, business, customer } = await getManagementContext(
+  const { session, business, customer } = await getNotesTagsManagementContext(
     slug,
     customerId,
-    "CUSTOMERS_EDIT"
   );
   const tag = await prisma.customerTag.findFirst({
     where: { id: parsedTagId.data, businessId: business.id },
@@ -852,7 +829,7 @@ export async function assignCustomerTagAction(
 export async function removeCustomerTagAction(
   slug: string,
   customerId: string,
-  tagId: string
+  tagId: string,
 ) {
   const parsedTagId = opaqueIdSchema.safeParse(tagId);
 
@@ -860,10 +837,9 @@ export async function removeCustomerTagAction(
     redirect(`/businesses/${slug}/customers/${customerId}?error=tag-invalid`);
   }
 
-  const { session, business, customer } = await getManagementContext(
+  const { session, business, customer } = await getNotesTagsManagementContext(
     slug,
     customerId,
-    "CUSTOMERS_EDIT"
   );
   const assignment = await prisma.customerTagAssignment.findFirst({
     where: {
@@ -896,12 +872,11 @@ export async function removeCustomerTagAction(
 export async function createCustomerNoteAction(
   slug: string,
   customerId: string,
-  formData: FormData
+  formData: FormData,
 ) {
-  const { session, business, customer } = await getManagementContext(
+  const { session, business, customer } = await getNotesTagsManagementContext(
     slug,
     customerId,
-    "CUSTOMERS_EDIT"
   );
   const parsed = customerNoteContentSchema.safeParse(formData.get("content"));
 
@@ -938,7 +913,7 @@ export async function updateCustomerNoteAction(
   slug: string,
   customerId: string,
   noteId: string,
-  formData: FormData
+  formData: FormData,
 ) {
   const parsedNoteId = opaqueIdSchema.safeParse(noteId);
 
@@ -946,10 +921,9 @@ export async function updateCustomerNoteAction(
     redirect(`/businesses/${slug}/customers/${customerId}?error=note-invalid`);
   }
 
-  const { session, business, customer } = await getManagementContext(
+  const { session, business, customer } = await getNotesTagsManagementContext(
     slug,
     customerId,
-    "CUSTOMERS_EDIT"
   );
   const parsed = customerNoteContentSchema.safeParse(formData.get("content"));
 
@@ -996,52 +970,47 @@ export async function updateCustomerNoteAction(
 export async function addLoyaltyAction(
   slug: string,
   customerId: string,
-  formData: FormData
+  formData: FormData,
 ) {
   const origin = getOperationOrigin(formData);
-  const {
-    session,
-    business,
-    customer,
-  } = await getActionContext(
+  const { session, business, customer } = await getActionContext(
     slug,
     customerId,
     "LOYALTY_EARN",
     origin,
   );
 
-  const activityContext =
-    await getActivityRequestContext();
+  const activityContext = await getActivityRequestContext();
 
   const branchId = getOptionalOperationId(formData, "branchId");
-  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
+  const attributedStaffId = getOptionalOperationId(
+    formData,
+    "attributedStaffId",
+  );
 
   let saleAmount: number | undefined;
 
-  if (
-    business.loyaltyMode ===
-    "SALES_AMOUNT"
-  ) {
-    const parsedSale =
-      saleAmountSchema.safeParse({
-        saleAmount:
-          formData.get(
-            "saleAmount"
-          ),
-      });
+  if (business.loyaltyMode === "SALES_AMOUNT") {
+    const parsedSale = saleAmountSchema.safeParse({
+      saleAmount: formData.get("saleAmount"),
+    });
 
     if (!parsedSale.success) {
-      redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "sale-invalid"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "invalid" },
+          "sale-invalid",
+        ),
+      );
     }
 
     saleAmount = parsedSale.data.saleAmount;
   }
 
-  const {
-    amount,
-    transactionNote,
-    activityDescription,
-  } = getEarnDetails({
+  const { amount, transactionNote, activityDescription } = getEarnDetails({
     loyaltyMode: business.loyaltyMode,
     earnAmount: business.earnAmount,
     saleAmount,
@@ -1049,34 +1018,41 @@ export async function addLoyaltyAction(
   });
 
   const parsedOperation = financialOperationSchema.safeParse(
-    formData.get("operationId")
+    formData.get("operationId"),
   );
 
   if (!parsedOperation.success) {
-    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "earned-invalid"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "invalid" },
+        "earned-invalid",
+      ),
+    );
   }
 
   const idempotencyKey = parsedOperation.data;
 
-  const completedOperation =
-    await prisma.loyaltyTransaction.findUnique({
-      where: {
-        businessId_idempotencyKey: {
-          businessId: business.id,
-          idempotencyKey,
-        },
+  const completedOperation = await prisma.loyaltyTransaction.findUnique({
+    where: {
+      businessId_idempotencyKey: {
+        businessId: business.id,
+        idempotencyKey,
       },
-      select: {
-        customerId: true,
-        type: true,
-        amount: true,
-        sourceLoyaltyMode: true,
-        saleAmount: true,
-        promotionApplication: {
-          select: { baseAmount: true },
-        },
+    },
+    select: {
+      customerId: true,
+      type: true,
+      amount: true,
+      sourceLoyaltyMode: true,
+      saleAmount: true,
+      promotionApplication: {
+        select: { baseAmount: true },
       },
-    });
+    },
+  });
 
   if (completedOperation) {
     const baseAmount =
@@ -1090,7 +1066,15 @@ export async function addLoyaltyAction(
       completedOperation.saleAmount !== (saleAmount ?? null) ||
       baseAmount !== amount
     ) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-conflict"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "earned-conflict",
+        ),
+      );
     }
 
     redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
@@ -1104,28 +1088,40 @@ export async function addLoyaltyAction(
   };
 
   if (!completedOperation) {
-    const rapidEarnLimit = rateLimit(
-      getRapidEarnRateLimitKey(rapidEarnInput),
-      {
-        limit: 1,
-        windowMs: RAPID_EARN_WINDOW_MS,
-      }
-    );
+    const rapidEarnLimit = rateLimit(getRapidEarnRateLimitKey(rapidEarnInput), {
+      limit: 1,
+      windowMs: RAPID_EARN_WINDOW_MS,
+    });
 
     if (!rapidEarnLimit.allowed) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-too-soon"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "earned-too-soon",
+        ),
+      );
     }
 
-    const recentDuplicateEarn =
-      await prisma.loyaltyTransaction.findFirst({
-        where: getRapidEarnWhere(rapidEarnInput),
-        select: {
-          id: true,
-        },
-      });
+    const recentDuplicateEarn = await prisma.loyaltyTransaction.findFirst({
+      where: getRapidEarnWhere(rapidEarnInput),
+      select: {
+        id: true,
+      },
+    });
 
     if (recentDuplicateEarn) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-too-soon"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "earned-too-soon",
+        ),
+      );
     }
   }
 
@@ -1140,16 +1136,10 @@ export async function addLoyaltyAction(
           isActive: true,
           AND: [
             {
-              OR: [
-                { startsAt: null },
-                { startsAt: { lte: occurredAt } },
-              ],
+              OR: [{ startsAt: null }, { startsAt: { lte: occurredAt } }],
             },
             {
-              OR: [
-                { endsAt: null },
-                { endsAt: { gte: occurredAt } },
-              ],
+              OR: [{ endsAt: null }, { endsAt: { gte: occurredAt } }],
             },
           ],
         },
@@ -1189,10 +1179,7 @@ export async function addLoyaltyAction(
           ? {
               id: promotion.id,
               businessId: promotion.businessId,
-              bonusAmount: calculatePromotionBonus(
-                promotion,
-                amount
-              ),
+              bonusAmount: calculatePromotionBonus(promotion, amount),
             }
           : undefined,
         transactionNote,
@@ -1213,30 +1200,38 @@ export async function addLoyaltyAction(
     });
   } catch (error) {
     if (isFinancialOperationConflictError(error)) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-conflict"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "earned-conflict",
+        ),
+      );
     }
     if (isFinancialOperationContextError(error) && origin === "SCAN") {
-      redirect(operationPath(origin, slug, customer.id, { error: scanContextError(error.reason) }));
+      redirect(
+        operationPath(origin, slug, customer.id, {
+          error: scanContextError(error.reason),
+        }),
+      );
     }
 
     throw error;
   }
 
   if (newBalance === null) {
-    redirect(origin === "SCAN"
-      ? operationPath(origin, slug, customer.id, { error: "generic" })
-      : `/businesses/${slug}/customers`);
+    redirect(
+      origin === "SCAN"
+        ? operationPath(origin, slug, customer.id, { error: "generic" })
+        : `/businesses/${slug}/customers`,
+    );
   }
 
-  await syncBusinessToGoogleSheetSafely(
-    business.id
-  );
+  await syncBusinessToGoogleSheetSafely(business.id);
 
-  revalidateCustomerPages(
-    slug,
-    customer.id,
-    customer.publicToken
-  );
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
 
   redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
 }
@@ -1248,23 +1243,25 @@ export async function redeemRewardAction(
   formData?: FormData,
 ) {
   const origin = getOperationOrigin(formData);
-  const {
-    session,
-    business,
-    customer,
-  } = await getActionContext(
+  const { session, business, customer } = await getActionContext(
     slug,
     customerId,
     "LOYALTY_REDEEM",
     origin,
   );
 
-  const parsedRewardId = rewardId
-    ? opaqueIdSchema.safeParse(rewardId)
-    : null;
+  const parsedRewardId = rewardId ? opaqueIdSchema.safeParse(rewardId) : null;
 
   if (parsedRewardId && !parsedRewardId.success) {
-    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "reward-unavailable" },
+        "reward-unavailable",
+      ),
+    );
   }
 
   const selectedReward = parsedRewardId?.success
@@ -1274,27 +1271,35 @@ export async function redeemRewardAction(
           businessId: business.id,
           isActive: true,
         },
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            code: true,
-            cost: true,
-            expiresAfterDays: true,
-            businessId: true,
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          code: true,
+          cost: true,
+          expiresAfterDays: true,
+          businessId: true,
         },
       })
     : null;
 
   if (rewardId && !selectedReward) {
-    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "reward-unavailable" },
+        "reward-unavailable",
+      ),
+    );
   }
 
   const rewardName = selectedReward?.name ?? business.rewardName;
   const rewardLabel = getRewardLabel(
     selectedReward?.type ?? business.rewardType,
     rewardName,
-    selectedReward?.code ?? business.rewardCode
+    selectedReward?.code ?? business.rewardCode,
   );
 
   const cost = selectedReward?.cost ?? business.rewardThreshold;
@@ -1304,15 +1309,25 @@ export async function redeemRewardAction(
   );
 
   if (!parsedOperation.success) {
-    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "redemption-invalid"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "invalid" },
+        "redemption-invalid",
+      ),
+    );
   }
 
   const idempotencyKey = parsedOperation.data;
   const branchId = getOptionalOperationId(formData, "branchId");
-  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
+  const attributedStaffId = getOptionalOperationId(
+    formData,
+    "attributedStaffId",
+  );
 
-  const redemptionActivityContext =
-    await getActivityRequestContext();
+  const redemptionActivityContext = await getActivityRequestContext();
 
   const rapidRedemptionInput = {
     businessId: business.id,
@@ -1347,7 +1362,15 @@ export async function redeemRewardAction(
         (selectedReward?.id ?? null) ||
       completedOperation.rewardRedemption?.cost !== cost
     ) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "redemption-conflict",
+        ),
+      );
     }
 
     redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
@@ -1359,30 +1382,45 @@ export async function redeemRewardAction(
       {
         limit: 1,
         windowMs: RAPID_EARN_WINDOW_MS,
-      }
+      },
     );
 
     if (!rapidRedemptionLimit.allowed) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redeemed-too-soon"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "redeemed-too-soon",
+        ),
+      );
     }
 
-    const recentDuplicateRedemption =
-      await prisma.loyaltyTransaction.findFirst({
-        where: getRapidRedemptionWhere(
-          rapidRedemptionInput
-        ),
+    const recentDuplicateRedemption = await prisma.loyaltyTransaction.findFirst(
+      {
+        where: getRapidRedemptionWhere(rapidRedemptionInput),
         select: {
           id: true,
         },
-      });
+      },
+    );
 
     if (recentDuplicateRedemption) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redeemed-too-soon"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "redeemed-too-soon",
+        ),
+      );
     }
   }
 
-  const redemption = await prisma.$transaction(
-    async (transaction) => {
+  const redemption = await prisma
+    .$transaction(async (transaction) => {
       const now = new Date();
       let unlockId: string | null = null;
 
@@ -1452,56 +1490,78 @@ export async function redeemRewardAction(
       }
 
       const balance = await recordRewardRedemption(transaction, {
-          customerId: customer.id,
-          businessId: business.id,
-          actor: getFinancialActor(session),
-          branchId,
-          attributedStaffId,
-          activityContext: redemptionActivityContext,
-          cost,
-          rewardLabel,
-          rewardName,
-          rewardId: selectedReward?.id,
-          ...(unlockId ? { unlockId } : {}),
-          idempotencyKey,
-          reportContextFailure: origin === "SCAN",
-        });
+        customerId: customer.id,
+        businessId: business.id,
+        actor: getFinancialActor(session),
+        branchId,
+        attributedStaffId,
+        activityContext: redemptionActivityContext,
+        cost,
+        rewardLabel,
+        rewardName,
+        rewardId: selectedReward?.id,
+        ...(unlockId ? { unlockId } : {}),
+        idempotencyKey,
+        reportContextFailure: origin === "SCAN",
+      });
 
       return { balance, expired: false };
-    },
-  ).catch((error: unknown) => {
-    if (isFinancialOperationConflictError(error)) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
-    }
+    })
+    .catch((error: unknown) => {
+      if (isFinancialOperationConflictError(error)) {
+        redirect(
+          operationPath(
+            origin,
+            slug,
+            customer.id,
+            { error: "conflict" },
+            "redemption-conflict",
+          ),
+        );
+      }
 
-    if (isFinancialOperationContextError(error) && origin === "SCAN") {
-      redirect(operationPath(origin, slug, customer.id, { error: scanContextError(error.reason) }));
-    }
+      if (isFinancialOperationContextError(error) && origin === "SCAN") {
+        redirect(
+          operationPath(origin, slug, customer.id, {
+            error: scanContextError(error.reason),
+          }),
+        );
+      }
 
-    if (isFinancialOperationAbortedError(error)) {
-      return { balance: null, expired: false };
-    }
+      if (isFinancialOperationAbortedError(error)) {
+        return { balance: null, expired: false };
+      }
 
-    throw error;
-  });
+      throw error;
+    });
 
   if (redemption.expired) {
-    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-expired"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "reward-unavailable" },
+        "reward-expired",
+      ),
+    );
   }
 
   if (redemption.balance === null) {
-    redirect(operationPath(origin, slug, customer.id, { error: "insufficient-balance" }, "not-enough"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "insufficient-balance" },
+        "not-enough",
+      ),
+    );
   }
 
-  await syncBusinessToGoogleSheetSafely(
-    business.id
-  );
+  await syncBusinessToGoogleSheetSafely(business.id);
 
-  revalidateCustomerPages(
-    slug,
-    customer.id,
-    customer.publicToken
-  );
+  revalidateCustomerPages(slug, customer.id, customer.publicToken);
 
   redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
 }

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
-import { calculateRewardProgress } from "@/lib/loyalty/progress";
+import { getLoyaltyCardMetrics } from "@/lib/cards/standard-card";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 
 const root = process.cwd();
@@ -30,10 +30,28 @@ test("U11 public projections stay bounded and omit staff-only CRM data", () => {
 });
 
 test("U11 uses the canonical reward helper and programme-safe progress", () => {
-  const card = source("components/auto-flip-membership-card.tsx");
-  assert.match(card, /calculateRewardProgress\(balance, rewardThreshold\)/);
-  assert.deepEqual(calculateRewardProgress(0, 5), { progress: 0, remaining: 5, rewardAvailable: false });
-  assert.deepEqual(calculateRewardProgress(Number.POSITIVE_INFINITY, 5), { progress: 100, remaining: 0, rewardAvailable: true });
+  const card = source("components/loyalty-card.tsx");
+  const standard = source("components/standard-loyalty-card.tsx");
+  assert.match(card, /StandardLoyaltyCard/);
+  assert.match(standard, /getLoyaltyCardMetrics/);
+  assert.equal(
+    getLoyaltyCardMetrics({
+      balance: 0,
+      loyaltyMode: "VISITS",
+      rewardThreshold: 5,
+      unitName: "Visit",
+    }).progress,
+    0,
+  );
+  assert.equal(
+    getLoyaltyCardMetrics({
+      balance: 5,
+      loyaltyMode: "VISITS",
+      rewardThreshold: 5,
+      unitName: "Visit",
+    }).progress,
+    100,
+  );
 });
 
 test("U11 QR, sharing and install are truthful presentation-only controls", () => {

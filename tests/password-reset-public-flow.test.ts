@@ -32,7 +32,10 @@ test("reset action consumes only an explicit token and matching password confirm
 });
 
 test("login exposes the forgot-password recovery path", () => {
-  const login = source("app/login/page.tsx");
+  const login = [
+    source("app/login/page.tsx"),
+    source("app/login/login-form.tsx"),
+  ].join("\n");
   assert.match(login, /href="\/forgot-password"/);
 });
 
@@ -58,7 +61,6 @@ test("password reset email delivery uses the canonical app origin and never logs
   assert.doesNotMatch(delivery, /console\.(log|info|debug)/);
 });
 
-
 test("password reset delivery configuration is server-only and fails closed", () => {
   const email = source("lib/auth/password-reset-email.ts");
   const env = source(".env.example");
@@ -77,11 +79,12 @@ test("password reset delivery configuration is server-only and fails closed", ()
 test("successful password reset returns to login with visible confirmation", () => {
   const action = source("app/reset-password/actions.ts");
   const login = source("app/login/page.tsx");
+  const catalog = source("lib/i18n/catalog.ts");
 
   assert.match(action, /redirect\("\/login\?reset=success"\)/);
-  assert.match(login, /resetSucceeded/);
+  assert.match(login, /includesValue\(params\.reset, "success"\)/);
   assert.match(
-    login,
+    catalog,
     /Your password has been updated\. Sign in with your new password\./,
   );
 });

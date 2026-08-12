@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPublicCardToken } from "@/lib/cards/public-token";
+import { buildPublicCardProjection } from "@/lib/cards/public-card-projection";
 import { isOfferEligible } from "@/lib/offers/eligibility";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
@@ -41,6 +43,7 @@ export async function GET(
       select: {
         firstName: true,
         lastName: true,
+        customerCode: true,
         balance: true,
         lifetimeEarned: true,
         lifetimeRedeemed: true,
@@ -53,8 +56,16 @@ export async function GET(
             name: true,
             isActive: true,
             rewardThreshold: true,
+            rewardName: true,
+            rewardType: true,
+            rewardCode: true,
+            rewardDescription: true,
+            loyaltyMode: true,
+            unitName: true,
+            currency: true,
             primaryColor: true,
             secondaryColor: true,
+            themePreset: true,
             logoUrl: true,
             coverImageUrl: true,
             qrStyle: true,
@@ -63,6 +74,32 @@ export async function GET(
             pointsName: true,
             membershipName: true,
             welcomeMessage: true,
+            cardDefaultLanguage: true,
+            contactPhone: true,
+            website: true,
+            city: true,
+            country: true,
+            address: true,
+            instagramUrl: true,
+            cardDesignMode: true,
+            standardCardArtworkEnabled: true,
+            standardCardArtworkCategory: true,
+            customCardArtworkEnabled: true,
+            customCardFrontArtworkUrl: true,
+            customCardBackArtworkUrl: true,
+            customCardSafeZoneVersion: true,
+            rewards: {
+              where: { isActive: true },
+              select: {
+                id: true,
+                name: true,
+                cost: true,
+                isActive: true,
+                type: true,
+                code: true,
+                description: true,
+              },
+            },
             offers: {
               orderBy: [{ validUntil: "asc" }, { createdAt: "asc" }],
               select: {
@@ -119,6 +156,57 @@ export async function GET(
         description: offer.description,
         validUntil: offer.validUntil,
       }));
+    const rewardAvailability = getRewardAvailability({
+      customerActive: customer.isActive,
+      balance: customer.balance,
+      rewardThreshold: customer.business.rewardThreshold,
+      fallbackReward: {
+        name: customer.business.rewardName,
+        cost: customer.business.rewardThreshold,
+        type: customer.business.rewardType,
+        code: customer.business.rewardCode,
+        description: customer.business.rewardDescription,
+      },
+      catalogueRewards: customer.business.rewards,
+    });
+    const card = buildPublicCardProjection({
+      customer: {
+        name: `${customer.firstName} ${customer.lastName ?? ""}`.trim(),
+        code: customer.customerCode,
+        balance: customer.balance,
+      },
+      program: {
+        name: customer.business.loyaltyProgramName,
+        mode: customer.business.loyaltyMode,
+        unitName: customer.business.unitName,
+        currency: customer.business.currency,
+        defaultLanguage: customer.business.cardDefaultLanguage,
+        reward: rewardAvailability.defaultReward,
+      },
+      business: {
+        name: customer.business.name,
+        logoUrl: customer.business.logoUrl,
+        primaryColor: customer.business.primaryColor,
+        themePreset: customer.business.themePreset,
+        phone: customer.business.contactPhone,
+        website: customer.business.website,
+        city: customer.business.city,
+        country: customer.business.country,
+        address: customer.business.address,
+        social: customer.business.instagramUrl,
+      },
+      design: {
+        mode: customer.business.cardDesignMode,
+        standardArtworkEnabled:
+          customer.business.standardCardArtworkEnabled,
+        standardArtworkCategory:
+          customer.business.standardCardArtworkCategory,
+        customArtworkEnabled: customer.business.customCardArtworkEnabled,
+        customFrontArtworkUrl: customer.business.customCardFrontArtworkUrl,
+        customBackArtworkUrl: customer.business.customCardBackArtworkUrl,
+        customSafeZoneVersion: customer.business.customCardSafeZoneVersion,
+      },
+    });
 
     const response = NextResponse.json({
       name: `${customer.firstName} ${customer.lastName ?? ""}`.trim(),
@@ -134,6 +222,10 @@ export async function GET(
 
       // Deliberately public-safe: no internal eligibility or audience rule.
       offers,
+
+      // Canonical additive contract. Legacy branding fields remain below for
+      // compatibility until their consumers are measured and migrated.
+      card,
 
       business: {
         name: customer.business.name,

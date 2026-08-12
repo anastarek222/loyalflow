@@ -107,7 +107,6 @@ test("PA-S1 domain payloads are pairwise disjoint", () => {
     getProgramRulesUpdate(
       programRulesSettingsSchema.parse({
         loyaltyProgramName: "Club",
-        pointsName: "Points",
         welcomeMessage: "Welcome",
         cardDefaultLanguage: "EN",
         loyaltyMode: "POINTS",
@@ -141,7 +140,10 @@ test("PA-S1 domain payloads are pairwise disjoint", () => {
     [rules, operations],
     [messages, operations],
   ]) {
-    assert.deepEqual(left.filter((field) => right.includes(field)), []);
+    assert.deepEqual(
+      left.filter((field) => right.includes(field)),
+      [],
+    );
   }
 });
 
@@ -151,9 +153,12 @@ test("PA-S1 keeps one card editor, separate forms, bilingual copy, and accessibl
   assert.equal((program.match(/<\/form>/g) ?? []).length, 1);
   assert.match(program, /customer messages in one workspace/);
   assert.match(program, /رسائل العملاء من مساحة عمل واحدة/);
-  assert.match(program, /role="status" aria-live="polite"/);
+  assert.match(program, /role="status"[\s\S]{0,80}aria-live="polite"/);
   assert.match(program, /role="alert"/);
   assert.match(settings, /business profile, operations, and integrations/);
   assert.match(settings, /الملف التعريفي والتشغيل والتكاملات/);
-  assert.doesNotMatch(settings, /Configure the loyalty programme and digital card/);
+  assert.doesNotMatch(
+    settings,
+    /Configure the loyalty programme and digital card/,
+  );
 });

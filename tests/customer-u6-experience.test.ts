@@ -23,8 +23,11 @@ test("U6 customer list keeps every query tenant scoped and paginated", () => {
 
 test("U6 simple and advanced customers share one route with presentation-only controls", () => {
   assert.match(list, /resolveExperienceMode/);
-  assert.match(list, /data-experience-customers=\{isSimpleExperience \? "simple" : "advanced"\}/);
-  assert.match(list, /!isSimpleExperience && canReviewDuplicates/);
+  assert.match(
+    list,
+    /data-experience-customers=\{isSimpleExperience \? "simple" : "advanced"\}/,
+  );
+  assert.match(list, /!isSimpleExperience && canUseBulkOperations/);
   assert.match(list, /copy\.advancedOptions/);
   assert.match(list, /copy\.scan/);
   assert.doesNotMatch(list, /simple-customers/);
@@ -32,9 +35,18 @@ test("U6 simple and advanced customers share one route with presentation-only co
 
 test("U6 keeps advanced management and mutations unavailable to staff and viewers", () => {
   const businessId = "business-a";
-  assert.equal(canPerform({ role: "STAFF", businessId }, businessId, "CUSTOMERS_EDIT"), false);
-  assert.equal(canPerform({ role: "VIEWER", businessId }, businessId, "LOYALTY_EARN"), false);
-  assert.match(list, /canReviewDuplicates && !isSimpleExperience \? <section id="add-customer"/);
+  assert.equal(
+    canPerform({ role: "STAFF", businessId }, businessId, "CUSTOMERS_EDIT"),
+    false,
+  );
+  assert.equal(
+    canPerform({ role: "VIEWER", businessId }, businessId, "LOYALTY_EARN"),
+    false,
+  );
+  assert.match(
+    list,
+    /canReviewDuplicates && !isSimpleExperience \? \(\s*<section[\s\S]{0,100}id="add-customer"/,
+  );
   assert.match(detail, /canEarnLoyalty/);
   assert.match(detail, /canRedeemLoyalty/);
 });
@@ -54,10 +66,16 @@ test("U6 customer detail distinguishes visits, points, and sales amount loyalty 
 });
 
 test("U6 retains dashboard-compatible reward-ready filters and direction-safe values", () => {
-  assert.deepEqual(getCustomerSegmentWhere("REWARD_READY", 5), { isActive: true, balance: { gte: 5 } });
+  assert.deepEqual(getCustomerSegmentWhere("REWARD_READY", 5), {
+    isActive: true,
+    balance: { gte: 5 },
+  });
   assert.match(list, /segment=REWARD_READY/);
   assert.match(list, /dir="ltr"/);
-  assert.match(detail, /dir="ltr" className="text-foreground-muted"/);
+  assert.match(
+    detail,
+    /<span[\s\S]{0,160}dir="ltr"[\s\S]{0,160}\{customer\.phone\}/,
+  );
   assert.match(detail, /name="phone"[\s\S]{0,240}dir="ltr"/);
   assert.match(detail, /customerCode/);
 });
@@ -82,8 +100,14 @@ test("U6 localizes segments and keeps simple and advanced modes on the same lang
   assert.equal(getCustomerSegmentLabel("INACTIVE", "EN"), "Inactive");
   assert.match(list, /const copy = customerUiCopy\(language\)/);
   assert.match(detail, /const copy = customerUiCopy\(language\)/);
-  assert.match(list, /data-experience-customers=\{isSimpleExperience \? "simple" : "advanced"\}/);
-  assert.match(detail, /data-experience-customer-detail=\{isSimpleExperience \? "simple" : "advanced"\}/);
+  assert.match(
+    list,
+    /data-experience-customers=\{isSimpleExperience \? "simple" : "advanced"\}/,
+  );
+  assert.match(
+    detail,
+    /data-experience-customer-detail=\{[\s\S]{0,100}isSimpleExperience[\s\S]{0,100}\?[\s\S]{0,40}"simple"[\s\S]{0,40}:[\s\S]{0,40}"advanced"/,
+  );
 });
 
 test("U6 language is fetched from the authenticated User and filter URLs stay unchanged", () => {
@@ -100,8 +124,17 @@ test("U6 language is fetched from the authenticated User and filter URLs stay un
 });
 
 test("U6 has separate route loading and error presentations without schema work", () => {
-  assert.match(source("app/businesses/[slug]/customers/loading.tsx"), /TablePageSkeleton/);
-  assert.match(source("app/businesses/[slug]/customers/error.tsx"), /PageErrorState/);
-  assert.match(source("app/businesses/[slug]/customers/[customerId]/loading.tsx"), /DetailPageSkeleton/);
+  assert.match(
+    source("app/businesses/[slug]/customers/loading.tsx"),
+    /TablePageSkeleton/,
+  );
+  assert.match(
+    source("app/businesses/[slug]/customers/error.tsx"),
+    /PageErrorState/,
+  );
+  assert.match(
+    source("app/businesses/[slug]/customers/[customerId]/loading.tsx"),
+    /DetailPageSkeleton/,
+  );
   assert.equal(source("prisma/schema.prisma").includes("U6"), false);
 });

@@ -1,10 +1,19 @@
 "use server";
 
 import {
+  publicMembershipRegistrationProblemCodes,
+} from "@loyalflow/contracts/customers/public-membership";
+
+import {
   generateCustomerCode,
   getCustomerDisplayName,
   parseCustomerRegistration,
 } from "@/lib/customers/registration";
+import {
+  canApplyPublicReferral,
+  canCreatePublicMembership,
+} from "@/lib/customers/public-membership-policy";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import {
   canRecordReferral,
   normalizeReferralCode,
@@ -19,6 +28,8 @@ import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+class PublicMembershipPlanLimitError extends Error {}
+
 export async function joinBusinessAction(
   slug: string,
   formData: FormData
@@ -29,11 +40,14 @@ export async function joinBusinessAction(
       id: true,
       slug: true,
       isActive: true,
+      plan: true,
     },
   });
 
   if (!business?.isActive) {
-    redirect(`/join/${slug}?error=unavailable`);
+    redirect(
+      `/join/${slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`
+    );
   }
 
   const requestHeaders = await headers();
@@ -47,7 +61,9 @@ export async function joinBusinessAction(
   );
 
   if (!limit.allowed) {
-    redirect(`/join/${business.slug}?error=rate-limit`);
+    redirect(
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.rateLimited}`
+    );
   }
 
   const parsed = parseCustomerRegistration({
@@ -57,7 +73,9 @@ export async function joinBusinessAction(
   });
 
   if (!parsed) {
-    redirect(`/join/${business.slug}?error=invalid`);
+    redirect(
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.invalidInput}`
+    );
   }
 
   const existingCustomer = await prisma.customer.findUnique({
@@ -73,7 +91,9 @@ export async function joinBusinessAction(
   });
 
   if (existingCustomer) {
-    redirect(`/join/${business.slug}?error=duplicate`);
+    redirect(
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`
+    );
   }
 
   const customerCode = await generateCustomerCode(
@@ -82,13 +102,28 @@ export async function joinBusinessAction(
     business.slug
   );
   const customerName = getCustomerDisplayName(parsed);
-  const referralCode = normalizeReferralCode(
-    formData.get("ref")
-  );
+  const planLimits = await getEffectivePlanLimits(business.plan);
+  const referralCode = canApplyPublicReferral(business.plan)
+    ? normalizeReferralCode(formData.get("ref"))
+    : null;
 
   try {
     const customer = await prisma.$transaction(
       async (transaction) => {
+        const customerCount = await transaction.customer.count({
+          where: { businessId: business.id },
+        });
+
+        if (
+          !canCreatePublicMembership(
+            business.plan,
+            customerCount,
+            planLimits
+          )
+        ) {
+          throw new PublicMembershipPlanLimitError();
+        }
+
         const createdCustomer = await transaction.customer.create({
           data: {
             firstName: parsed.firstName,
@@ -159,7 +194,8 @@ export async function joinBusinessAction(
         }
 
         return createdCustomer;
-      }
+      },
+      { isolationLevel: "Serializable" }
     );
 
     await syncBusinessToGoogleSheetSafely(business.id);
@@ -170,13 +206,21 @@ export async function joinBusinessAction(
 
     redirect(`/card/${customer.publicToken}?welcome=1`);
   } catch (error) {
+    if (error instanceof PublicMembershipPlanLimitError) {
+      redirect(
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.customerLimitReached}`
+      );
+    }
+
     if (
       typeof error === "object" &&
       error &&
       "code" in error &&
       error.code === "P2002"
     ) {
-      redirect(`/join/${business.slug}?error=duplicate`);
+      redirect(
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`
+      );
     }
 
     // Redirect errors are control flow. Every other failure gets a bounded
@@ -191,6 +235,8 @@ export async function joinBusinessAction(
       throw error;
     }
 
-    redirect(`/join/${business.slug}?error=unavailable`);
+    redirect(
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`
+    );
   }
 }

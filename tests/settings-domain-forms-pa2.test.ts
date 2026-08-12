@@ -38,7 +38,6 @@ const validProfile = {
 
 const validProgram = {
   loyaltyProgramName: "Loyal Rewards",
-  pointsName: "Points",
   welcomeMessage: "Welcome",
   cardDefaultLanguage: "EN",
   loyaltyMode: "POINTS",
@@ -102,7 +101,6 @@ test("programme rules update only programme-owned fields", () => {
     "earnAmount",
     "loyaltyMode",
     "loyaltyProgramName",
-    "pointsName",
     "rewardCode",
     "rewardDescription",
     "rewardName",

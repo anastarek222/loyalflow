@@ -43,8 +43,14 @@ test("T005 resolves typed messages from the selected locale", () => {
 });
 
 test("T005 keeps legacy shared dictionary callers on the typed catalog source", () => {
-  assert.equal(getSharedDictionary("AR").language, translate("ar", "common.language"));
-  assert.equal(getSharedDictionary("EN").language, translate("en", "common.language"));
+  assert.equal(
+    getSharedDictionary("AR").language,
+    translate("ar", "common.language"),
+  );
+  assert.equal(
+    getSharedDictionary("EN").language,
+    translate("en", "common.language"),
+  );
   assert.equal(
     getSharedDictionary("AR").switchToEnglish,
     translate("ar", "common.switchToEnglish"),
@@ -64,11 +70,14 @@ test("T005 resolves the SSR locale only from the bounded locale cookie", () => {
 });
 
 test("T005 login entrypoint reads the locale cookie and renders locale-aware direction", async () => {
-  const source = await readFile(new URL("../app/login/page.tsx", import.meta.url), "utf8");
+  const source = await readFile(
+    new URL("../app/login/page.tsx", import.meta.url),
+    "utf8",
+  );
 
   assert.match(source, /cookieStore\.get\(LOCALE_COOKIE_NAME\)/);
   assert.match(source, /const direction = getLocaleDirection\(locale\)/);
-  assert.match(source, /<main lang=\{locale\} dir=\{direction\}/);
+  assert.match(source, /<main\s+lang=\{locale\}\s+dir=\{direction\}/);
   assert.match(source, /<LanguageSwitcher locale=\{locale\} \/>/);
   assert.match(source, /translate\(locale, "auth\.signIn"\)/);
   assert.match(source, /translate\(locale, "auth\.email"\)/);
@@ -81,7 +90,10 @@ test("T005 language switcher persists only the bounded locale cookie and refresh
     "utf8",
   );
 
-  assert.match(source, /document\.cookie = `\$\{LOCALE_COOKIE_NAME\}=\$\{nextLocale\}/);
+  assert.match(
+    source,
+    /document\.cookie = `\$\{LOCALE_COOKIE_NAME\}=\$\{nextLocale\}/,
+  );
   assert.match(source, /Path=\//);
   assert.match(source, /SameSite=Lax/);
   assert.match(source, /router\.refresh\(\)/);
