@@ -214,6 +214,12 @@ customer/branch counts only. It adds no client tenant selector, write, schema,
 migration, provider, credential, or Production change. See
 [`TC5_READ_EXTRACTION_2_AUDIT.md`](./TC5_READ_EXTRACTION_2_AUDIT.md).
 
+The third bounded extraction is `GET /api/v1/business/access`. It reuses the
+authoritative role-capability and plan-entitlement functions to return only the
+effective identifier lists for the session business. It exposes no billing,
+usage, customer, contact, note, credential, or provider data. See
+[`TC5_READ_EXTRACTION_3_AUDIT.md`](./TC5_READ_EXTRACTION_3_AUDIT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
