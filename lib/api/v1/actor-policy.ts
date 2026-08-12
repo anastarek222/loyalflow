@@ -56,3 +56,21 @@ export function resolveApiActor(input: {
     },
   };
 }
+
+export function resolveOwnBusinessApiActor(input: {
+  session: Session | null;
+  capability: Capability;
+}): ApiActorResolution {
+  const resolution = resolveApiActor({ session: input.session });
+  if (!resolution.allowed) return resolution;
+
+  const businessId = resolution.actor.businessId;
+  if (!businessId) {
+    return { allowed: false, problem: "RESOURCE_NOT_FOUND" };
+  }
+  if (!canPerform(resolution.actor, businessId, input.capability)) {
+    return { allowed: false, problem: "CAPABILITY_REQUIRED" };
+  }
+
+  return { allowed: true, actor: resolution.actor };
+}

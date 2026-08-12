@@ -1,5 +1,8 @@
 import { auth } from "@/auth";
-import { resolveApiActor } from "@/lib/api/v1/actor-policy";
+import {
+  resolveApiActor,
+  resolveOwnBusinessApiActor,
+} from "@/lib/api/v1/actor-policy";
 import type { Capability } from "@/lib/permissions";
 
 export type {
@@ -12,4 +15,8 @@ export async function getApiActor(input: {
   capability?: Capability;
 } = {}) {
   return resolveApiActor({ session: await auth(), ...input });
+}
+
+export async function getOwnBusinessApiActor(capability: Capability) {
+  return resolveOwnBusinessApiActor({ session: await auth(), capability });
 }

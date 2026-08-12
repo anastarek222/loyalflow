@@ -207,6 +207,13 @@ independent backend, or include writes, schema, migrations, credentials, or
 Production work. See
 [`TC5_API_FOUNDATION_AUDIT.md`](./TC5_API_FOUNDATION_AUDIT.md).
 
+The second bounded extraction is `GET /api/v1/business/summary`. Its tenant is
+derived exclusively from the authenticated session, and its minimized DTO
+contains business identity, loyalty-programme rules, and aggregate
+customer/branch counts only. It adds no client tenant selector, write, schema,
+migration, provider, credential, or Production change. See
+[`TC5_READ_EXTRACTION_2_AUDIT.md`](./TC5_READ_EXTRACTION_2_AUDIT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
