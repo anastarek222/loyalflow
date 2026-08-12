@@ -64,3 +64,37 @@ export type ApiBusinessSummaryRead = Readonly<{
     branches: number;
   }>;
 }>;
+
+export const apiBusinessCapabilities = [
+  "CUSTOMERS_VIEW",
+  "CUSTOMERS_EDIT",
+  "LOYALTY_EARN",
+  "LOYALTY_REDEEM",
+  "LOYALTY_ADJUST",
+  "REPORTS_VIEW",
+  "STAFF_MANAGE",
+  "SETTINGS_EDIT",
+] as const;
+
+export type ApiBusinessCapability = (typeof apiBusinessCapabilities)[number];
+
+export const apiProductEntitlements = [
+  "LOYALTY_CORE",
+  "REWARDS",
+  "PROMOTIONS",
+  "OFFERS",
+  "CAMPAIGNS",
+  "REFERRALS",
+  "REPORTING",
+  "MULTI_BRANCH",
+  "CUSTOMER_NOTES_TAGS",
+  "CUSTOMER_BULK_OPERATIONS",
+  "GOOGLE_WALLET_READINESS",
+] as const;
+
+export type ApiProductEntitlement = (typeof apiProductEntitlements)[number];
+
+export type ApiBusinessAccessRead = Readonly<{
+  capabilities: readonly ApiBusinessCapability[];
+  entitlements: readonly ApiProductEntitlement[];
+}>;
