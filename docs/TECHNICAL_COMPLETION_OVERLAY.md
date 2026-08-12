@@ -251,6 +251,17 @@ health read adapter remains deferred because it would require a new database
 read and an approved `pendingSinceMs` source. See
 [`TC6_2_RETRY_DECISION_CONTRACT.md`](./TC6_2_RETRY_DECISION_CONTRACT.md).
 
+The TC6 completion audit classifies the provider-neutral foundation as
+`PARTIAL_FOUNDATION_COMPLETE`: TC6.1 health classification/aggregation and
+TC6.2 retry eligibility are merged and sufficient for the currently approved
+pure boundary. More contract-only types would have no approved runtime consumer
+and would be over-engineering. Runtime health measurement requires an approved
+database read and pending-start source; durable execution requires persistence,
+idempotency, worker/queue, provider, credential, and retry-policy decisions;
+SLO, severity, alerting, and recovery evidence also remain deferred. TC6 as a
+whole is not complete. See
+[`TC6_COMPLETION_AUDIT.md`](./TC6_COMPLETION_AUDIT.md).
+
 ## 7. Technical Launch V1 definition
 
 Technical completion requires all of the following before the final
