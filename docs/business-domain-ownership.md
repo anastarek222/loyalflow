@@ -27,7 +27,7 @@ Business fields are the **default milestone**. They do not replace the advanced
 | Concept / field | Written by | Principal readers | Canonical settings writer | Other deliberate writer | Compatibility |
 | --- | --- | --- | --- | --- | --- |
 | Mode / `loyaltyMode` | creation flows, Business Settings | ledger, reports, card | Business Settings via shared loyalty schema | explicitly confirmed Playbook | enum unchanged |
-| Unit / `unitName` | creation flows, Business Settings | ledger copy, reports, card | Business Settings via shared loyalty schema | explicitly confirmed Playbook | `pointsName` remains compatibility copy only |
+| Unit / `unitName` | creation flows, Program workspace | ledger copy, reports, card | Program workspace via shared loyalty schema | explicitly confirmed Playbook | `pointsName` is preserved read-only and cannot override the canonical card projection |
 | Earn / `earnAmount` | creation flows, Business Settings | transaction engine, reports | Business Settings via shared loyalty schema | explicitly confirmed Playbook | semantics unchanged |
 | Target / `rewardThreshold` | creation flows, Business Settings | progress/unlock engine, fallback reward | Business Settings via shared loyalty schema | explicitly confirmed Playbook | default milestone retained |
 | Reward / `rewardName` | creation flows, Business Settings | card, fallback redemption | Business Settings via shared loyalty schema | explicitly confirmed Playbook | catalogue remains separate |
@@ -71,11 +71,11 @@ The executable classification is
 
 | Field | Status | Reason |
 | --- | --- | --- |
-| `pointsName`, `membershipName` | `ACTIVE_COMPATIBILITY` | old white-label/customer copy; not the canonical loyalty unit |
+| `pointsName` | `DEPRECATED_READ_ONLY` | stored legacy alias preserved without an active editor; `unitName` owns all current card projections |
+| `membershipName` | `ACTIVE_COMPATIBILITY` | old white-label/customer copy; not the canonical loyalty unit |
 | `secondaryColor` | `ACTIVE_COMPATIBILITY` | public surfaces still read it; active card editors do not write it |
 | `themePreset` | `ACTIVE_CANONICAL` | constrained Light/Dark Standard Card setting |
 | `cardStyle` | `DEPRECATED_READ_ONLY` | old card layout; canonical card renderer owns layout |
 | `fontFamily` | `ACTIVE_COMPATIBILITY` | public legacy theme reader |
 | `backgroundColor`, `buttonStyle` | `DEAD_CANDIDATE` | persisted fields are not authoritative theme inputs |
 | `qrPosition`, `qrStyle` | `ACTIVE_COMPATIBILITY` | limited public-facing QR support |
-

@@ -229,7 +229,6 @@ export async function updateProgramRulesAction(
   const { business, session } = await getManagedBusiness(slug);
   const parsed = programRulesSettingsSchema.safeParse({
     loyaltyProgramName: formData.get("loyaltyProgramName") ?? "",
-    pointsName: formData.get("pointsName") ?? "",
     welcomeMessage: formData.get("welcomeMessage") ?? "",
     cardDefaultLanguage: formData.get("cardDefaultLanguage"),
     loyaltyMode: formData.get("loyaltyMode"),
@@ -295,6 +294,10 @@ export async function updateProgramRulesAction(
     rewardThreshold: currentProgramme.rewardThreshold,
     earnAmount: currentProgramme.earnAmount,
   };
+  const nextProgrammeSnapshot = {
+    ...currentProgrammeSnapshot,
+    ...nextProgramme,
+  };
 
   const programmeHistory = {
     customerWithBalance: currentProgramme.customers.length > 0,
@@ -338,7 +341,7 @@ export async function updateProgramRulesAction(
     metadata: {
       ...getLoyaltyProgramRulesAuditMetadata(
         currentProgrammeSnapshot,
-        nextProgramme,
+        nextProgrammeSnapshot,
       ),
       economicRuleConfirmation: {
         required: economicConfirmationRequired,

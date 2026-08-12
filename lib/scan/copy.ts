@@ -5,8 +5,14 @@ const dictionary = {
     backToBusiness: "الرجوع إلى النشاط",
     scan: "مسح",
     scanner: "ماسح LoyalFlow",
+    workspaceLabel: "مساحة التشغيل اليومية",
+    cameraPanelTitle: "امسح الكارت بالكاميرا",
+    cameraPanelDescription: "ضع رمز QR داخل الإطار وسيتم فتح العميل تلقائيًا.",
+    scanTip: "ثبّت الهاتف وتأكد من وجود إضاءة واضحة.",
+    alternateAccess: "طرق فتح بديلة",
     scanCustomerCard: "مسح كارت العميل",
-    scanDescription: "افتح الكاميرا ووجّهها ناحية QR الموجود على كارت العميل. بعد القراءة هيفتح ملف العميل مباشرة لإضافة زيارة أو استبدال الهدية.",
+    scanDescription:
+      "افتح الكاميرا ووجّهها ناحية QR الموجود على كارت العميل. بعد القراءة هيفتح ملف العميل مباشرة لإضافة زيارة أو استبدال الهدية.",
     cameraInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
     processing: "جارٍ البحث عن العميل...",
     authenticationRequired: "يجب تسجيل الدخول أولًا.",
@@ -15,10 +21,14 @@ const dictionary = {
     rateLimited: "تم تجاوز عدد المحاولات المسموح. حاول مرة أخرى قريبًا.",
     customerOrCardNotFound: "العميل أو الكارت غير موجود.",
     genericError: "تعذر قراءة هذا الكارت.",
-    secureContextWarning: "تشغيل الكاميرا على الهاتف يحتاج رابط HTTPS. يمكنك حاليًا اختيار صورة QR من الهاتف أو لصق رابط الكارت يدويًا.",
-    cameraUnavailable: "الكاميرا غير متاحة على هذا الجهاز. يمكنك اختيار صورة QR أو استخدام البحث.",
-    cameraPermissionDenied: "تم رفض إذن الكاميرا. اسمح بالوصول إلى الكاميرا ثم أعد المحاولة.",
-    scannerInitializationFailed: "تعذر تشغيل الماسح الآن. حاول مرة أخرى أو استخدم البحث.",
+    secureContextWarning:
+      "تشغيل الكاميرا على الهاتف يحتاج رابط HTTPS. يمكنك حاليًا اختيار صورة QR من الهاتف أو لصق رابط الكارت يدويًا.",
+    cameraUnavailable:
+      "الكاميرا غير متاحة على هذا الجهاز. يمكنك اختيار صورة QR أو استخدام البحث.",
+    cameraPermissionDenied:
+      "تم رفض إذن الكاميرا. اسمح بالوصول إلى الكاميرا ثم أعد المحاولة.",
+    scannerInitializationFailed:
+      "تعذر تشغيل الماسح الآن. حاول مرة أخرى أو استخدم البحث.",
     retryCamera: "إعادة تشغيل الكاميرا",
     switchCamera: "تبديل الكاميرا",
     startingCamera: "جارٍ تشغيل الكاميرا...",
@@ -88,8 +98,15 @@ const dictionary = {
     backToBusiness: "Back to business",
     scan: "Scan",
     scanner: "LoyalFlow scanner",
+    workspaceLabel: "Daily operations workspace",
+    cameraPanelTitle: "Scan the card with your camera",
+    cameraPanelDescription:
+      "Keep the QR code inside the frame and the customer will open automatically.",
+    scanTip: "Hold the device steady and make sure the card is well lit.",
+    alternateAccess: "Alternative ways to open",
     scanCustomerCard: "Scan customer card",
-    scanDescription: "Open the camera and point it at the QR code on the customer card. After it is read, the customer profile opens so you can record a visit or redeem a reward.",
+    scanDescription:
+      "Open the camera and point it at the QR code on the customer card. After it is read, the customer profile opens so you can record a visit or redeem a reward.",
     cameraInstruction: "Point the camera at the customer QR code.",
     processing: "Finding customer...",
     authenticationRequired: "Authentication is required.",
@@ -98,10 +115,14 @@ const dictionary = {
     rateLimited: "Too many attempts. Please try again shortly.",
     customerOrCardNotFound: "The customer or card could not be found.",
     genericError: "This card could not be read.",
-    secureContextWarning: "Camera access on mobile requires an HTTPS link. You can still select a QR image from your phone or paste the card link manually.",
-    cameraUnavailable: "The camera is unavailable on this device. You can select a QR image or use search.",
-    cameraPermissionDenied: "Camera permission was denied. Allow camera access and try again.",
-    scannerInitializationFailed: "The scanner could not start. Try again or use search.",
+    secureContextWarning:
+      "Camera access on mobile requires an HTTPS link. You can still select a QR image from your phone or paste the card link manually.",
+    cameraUnavailable:
+      "The camera is unavailable on this device. You can select a QR image or use search.",
+    cameraPermissionDenied:
+      "Camera permission was denied. Allow camera access and try again.",
+    scannerInitializationFailed:
+      "The scanner could not start. Try again or use search.",
     retryCamera: "Restart camera",
     switchCamera: "Switch camera",
     startingCamera: "Starting camera...",
@@ -114,7 +135,8 @@ const dictionary = {
     manualPlaceholder: "Card link or identifier",
     openCustomer: "Open customer",
     customerSearchHeading: "Find a customer",
-    customerSearchDescription: "Search by name, phone number, or customer code.",
+    customerSearchDescription:
+      "Search by name, phone number, or customer code.",
     customerSearchLabel: "Find a customer",
     customerSearchPlaceholder: "Name, phone, or customer code",
     customerSearchMinimum: "Enter at least 2 characters to search.",
@@ -138,11 +160,15 @@ const dictionary = {
       invalid: "Check the entered details and try again.",
       permission: "You do not have permission to perform this operation.",
       "reward-unavailable": "This reward is not available to redeem right now.",
-      "insufficient-balance": "This customer does not have enough balance for this reward.",
-      conflict: "This operation could not be completed safely. Review activity before trying again.",
-      "invalid-branch": "Choose an active branch available to you and try again.",
+      "insufficient-balance":
+        "This customer does not have enough balance for this reward.",
+      conflict:
+        "This operation could not be completed safely. Review activity before trying again.",
+      "invalid-branch":
+        "Choose an active branch available to you and try again.",
       "invalid-staff": "Choose valid staff attribution details and try again.",
-      generic: "The operation could not be completed. A balance change was not confirmed.",
+      generic:
+        "The operation could not be completed. A balance change was not confirmed.",
     },
     balance: "Current balance",
     activity: "Recent activity",

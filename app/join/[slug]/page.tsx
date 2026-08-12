@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import JoinSubmitButton from "@/components/join-submit-button";
 import { joinBusinessAction } from "@/app/join/[slug]/actions";
 import { normalizeReferralCode } from "@/lib/referrals/code";
+import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
 import prisma from "@/lib/prisma";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
@@ -50,6 +51,7 @@ export default async function JoinBusinessPage({
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
+      id: true,
       name: true,
       slug: true,
       logoUrl: true,
@@ -69,6 +71,7 @@ export default async function JoinBusinessPage({
       rewardThreshold: true,
       cardDefaultLanguage: true,
       isActive: true,
+      plan: true,
     },
   });
 
@@ -80,7 +83,21 @@ export default async function JoinBusinessPage({
     getCustomerExperienceTheme(business);
 
   const joinBusiness = joinBusinessAction.bind(null, business.slug);
-  const referralCode = normalizeReferralCode(query.ref);
+  const referralCandidate = canApplyPublicReferral(business.plan)
+    ? normalizeReferralCode(query.ref)
+    : null;
+  const validReferral = referralCandidate
+    ? await prisma.customerReferralCode.findFirst({
+        where: {
+          businessId: business.id,
+          code: referralCandidate,
+          isActive: true,
+          customer: { isActive: true },
+        },
+        select: { id: true },
+      })
+    : null;
+  const appliedReferralCode = validReferral ? referralCandidate : null;
   const { language, lang, dir } = getLanguageAttributes(
     business.cardDefaultLanguage
   );
@@ -106,6 +123,7 @@ export default async function JoinBusinessPage({
             invalid: "راجع الاسم ورقم الهاتف ثم حاول مرة أخرى.",
             duplicate: "رقم الهاتف مسجل بالفعل لدى هذا النشاط.",
             "rate-limit": "تم تجاوز عدد المحاولات. حاول مرة أخرى بعد قليل.",
+            "plan-limit": "وصل النشاط إلى الحد الحالي لعدد العملاء.",
             unavailable: "التسجيل غير متاح حاليًا.",
             failed: "تعذر إكمال التسجيل الآن. حاول مرة أخرى لاحقًا.",
           },
@@ -130,6 +148,7 @@ export default async function JoinBusinessPage({
             invalid: "Check your name and phone number, then try again.",
             duplicate: "This phone number is already registered with this business.",
             "rate-limit": "Too many attempts. Please try again shortly.",
+            "plan-limit": "This business has reached its current customer limit.",
             unavailable: "Registration is unavailable right now.",
             failed: "We could not complete registration right now. Please try again later.",
           },
@@ -232,15 +251,15 @@ export default async function JoinBusinessPage({
             {copy.reward} {business.rewardThreshold} {business.unitName} {copy.rewardSuffix} {business.rewardName}.
           </div>
 
-          {referralCode ? (
+          {appliedReferralCode ? (
             <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
               {copy.referralApplied}
             </div>
           ) : null}
 
           <form action={joinBusiness} className="space-y-4">
-            {referralCode ? (
-              <input type="hidden" name="ref" value={referralCode} />
+            {appliedReferralCode ? (
+              <input type="hidden" name="ref" value={appliedReferralCode} />
             ) : null}
             <div>
               <label

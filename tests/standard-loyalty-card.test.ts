@@ -347,6 +347,7 @@ test("all Standard Card previews and the public card retain the canonical render
   const setup = source("components/standard-card-setup.tsx");
   const wizard = source("components/business-setup-wizard.tsx");
   const publicCard = source("app/card/[token]/page.tsx");
-  for (const renderer of [preview, setup, wizard, publicCard]) assert.match(renderer, /LoyaltyCard/);
+  for (const renderer of [preview, setup, publicCard]) assert.match(renderer, /LoyaltyCard/);
+  assert.match(wizard, /StandardCardSetup/);
   assert.match(source("components/loyalty-card.tsx"), /StandardLoyaltyCard/);
 });

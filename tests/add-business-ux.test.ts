@@ -41,9 +41,11 @@ test("blank optional numeric billing values do not coerce to zero and raw Zod me
   assert.match(wizard, /setStep\(error\.step\)/);
 });
 
-test("review includes editable required sections and a card preview", () => {
+test("review includes one editable loyalty section and one canonical card-design section", () => {
   const wizard = read("components/business-setup-wizard.tsx");
-  for (const section of ["Business", "Owner", "Billing", "Loyalty", "Branding", "Standard Card"]) assert.match(wizard, new RegExp(`title="${section}"|title=\"${section}`));
+  for (const section of ["Business", "Owner", "Billing", "Loyalty", "Card Design"]) assert.match(wizard, new RegExp(`title="${section}"|title=\"${section}`));
+  assert.equal((wizard.match(/title="Card Design"/g) ?? []).length, 1);
+  assert.doesNotMatch(wizard, /title="Branding"|title="Standard Card"/);
   assert.match(wizard, /StandardCardSetup/);
   assert.match(wizard, /Review & Create/);
 });
@@ -69,10 +71,11 @@ test("editor preview has a physical-card maximum width while preserving the shar
   assert.match(read("components/standard-loyalty-card.tsx"), /STANDARD_CARD_ASPECT_RATIO/);
 });
 
-test("six-step custom setup keeps Loyalty Card focused and Branding separate", () => {
+test("six-step custom setup separates loyalty rules from one card-design editor", () => {
   const wizard = read("components/business-setup-wizard.tsx");
-  assert.match(wizard, /"Loyalty Card"/);
-  assert.match(wizard, /"Branding"/);
-  assert.doesNotMatch(wizard, /"Branding & Loyalty Card"/);
+  assert.match(wizard, /"Loyalty"/);
+  assert.match(wizard, /"Card Design"/);
+  assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
+  assert.doesNotMatch(wizard, /LoyaltyCardPreview|cardStyleLabels|fontLabels/);
   assert.match(wizard, /allowCustom/);
 });

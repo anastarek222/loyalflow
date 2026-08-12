@@ -49,7 +49,7 @@ test("public card API exposes QR style only as branding", () => {
 });
 
 
-test("persists and renders the legacy QR position without Settings round-tripping", () => {
+test("preserves the legacy QR position without making it a second card renderer authority", () => {
   const schema = read("prisma/schema.prisma");
   const actions = read(
     "app/businesses/[slug]/settings/actions.ts"
@@ -57,9 +57,7 @@ test("persists and renders the legacy QR position without Settings round-trippin
   const form = read(
     "components/business-settings-form.tsx"
   );
-  const card = read(
-    "components/auto-flip-membership-card.tsx"
-  );
+  const card = read("components/standard-loyalty-card.tsx");
 
   assert.match(
     schema,
@@ -71,6 +69,6 @@ test("persists and renders the legacy QR position without Settings round-trippin
 
   assert.match(
     card,
-    /qrPositionClass/
+    /data-safe-zone="qr-code"/
   );
 });

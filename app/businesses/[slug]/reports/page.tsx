@@ -23,21 +23,37 @@ import {
   getCustomerSegmentWhere,
   type CustomerSegment,
 } from "@/lib/customers/segments";
-import {
-  canExportBusinessData,
-  canPerform,
-} from "@/lib/permissions";
+import { canExportBusinessData, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
 import { createHistoricalAnalyticsTrends } from "@/lib/analytics/trends";
-import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import {
+  getExperienceModeCookieName,
+  resolveExperienceMode,
+} from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { reportCopy } from "@/lib/reports/presentation";
-import { formatLoyaltyAmount, operationalUnitLabel } from "@/lib/loyalty/presentation";
+import {
+  formatLoyaltyAmount,
+  operationalUnitLabel,
+} from "@/lib/loyalty/presentation";
 import { countOpenReversalExceptions } from "@/lib/loyalty/reversal-exception-reporting";
 import { summarizeLedgerOperations } from "@/lib/loyalty/ledger-reporting";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import type { Prisma } from "@/generated/prisma/client";
+import {
+  Activity,
+  CalendarDays,
+  CheckCircle2,
+  Download,
+  Filter,
+  Gift,
+  LineChart,
+  ShieldAlert,
+  Sparkles,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -65,12 +81,12 @@ const dateTimeFormatter = new Intl.DateTimeFormat("ar-EG", {
 
 const reportPeriods = ["today", "7d", "30d"] as const;
 
+const reportFieldClass =
+  "min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft";
+
 type ReportPeriod = (typeof reportPeriods)[number] | "custom";
 
-function getReportRange(
-  period: ReportPeriod,
-  now: Date
-) {
+function getReportRange(period: ReportPeriod, now: Date) {
   const toInput = formatUtcDateInput(now);
   const from = new Date(now);
 
@@ -90,14 +106,14 @@ function getReportRange(
   };
 }
 
-function getLoyaltyModeLabel(mode: string) {
+function getLoyaltyModeLabel(mode: string, language: "AR" | "EN") {
   switch (mode) {
     case "VISITS":
-      return "الزيارات";
+      return language === "AR" ? "الزيارات" : "Visits";
     case "POINTS":
-      return "النقاط";
+      return language === "AR" ? "النقاط" : "Points";
     case "SALES_AMOUNT":
-      return "المبيعات";
+      return language === "AR" ? "المبيعات" : "Sales amount";
     default:
       return mode;
   }
@@ -107,9 +123,7 @@ function getCustomerName(customer: {
   firstName: string;
   lastName: string | null;
 }) {
-  return [customer.firstName, customer.lastName]
-    .filter(Boolean)
-    .join(" ");
+  return [customer.firstName, customer.lastName].filter(Boolean).join(" ");
 }
 
 export default async function ReportsPage({
@@ -153,8 +167,7 @@ export default async function ReportsPage({
     notFound();
   }
 
-  const theme =
-    getBusinessTheme(business);
+  const theme = getBusinessTheme(business);
 
   const reportUser = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -169,13 +182,14 @@ export default async function ReportsPage({
   const simple = experienceMode === "SIMPLE";
   const copy = reportCopy(language);
   const numberFormatter = new Intl.NumberFormat(getLanguageLocale(language));
-  const loyaltyPresentation = { loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency } as const;
+  const loyaltyPresentation = {
+    loyaltyMode: business.loyaltyMode,
+    language,
+    unitName: business.unitName,
+    currency: business.currency,
+  } as const;
 
-  const canViewReports = canPerform(
-    session.user,
-    business.id,
-    "REPORTS_VIEW"
-  );
+  const canViewReports = canPerform(session.user, business.id, "REPORTS_VIEW");
 
   if (!canViewReports) {
     redirect(`/businesses/${business.slug}`);
@@ -187,7 +201,7 @@ export default async function ReportsPage({
 
   const today = new Date();
   const requestedPeriod = reportPeriods.includes(
-    query.period as (typeof reportPeriods)[number]
+    query.period as (typeof reportPeriods)[number],
   )
     ? (query.period as (typeof reportPeriods)[number])
     : null;
@@ -206,12 +220,8 @@ export default async function ReportsPage({
   if (!shortcutRange && !customRange) period = "30d";
   const { fromInput, toInput, from: fromDate, to: toDate } = selectedRange;
 
-  const availableSegments = getCustomerFilterSegments(
-    business.loyaltyMode
-  );
-  const segment = availableSegments.includes(
-    query.segment as CustomerSegment
-  )
+  const availableSegments = getCustomerFilterSegments(business.loyaltyMode);
+  const segment = availableSegments.includes(query.segment as CustomerSegment)
     ? (query.segment as CustomerSegment)
     : null;
 
@@ -219,9 +229,7 @@ export default async function ReportsPage({
   // Keeping the selected mode in the report URL makes the filter explicit now
   // and keeps links forward-compatible if businesses later support programmes.
   const loyaltyMode =
-    query.loyaltyMode === business.loyaltyMode
-      ? business.loyaltyMode
-      : "all";
+    query.loyaltyMode === business.loyaltyMode ? business.loyaltyMode : "all";
 
   const [reportBranches, reportStaff] = await Promise.all([
     prisma.branch.findMany({
@@ -231,19 +239,26 @@ export default async function ReportsPage({
     }),
     prisma.user.findMany({
       where: { businessId: business.id },
-      select: { id: true, businessId: true, firstName: true, lastName: true, isActive: true },
+      select: {
+        id: true,
+        businessId: true,
+        firstName: true,
+        lastName: true,
+        isActive: true,
+      },
       orderBy: [{ firstName: "asc" }, { lastName: "asc" }],
     }),
   ]);
   // Invalid/cross-tenant route values are ignored on the HTML report. The
   // export route rejects them; neither path can expand this tenant's scope.
-  const reportScope = resolveReportScope({
-    businessId: business.id,
-    branchId: query.branch,
-    staffId: query.staff,
-    branches: reportBranches,
-    staff: reportStaff,
-  }) ?? {};
+  const reportScope =
+    resolveReportScope({
+      businessId: business.id,
+      branchId: query.branch,
+      staffId: query.staff,
+      branches: reportBranches,
+      staff: reportStaff,
+    }) ?? {};
   const operationScope = reportScope;
   const activityScope = reportScope.branchId
     ? { branchId: reportScope.branchId }
@@ -256,7 +271,7 @@ export default async function ReportsPage({
           segment,
           business.rewardThreshold,
           undefined,
-          business.earnAmount
+          business.earnAmount,
         )
       : {}),
   };
@@ -338,10 +353,7 @@ export default async function ReportsPage({
       where: {
         AND: [
           customerWhere,
-          getCustomerSegmentWhere(
-            "INACTIVE",
-            business.rewardThreshold
-          ),
+          getCustomerSegmentWhere("INACTIVE", business.rewardThreshold),
         ],
       },
     }),
@@ -350,10 +362,7 @@ export default async function ReportsPage({
       where: {
         AND: [
           customerWhere,
-          getCustomerSegmentWhere(
-            "AT_RISK",
-            business.rewardThreshold
-          ),
+          getCustomerSegmentWhere("AT_RISK", business.rewardThreshold),
         ],
       },
     }),
@@ -699,12 +708,9 @@ export default async function ReportsPage({
 
   const trackedSalesAmount = trackedSales._sum.saleAmount ?? 0;
 
-  const lifetimeTrackedSalesAmount =
-    allTimeTrackedSales._sum.saleAmount ?? 0;
+  const lifetimeTrackedSalesAmount = allTimeTrackedSales._sum.saleAmount ?? 0;
 
-  const recoveredCustomers = countDistinctCustomers(
-    recoveredCustomerGroups
-  );
+  const recoveredCustomers = countDistinctCustomers(recoveredCustomerGroups);
 
   const redeemedCost = redeemed._sum.cost ?? 0;
 
@@ -715,9 +721,7 @@ export default async function ReportsPage({
       ? await prisma.customer.findMany({
           where: {
             id: {
-              in: firstRewardGroups.map(
-                (reward) => reward.customerId
-              ),
+              in: firstRewardGroups.map((reward) => reward.customerId),
             },
             businessId: business.id,
           },
@@ -728,14 +732,13 @@ export default async function ReportsPage({
         })
       : [];
 
-  const averageDaysToFirstReward =
-    calculateAverageDaysToFirstReward(
-      firstRewardCustomers,
-      firstRewardGroups.map((reward) => ({
-        customerId: reward.customerId,
-        firstRewardAt: reward._min.createdAt,
-      }))
-    );
+  const averageDaysToFirstReward = calculateAverageDaysToFirstReward(
+    firstRewardCustomers,
+    firstRewardGroups.map((reward) => ({
+      customerId: reward.customerId,
+      firstRewardAt: reward._min.createdAt,
+    })),
+  );
 
   const rankingCustomerIds = Array.from(
     new Set(
@@ -743,8 +746,8 @@ export default async function ReportsPage({
         ...mostActiveGroups,
         ...highestValueEarnedGroups,
         ...mostRedeemedGroups,
-      ].map((group) => group.customerId)
-    )
+      ].map((group) => group.customerId),
+    ),
   );
 
   const rankingCustomers =
@@ -766,42 +769,36 @@ export default async function ReportsPage({
       : [];
 
   const rankingCustomersById = new Map(
-    rankingCustomers.map((customer) => [customer.id, customer])
+    rankingCustomers.map((customer) => [customer.id, customer]),
   );
 
   const mostActiveCustomers = mostActiveGroups.flatMap((group) => {
     const customer = rankingCustomersById.get(group.customerId);
 
-    return customer
-      ? [{ customer, value: group._count._all }]
-      : [];
+    return customer ? [{ customer, value: group._count._all }] : [];
   });
 
-  const highestValueEarnedCustomers =
-    highestValueEarnedGroups.flatMap((group) => {
+  const highestValueEarnedCustomers = highestValueEarnedGroups.flatMap(
+    (group) => {
       const customer = rankingCustomersById.get(group.customerId);
 
-      return customer
-        ? [{ customer, value: group._sum.amount ?? 0 }]
-        : [];
-    });
+      return customer ? [{ customer, value: group._sum.amount ?? 0 }] : [];
+    },
+  );
 
   const mostRedeemedCustomers = mostRedeemedGroups.flatMap((group) => {
     const customer = rankingCustomersById.get(group.customerId);
 
-    return customer
-      ? [{ customer, value: group._count._all }]
-      : [];
+    return customer ? [{ customer, value: group._count._all }] : [];
   });
 
-  const returningCustomers =
-    returningCustomerGroups.filter(
-      (customer) => customer._count._all >= 2
-    ).length;
+  const returningCustomers = returningCustomerGroups.filter(
+    (customer) => customer._count._all >= 2,
+  ).length;
 
   const repeatCustomerRate = calculateRepeatCustomerRate(
     returningCustomers,
-    returningCustomerGroups.length
+    returningCustomerGroups.length,
   );
 
   const averageDaysBetweenVisits =
@@ -811,24 +808,20 @@ export default async function ReportsPage({
 
   const averageLoyaltyActivity =
     activeCustomerGroups.length > 0
-      ? earned._count._all /
-        activeCustomerGroups.length
+      ? earned._count._all / activeCustomerGroups.length
       : 0;
 
   const redemptionRate =
     earned._count._all > 0
-      ? (redeemed._count._all /
-          earned._count._all) *
-        100
+      ? (redeemed._count._all / earned._count._all) * 100
       : 0;
 
-  const averagePurchaseAmount =
-    trackedSales._avg.saleAmount ?? 0;
+  const averagePurchaseAmount = trackedSales._avg.saleAmount ?? 0;
 
   const canExportData = canExportBusinessData(
     session.user,
     business.id,
-    business.allowOwnerDataExport
+    business.allowOwnerDataExport,
   );
 
   const reportQuery = getReportQueryString({
@@ -844,7 +837,9 @@ export default async function ReportsPage({
     ...(segment ? { segment } : {}),
     ...(loyaltyMode !== "all" ? { loyaltyMode } : {}),
     ...(reportScope.branchId ? { branch: reportScope.branchId } : {}),
-    ...(reportScope.attributedStaffId ? { staff: reportScope.attributedStaffId } : {}),
+    ...(reportScope.attributedStaffId
+      ? { staff: reportScope.attributedStaffId }
+      : {}),
   }).toString();
 
   const reportFilterSuffix = activeReportFilters
@@ -853,261 +848,430 @@ export default async function ReportsPage({
 
   // The chart receives only server-derived daily buckets. It intentionally does
   // not reimplement analytics mathematics in a client component.
-  const [historicalCustomers, historicalEarned, historicalRedemptions] = await Promise.all([
-    prisma.customer.findMany({ where: { ...customerWhere, createdAt: { gte: fromDate, lte: toDate } }, select: { createdAt: true }, orderBy: { createdAt: "asc" } }),
-    prisma.loyaltyTransaction.findMany({ where: { ...transactionWhere, type: "EARN" }, select: { createdAt: true, amount: true } }),
-    prisma.rewardRedemption.findMany({ where: redemptionWhere, select: { createdAt: true } }),
-  ]);
-  const historicalTrends = createHistoricalAnalyticsTrends({
-    customers: historicalCustomers,
-    loyaltyEarned: historicalEarned,
-    rewardsRedeemed: historicalRedemptions,
-  }, fromDate, toDate);
+  const [historicalCustomers, historicalEarned, historicalRedemptions] =
+    await Promise.all([
+      prisma.customer.findMany({
+        where: { ...customerWhere, createdAt: { gte: fromDate, lte: toDate } },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.loyaltyTransaction.findMany({
+        where: { ...transactionWhere, type: "EARN" },
+        select: { createdAt: true, amount: true },
+      }),
+      prisma.rewardRedemption.findMany({
+        where: redemptionWhere,
+        select: { createdAt: true },
+      }),
+    ]);
+  const historicalTrends = createHistoricalAnalyticsTrends(
+    {
+      customers: historicalCustomers,
+      loyaltyEarned: historicalEarned,
+      rewardsRedeemed: historicalRedemptions,
+    },
+    fromDate,
+    toDate,
+  );
 
   return (
     <main
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      dir={language === "AR" ? "rtl" : "ltr"}
       style={{
         backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
-      <div className="mx-auto max-w-7xl" data-experience-mode={experienceMode}>
+      <div
+        className="mx-auto max-w-7xl"
+        data-experience-mode={experienceMode}
+        data-reports-workspace="true"
+      >
         <Link
           href={`/businesses/${business.slug}`}
-          className="text-sm font-medium text-violet-600 hover:text-violet-800"
+          className="inline-flex min-h-10 items-center text-sm font-semibold text-foreground-muted transition-colors hover:text-primary"
         >
-          → الرجوع إلى {business.name}
+          {language === "AR" ? "العودة إلى" : "Back to"} {business.name}
         </Link>
 
-        <header className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 sm:p-6">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground-subtle">{copy.overview}</p>
-              <h1 className="mt-1 text-2xl font-black text-foreground sm:text-3xl">{language === "AR" ? "التقارير" : "Reports"}</h1>
-              <p dir="auto" className="mt-1 text-sm text-foreground-muted">{business.name}</p>
+        <header className="relative mt-5 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7">
+          <div className="pointer-events-none absolute end-0 top-0 size-64 rounded-full bg-[radial-gradient(circle,var(--lf-primary-soft),transparent_68%)]" />
+          <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+                <LineChart className="size-4" aria-hidden="true" />
+                {copy.overview}
+              </span>
+              <h1 className="mt-4 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                {language === "AR"
+                  ? "التقارير والتحليلات"
+                  : "Reports & analytics"}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-foreground-muted">
+                {language === "AR"
+                  ? "اقرأ أداء برنامج الولاء من السجل الفعلي، مع فصل واضح بين الرصيد والمبيعات والاستبدالات."
+                  : "Read loyalty performance from the actual ledger, with a clear separation between balances, sales, and redemptions."}
+              </p>
             </div>
-            <span className="w-fit rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-foreground-muted">
-              {simple ? copy.simple : copy.advanced}
-            </span>
+            <div className="grid grid-cols-2 gap-3 sm:flex">
+              <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-4 py-3">
+                <p className="flex items-center gap-2 text-xs font-semibold text-foreground-subtle">
+                  <CalendarDays
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
+                  {language === "AR" ? "الفترة" : "Period"}
+                </p>
+                <p
+                  dir="ltr"
+                  className="lf-type-numeric mt-1 text-sm font-black text-foreground"
+                >
+                  {fromInput} → {toInput}
+                </p>
+              </div>
+              <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-4 py-3">
+                <p className="text-xs font-semibold text-foreground-subtle">
+                  {language === "AR" ? "طريقة العرض" : "View mode"}
+                </p>
+                <p className="mt-1 text-sm font-black text-foreground">
+                  {simple ? copy.simple : copy.advanced}
+                </p>
+              </div>
+            </div>
           </div>
         </header>
 
-        <ReportNavigation slug={business.slug} active="overview" query={reportQuery} language={language} />
+        <ReportNavigation
+          slug={business.slug}
+          active="overview"
+          query={reportQuery}
+          language={language}
+        />
 
-
-        <section className="mt-5 flex flex-wrap gap-2">
+        <section
+          aria-label={language === "AR" ? "إجراءات التقارير" : "Report actions"}
+          className="mt-5 flex flex-wrap gap-2"
+        >
           <Link
             href={`/businesses/${business.slug}/reports/staff?${reportQuery}`}
-            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:border-primary/30 hover:text-primary"
+            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-bold text-foreground-muted transition-colors hover:border-primary/30 hover:text-primary"
           >
-            👥 تقرير أداء الموظفين
+            <Users className="size-4" aria-hidden="true" />
+            {language === "AR" ? "أداء الموظفين" : "Staff performance"}
           </Link>
 
           {canExportData && (
             <a
-            href={`/businesses/${business.slug}/reports/export?${reportQuery}`}
-            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:border-primary/30 hover:text-primary"
-          >
-            📥 تصدير حركات الفترة CSV
+              href={`/businesses/${business.slug}/reports/export?${reportQuery}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-emerald-300 bg-emerald-50 px-4 text-sm font-bold text-emerald-900 transition-colors hover:bg-emerald-100"
+            >
+              <Download className="size-4" aria-hidden="true" />
+              {language === "AR"
+                ? "تصدير حركات الفترة CSV"
+                : "Export period activity CSV"}
             </a>
           )}
           {!canExportData && (
-            <p role="status" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 text-sm font-semibold text-foreground-subtle">
+            <p
+              role="status"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 text-sm font-semibold text-foreground-subtle"
+            >
+              <ShieldAlert className="size-4" aria-hidden="true" />
               {copy.exportUnavailable}
             </p>
           )}
         </section>
 
-        <details className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface" open={!simple}>
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
-            <span>
-              <span className="block text-sm font-bold text-foreground">{language === "AR" ? "الفترة والفلاتر" : "Period & filters"}</span>
-              <span className="mt-0.5 block text-xs text-foreground-subtle">{language === "AR" ? "غيّر التاريخ أو الفرع أو الموظف عند الحاجة." : "Change dates, branch or staff only when needed."}</span>
+        <details
+          className="group mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm"
+          open={!simple}
+          data-report-filters="true"
+        >
+          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 sm:px-6">
+            <span className="flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                <Filter className="size-5" aria-hidden="true" />
+              </span>
+              <span>
+                <span className="block text-sm font-black text-foreground">
+                  {language === "AR"
+                    ? "الفترة ونطاق التقرير"
+                    : "Period & report scope"}
+                </span>
+                <span className="mt-0.5 block text-xs text-foreground-subtle">
+                  {language === "AR"
+                    ? "غيّر التاريخ أو الشريحة أو الفرع أو الموظف عند الحاجة."
+                    : "Change dates, segment, branch, or staff when needed."}
+                </span>
+              </span>
             </span>
-            <span className="text-xs font-semibold text-primary">{language === "AR" ? "تعديل" : "Edit"}</span>
+            <span className="text-xs font-bold text-primary">
+              {language === "AR" ? "تعديل" : "Edit"}
+            </span>
           </summary>
           <form
             method="get"
-            className="grid gap-4 border-t border-border p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3"
+            className="grid gap-4 border-t border-border p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3"
           >
-          <input name="period" type="hidden" value="custom" />
-          <div>
-            <label
-              htmlFor="from"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              من تاريخ
-            </label>
-
-            <input
-              id="from"
-              name="from"
-              type="date"
-              defaultValue={fromInput}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="segment"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              شريحة العملاء
-            </label>
-
-            <select
-              id="segment"
-              name="segment"
-              defaultValue={segment ?? "all"}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
-            >
-              <option value="all">كل الشرائح</option>
-              {availableSegments.map((customerSegment) => (
-                <option
-                  key={customerSegment}
-                  value={customerSegment}
-                >
-                  {getCustomerSegmentLabel(customerSegment)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="loyaltyMode"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              برنامج الولاء
-            </label>
-
-            <select
-              id="loyaltyMode"
-              name="loyaltyMode"
-              defaultValue={loyaltyMode}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
-            >
-              <option value="all">كل البرامج المتاحة</option>
-              <option value={business.loyaltyMode}>
-                {getLoyaltyModeLabel(business.loyaltyMode)}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="to"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              إلى تاريخ
-            </label>
-
-            <input
-              id="to"
-              name="to"
-              type="date"
-              defaultValue={toInput}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="branch"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              الفرع
-            </label>
-
-            <select
-              id="branch"
-              name="branch"
-              defaultValue={reportScope.branchId ?? "all"}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
-            >
-              <option value="all">كل الفروع والسجل التاريخي</option>
-              {reportBranches.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name}{branch.isActive ? "" : " (غير نشط)"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="staff"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              الموظف المنسوب إليه
-            </label>
-
-            <select
-              id="staff"
-              name="staff"
-              defaultValue={reportScope.attributedStaffId ?? "all"}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-violet-500"
-            >
-              <option value="all">كل الموظفين والعمليات غير المنسوبة</option>
-              {reportStaff.map((staffMember) => (
-                <option key={staffMember.id} value={staffMember.id}>
-                  {[staffMember.firstName, staffMember.lastName]
-                    .filter(Boolean)
-                    .join(" ") || "مستخدم بدون اسم"}
-                  {staffMember.isActive ? "" : " (غير نشط)"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-violet-600 px-6 py-3 font-semibold text-white transition hover:bg-violet-700 sm:w-auto"
-          >
-            تطبيق الفلتر
-          </button>
-
-          <div className="flex flex-wrap gap-2 xl:col-span-2">
-            {[
-              ["today", "اليوم"],
-              ["7d", "آخر 7 أيام"],
-              ["30d", "آخر 30 يومًا"],
-            ].map(([shortcut, label]) => (
-              <Link
-                key={shortcut}
-                href={`/businesses/${business.slug}/reports?period=${shortcut}${reportFilterSuffix}`}
-                className={`rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
-                  period === shortcut
-                    ? "border-violet-600 bg-violet-600 text-white"
-                    : "border-slate-300 bg-white text-slate-700 hover:border-violet-400"
-                }`}
+            <input name="period" type="hidden" value="custom" />
+            <div>
+              <label
+                htmlFor="from"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                {label}
-              </Link>
-            ))}
-          </div>
+                {language === "AR" ? "من تاريخ" : "From date"}
+              </label>
+
+              <input
+                id="from"
+                name="from"
+                type="date"
+                defaultValue={fromInput}
+                className={reportFieldClass}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="segment"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                {language === "AR" ? "شريحة العملاء" : "Customer segment"}
+              </label>
+
+              <select
+                id="segment"
+                name="segment"
+                defaultValue={segment ?? "all"}
+                className={reportFieldClass}
+              >
+                <option value="all">
+                  {language === "AR" ? "كل الشرائح" : "All segments"}
+                </option>
+                {availableSegments.map((customerSegment) => (
+                  <option key={customerSegment} value={customerSegment}>
+                    {getCustomerSegmentLabel(customerSegment, language)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="loyaltyMode"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                {language === "AR" ? "برنامج الولاء" : "Loyalty programme"}
+              </label>
+
+              <select
+                id="loyaltyMode"
+                name="loyaltyMode"
+                defaultValue={loyaltyMode}
+                className={reportFieldClass}
+              >
+                <option value="all">
+                  {language === "AR"
+                    ? "كل البرامج المتاحة"
+                    : "All available programmes"}
+                </option>
+                <option value={business.loyaltyMode}>
+                  {getLoyaltyModeLabel(business.loyaltyMode, language)}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="to"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                {language === "AR" ? "إلى تاريخ" : "To date"}
+              </label>
+
+              <input
+                id="to"
+                name="to"
+                type="date"
+                defaultValue={toInput}
+                className={reportFieldClass}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="branch"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                {language === "AR" ? "الفرع" : "Branch"}
+              </label>
+
+              <select
+                id="branch"
+                name="branch"
+                defaultValue={reportScope.branchId ?? "all"}
+                className={reportFieldClass}
+              >
+                <option value="all">
+                  {language === "AR"
+                    ? "كل الفروع والسجل التاريخي"
+                    : "All branches and historical records"}
+                </option>
+                {reportBranches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                    {branch.isActive
+                      ? ""
+                      : language === "AR"
+                        ? " (غير نشط)"
+                        : " (inactive)"}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="staff"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                {language === "AR" ? "الموظف المنسوب إليه" : "Attributed staff"}
+              </label>
+
+              <select
+                id="staff"
+                name="staff"
+                defaultValue={reportScope.attributedStaffId ?? "all"}
+                className={reportFieldClass}
+              >
+                <option value="all">
+                  {language === "AR"
+                    ? "كل الموظفين والعمليات غير المنسوبة"
+                    : "All staff and unattributed operations"}
+                </option>
+                {reportStaff.map((staffMember) => (
+                  <option key={staffMember.id} value={staffMember.id}>
+                    {[staffMember.firstName, staffMember.lastName]
+                      .filter(Boolean)
+                      .join(" ") ||
+                      (language === "AR" ? "مستخدم بدون اسم" : "Unnamed user")}
+                    {staffMember.isActive
+                      ? ""
+                      : language === "AR"
+                        ? " (غير نشط)"
+                        : " (inactive)"}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover sm:w-auto"
+            >
+              <CheckCircle2 className="size-4" aria-hidden="true" />
+              {copy.apply}
+            </button>
+
+            <div className="flex flex-wrap gap-2 xl:col-span-2">
+              {[
+                ["today", language === "AR" ? "اليوم" : "Today"],
+                ["7d", language === "AR" ? "آخر 7 أيام" : "Last 7 days"],
+                ["30d", language === "AR" ? "آخر 30 يومًا" : "Last 30 days"],
+              ].map(([shortcut, label]) => (
+                <Link
+                  key={shortcut}
+                  href={`/businesses/${business.slug}/reports?period=${shortcut}${reportFilterSuffix}`}
+                  className={`inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border px-4 text-center text-sm font-bold transition-colors ${
+                    period === shortcut
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-surface text-foreground-muted hover:border-primary/40 hover:text-primary"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
           </form>
         </details>
 
-        <section aria-label={copy.summary} className="mt-5 grid grid-cols-1 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface sm:grid-cols-2 xl:grid-cols-4">
+        <section
+          aria-label={copy.summary}
+          data-report-summary="true"
+          className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        >
           {[
-            { label: language === "AR" ? "عملاء جدد" : "New customers", value: newCustomers, detail: language === "AR" ? "خلال الفترة المحددة" : "In the selected period" },
-            { label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned", value: formatLoyaltyAmount({ ...loyaltyPresentation, amount: earnedAmount }), detail: language === "AR" ? "رصيد ولاء مسجل" : "Recorded loyalty balance" },
-            { label: language === "AR" ? "استبدالات المكافآت" : "Reward redemptions", value: numberFormatter.format(redeemed._count._all), detail: language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions" },
             {
-              label: language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals",
+              icon: Users,
+              tone: "primary",
+              label: language === "AR" ? "عملاء جدد" : "New customers",
+              value: newCustomers,
+              detail:
+                language === "AR"
+                  ? "خلال الفترة المحددة"
+                  : "In the selected period",
+            },
+            {
+              icon: Sparkles,
+              tone: "success",
+              label: language === "AR" ? "الولاء المكتسب" : "Loyalty earned",
+              value: formatLoyaltyAmount({
+                ...loyaltyPresentation,
+                amount: earnedAmount,
+              }),
+              detail:
+                language === "AR"
+                  ? "رصيد ولاء مسجل"
+                  : "Recorded loyalty balance",
+            },
+            {
+              icon: Gift,
+              tone: "warning",
+              label:
+                language === "AR" ? "استبدالات المكافآت" : "Reward redemptions",
+              value: numberFormatter.format(redeemed._count._all),
+              detail:
+                language === "AR" ? "استبدالات مسجلة" : "Recorded redemptions",
+            },
+            {
+              icon: ShieldAlert,
+              tone: "danger",
+              label:
+                language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals",
               value: numberFormatter.format(openReversalExceptions),
-              detail: language === "AR" ? "رصيد غير كافٍ ويحتاج متابعة" : "Insufficient balance requires follow-up",
+              detail:
+                language === "AR"
+                  ? "رصيد غير كافٍ ويحتاج متابعة"
+                  : "Insufficient balance requires follow-up",
               href: `/businesses/${business.slug}/reports/reversal-exceptions`,
             },
           ].map((metric) => {
+            const Icon = metric.icon;
+            const toneClass =
+              metric.tone === "success"
+                ? "bg-emerald-50 text-emerald-700"
+                : metric.tone === "warning"
+                  ? "bg-amber-50 text-amber-700"
+                  : metric.tone === "danger"
+                    ? "bg-red-50 text-red-700"
+                    : "bg-primary-soft text-primary";
             const content = (
               <>
-                <p className="text-sm font-semibold text-slate-600">{metric.label}</p>
-                <p className="mt-2 text-2xl font-bold text-slate-950">{metric.value}</p>
-                <p className="mt-2 text-xs text-slate-500">{metric.detail}</p>
+                <span
+                  className={`grid size-9 place-items-center rounded-xl ${toneClass}`}
+                >
+                  <Icon className="size-4" aria-hidden="true" />
+                </span>
+                <p className="mt-4 text-xs font-semibold text-foreground-subtle">
+                  {metric.label}
+                </p>
+                <p className="lf-type-numeric mt-1 text-2xl font-black text-foreground">
+                  {metric.value}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-foreground-muted">
+                  {metric.detail}
+                </p>
               </>
             );
 
@@ -1115,14 +1279,14 @@ export default async function ReportsPage({
               <Link
                 key={metric.label}
                 href={metric.href}
-                className="border-b border-border p-4 transition hover:bg-surface-subtle last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"
+                className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm transition-colors hover:bg-surface-subtle sm:p-5"
               >
                 {content}
               </Link>
             ) : (
               <article
                 key={metric.label}
-                className="border-b border-border p-4 last:border-b-0 sm:border-b-0 sm:border-s sm:first:border-s-0 sm:p-5"
+                className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm sm:p-5"
               >
                 {content}
               </article>
@@ -1131,22 +1295,37 @@ export default async function ReportsPage({
         </section>
 
         <section
-          aria-label={language === "AR" ? "صافي عمليات الولاء" : "Ledger gross and net summary"}
-          className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 sm:p-5"
+          aria-label={
+            language === "AR"
+              ? "صافي عمليات الولاء"
+              : "Ledger gross and net summary"
+          }
+          data-ledger-summary="gross-reversal-net"
+          className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
         >
-          <div>
-            <h2 className="text-lg font-bold text-foreground">
-              {language === "AR" ? "الإجمالي والعكس والصافي" : "Gross, reversals & net"}
-            </h2>
-            <p className="mt-1 text-sm text-foreground-muted">
-              {language === "AR"
-                ? "الأرقام محسوبة من سجل الحركات للفترة والفلاتر الحالية بدون تعديل السجل التاريخي."
-                : "Calculated from the immutable ledger using the current period and filters."}
-            </p>
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+              <TrendingUp className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                {language === "AR" ? "سلامة السجل" : "Ledger integrity"}
+              </p>
+              <h2 className="mt-1 text-lg font-black text-foreground">
+                {language === "AR"
+                  ? "الإجمالي والعكس والصافي"
+                  : "Gross, reversals & net"}
+              </h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-foreground-muted">
+                {language === "AR"
+                  ? "الأرقام محسوبة من سجل الحركات للفترة والفلاتر الحالية بدون تعديل السجل التاريخي."
+                  : "Calculated from the immutable ledger using the current period and filters."}
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <article className="rounded-[var(--lf-radius-input)] border border-border p-4">
+            <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
                 {language === "AR" ? "الولاء المكتسب" : "Earned loyalty"}
               </p>
@@ -1154,71 +1333,118 @@ export default async function ReportsPage({
                 <div className="flex justify-between gap-4">
                   <dt>{language === "AR" ? "الإجمالي" : "Gross earned"}</dt>
                   <dd className="font-semibold">
-                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.grossEarned })}
+                    {formatLoyaltyAmount({
+                      ...loyaltyPresentation,
+                      amount: ledgerSummary.grossEarned,
+                    })}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt>{language === "AR" ? "عمليات العكس" : "Earn reversals"}</dt>
+                  <dt>
+                    {language === "AR" ? "عمليات العكس" : "Earn reversals"}
+                  </dt>
                   <dd className="font-semibold">
-                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.earnReversed })}
+                    {formatLoyaltyAmount({
+                      ...loyaltyPresentation,
+                      amount: ledgerSummary.earnReversed,
+                    })}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-border pt-2">
-                  <dt className="font-bold">{language === "AR" ? "الصافي" : "Net earned"}</dt>
+                  <dt className="font-bold">
+                    {language === "AR" ? "الصافي" : "Net earned"}
+                  </dt>
                   <dd className="font-bold">
-                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.netEarned })}
+                    {formatLoyaltyAmount({
+                      ...loyaltyPresentation,
+                      amount: ledgerSummary.netEarned,
+                    })}
                   </dd>
                 </div>
               </dl>
             </article>
 
-            <article className="rounded-[var(--lf-radius-input)] border border-border p-4">
+            <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
                 {language === "AR" ? "الاستبدالات" : "Redemptions"}
               </p>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt>{language === "AR" ? "إجمالي المستبدل" : "Gross redeemed"}</dt>
+                  <dt>
+                    {language === "AR" ? "إجمالي المستبدل" : "Gross redeemed"}
+                  </dt>
                   <dd className="font-semibold">
-                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.grossRedeemed })}
+                    {formatLoyaltyAmount({
+                      ...loyaltyPresentation,
+                      amount: ledgerSummary.grossRedeemed,
+                    })}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt>{language === "AR" ? "عكس الاستبدالات" : "Redemption reversals"}</dt>
+                  <dt>
+                    {language === "AR"
+                      ? "عكس الاستبدالات"
+                      : "Redemption reversals"}
+                  </dt>
                   <dd className="font-semibold">
-                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.redemptionReversed })}
+                    {formatLoyaltyAmount({
+                      ...loyaltyPresentation,
+                      amount: ledgerSummary.redemptionReversed,
+                    })}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-border pt-2">
-                  <dt className="font-bold">{language === "AR" ? "صافي المستبدل" : "Net redeemed"}</dt>
+                  <dt className="font-bold">
+                    {language === "AR" ? "صافي المستبدل" : "Net redeemed"}
+                  </dt>
                   <dd className="font-bold">
-                    {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.netRedeemed })}
+                    {formatLoyaltyAmount({
+                      ...loyaltyPresentation,
+                      amount: ledgerSummary.netRedeemed,
+                    })}
                   </dd>
                 </div>
               </dl>
             </article>
 
-            <article className="rounded-[var(--lf-radius-input)] border border-border p-4">
+            <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
                 {language === "AR" ? "المبيعات المسجلة" : "Recorded sales"}
               </p>
               <dl className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt>{language === "AR" ? "إجمالي المبيعات" : "Gross recorded sales"}</dt>
+                  <dt>
+                    {language === "AR"
+                      ? "إجمالي المبيعات"
+                      : "Gross recorded sales"}
+                  </dt>
                   <dd className="font-semibold">
-                    {formatLoyaltyAmount({ ...salesPresentation, amount: ledgerSummary.grossRecordedSales })}
+                    {formatLoyaltyAmount({
+                      ...salesPresentation,
+                      amount: ledgerSummary.grossRecordedSales,
+                    })}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt>{language === "AR" ? "المبيعات المرتجعة" : "Refunded sales"}</dt>
+                  <dt>
+                    {language === "AR" ? "المبيعات المرتجعة" : "Refunded sales"}
+                  </dt>
                   <dd className="font-semibold">
-                    {formatLoyaltyAmount({ ...salesPresentation, amount: ledgerSummary.refundedSales })}
+                    {formatLoyaltyAmount({
+                      ...salesPresentation,
+                      amount: ledgerSummary.refundedSales,
+                    })}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-border pt-2">
-                  <dt className="font-bold">{language === "AR" ? "صافي المبيعات" : "Net recorded sales"}</dt>
+                  <dt className="font-bold">
+                    {language === "AR" ? "صافي المبيعات" : "Net recorded sales"}
+                  </dt>
                   <dd className="font-bold">
-                    {formatLoyaltyAmount({ ...salesPresentation, amount: ledgerSummary.netRecordedSales })}
+                    {formatLoyaltyAmount({
+                      ...salesPresentation,
+                      amount: ledgerSummary.netRecordedSales,
+                    })}
                   </dd>
                 </div>
               </dl>
@@ -1228,23 +1454,59 @@ export default async function ReportsPage({
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
               {language === "AR" ? "التعديلات اليدوية" : "Manual adjustments"}:{" "}
-              +{formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.adjustmentAdds })} / -
-              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: ledgerSummary.adjustmentSubtracts })}
+              +
+              {formatLoyaltyAmount({
+                ...loyaltyPresentation,
+                amount: ledgerSummary.adjustmentAdds,
+              })}{" "}
+              / -
+              {formatLoyaltyAmount({
+                ...loyaltyPresentation,
+                amount: ledgerSummary.adjustmentSubtracts,
+              })}
             </p>
             <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
               {language === "AR" ? "عمليات عكس معلقة" : "Unresolved reversals"}:{" "}
               {numberFormatter.format(ledgerSummary.unresolvedExceptions)}
             </p>
             <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
-              {language === "AR" ? "حركات عكس غير صالحة" : "Invalid reversal rows"}:{" "}
-              {numberFormatter.format(ledgerSummary.invalidReversalCount)}
+              {language === "AR"
+                ? "حركات عكس غير صالحة"
+                : "Invalid reversal rows"}
+              : {numberFormatter.format(ledgerSummary.invalidReversalCount)}
             </p>
           </div>
         </section>
 
-        {!simple && <section className="mt-6"><div className="mb-3"><h2 className="text-xl font-bold text-slate-950">{copy.historical}</h2><p className="mt-1 text-sm text-slate-600">{copy.dateRange}</p></div><ReportCharts language={language} unitName={business.unitName} trends={historicalTrends} /></section>}
+        {!simple && (
+          <section className="mt-6" data-report-trends="server-derived">
+            <div className="mb-4 flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                <Activity className="size-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  {copy.trends}
+                </p>
+                <h2 className="mt-1 text-xl font-black text-foreground">
+                  {copy.historical}
+                </h2>
+                <p className="mt-1 text-sm text-foreground-muted">
+                  {copy.dateRange}
+                </p>
+              </div>
+            </div>
+            <ReportCharts
+              language={language}
+              unitName={business.unitName}
+              trends={historicalTrends}
+            />
+          </section>
+        )}
 
-        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3`}>
+        <section
+          className={`${simple ? "hidden " : ""}mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3`}
+        >
           <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
             <p className="text-sm text-slate-500">إجمالي العملاء</p>
 
@@ -1323,11 +1585,15 @@ export default async function ReportsPage({
             <p className="text-sm text-slate-500">رصيد الولاء المكتسب</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-600">
-              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: earnedAmount })}
+              {formatLoyaltyAmount({
+                ...loyaltyPresentation,
+                amount: earnedAmount,
+              })}
             </p>
 
             <p dir="auto" className="mt-2 text-xs text-slate-400">
-              {earned._count._all} عملية إضافة — {operationalUnitLabel(loyaltyPresentation)}
+              {earned._count._all} عملية إضافة —{" "}
+              {operationalUnitLabel(loyaltyPresentation)}
             </p>
           </article>
 
@@ -1335,7 +1601,10 @@ export default async function ReportsPage({
             <p className="text-sm text-slate-500">إجمالي الولاء المكتسب</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-700">
-              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: lifetimeEarnedAmount })}
+              {formatLoyaltyAmount({
+                ...loyaltyPresentation,
+                amount: lifetimeEarnedAmount,
+              })}
             </p>
 
             <p dir="auto" className="mt-2 text-xs text-slate-400">
@@ -1348,7 +1617,10 @@ export default async function ReportsPage({
               <p className="text-sm text-slate-500">إجمالي الإنفاق المسجل</p>
 
               <p className="mt-3 text-4xl font-bold text-emerald-700">
-                {formatLoyaltyAmount({ ...loyaltyPresentation, amount: lifetimeTrackedSalesAmount })}
+                {formatLoyaltyAmount({
+                  ...loyaltyPresentation,
+                  amount: lifetimeTrackedSalesAmount,
+                })}
               </p>
 
               <p className="mt-2 text-xs text-slate-400">
@@ -1390,7 +1662,8 @@ export default async function ReportsPage({
               <p className="text-sm text-slate-500">متوسط قيمة الشراء</p>
 
               <p className="mt-3 text-4xl font-bold text-slate-950">
-                {averagePurchaseAmount.toFixed(1)}{business.currency ? ` ${business.currency}` : ""}
+                {averagePurchaseAmount.toFixed(1)}
+                {business.currency ? ` ${business.currency}` : ""}
               </p>
 
               <p className="mt-2 text-xs text-slate-400">
@@ -1401,7 +1674,9 @@ export default async function ReportsPage({
 
           {business.loyaltyMode === "VISITS" && (
             <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-              <p className="text-sm text-slate-500">متوسط الأيام بين الزيارات</p>
+              <p className="text-sm text-slate-500">
+                متوسط الأيام بين الزيارات
+              </p>
 
               <p className="mt-3 text-4xl font-bold text-slate-950">
                 {averageDaysBetweenVisits === null
@@ -1423,7 +1698,8 @@ export default async function ReportsPage({
             </p>
 
             <p className="mt-2 text-xs text-slate-400">
-              إجمالي التكلفة خلال الفترة: {redeemedCost} — الإجمالي منذ البداية: {allTimeRedeemed._count._all}
+              إجمالي التكلفة خلال الفترة: {redeemedCost} — الإجمالي منذ البداية:{" "}
+              {allTimeRedeemed._count._all}
             </p>
 
             {rewardDistribution.length > 0 && (
@@ -1445,7 +1721,8 @@ export default async function ReportsPage({
             </p>
 
             <p className="mt-2 text-xs text-slate-400">
-              مقياس على مستوى النشاط؛ لا يحمل فتح المكافأة فرعًا أو موظفًا في السجل الحالي.
+              مقياس على مستوى النشاط؛ لا يحمل فتح المكافأة فرعًا أو موظفًا في
+              السجل الحالي.
             </p>
           </article>
 
@@ -1453,7 +1730,10 @@ export default async function ReportsPage({
             <p className="text-sm text-slate-500">أرصدة العملاء الحالية</p>
 
             <p className="mt-3 text-4xl font-bold text-violet-600">
-              {formatLoyaltyAmount({ ...loyaltyPresentation, amount: currentBalance })}
+              {formatLoyaltyAmount({
+                ...loyaltyPresentation,
+                amount: currentBalance,
+              })}
             </p>
 
             <p dir="auto" className="mt-2 text-xs text-slate-400">
@@ -1522,15 +1802,20 @@ export default async function ReportsPage({
           </article>
         </section>
 
-        <section className={`${simple ? "hidden " : ""}mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7`}>
+        <section
+          className={`${simple ? "hidden " : ""}mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7`}
+        >
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-black text-emerald-300">أثر برنامج الولاء</p>
+              <p className="text-sm font-black text-emerald-300">
+                أثر برنامج الولاء
+              </p>
               <h2 className="mt-1 text-2xl font-black">مؤشرات تشغيلية موثقة</h2>
             </div>
 
             <p className="max-w-xl text-sm leading-6 text-slate-300">
-              تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.
+              تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا
+              للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.
             </p>
           </div>
 
@@ -1566,21 +1851,31 @@ export default async function ReportsPage({
                     {
                       label: "مبيعات ولاء مسجلة",
                       value: `${trackedSalesAmount}${business.currency ? ` ${business.currency}` : ""}`,
-                      detail: "مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا",
+                      detail:
+                        "مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا",
                     },
                   ]
                 : []),
             ].map((metric) => (
-              <article key={metric.label} className="rounded-2xl bg-white/10 p-4">
+              <article
+                key={metric.label}
+                className="rounded-2xl bg-white/10 p-4"
+              >
                 <p className="text-sm text-slate-300">{metric.label}</p>
-                <p className="mt-2 text-3xl font-black text-white">{metric.value}</p>
-                <p className="mt-2 text-xs leading-5 text-slate-300">{metric.detail}</p>
+                <p className="mt-2 text-3xl font-black text-white">
+                  {metric.value}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-300">
+                  {metric.detail}
+                </p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-5 lg:grid-cols-3`}>
+        <section
+          className={`${simple ? "hidden " : ""}mt-8 grid gap-5 lg:grid-cols-3`}
+        >
           {[
             {
               title: "الأكثر نشاطًا",
@@ -1644,7 +1939,9 @@ export default async function ReportsPage({
           ))}
         </section>
 
-        <section className={`${simple ? "hidden " : ""}mt-8 grid gap-8 xl:grid-cols-[1fr_360px]`}>
+        <section
+          className={`${simple ? "hidden " : ""}mt-8 grid gap-8 xl:grid-cols-[1fr_360px]`}
+        >
           <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
               <h2 className="text-xl font-bold text-slate-950">أحدث الحركات</h2>

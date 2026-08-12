@@ -53,7 +53,9 @@
     "validate:workspace": "node scripts/validate-workspace-boundaries.mjs"
   },
   "dependencies": {
+    "@loyalflow/contracts": "workspace:*",
     "@loyalflow/domain": "workspace:*",
+    "@loyalflow/i18n": "workspace:*",
     "@base-ui/react": "^1.6.0",
     "@inquirer/prompts": "^8.5.2",
     "@prisma/adapter-pg": "^7.8.0",

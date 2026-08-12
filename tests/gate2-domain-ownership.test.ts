@@ -198,6 +198,10 @@ test("legacy fields have an explicit non-destructive classification", () => {
     LEGACY_BUSINESS_FIELD_CLASSIFICATION.cardStyle,
     "DEPRECATED_READ_ONLY",
   );
+  assert.equal(
+    LEGACY_BUSINESS_FIELD_CLASSIFICATION.pointsName,
+    "DEPRECATED_READ_ONLY",
+  );
 });
 
 test("Owner and Super Admin card permissions remain isolated", () => {

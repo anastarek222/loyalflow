@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
+import { safePublicCardColor } from "@/lib/cards/public-card-projection";
 import prisma from "@/lib/prisma";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
@@ -13,19 +14,6 @@ type ManifestRouteProps = {
     token: string;
   }>;
 };
-
-function getThemeColor(
-  value: string | null
-) {
-  if (
-    value &&
-    /^#[0-9a-fA-F]{6}$/.test(value)
-  ) {
-    return value;
-  }
-
-  return "#2563eb";
-}
 
 export async function GET(
   _request: Request,
@@ -132,7 +120,7 @@ export async function GET(
       "#020617",
 
     theme_color:
-      getThemeColor(
+      safePublicCardColor(
         customer.business.primaryColor
       ),
 

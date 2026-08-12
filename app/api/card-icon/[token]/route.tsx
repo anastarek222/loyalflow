@@ -3,6 +3,7 @@
 import { ImageResponse } from "next/og";
 import { getSafeImageDataUrl } from "@/lib/branding/image-data";
 import { isPublicCardToken } from "@/lib/cards/public-token";
+import { safePublicCardColor } from "@/lib/cards/public-card-projection";
 import prisma from "@/lib/prisma";
 import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 
@@ -51,7 +52,7 @@ export const GET = async (
     return new Response('Card not found', { status: 404 });
   }
   const business = customer?.business;
-  const primaryColor = getSafeColor(business?.primaryColor, '#2563eb');
+  const primaryColor = safePublicCardColor(business?.primaryColor);
 
   const logoDataUrl = getSafeImageDataUrl(business?.logoUrl, 500 * 1024);
   const initials = getInitials(business?.name);
@@ -121,10 +122,6 @@ export const GET = async (
   response.headers.set("Cache-Control", "no-store, max-age=0");
   return response;
 };
-
-function getSafeColor(value: string | null | undefined, fallback: string) {
-  return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
-}
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);

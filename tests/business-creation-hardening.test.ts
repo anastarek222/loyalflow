@@ -140,7 +140,8 @@ test("Add Business branding uses upload preview without an owner-facing logo URL
   assert.match(wizard, /Business Logo/);
   assert.match(wizard, /Current business logo preview/);
   assert.match(wizard, /Change Logo|Upload Logo/);
-  assert.match(wizard, /Card preview with this business logo/);
+  assert.match(wizard, /Configure the one card design used for every customer/);
+  assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.doesNotMatch(wizard, /Or use a logo image URL/);
   assert.doesNotMatch(wizard, /type="url"/);
 });

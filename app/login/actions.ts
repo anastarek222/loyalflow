@@ -1,19 +1,92 @@
 "use server";
 
 import { signIn } from "@/auth";
+import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
+import { isSuperAdminMfaEnabled } from "@/lib/auth/super-admin-mfa-runtime";
+import prisma from "@/lib/prisma";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
+import { compare } from "bcryptjs";
 import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { z } from "zod";
 
-export async function loginAction(formData: FormData) {
+export type LoginState = {
+  status?: "invalid" | "mfa-required" | "mfa-invalid" | "mfa-setup-required";
+};
+
+const loginStepSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(10).max(200),
+  mfaCode: z.string().trim().max(64).optional().default(""),
+  loginStep: z.enum(["primary", "mfa"]).default("primary"),
+});
+
+export async function loginAction(
+  _previousState: LoginState,
+  formData: FormData,
+): Promise<LoginState> {
+  const parsed = loginStepSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    mfaCode: formData.get("mfaCode"),
+    loginStep: formData.get("loginStep"),
+  });
+  if (!parsed.success) return { status: "invalid" };
+
+  if (parsed.data.loginStep === "primary") {
+    const requestHeaders = await headers();
+    const attempt = await distributedRateLimit(
+      `credentials-primary-step:${getClientAddress(requestHeaders)}`,
+      { limit: 10, windowMs: 15 * 60 * 1000 },
+    );
+    if (!attempt.allowed) return { status: "invalid" };
+
+    const email = parsed.data.email.toLowerCase();
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        role: true,
+        isActive: true,
+        passwordHash: true,
+        business: { select: { isActive: true } },
+      },
+    });
+
+    const primaryCredentialsValid = Boolean(
+      user &&
+      user.isActive &&
+      (!user.business || user.business.isActive) &&
+      (await compare(parsed.data.password, user.passwordHash)) &&
+      (await isEmailVerificationSatisfied(user.id)),
+    );
+
+    if (!user || !primaryCredentialsValid) return { status: "invalid" };
+
+    if (user.role === "SUPER_ADMIN") {
+      const enabled = await isSuperAdminMfaEnabled(user.id);
+      return {
+        status: enabled ? "mfa-required" : "mfa-setup-required",
+      };
+    }
+  }
+
   formData.set("redirectTo", "/dashboard");
 
   try {
     await signIn("credentials", formData);
   } catch (error) {
     if (error instanceof AuthError) {
-      redirect("/login?error=invalid");
+      return {
+        status: parsed.data.loginStep === "mfa" ? "mfa-invalid" : "invalid",
+      };
     }
 
     throw error;
   }
+
+  return {};
 }

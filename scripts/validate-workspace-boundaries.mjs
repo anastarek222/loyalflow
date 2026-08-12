@@ -6,7 +6,17 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const expectedPackages = new Map([
-  ["packages/contracts", { name: "@loyalflow/contracts", allowedInternal: [], exports: {} }],
+  [
+    "packages/contracts",
+    {
+      name: "@loyalflow/contracts",
+      allowedInternal: [],
+      exports: {
+        "./customers/public-membership": "./src/customers/public-membership.ts",
+        "./cards/public-card": "./src/cards/public-card.ts",
+      },
+    },
+  ],
   [
     "packages/domain",
     {
@@ -20,7 +30,13 @@ const expectedPackages = new Map([
   ],
   [
     "packages/i18n",
-    { name: "@loyalflow/i18n", allowedInternal: ["@loyalflow/contracts"], exports: {} },
+    {
+      name: "@loyalflow/i18n",
+      allowedInternal: ["@loyalflow/contracts"],
+      exports: {
+        "./common": "./src/common.ts",
+      },
+    },
   ],
   ["packages/config", { name: "@loyalflow/config", allowedInternal: [], exports: {} }],
 ]);
@@ -117,4 +133,4 @@ function visit(packageName) {
 
 for (const packageName of graph.keys()) visit(packageName);
 
-console.log("Workspace boundaries are valid (4 packages, 2 approved runtime exports, no cycles).");
+console.log("Workspace boundaries are valid (4 packages, 5 approved runtime exports, no cycles).");

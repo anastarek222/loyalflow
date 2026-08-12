@@ -29,6 +29,7 @@ export type ShellNavigationItem = {
     | "overview"
     | "businesses"
     | "owners"
+    | "plans"
     | "platformOps"
     | "scan"
     | "customers"
@@ -51,6 +52,7 @@ type NavigationId =
   | "overview"
   | "businesses"
   | "owners"
+  | "plans"
   | "platformOps"
   | "scan"
   | "customers"
@@ -164,11 +166,23 @@ export function buildShellNavigation({
   if (user.role === "SUPER_ADMIN") {
     globalItems.push(item(language, "businesses", "/businesses"));
     globalItems.push(item(language, "owners", "/business-owners"));
+    globalItems.push(item(language, "plans", "/plans"));
     globalItems.push(item(language, "platformOps", "/operations"));
   }
 
   if (!business) {
-    return [{ id: "global", items: globalItems }];
+    return [
+      {
+        id: "global",
+        label:
+          user.role === "SUPER_ADMIN"
+            ? language === "AR"
+              ? "إدارة المنصة"
+              : "Platform administration"
+            : undefined,
+        items: globalItems,
+      },
+    ];
   }
 
   const root = `/businesses/${business.slug}`;
@@ -179,9 +193,7 @@ export function buildShellNavigation({
 
   const operations = [
     item(language, "overview", root),
-    ...(can("LOYALTY_EARN")
-      ? [item(language, "scan", `${root}/scan`)]
-      : []),
+    ...(can("LOYALTY_EARN") ? [item(language, "scan", `${root}/scan`)] : []),
     ...(can("CUSTOMERS_VIEW")
       ? [item(language, "customers", `${root}/customers`)]
       : []),
@@ -192,10 +204,18 @@ export function buildShellNavigation({
 
   const growth = can("SETTINGS_EDIT")
     ? [
-        ...(entitled("REWARDS") ? [item(language, "rewards", `${root}/rewards`)] : []),
-        ...(entitled("OFFERS") ? [item(language, "offers", `${root}/offers`)] : []),
-        ...(entitled("CAMPAIGNS") ? [item(language, "campaigns", `${root}/campaigns`)] : []),
-        ...(entitled("CAMPAIGNS") ? [item(language, "recovery", `${root}/recovery`)] : []),
+        ...(entitled("REWARDS")
+          ? [item(language, "rewards", `${root}/rewards`)]
+          : []),
+        ...(entitled("OFFERS")
+          ? [item(language, "offers", `${root}/offers`)]
+          : []),
+        ...(entitled("CAMPAIGNS")
+          ? [item(language, "campaigns", `${root}/campaigns`)]
+          : []),
+        ...(entitled("CAMPAIGNS")
+          ? [item(language, "recovery", `${root}/recovery`)]
+          : []),
       ]
     : can("CUSTOMERS_VIEW") && entitled("OFFERS")
       ? [item(language, "offers", `${root}/offers`)]
@@ -205,14 +225,13 @@ export function buildShellNavigation({
     ? [item(language, "program", `${root}/program`)]
     : [];
 
-  const analytics = can("REPORTS_VIEW") && entitled("REPORTING")
-    ? [item(language, "reports", `${root}/reports`)]
-    : [];
+  const analytics =
+    can("REPORTS_VIEW") && entitled("REPORTING")
+      ? [item(language, "reports", `${root}/reports`)]
+      : [];
 
   const administration = [
-    ...(can("STAFF_MANAGE")
-      ? [item(language, "team", `${root}/users`)]
-      : []),
+    ...(can("STAFF_MANAGE") ? [item(language, "team", `${root}/users`)] : []),
     ...(can("SETTINGS_EDIT")
       ? [
           item(language, "branches", `${root}/branches`),
@@ -231,7 +250,13 @@ export function buildShellNavigation({
       ? [{ id: "growth", label: labels[language].growth, items: growth }]
       : []),
     ...(analytics.length
-      ? [{ id: "analytics", label: labels[language].analytics, items: analytics }]
+      ? [
+          {
+            id: "analytics",
+            label: labels[language].analytics,
+            items: analytics,
+          },
+        ]
       : []),
     ...(administration.length
       ? [
@@ -246,7 +271,12 @@ export function buildShellNavigation({
 
   if (experienceMode === "ADVANCED") return advancedNavigation;
 
-  const primaryIds = new Set<NavigationId>(["overview", "scan", "customers", "activity"]);
+  const primaryIds = new Set<NavigationId>([
+    "overview",
+    "scan",
+    "customers",
+    "activity",
+  ]);
   const advancedDestinations = advancedNavigation
     .filter((group) => group.id !== "global")
     .flatMap((group) => group.items)
@@ -261,23 +291,37 @@ export function buildShellNavigation({
     .filter((group) => group.id !== "global")
     .flatMap((group) => group.items)
     .filter((entry) => primaryIds.has(entry.id))
-    .map((entry) => entry.id === "overview" ? { ...entry, label: labels[language].home } : entry);
+    .map((entry) =>
+      entry.id === "overview"
+        ? { ...entry, label: labels[language].home }
+        : entry,
+    );
 
   return [
     { id: "simple-primary", items: simplePrimary },
     ...(advancedDestinations.length || rules.showAdvancedToolsEntry
-      ? [{
-          id: "more",
-          label: labels[language].more,
-          items: [
-            ...advancedDestinations.filter(
-              (entry) => entry.id === "reports" || entry.id === "program",
-            ),
-            ...(rules.showAdvancedToolsEntry
-              ? [{ id: "advancedTools" as const, label: labels[language].advancedTools, icon: "settings" as const, href: "#experience-mode", action: "switch-mode" as const }]
-              : []),
-          ],
-        }]
+      ? [
+          {
+            id: "more",
+            label: labels[language].more,
+            items: [
+              ...advancedDestinations.filter(
+                (entry) => entry.id === "reports" || entry.id === "program",
+              ),
+              ...(rules.showAdvancedToolsEntry
+                ? [
+                    {
+                      id: "advancedTools" as const,
+                      label: labels[language].advancedTools,
+                      icon: "settings" as const,
+                      href: "#experience-mode",
+                      action: "switch-mode" as const,
+                    },
+                  ]
+                : []),
+            ],
+          },
+        ]
       : []),
   ].filter((group) => group.items.length);
 }
@@ -298,32 +342,56 @@ export function getShellPageContext(
   business?: ShellBusiness,
 ) {
   const text = labels[language];
-  if (pathname === "/businesses") return { title: text.businesses, parent: undefined };
-  if (pathname === "/business-owners") return { title: text.owners, parent: undefined };
-  if (pathname === "/operations") return { title: text.platformOps, parent: undefined };
-  if (pathname === "/plans") return { title: text.plans, parent: undefined };
-  if (pathname === "/dashboard") return { title: text.overview, parent: undefined };
+  const platformParent =
+    language === "AR" ? "إدارة المنصة" : "Platform administration";
+  if (pathname === "/businesses")
+    return { title: text.businesses, parent: platformParent };
+  if (pathname === "/business-owners")
+    return { title: text.owners, parent: platformParent };
+  if (pathname === "/operations")
+    return { title: text.platformOps, parent: platformParent };
+  if (pathname === "/plans")
+    return { title: text.plans, parent: platformParent };
+  if (pathname === "/dashboard")
+    return { title: text.overview, parent: undefined };
   if (!business) return { title: "LoyalFlow", parent: undefined };
 
   const suffix = pathname?.replace(`/businesses/${business.slug}`, "") || "";
   const title = suffix.startsWith("/customers/")
-    ? language === "AR" ? "تفاصيل العميل" : "Customer details"
-    : suffix === "/customers" ? text.customers
-    : suffix === "/duplicates" ? text.duplicates
-    : suffix === "/scan" || suffix.startsWith("/scan/") ? text.scan
-    : suffix === "/activity" ? text.activity
-    : suffix === "/program" ? text.program
-    : suffix === "/rewards" ? text.rewards
-    : suffix === "/offers" ? text.offers
-    : suffix === "/campaigns" ? text.campaigns
-    : suffix === "/recovery" ? text.recovery
-    : suffix === "/reports/staff" ? text.staffReports
-    : suffix === "/reports" ? text.reports
-    : suffix === "/users" ? text.team
-    : suffix === "/branches" ? text.branches
-    : suffix === "/settings" ? text.settings
-    : suffix === "/playbooks" ? text.playbooks
-    : text.overview;
+    ? language === "AR"
+      ? "تفاصيل العميل"
+      : "Customer details"
+    : suffix === "/customers"
+      ? text.customers
+      : suffix === "/duplicates"
+        ? text.duplicates
+        : suffix === "/scan" || suffix.startsWith("/scan/")
+          ? text.scan
+          : suffix === "/activity"
+            ? text.activity
+            : suffix === "/program"
+              ? text.program
+              : suffix === "/rewards"
+                ? text.rewards
+                : suffix === "/offers"
+                  ? text.offers
+                  : suffix === "/campaigns"
+                    ? text.campaigns
+                    : suffix === "/recovery"
+                      ? text.recovery
+                      : suffix === "/reports/staff"
+                        ? text.staffReports
+                        : suffix === "/reports"
+                          ? text.reports
+                          : suffix === "/users"
+                            ? text.team
+                            : suffix === "/branches"
+                              ? text.branches
+                              : suffix === "/settings"
+                                ? text.settings
+                                : suffix === "/playbooks"
+                                  ? text.playbooks
+                                  : text.overview;
 
   return { title, parent: business.name };
 }

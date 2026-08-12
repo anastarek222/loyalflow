@@ -6,6 +6,15 @@ import {
 import prisma from "@/lib/prisma";
 import type { Prisma, UserRole } from "@/generated/prisma/client";
 import Link from "next/link";
+import {
+  CheckCircle2,
+  Filter,
+  KeyRound,
+  Plus,
+  Search,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import { ConfirmSubmitButton } from "@/components/administration/confirm-submit-button";
 import { notFound, redirect } from "next/navigation";
 
@@ -20,12 +29,17 @@ import { logServerEvent } from "@/lib/server/logging";
 
 const USERS_PER_PAGE = 10;
 
+const administrationFieldClass =
+  "min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft";
+
 const experienceAccessCopy = {
   AR: {
     label: "وصول الواجهة",
-    createDescription: "اختر الواجهة التي يستطيع عضو الفريق استخدامها. الصلاحيات الحالية لا تتغير.",
+    createDescription:
+      "اختر الواجهة التي يستطيع عضو الفريق استخدامها. الصلاحيات الحالية لا تتغير.",
     editDescription: "يسري التغيير عند أول طلب جديد من الحساب.",
-    ownerDescription: "حسابات المالك تحتفظ دائمًا بالوضعين لحماية الوصول الإداري.",
+    ownerDescription:
+      "حسابات المالك تحتفظ دائمًا بالوضعين لحماية الوصول الإداري.",
     save: "حفظ وصول الواجهة",
     updated: "تم تحديث وصول الواجهة بنجاح.",
     SIMPLE_ONLY: "الوضع البسيط فقط",
@@ -38,9 +52,11 @@ const experienceAccessCopy = {
   },
   EN: {
     label: "Interface access",
-    createDescription: "Choose which interface this team member may use. Existing permissions do not change.",
+    createDescription:
+      "Choose which interface this team member may use. Existing permissions do not change.",
     editDescription: "The change takes effect on the account’s next request.",
-    ownerDescription: "Owner accounts always retain both modes to protect administrative access.",
+    ownerDescription:
+      "Owner accounts always retain both modes to protect administrative access.",
     save: "Save interface access",
     updated: "Interface access updated successfully.",
     SIMPLE_ONLY: "Simple only",
@@ -290,28 +306,47 @@ export default async function UsersPage({
 
   return (
     <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <Link
-              href={`/businesses/${business.slug}`}
-              className="text-sm font-medium text-violet-600 hover:text-violet-800"
-            >
-              → الرجوع إلى {business.name}
-            </Link>
+      <div
+        className="mx-auto max-w-7xl"
+        data-team-administration="true"
+        dir={language === "AR" ? "rtl" : "ltr"}
+      >
+        <Link
+          href={`/businesses/${business.slug}`}
+          className="inline-flex min-h-10 items-center text-sm font-semibold text-foreground-muted transition-colors hover:text-primary"
+        >
+          {language === "AR" ? "العودة إلى" : "Back to"} {business.name}
+        </Link>
 
-            <h1 className="mt-3 text-2xl font-bold text-slate-950 sm:text-3xl">
-              حسابات الفريق
-            </h1>
-
-            <p className="mt-1 text-slate-500">
-              إنشاء وإدارة حسابات فريق {business.name}.
-            </p>
-          </div>
-
-          <div className="rounded-full bg-surface-subtle px-3 py-1.5 text-sm font-semibold text-foreground-muted">
-            <span>إجمالي الحسابات</span>
-            <strong className="ms-2 text-foreground">{totalUsers}</strong>
+        <header className="relative mb-5 mt-4 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7">
+          <div className="pointer-events-none absolute end-0 top-0 size-64 rounded-full bg-[radial-gradient(circle,var(--lf-primary-soft),transparent_68%)]" />
+          <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-2 rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+                <UsersRound className="size-4" aria-hidden="true" />
+                {language === "AR" ? "إدارة الفريق" : "Team administration"}
+              </span>
+              <h1 className="mt-4 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                {language === "AR" ? "حسابات الفريق" : "Team accounts"}
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-foreground-muted">
+                {language === "AR"
+                  ? `أنشئ حسابات فريق ${business.name} واضبط الدور والوصول وحالة الحساب من مكان واحد.`
+                  : `Create ${business.name} team accounts and manage role, interface access, and account status in one place.`}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <AdminMetric
+                label={language === "AR" ? "إجمالي الحسابات" : "Total accounts"}
+                value={totalUsers}
+              />
+              <AdminMetric
+                label={
+                  language === "AR" ? "النتائج الحالية" : "Current results"
+                }
+                value={filteredUsers}
+              />
+            </div>
           </div>
         </header>
 
@@ -407,60 +442,118 @@ export default async function UsersPage({
           </div>
         )}
 
-        <section className="mb-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 sm:p-5">
+        <section
+          className="mb-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
+          data-team-filters="true"
+        >
+          <div className="mb-4 flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+              <Filter className="size-5" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="font-black text-foreground">
+                {language === "AR" ? "البحث والتصفية" : "Search & filter"}
+              </h2>
+              <p className="mt-1 text-sm text-foreground-muted">
+                {language === "AR"
+                  ? "ابحث بالاسم أو البريد وحدد الدور والحالة."
+                  : "Search by name or email and narrow by role and status."}
+              </p>
+            </div>
+          </div>
           <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <input
-              type="search"
-              name="q"
-              defaultValue={search}
-              placeholder="بحث بالاسم أو البريد الإلكتروني"
-              className="rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-            />
+            <label className="relative">
+              <Search
+                className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-foreground-subtle"
+                aria-hidden="true"
+              />
+              <span className="sr-only">
+                {language === "AR" ? "بحث الفريق" : "Search team"}
+              </span>
+              <input
+                type="search"
+                name="q"
+                defaultValue={search}
+                placeholder={
+                  language === "AR"
+                    ? "بحث بالاسم أو البريد الإلكتروني"
+                    : "Search by name or email"
+                }
+                className={`${administrationFieldClass} ps-10`}
+              />
+            </label>
 
             <select
               name="role"
               defaultValue={selectedRole ?? ""}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+              className={administrationFieldClass}
             >
-              <option value="">كل الصلاحيات</option>
-              <option value="OWNER">مالك</option>
-              <option value="MANAGER">مدير</option>
-              <option value="STAFF">موظف / كاشير</option>
-              <option value="VIEWER">مشاهد</option>
+              <option value="">
+                {language === "AR" ? "كل الصلاحيات" : "All roles"}
+              </option>
+              <option value="OWNER">
+                {language === "AR" ? "مالك" : "Owner"}
+              </option>
+              <option value="MANAGER">
+                {language === "AR" ? "مدير" : "Manager"}
+              </option>
+              <option value="STAFF">
+                {language === "AR" ? "موظف / كاشير" : "Staff / cashier"}
+              </option>
+              <option value="VIEWER">
+                {language === "AR" ? "مشاهد" : "Viewer"}
+              </option>
             </select>
 
             <select
               name="status"
               defaultValue={status}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+              className={administrationFieldClass}
             >
-              <option value="all">كل الحالات</option>
-              <option value="active">نشط</option>
-              <option value="inactive">موقوف</option>
+              <option value="all">
+                {language === "AR" ? "كل الحالات" : "All statuses"}
+              </option>
+              <option value="active">
+                {language === "AR" ? "نشط" : "Active"}
+              </option>
+              <option value="inactive">
+                {language === "AR" ? "موقوف" : "Inactive"}
+              </option>
             </select>
 
             <select
               name="sort"
               defaultValue={sort}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-3"
+              className={administrationFieldClass}
             >
-              <option value="newest">الأحدث أولًا</option>
-              <option value="oldest">الأقدم أولًا</option>
-              <option value="name_asc">الاسم أ ← ي</option>
-              <option value="name_desc">الاسم ي ← أ</option>
+              <option value="newest">
+                {language === "AR" ? "الأحدث أولًا" : "Newest first"}
+              </option>
+              <option value="oldest">
+                {language === "AR" ? "الأقدم أولًا" : "Oldest first"}
+              </option>
+              <option value="name_asc">
+                {language === "AR" ? "الاسم أ ← ي" : "Name A → Z"}
+              </option>
+              <option value="name_desc">
+                {language === "AR" ? "الاسم ي ← أ" : "Name Z → A"}
+              </option>
             </select>
 
             <button
               type="submit"
-              className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover"
             >
-              تطبيق
+              <CheckCircle2 className="size-4" aria-hidden="true" />
+              {language === "AR" ? "تطبيق" : "Apply"}
             </button>
           </form>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
             <span>
-              {filteredUsers} نتيجة من {totalUsers} حساب
+              {language === "AR"
+                ? `${filteredUsers} نتيجة من ${totalUsers} حساب`
+                : `${filteredUsers} of ${totalUsers} accounts`}
             </span>
 
             {filtersActive && (
@@ -468,19 +561,35 @@ export default async function UsersPage({
                 href={`/businesses/${business.slug}/users`}
                 className="font-semibold text-violet-600 hover:text-violet-800"
               >
-                مسح الفلاتر
+                {language === "AR" ? "مسح الفلاتر" : "Clear filters"}
               </Link>
             )}
           </div>
         </section>
 
-        <details className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
-            <span>
-              <span className="block text-sm font-bold text-foreground">إضافة حساب</span>
-              <span className="mt-0.5 block text-xs text-foreground-subtle">أنشئ حسابًا جديدًا فقط عند إضافة عضو للفريق.</span>
+        <details className="group mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
+          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 sm:px-6">
+            <span className="flex items-center gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                <Plus className="size-5" aria-hidden="true" />
+              </span>
+              <span>
+                <span className="block text-sm font-black text-foreground">
+                  {language === "AR" ? "إضافة حساب" : "Add account"}
+                </span>
+                <span className="mt-0.5 block text-xs text-foreground-subtle">
+                  {language === "AR"
+                    ? "أنشئ حسابًا جديدًا فقط عند إضافة عضو للفريق."
+                    : "Create an account only when adding a new team member."}
+                </span>
+              </span>
             </span>
-            <span className="text-lg font-bold text-primary" aria-hidden="true">+</span>
+            <span
+              className="text-lg font-bold text-primary transition-transform group-open:rotate-45"
+              aria-hidden="true"
+            >
+              +
+            </span>
           </summary>
           <div className="border-t border-border p-5">
             <form action={createUser} className="grid gap-4 sm:grid-cols-2">
@@ -499,7 +608,7 @@ export default async function UsersPage({
                   minLength={2}
                   maxLength={50}
                   dir="auto"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className={administrationFieldClass}
                 />
               </div>
 
@@ -516,7 +625,7 @@ export default async function UsersPage({
                   name="lastName"
                   maxLength={50}
                   dir="auto"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className={administrationFieldClass}
                 />
               </div>
 
@@ -535,7 +644,7 @@ export default async function UsersPage({
                   required
                   dir="ltr"
                   autoComplete="off"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className={administrationFieldClass}
                 />
               </div>
 
@@ -555,7 +664,7 @@ export default async function UsersPage({
                   dir="ltr"
                   minLength={10}
                   autoComplete="new-password"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                  className={administrationFieldClass}
                 />
               </div>
 
@@ -571,7 +680,7 @@ export default async function UsersPage({
                   id="role"
                   name="role"
                   defaultValue={isSuperAdmin ? "MANAGER" : "STAFF"}
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                  className={administrationFieldClass}
                 >
                   {isSuperAdmin && (
                     <option value="OWNER">مالك — يدير النشاط</option>
@@ -604,29 +713,50 @@ export default async function UsersPage({
                   name="experienceAccess"
                   defaultValue=""
                   aria-describedby="experience-access-description"
-                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                  className={administrationFieldClass}
                 >
                   <option value="">{accessCopy.recommended}</option>
                   <option value="SIMPLE_ONLY">{accessCopy.SIMPLE_ONLY}</option>
-                  <option value="ADVANCED_ONLY">{accessCopy.ADVANCED_ONLY}</option>
+                  <option value="ADVANCED_ONLY">
+                    {accessCopy.ADVANCED_ONLY}
+                  </option>
                   <option value="BOTH">{accessCopy.BOTH}</option>
                 </select>
 
-                <p id="experience-access-description" className="mt-2 text-sm text-slate-500">
+                <p
+                  id="experience-access-description"
+                  className="mt-2 text-sm text-slate-500"
+                >
                   {accessCopy.createDescription}
                 </p>
                 <ul className="mt-2 space-y-1 text-xs text-slate-500">
-                  <li><span className="font-semibold text-slate-700">{accessCopy.SIMPLE_ONLY}:</span> {accessCopy.simpleHelp}</li>
-                  <li><span className="font-semibold text-slate-700">{accessCopy.ADVANCED_ONLY}:</span> {accessCopy.advancedHelp}</li>
-                  <li><span className="font-semibold text-slate-700">{accessCopy.BOTH}:</span> {accessCopy.bothHelp}</li>
+                  <li>
+                    <span className="font-semibold text-slate-700">
+                      {accessCopy.SIMPLE_ONLY}:
+                    </span>{" "}
+                    {accessCopy.simpleHelp}
+                  </li>
+                  <li>
+                    <span className="font-semibold text-slate-700">
+                      {accessCopy.ADVANCED_ONLY}:
+                    </span>{" "}
+                    {accessCopy.advancedHelp}
+                  </li>
+                  <li>
+                    <span className="font-semibold text-slate-700">
+                      {accessCopy.BOTH}:
+                    </span>{" "}
+                    {accessCopy.bothHelp}
+                  </li>
                 </ul>
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover sm:w-auto"
               >
-                إنشاء الحساب
+                <UserRound className="size-4" aria-hidden="true" />
+                {language === "AR" ? "إنشاء الحساب" : "Create account"}
               </button>
             </form>
           </div>
@@ -661,42 +791,55 @@ export default async function UsersPage({
                     business.slug,
                     user.id,
                   );
-                  const changeExperienceAccess = updateBusinessUserExperienceAccessAction.bind(
-                    null,
-                    business.slug,
-                    user.id,
-                  );
+                  const changeExperienceAccess =
+                    updateBusinessUserExperienceAccessAction.bind(
+                      null,
+                      business.slug,
+                      user.id,
+                    );
 
                   return (
                     <article
                       key={user.id}
-                      className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 sm:p-5"
+                      data-team-member="true"
+                      className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
                     >
                       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h2
-                              dir="auto"
-                              className="text-lg font-bold text-slate-950"
+                        <div className="flex min-w-0 items-start gap-3">
+                          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-black text-primary">
+                            {user.firstName.trim().charAt(0).toUpperCase() ||
+                              "?"}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h2
+                                dir="auto"
+                                className="text-lg font-bold text-slate-950"
+                              >
+                                {user.firstName} {user.lastName ?? ""}
+                              </h2>
+
+                              {isCurrentUser && (
+                                <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
+                                  {language === "AR" ? "أنت" : "You"}
+                                </span>
+                              )}
+                            </div>
+
+                            <p
+                              dir="ltr"
+                              className="mt-1 break-words text-start text-sm text-foreground-muted"
                             >
-                              {user.firstName} {user.lastName ?? ""}
-                            </h2>
+                              {user.email}
+                            </p>
 
-                            {isCurrentUser && (
-                              <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
-                                أنت
-                              </span>
-                            )}
+                            <p className="mt-1 text-xs text-foreground-subtle">
+                              {language === "AR" ? "تاريخ الإنشاء" : "Created"}:{" "}
+                              {user.createdAt.toLocaleDateString(
+                                language === "AR" ? "ar-EG" : "en-US",
+                              )}
+                            </p>
                           </div>
-
-                          <p className="mt-1 break-words text-sm text-slate-500">
-                            {user.email}
-                          </p>
-
-                          <p className="mt-1 text-xs text-slate-400">
-                            تاريخ الإنشاء:{" "}
-                            {user.createdAt.toLocaleDateString("ar-EG")}
-                          </p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
@@ -722,128 +865,180 @@ export default async function UsersPage({
                         </div>
                       </div>
 
-                      <details className="mt-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle">
-                        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-foreground-muted">إدارة الحساب</summary>
-                        <div className="border-t border-border p-4">
-                      {canChangePassword && (
-                        <form
-                          action={resetPassword}
-                          className="mt-6 grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-2"
-                        >
-                          <div>
-                            <label
-                              htmlFor={`password-${user.id}`}
-                              className="mb-2 block text-sm font-medium text-slate-700"
-                            >
-                              كلمة المرور الجديدة
-                            </label>
-
-                            <input
-                              id={`password-${user.id}`}
-                              name="password"
-                              type="password"
-                              minLength={10}
-                              required
-                              autoComplete="new-password"
-                              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                      <details className="group mt-5 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-bold text-foreground-muted">
+                          <span className="inline-flex items-center gap-2">
+                            <KeyRound
+                              className="size-4 text-primary"
+                              aria-hidden="true"
                             />
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor={`confirm-${user.id}`}
-                              className="mb-2 block text-sm font-medium text-slate-700"
-                            >
-                              تأكيد كلمة المرور
-                            </label>
-
-                            <input
-                              id={`confirm-${user.id}`}
-                              name="confirmPassword"
-                              type="password"
-                              minLength={10}
-                              required
-                              autoComplete="new-password"
-                              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                            />
-                          </div>
-
-                          <button
-                            type="submit"
-                            className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700 sm:col-span-2"
+                            {language === "AR"
+                              ? "إدارة الحساب"
+                              : "Manage account"}
+                          </span>
+                          <span
+                            className="text-primary transition-transform group-open:rotate-45"
+                            aria-hidden="true"
                           >
-                            تغيير كلمة المرور
-                          </button>
-                        </form>
-                      )}
-
-                      <section className="mt-6 border-t border-slate-200 pt-6" aria-labelledby={`experience-access-${user.id}`}>
-                        <h3 id={`experience-access-${user.id}`} className="font-semibold text-slate-900">
-                          {accessCopy.label}
-                        </h3>
-                        {user.role === "OWNER" ? (
-                          <p className="mt-1 text-sm text-slate-500">{accessCopy.ownerDescription}</p>
-                        ) : (
-                          <form action={changeExperienceAccess} className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-                            <div>
-                              <label htmlFor={`experienceAccess-${user.id}`} className="mb-2 block text-sm font-medium text-slate-700">
-                                {accessCopy.label}
-                              </label>
-                              <select
-                                id={`experienceAccess-${user.id}`}
-                                name="experienceAccess"
-                                defaultValue={user.experienceAccess}
-                                aria-describedby={`experience-access-description-${user.id}`}
-                                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-                              >
-                                <option value="SIMPLE_ONLY">{accessCopy.SIMPLE_ONLY}</option>
-                                <option value="ADVANCED_ONLY">{accessCopy.ADVANCED_ONLY}</option>
-                                <option value="BOTH">{accessCopy.BOTH}</option>
-                              </select>
-                              <p id={`experience-access-description-${user.id}`} className="mt-2 text-sm text-slate-500">{accessCopy.editDescription}</p>
-                            </div>
-                            <button type="submit" className="min-h-11 rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700">
-                              {accessCopy.save}
-                            </button>
-                          </form>
-                        )}
-                      </section>
-
-                      <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
-                        <div>
-                          <p className="font-semibold text-slate-900">
-                            الوصول إلى الحساب
-                          </p>
-
-                          <p className="mt-1 break-words text-sm text-slate-500">
-                            الحساب الموقوف لا يمكنه الدخول إلى LoyalFlow.
-                          </p>
-                        </div>
-
-                        {canChangeStatus ? (
-                          <form action={changeStatus}>
-                            <ConfirmSubmitButton
-                              confirmation={user.isActive ? `إيقاف حساب ${user.email} وإنهاء جلساته الحالية؟` : `إعادة تفعيل حساب ${user.email}؟`}
-                              type="submit"
-                              className={
-                                user.isActive
-                                  ? "w-full rounded-xl border border-red-300 bg-red-50 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 sm:w-auto"
-                                  : "w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
-                              }
+                            +
+                          </span>
+                        </summary>
+                        <div className="border-t border-border p-4">
+                          {canChangePassword && (
+                            <form
+                              action={resetPassword}
+                              className="mt-6 grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-2"
                             >
-                              {user.isActive
-                                ? "إيقاف الحساب"
-                                : "إعادة تفعيل الحساب"}
-                            </ConfirmSubmitButton>
-                          </form>
-                        ) : (
-                          <p className="text-sm font-medium text-slate-400">
-                            {isCurrentUser
-                              ? "أنت cannot deactivate yourself."
-                              : "حساب محمي."}
-                          </p>
-                        )}
-                      </div>
+                              <div>
+                                <label
+                                  htmlFor={`password-${user.id}`}
+                                  className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                  كلمة المرور الجديدة
+                                </label>
+
+                                <input
+                                  id={`password-${user.id}`}
+                                  name="password"
+                                  type="password"
+                                  minLength={10}
+                                  required
+                                  autoComplete="new-password"
+                                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                />
+                              </div>
+
+                              <div>
+                                <label
+                                  htmlFor={`confirm-${user.id}`}
+                                  className="mb-2 block text-sm font-medium text-slate-700"
+                                >
+                                  تأكيد كلمة المرور
+                                </label>
+
+                                <input
+                                  id={`confirm-${user.id}`}
+                                  name="confirmPassword"
+                                  type="password"
+                                  minLength={10}
+                                  required
+                                  autoComplete="new-password"
+                                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                />
+                              </div>
+
+                              <button
+                                type="submit"
+                                className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700 sm:col-span-2"
+                              >
+                                تغيير كلمة المرور
+                              </button>
+                            </form>
+                          )}
+
+                          <section
+                            className="mt-6 border-t border-slate-200 pt-6"
+                            aria-labelledby={`experience-access-${user.id}`}
+                          >
+                            <h3
+                              id={`experience-access-${user.id}`}
+                              className="font-semibold text-slate-900"
+                            >
+                              {accessCopy.label}
+                            </h3>
+                            {user.role === "OWNER" ? (
+                              <p className="mt-1 text-sm text-slate-500">
+                                {accessCopy.ownerDescription}
+                              </p>
+                            ) : (
+                              <form
+                                action={changeExperienceAccess}
+                                className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
+                              >
+                                <div>
+                                  <label
+                                    htmlFor={`experienceAccess-${user.id}`}
+                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                  >
+                                    {accessCopy.label}
+                                  </label>
+                                  <select
+                                    id={`experienceAccess-${user.id}`}
+                                    name="experienceAccess"
+                                    defaultValue={user.experienceAccess}
+                                    aria-describedby={`experience-access-description-${user.id}`}
+                                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                  >
+                                    <option value="SIMPLE_ONLY">
+                                      {accessCopy.SIMPLE_ONLY}
+                                    </option>
+                                    <option value="ADVANCED_ONLY">
+                                      {accessCopy.ADVANCED_ONLY}
+                                    </option>
+                                    <option value="BOTH">
+                                      {accessCopy.BOTH}
+                                    </option>
+                                  </select>
+                                  <p
+                                    id={`experience-access-description-${user.id}`}
+                                    className="mt-2 text-sm text-slate-500"
+                                  >
+                                    {accessCopy.editDescription}
+                                  </p>
+                                </div>
+                                <button
+                                  type="submit"
+                                  className="min-h-11 rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+                                >
+                                  {accessCopy.save}
+                                </button>
+                              </form>
+                            )}
+                          </section>
+
+                          <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                الوصول إلى الحساب
+                              </p>
+
+                              <p className="mt-1 break-words text-sm text-slate-500">
+                                الحساب الموقوف لا يمكنه الدخول إلى LoyalFlow.
+                              </p>
+                            </div>
+
+                            {canChangeStatus ? (
+                              <form action={changeStatus}>
+                                <ConfirmSubmitButton
+                                  confirmation={
+                                    user.isActive
+                                      ? `إيقاف حساب ${user.email} وإنهاء جلساته الحالية؟`
+                                      : `إعادة تفعيل حساب ${user.email}؟`
+                                  }
+                                  type="submit"
+                                  className={
+                                    user.isActive
+                                      ? "w-full rounded-xl border border-red-300 bg-red-50 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 sm:w-auto"
+                                      : "w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+                                  }
+                                >
+                                  {user.isActive
+                                    ? "إيقاف الحساب"
+                                    : "إعادة تفعيل الحساب"}
+                                </ConfirmSubmitButton>
+                              </form>
+                            ) : (
+                              <p className="text-sm font-medium text-slate-400">
+                                {isCurrentUser
+                                  ? language === "AR"
+                                    ? "لا يمكنك إيقاف حسابك الشخصي."
+                                    : "You cannot deactivate your own account."
+                                  : language === "AR"
+                                    ? "حساب محمي."
+                                    : "Protected account."}
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </details>
                     </article>
@@ -889,5 +1084,16 @@ export default async function UsersPage({
         )}
       </div>
     </main>
+  );
+}
+
+function AdminMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-4 py-3">
+      <p className="text-xs font-semibold text-foreground-subtle">{label}</p>
+      <p className="lf-type-numeric mt-1 text-xl font-black text-foreground">
+        {value}
+      </p>
+    </div>
   );
 }
