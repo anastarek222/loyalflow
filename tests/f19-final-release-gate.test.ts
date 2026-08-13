@@ -118,3 +118,4 @@ test("F19.6 production checklist points to the final gate and approval record", 
 
   assert.match(checklist, /verify:release-checkpoint/);
   assert.match(checklist, /release:final/);
+});
