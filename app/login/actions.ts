@@ -2,6 +2,7 @@
 
 import { signIn } from "@/auth";
 import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
+import { recordLoginDenial } from "@/lib/auth/login-observability";
 import { isSuperAdminMfaEnabled } from "@/lib/auth/super-admin-mfa-runtime";
 import prisma from "@/lib/prisma";
 import {
@@ -34,7 +35,10 @@ export async function loginAction(
     mfaCode: formData.get("mfaCode"),
     loginStep: formData.get("loginStep"),
   });
-  if (!parsed.success) return { status: "invalid" };
+  if (!parsed.success) {
+    recordLoginDenial("primary", "invalid_input");
+    return { status: "invalid" };
+  }
 
   if (parsed.data.loginStep === "primary") {
     const requestHeaders = await headers();
@@ -42,7 +46,10 @@ export async function loginAction(
       `credentials-primary-step:${getClientAddress(requestHeaders)}`,
       { limit: 10, windowMs: 15 * 60 * 1000 },
     );
-    if (!attempt.allowed) return { status: "invalid" };
+    if (!attempt.allowed) {
+      recordLoginDenial("primary", "rate_limited");
+      return { status: "invalid" };
+    }
 
     const email = parsed.data.email.toLowerCase();
     const user = await prisma.user.findUnique({
@@ -56,15 +63,20 @@ export async function loginAction(
       },
     });
 
-    const primaryCredentialsValid = Boolean(
-      user &&
-      user.isActive &&
-      (!user.business || user.business.isActive) &&
-      (await compare(parsed.data.password, user.passwordHash)) &&
-      (await isEmailVerificationSatisfied(user.id)),
-    );
+    if (!user || !user.isActive || (user.business && !user.business.isActive)) {
+      recordLoginDenial("primary", "account_unavailable");
+      return { status: "invalid" };
+    }
 
-    if (!user || !primaryCredentialsValid) return { status: "invalid" };
+    if (!(await compare(parsed.data.password, user.passwordHash))) {
+      recordLoginDenial("primary", "password_mismatch");
+      return { status: "invalid" };
+    }
+
+    if (!(await isEmailVerificationSatisfied(user.id))) {
+      recordLoginDenial("primary", "email_unverified");
+      return { status: "invalid" };
+    }
 
     if (user.role === "SUPER_ADMIN") {
       const enabled = await isSuperAdminMfaEnabled(user.id);
@@ -80,6 +92,7 @@ export async function loginAction(
     await signIn("credentials", formData);
   } catch (error) {
     if (error instanceof AuthError) {
+      recordLoginDenial("primary", "credentials_rejected");
       return {
         status: parsed.data.loginStep === "mfa" ? "mfa-invalid" : "invalid",
       };
