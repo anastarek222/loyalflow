@@ -170,8 +170,8 @@ export default async function BranchesPage({
         )}
         {query.error === "subscription-restricted" && (
           <Notice tone="warning">
-            لا تسمح حالة الاشتراك الحالية بإضافة فرع جديد. تظل الفروع
-            والبيانات الحالية متاحة.
+            لا تسمح حالة الاشتراك الحالية بإضافة فرع أو تغيير بياناته أو
+            حالته. تظل الفروع والبيانات الحالية متاحة للقراءة.
           </Notice>
         )}
 
