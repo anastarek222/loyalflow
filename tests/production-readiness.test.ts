@@ -142,6 +142,10 @@ test("health routes expose safe readiness and liveness behavior", () => {
     readinessRoute,
     /database:\s*["'](connected|disconnected)/,
   );
+  assert.match(readinessRoute, /headers\.set\(\s*"Server-Timing"/);
+  assert.match(readinessRoute, /db;dur=\$\{formatDuration\(timings\.databaseMs\)\}/);
+  assert.match(readinessRoute, /total;dur=\$\{formatDuration\(timings\.totalMs\)\}/);
+  assert.doesNotMatch(readinessRoute, /Server-Timing[\s\S]{0,200}DATABASE_URL/);
   assert.match(livenessRoute, /status:\s*["']live["']/);
   assert.doesNotMatch(livenessRoute, /lib\/prisma/);
 });
@@ -207,84 +211,21 @@ test("local database verifier requires the complete reviewed committed migration
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
+  const manifest = JSON.parse(
+    source("prisma/migrations/manifest.json"),
+  ) as {
+    migrations: Array<{ name: string; sha256: string }>;
+  };
 
-  assert.equal(committedMigrations.length, 46);
-  assert.ok(
-    committedMigrations.includes(
-      "20260723103415_add_branch_audit_activity_types",
-    ),
-    "The F3 branch audit activity migration must be part of the reviewed history.",
+  assert.equal(manifest.migrations.length, committedMigrations.length);
+  assert.deepEqual(
+    manifest.migrations.map((migration) => migration.name),
+    committedMigrations,
   );
-  assert.ok(
-    committedMigrations.includes("20260724090000_add_experience_access"),
-    "The U6.2 experience-access migration must be part of the reviewed history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260726220000_add_business_subscription_billing",
-    ),
-    "The F19 subscription billing migration must be part of the reviewed history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260729090000_add_owner_onboarding_foundation",
-    ),
-    "Owner onboarding state must be part of the reviewed migration history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260729100000_add_standard_card_preferences",
-    ),
-    "Standard Card preferences must be part of the reviewed migration history.",
-  );
-  assert.ok(
-    committedMigrations.includes("20260729113000_add_custom_card_mode"),
-    "Custom Card mode must be isolated in its own reviewed migration.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260809033000_add_owner_invitation_lifecycle",
-    ),
-    "Owner invitation lifecycle must be part of the reviewed migration history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260809044000_add_email_verification_lifecycle",
-    ),
-    "Email verification lifecycle must be part of the reviewed migration history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260809081000_add_super_admin_mfa_lifecycle",
-    ),
-    "Super Admin MFA lifecycle must be part of the reviewed migration history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260809084500_add_security_notification_lifecycle",
-    ),
-    "Security notification lifecycle must be part of the reviewed migration history.",
-  );
-  assert.ok(
-    committedMigrations.includes(
-      "20260726224500_add_subscription_plan_entitlements",
-    ),
-    "The F19 plan entitlement migration must be part of the reviewed history.",
-  );
-  assert.ok(
-    committedMigrations.includes("20260727043000_add_google_sheets_sync_state"),
-    "The Google Sheets mapping and sync-state migration must be part of the reviewed history.",
-  );
-  assert.match(verifier, /const REVIEWED_MIGRATIONS = \[/);
-  assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);
-  assert.match(
-    verifier,
-    /JSON\.stringify\(migrationNames\) === JSON\.stringify\(REVIEWED_MIGRATIONS\)/,
-  );
-
-  for (const migration of committedMigrations) {
-    assert.match(verifier, new RegExp(`"${migration}"`));
-  }
+  assert.match(verifier, /manifest\.json/);
+  assert.match(verifier, /sha256/);
+  assert.doesNotMatch(verifier, /const REVIEWED_MIGRATIONS = \[/);
+  assert.doesNotMatch(verifier, /committedMigrations\.length\s*[!=]==?\s*\d+/);
 });
 
 test("final UAT transaction fixtures enforce customer-business consistency", () => {
