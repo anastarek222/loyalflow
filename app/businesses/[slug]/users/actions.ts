@@ -185,7 +185,6 @@ export async function createBusinessUserAction(
   if (!isBusinessOwner && !isSuperAdmin) {
     redirect(`/businesses/${slug}/users?error=permission`);
   }
-
   if (
     !canPerformSubscriptionOperation(
       business.subscriptionLifecycleState,
@@ -361,6 +360,14 @@ export async function updateBusinessUserExperienceAccessAction(
   if (!isBusinessOwner && !isSuperAdmin) {
     redirect(`/businesses/${slug}/users?error=permission`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  }
 
   const targetUser = await getTargetUser(business.id, parsedUserId.data);
   if (!targetUser) {
@@ -370,12 +377,22 @@ export async function updateBusinessUserExperienceAccessAction(
   const experienceAccess = resolveExperienceAccess(targetUser.role, parsedAccess.data);
   const activityContext = await getActivityRequestContext();
 
-  await prisma.$transaction([
-    prisma.user.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.user.update({
       where: { id: targetUser.id },
       data: { experienceAccess },
-    }),
-    prisma.businessActivity.create({
+    });
+    await transaction.businessActivity.create({
       data: {
         type: "USER_EXPERIENCE_ACCESS_UPDATED",
         description: `تم تحديث وصول الواجهة للحساب ${targetUser.email}`,
@@ -383,8 +400,12 @@ export async function updateBusinessUserExperienceAccessAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!updated) {
+    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  }
 
   revalidateTeamPages(slug);
   redirect(`/businesses/${slug}/users?success=experience-access`);
