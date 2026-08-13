@@ -1,6 +1,6 @@
 # TC8 Closed Beta Operations Record
 
-Status: `TECHNICAL ENTRY EVIDENCE COMPLETE — PARTICIPANT ENROLLMENT PENDING`  
+Status: `SYNTHETIC BETA PASS — REAL PARTICIPANT ENROLLMENT PENDING`  
 Environment: isolated `staging` only  
 Target cohort: 5-10 businesses
 
@@ -118,6 +118,29 @@ The Closed Beta is complete only when:
 
 Allowed decisions are `GO`, `NO-GO`, or `CONDITIONAL GO`. A green CI build,
 successful Preview, or this document cannot make the decision automatically.
+
+## Synthetic Beta UAT — 2026-08-13
+
+The product owner authorised the current validation work to run as synthetic
+Beta on isolated Staging. Three explicitly marked, non-real businesses were
+created temporarily, bringing the database total to six for the bounded test.
+Each synthetic business had one synthetic customer and one Earn transaction.
+
+The public card journey for one synthetic participant returned HTTP 200 on the
+protected Staging deployment. The response showed an active Arabic/RTL card,
+the expected balance and reward progress, `no-store` caching, CSP and bounded
+security headers. Follow-up direct API fetches were redirected by Vercel
+Protection (HTTP 302); this is protection-layer evidence, not an application
+failure, and no API success is claimed from those redirected requests.
+
+Cleanup completed in dependency order. Verification reported zero matching
+synthetic businesses, customers, and transactions after the test. No existing
+record, Production environment, credential, schema, migration, or deployment
+was changed.
+
+This evidence validates the disposable synthetic Beta path only. It does not
+count toward the five required real participants, participant consent,
+authenticated owner journeys, Closed Beta completion, or Go/No-Go approval.
 
 ## Current evidence boundary
 
