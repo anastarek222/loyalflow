@@ -32,6 +32,17 @@ export type SubscriptionAccessPolicy = Readonly<{
   preserveRolesAndTenantIsolation: true;
 }>;
 
+export const subscriptionOperationIntents = [
+  "READ",
+  "EXPORT",
+  "OPERATE",
+  "EXPAND",
+  "PURCHASE",
+] as const;
+
+export type SubscriptionOperationIntent =
+  (typeof subscriptionOperationIntents)[number];
+
 const accessPolicies: Record<
   SubscriptionLifecycleState,
   SubscriptionAccessPolicy
@@ -124,6 +135,30 @@ export function getSubscriptionAccessPolicy(
   state: SubscriptionLifecycleState,
 ): SubscriptionAccessPolicy {
   return accessPolicies[state];
+}
+
+export function canPerformSubscriptionOperation(
+  state: SubscriptionLifecycleState,
+  intent: SubscriptionOperationIntent,
+): boolean {
+  const policy = getSubscriptionAccessPolicy(state);
+
+  switch (intent) {
+    case "READ":
+    case "EXPORT":
+      return true;
+    case "OPERATE":
+      return (
+        policy.paidFeatures === "FULL" ||
+        policy.paidFeatures === "CURRENT_PERIOD"
+      );
+    case "EXPAND":
+      return policy.allowPlanExpansion;
+    case "PURCHASE":
+      return policy.allowNewPurchase;
+    default:
+      return false;
+  }
 }
 
 export function transitionSubscriptionLifecycle(input: {

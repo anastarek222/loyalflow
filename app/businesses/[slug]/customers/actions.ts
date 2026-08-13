@@ -25,6 +25,8 @@ import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -258,6 +260,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
       id: true,
       slug: true,
       plan: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -269,6 +272,15 @@ export async function createCustomerAction(slug: string, formData: FormData) {
 
   if (!canAccess) {
     redirect("/dashboard");
+  }
+
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
   }
 
   const parsed = parseCustomerRegistration({
@@ -317,6 +329,16 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   const activityContext = await getActivityRequestContext();
 
   const createdCustomer = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "EXPAND",
+      ))
+    ) {
+      return null;
+    }
+
     const customer = await transaction.customer.create({
       data: {
         firstName: parsed.firstName,
@@ -340,6 +362,10 @@ export async function createCustomerAction(slug: string, formData: FormData) {
 
     return customer;
   });
+
+  if (!createdCustomer) {
+    redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+  }
 
   await syncBusinessToGoogleSheetSafely(business.id);
 

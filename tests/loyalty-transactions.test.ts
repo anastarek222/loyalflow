@@ -50,6 +50,7 @@ function createTransaction(
       findUnique: async () => ({
         staffAttributionEnabled,
         staffAttributionRequired,
+        subscriptionLifecycleState: "ACTIVE",
       }),
     },
     customer: {
