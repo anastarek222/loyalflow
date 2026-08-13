@@ -48,6 +48,12 @@ function createTransaction(options: {
   updateCount?: number;
   balanceAfter?: number;
   customerExists?: boolean;
+  subscriptionLifecycleState?:
+    | "ACTIVE"
+    | "SUSPENDED"
+    | "PAST_DUE"
+    | "CANCELED"
+    | "EXPIRED";
 } = {}) {
   const calls: Calls = {
     updates: [],
@@ -61,6 +67,8 @@ function createTransaction(options: {
       findUnique: async () => ({
         staffAttributionEnabled: false,
         staffAttributionRequired: false,
+        subscriptionLifecycleState:
+          options.subscriptionLifecycleState ?? "ACTIVE",
       }),
     },
     customer: {
@@ -224,6 +232,7 @@ test("a redemption can only be reversed once", async () => {
 
 test("same operation ID with identical redemption reversal intent replays the prior result", async () => {
   const { transaction, calls } = createTransaction({
+    subscriptionLifecycleState: "SUSPENDED",
     existing: {
       id: "reversal-existing",
       businessId: "business-1",
@@ -246,6 +255,26 @@ test("same operation ID with identical redemption reversal intent replays the pr
   });
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
+});
+
+test("restricted subscription blocks a new redemption reversal without financial writes", async () => {
+  const { transaction, calls } = createTransaction({
+    subscriptionLifecycleState: "SUSPENDED",
+  });
+
+  const result = await recordRedemptionReversal(transaction, {
+    ...input,
+    idempotencyKey: "redemption-reversal-restricted",
+  });
+
+  assert.deepEqual(result, {
+    status: "BLOCKED",
+    reason: "SUBSCRIPTION_RESTRICTED",
+  });
+  assert.equal(calls.updates.length, 0);
+  assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.activities.length, 0);
+  assert.equal(calls.notifications.length, 0);
 });
 
 test("unlock restoration is explicit and remains blocked until a safe redemption-to-unlock link exists", async () => {

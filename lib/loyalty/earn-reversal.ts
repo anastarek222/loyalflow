@@ -1,5 +1,6 @@
 import { Prisma, type ReversalKind } from "@/generated/prisma/client";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import {
   resolveFinancialOperationContext,
   type FinancialOperationActor,
@@ -23,7 +24,8 @@ export type EarnReversalBlockReason =
   | "UNEXPECTED_SALE_AMOUNT"
   | "SALE_REVERSAL_EXCEEDS_ORIGINAL"
   | "VOID_REQUIRES_FULL_ORIGINAL"
-  | "INSUFFICIENT_BALANCE";
+  | "INSUFFICIENT_BALANCE"
+  | "SUBSCRIPTION_RESTRICTED";
 
 export type EarnReversalResult =
   | {
@@ -327,6 +329,16 @@ export async function recordEarnReversal(
     }
 
     return blocked("INSUFFICIENT_BALANCE");
+  }
+
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      transaction,
+      input.businessId,
+      "OPERATE",
+    ))
+  ) {
+    return blocked("SUBSCRIPTION_RESTRICTED");
   }
 
   const original = await transaction.loyaltyTransaction.findFirst({
