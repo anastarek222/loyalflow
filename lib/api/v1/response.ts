@@ -54,7 +54,7 @@ export function apiProblem(input: {
   });
 }
 
-export function methodNotAllowed(request: Request, allowed = ["GET"] as const) {
+export function methodNotAllowed(request: Request) {
   const requestId = resolveRequestId(request.headers);
   const response = apiProblem({
     requestId,
@@ -62,7 +62,7 @@ export function methodNotAllowed(request: Request, allowed = ["GET"] as const) {
     code: "METHOD_NOT_ALLOWED",
     message: "The request method is not supported.",
   });
-  response.headers.set("Allow", allowed.join(", "));
+  response.headers.set("Allow", "GET");
   return response;
 }
 
