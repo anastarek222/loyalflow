@@ -777,50 +777,57 @@ export async function createAndAssignCustomerTagAction(
     redirect(`/businesses/${slug}/customers/${customer.id}?error=tag-invalid`);
   }
 
-  const tag = await prisma.customerTag.upsert({
+  const existingTag = await prisma.customerTag.findUnique({
     where: {
       businessId_name: {
         businessId: business.id,
         name: parsed.data,
       },
     },
-    create: {
-      businessId: business.id,
-      name: parsed.data,
-    },
-    update: {},
     select: { id: true, name: true },
   });
 
-  const existing = await prisma.customerTagAssignment.findUnique({
-    where: {
-      customerId_tagId: {
-        customerId: customer.id,
-        tagId: tag.id,
-      },
-    },
-    select: { id: true },
-  });
+  const existing = existingTag
+    ? await prisma.customerTagAssignment.findUnique({
+        where: {
+          customerId_tagId: {
+            customerId: customer.id,
+            tagId: existingTag.id,
+          },
+        },
+        select: { id: true },
+      })
+    : null;
 
   if (!existing) {
-    await prisma.$transaction([
-      prisma.customerTagAssignment.create({
-        data: {
-          businessId: business.id,
-          customerId: customer.id,
-          tagId: tag.id,
-        },
-      }),
-      prisma.businessActivity.create({
-        data: {
-          type: "CUSTOMER_TAG_ASSIGNED",
-          description: `تمت إضافة وسم العميل: ${tag.name}`,
-          businessId: business.id,
-          customerId: customer.id,
-          createdById: session.user.id,
-        },
-      }),
-    ]);
+    const intent = existingTag ? "OPERATE" : "EXPAND";
+    if (!canPerformSubscriptionOperation(business.subscriptionLifecycleState, intent)) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`);
+    }
+    const updated = await prisma.$transaction(async (transaction) => {
+      if (!(await canBusinessPerformSubscriptionOperation(transaction, business.id, intent))) {
+        return false;
+      }
+      const tag = existingTag ?? await transaction.customerTag.upsert({
+        where: { businessId_name: { businessId: business.id, name: parsed.data } },
+        create: { businessId: business.id, name: parsed.data },
+        update: {},
+        select: { id: true, name: true },
+      });
+      const added = await transaction.customerTagAssignment.createMany({
+        data: [{ businessId: business.id, customerId: customer.id, tagId: tag.id }],
+        skipDuplicates: true,
+      });
+      if (added.count > 0) {
+        await transaction.businessActivity.create({
+          data: { type: "CUSTOMER_TAG_ASSIGNED", description: `تمت إضافة وسم العميل: ${tag.name}`, businessId: business.id, customerId: customer.id, createdById: session.user.id },
+        });
+      }
+      return true;
+    });
+    if (!updated) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`);
+    }
   }
 
   revalidateCustomerPages(slug, customer.id, customer.publicToken);
@@ -859,24 +866,27 @@ export async function assignCustomerTagAction(
   });
 
   if (!existing) {
-    await prisma.$transaction([
-      prisma.customerTagAssignment.create({
-        data: {
-          businessId: business.id,
-          customerId: customer.id,
-          tagId: tag.id,
-        },
-      }),
-      prisma.businessActivity.create({
-        data: {
-          type: "CUSTOMER_TAG_ASSIGNED",
-          description: `تمت إضافة وسم العميل: ${tag.name}`,
-          businessId: business.id,
-          customerId: customer.id,
-          createdById: session.user.id,
-        },
-      }),
-    ]);
+    if (!canPerformSubscriptionOperation(business.subscriptionLifecycleState, "OPERATE")) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`);
+    }
+    const updated = await prisma.$transaction(async (transaction) => {
+      if (!(await canBusinessPerformSubscriptionOperation(transaction, business.id, "OPERATE"))) {
+        return false;
+      }
+      const added = await transaction.customerTagAssignment.createMany({
+        data: [{ businessId: business.id, customerId: customer.id, tagId: tag.id }],
+        skipDuplicates: true,
+      });
+      if (added.count > 0) {
+        await transaction.businessActivity.create({
+          data: { type: "CUSTOMER_TAG_ASSIGNED", description: `تمت إضافة وسم العميل: ${tag.name}`, businessId: business.id, customerId: customer.id, createdById: session.user.id },
+        });
+      }
+      return true;
+    });
+    if (!updated) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`);
+    }
   }
 
   revalidateCustomerPages(slug, customer.id, customer.publicToken);
@@ -908,18 +918,26 @@ export async function removeCustomerTagAction(
   });
 
   if (assignment) {
-    await prisma.$transaction([
-      prisma.customerTagAssignment.delete({ where: { id: assignment.id } }),
-      prisma.businessActivity.create({
-        data: {
-          type: "CUSTOMER_TAG_REMOVED",
-          description: `تمت إزالة وسم العميل: ${assignment.tag.name}`,
-          businessId: business.id,
-          customerId: customer.id,
-          createdById: session.user.id,
-        },
-      }),
-    ]);
+    if (!canPerformSubscriptionOperation(business.subscriptionLifecycleState, "OPERATE")) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`);
+    }
+    const updated = await prisma.$transaction(async (transaction) => {
+      if (!(await canBusinessPerformSubscriptionOperation(transaction, business.id, "OPERATE"))) {
+        return false;
+      }
+      const removed = await transaction.customerTagAssignment.deleteMany({
+        where: { id: assignment.id, businessId: business.id },
+      });
+      if (removed.count > 0) {
+        await transaction.businessActivity.create({
+          data: { type: "CUSTOMER_TAG_REMOVED", description: `تمت إزالة وسم العميل: ${assignment.tag.name}`, businessId: business.id, customerId: customer.id, createdById: session.user.id },
+        });
+      }
+      return true;
+    });
+    if (!updated) {
+      redirect(`/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`);
+    }
   }
 
   revalidateCustomerPages(slug, customer.id, customer.publicToken);

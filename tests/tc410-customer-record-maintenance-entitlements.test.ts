@@ -51,7 +51,7 @@ test("TC4.10 guards customer profile and note maintenance as OPERATE", () => {
   }
 });
 
-test("TC4.10 preserves customer deactivation safety and defers tag/referral topology", () => {
+test("TC4.10 preserves customer deactivation safety", () => {
   const statusAction = action(
     customerActions,
     "setCustomerStatusAction",
@@ -63,15 +63,6 @@ test("TC4.10 preserves customer deactivation safety and defers tag/referral topo
   );
   assert.match(statusAction, /isActive: parsedStatus\.data/);
 
-  for (const [name, nextName] of [
-    ["createCustomerReferralCodeAction", "createAndAssignCustomerTagAction"],
-    ["createAndAssignCustomerTagAction", "assignCustomerTagAction"],
-    ["assignCustomerTagAction", "removeCustomerTagAction"],
-    ["removeCustomerTagAction", "createCustomerNoteAction"],
-  ] as const) {
-    const deferredAction = action(customerActions, name, nextName);
-    assert.doesNotMatch(deferredAction, /canBusinessPerformSubscriptionOperation/);
-  }
 });
 
 test("TC4.10 exposes bounded feedback without provider or schema behavior", () => {
