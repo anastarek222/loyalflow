@@ -3,6 +3,7 @@ import {
   apiProblem,
   apiSuccess,
   internalApiProblem,
+  methodNotAllowed,
   resolveRequestId,
 } from "@/lib/api/v1/response";
 import { getApiBusinessSummary } from "@/lib/business/api-summary-query";
@@ -64,3 +65,8 @@ export async function GET(request: Request) {
     return internalApiProblem(requestId);
   }
 }
+
+export const POST = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;

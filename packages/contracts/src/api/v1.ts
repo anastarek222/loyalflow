@@ -18,6 +18,7 @@ export type ApiProblemCode =
   | "CAPABILITY_REQUIRED"
   | "RESOURCE_NOT_FOUND"
   | "INVALID_REQUEST"
+  | "METHOD_NOT_ALLOWED"
   | "INTERNAL_ERROR";
 
 export type ApiProblem = Readonly<{

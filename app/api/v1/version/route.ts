@@ -1,7 +1,11 @@
 import type { ApiVersionRead } from "@loyalflow/contracts/api/v1";
 import { loyalFlowApiVersion } from "@loyalflow/contracts/api/v1";
 
-import { apiSuccess, resolveRequestId } from "@/lib/api/v1/response";
+import {
+  apiSuccess,
+  methodNotAllowed,
+  resolveRequestId,
+} from "@/lib/api/v1/response";
 import { getPublicReleaseMetadata } from "@/lib/server/release";
 
 export const runtime = "nodejs";
@@ -19,3 +23,8 @@ export async function GET(request: Request) {
 
   return apiSuccess(data, requestId);
 }
+
+export const POST = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;
