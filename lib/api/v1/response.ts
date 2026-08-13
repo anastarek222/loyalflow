@@ -38,7 +38,7 @@ export function apiSuccess<T>(data: T, requestId: string, status = 200) {
 
 export function apiProblem(input: {
   requestId: string;
-  status: 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
+  status: 400 | 401 | 403 | 404 | 405 | 409 | 422 | 429 | 500;
   code: ApiProblemCode;
   message: string;
 }) {
@@ -52,6 +52,18 @@ export function apiProblem(input: {
     status: input.status,
     headers: responseHeaders(input.requestId),
   });
+}
+
+export function methodNotAllowed(request: Request, allowed = ["GET"] as const) {
+  const requestId = resolveRequestId(request.headers);
+  const response = apiProblem({
+    requestId,
+    status: 405,
+    code: "METHOD_NOT_ALLOWED",
+    message: "The request method is not supported.",
+  });
+  response.headers.set("Allow", allowed.join(", "));
+  return response;
 }
 
 export function internalApiProblem(requestId: string) {
