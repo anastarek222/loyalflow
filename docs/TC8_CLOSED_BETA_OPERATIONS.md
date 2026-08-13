@@ -130,9 +130,10 @@ Authenticated disposable UAT then confirmed:
 - Staff access to Scan and denial from Reports and Settings;
 - Viewer read-only access to Customers and Reports and denial from Scan;
 - the ordinary primary-login path after fixing omitted optional MFA input;
-- zero remaining UAT businesses and users after cleanup.
+- Super Admin fail-closed MFA setup, TOTP verification, Dashboard, and Operations access;
+- zero remaining UAT businesses, users, MFA records, and recovery-code records after cleanup.
 
-This is bounded authenticated role evidence only. Super Admin MFA, mobile coverage,
+This is bounded authenticated role evidence only. Mobile coverage,
 onboarding-state variants, performance remeasurement, rollback rehearsal, real
 5-10 business participation, and the human Go/No-Go decision remain open. No
 Production deployment, Production data, migration, provider activation, or real
