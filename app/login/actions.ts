@@ -32,7 +32,7 @@ export async function loginAction(
   const parsed = loginStepSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
-    mfaCode: formData.get("mfaCode"),
+    mfaCode: formData.get("mfaCode") ?? undefined,
     loginStep: formData.get("loginStep"),
   });
   if (!parsed.success) {

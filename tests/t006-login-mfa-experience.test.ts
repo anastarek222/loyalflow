@@ -25,6 +25,7 @@ test("T006 primary login step is rate limited and does not create a second sessi
   const action = source("app/login/actions.ts");
 
   assert.match(action, /credentials-primary-step:/);
+  assert.match(action, /formData\.get\("mfaCode"\) \?\? undefined/);
   assert.match(action, /distributedRateLimit/);
   assert.match(action, /compare\(parsed\.data\.password, user\.passwordHash\)/);
   assert.match(action, /isEmailVerificationSatisfied\(user\.id\)/);
