@@ -1,8 +1,6 @@
 "use server";
 
-import {
-  publicMembershipRegistrationProblemCodes,
-} from "@loyalflow/contracts/customers/public-membership";
+import { publicMembershipRegistrationProblemCodes } from "@loyalflow/contracts/customers/public-membership";
 
 import {
   generateCustomerCode,
@@ -14,26 +12,20 @@ import {
   canCreatePublicMembership,
 } from "@/lib/customers/public-membership-policy";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
-import {
-  canRecordReferral,
-  normalizeReferralCode,
-} from "@/lib/referrals/code";
+import { canRecordReferral, normalizeReferralCode } from "@/lib/referrals/code";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
-import {
-  getClientAddress,
-  rateLimit,
-} from "@/lib/utils/rate-limiter";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 class PublicMembershipPlanLimitError extends Error {}
+class PublicMembershipSubscriptionRestrictedError extends Error {}
 
-export async function joinBusinessAction(
-  slug: string,
-  formData: FormData
-) {
+export async function joinBusinessAction(slug: string, formData: FormData) {
   const business = await prisma.business.findUnique({
     where: { slug },
     select: {
@@ -41,28 +33,37 @@ export async function joinBusinessAction(
       slug: true,
       isActive: true,
       plan: true,
+      subscriptionLifecycleState: true,
     },
   });
 
   if (!business?.isActive) {
     redirect(
-      `/join/${slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`
+      `/join/${slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
+    );
+  }
+
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
     );
   }
 
   const requestHeaders = await headers();
   const clientAddress = getClientAddress(requestHeaders);
-  const limit = rateLimit(
-    `public-join:${business.id}:${clientAddress}`,
-    {
-      limit: 5,
-      windowMs: 15 * 60 * 1000,
-    }
-  );
+  const limit = rateLimit(`public-join:${business.id}:${clientAddress}`, {
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+  });
 
   if (!limit.allowed) {
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.rateLimited}`
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.rateLimited}`,
     );
   }
 
@@ -74,7 +75,7 @@ export async function joinBusinessAction(
 
   if (!parsed) {
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.invalidInput}`
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.invalidInput}`,
     );
   }
 
@@ -92,14 +93,14 @@ export async function joinBusinessAction(
 
   if (existingCustomer) {
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
     );
   }
 
   const customerCode = await generateCustomerCode(
     prisma,
     business.id,
-    business.slug
+    business.slug,
   );
   const customerName = getCustomerDisplayName(parsed);
   const planLimits = await getEffectivePlanLimits(business.plan);
@@ -110,16 +111,22 @@ export async function joinBusinessAction(
   try {
     const customer = await prisma.$transaction(
       async (transaction) => {
+        if (
+          !(await canBusinessPerformSubscriptionOperation(
+            transaction,
+            business.id,
+            "EXPAND",
+          ))
+        ) {
+          throw new PublicMembershipSubscriptionRestrictedError();
+        }
+
         const customerCount = await transaction.customer.count({
           where: { businessId: business.id },
         });
 
         if (
-          !canCreatePublicMembership(
-            business.plan,
-            customerCount,
-            planLimits
-          )
+          !canCreatePublicMembership(business.plan, customerCount, planLimits)
         ) {
           throw new PublicMembershipPlanLimitError();
         }
@@ -144,8 +151,8 @@ export async function joinBusinessAction(
         });
 
         if (referralCode) {
-          const referrerCode =
-            await transaction.customerReferralCode.findFirst({
+          const referrerCode = await transaction.customerReferralCode.findFirst(
+            {
               where: {
                 businessId: business.id,
                 code: referralCode,
@@ -163,7 +170,8 @@ export async function joinBusinessAction(
                   },
                 },
               },
-            });
+            },
+          );
 
           if (
             referrerCode &&
@@ -195,7 +203,7 @@ export async function joinBusinessAction(
 
         return createdCustomer;
       },
-      { isolationLevel: "Serializable" }
+      { isolationLevel: "Serializable" },
     );
 
     await syncBusinessToGoogleSheetSafely(business.id);
@@ -206,9 +214,15 @@ export async function joinBusinessAction(
 
     redirect(`/card/${customer.publicToken}?welcome=1`);
   } catch (error) {
+    if (error instanceof PublicMembershipSubscriptionRestrictedError) {
+      redirect(
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
+      );
+    }
+
     if (error instanceof PublicMembershipPlanLimitError) {
       redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.customerLimitReached}`
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.customerLimitReached}`,
       );
     }
 
@@ -219,7 +233,7 @@ export async function joinBusinessAction(
       error.code === "P2002"
     ) {
       redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
       );
     }
 
@@ -236,7 +250,7 @@ export async function joinBusinessAction(
     }
 
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
     );
   }
 }

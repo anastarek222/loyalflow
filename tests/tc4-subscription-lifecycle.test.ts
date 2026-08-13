@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  canPerformSubscriptionOperation,
   getSubscriptionAccessPolicy,
   subscriptionLifecycleStates,
   transitionSubscriptionLifecycle,
@@ -69,7 +70,10 @@ test("TC4 access policy preserves data, roles, and tenant isolation", () => {
 
   assert.equal(getSubscriptionAccessPolicy("TRIALING").paidFeatures, "FULL");
   assert.equal(getSubscriptionAccessPolicy("ACTIVE").paidFeatures, "FULL");
-  assert.equal(getSubscriptionAccessPolicy("PAST_DUE").allowPlanExpansion, false);
+  assert.equal(
+    getSubscriptionAccessPolicy("PAST_DUE").allowPlanExpansion,
+    false,
+  );
   assert.equal(getSubscriptionAccessPolicy("PAST_DUE").allowNewPurchase, false);
   assert.equal(
     getSubscriptionAccessPolicy("SUSPENDED").paidFeatures,
@@ -83,6 +87,25 @@ test("TC4 access policy preserves data, roles, and tenant isolation", () => {
     getSubscriptionAccessPolicy("CANCELED").paidFeatures,
     "CURRENT_PERIOD",
   );
+});
+
+test("TC4 operation policy preserves reads while enforcing lifecycle writes", () => {
+  for (const state of subscriptionLifecycleStates) {
+    assert.equal(canPerformSubscriptionOperation(state, "READ"), true);
+    assert.equal(canPerformSubscriptionOperation(state, "EXPORT"), true);
+  }
+
+  for (const state of ["TRIALING", "ACTIVE", "PAST_DUE", "CANCELED"] as const) {
+    assert.equal(canPerformSubscriptionOperation(state, "OPERATE"), true);
+  }
+  for (const state of ["PENDING", "SUSPENDED", "EXPIRED"] as const) {
+    assert.equal(canPerformSubscriptionOperation(state, "OPERATE"), false);
+  }
+
+  assert.equal(canPerformSubscriptionOperation("TRIALING", "EXPAND"), true);
+  assert.equal(canPerformSubscriptionOperation("ACTIVE", "EXPAND"), true);
+  assert.equal(canPerformSubscriptionOperation("PAST_DUE", "EXPAND"), false);
+  assert.equal(canPerformSubscriptionOperation("CANCELED", "EXPAND"), false);
 });
 
 test("TC4 foundation has no persistence, provider, runtime, or environment dependency", () => {

@@ -6,6 +6,7 @@ import {
 } from "@/lib/loyalty/operation-context";
 import { createBusinessNotification } from "@/lib/notifications";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 
 type TransactionClient = Prisma.TransactionClient;
 
@@ -64,7 +65,9 @@ type BalanceAdjustmentInput = {
 
 export class FinancialOperationConflictError extends Error {
   constructor() {
-    super("This operation ID is already associated with different financial intent.");
+    super(
+      "This operation ID is already associated with different financial intent.",
+    );
     this.name = "FinancialOperationConflictError";
   }
 }
@@ -78,7 +81,10 @@ export class FinancialOperationAbortedError extends Error {
 
 export class FinancialOperationContextError extends Error {
   constructor(
-    readonly reason: Extract<FinancialOperationContext, { valid: false }> ["reason"],
+    readonly reason: Extract<
+      FinancialOperationContext,
+      { valid: false }
+    >["reason"],
   ) {
     super("The financial operation context is invalid.");
     this.name = "FinancialOperationContextError";
@@ -165,7 +171,13 @@ export async function recordLoyaltyEarn(
     return null;
   }
 
-  if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
+  if (
+    !(await lockCustomerBalance(
+      transaction,
+      input.customerId,
+      input.businessId,
+    ))
+  ) {
     return null;
   }
 
@@ -218,6 +230,16 @@ export async function recordLoyaltyEarn(
     }
   }
 
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      transaction,
+      input.businessId,
+      "OPERATE",
+    ))
+  ) {
+    return null;
+  }
+
   const updateResult = await transaction.customer.updateMany({
     where: {
       id: input.customerId,
@@ -259,7 +281,9 @@ export async function recordLoyaltyEarn(
       ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       createdById: operationContext.createdById,
       ...(operationContext.attributedStaffId
         ? { attributedStaffId: operationContext.attributedStaffId }
@@ -285,7 +309,9 @@ export async function recordLoyaltyEarn(
       type: "LOYALTY_EARNED",
       description: input.activityDescription,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
       ...(input.activityContext?.deviceName
@@ -297,15 +323,12 @@ export async function recordLoyaltyEarn(
     },
   });
 
-  await createBusinessNotification(
-    transaction,
-    {
-      type: "LOYALTY_EARNED",
-      title: "تمت إضافة رصيد ولاء",
-      message: input.activityDescription,
-      businessId: input.businessId,
-    }
-  );
+  await createBusinessNotification(transaction, {
+    type: "LOYALTY_EARNED",
+    title: "تمت إضافة رصيد ولاء",
+    message: input.activityDescription,
+    businessId: input.businessId,
+  });
 
   return balanceAfter;
 }
@@ -330,7 +353,13 @@ export async function recordRewardRedemption(
     return null;
   }
 
-  if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
+  if (
+    !(await lockCustomerBalance(
+      transaction,
+      input.customerId,
+      input.businessId,
+    ))
+  ) {
     return null;
   }
 
@@ -365,7 +394,8 @@ export async function recordRewardRedemption(
         existing.type !== "REDEEM" ||
         existing.amount !== -input.cost ||
         existing.rewardRedemption?.rewardId !== (input.rewardId ?? null) ||
-        existing.rewardRedemption?.rewardUnlockId !== (input.unlockId ?? null) ||
+        existing.rewardRedemption?.rewardUnlockId !==
+          (input.unlockId ?? null) ||
         existing.rewardRedemption?.cost !== input.cost
       ) {
         throw new FinancialOperationConflictError();
@@ -373,6 +403,16 @@ export async function recordRewardRedemption(
 
       return existing.balanceAfter;
     }
+  }
+
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      transaction,
+      input.businessId,
+      "OPERATE",
+    ))
+  ) {
+    return null;
   }
 
   if (input.unlockId) {
@@ -441,7 +481,9 @@ export async function recordRewardRedemption(
       ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       createdById: operationContext.createdById,
       ...(operationContext.attributedStaffId
         ? { attributedStaffId: operationContext.attributedStaffId }
@@ -458,7 +500,9 @@ export async function recordRewardRedemption(
       transactionId: redeemedTransaction.id,
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       createdById: operationContext.createdById,
       ...(operationContext.attributedStaffId
         ? { attributedStaffId: operationContext.attributedStaffId }
@@ -471,7 +515,9 @@ export async function recordRewardRedemption(
       type: "REWARD_REDEEMED",
       description: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
       ...(input.activityContext?.deviceName
@@ -483,15 +529,12 @@ export async function recordRewardRedemption(
     },
   });
 
-  await createBusinessNotification(
-    transaction,
-    {
-      type: "REWARD_REDEEMED",
-      title: "تم استبدال مكافأة",
-      message: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
-      businessId: input.businessId,
-    }
-  );
+  await createBusinessNotification(transaction, {
+    type: "REWARD_REDEEMED",
+    title: "تم استبدال مكافأة",
+    message: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
+    businessId: input.businessId,
+  });
 
   return balanceAfter;
 }
@@ -513,7 +556,13 @@ export async function recordBalanceAdjustment(
 
   if (!operationContext.valid) return null;
 
-  if (!(await lockCustomerBalance(transaction, input.customerId, input.businessId))) {
+  if (
+    !(await lockCustomerBalance(
+      transaction,
+      input.customerId,
+      input.businessId,
+    ))
+  ) {
     return null;
   }
 
@@ -548,6 +597,16 @@ export async function recordBalanceAdjustment(
 
       return existing.balanceAfter;
     }
+  }
+
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      transaction,
+      input.businessId,
+      "OPERATE",
+    ))
+  ) {
+    return null;
   }
 
   const updateResult = await transaction.customer.updateMany({
@@ -598,7 +657,9 @@ export async function recordBalanceAdjustment(
       ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       customerId: input.customerId,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       createdById: operationContext.createdById,
       ...(operationContext.attributedStaffId
         ? { attributedStaffId: operationContext.attributedStaffId }
@@ -613,7 +674,9 @@ export async function recordBalanceAdjustment(
         signedAmount > 0 ? "+" : ""
       }${signedAmount}. السبب: ${input.reason}`,
       businessId: input.businessId,
-      ...(operationContext.branchId ? { branchId: operationContext.branchId } : {}),
+      ...(operationContext.branchId
+        ? { branchId: operationContext.branchId }
+        : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
       ...(input.activityContext?.deviceName
@@ -625,17 +688,14 @@ export async function recordBalanceAdjustment(
     },
   });
 
-  await createBusinessNotification(
-    transaction,
-    {
-      type: "BALANCE_ADJUSTED",
-      title: "تم تعديل رصيد عميل",
-      message: `تم تعديل الرصيد بمقدار ${
-        signedAmount > 0 ? "+" : ""
-      }${signedAmount}. السبب: ${input.reason}`,
-      businessId: input.businessId,
-    }
-  );
+  await createBusinessNotification(transaction, {
+    type: "BALANCE_ADJUSTED",
+    title: "تم تعديل رصيد عميل",
+    message: `تم تعديل الرصيد بمقدار ${
+      signedAmount > 0 ? "+" : ""
+    }${signedAmount}. السبب: ${input.reason}`,
+    businessId: input.businessId,
+  });
 
   return balanceAfter;
 }
