@@ -121,8 +121,19 @@ successful Preview, or this document cannot make the decision automatically.
 
 ## Current evidence boundary
 
-At creation time, staging head `95c3f86e9e02afa72b25d0efabb085440bb43df4`
-had a Vercel deployment in `Ready` state. Direct endpoint verification was
-blocked by Vercel Authentication, and no runtime requests were visible for that
-deployment. No participant was invited, no fixture was created, no database
-write or migration was run, and no Production action occurred.
+On 2026-08-13, isolated Staging release
+`2bda4e7b69b76e47e9c7275b36603917f65e4e4e` reached Vercel `Ready`.
+Authenticated disposable UAT then confirmed:
+
+- Owner login, Dashboard, and Loyalty Program access;
+- Manager access to reports and denial from owner-only Settings;
+- Staff access to Scan and denial from Reports and Settings;
+- Viewer read-only access to Customers and Reports and denial from Scan;
+- the ordinary primary-login path after fixing omitted optional MFA input;
+- zero remaining UAT businesses and users after cleanup.
+
+This is bounded authenticated role evidence only. Super Admin MFA, mobile coverage,
+onboarding-state variants, performance remeasurement, rollback rehearsal, real
+5-10 business participation, and the human Go/No-Go decision remain open. No
+Production deployment, Production data, migration, provider activation, or real
+participant invitation occurred.
