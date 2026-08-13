@@ -142,6 +142,19 @@ test("health routes expose safe readiness and liveness behavior", () => {
     readinessRoute,
     /database:\s*["'](connected|disconnected)/,
   );
+  assert.match(readinessRoute, /headers\.set\(\s*"Server-Timing"/);
+  assert.match(
+    readinessRoute,
+    /db;dur=\$\{formatDuration\(timings\.databaseMs\)\}/,
+  );
+  assert.match(
+    readinessRoute,
+    /total;dur=\$\{formatDuration\(timings\.totalMs\)\}/,
+  );
+  assert.doesNotMatch(
+    readinessRoute,
+    /Server-Timing[\s\S]{0,200}DATABASE_URL/,
+  );
   assert.match(livenessRoute, /status:\s*["']live["']/);
   assert.doesNotMatch(livenessRoute, /lib\/prisma/);
 });
