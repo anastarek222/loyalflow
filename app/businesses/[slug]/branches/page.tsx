@@ -168,6 +168,12 @@ export default async function BranchesPage({
             الفرع أو الإسناد المطلوب غير موجود ضمن هذا النشاط.
           </Notice>
         )}
+        {query.error === "subscription-restricted" && (
+          <Notice tone="warning">
+            لا تسمح حالة الاشتراك الحالية بإضافة فرع جديد. تظل الفروع
+            والبيانات الحالية متاحة.
+          </Notice>
+        )}
 
         <details className="group mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
           <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 sm:px-6">
