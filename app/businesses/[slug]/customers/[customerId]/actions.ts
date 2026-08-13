@@ -717,16 +717,46 @@ export async function createCustomerReferralCodeAction(
   });
 
   if (!existing) {
+    if (
+      !canPerformSubscriptionOperation(
+        business.subscriptionLifecycleState,
+        "EXPAND",
+      )
+    ) {
+      redirect(
+        `/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`,
+      );
+    }
+
     let created = false;
     for (let attempt = 0; attempt < 10 && !created; attempt += 1) {
       try {
-        await prisma.customerReferralCode.create({
-          data: {
-            businessId: business.id,
-            customerId: customer.id,
-            code: createReferralCodeCandidate(),
-          },
+        const result = await prisma.$transaction(async (transaction) => {
+          if (
+            !(await canBusinessPerformSubscriptionOperation(
+              transaction,
+              business.id,
+              "EXPAND",
+            ))
+          ) {
+            return "RESTRICTED" as const;
+          }
+
+          await transaction.customerReferralCode.create({
+            data: {
+              businessId: business.id,
+              customerId: customer.id,
+              code: createReferralCodeCandidate(),
+            },
+          });
+          return "CREATED" as const;
         });
+
+        if (result === "RESTRICTED") {
+          redirect(
+            `/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`,
+          );
+        }
         created = true;
       } catch (error) {
         if (!(

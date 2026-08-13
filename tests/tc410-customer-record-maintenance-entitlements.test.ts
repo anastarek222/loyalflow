@@ -64,7 +64,6 @@ test("TC4.10 preserves customer deactivation safety and defers tag/referral topo
   assert.match(statusAction, /isActive: parsedStatus\.data/);
 
   for (const [name, nextName] of [
-    ["createCustomerReferralCodeAction", "createAndAssignCustomerTagAction"],
     ["createAndAssignCustomerTagAction", "assignCustomerTagAction"],
     ["assignCustomerTagAction", "removeCustomerTagAction"],
     ["removeCustomerTagAction", "createCustomerNoteAction"],
