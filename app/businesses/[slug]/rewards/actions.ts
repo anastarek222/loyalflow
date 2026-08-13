@@ -6,6 +6,7 @@ import {
   activityRequestMetadata,
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
@@ -15,6 +16,7 @@ import {
   rewardInputSchema,
 } from "@/lib/rewards/catalog";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -27,7 +29,12 @@ async function getRewardManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, plan: true },
+    select: {
+      id: true,
+      slug: true,
+      plan: true,
+      subscriptionLifecycleState: true,
+    },
   });
 
   if (!business || !canManageBusiness(session.user, business.id)) {
@@ -61,6 +68,14 @@ export async function createRewardAction(
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
   if (!hasFeatureEntitlement(business.plan, "REWARDS")) {
     redirect(`/businesses/${business.slug}/rewards?error=plan-feature`);
   }
@@ -73,7 +88,17 @@ export async function createRewardAction(
   }
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const created = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "EXPAND",
+      ))
+    ) {
+      return false;
+    }
+
     const reward = await transaction.reward.create({
       data: {
         ...normalizeRewardInput(parsed.data),
@@ -90,7 +115,12 @@ export async function createRewardAction(
         ...activityRequestMetadata(activityContext),
       },
     });
+    return true;
   });
+
+  if (!created) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=created`);

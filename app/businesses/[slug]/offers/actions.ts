@@ -6,12 +6,14 @@ import {
   activityRequestMetadata,
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { offerInputSchema, normalizeOfferInput } from "@/lib/offers/catalog";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -21,7 +23,12 @@ async function getOfferManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, plan: true },
+    select: {
+      id: true,
+      slug: true,
+      plan: true,
+      subscriptionLifecycleState: true,
+    },
   });
   if (!business || !canManageBusiness(session.user, business.id)) {
     redirect("/dashboard");
@@ -50,6 +57,14 @@ export async function createOfferAction(slug: string, formData: FormData) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsed = parseOfferForm(formData);
   if (!parsed.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  }
   if (!hasFeatureEntitlement(business.plan, "OFFERS")) {
     redirect(`/businesses/${business.slug}/offers?error=plan-feature`);
   }
@@ -62,7 +77,17 @@ export async function createOfferAction(slug: string, formData: FormData) {
   }
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const created = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "EXPAND",
+      ))
+    ) {
+      return false;
+    }
+
     const offer = await transaction.offer.create({
       data: { ...normalizeOfferInput(parsed.data), businessId: business.id },
       select: { name: true },
@@ -76,7 +101,11 @@ export async function createOfferAction(slug: string, formData: FormData) {
         ...activityRequestMetadata(activityContext),
       },
     });
+    return true;
   });
+  if (!created) {
+    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  }
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=created`);
 }

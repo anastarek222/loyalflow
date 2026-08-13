@@ -46,7 +46,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run focused subscription entitlement tests
-        run: node --import tsx --test tests/subscription-lifecycle.test.ts tests/tc44-subscription-entitlement-enforcement.test.ts tests/tc45-subscription-expansion-parity.test.ts
+        run: node --import tsx --test tests/subscription-lifecycle.test.ts tests/tc4*.test.ts
 
       - name: Run full tests
         run: pnpm test
