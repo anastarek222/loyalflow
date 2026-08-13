@@ -24,6 +24,19 @@ type DistributedRateLimitRuntime = {
 
 const buckets = new Map<string, RateLimitBucket>();
 
+function logDistributedDenial(
+  reason: "missing_credentials" | "backend_unavailable" | "limit_exceeded",
+) {
+  // Do not include the limiter key: authentication keys can contain an IP or
+  // user identifier. The bounded reason is enough to diagnose fail-closed
+  // staging/production authentication without leaking request data.
+  console.warn(JSON.stringify({
+    level: "warning",
+    event: "distributed_rate_limit_denied",
+    reason,
+  }));
+}
+
 function pruneExpiredBuckets(now: number) {
   for (const [key, bucket] of buckets) {
     if (bucket.resetAt <= now) {
@@ -105,6 +118,7 @@ export async function distributedRateLimit(
 
   if (!resolved.url || !resolved.token) {
     if (!isProduction) return rateLimit(key, options);
+    logDistributedDenial("missing_credentials");
     return {
       allowed: false,
       remaining: 0,
@@ -152,6 +166,10 @@ export async function distributedRateLimit(
     const count = result[0];
     const ttlMs = result[1] > 0 ? result[1] : options.windowMs;
 
+    if (count > options.limit) {
+      logDistributedDenial("limit_exceeded");
+    }
+
     return {
       allowed: count <= options.limit,
       remaining: Math.max(0, options.limit - count),
@@ -159,6 +177,7 @@ export async function distributedRateLimit(
     };
   } catch {
     if (!isProduction) return rateLimit(key, options);
+    logDistributedDenial("backend_unavailable");
     return {
       allowed: false,
       remaining: 0,
