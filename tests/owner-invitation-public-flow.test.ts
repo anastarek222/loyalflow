@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { translate } from "@/lib/i18n/catalog";
 
 const root = process.cwd();
 const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
@@ -29,7 +30,8 @@ test("invalid, expired, replayed, or unavailable invitations share a generic pub
   const action = source("app/accept-owner-invitation/actions.ts");
   const page = source("app/accept-owner-invitation/page.tsx");
   assert.match(action, /error=invalid-token/);
-  assert.match(page, /invalid or has expired/);
+  assert.match(page, /ownerInvite\.invalid/);
+  assert.match(translate("en", "ownerInvite.invalid"), /invalid or has expired/);
   assert.doesNotMatch(page, /email_unavailable/);
 });
 
