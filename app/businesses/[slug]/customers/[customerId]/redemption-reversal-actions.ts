@@ -46,6 +46,8 @@ function reversalError(reason: RedemptionReversalBlockReason) {
       return "redemption-reversal-complete";
     case "UNLOCK_RESTORE_UNSUPPORTED":
       return "redemption-reversal-unlock-unsupported";
+    case "SUBSCRIPTION_RESTRICTED":
+      return "subscription-restricted";
   }
 }
 

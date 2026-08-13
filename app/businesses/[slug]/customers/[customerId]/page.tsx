@@ -656,6 +656,14 @@ export default async function CustomerDetailsPage({
           </div>
         )}
 
+        {query.error === "subscription-restricted" && (
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
+            {language === "AR"
+              ? "لا تسمح حالة الاشتراك الحالية بتنفيذ عملية مالية جديدة. تظل السجلات والبيانات الحالية متاحة."
+              : "The current subscription state does not allow a new financial operation. Existing records and data remain available."}
+          </div>
+        )}
+
         {!isSimpleExperience && smartWhatsAppSuggestion && (
           <section className="mt-6 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
