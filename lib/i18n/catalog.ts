@@ -148,7 +148,7 @@ export const messages = {
     "conversion.eyebrow": "Get started",
     "conversion.title": "Choose the LoyalFlow path that matches your account.",
     "conversion.body":
-      "LoyalFlow currently supports existing workspace access and secure owner invitation acceptance. Choose the path that matches how your account was created.",
+      "LoyalFlow Beta currently supports existing workspace access and secure owner invitation acceptance. Choose the path that matches how your account was created.",
     "conversion.existingTitle": "I already have a LoyalFlow account",
     "conversion.existingBody":
       "Sign in to your existing workspace. Pending owners are routed to their private setup flow automatically.",
@@ -158,7 +158,7 @@ export const messages = {
       "Open the invitation acceptance flow and use the secure invitation token from your email.",
     "conversion.invitedCta": "Accept owner invitation",
     "conversion.noSignup":
-      "Public self-signup and payment checkout are not enabled in this release, so this page does not create a new unsupported account path.",
+      "This Beta is invitation-only. Public self-signup and payment checkout are not enabled, so this page does not create an unsupported account path.",
     "conversion.backHome": "Back to homepage",
     "onboarding.metaTitle": "Owner onboarding | LoyalFlow",
     "onboarding.metaDescription":
@@ -313,7 +313,7 @@ export const messages = {
     "conversion.eyebrow": "ابدأ الآن",
     "conversion.title": "اختر مسار LoyalFlow المناسب لحسابك.",
     "conversion.body":
-      "يدعم LoyalFlow حاليًا الدخول إلى مساحة عمل موجودة وقبول دعوة مالك آمنة. اختر المسار الذي يطابق طريقة إنشاء حسابك.",
+      "يدعم LoyalFlow Beta حاليًا الدخول إلى مساحة عمل موجودة وقبول دعوة مالك آمنة. اختر المسار الذي يطابق طريقة إنشاء حسابك.",
     "conversion.existingTitle": "لدي حساب LoyalFlow بالفعل",
     "conversion.existingBody":
       "سجّل الدخول إلى مساحة العمل الحالية. يتم توجيه المالك المعلّق تلقائيًا إلى مسار الإعداد الخاص به.",
@@ -323,7 +323,7 @@ export const messages = {
       "افتح مسار قبول الدعوة واستخدم رمز الدعوة الآمن الموجود في البريد الإلكتروني.",
     "conversion.invitedCta": "قبول دعوة المالك",
     "conversion.noSignup":
-      "التسجيل الذاتي العام والدفع غير مفعّلين في هذا الإصدار، لذلك لا تنشئ هذه الصفحة مسار حساب جديد غير مدعوم.",
+      "هذه النسخة التجريبية متاحة بالدعوة فقط. التسجيل الذاتي العام والدفع غير مفعّلين، لذلك لا تنشئ هذه الصفحة مسار حساب غير مدعوم.",
     "conversion.backHome": "العودة للصفحة الرئيسية",
     "onboarding.metaTitle": "إعداد المالك | LoyalFlow",
     "onboarding.metaDescription": "أكمل إعداد المالك الخاص بك في LoyalFlow.",
