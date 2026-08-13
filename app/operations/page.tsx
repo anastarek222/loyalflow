@@ -8,6 +8,7 @@ import {
 } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { derivePaymentState } from "@/lib/billing/subscription";
+import { projectPaymentStateToSubscriptionLifecycle } from "@/lib/billing/subscription-lifecycle-projection";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import {
   deriveOperationalSeverity,
@@ -77,6 +78,17 @@ export default async function OperationsPage() {
       nextPaymentDate: business.nextPaymentDate,
       gracePeriodDays: business.gracePeriodDays,
     }),
+  );
+  const subscriptionLifecycleCounts = paymentStates.reduce(
+    (counts, paymentState) => {
+      const lifecycle = projectPaymentStateToSubscriptionLifecycle(paymentState);
+      if (lifecycle === "TRIALING") counts.TRIALING += 1;
+      else if (lifecycle === "ACTIVE") counts.ACTIVE += 1;
+      else if (lifecycle === "PAST_DUE") counts.PAST_DUE += 1;
+      else if (lifecycle === "SUSPENDED") counts.SUSPENDED += 1;
+      return counts;
+    },
+    { TRIALING: 0, ACTIVE: 0, PAST_DUE: 0, SUSPENDED: 0 },
   );
 
   const overdueSubscriptions = paymentStates.filter(
@@ -208,6 +220,35 @@ export default async function OperationsPage() {
           </div>
         </SummaryPanel>
       </div>
+
+      <SummaryPanel
+        title={t("دورة حياة الاشتراكات التجريبية", "Beta subscription lifecycle")}
+        description={t(
+          "إسقاط للقراءة فقط من حالة الفوترة الحالية؛ لا يغيّر الخطط أو الصلاحيات أو المدفوعات.",
+          "A read-only projection from current billing state; it changes no plans, access, or payments.",
+        )}
+      >
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            [t("تجريبية", "Trialing"), subscriptionLifecycleCounts.TRIALING],
+            [t("نشطة", "Active"), subscriptionLifecycleCounts.ACTIVE],
+            [t("متأخرة", "Past due"), subscriptionLifecycleCounts.PAST_DUE],
+            [t("موقوفة", "Suspended"), subscriptionLifecycleCounts.SUSPENDED],
+          ].map(([label, count]) => (
+            <div
+              key={String(label)}
+              className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3"
+            >
+              <p className="text-xs font-semibold text-foreground-subtle">
+                {label}
+              </p>
+              <p className="mt-1 text-lg font-black text-foreground">
+                {number.format(Number(count))}
+              </p>
+            </div>
+          ))}
+        </div>
+      </SummaryPanel>
 
       <SummaryPanel
         title={t("صحة التكاملات", "Integration health")}
