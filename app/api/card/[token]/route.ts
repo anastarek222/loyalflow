@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { buildPublicCardProjection } from "@/lib/cards/public-card-projection";
+import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import prisma from "@/lib/prisma";
@@ -202,8 +203,18 @@ export async function GET(
         standardArtworkCategory:
           customer.business.standardCardArtworkCategory,
         customArtworkEnabled: customer.business.customCardArtworkEnabled,
-        customFrontArtworkUrl: customer.business.customCardFrontArtworkUrl,
-        customBackArtworkUrl: customer.business.customCardBackArtworkUrl,
+        customFrontArtworkUrl: publicCustomCardArtworkUrl(
+          token,
+          "front",
+          customer.business.customCardFrontArtworkUrl,
+          customer.business.id,
+        ),
+        customBackArtworkUrl: publicCustomCardArtworkUrl(
+          token,
+          "back",
+          customer.business.customCardBackArtworkUrl,
+          customer.business.id,
+        ),
         customSafeZoneVersion: customer.business.customCardSafeZoneVersion,
       },
     });

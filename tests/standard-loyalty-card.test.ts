@@ -320,14 +320,14 @@ test("custom artwork capability stays reserved for super-admin architecture", ()
   assert.match(canonical, /custom-qr|custom-member|custom-balance|custom-reward/);
 });
 
-test("Custom UX is upload-oriented, storage-fenced, and preserves existing URLs", () => {
+test("Custom UX delegates lifecycle uploads while preserving published URLs", () => {
   const setup = source("components/standard-card-setup.tsx");
+  const manager = source("components/custom-card-artwork-manager.tsx");
   const canonical = source("components/loyalty-card.tsx");
-  assert.match(setup, /Upload \{label\} Design/);
-  assert.match(setup, /Persistent artwork storage is not configured/);
-  assert.match(setup, /Custom Card — storage setup required/);
-  assert.match(setup, /Connect approved\s+persistent storage to upload custom artwork/);
-  assert.match(setup, /type="file"[^>]*disabled/);
+  assert.match(setup, /Upload, immutable draft versions, preview and publish/);
+  assert.match(manager, /Upload new draft version/);
+  assert.match(manager, /Publish this version/);
+  assert.match(manager, /Vercel Blob is not connected/);
   assert.doesNotMatch(setup, /type="url"|Custom front artwork URL|Custom back artwork URL/);
   assert.match(setup, /name="customCardFrontArtworkUrl"\s+type="hidden"/);
   assert.match(setup, /name="customCardBackArtworkUrl"\s+type="hidden"/);

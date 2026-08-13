@@ -22,6 +22,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getAuthorizedCardDesignUpdate } from "@/lib/cards/card-design-permissions";
 import {
+  customCardStorageConfigured,
+  findCustomCardArtworkVersion,
+  uploadCustomCardArtwork,
+  validateCustomCardArtwork,
+} from "@/lib/cards/custom-card-storage";
+import {
   businessProfileSettingsSchema,
   customerMessagesSettingsSchema,
   getBusinessProfileUpdate,
@@ -475,6 +481,97 @@ export async function updateBusinessCardDesignAction(
   revalidatePath(`/businesses/${business.slug}/program`);
   revalidatePath("/card/[token]", "page");
   redirect(`/businesses/${business.slug}/program?cardDesign=saved`);
+}
+
+export async function uploadCustomCardArtworkAction(
+  slug: string,
+  formData: FormData,
+) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { id: true, slug: true },
+  });
+  if (!business) redirect("/businesses");
+  if (
+    session.user.role !== "SUPER_ADMIN" ||
+    !canManageBusiness(session.user, business.id)
+  ) {
+    redirect(`/businesses/${slug}/program?cardDesign=forbidden`);
+  }
+  if (!customCardStorageConfigured()) {
+    redirect(`/businesses/${slug}/program?cardDesign=storage-unavailable`);
+  }
+
+  const front = formData.get("customCardFrontFile");
+  const back = formData.get("customCardBackFile");
+  if (!validateCustomCardArtwork(front) || !validateCustomCardArtwork(back)) {
+    redirect(`/businesses/${slug}/program?cardDesign=invalid-upload`);
+  }
+
+  const version = crypto.randomUUID();
+  await uploadCustomCardArtwork({
+    businessId: business.id,
+    version,
+    front,
+    back,
+  });
+  redirect(
+    `/businesses/${slug}/program?cardDesign=draft&customVersion=${version}`,
+  );
+}
+
+export async function publishCustomCardArtworkAction(
+  slug: string,
+  formData: FormData,
+) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { id: true, slug: true },
+  });
+  if (!business) redirect("/businesses");
+  if (
+    session.user.role !== "SUPER_ADMIN" ||
+    !canManageBusiness(session.user, business.id)
+  ) {
+    redirect(`/businesses/${slug}/program?cardDesign=forbidden`);
+  }
+
+  const version = String(formData.get("customVersion") ?? "");
+  const artwork = await findCustomCardArtworkVersion(business.id, version);
+  if (!artwork) {
+    redirect(`/businesses/${slug}/program?cardDesign=invalid-upload`);
+  }
+
+  const activityContext = await getActivityRequestContext();
+  await prisma.$transaction([
+    prisma.business.update({
+      where: { id: business.id },
+      data: {
+        cardDesignMode: "CUSTOM",
+        customCardArtworkEnabled: true,
+        customCardFrontArtworkUrl: artwork.frontUrl,
+        customCardBackArtworkUrl: artwork.backUrl,
+        customCardSafeZoneVersion: "ID1_V1",
+      },
+    }),
+    prisma.businessActivity.create({
+      data: {
+        type: "BUSINESS_SETTINGS_UPDATED",
+        description: `تم نشر نسخة جديدة من تصميم بطاقة الولاء (${version})`,
+        businessId: business.id,
+        ...activityActorFields(session.user, business.id),
+        ...activityRequestMetadata(activityContext),
+      },
+    }),
+  ]);
+
+  revalidatePath(`/businesses/${business.slug}/program`);
+  revalidatePath("/card/[token]", "page");
+  redirect(`/businesses/${slug}/program?cardDesign=published`);
 }
 
 export async function syncGoogleSheetAction(slug: string) {
