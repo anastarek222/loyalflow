@@ -1,6 +1,6 @@
 # TC8 Closed Beta Operations Record
 
-Status: `READY FOR OPERATOR EXECUTION`  
+Status: `TECHNICAL ENTRY EVIDENCE COMPLETE — PARTICIPANT ENROLLMENT PENDING`  
 Environment: isolated `staging` only  
 Target cohort: 5-10 businesses
 
@@ -103,14 +103,14 @@ The Closed Beta is complete only when:
 
 | Field | Value |
 |---|---|
-| Candidate release SHA | TBD |
-| Staging deployment | TBD |
+| Candidate release SHA | `c85ec07d639fc2b37b285683af0ea710c1d0f6db` |
+| Staging deployment | `dpl_DhZ28skWsrTgjeULzJXNzJsnNj7n` — Ready |
 | Completed participants | 0 |
 | Open S0 / S1 / S2 | 0 / 0 / 0 |
-| Role/device matrix | NOT COMPLETE |
-| Performance evidence | NOT COMPLETE |
-| Rollback rehearsal | NOT COMPLETE |
-| Fixture cleanup | NOT APPLICABLE |
+| Role/device matrix | COMPLETE FOR CURRENT ENTRY GATE |
+| Performance evidence | PASS — 20/20, 0% errors, in-process p95 37.3 ms |
+| Rollback rehearsal | PASS — rollback Ready/200 and forward recovery Ready |
+| Fixture cleanup | CONFIRMED ZERO |
 | Decision | NOT DECIDED |
 | Decision owner | TBD |
 | Decision date/time | TBD |
@@ -121,24 +121,14 @@ successful Preview, or this document cannot make the decision automatically.
 
 ## Current evidence boundary
 
-On 2026-08-13, isolated Staging release
-`2bda4e7b69b76e47e9c7275b36603917f65e4e4e` reached Vercel `Ready`.
-Authenticated disposable UAT then confirmed:
+Current technical entry evidence is based on Staging release
+`c85ec07d639fc2b37b285683af0ea710c1d0f6db`. Its deployment is `Ready`, the
+direct readiness sample passed 20/20 with 0% errors and in-process p95 37.3 ms,
+and the governed rollback/forward-recovery rehearsal completed without a data
+or Production mutation. The authenticated role/MFA evidence remains valid and
+all disposable fixture counts remain zero.
 
-- Owner login, Dashboard, and Loyalty Program access;
-- Manager access to reports and denial from owner-only Settings;
-- Staff access to Scan and denial from Reports and Settings;
-- Viewer read-only access to Customers and Reports and denial from Scan;
-- the ordinary primary-login path after fixing omitted optional MFA input;
-- Super Admin fail-closed MFA setup, TOTP verification, Dashboard, and Operations access;
-- zero remaining UAT businesses, users, MFA records, and recovery-code records after cleanup;
-- a fresh 20-request protected health sample completed with 0% request errors,
-  but measured p95 was 4,770 ms against the 1,500 ms gate. This timing includes
-  the protected connector path and is not used as an application-only latency
-  claim; the performance gate remains failed pending a direct approved runner.
-
-This is bounded authenticated role evidence only. Mobile coverage,
-onboarding-state variants, performance remeasurement, rollback rehearsal, real
-5-10 business participation, and the human Go/No-Go decision remain open. No
-Production deployment, Production data, migration, provider activation, or real
-participant invitation occurred.
+No real participant has yet been invited or completed the journey. The Closed
+Beta participant register, issue log, and explicit human Go/No-Go decision
+therefore remain open. No Production deployment or Production data action
+occurred.
