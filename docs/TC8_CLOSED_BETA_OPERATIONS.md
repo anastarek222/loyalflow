@@ -1,9 +1,14 @@
 # TC8 Closed Beta Operations Record
 
-Status: `SYNTHETIC BETA PASS — REAL PARTICIPANT ENROLLMENT PENDING`  
+Status: `BETA TECHNICAL VALIDATION ACTIVE — REAL PARTICIPANT AND PRODUCTION GATES DEFERRED`  
 Environment: isolated `staging` only  
 Target cohort: 5-10 businesses
 
+## Current execution policy — 2026-08-13
+
+The product owner has directed all current work to continue as Beta on isolated Staging. Technical Beta slices may proceed without waiting for real-participant enrollment, provided each slice remains non-production, preserves isolation, and is labelled as synthetic or technical evidence where applicable.
+
+The governed 5-10 real-business cohort is deferred rather than completed. It remains mandatory before any Production or public-launch decision. Synthetic fixtures and automated UAT must never be counted as real participants, participant consent, or a human Go/No-Go decision.
 This record closes the operating-document gap for TC8. It does not claim that
 the Closed Beta, authenticated UAT, rollback rehearsal, or Go/No-Go decision
 has been completed.
