@@ -59,10 +59,12 @@ import {
 } from "@/lib/activity/business-activity";
 import { createBusinessNotification } from "@/lib/notifications";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import {
   actionBooleanSchema,
   opaqueIdSchema,
 } from "@/lib/validation/action-input";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const customerSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -256,6 +258,7 @@ async function getBusinessAccess(slug: string) {
       staffAttributionEnabled: true,
       staffAttributionRequired: true,
       plan: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -442,6 +445,16 @@ export async function updateCustomerAction(
   if (!parsed.success) {
     redirect(`/businesses/${slug}/customers/${customerId}?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
+    );
+  }
 
   const phone = normalizePhone(parsed.data.phone);
 
@@ -471,8 +484,18 @@ export async function updateCustomerAction(
     .join(" ");
   const activityContext = await getActivityRequestContext();
 
-  await prisma.$transaction([
-    prisma.customer.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.customer.update({
       where: {
         id: customer.id,
       },
@@ -481,9 +504,9 @@ export async function updateCustomerAction(
         lastName: parsed.data.lastName || null,
         phone,
       },
-    }),
+    });
 
-    prisma.businessActivity.create({
+    await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_UPDATED",
         description: `تم تحديث بيانات العميل ${updatedCustomerName}`,
@@ -492,8 +515,14 @@ export async function updateCustomerAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!updated) {
+    redirect(
+      `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
+    );
+  }
 
   await syncBusinessToGoogleSheetSafely(business.id);
 
@@ -883,9 +912,29 @@ export async function createCustomerNoteAction(
   if (!parsed.success) {
     redirect(`/businesses/${slug}/customers/${customer.id}?error=note-invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`,
+    );
+  }
 
-  await prisma.$transaction([
-    prisma.customerNote.create({
+  const created = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.customerNote.create({
       data: {
         businessId: business.id,
         customerId: customer.id,
@@ -893,8 +942,8 @@ export async function createCustomerNoteAction(
         createdById: session.user.id,
         updatedById: session.user.id,
       },
-    }),
-    prisma.businessActivity.create({
+    });
+    await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_NOTE_CREATED",
         description: "تمت إضافة ملاحظة داخلية للعميل",
@@ -902,8 +951,14 @@ export async function createCustomerNoteAction(
         customerId: customer.id,
         createdById: session.user.id,
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!created) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`,
+    );
+  }
 
   revalidateCustomerPages(slug, customer.id, customer.publicToken);
   redirect(`/businesses/${slug}/customers/${customer.id}?success=note-created`);
@@ -930,6 +985,16 @@ export async function updateCustomerNoteAction(
   if (!parsed.success) {
     redirect(`/businesses/${slug}/customers/${customer.id}?error=note-invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`,
+    );
+  }
 
   const note = await prisma.customerNote.findFirst({
     where: {
@@ -944,15 +1009,25 @@ export async function updateCustomerNoteAction(
     redirect(`/businesses/${slug}/customers/${customer.id}`);
   }
 
-  await prisma.$transaction([
-    prisma.customerNote.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.customerNote.update({
       where: { id: note.id },
       data: {
         content: parsed.data,
         updatedById: session.user.id,
       },
-    }),
-    prisma.businessActivity.create({
+    });
+    await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_NOTE_UPDATED",
         description: "تم تعديل ملاحظة داخلية للعميل",
@@ -960,8 +1035,14 @@ export async function updateCustomerNoteAction(
         customerId: customer.id,
         createdById: session.user.id,
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!updated) {
+    redirect(
+      `/businesses/${slug}/customers/${customer.id}?error=subscription-restricted`,
+    );
+  }
 
   revalidateCustomerPages(slug, customer.id, customer.publicToken);
   redirect(`/businesses/${slug}/customers/${customer.id}?success=note-updated`);

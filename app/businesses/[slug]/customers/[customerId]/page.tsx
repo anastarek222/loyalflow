@@ -659,8 +659,8 @@ export default async function CustomerDetailsPage({
         {query.error === "subscription-restricted" && (
           <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
             {language === "AR"
-              ? "لا تسمح حالة الاشتراك الحالية بتنفيذ عملية مالية جديدة. تظل السجلات والبيانات الحالية متاحة."
-              : "The current subscription state does not allow a new financial operation. Existing records and data remain available."}
+              ? "لا تسمح حالة الاشتراك الحالية بتنفيذ تغيير تشغيلي جديد. تظل السجلات والبيانات الحالية متاحة للقراءة، وتظل إجراءات الأمان متاحة."
+              : "The current subscription state does not allow a new operational change. Existing records and data remain readable, and security controls remain accessible."}
           </div>
         )}
 
