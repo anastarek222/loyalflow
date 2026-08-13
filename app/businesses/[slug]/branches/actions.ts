@@ -13,9 +13,14 @@ import {
   normalizeBranchInput,
 } from "@/lib/branches/management";
 import prisma from "@/lib/prisma";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
-import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import {
+  actionBooleanSchema,
+  opaqueIdSchema,
+} from "@/lib/validation/action-input";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -33,7 +38,12 @@ async function getBranchManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, plan: true },
+    select: {
+      id: true,
+      slug: true,
+      plan: true,
+      subscriptionLifecycleState: true,
+    },
   });
 
   if (!business || !canManageBranches(session.user, business.id)) {
@@ -63,6 +73,15 @@ export async function createBranchAction(slug: string, formData: FormData) {
   const parsed = parseBranchForm(formData);
   if (!parsed.success) redirectWithError(business.slug, "invalid");
 
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirectWithError(business.slug, "subscription-restricted");
+  }
+
   const [branchCount, planLimits] = await Promise.all([
     prisma.branch.count({ where: { businessId: business.id } }),
     getEffectivePlanLimits(business.plan),
@@ -73,7 +92,17 @@ export async function createBranchAction(slug: string, formData: FormData) {
 
   try {
     const activityContext = await getActivityRequestContext();
-    await prisma.$transaction(async (transaction) => {
+    const created = await prisma.$transaction(async (transaction) => {
+      if (
+        !(await canBusinessPerformSubscriptionOperation(
+          transaction,
+          business.id,
+          "EXPAND",
+        ))
+      ) {
+        return false;
+      }
+
       const branch = await transaction.branch.create({
         data: { businessId: business.id, ...normalizeBranchInput(parsed.data) },
       });
@@ -88,7 +117,12 @@ export async function createBranchAction(slug: string, formData: FormData) {
           activityContext,
         }),
       });
+      return true;
     });
+
+    if (!created) {
+      redirectWithError(business.slug, "subscription-restricted");
+    }
   } catch (error) {
     if (isDuplicateBranchAssignmentError(error)) {
       redirectWithError(business.slug, "duplicate-name");

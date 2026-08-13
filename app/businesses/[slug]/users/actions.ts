@@ -18,6 +18,7 @@ import {
   isSuperAdmin as isSuperAdminRole,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { revalidatePath } from "next/cache";
@@ -29,6 +30,7 @@ import {
   getDefaultExperienceAccess,
   resolveExperienceAccess,
 } from "@/lib/experience-mode";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const experienceAccessSchema = z.enum(EXPERIENCE_ACCESS_VALUES);
 
@@ -83,6 +85,7 @@ async function getManagementContext(
         id: true,
         slug: true,
         plan: true,
+        subscriptionLifecycleState: true,
       },
     });
 
@@ -184,6 +187,15 @@ export async function createBusinessUserAction(
   }
 
   if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  }
+
+  if (
     isBusinessOwner &&
     parsed.data.role === "OWNER"
   ) {
@@ -245,8 +257,18 @@ export async function createBusinessUserAction(
     );
   const activityContext = await getActivityRequestContext();
 
-  await prisma.$transaction(
+  const created = await prisma.$transaction(
     async (transaction) => {
+      if (
+        !(await canBusinessPerformSubscriptionOperation(
+          transaction,
+          business.id,
+          "EXPAND",
+        ))
+      ) {
+        return false;
+      }
+
       await transaction.user.create({
         data: {
           firstName:
@@ -308,8 +330,13 @@ export async function createBusinessUserAction(
             business.id,
         }
       );
+      return true;
     }
   );
+
+  if (!created) {
+    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  }
 
   revalidateTeamPages(slug);
 

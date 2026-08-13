@@ -442,6 +442,14 @@ export default async function UsersPage({
           </div>
         )}
 
+        {query.error === "subscription-restricted" && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            {language === "AR"
+              ? "لا تسمح حالة الاشتراك الحالية بإضافة حساب فريق جديد. تظل الحسابات والبيانات الحالية متاحة."
+              : "The current subscription state does not allow adding a new team account. Existing accounts and data remain available."}
+          </div>
+        )}
+
         <section
           className="mb-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
           data-team-filters="true"
