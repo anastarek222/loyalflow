@@ -146,9 +146,13 @@ export default async function OffersPage({ params, searchParams }: Props) {
           role="alert"
           className="rounded-[var(--lf-radius-input)] border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"
         >
-          {language === "AR"
-            ? "تعذر حفظ العرض. راجع الجمهور والتواريخ."
-            : "We could not save the offer. Review audience and dates."}
+          {query.error === "subscription-restricted"
+            ? language === "AR"
+              ? "لا تسمح حالة الاشتراك الحالية بإنشاء عرض جديد. تظل العروض والبيانات الحالية متاحة."
+              : "The current subscription state does not allow creating a new offer. Existing offers and data remain available."
+            : language === "AR"
+              ? "تعذر حفظ العرض. راجع الجمهور والتواريخ."
+              : "We could not save the offer. Review audience and dates."}
         </p>
       ) : null}
 
