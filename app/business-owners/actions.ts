@@ -8,6 +8,8 @@ import {
   parseMoneyToMinor,
 } from "@/lib/billing/subscription";
 import { isLoyalFlowPlan } from "@/lib/entitlements";
+import { persistSubscriptionLifecycleTransition } from "@/lib/billing/subscription-lifecycle-runtime";
+import { subscriptionLifecycleEvents } from "@loyalflow/domain/billing/subscription-lifecycle";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -65,12 +67,14 @@ export async function updateBusinessBillingAction(
       billingInterval: parsed.data.billingInterval,
       billingCustomDays:
         parsed.data.billingInterval === "CUSTOM"
-          ? parsed.data.billingCustomDays ?? null
+          ? (parsed.data.billingCustomDays ?? null)
           : null,
       subscriptionStartDate: parseDateOnly(parsed.data.subscriptionStartDate),
       nextPaymentDate: parseDateOnly(parsed.data.nextPaymentDate),
       lastPaymentDate: parseDateOnly(parsed.data.lastPaymentDate),
-      subscriptionAmountMinor: parseMoneyToMinor(parsed.data.subscriptionAmount),
+      subscriptionAmountMinor: parseMoneyToMinor(
+        parsed.data.subscriptionAmount,
+      ),
       billingCurrency: parsed.data.billingCurrency || null,
       paymentStatus: parsed.data.paymentStatus,
       gracePeriodDays: parsed.data.gracePeriodDays,
@@ -179,4 +183,38 @@ export async function setBusinessPlatformStatusAction(
   redirect(
     `/business-owners?success=${isActive ? "business-reactivated" : "business-suspended"}`,
   );
+}
+
+export async function transitionBusinessSubscriptionAction(
+  businessId: string,
+  formData: FormData,
+) {
+  const actor = await requireSuperAdmin();
+  const event = String(formData.get("event") ?? "");
+  const expectedVersion = Number(formData.get("expectedVersion"));
+
+  if (
+    !subscriptionLifecycleEvents.includes(
+      event as (typeof subscriptionLifecycleEvents)[number],
+    ) ||
+    !Number.isSafeInteger(expectedVersion) ||
+    expectedVersion < 0
+  ) {
+    redirect("/business-owners?error=lifecycle-invalid");
+  }
+
+  const result = await persistSubscriptionLifecycleTransition({
+    businessId,
+    event: event as (typeof subscriptionLifecycleEvents)[number],
+    expectedVersion,
+    actorId: actor.id,
+    actorEmail: actor.email,
+  });
+
+  if (!result.ok) {
+    redirect(`/business-owners?error=lifecycle-${result.reason.toLowerCase()}`);
+  }
+
+  refreshPlatform();
+  redirect("/business-owners?success=lifecycle-updated");
 }

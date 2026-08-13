@@ -75,6 +75,7 @@ const REVIEWED_MIGRATIONS = [
   "20260809044000_add_email_verification_lifecycle",
   "20260809081000_add_super_admin_mfa_lifecycle",
   "20260809084500_add_security_notification_lifecycle",
+  "20260813003000_add_subscription_lifecycle_persistence",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;

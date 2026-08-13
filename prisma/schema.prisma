@@ -48,6 +48,10 @@ model Business {
   paymentMethod          String?
   billingNotes           String?
   adminNotes             String?
+  subscriptionLifecycleState     SubscriptionLifecycleState @default(TRIALING)
+  subscriptionLifecycleVersion   Int                        @default(0)
+  subscriptionLifecycleChangedAt DateTime                   @default(now())
+  subscriptionCancelAtPeriodEnd  Boolean                    @default(false)
 
   plan                   SubscriptionPlan @default(FREE)
   planChangedAt          DateTime         @default(now())
@@ -677,6 +681,16 @@ enum PaymentStatus {
   DUE
   OVERDUE
   SUSPENDED
+}
+
+enum SubscriptionLifecycleState {
+  PENDING
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELED
+  EXPIRED
 }
 
 enum SubscriptionPlan {
