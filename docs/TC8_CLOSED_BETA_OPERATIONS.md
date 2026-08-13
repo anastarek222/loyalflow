@@ -1,6 +1,6 @@
 # TC8 Closed Beta Operations Record
 
-Status: `BETA TECHNICAL VALIDATION ACTIVE — REAL PARTICIPANT AND PRODUCTION GATES DEFERRED`  
+Status: `ENTRY GATE TECHNICALLY READY — REAL PARTICIPANTS NOT STARTED`
 Environment: isolated `staging` only  
 Target cohort: 5-10 businesses
 
@@ -9,9 +9,10 @@ Target cohort: 5-10 businesses
 The product owner has directed all current work to continue as Beta on isolated Staging. Technical Beta slices may proceed without waiting for real-participant enrollment, provided each slice remains non-production, preserves isolation, and is labelled as synthetic or technical evidence where applicable.
 
 The governed 5-10 real-business cohort is deferred rather than completed. It remains mandatory before any Production or public-launch decision. Synthetic fixtures and automated UAT must never be counted as real participants, participant consent, or a human Go/No-Go decision.
-This record closes the operating-document gap for TC8. It does not claim that
-the Closed Beta, authenticated UAT, rollback rehearsal, or Go/No-Go decision
-has been completed.
+Authenticated role/transaction UAT, public browser evidence, performance, and
+rollback/forward-recovery evidence are complete for the current technical
+entry gate. This does not claim that the real-business Closed Beta or Go/No-Go
+decision has been completed.
 
 ## Entry gate
 
@@ -108,8 +109,8 @@ The Closed Beta is complete only when:
 
 | Field | Value |
 |---|---|
-| Candidate release SHA | `c85ec07d639fc2b37b285683af0ea710c1d0f6db` |
-| Staging deployment | `dpl_DhZ28skWsrTgjeULzJXNzJsnNj7n` — Ready |
+| Candidate runtime release SHA | `60994322b1153176ec278bd37d30d0f32387be2b` |
+| Staging deployment | `dpl_3iSf6rVvwp3Y5X5chF3XJMj5GmZu` — Ready |
 | Completed participants | 0 |
 | Open S0 / S1 / S2 | 0 / 0 / 0 |
 | Role/device matrix | COMPLETE FOR CURRENT ENTRY GATE |
@@ -149,12 +150,15 @@ authenticated owner journeys, Closed Beta completion, or Go/No-Go approval.
 
 ## Current evidence boundary
 
-Current technical entry evidence is based on Staging release
-`c85ec07d639fc2b37b285683af0ea710c1d0f6db`. Its deployment is `Ready`, the
-direct readiness sample passed 20/20 with 0% errors and in-process p95 37.3 ms,
-and the governed rollback/forward-recovery rehearsal completed without a data
-or Production mutation. The authenticated role/MFA evidence remains valid and
-all disposable fixture counts remain zero.
+Current technical entry evidence is based on runtime Staging release
+`60994322b1153176ec278bd37d30d0f32387be2b`. Its deployment is `Ready`, its
+live health returned HTTP 200 with `environment: staging` and the matching
+release prefix, the direct readiness sample passed 20/20 with 0% errors and
+in-process p95 37.3 ms, and the governed rollback/forward-recovery rehearsal
+completed without a data or Production mutation. The authenticated role/MFA
+evidence remains valid and all disposable fixture counts remain zero. The
+later documentation-only Master Tracker merge does not alter the evaluated
+runtime behavior.
 
 No real participant has yet been invited or completed the journey. The Closed
 Beta participant register, issue log, and explicit human Go/No-Go decision
