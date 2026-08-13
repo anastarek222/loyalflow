@@ -3,6 +3,12 @@ import { auth } from "@/auth";
 import { CustomerMessagesForm } from "@/components/customer-messages-form";
 import { ProgramRulesForm } from "@/components/program-rules-form";
 import { StandardCardSetup } from "@/components/standard-card-setup";
+import { CustomCardArtworkManager } from "@/components/custom-card-artwork-manager";
+import {
+  customCardStorageConfigured,
+  isManagedCustomCardArtworkUrl,
+  listCustomCardArtworkVersions,
+} from "@/lib/cards/custom-card-storage";
 import { normalizeLanguage } from "@/lib/i18n";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -12,6 +18,8 @@ import { notFound, redirect } from "next/navigation";
 
 import {
   updateBusinessCardDesignAction,
+  publishCustomCardArtworkAction,
+  uploadCustomCardArtworkAction,
   updateCustomerMessagesAction,
   updateProgramRulesAction,
 } from "../settings/actions";
@@ -21,6 +29,7 @@ type Props = {
   searchParams: Promise<{
     program?: string;
     cardDesign?: string;
+    customVersion?: string;
     messages?: string;
   }>;
 };
@@ -73,6 +82,18 @@ export default async function LoyaltyProgramPage({
     null,
     business.slug,
   );
+  const uploadCustomArtwork = uploadCustomCardArtworkAction.bind(
+    null,
+    business.slug,
+  );
+  const publishCustomArtwork = publishCustomCardArtworkAction.bind(
+    null,
+    business.slug,
+  );
+  const customArtworkVersions =
+    session.user.role === "SUPER_ADMIN"
+      ? await listCustomCardArtworkVersions(business.id)
+      : [];
   const updateCustomerMessages = updateCustomerMessagesAction.bind(
     null,
     business.slug,
@@ -267,6 +288,16 @@ export default async function LoyaltyProgramPage({
               </p>
             ) : null}
           </div>
+          {session.user.role === "SUPER_ADMIN" ? (
+            <CustomCardArtworkManager
+              slug={business.slug}
+              selectedVersion={query.customVersion}
+              versions={customArtworkVersions}
+              storageConfigured={customCardStorageConfigured()}
+              uploadAction={uploadCustomArtwork}
+              publishAction={publishCustomArtwork}
+            />
+          ) : null}
           <form action={updateCardDesign}>
             {session.user.role === "SUPER_ADMIN" ||
             business.cardDesignMode === "STANDARD" ? (
@@ -336,6 +367,18 @@ export default async function LoyaltyProgramPage({
                 customDesignEnabled: business.customCardArtworkEnabled,
                 customFrontArtworkUrl: business.customCardFrontArtworkUrl ?? "",
                 customBackArtworkUrl: business.customCardBackArtworkUrl ?? "",
+                customFrontArtworkPreviewUrl: isManagedCustomCardArtworkUrl(
+                  business.customCardFrontArtworkUrl,
+                  business.id,
+                )
+                  ? `/api/businesses/${encodeURIComponent(business.slug)}/custom-card-artwork/published/front`
+                  : business.customCardFrontArtworkUrl ?? "",
+                customBackArtworkPreviewUrl: isManagedCustomCardArtworkUrl(
+                  business.customCardBackArtworkUrl,
+                  business.id,
+                )
+                  ? `/api/businesses/${encodeURIComponent(business.slug)}/custom-card-artwork/published/back`
+                  : business.customCardBackArtworkUrl ?? "",
               }}
             />
             {session.user.role === "SUPER_ADMIN" ||

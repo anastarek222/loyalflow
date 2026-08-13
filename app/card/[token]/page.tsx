@@ -11,6 +11,7 @@ import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
 import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
 import { buildPublicCardProjection } from "@/lib/cards/public-card-projection";
+import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import * as QRCode from "qrcode";
@@ -306,8 +307,18 @@ export default async function PublicCardPage({
       standardArtworkEnabled: business.standardCardArtworkEnabled,
       standardArtworkCategory: business.standardCardArtworkCategory,
       customArtworkEnabled: business.customCardArtworkEnabled,
-      customFrontArtworkUrl: business.customCardFrontArtworkUrl,
-      customBackArtworkUrl: business.customCardBackArtworkUrl,
+      customFrontArtworkUrl: publicCustomCardArtworkUrl(
+        token,
+        "front",
+        business.customCardFrontArtworkUrl,
+        business.id,
+      ),
+      customBackArtworkUrl: publicCustomCardArtworkUrl(
+        token,
+        "back",
+        business.customCardBackArtworkUrl,
+        business.id,
+      ),
       customSafeZoneVersion: business.customCardSafeZoneVersion,
     },
   });

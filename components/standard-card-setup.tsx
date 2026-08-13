@@ -31,6 +31,8 @@ export type CardPreview = Partial<{
   customDesignEnabled: boolean;
   customFrontArtworkUrl: string;
   customBackArtworkUrl: string;
+  customFrontArtworkPreviewUrl: string;
+  customBackArtworkPreviewUrl: string;
 }>;
 
 type Props = {
@@ -170,7 +172,7 @@ export function StandardCardSetup({
                   className="sr-only"
                 />
                 <span className="block font-black">
-                  Custom Card — storage setup required
+                  Custom Card — Super Admin managed
                 </span>
                 <span className="mt-1 block text-xs text-foreground-muted">
                   Super Admin only. Upload your own front and back card artwork.
@@ -222,10 +224,10 @@ export function StandardCardSetup({
               name="customCardSafeZoneVersion"
               value={CUSTOM_CARD_SAFE_ZONE_VERSION}
             />
-            <p className="rounded-xl border border-warning/30 bg-warning-subtle p-3 text-sm text-foreground">
-              Persistent artwork storage is not configured. Connect approved
-              persistent storage to upload custom artwork. Upload controls stay
-              disabled until then; existing stored artwork remains available.
+            <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">
+              Upload, immutable draft versions, preview and publish are managed
+              in the Super Admin artwork panel. Saving this form preserves the
+              selected published artwork.
             </p>
             <input
               name="customCardFrontArtworkUrl"
@@ -256,7 +258,11 @@ export function StandardCardSetup({
                   <div className="mt-2 flex aspect-[1.586] items-center justify-center overflow-hidden rounded-lg border border-border bg-slate-950">
                     {artworkUrl ? (
                       <img
-                        src={artworkUrl}
+                        src={
+                          key === "customFrontArtworkUrl"
+                            ? values.customFrontArtworkPreviewUrl || artworkUrl
+                            : values.customBackArtworkPreviewUrl || artworkUrl
+                        }
                         alt={`Existing custom ${label.toLowerCase()} artwork`}
                         className="size-full object-contain"
                       />
