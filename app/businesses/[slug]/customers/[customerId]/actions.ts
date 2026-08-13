@@ -546,19 +546,41 @@ export async function setCustomerStatusAction(
     slug,
     customerId,
   );
+  if (
+    parsedStatus.data &&
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
+    );
+  }
   const activityContext = await getActivityRequestContext();
 
-  await prisma.$transaction([
-    prisma.customer.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      parsedStatus.data &&
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.customer.update({
       where: {
         id: customer.id,
       },
       data: {
         isActive: parsedStatus.data,
       },
-    }),
+    });
 
-    prisma.businessActivity.create({
+    await transaction.businessActivity.create({
       data: {
         type: parsedStatus.data
           ? "CUSTOMER_REACTIVATED"
@@ -571,8 +593,14 @@ export async function setCustomerStatusAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!updated) {
+    redirect(
+      `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
+    );
+  }
 
   await syncBusinessToGoogleSheetSafely(business.id);
 
