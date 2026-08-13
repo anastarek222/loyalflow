@@ -5,6 +5,7 @@ import type { Session } from "next-auth";
 
 import {
   internalApiProblem,
+  methodNotAllowed,
   resolveRequestId,
 } from "@/lib/api/v1/response";
 import { resolveApiActor } from "@/lib/api/v1/actor-policy";
@@ -51,6 +52,37 @@ test("TC5 v1 version and liveness reads use the envelope and no-store defaults",
     assert.equal(body.meta.apiVersion, "v1");
     assert.equal(body.meta.requestId, response.headers.get("x-request-id"));
     assert.equal(body.data.service, "loyalflow");
+  }
+});
+
+test("TC5 unsupported methods return a bounded no-store v1 problem", async () => {
+  const response = methodNotAllowed(
+    new Request("https://example.test/api/v1/version", {
+      method: "POST",
+      headers: { "x-request-id": "method-check" },
+    }),
+  );
+  assert.equal(response.status, 405);
+  assert.equal(response.headers.get("allow"), "GET");
+  assert.equal(response.headers.get("cache-control"), "no-store, max-age=0");
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  const body = await response.json();
+  assert.equal(body.ok, false);
+  assert.equal(body.error.code, "METHOD_NOT_ALLOWED");
+  assert.equal(body.meta.apiVersion, "v1");
+  assert.equal(body.meta.requestId, "method-check");
+
+  const routePaths = [
+    "../app/api/v1/version/route.ts",
+    "../app/api/v1/health/live/route.ts",
+    "../app/api/v1/business/summary/route.ts",
+    "../app/api/v1/business/access/route.ts",
+  ];
+  for (const path of routePaths) {
+    const route = readFileSync(new URL(path, import.meta.url), "utf8");
+    for (const method of ["POST", "PUT", "PATCH", "DELETE"]) {
+      assert.match(route, new RegExp(`export const ${method} = methodNotAllowed`));
+    }
   }
 });
 
