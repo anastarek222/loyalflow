@@ -57,7 +57,12 @@ async function getBulkCustomerContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, plan: true },
+    select: {
+      id: true,
+      slug: true,
+      plan: true,
+      subscriptionLifecycleState: true,
+    },
   });
   if (!business) redirect("/businesses");
   if (!canUseCustomerBulkOperations(session.user, business.id, business.plan)) {
@@ -112,8 +117,31 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     }
 
     if (changedIds.length > 0) {
+      if (
+        activate &&
+        !canPerformSubscriptionOperation(
+          business.subscriptionLifecycleState,
+          "OPERATE",
+        )
+      ) {
+        redirect(
+          `/businesses/${slug}/customers?error=subscription-restricted`,
+        );
+      }
+
       const activityContext = await getActivityRequestContext();
-      await prisma.$transaction(async (transaction) => {
+      const updatedAll = await prisma.$transaction(async (transaction) => {
+        if (
+          activate &&
+          !(await canBusinessPerformSubscriptionOperation(
+            transaction,
+            business.id,
+            "OPERATE",
+          ))
+        ) {
+          return false;
+        }
+
         const updated = await transaction.customer.updateMany({
           where: { businessId: business.id, id: { in: changedIds } },
           data: { isActive: activate },
@@ -135,7 +163,13 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
             ...activityRequestMetadata(activityContext),
           })),
         });
+        return true;
       });
+      if (!updatedAll) {
+        redirect(
+          `/businesses/${slug}/customers?error=subscription-restricted`,
+        );
+      }
     }
 
     await syncBusinessToGoogleSheetSafely(business.id);
