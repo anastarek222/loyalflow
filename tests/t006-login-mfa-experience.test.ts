@@ -34,6 +34,19 @@ test("T006 primary login step is rate limited and does not create a second sessi
   assert.doesNotMatch(action, /prisma\.(session|account)\.(create|upsert)/i);
 });
 
+test("T006 login denial diagnostics are bounded and never include account identifiers", () => {
+  const action = source("app/login/actions.ts");
+  const auth = source("auth.ts");
+  const observability = source("lib/auth/login-observability.ts");
+
+  assert.match(action, /recordLoginDenial\("primary"/);
+  assert.match(auth, /recordLoginDenial\("authorize"/);
+  assert.match(observability, /event: "login_denied"/);
+  assert.match(observability, /stage,/);
+  assert.match(observability, /reason,/);
+  assert.doesNotMatch(observability, /console\.warn\([\s\S]*(email:|password:|userId:|businessId:|clientAddress:|headers:)/i);
+});
+
 test("T006 login and conditional MFA copy remains bilingual", () => {
   const catalog = source("lib/i18n/catalog.ts");
 
