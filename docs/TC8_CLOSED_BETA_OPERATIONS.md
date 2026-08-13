@@ -131,7 +131,11 @@ Authenticated disposable UAT then confirmed:
 - Viewer read-only access to Customers and Reports and denial from Scan;
 - the ordinary primary-login path after fixing omitted optional MFA input;
 - Super Admin fail-closed MFA setup, TOTP verification, Dashboard, and Operations access;
-- zero remaining UAT businesses, users, MFA records, and recovery-code records after cleanup.
+- zero remaining UAT businesses, users, MFA records, and recovery-code records after cleanup;
+- a fresh 20-request protected health sample completed with 0% request errors,
+  but measured p95 was 4,770 ms against the 1,500 ms gate. This timing includes
+  the protected connector path and is not used as an application-only latency
+  claim; the performance gate remains failed pending a direct approved runner.
 
 This is bounded authenticated role evidence only. Mobile coverage,
 onboarding-state variants, performance remeasurement, rollback rehearsal, real
