@@ -57,7 +57,10 @@ test("TC4.10 preserves customer deactivation safety and defers tag/referral topo
     "setCustomerStatusAction",
     "adjustCustomerBalanceAction",
   );
-  assert.doesNotMatch(statusAction, /canPerformSubscriptionOperation/);
+  assert.match(
+    statusAction,
+    /parsedStatus\.data &&[\s\S]*canPerformSubscriptionOperation/,
+  );
   assert.match(statusAction, /isActive: parsedStatus\.data/);
 
   for (const [name, nextName] of [
