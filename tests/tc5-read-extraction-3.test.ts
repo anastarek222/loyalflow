@@ -66,7 +66,7 @@ test("TC5 access endpoint accepts no client tenant selector and has no write pat
 
   assert.match(route, /export async function GET\(request: Request\)/);
   assert.doesNotMatch(route, /export async function (POST|PUT|PATCH|DELETE)/);
-  assert.match(route, /getOwnBusinessApiActor\("CUSTOMERS_VIEW"\)/);
+  assert.match(route, /resolveOwnBusinessRead\(request, "CUSTOMERS_VIEW"\)/);
   assert.doesNotMatch(route, /searchParams|params|tenantId|slug/);
   assert.match(route, /internalApiProblem\(requestId\)/);
   assert.match(query, /where: \{ id: actor\.businessId \}/);

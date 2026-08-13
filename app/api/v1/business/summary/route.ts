@@ -1,57 +1,22 @@
-import { getOwnBusinessApiActor } from "@/lib/api/v1/actor-context";
 import {
   apiProblem,
   apiSuccess,
   internalApiProblem,
   methodNotAllowed,
-  resolveRequestId,
 } from "@/lib/api/v1/response";
+import { resolveOwnBusinessRead } from "@/lib/api/v1/own-business-read";
 import { getApiBusinessSummary } from "@/lib/business/api-summary-query";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  const requestId = resolveRequestId(request.headers);
-  const resolution = await getOwnBusinessApiActor("CUSTOMERS_VIEW");
-
-  if (!resolution.allowed) {
-    if (resolution.problem === "AUTHENTICATION_REQUIRED") {
-      return apiProblem({
-        requestId,
-        status: 401,
-        code: resolution.problem,
-        message: "Authentication is required.",
-      });
-    }
-    if (resolution.problem === "CAPABILITY_REQUIRED") {
-      return apiProblem({
-        requestId,
-        status: 403,
-        code: resolution.problem,
-        message: "The required capability is not available.",
-      });
-    }
-    return apiProblem({
-      requestId,
-      status: 404,
-      code: "RESOURCE_NOT_FOUND",
-      message: "The requested resource was not found.",
-    });
-  }
-
-  const businessId = resolution.actor.businessId;
-  if (!businessId) {
-    return apiProblem({
-      requestId,
-      status: 404,
-      code: "RESOURCE_NOT_FOUND",
-      message: "The requested resource was not found.",
-    });
-  }
+  const resolution = await resolveOwnBusinessRead(request, "CUSTOMERS_VIEW");
+  if (!resolution.allowed) return resolution.response;
+  const { requestId, actor } = resolution;
 
   try {
-    const summary = await getApiBusinessSummary(businessId);
+    const summary = await getApiBusinessSummary(actor.businessId);
     if (!summary) {
       return apiProblem({
         requestId,
