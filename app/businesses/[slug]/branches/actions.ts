@@ -146,6 +146,14 @@ export async function updateBranchAction(
   if (!parsedBranchId.success || !parsed.success) {
     redirectWithError(business.slug, "invalid");
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirectWithError(business.slug, "subscription-restricted");
+  }
 
   try {
     const existingBranch = await prisma.branch.findFirst({
@@ -155,7 +163,17 @@ export async function updateBranchAction(
     if (!existingBranch) redirectWithError(business.slug, "not-found");
 
     const activityContext = await getActivityRequestContext();
-    await prisma.$transaction(async (transaction) => {
+    const updated = await prisma.$transaction(async (transaction) => {
+      if (
+        !(await canBusinessPerformSubscriptionOperation(
+          transaction,
+          business.id,
+          "OPERATE",
+        ))
+      ) {
+        return false;
+      }
+
       const branch = await transaction.branch.update({
         where: { id: existingBranch.id },
         data: normalizeBranchInput(parsed.data),
@@ -172,7 +190,9 @@ export async function updateBranchAction(
           activityContext,
         }),
       });
+      return true;
     });
+    if (!updated) redirectWithError(business.slug, "subscription-restricted");
   } catch (error) {
     if (isDuplicateBranchAssignmentError(error)) {
       redirectWithError(business.slug, "duplicate-name");
@@ -196,6 +216,14 @@ export async function setBranchStatusAction(
   if (!parsedBranchId.success || !parsedStatus.success) {
     redirectWithError(business.slug, "invalid");
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirectWithError(business.slug, "subscription-restricted");
+  }
 
   const existingBranch = await prisma.branch.findFirst({
     where: getTenantScopedBranchWhere(parsedBranchId.data, business.id),
@@ -204,7 +232,17 @@ export async function setBranchStatusAction(
   if (!existingBranch) redirectWithError(business.slug, "not-found");
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
     const branch = await transaction.branch.update({
       where: { id: existingBranch.id },
       data: { isActive: parsedStatus.data },
@@ -221,7 +259,9 @@ export async function setBranchStatusAction(
         activityContext,
       }),
     });
+    return true;
   });
+  if (!updated) redirectWithError(business.slug, "subscription-restricted");
 
   revalidateBranchPaths(business.slug);
   redirect(

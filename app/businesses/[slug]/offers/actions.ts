@@ -119,6 +119,14 @@ export async function updateOfferAction(
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsed = parseOfferForm(formData);
   if (!parsed.success || !parsedOfferId.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  }
 
   const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
@@ -127,7 +135,17 @@ export async function updateOfferAction(
   if (!existingOffer) redirect(`/businesses/${business.slug}/offers?error=not-found`);
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: normalizeOfferInput(parsed.data),
@@ -142,7 +160,11 @@ export async function updateOfferAction(
         ...activityRequestMetadata(activityContext),
       },
     });
+    return true;
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  }
 
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=updated`);
@@ -160,6 +182,14 @@ export async function toggleOfferStatusAction(
   if (!parsedOfferId.success || !parsedStatus.success) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  }
 
   const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
@@ -168,7 +198,17 @@ export async function toggleOfferStatusAction(
   if (!existingOffer) redirect(`/businesses/${business.slug}/offers?error=not-found`);
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: { isActive: parsedStatus.data },
@@ -185,7 +225,11 @@ export async function toggleOfferStatusAction(
         ...activityRequestMetadata(activityContext),
       },
     });
+    return true;
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  }
 
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=updated`);

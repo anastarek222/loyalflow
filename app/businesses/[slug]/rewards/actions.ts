@@ -146,6 +146,14 @@ export async function updateRewardAction(
   if (!parsed.success || !parsedRewardId.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   const existingReward = await prisma.reward.findFirst({
     where: { id: parsedRewardId.data, businessId: business.id },
@@ -156,7 +164,17 @@ export async function updateRewardAction(
   }
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
     const reward = await transaction.reward.update({
       where: { id: existingReward.id },
       data: normalizeRewardInput(parsed.data),
@@ -171,7 +189,11 @@ export async function updateRewardAction(
         ...activityRequestMetadata(activityContext),
       },
     });
+    return true;
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=updated`);
@@ -189,6 +211,14 @@ export async function toggleRewardStatusAction(
   if (!parsedRewardId.success || !parsedStatus.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   const existingReward = await prisma.reward.findFirst({
     where: { id: parsedRewardId.data, businessId: business.id },
@@ -199,7 +229,17 @@ export async function toggleRewardStatusAction(
   }
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
     const reward = await transaction.reward.update({
       where: { id: existingReward.id },
       data: { isActive: parsedStatus.data },
@@ -216,7 +256,11 @@ export async function toggleRewardStatusAction(
         ...activityRequestMetadata(activityContext),
       },
     });
+    return true;
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=updated`);

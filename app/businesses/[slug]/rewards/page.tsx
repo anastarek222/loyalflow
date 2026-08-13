@@ -98,9 +98,9 @@ export default async function RewardsPage({ params, searchParams }: Props) {
           className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"
         >
           {query.error === "subscription-restricted"
-            ? language === "AR"
-              ? "لا تسمح حالة الاشتراك الحالية بإنشاء مكافأة جديدة. تظل المكافآت والبيانات الحالية متاحة."
-              : "The current subscription state does not allow creating a new reward. Existing rewards and data remain available."
+              ? language === "AR"
+              ? "لا تسمح حالة الاشتراك الحالية بإنشاء مكافأة أو تغيير بياناتها أو حالتها. تظل المكافآت والبيانات الحالية متاحة للقراءة."
+              : "The current subscription state does not allow creating or changing a reward. Existing rewards and data remain readable."
             : language === "AR"
               ? "تعذر حفظ المكافأة. راجع البيانات وحاول مرة أخرى."
               : "We could not save this reward. Review the details and try again."}
