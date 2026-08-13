@@ -1,7 +1,7 @@
 # TC5 Read Foundation Completion Audit
 
 Date: 2026-08-13
-Base: `staging` at merge commit `5deb20bdd6b84c9017fc02ad39b9596861682b54`
+Base: `staging` at merge commit `af773c80cb173ea9cc71a1deea3cec26f1768fcf`
 
 ## Conclusion
 
@@ -42,19 +42,16 @@ is split into:
 
 | Control | Coverage and evidence | Residual status |
 | --- | --- | --- |
-| Authentication | protected reads use the current NextAuth session only; unauthenticated Preview UAT returned the v1 401 envelope | authenticated runtime UAT remains required before Production because no approved session fixture exists |
-| Tenant isolation | business endpoints accept no client tenant ID or slug; the tenant comes from the session and the query uses that ID | negative unit/contract coverage passes; runtime cross-tenant session replay remains part of authenticated UAT |
+| Authentication | protected reads use the current NextAuth session only; unauthenticated Preview UAT returned the v1 401 envelope; isolated-Staging authenticated UAT returned 200 for both protected reads with a disposable Owner session | completed for the bounded read foundation; the synthetic Owner fixture was removed and verified at zero |
+| Tenant isolation | business endpoints accept no client tenant ID or slug; the tenant comes from the session and the query uses that ID; runtime UAT supplied conflicting `tenantId`, `slug`, and `role=SUPER_ADMIN` inputs and still returned only the session business/Owner projection | negative unit/contract coverage and session-bound runtime replay pass; no Super Admin fixture was used |
 | Capability | `getOwnBusinessApiActor("CUSTOMERS_VIEW")` reuses `canPerform`; denied and no-tenant paths are fail-closed | no new role semantics introduced |
 | Entitlements | access projection reuses `getPlanEntitlements` and the canonical plan catalogue | provider activation and billing lifecycle are explicitly outside this read DTO |
-| Cache safety | every implemented v1 success/problem response uses `Cache-Control: no-store, max-age=0` | framework-generated unsupported-method 405 responses use `public, max-age=0, must-revalidate` |
+| Cache safety | every implemented v1 success/problem response uses `Cache-Control: no-store, max-age=0`; PRs #92 and #93 added explicit safe 405 responses with `Allow: GET`, `nosniff`, and the bounded v1 problem envelope | no open cache-safety exception remains for the four current endpoints |
 | Correlation | accepted IDs match a 1-64 character safe allow-list; unsafe input is replaced by a UUID; header and envelope IDs match | no distributed trace/store is introduced |
 | Error disclosure | known problems use bounded codes/messages; caught runtime failures use one generic 500 without stack/Prisma/provider detail | public/version handlers have no database/provider failure surface |
-| Writes | no v1 route exports POST, PUT, PATCH, or DELETE | unsupported methods return empty 405 responses; no v1 write architecture exists or is claimed |
+| Writes | no v1 route implements a write path; explicit POST, PUT, PATCH, and DELETE handlers return the shared 405 problem before auth or persistence | no v1 write architecture exists or is claimed |
 
-Focused TC5 coverage comprises 11 tests across foundation, business summary,
-and business access. The latest implementation run before PR #73 recorded
-898/898 full tests plus passing typecheck, workspace validation, build, and
-`git diff --check`; lint had zero errors and the same two pre-existing warnings.
+Focused TC5 coverage now includes the unsupported-method hardening tests across foundation, business summary, and business access. The latest post-hardening verification recorded 6/6 focused tests and 912/912 full tests plus passing typecheck, workspace validation, build/type generation, and `git diff --check`; lint had zero errors and the same two pre-existing warnings.
 
 ## What was actually extracted
 
@@ -117,14 +114,18 @@ identifier arrays because it cannot import application runtime modules. Parity
 tests currently prevent drift; future contract generation may remove this
 maintenance duplication if an external contract is approved.
 
+## Follow-up closure evidence
+
+On 2026-08-13, PRs #92 and #93 closed the unsupported-method cache exception for all four current endpoints. A protected isolated-Staging replay confirmed a shared HTTP 405 v1 problem envelope, `Allow: GET`, `Cache-Control: no-store, max-age=0`, `nosniff`, and no auth/database write path for unsupported methods.
+
+Authenticated runtime UAT then used one disposable synthetic Owner and business on the isolated Neon Staging branch. Both `GET /api/v1/business/summary` and `GET /api/v1/business/access` returned HTTP 200 with `no-store`. Conflicting client query inputs (`tenantId`, `slug`, and `role=SUPER_ADMIN`) did not change the session-derived business or capabilities. The summary remained minimized and exposed no contacts, billing, notes, credentials, or customer records. No Super Admin fixture was created. The synthetic Owner, business, and associated verification/reset records were deleted immediately, and the post-cleanup counts were all zero.
+
+This is bounded technical evidence for the current read foundation only. It is not a real participant Closed Beta, external API publication, Production authorization, or Go-Live approval.
+
 ## Defects and hardening follow-ups
 
-1. **Normalize unsupported methods:** explicitly return a v1 405 problem with
-   `Allow` and `Cache-Control: no-store`; current Next.js-generated 405 responses
-   are empty and use public revalidation caching.
-2. **Complete authenticated Preview UAT:** replay business summary and access
-   with an approved existing session fixture, including cross-tenant and role
-   cases, before Production. Do not create a fixture implicitly.
+1. **Completed — normalize unsupported methods:** PRs #92 and #93 added the shared safe 405 boundary and Staging replay passed.
+2. **Completed — authenticated Preview UAT:** both protected reads passed with a disposable Owner session on isolated Staging; conflicting client tenant/slug/role inputs were ignored and cleanup was verified at zero.
 3. **Watch handler duplication:** extract the shared authenticated-business
    problem mapper/guard only if another protected read makes repetition material.
 4. **Keep contract identifiers synchronized:** retain capability/entitlement
