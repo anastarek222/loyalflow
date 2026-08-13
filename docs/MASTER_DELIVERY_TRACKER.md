@@ -13,6 +13,7 @@ This file joins two different planning views without treating them as interchang
 - **Product delivery P0-P12** tracks whether LoyalFlow is safe, usable, operable, and sellable.
 - **Modernization P0-P25** tracks the internal architecture migration from the current Next.js monolith toward domain/API ownership.
 - **Technical Completion Overlay** classifies unfinished work as technical-now or final presentation/content-later without replacing either phase model. See [`TECHNICAL_COMPLETION_OVERLAY.md`](./TECHNICAL_COMPLETION_OVERLAY.md).
+- **Beta Deferred Register** is the single list of Beta foundations that still require product, provider, real-participant, recovery, or Production evidence. See [`BETA_DEFERRED_REGISTER.md`](./BETA_DEFERRED_REGISTER.md).
 
 `Complete` means the agreed exit evidence for the current execution gate is merged. `In progress` means useful slices are merged but the broader phase exit gate is still open. `Foundation present` means product functionality exists, but the phase still lacks its final operational or UX evidence. Percentages are planning estimates, not CI measurements.
 
