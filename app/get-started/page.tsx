@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
@@ -28,7 +29,10 @@ export default async function GetStartedPage() {
 
   return (
     <main lang={locale} dir={direction} className="min-h-screen bg-surface-subtle px-4 py-8 text-foreground sm:px-6">
-      <div className="mx-auto w-full max-w-5xl">
+      <div
+        data-acquisition-mode={PUBLIC_ACQUISITION_MODE}
+        className="mx-auto w-full max-w-5xl"
+      >
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
           <Link href="/" className="text-xl font-black tracking-tight">
             {translate(locale, "common.brand")}
