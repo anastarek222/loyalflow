@@ -282,6 +282,14 @@ export async function assignStaffToBranchAction(
   if (!parsedBranchId.success || !parsedUserId.success) {
     redirectWithError(business.slug, "invalid");
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirectWithError(business.slug, "subscription-restricted");
+  }
 
   const [branch, user] = await Promise.all([
     prisma.branch.findFirst({
@@ -308,7 +316,17 @@ export async function assignStaffToBranchAction(
 
   try {
     const activityContext = await getActivityRequestContext();
-    await prisma.$transaction(async (transaction) => {
+    const assigned = await prisma.$transaction(async (transaction) => {
+      if (
+        !(await canBusinessPerformSubscriptionOperation(
+          transaction,
+          business.id,
+          "OPERATE",
+        ))
+      ) {
+        return false;
+      }
+
       await transaction.branchStaffAssignment.create({
         data: {
           businessId: business.id,
@@ -328,7 +346,9 @@ export async function assignStaffToBranchAction(
           activityContext,
         }),
       });
+      return true;
     });
+    if (!assigned) redirectWithError(business.slug, "subscription-restricted");
   } catch (error) {
     if (isDuplicateBranchAssignmentError(error)) {
       redirectWithError(business.slug, "duplicate-assignment");
@@ -348,6 +368,14 @@ export async function removeStaffAssignmentAction(
   const { business, session } = await getBranchManagementContext(slug);
   const parsedAssignmentId = opaqueIdSchema.safeParse(assignmentId);
   if (!parsedAssignmentId.success) redirectWithError(business.slug, "invalid");
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirectWithError(business.slug, "subscription-restricted");
+  }
 
   const assignment = await prisma.branchStaffAssignment.findFirst({
     where: getTenantScopedAssignmentWhere(parsedAssignmentId.data, business.id),
@@ -360,7 +388,17 @@ export async function removeStaffAssignmentAction(
   if (!assignment) redirectWithError(business.slug, "not-found");
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
+  const removed = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
     await transaction.branchStaffAssignment.delete({
       where: { id: assignment.id },
     });
@@ -376,7 +414,9 @@ export async function removeStaffAssignmentAction(
         activityContext,
       }),
     });
+    return true;
   });
+  if (!removed) redirectWithError(business.slug, "subscription-restricted");
 
   revalidateBranchPaths(business.slug);
   redirect(`${branchesPath(business.slug)}?success=assignment-removed`);

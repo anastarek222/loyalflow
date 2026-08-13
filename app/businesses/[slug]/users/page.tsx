@@ -445,8 +445,8 @@ export default async function UsersPage({
         {query.error === "subscription-restricted" && (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
             {language === "AR"
-              ? "لا تسمح حالة الاشتراك الحالية بإضافة حساب فريق جديد. تظل الحسابات والبيانات الحالية متاحة."
-              : "The current subscription state does not allow adding a new team account. Existing accounts and data remain available."}
+              ? "لا تسمح حالة الاشتراك الحالية بإضافة حساب فريق أو تغيير وصوله التشغيلي. تظل الحسابات والبيانات الحالية متاحة، وتظل إجراءات الأمان متاحة."
+              : "The current subscription state does not allow adding a team account or changing its operational access. Existing accounts and data remain available, and security controls remain accessible."}
           </div>
         )}
 

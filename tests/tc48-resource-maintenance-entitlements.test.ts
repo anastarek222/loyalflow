@@ -45,16 +45,14 @@ test("TC4.8 guards branch, offer, and reward maintenance as OPERATE", () => {
   }
 });
 
-test("TC4.8 keeps expansion and staff assignment classifications separate", () => {
+test("TC4.8 keeps expansion and maintenance classifications separate", () => {
   for (const sourceText of [branchActions, offerActions, rewardActions]) {
     assert.match(sourceText, /"EXPAND"/);
   }
-  const assignment = action(
-    branchActions,
-    "assignStaffToBranchAction",
-    "removeStaffAssignmentAction",
+  assert.match(
+    action(branchActions, "updateBranchAction", "setBranchStatusAction"),
+    /"OPERATE"/,
   );
-  assert.doesNotMatch(assignment, /canBusinessPerformSubscriptionOperation/);
 });
 
 test("TC4.8 exposes bounded restriction feedback without provider behavior", () => {
