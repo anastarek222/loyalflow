@@ -95,6 +95,7 @@ export default async function PlaybooksPage({ params, searchParams }: PlaybooksP
         {query.saved === "already" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle px-6 py-4 font-bold text-foreground-muted">{t("هذا القالب مطبق بالفعل؛ لم تُنشأ سجلات مكررة.", "This playbook is already applied; no duplicate records were created.")}</p> : null}
         {query.error === "confirmation" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-warning/30 bg-warning-subtle px-6 py-4 font-bold text-warning">{t("النشاط يحتوي إعدادات أو بيانات قائمة. راجع التغييرات ثم أكّد الاستبدال صراحةً.", "This business already has settings or data. Review the changes and explicitly confirm replacement.")}</p> : null}
         {query.error === "invalid" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-danger/30 bg-danger-subtle px-6 py-4 font-bold text-danger">{t("تعذر تحديد القالب.", "The playbook could not be identified.")}</p> : null}
+        {query.error === "subscription-restricted" ? <p className="mt-6 rounded-[var(--lf-radius-card)] border border-danger/30 bg-danger-subtle px-6 py-4 font-bold text-danger">{t("لا يمكن تطبيق قالب تشغيل في حالة الاشتراك الحالية.", "A playbook cannot be applied in the current subscription state.")}</p> : null}
 
         <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {businessPlaybookIds.map((id) => {

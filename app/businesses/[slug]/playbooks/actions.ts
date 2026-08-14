@@ -9,8 +9,10 @@ import {
   type PlaybookBusinessState,
 } from "@/lib/playbooks/catalog";
 import { canManageBusiness } from "@/lib/permissions";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -61,7 +63,10 @@ function playbookStateFromBusiness(business: {
 async function getPlaybookContext(slug: string) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const business = await prisma.business.findUnique({ where: { slug }, select: { id: true, slug: true } });
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { id: true, slug: true, subscriptionLifecycleState: true },
+  });
   if (!business || !canManageBusiness(session.user, business.id)) redirect("/dashboard");
   return { session, business };
 }
@@ -76,11 +81,28 @@ function revalidatePlaybookPaths(slug: string) {
 
 export async function applyBusinessPlaybookAction(slug: string, formData: FormData) {
   const { session, business } = await getPlaybookContext(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/playbooks?error=subscription-restricted`);
+  }
   const playbook = getBusinessPlaybook(formData.get("playbook")?.toString());
   if (!playbook) redirect(`/businesses/${business.slug}/playbooks?error=invalid`);
   const confirmedExisting = formData.get("confirmExisting") === "on";
 
   const outcome = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return "subscription-restricted" as const;
+    }
     const current = await transaction.business.findUnique({
       where: { id: business.id },
       select: {
@@ -117,6 +139,7 @@ export async function applyBusinessPlaybookAction(slug: string, formData: FormDa
 
   if (outcome === "confirmation-required") redirect(`/businesses/${business.slug}/playbooks?playbook=${playbook.id}&error=confirmation`);
   if (outcome === "already-applied") redirect(`/businesses/${business.slug}/playbooks?playbook=${playbook.id}&saved=already`);
+  if (outcome === "subscription-restricted") redirect(`/businesses/${business.slug}/playbooks?error=subscription-restricted`);
   if (outcome === "missing") redirect("/businesses");
 
   await syncBusinessToGoogleSheetSafely(business.id);
