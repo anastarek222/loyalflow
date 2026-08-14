@@ -525,6 +525,12 @@ export default async function CustomersPage({
           </div>
         )}
 
+        {query.error === "subscription-restricted" && (
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
+            {copy.subscriptionRestricted}
+          </div>
+        )}
+
         {query.bulk && query.selected && query.changed && (
           <div
             className={`mb-6 rounded-[var(--lf-radius-input)] border px-4 py-4 ${query.bulk === "invalid" || query.bulk === "invalid-selection" ? "border-danger/30 bg-danger-subtle text-danger" : "border-success/30 bg-success-subtle text-success"}`}
