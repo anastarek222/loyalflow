@@ -50,6 +50,8 @@ import {
   isLoyaltyModeChangeBlocked,
 } from "@/lib/loyalty/program-change-safety";
 import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -491,7 +493,7 @@ export async function uploadCustomCardArtworkAction(
   if (!session?.user) redirect("/login");
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, subscriptionLifecycleState: true },
   });
   if (!business) redirect("/businesses");
   if (
@@ -499,6 +501,14 @@ export async function uploadCustomCardArtworkAction(
     !canManageBusiness(session.user, business.id)
   ) {
     redirect(`/businesses/${slug}/program?cardDesign=forbidden`);
+  }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${slug}/program?cardDesign=subscription-restricted`);
   }
   if (!customCardStorageConfigured()) {
     redirect(`/businesses/${slug}/program?cardDesign=storage-unavailable`);
@@ -511,6 +521,15 @@ export async function uploadCustomCardArtworkAction(
   }
 
   const version = crypto.randomUUID();
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
+      "EXPAND",
+    ))
+  ) {
+    redirect(`/businesses/${slug}/program?cardDesign=subscription-restricted`);
+  }
   await uploadCustomCardArtwork({
     businessId: business.id,
     version,
@@ -530,7 +549,7 @@ export async function publishCustomCardArtworkAction(
   if (!session?.user) redirect("/login");
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: { id: true, slug: true, subscriptionLifecycleState: true },
   });
   if (!business) redirect("/businesses");
   if (
@@ -538,6 +557,14 @@ export async function publishCustomCardArtworkAction(
     !canManageBusiness(session.user, business.id)
   ) {
     redirect(`/businesses/${slug}/program?cardDesign=forbidden`);
+  }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${slug}/program?cardDesign=subscription-restricted`);
   }
 
   const version = String(formData.get("customVersion") ?? "");
@@ -547,8 +574,17 @@ export async function publishCustomCardArtworkAction(
   }
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction([
-    prisma.business.update({
+  const published = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+    await transaction.business.update({
       where: { id: business.id },
       data: {
         cardDesignMode: "CUSTOM",
@@ -557,8 +593,8 @@ export async function publishCustomCardArtworkAction(
         customCardBackArtworkUrl: artwork.backUrl,
         customCardSafeZoneVersion: "ID1_V1",
       },
-    }),
-    prisma.businessActivity.create({
+    });
+    await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: `تم نشر نسخة جديدة من تصميم بطاقة الولاء (${version})`,
@@ -566,8 +602,12 @@ export async function publishCustomCardArtworkAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!published) {
+    redirect(`/businesses/${slug}/program?cardDesign=subscription-restricted`);
+  }
 
   revalidatePath(`/businesses/${business.slug}/program`);
   revalidatePath("/card/[token]", "page");

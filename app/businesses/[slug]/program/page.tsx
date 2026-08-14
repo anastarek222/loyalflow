@@ -287,6 +287,17 @@ export default async function LoyaltyProgramPage({
                 )}
               </p>
             ) : null}
+            {query.cardDesign === "subscription-restricted" ? (
+              <p
+                role="alert"
+                className="mt-3 rounded-xl bg-danger-subtle p-3 text-sm font-bold text-danger"
+              >
+                {t(
+                  "لا يمكن رفع أو نشر تصميم مخصص في حالة الاشتراك الحالية.",
+                  "Custom artwork cannot be uploaded or published in the current subscription state.",
+                )}
+              </p>
+            ) : null}
           </div>
           {session.user.role === "SUPER_ADMIN" ? (
             <CustomCardArtworkManager
