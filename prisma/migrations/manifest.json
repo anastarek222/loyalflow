@@ -1,7 +1,7 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "migrationCount": 47,
+  "migrationCount": 48,
   "migrations": [
     {
       "order": 1,
@@ -284,6 +284,12 @@
       "name": "20260813003000_add_subscription_lifecycle_persistence",
       "path": "prisma/migrations/20260813003000_add_subscription_lifecycle_persistence/migration.sql",
       "sha256": "a8d010dea34d5d08336ad6cf90090f7ec7ce97f10643157522756afbd79fcfc0"
+    },
+    {
+      "order": 48,
+      "name": "20260814213000_add_integration_outbox_jobs",
+      "path": "prisma/migrations/20260814213000_add_integration_outbox_jobs/migration.sql",
+      "sha256": "2702702e918c8f06475b7738b1dc5d2eb7c4024b7a19fd529aa19ac0a177fd52"
     }
   ]
 }
