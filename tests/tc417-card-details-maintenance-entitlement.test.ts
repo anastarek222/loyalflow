@@ -32,7 +32,7 @@ test("TC4.17 guards public card details maintenance as OPERATE", () => {
   );
 });
 
-test("TC4.17 composes with later sync protection while export remains deferred", () => {
+test("TC4.17 composes with later sync and export-permission protection", () => {
   const syncAction = action(
     settingsActions,
     "syncGoogleSheetAction",
@@ -45,8 +45,8 @@ test("TC4.17 composes with later sync protection while export remains deferred",
   );
   assert.match(syncAction, /canPerformSubscriptionOperation\(/);
   assert.match(syncAction, /canBusinessPerformSubscriptionOperation\(/);
-  assert.doesNotMatch(exportAction, /canPerformSubscriptionOperation\(/);
-  assert.doesNotMatch(exportAction, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(exportAction, /canPerformSubscriptionOperation\(/);
+  assert.match(exportAction, /canBusinessPerformSubscriptionOperation\(/);
 });
 
 test("TC4.17 exposes bounded bilingual restriction feedback", () => {

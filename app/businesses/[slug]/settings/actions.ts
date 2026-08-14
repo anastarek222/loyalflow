@@ -886,6 +886,8 @@ export async function updateBusinessExportPermissionAction(
     select: {
       id: true,
       slug: true,
+      allowOwnerDataExport: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -894,10 +896,33 @@ export async function updateBusinessExportPermissionAction(
   }
 
   const allowOwnerDataExport = formData.get("allowOwnerDataExport") === "on";
+  if (allowOwnerDataExport === business.allowOwnerDataExport) {
+    redirect(`/businesses/${business.slug}/settings?exportPermissionSaved=1`);
+  }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      `/businesses/${business.slug}/settings?exportPermissionSaved=subscription-restricted`,
+    );
+  }
   const activityContext = await getActivityRequestContext();
 
-  await prisma.$transaction([
-    prisma.business.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.business.update({
       where: {
         id: business.id,
       },
@@ -905,9 +930,9 @@ export async function updateBusinessExportPermissionAction(
       data: {
         allowOwnerDataExport,
       },
-    }),
+    });
 
-    prisma.businessActivity.create({
+    await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
 
@@ -920,8 +945,15 @@ export async function updateBusinessExportPermissionAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+
+  if (!updated) {
+    redirect(
+      `/businesses/${business.slug}/settings?exportPermissionSaved=subscription-restricted`,
+    );
+  }
 
   revalidatePath(`/businesses/${business.slug}`);
 

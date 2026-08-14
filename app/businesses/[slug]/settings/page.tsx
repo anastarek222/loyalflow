@@ -320,6 +320,18 @@ export default async function BusinessSettingsPage({
           </div>
         )}
 
+        {query.exportPermissionSaved === "subscription-restricted" && (
+          <div
+            role="alert"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger"
+          >
+            {t(
+              "لا يمكن تغيير صلاحية تصدير البيانات في حالة الاشتراك الحالية.",
+              "Data export permission cannot be changed in the current subscription state.",
+            )}
+          </div>
+        )}
+
         <section
           id="integration-settings"
           className="scroll-mt-24"
