@@ -618,11 +618,15 @@ export default async function BusinessSettingsPage({
           }}
           status={{
             profile:
-              query.profile === "saved" || query.profile === "invalid"
+              query.profile === "saved" ||
+              query.profile === "invalid" ||
+              query.profile === "subscription-restricted"
                 ? query.profile
                 : undefined,
             operations:
-              query.operations === "saved" || query.operations === "invalid"
+              query.operations === "saved" ||
+              query.operations === "invalid" ||
+              query.operations === "subscription-restricted"
                 ? query.operations
                 : undefined,
           }}

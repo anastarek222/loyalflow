@@ -9,7 +9,7 @@ type Props = {
     whatsappBalanceMessage: string;
     whatsappRewardMessage: string;
   };
-  status: "saved" | "invalid" | undefined;
+  status: "saved" | "invalid" | "subscription-restricted" | undefined;
   action: (formData: FormData) => void | Promise<void>;
 };
 
@@ -78,7 +78,12 @@ export function CustomerMessagesForm({
         >
           {status === "saved"
             ? t("تم حفظ رسائل العملاء.", "Customer messages saved.")
-            : t("راجع رسائل العملاء.", "Review the customer messages.")}
+            : status === "subscription-restricted"
+              ? t(
+                  "لا يمكن تعديل رسائل العملاء في حالة الاشتراك الحالية.",
+                  "Customer messages cannot be changed in the current subscription state.",
+                )
+              : t("راجع رسائل العملاء.", "Review the customer messages.")}
         </p>
       ) : null}
       <h2 className="text-xl font-black text-foreground">

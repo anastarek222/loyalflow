@@ -50,6 +50,8 @@ import {
   isLoyaltyModeChangeBlocked,
 } from "@/lib/loyalty/program-change-safety";
 import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -113,6 +115,7 @@ async function getManagedBusiness(slug: string) {
       id: true,
       slug: true,
       coverImageUrl: true,
+      subscriptionLifecycleState: true,
     },
   });
   if (!business) {
@@ -132,6 +135,7 @@ async function updateSettingsDomain(input: {
   data: Parameters<typeof prisma.business.update>[0]["data"];
   metadata?: Prisma.InputJsonObject;
   syncSheet?: boolean;
+  enforceOperateEntitlement?: boolean;
 }) {
   const activityContext = await getActivityRequestContext();
   const actorFields = activityActorFields(input.user, input.businessId);
@@ -140,12 +144,23 @@ async function updateSettingsDomain(input: {
   const actorMetadata =
     "metadata" in actorFields ? actorFields.metadata : undefined;
 
-  await prisma.$transaction([
-    prisma.business.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      input.enforceOperateEntitlement &&
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        input.businessId,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.business.update({
       where: { id: input.businessId },
       data: input.data,
-    }),
-    prisma.businessActivity.create({
+    });
+    await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: input.description,
@@ -161,8 +176,10 @@ async function updateSettingsDomain(input: {
           : {}),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!updated) return false;
   if (input.syncSheet) {
     await syncBusinessToGoogleSheetSafely(input.businessId);
   }
@@ -174,6 +191,7 @@ async function updateSettingsDomain(input: {
   revalidatePath(`/businesses/${input.slug}/program`);
   revalidatePath(`/businesses/${input.slug}/activity`);
   revalidatePath("/card/[token]", "page");
+  return true;
 }
 
 export async function updateBusinessProfileAction(
@@ -181,6 +199,14 @@ export async function updateBusinessProfileAction(
   formData: FormData,
 ) {
   const { business, session } = await getManagedBusiness(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/settings?profile=subscription-restricted`);
+  }
   const removeCoverImage = formData.get("removeCoverImage") === "on";
   const coverImageFile = formData.get("coverImageFile");
   let uploadedCoverImageDataUrl: string | null = null;
@@ -217,14 +243,18 @@ export async function updateBusinessProfileAction(
     : uploadedCoverImageDataUrl ??
       submittedCoverImageUrl ??
       business.coverImageUrl;
-  await updateSettingsDomain({
+  const updated = await updateSettingsDomain({
     businessId: business.id,
     slug: business.slug,
     user: session.user,
     description: "تم تحديث الملف التعريفي للنشاط",
     data: getBusinessProfileUpdate(parsed.data, finalCoverImageUrl),
     syncSheet: true,
+    enforceOperateEntitlement: true,
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/settings?profile=subscription-restricted`);
+  }
   redirect(`/businesses/${business.slug}/settings?profile=saved`);
 }
 
@@ -233,6 +263,14 @@ export async function updateProgramRulesAction(
   formData: FormData,
 ) {
   const { business, session } = await getManagedBusiness(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/program?program=subscription-restricted`);
+  }
   const parsed = programRulesSettingsSchema.safeParse({
     loyaltyProgramName: formData.get("loyaltyProgramName") ?? "",
     welcomeMessage: formData.get("welcomeMessage") ?? "",
@@ -338,7 +376,7 @@ export async function updateProgramRulesAction(
     );
   }
 
-  await updateSettingsDomain({
+  const updated = await updateSettingsDomain({
     businessId: business.id,
     slug: business.slug,
     user: session.user,
@@ -356,7 +394,11 @@ export async function updateProgramRulesAction(
       },
     },
     syncSheet: true,
+    enforceOperateEntitlement: true,
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/program?program=subscription-restricted`);
+  }
   redirect(`/businesses/${business.slug}/program?program=saved`);
 }
 
@@ -365,6 +407,14 @@ export async function updateCustomerMessagesAction(
   formData: FormData,
 ) {
   const { business, session } = await getManagedBusiness(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/program?messages=subscription-restricted`);
+  }
   const parsed = customerMessagesSettingsSchema.safeParse({
     whatsappWelcomeMessage: formData.get("whatsappWelcomeMessage"),
     whatsappBalanceMessage: formData.get("whatsappBalanceMessage"),
@@ -373,13 +423,17 @@ export async function updateCustomerMessagesAction(
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/program?messages=invalid`);
   }
-  await updateSettingsDomain({
+  const updated = await updateSettingsDomain({
     businessId: business.id,
     slug: business.slug,
     user: session.user,
     description: "تم تحديث قوالب رسائل العملاء",
     data: getCustomerMessagesUpdate(parsed.data),
+    enforceOperateEntitlement: true,
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/program?messages=subscription-restricted`);
+  }
   redirect(`/businesses/${business.slug}/program?messages=saved`);
 }
 
@@ -388,19 +442,31 @@ export async function updateOperationsSettingsAction(
   formData: FormData,
 ) {
   const { business, session } = await getManagedBusiness(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/settings?operations=subscription-restricted`);
+  }
   const parsed = operationsSettingsSchema.safeParse({
     staffAttributionMode: formData.get("staffAttributionMode"),
   });
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/settings?operations=invalid`);
   }
-  await updateSettingsDomain({
+  const updated = await updateSettingsDomain({
     businessId: business.id,
     slug: business.slug,
     user: session.user,
     description: "تم تحديث إعدادات التشغيل",
     data: getOperationsSettingsUpdate(parsed.data),
+    enforceOperateEntitlement: true,
   });
+  if (!updated) {
+    redirect(`/businesses/${business.slug}/settings?operations=subscription-restricted`);
+  }
   redirect(`/businesses/${business.slug}/settings?operations=saved`);
 }
 

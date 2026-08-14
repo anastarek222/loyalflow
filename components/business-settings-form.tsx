@@ -7,7 +7,7 @@ import { Building2, Save, Settings2 } from "lucide-react";
 
 type Language = "AR" | "EN";
 type FormAction = (formData: FormData) => void | Promise<void>;
-type FormStatus = "saved" | "invalid" | undefined;
+type FormStatus = "saved" | "invalid" | "subscription-restricted" | undefined;
 
 export type ProgramRulesBusiness = {
   loyaltyProgramName: string | null;
@@ -95,9 +95,13 @@ function Feedback({
         ? language === "AR"
           ? "تم حفظ هذا القسم بنجاح."
           : "This section was saved successfully."
-        : language === "AR"
-          ? "راجع بيانات هذا القسم."
-          : "Review the fields in this section."}
+        : status === "subscription-restricted"
+          ? language === "AR"
+            ? "لا يمكن تعديل هذا القسم في حالة الاشتراك الحالية."
+            : "This section cannot be changed in the current subscription state."
+          : language === "AR"
+            ? "راجع بيانات هذا القسم."
+            : "Review the fields in this section."}
     </p>
   );
 }

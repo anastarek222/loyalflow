@@ -211,7 +211,8 @@ export default async function LoyaltyProgramPage({
               query.program === "saved" ||
               query.program === "invalid" ||
               query.program === "mode-blocked" ||
-              query.program === "economic-confirmation-required"
+              query.program === "economic-confirmation-required" ||
+              query.program === "subscription-restricted"
                 ? query.program
                 : undefined
             }
@@ -422,7 +423,9 @@ export default async function LoyaltyProgramPage({
                 DEFAULT_WHATSAPP_TEMPLATES.reward,
             }}
             status={
-              query.messages === "saved" || query.messages === "invalid"
+              query.messages === "saved" ||
+              query.messages === "invalid" ||
+              query.messages === "subscription-restricted"
                 ? query.messages
                 : undefined
             }
