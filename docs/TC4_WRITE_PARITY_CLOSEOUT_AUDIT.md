@@ -1,6 +1,6 @@
 # TC4 Beta Write-Parity Closeout Audit
 
-Status: `IMPLEMENTED_AND_SOURCE_TESTED`; isolated Staging proof remains open.
+Status: `IMPLEMENTED_SOURCE_TESTED_AND_PREVIEW_HEALTH_VERIFIED`; merge remains governed by the approved PR workflow.
 
 This closeout audit does not create a new TC identifier. It inventories the existing TC4 runtime-entitlement slices and classifies every exported business-operational Server Action currently present in the repository.
 
@@ -42,11 +42,14 @@ Business/Owner creation and invitation acceptance, authentication, email verific
 ## Evidence and limitations
 
 - The static inventory and existing focused TC4 suites provide source-level regression evidence.
+- GitHub Actions `Staging PR Validation` passed for cumulative commit `b8101c4fd97240eb24e431f93f813636ece8ef85`.
+- The branch-scoped Vercel Preview deployment `dpl_E2dFjeqkFmQGPT9SFuC1wRBUYLmu` reached `READY` against the isolated Neon `staging` branch; Production was not used or changed.
+- Authenticated CLI checks returned `status: live`, `environment: preview`, and release `b8101c4fd972` from `/api/v1/health/live`, then `status: ready` with the same environment and release from `/api/health`.
 - This audit changes no application code, UI, CSS, token, component, route behavior, schema, migration, dependency, environment variable, provider, credential, or Production behavior.
-- It does not prove isolated Staging behavior and does not close the deployment/health gate.
+- The evidence above closes the cumulative candidate's Preview build, liveness, and database-readiness gate only. It is not merge, real-participant, provider, or Production evidence.
 - Provider events, referral rewards, campaign execution, checkout, and billing activation remain deferred product/provider work rather than hidden runtime-parity gaps.
 - Any future exported business mutation must receive an explicit classification and risk-appropriate tests.
 
 ## Closeout interpretation
 
-The current source inventory contains no unclassified business-operational mutation bypass. TC4 runtime write parity can be treated as technically implemented and source-tested only. Operational completion remains blocked until the cumulative candidate is merged through the approved workflow and exercised on isolated Staging with the required health evidence.
+The current source inventory contains no unclassified business-operational mutation bypass. TC4 runtime write parity is technically implemented, source-tested, and verified through the cumulative candidate's isolated Preview build/liveness/readiness gate. Operational completion remains blocked until the cumulative candidate is reviewed and merged through the approved workflow; provider events, referral rewards, campaign execution, checkout, billing activation, real-participant evidence, and Production authorization remain separate gates.
