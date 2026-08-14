@@ -287,6 +287,14 @@ export default async function LoyaltyProgramPage({
                 )}
               </p>
             ) : null}
+            {query.cardDesign === "subscription-restricted" ? (
+              <p className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger">
+                {t(
+                  "لا يمكن تعديل تصميم الكارت في حالة الاشتراك الحالية.",
+                  "Card design cannot be changed in the current subscription state.",
+                )}
+              </p>
+            ) : null}
           </div>
           {session.user.role === "SUPER_ADMIN" ? (
             <CustomCardArtworkManager

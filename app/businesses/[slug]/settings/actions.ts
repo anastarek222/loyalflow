@@ -50,6 +50,8 @@ import {
   isLoyaltyModeChangeBlocked,
 } from "@/lib/loyalty/program-change-safety";
 import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -413,10 +415,24 @@ export async function updateBusinessCardDesignAction(
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, logoUrl: true, cardDesignMode: true },
+    select: {
+      id: true,
+      slug: true,
+      logoUrl: true,
+      cardDesignMode: true,
+      subscriptionLifecycleState: true,
+    },
   });
   if (!business) redirect("/businesses");
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${slug}/program?cardDesign=subscription-restricted`);
+  }
 
   const logoFile = formData.get("logoFile");
   let uploadedLogoDataUrl: string | null = null;
@@ -461,12 +477,21 @@ export async function updateBusinessCardDesignAction(
       : submittedLogoUrl || business.logoUrl;
 
   const activityContext = await getActivityRequestContext();
-  await prisma.$transaction([
-    prisma.business.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+    await transaction.business.update({
       where: { id: business.id },
       data: { ...authorizedUpdate.data, logoUrl: finalLogoUrl },
-    }),
-    prisma.businessActivity.create({
+    });
+    await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: "تم تحديث تصميم بطاقة الولاء",
@@ -474,8 +499,12 @@ export async function updateBusinessCardDesignAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+  if (!updated) {
+    redirect(`/businesses/${slug}/program?cardDesign=subscription-restricted`);
+  }
 
   revalidatePath(`/businesses/${business.slug}/settings`);
   revalidatePath(`/businesses/${business.slug}/program`);
