@@ -30,13 +30,32 @@ function CustomQr({ src }: { src?: string | null }) {
   );
 }
 
+function readableAccentOnDark(color?: string | null) {
+  const fallback = "#D5AE6E";
+  if (!color || !/^#[0-9a-fA-F]{6}$/.test(color)) return fallback;
+
+  const channels = [1, 3, 5].map((offset) =>
+    Number.parseInt(color.slice(offset, offset + 2), 16),
+  );
+  const luminance =
+    (channels[0] * 299 + channels[1] * 587 + channels[2] * 114) / 1000;
+  if (luminance >= 145) return color;
+
+  const lightened = channels.map((channel) =>
+    Math.round(channel + (255 - channel) * 0.58),
+  );
+  return `#${lightened
+    .map((channel) => channel.toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
 function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const side = props.side ?? "front";
   const language = props.language ?? "EN";
   const dir = language === "AR" ? "rtl" : "ltr";
   const metrics = getLoyaltyCardMetrics({ ...props, language });
   const artworkUrl = side === "front" ? props.customFrontArtworkUrl : props.customBackArtworkUrl;
-  const accent = /^#[0-9a-fA-F]{6}$/.test(props.primaryColor) ? props.primaryColor : "#D5AE6E";
+  const accent = readableAccentOnDark(props.primaryColor);
   const labels = language === "AR"
     ? { member: "اسم العضو", id: "رقم العضوية", balance: "الرصيد", reward: "المكافأة القادمة" }
     : { member: "MEMBER NAME", id: "LOYALTY ID", balance: "BALANCE", reward: "NEXT REWARD" };
@@ -63,7 +82,10 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
 
       {side === "front" ? (
         <div dir={dir} className="relative grid h-full grid-cols-[minmax(0,1fr)_25%] grid-rows-[auto_1fr_auto] gap-x-[5cqw] p-[6.8cqw]">
-          <div data-safe-zone="custom-brand" className="min-w-0">
+          <div
+            data-safe-zone="custom-brand"
+            className="min-w-0 w-fit max-w-full rounded-[2cqw] border border-white/15 bg-black/60 px-[2.5cqw] py-[1.8cqw] backdrop-blur-sm"
+          >
             <p dir="auto" title={props.businessName} className="truncate text-[3.7cqw] font-black tracking-[0.06em]">{props.businessName}</p>
             <p className="mt-[1cqw] text-[1.45cqw] font-bold tracking-[0.22em]" style={{ color: accent }}>LOYALTY CARD</p>
           </div>
@@ -72,7 +94,10 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
               <CustomQr src={props.qrCode} />
             </div>
           </div>
-          <div data-safe-zone="custom-member" className="col-span-2 self-end">
+          <div
+            data-safe-zone="custom-member"
+            className="col-span-2 w-fit max-w-[72%] self-end rounded-[2cqw] border border-white/15 bg-black/60 px-[2.5cqw] py-[2cqw] backdrop-blur-sm"
+          >
             <p className="text-[1.5cqw] font-bold tracking-[0.18em]" style={{ color: accent }}>{labels.member}</p>
             <p dir="auto" title={props.customerName} className="mt-[1cqw] max-w-[62%] truncate text-[4.2cqw] font-black">{props.customerName}</p>
             <p className="mt-[2cqw] text-[1.5cqw] font-bold tracking-[0.18em]" style={{ color: accent }}>{labels.id}</p>
@@ -93,10 +118,16 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
         </div>
       ) : (
         <div dir={dir} className="relative flex h-full flex-col justify-between p-[6.8cqw]">
-          <div data-safe-zone="custom-back-brand">
+          <div
+            data-safe-zone="custom-back-brand"
+            className="w-fit max-w-full rounded-[2cqw] border border-white/15 bg-black/60 px-[2.5cqw] py-[1.8cqw] backdrop-blur-sm"
+          >
             <p dir="auto" title={props.businessName} className="truncate text-[3.4cqw] font-black tracking-[0.06em]">{props.businessName}</p>
           </div>
-          <section data-safe-zone="custom-reward" className="max-w-[68%]">
+          <section
+            data-safe-zone="custom-reward"
+            className="max-w-[72%] rounded-[2.5cqw] border border-white/15 bg-black/60 px-[3cqw] py-[2.5cqw] backdrop-blur-sm"
+          >
             <p className="text-[1.6cqw] font-bold tracking-[0.2em]" style={{ color: accent }}>{labels.reward}</p>
             <p dir="auto" title={props.rewardName} className="mt-[1.8cqw] line-clamp-2 break-words text-[4.2cqw] font-black leading-tight">{props.rewardName.slice(0, 32)}</p>
             <p dir="auto" aria-label={metrics.semanticRemainingText} title={metrics.semanticRemainingText} className="mt-[2cqw] truncate text-[1.8cqw] font-bold">{metrics.remainingText}</p>

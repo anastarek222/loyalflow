@@ -236,7 +236,11 @@ function Brand({
   muted: string;
 }) {
   return (
-    <g data-safe-zone="brand-logo">
+    <g
+      data-safe-zone="brand-logo"
+      direction="ltr"
+      style={{ unicodeBidi: "isolate" }}
+    >
       <rect
         x="42"
         y="35"
@@ -848,6 +852,8 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         viewBox={`0 0 ${STANDARD_CARD_CANVAS.width} ${STANDARD_CARD_CANVAS.height}`}
         width="100%"
         height="100%"
+        direction="ltr"
+        style={{ unicodeBidi: "isolate" }}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`${props.businessName} loyalty card ${side}`}

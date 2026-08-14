@@ -34,6 +34,15 @@ test("standard card uses one browser-independent SVG canvas", () => {
   assert.doesNotMatch(card, /ResizeObserver|transform:|cqw|cqh|cqi|cqb|containerType/);
 });
 
+test("standard SVG isolates its fixed canvas from an RTL page", () => {
+  const card = source("components/standard-loyalty-card.tsx");
+  assert.match(card, /<svg[\s\S]*?direction="ltr"[\s\S]*?unicodeBidi: "isolate"/);
+  assert.match(
+    card,
+    /data-safe-zone="brand-logo"[\s\S]*?direction="ltr"[\s\S]*?unicodeBidi: "isolate"/,
+  );
+});
+
 test("standard QR has fixed logical dimensions and defensive bounds", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /data-safe-zone="qr-code"/);
@@ -334,6 +343,22 @@ test("Custom UX delegates lifecycle uploads while preserving published URLs", ()
   assert.match(canonical, /props\.customFrontArtworkUrl/);
   assert.match(canonical, /props\.customBackArtworkUrl/);
   assert.match(canonical, /Boolean\(props\.customFrontArtworkUrl && props\.customBackArtworkUrl\)/);
+  assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
+  assert.match(setup, /Managed from the Custom Card artwork panel above/);
+  assert.match(manager, /object-contain/);
+});
+
+test("custom artwork keeps dynamic data readable over dark artwork", () => {
+  const canonical = source("components/loyalty-card.tsx");
+  assert.match(canonical, /function readableAccentOnDark/);
+  for (const zone of [
+    "custom-brand",
+    "custom-member",
+    "custom-back-brand",
+    "custom-reward",
+  ]) {
+    assert.match(canonical, new RegExp(`data-safe-zone="${zone}"[^>]*bg-black\\/60`));
+  }
 });
 
 test("public card is rendered from dynamic customer and business data", () => {

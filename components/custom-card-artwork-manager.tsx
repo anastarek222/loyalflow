@@ -105,7 +105,7 @@ export function CustomCardArtworkManager({
                 <img
                   src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/${side}`}
                   alt={`Custom card ${side} draft`}
-                  className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-cover"
+                  className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
                 />
               </div>
             ))}

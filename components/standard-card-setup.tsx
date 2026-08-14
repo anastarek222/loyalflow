@@ -272,30 +272,9 @@ export function StandardCardSetup({
                       </span>
                     )}
                   </div>
-                  <label className="mt-3 block">
-                    <span className="sr-only">Upload {label} Design</span>
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      disabled
-                      className="sr-only"
-                    />
-                    <span
-                      aria-disabled="true"
-                      className="block cursor-not-allowed rounded-lg border border-border bg-white px-3 py-2 text-center text-sm font-bold opacity-55"
-                    >
-                      Upload {label} Design
-                    </span>
-                  </label>
-                  {artworkUrl ? (
-                    <button
-                      type="button"
-                      onClick={() => update(key, "")}
-                      className="mt-2 w-full rounded-lg px-3 py-2 text-sm font-bold text-danger hover:bg-danger-subtle"
-                    >
-                      Remove existing artwork
-                    </button>
-                  ) : null}
+                  <p className="mt-3 text-xs font-semibold text-foreground-muted">
+                    Managed from the Custom Card artwork panel above.
+                  </p>
                 </div>
               ))}
             </div>
