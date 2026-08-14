@@ -50,6 +50,8 @@ import {
   isLoyaltyModeChangeBlocked,
 } from "@/lib/loyalty/program-change-safety";
 import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -629,6 +631,7 @@ export async function updateBusinessCardDetailsAction(
     select: {
       id: true,
       slug: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -640,6 +643,17 @@ export async function updateBusinessCardDetailsAction(
 
   if (!canManage) {
     redirect("/dashboard");
+  }
+
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      `/businesses/${business.slug}/settings?cardError=subscription-restricted`,
+    );
   }
 
   const parsed = cardBusinessDetailsSchema.safeParse({
@@ -654,8 +668,18 @@ export async function updateBusinessCardDetailsAction(
 
   const activityContext = await getActivityRequestContext();
 
-  await prisma.$transaction([
-    prisma.business.update({
+  const updated = await prisma.$transaction(async (transaction) => {
+    if (
+      !(await canBusinessPerformSubscriptionOperation(
+        transaction,
+        business.id,
+        "OPERATE",
+      ))
+    ) {
+      return false;
+    }
+
+    await transaction.business.update({
       where: {
         id: business.id,
       },
@@ -664,9 +688,9 @@ export async function updateBusinessCardDetailsAction(
         address: parsed.data.address,
         cardTerms: parsed.data.cardTerms,
       },
-    }),
+    });
 
-    prisma.businessActivity.create({
+    await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: "تم تحديث بيانات التواصل وشروط الكارت الرقمي",
@@ -674,8 +698,15 @@ export async function updateBusinessCardDetailsAction(
         ...activityActorFields(session.user, business.id),
         ...activityRequestMetadata(activityContext),
       },
-    }),
-  ]);
+    });
+    return true;
+  });
+
+  if (!updated) {
+    redirect(
+      `/businesses/${business.slug}/settings?cardError=subscription-restricted`,
+    );
+  }
 
   revalidatePath(`/businesses/${business.slug}/settings`);
 

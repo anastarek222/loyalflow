@@ -460,6 +460,15 @@ export default async function BusinessSettingsPage({
           </div>
         )}
 
+        {query.cardError === "subscription-restricted" && (
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t(
+              "لا يمكن تعديل بيانات الكارت في حالة الاشتراك الحالية.",
+              "Card details cannot be changed in the current subscription state.",
+            )}
+          </div>
+        )}
+
         <details
           id="customer-card-settings"
           className="group mb-6 scroll-mt-24 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm"
