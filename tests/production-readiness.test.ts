@@ -218,7 +218,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 47);
+  assert.equal(committedMigrations.length, 48);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types",
@@ -234,6 +234,10 @@ test("local database verifier requires the complete reviewed committed migration
       "20260813003000_add_subscription_lifecycle_persistence",
     ),
     "The TC4.3 subscription lifecycle migration must be part of the reviewed history.",
+  );
+  assert.ok(
+    committedMigrations.includes("20260814213000_add_integration_outbox_jobs"),
+    "The TC6.4 integration outbox migration must be part of the reviewed history.",
   );
   assert.ok(
     committedMigrations.includes(
