@@ -50,6 +50,8 @@ import {
   isLoyaltyModeChangeBlocked,
 } from "@/lib/loyalty/program-change-safety";
 import { getLoyaltyProgramRulesAuditMetadata } from "@/lib/loyalty/program-rules-audit";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const cardBusinessDetailsSchema = z.object({
   contactPhone: z.string().trim().refine(isValidBusinessPhone),
@@ -588,6 +590,7 @@ export async function syncGoogleSheetAction(slug: string) {
     select: {
       id: true,
       slug: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -599,6 +602,25 @@ export async function syncGoogleSheetAction(slug: string) {
 
   if (!canManage) {
     redirect("/dashboard");
+  }
+
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/settings?sheetSync=subscription-restricted`);
+  }
+
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
+      "OPERATE",
+    ))
+  ) {
+    redirect(`/businesses/${business.slug}/settings?sheetSync=subscription-restricted`);
   }
 
   const result = await syncBusinessToGoogleSheetSafely(business.id);

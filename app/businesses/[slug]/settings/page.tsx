@@ -299,6 +299,15 @@ export default async function BusinessSettingsPage({
           </div>
         )}
 
+        {query.sheetSync === "subscription-restricted" && (
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t(
+              "لا يمكن تشغيل مزامنة Google Sheets في حالة الاشتراك الحالية.",
+              "Google Sheets sync cannot run in the current subscription state.",
+            )}
+          </div>
+        )}
+
         {query.exportPermissionSaved === "1" && (
           <div
             role="status"
