@@ -18,4 +18,3 @@
 
 - Focused source-level tests cover authorization, preflight and transactional enforcement, no-op replay, audit preservation, and bilingual feedback.
 - Full tests, typecheck, workspace validation, lint, build, and patch checks remain required in CI.
-

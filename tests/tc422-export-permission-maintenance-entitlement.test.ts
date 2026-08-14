@@ -48,4 +48,3 @@ test("TC4.22 exposes bounded bilingual restriction feedback", () => {
   assert.match(page, /current subscription state/);
   assert.match(page, /حالة الاشتراك الحالية/);
 });
-
