@@ -1,7 +1,7 @@
 # LoyalFlow Beta Technical Completion Audit
 
-Date: 2026-08-13
-Status: `TC3_BLOB_BETA_IMPLEMENTED_PENDING_STAGING_ACTIVATION`
+Date: 2026-08-14
+Status: `TC3_BLOB_STAGING_LIFECYCLE_VERIFIED`
 Environment: isolated Staging Beta only
 
 ## Outcome
@@ -9,6 +9,13 @@ Environment: isolated Staging Beta only
 The previously safe technical backlog was exhausted. The product owner then
 approved Vercel Blob and a preserve-all Beta lifecycle for TC3 Custom Card,
 which reopened one bounded implementation path without authorizing Production.
+
+That path is now operationally verified on isolated Staging. A private,
+branch-scoped Blob resource accepted one immutable front/back draft; authenticated
+preview, explicit publish, token-bound desktop/mobile delivery, and Standard-mode
+cleanup passed. Read-only Neon checks confirmed the published Custom state and
+the later cleaned Standard state. See
+[`TC3_CUSTOM_CARD_STAGING_UAT.md`](./TC3_CUSTOM_CARD_STAGING_UAT.md).
 
 The latest bundle centralizes the duplicated protected own-business API read
 boundary. Both existing protected `/api/v1` reads now share request-ID,
@@ -36,7 +43,8 @@ adds no endpoint and publishes no external API commitment.
 The remaining items are not additional safe code cleanup. Each requires at
 least one explicitly deferred input:
 
-- Custom Card now requires Staging Blob activation and live lifecycle UAT;
+- Custom Card Production activation requires an explicit retention/deletion
+  policy beyond the current preserve-all Beta rule and separate authorization;
 - subscriptions require persistence/idempotency design and payment/provider
   decisions;
 - API writes require a named consumer and approved CSRF/idempotency/transaction

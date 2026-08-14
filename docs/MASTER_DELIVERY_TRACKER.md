@@ -1,6 +1,6 @@
 # LoyalFlow Master Delivery Tracker
 
-Last verified: 2026-08-13
+Last verified: 2026-08-14
 
 Baseline: `main` at `f2bf363bc289a177be7a36c02a7c26ea04446cdc` (merged PR #63)
 
@@ -31,7 +31,7 @@ On 2026-08-12, the product owner approved a technical-first execution priority. 
 
 On 2026-08-12, PR #69 merged TC1.1 through TC3.2 into `staging` with merge commit `3f739dba9960ad6574385a8bfd5086276fc468e5`; required checks passed and the automatic Vercel `staging` Preview reached Ready. The authenticated Owner evidence that was initially blocked was completed later on isolated Staging with a disposable fixture, and cleanup verified zero retained businesses, users, and customers.
 
-The product owner approved Vercel Blob for the TC3 Custom Card Beta lifecycle. The bounded implementation now provides private business-isolated front/back uploads, immutable version paths, authenticated Super Admin preview, explicit publish, preserve-all version history, and token-bound customer delivery without exposing private Blob URLs. Existing Custom Card URLs remain compatible and no schema migration or Production action is introduced. Staging Blob resource activation and live lifecycle UAT remain required before this path is operationally complete. The approved TC4 provider-neutral lifecycle remains separate; provider-event consumption, checkout, and payment activation are still deferred. See [`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
+The product owner approved Vercel Blob for the TC3 Custom Card Beta lifecycle. The bounded implementation provides private business-isolated front/back uploads, immutable version paths, authenticated Super Admin preview, explicit publish, preserve-all version history, and token-bound customer delivery without exposing private Blob URLs. On 2026-08-14, an isolated private Blob store and branch-scoped Sensitive token were activated only for Preview (`staging`); upload, draft preview, publish, public desktop/mobile front/back delivery, and Standard-mode cleanup passed against release `cd2c4903f0ea`. Read-only Neon checks confirmed both the active Custom state and the cleaned Standard state. TC3 is operationally verified for isolated Staging Beta; only the later retention/deletion policy and any separately authorized Production activation remain deferred. See [`TC3_CUSTOM_CARD_STAGING_UAT.md`](./TC3_CUSTOM_CARD_STAGING_UAT.md). The approved TC4 provider-neutral lifecycle remains separate; provider-event consumption, checkout, and payment activation are still deferred. See [`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
 
 TC4.2 adds a read-only Beta compatibility projection from the current manual billing states into the provider-neutral lifecycle and exposes aggregate counts in Operations. It changes no persisted state, entitlement, transition, checkout, provider, schema, migration, or Production behavior. Unsupported lifecycle states remain fail-closed and deferred. See [`TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md`](./TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md).
 
