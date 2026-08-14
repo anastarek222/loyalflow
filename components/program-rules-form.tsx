@@ -16,6 +16,7 @@ type Props = {
     | "invalid"
     | "mode-blocked"
     | "economic-confirmation-required"
+    | "subscription-restricted"
     | undefined;
   action: (formData: FormData) => void | Promise<void>;
 };
@@ -167,6 +168,11 @@ export function ProgramRulesForm({
                     "تغيير قيمة الإضافة أو هدف المكافأة أو نوعها بعد وجود سجل يحتاج معاينة التأثير والتأكيد الصريح.",
                     "Changing the earn amount, reward threshold, or reward type after history exists requires an impact preview and explicit confirmation.",
                   )
+                : status === "subscription-restricted"
+                  ? t(
+                      "لا يمكن تعديل قواعد البرنامج في حالة الاشتراك الحالية.",
+                      "Programme rules cannot be changed in the current subscription state.",
+                    )
                 : t("راجع قواعد البرنامج.", "Review the programme rules.")}
         </p>
       ) : null}

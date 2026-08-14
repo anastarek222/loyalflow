@@ -5,7 +5,7 @@ Environment: isolated Staging Beta only
 
 ## Implemented boundary
 
-- Reactivating an existing customer now enforces the canonical persisted-lifecycle `OPERATE` policy.
+- Reactivating an existing customer through the individual customer profile now enforces the canonical persisted-lifecycle `OPERATE` policy.
 - The path checks lifecycle state before activity request-context work and re-reads it inside the authoritative transaction immediately before the customer and audit writes.
 - Restricted states keep the existing customer readable and receive the bounded bilingual subscription feedback.
 - Existing tenant, capability, validation, audit, cache revalidation, and safe Google Sheets synchronization boundaries remain authoritative. Subscription state grants no permission.
@@ -21,6 +21,7 @@ Environment: isolated Staging Beta only
 - Referral-code creation and customer tag creation/assignment/removal remain separate identity/topology parity work.
 - Business settings, Custom Card lifecycle, integration sync, destructive tenant deletion, trusted provider events, checkout, and billing activation are not changed.
 - No provider, credential, schema, migration, Production deployment, or Production data action is added.
+- Bulk reactivation remains separate parity work and is closed by TC4.13.
 - This slice does not claim route-wide TC4 write parity.
 
 ## Expected behavior

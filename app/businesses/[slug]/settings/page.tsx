@@ -299,6 +299,15 @@ export default async function BusinessSettingsPage({
           </div>
         )}
 
+        {query.sheetSync === "subscription-restricted" && (
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t(
+              "لا يمكن تشغيل مزامنة Google Sheets في حالة الاشتراك الحالية.",
+              "Google Sheets sync cannot run in the current subscription state.",
+            )}
+          </div>
+        )}
+
         {query.exportPermissionSaved === "1" && (
           <div
             role="status"
@@ -456,6 +465,15 @@ export default async function BusinessSettingsPage({
             {t(
               "راجع رقم الهاتف والعنوان وشروط الكارت.",
               "Review the phone number, address, and card terms.",
+            )}
+          </div>
+        )}
+
+        {query.cardError === "subscription-restricted" && (
+          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {t(
+              "لا يمكن تعديل بيانات الكارت في حالة الاشتراك الحالية.",
+              "Card details cannot be changed in the current subscription state.",
             )}
           </div>
         )}
@@ -618,11 +636,15 @@ export default async function BusinessSettingsPage({
           }}
           status={{
             profile:
-              query.profile === "saved" || query.profile === "invalid"
+              query.profile === "saved" ||
+              query.profile === "invalid" ||
+              query.profile === "subscription-restricted"
                 ? query.profile
                 : undefined,
             operations:
-              query.operations === "saved" || query.operations === "invalid"
+              query.operations === "saved" ||
+              query.operations === "invalid" ||
+              query.operations === "subscription-restricted"
                 ? query.operations
                 : undefined,
           }}

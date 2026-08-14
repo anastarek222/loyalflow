@@ -126,6 +126,9 @@ test("P9.8 customer pages use the same shared policies as their server actions",
   assert.match(detailPage, /canUseCustomerReferrals/);
   assert.match(detailActions, /canManageCustomerNotesTags/);
   assert.match(detailActions, /canUseCustomerReferrals/);
-  assert.match(listActions, /select: \{ id: true, slug: true, plan: true \}/);
+  assert.match(listActions, /id: true/);
+  assert.match(listActions, /slug: true/);
+  assert.match(listActions, /plan: true/);
+  assert.match(listActions, /subscriptionLifecycleState: true/);
   assert.match(detailActions, /plan: true/);
 });
