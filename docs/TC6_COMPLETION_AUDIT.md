@@ -1,15 +1,17 @@
 # TC6 provider-neutral foundation completion audit
 
-Status: `PARTIAL_FOUNDATION_COMPLETE` on `staging` through PRs #75 and #76.
+Status: `PARTIAL_FOUNDATION_COMPLETE` on `staging` through PR #131.
 This is not completion of TC6 runtime operations, durable execution, recovery,
 or launch evidence.
 
 ## Audit conclusion
 
-TC6.1 and TC6.2 complete the bounded provider-neutral foundation that has a
-real current use: integration execution classification, privacy-safe aggregate
-shapes, deterministic caller-configured pending aging, fail-closed mapping from
-the existing Google Sheets state, and a pure retry-eligibility decision.
+TC6.1 through TC6.4 complete the currently approved bounded foundation:
+integration execution classification, privacy-safe aggregate shapes,
+deterministic caller-configured pending aging, fail-closed mapping from the
+existing Google Sheets state, retry eligibility, a privacy-minimized runtime
+status consumer, and an isolated-Staging-verified durable outbox persistence
+boundary.
 
 No additional pure slice has sufficient independent value now. Further enums
 or ports without an approved runtime consumer would duplicate the existing
@@ -48,20 +50,39 @@ Both slices are dependency-light contracts/domain logic. They introduce no
 endpoint, network operation, Prisma access, database access, provider call,
 worker, queue, credential, environment access, or Production behavior.
 
+### TC6.3 — runtime status consumer
+
+- privacy-minimized aggregate status counts in Super Admin Operations;
+- canonical runtime mapping over the current Google Sheets sync state;
+- no provider call, retry execution, pending-age inference, or data write.
+
+### TC6.4 — database outbox persistence
+
+- business-scoped idempotent job identity and immutable replay behavior;
+- atomic readiness/lease claim with attempt recording;
+- lease-owned success, retryable failure, and terminal result persistence;
+- bounded machine error codes without provider payloads or stack data;
+- additive schema with tenant-history and ready-job indexes;
+- migration checksum parity and 48/48 successful migration history on isolated
+  Neon Staging, with zero incomplete or rolled-back migrations;
+- no worker, queue, cron, provider, credential, source enqueue, or Production
+  activation.
+
 ## Runtime and persistence work still required
 
 The following cannot proceed as another pure contract-only slice:
 
 | Work | Required boundary/evidence |
 |---|---|
-| Runtime integration-health measurement | Approved privacy-safe database read, tenant/aggregate query ownership, and an approved source for `pendingSinceMs`. |
-| Runtime status/attempt recording | Database writes with transaction/idempotency semantics; the current per-business fields do not prove durable execution history. |
-| Durable job/outbox state | Likely schema and migrations for job identity, attempts, leases, results, and replay safety, subject to database review. |
+| Runtime integration-health aging | An approved source for `pendingSinceMs` plus numerical aging thresholds. |
+| Transactional source enqueue | Approved source mutation and transaction boundary that creates the first Google Sheets job without dual-write or replay drift. |
+| Worker trigger and consumer | Approved execution topology, service identity, lease cadence, and provider adapter ownership. |
 | Operational exposure | Approved internal consumer, authorization/privacy boundary, cache policy, and endpoint/dashboard decision. |
 | Recovery evidence | Non-production execution rehearsal proving retry/replay, duplicate prevention, pause/resume, and forward recovery. |
 
-No schema, migration, database read, database write, or recovery execution is
-authorized by this audit.
+TC6.4 schema and isolated-Staging migration execution were authorized and are
+verified. No additional schema, migration, database write, worker, provider, or
+recovery execution is authorized by this audit.
 
 ## Infrastructure and provider work still required
 
