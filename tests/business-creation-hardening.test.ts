@@ -87,7 +87,6 @@ test("minimal and fully populated realistic creation payloads share one valid co
   assert.equal(full.success, true);
   assert.equal(full.success && full.data.website, "https://www.xtvco.com/");
 });
-
 test("website input is friendly, canonical, and rejects dangerous protocols", () => {
   assert.equal(normalizeWebsiteUrl("xtvco.com"), "https://xtvco.com/");
   assert.equal(normalizeWebsiteUrl("www.xtvco.com"), "https://www.xtvco.com/");
@@ -97,16 +96,18 @@ test("website input is friendly, canonical, and rejects dangerous protocols", ()
   assert.equal(formatWebsiteForCard("https://www.xtvco.com/"), "xtvco.com");
 });
 
-test("business creation commits core state before scheduling optional Google Sheets sync", () => {
+test("business creation commits a durable job before publishing its queue wake-up", () => {
   const action = source("app/businesses/actions.ts");
   const scheduler = source("lib/google-sheets-sync-scheduler.ts");
   const transaction = action.indexOf("prisma.$transaction");
   const backgroundSync = action.indexOf(
-    "scheduleBusinessGoogleSheetsSync(createdBusiness.id)",
+    "scheduleBusinessGoogleSheetsSync(integrationJobId)",
   );
 
   assert.ok(transaction >= 0 && backgroundSync > transaction);
-  assert.match(scheduler, /after\(async \(\) => \{\s*await syncBusinessToGoogleSheetSafely/);
+  assert.match(action, /await enqueueIntegrationJob\(transaction/);
+  assert.match(scheduler, /after\(async \(\) =>/);
+  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
   assert.doesNotMatch(action, /await syncBusinessToGoogleSheetSafely\(createdBusiness\.id\)/);
   assert.match(action, /sheetSync=pending/);
   assert.match(source("app/businesses/[slug]/users/page.tsx"), /مزامنة Google Sheets تعمل في الخلفية/);

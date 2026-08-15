@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "app/api/queues/integration-jobs/route.ts": {
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "loyalflow-integration-jobs-beta"
+        }
+      ]
+    }
+  }
+}

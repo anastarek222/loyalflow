@@ -41,7 +41,6 @@ test("Owner saves preserve an existing Custom Card without accepting custom chan
     reason: "CUSTOM_READ_ONLY",
   });
 });
-
 test("Owner cannot activate Custom or write any custom-card field", () => {
   const activation = getAuthorizedCardDesignUpdate({
     role: "OWNER",
@@ -192,14 +191,15 @@ test("Owner creation schedules the canonical non-blocking Sheets sync only after
 
   const transaction = ownerAction.indexOf("prisma.$transaction");
   const schedule = ownerAction.indexOf(
-    "scheduleBusinessGoogleSheetsSync(business.id)",
+    "scheduleBusinessGoogleSheetsSync(integrationJobId)",
   );
   assert.ok(transaction >= 0 && schedule > transaction);
+  assert.match(ownerAction, /await enqueueIntegrationJob\(tx/);
   assert.match(scheduler, /after\(async \(\) =>/);
-  assert.match(scheduler, /await syncBusinessToGoogleSheetSafely\(businessId\)/);
+  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
   assert.match(
     superAdminAction,
-    /scheduleBusinessGoogleSheetsSync\(createdBusiness\.id\)/,
+    /scheduleBusinessGoogleSheetsSync\(integrationJobId\)/,
   );
   assert.match(
     safeSync,

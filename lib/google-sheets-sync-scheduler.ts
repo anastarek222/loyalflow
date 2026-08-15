@@ -1,14 +1,18 @@
 import { after } from "next/server";
 
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { publishIntegrationJob } from "@/lib/server/integrations/transport";
+import { logServerError } from "@/lib/server/logging";
 
 /**
- * Schedules the optional Sheets mirror after the core response. The safe sync
- * helper records success/failure state and never throws back into Business
- * creation.
+ * Publishes an already-committed durable job after the core response. The
+ * business transaction owns durability; the transport only wakes a consumer.
  */
-export function scheduleBusinessGoogleSheetsSync(businessId: string) {
+export function scheduleBusinessGoogleSheetsSync(jobId: string) {
   after(async () => {
-    await syncBusinessToGoogleSheetSafely(businessId);
+    try {
+      await publishIntegrationJob({ jobId });
+    } catch (error) {
+      logServerError("integration_job_publish_failed", error, { jobId });
+    }
   });
 }
