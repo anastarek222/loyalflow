@@ -1,8 +1,8 @@
 # TC6.5 Vercel Queues Beta transport
 
-Status: `BLOCKED_STAGING_ENV_SCOPE`; implementation remains valid and the first
-isolated-Staging runtime rehearsal reached the Queue consumer, but the deployed
-`staging` runtime did not receive `GOOGLE_SERVICE_ACCOUNT_EMAIL`.
+Status: `BLOCKED_STAGING_GOOGLE_WRITE_PERMISSION`; the deployed `staging`
+runtime now receives both Service Account variables and can read Spreadsheet
+metadata, but the Service Account cannot complete the first `addSheet` write.
 
 ## Bounded slice
 
@@ -51,7 +51,17 @@ duplicate prevention, provider-safe failure handling, and fixture cleanup.
 - cleanup verified zero rehearsal businesses, users, and orphan jobs; no Google
   Sheet mutation occurred and Production was not accessed.
 
-The next action is provider configuration only: scope both Google Service
-Account variables to Preview branch `staging`, then redeploy and run one new
-bounded rehearsal. Previous local, CI, enqueue, Queue-delivery, lease, safe
-failure, and cleanup evidence must not be repeated.
+Follow-up release `0c719a3634ed` reached `READY` after the Preview branch scope
+was verified. The bounded provider rehearsal passed credential parsing,
+authentication, and Spreadsheet metadata access, then persisted
+`GOOGLE_API_FAILED` before a mapping was created (`googleSheetId=null`). This
+proves both environment variables are present without exposing their values;
+the remaining gate is write access on the Staging Spreadsheet. Cleanup again
+verified zero rehearsal businesses, users, and orphan jobs, with no Google tab
+created.
+
+The next action is provider configuration only: grant the Staging Service
+Account Editor access that permits adding a sheet to the test Spreadsheet, then
+run one provider-success and mapped-sheet idempotency rehearsal. Previous local,
+CI, enqueue, Queue-delivery, lease, environment, authentication, read-access,
+safe-failure, and cleanup evidence must not be repeated.
