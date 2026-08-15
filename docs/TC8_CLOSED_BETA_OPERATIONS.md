@@ -1,6 +1,6 @@
 # TC8 Closed Beta Operations Record
 
-Status: `ENTRY GATE TECHNICALLY READY — REAL PARTICIPANTS NOT STARTED`
+Status: `ENTRY GATE TECHNICALLY READY — DEFERRED_REAL_CLOSED_BETA`
 Environment: isolated `staging` only  
 Target cohort: 5-10 businesses
 
@@ -8,7 +8,10 @@ Target cohort: 5-10 businesses
 
 The product owner has directed all current work to continue as Beta on isolated Staging. Technical Beta slices may proceed without waiting for real-participant enrollment, provided each slice remains non-production, preserves isolation, and is labelled as synthetic or technical evidence where applicable.
 
-The governed 5-10 real-business cohort is deferred rather than completed. It remains mandatory before any Production or public-launch decision. Synthetic fixtures and automated UAT must never be counted as real participants, participant consent, or a human Go/No-Go decision.
+The governed 5-10 real-business cohort is `DEFERRED_REAL_CLOSED_BETA` rather
+than completed. It remains mandatory before any Production or public-launch
+decision. Synthetic fixtures and automated UAT must never be counted as real
+participants, participant consent, or a human Go/No-Go decision.
 Authenticated role/transaction UAT, public browser evidence, performance, and
 rollback/forward-recovery evidence are complete for the current technical
 entry gate. This does not claim that the real-business Closed Beta or Go/No-Go

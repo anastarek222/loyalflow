@@ -1,14 +1,19 @@
 # LoyalFlow Beta Technical Completion Audit
 
-Date: 2026-08-13
-Status: `TC3_BLOB_BETA_IMPLEMENTED_PENDING_STAGING_ACTIVATION`
+Date: 2026-08-15
+Status: `TC3_BLOB_STAGING_LIFECYCLE_VERIFIED`
 Environment: isolated Staging Beta only
 
 ## Outcome
 
 The previously safe technical backlog was exhausted. The product owner then
-approved Vercel Blob and a preserve-all Beta lifecycle for TC3 Custom Card,
-which reopened one bounded implementation path without authorizing Production.
+approved Vercel Blob and a preserve-all Beta lifecycle for TC3 Custom Card.
+Deployment `dpl_BicNVV3Q4PbHsmVRwtMPXc73msQD` now verifies that path on
+isolated Staging with a synthetic Super Admin/MFA fixture: private front/back
+upload, immutable draft preview, explicit publish, one audit activity, and
+token-bound public delivery all passed. Database/browser fixtures returned to
+zero; the two immutable Blob objects remain under the approved preserve-all
+Beta rule.
 
 The latest bundle centralizes the duplicated protected own-business API read
 boundary. Both existing protected `/api/v1` reads now share request-ID,
@@ -36,7 +41,8 @@ adds no endpoint and publishes no external API commitment.
 The remaining items are not additional safe code cleanup. Each requires at
 least one explicitly deferred input:
 
-- Custom Card now requires Staging Blob activation and live lifecycle UAT;
+- Custom Card retention/deletion and provider cleanup/rollback remain a later
+  pre-Production decision/evidence gate; the Staging lifecycle itself passes;
 - subscriptions require persistence/idempotency design and payment/provider
   decisions;
 - API writes require a named consumer and approved CSRF/idempotency/transaction
@@ -47,10 +53,11 @@ least one explicitly deferred input:
   decisions;
 - recovery requires tooling that can prove a disposable database was forked
   from isolated Staging rather than Production;
-- Beta exit requires 5-10 real participants, issue disposition, and a human
-  Go/No-Go;
+- Beta exit is `DEFERRED_REAL_CLOSED_BETA` and still requires 5-10 real
+  participants, issue disposition, and a human Go/No-Go;
 - Production requires separate explicit authorization.
 
-Creating more read-only panels, speculative types, synthetic role replays, or
-documentation-only slices would not close these gates and is therefore not
-part of the current technical plan.
+The temporary Product override permits other named Internal/Synthetic Beta
+slices to continue without treating them as real-participant or Production
+evidence. The next independent named item is the isolated disposable-database
+restore rehearsal.

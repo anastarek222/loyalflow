@@ -21,7 +21,13 @@ This file joins two different planning views without treating them as interchang
 
 **T004, T005, and T006 are complete for their current execution gates. T007 is in progress.** T007 now has an active isolated Vercel/Neon Staging runtime, schema parity, passing public browser evidence, working isolated Redis-backed authentication, authenticated Owner/Manager/Staff/Viewer role evidence, a passing Owner Earn/Redeem journey, and passing disposable Super Admin MFA evidence. T007 is not complete because the 5-10 business Closed Beta, participant issue log, and explicit human Go/No-Go remain open.
 
-Current execution is **Beta-only on isolated Staging**. The governed 5-10 real-business Closed Beta, participant issue log, and explicit human Go/No-Go remain deferred and mandatory before Production/public launch, but they no longer block bounded technical Beta slices. Synthetic fixtures and automated UAT must remain explicitly labelled and cannot satisfy the real-participant gate. Production execution remains forbidden.
+Current execution is **Beta-only on isolated Staging**. By temporary Product
+override on 2026-08-15, the governed 5-10 real-business Closed Beta is
+`DEFERRED_REAL_CLOSED_BETA`. The participant issue log and explicit human
+Go/No-Go remain mandatory before Production/public launch, but they do not
+block bounded Internal/Synthetic Beta slices. Synthetic fixtures and automated
+UAT must remain explicitly labelled and cannot satisfy the real-participant
+gate. Production execution remains forbidden.
 
 ## Reconciled planning snapshot
 
@@ -31,7 +37,7 @@ On 2026-08-12, the product owner approved a technical-first execution priority. 
 
 On 2026-08-12, PR #69 merged TC1.1 through TC3.2 into `staging` with merge commit `3f739dba9960ad6574385a8bfd5086276fc468e5`; required checks passed and the automatic Vercel `staging` Preview reached Ready. The authenticated Owner evidence that was initially blocked was completed later on isolated Staging with a disposable fixture, and cleanup verified zero retained businesses, users, and customers.
 
-The product owner approved Vercel Blob for the TC3 Custom Card Beta lifecycle. The bounded implementation now provides private business-isolated front/back uploads, immutable version paths, authenticated Super Admin preview, explicit publish, preserve-all version history, and token-bound customer delivery without exposing private Blob URLs. Existing Custom Card URLs remain compatible and no schema migration or Production action is introduced. Staging Blob resource activation and live lifecycle UAT remain required before this path is operationally complete. The approved TC4 provider-neutral lifecycle remains separate; provider-event consumption, checkout, and payment activation are still deferred. See [`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
+The product owner approved Vercel Blob for the TC3 Custom Card Beta lifecycle. The bounded implementation provides private business-isolated front/back uploads, immutable version paths, authenticated Super Admin preview, explicit publish, preserve-all version history, and token-bound customer delivery without exposing private Blob URLs. On 2026-08-15, deployment `dpl_BicNVV3Q4PbHsmVRwtMPXc73msQD` at commit `0eb72b086333` completed an isolated synthetic Super Admin/MFA lifecycle: one private draft version was uploaded and previewed, explicitly published, and served through the bounded public front/back artwork routes. Database/browser fixtures were cleaned to zero; the two Blob objects remain intentionally retained by the approved preserve-all Beta policy. This is Internal/Synthetic Beta evidence only, not real-business, retention-policy, rollback, or Production evidence. The approved TC4 provider-neutral lifecycle remains separate; provider-event consumption, checkout, and payment activation are still deferred. See [`evidence/TC3_BLOB_STAGING_LIFECYCLE_2026-08-15.md`](./evidence/TC3_BLOB_STAGING_LIFECYCLE_2026-08-15.md) and [`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
 
 TC4.2 adds a read-only Beta compatibility projection from the current manual billing states into the provider-neutral lifecycle and exposes aggregate counts in Operations. It changes no persisted state, entitlement, transition, checkout, provider, schema, migration, or Production behavior. Unsupported lifecycle states remain fail-closed and deferred. See [`TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md`](./TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md).
 
@@ -130,7 +136,7 @@ Current local working-tree checkpoint on 2026-08-12: the uncommitted T006/P9 pre
 | T004 | Operational readiness closeout      | Completed   | backup/restore, RPO/RTO, isolation, monitoring and runbooks                      | current gate closed; measured production/service RPO/RTO deferred to public-launch gate by explicit product decision                        |
 | T005 | I18N compatibility foundation       | Completed   | one canonical compatibility source; no mass copy rewrite                         | AR/EN parity, fallback, SSR/RTL and compatibility evidence merged                                                                           |
 | T006 | Marketing and onboarding completion | Completed   | public website and owner setup; no payment cutover                               | conversion routes, SEO, inline validation, live preview and bounded browser UAT merged; analytics explicitly deferred to public-launch gate |
-| T007 | Isolated staging and Closed Beta    | In progress | non-production only                                                              | technical Staging gate is evidenced; complete 5-10 real-business Beta + participant issue log + explicit human Go/No-Go                     |
+| T007 | Isolated staging and Closed Beta    | In progress — `DEFERRED_REAL_CLOSED_BETA` | non-production only                                                              | technical Staging gate is evidenced; complete 5-10 real-business Beta + participant issue log + explicit human Go/No-Go                     |
 | T008 | Public launch readiness             | Blocked     | signup/legal/billing/payment/release                                             | T007 evidence, measured launch recovery, analytics decision, rollback rehearsal and launch approval                                         |
 
 ## Update rules
