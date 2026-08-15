@@ -39,6 +39,35 @@ On 2026-08-12, PR #69 merged TC1.1 through TC3.2 into `staging` with merge commi
 
 The product owner approved Vercel Blob for the TC3 Custom Card Beta lifecycle. The bounded implementation provides private business-isolated front/back uploads, immutable version paths, authenticated Super Admin preview, explicit publish, preserve-all version history, and token-bound customer delivery without exposing private Blob URLs. On 2026-08-15, deployment `dpl_BicNVV3Q4PbHsmVRwtMPXc73msQD` at commit `0eb72b086333` completed an isolated synthetic Super Admin/MFA lifecycle: one private draft version was uploaded and previewed, explicitly published, and served through the bounded public front/back artwork routes. Database/browser fixtures were cleaned to zero; the two Blob objects remain intentionally retained by the approved preserve-all Beta policy. This is Internal/Synthetic Beta evidence only, not real-business, retention-policy, rollback, or Production evidence. The approved TC4 provider-neutral lifecycle remains separate; provider-event consumption, checkout, and payment activation are still deferred. See [`evidence/TC3_BLOB_STAGING_LIFECYCLE_2026-08-15.md`](./evidence/TC3_BLOB_STAGING_LIFECYCLE_2026-08-15.md) and [`TC4_TECHNICAL_COMPLETION_AUDIT.md`](./TC4_TECHNICAL_COMPLETION_AUDIT.md).
 
+TC2.2 continues the approved Phase 2 common/navigation migration by moving the
+app-shell navigation messages into separately sourced, compile-time-parity AR
+and EN catalogs under `@loyalflow/i18n/navigation`. The web adapter retains all
+role, entitlement, route, ordering, experience-mode, and page-context behavior.
+Focused evidence passes 32/32 and the required full suite passes 1010/1010,
+plus TypeScript, full ESLint with 0 errors, the local Next.js 16.2.11 webpack
+build, and `git diff --check`. This is Internal/Synthetic Beta evidence only;
+Real Closed Beta remains `DEFERRED_REAL_CLOSED_BETA`. See
+[`TC2_2_NAVIGATION_LOCALE_EXTRACTION.md`](./TC2_2_NAVIGATION_LOCALE_EXTRACTION.md).
+
+TC2.3 completes the remaining Phase 2 navigation source by moving
+administration labels and descriptions into the same compile-time-parity AR/EN
+catalog. Capability and tenant checks, route construction, item ordering, and
+message values remain unchanged. Focused evidence passes 13/13; the combined
+implementation head passes 1012/1012 tests, TypeScript, full ESLint with 0
+errors, the local Next.js 16.2.11 webpack build, and `git diff --check`. This
+remains Internal/Synthetic Beta evidence. See
+[`TC2_3_ADMINISTRATION_NAVIGATION_LOCALE_EXTRACTION.md`](./TC2_3_ADMINISTRATION_NAVIGATION_LOCALE_EXTRACTION.md).
+
+TC2.4 starts bounded Phase 3 extraction by moving all 34 existing `auth.*`
+messages into separate compile-time-parity AR/EN modules exposed through
+`@loyalflow/i18n/auth`. The compatibility catalog retains every key/value and
+all login/MFA callers while authentication actions, validation, sessions,
+authorization, rate limits, and observability remain unchanged. Focused
+evidence passes 18/18; the final combined head passes 1015/1015 tests,
+TypeScript, full ESLint with 0 errors, the local Next.js 16.2.11 webpack build,
+and `git diff --check`. This remains Internal/Synthetic Beta evidence. See
+[`TC2_4_AUTH_LOCALE_EXTRACTION.md`](./TC2_4_AUTH_LOCALE_EXTRACTION.md).
+
 TC4.2 adds a read-only Beta compatibility projection from the current manual billing states into the provider-neutral lifecycle and exposes aggregate counts in Operations. It changes no persisted state, entitlement, transition, checkout, provider, schema, migration, or Production behavior. Unsupported lifecycle states remain fail-closed and deferred. See [`TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md`](./TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md).
 
 TC4.3 adds the approved Beta lifecycle persistence boundary: an additive enum and migration with truthful legacy-state backfill, compare-and-swap versioning, explicit Super Admin transitions, and bounded audit metadata. It does not activate a payment provider, consume webhooks, initiate checkout, or enforce lifecycle entitlements. Isolated migration/runtime UAT remains required before operational completion. See [`TC4_3_SUBSCRIPTION_LIFECYCLE_PERSISTENCE.md`](./TC4_3_SUBSCRIPTION_LIFECYCLE_PERSISTENCE.md).
@@ -103,7 +132,7 @@ Current local working-tree checkpoint on 2026-08-12: the uncommitted T006/P9 pre
 | P3 Account and authentication   | Complete           |     100% | secure password reset, self-service password change, logout-everywhere PR #42, pending-owner lifecycle PR #43, Owner Invitation PR #44, Email Verification PR #46, Super Admin MFA PR #47, distributed auth rate limiting PR #48, Security Notifications PR #49 | reopen only for an approved authentication/security policy change                                                                                        |
 | P4 Database and operations      | In progress        |      92% | environment isolation, dedicated Neon Staging, 48/48 migration parity, monitoring/performance proof, rollback/forward recovery, runbooks and T004 closeout                                                                                                      | measured disposable-database restore and later Production/service RPO/RTO evidence                                                                       |
 | P5 Architecture boundaries      | In progress        |      52% | workspace/domain packages, transport-neutral contracts, approved same-origin BFF, four `/api/v1` reads, authenticated tenant/capability parity, and TC1-TC6 boundaries                                                                                          | approve and execute write extraction before legacy/web database removal or external publication                                                          |
-| P6 UX, design system, languages | In progress        |      85% | shared UI foundations, canonical AR/EN compatibility source, SSR direction, broad T006 authenticated/public surfaces and critical browser evidence                                                                                                              | final accessibility/device matrix, remaining inline-source migration, and presentation pass                                                              |
+| P6 UX, design system, languages | In progress        |      88% | shared UI foundations, canonical AR/EN compatibility source, extracted common/navigation/auth catalogs, SSR direction, broad T006 authenticated/public surfaces and critical browser evidence                                                                   | final accessibility/device matrix, remaining inline-source migration, and presentation pass                                                              |
 | P7 Marketing website            | In progress        |      90% | bilingual homepage, localized SEO, `/get-started`, invitation-only Beta acquisition boundary and browser UAT                                                                                                                                                    | final content/media plus approved analytics, legal, pricing and later launch acquisition policy                                                          |
 | P8 Business onboarding          | Complete           |     100% | invitation and draft foundations, bilingual owner onboarding, inline validation, supported path selection, live Standard Card preview and bounded browser UAT                                                                                                   | reopen only for approved onboarding/product-policy changes                                                                                               |
 | P9 Role experiences             | In progress        |      88% | Super Admin, Owner, Manager, Staff, Viewer, Scan, Customer Card, reports and permissions plus isolated-Staging role/MFA evidence                                                                                                                                | repeat only materially affected journeys; complete final device/accessibility and presentation acceptance                                                |
@@ -128,16 +157,16 @@ Current local working-tree checkpoint on 2026-08-12: the uncommitted T006/P9 pre
 
 ## Executable queue
 
-| ID   | Work item                           | State       | Scope boundary                                                                   | Required exit evidence                                                                                                                      |
-| ---- | ----------------------------------- | ----------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| T001 | Create unified master tracker       | Complete    | documentation only                                                               | merged in PR #38                                                                                                                            |
-| T002 | Ledger reconciliation               | Completed   | read-only calculation/reporting; no automatic repair and no production execution | isolated test-database reconciliation evidence recorded                                                                                     |
-| T003 | Authentication closeout             | Completed   | account/session security only; no auth-topology rewrite                          | merged through PR #49                                                                                                                       |
-| T004 | Operational readiness closeout      | Completed   | backup/restore, RPO/RTO, isolation, monitoring and runbooks                      | current gate closed; measured production/service RPO/RTO deferred to public-launch gate by explicit product decision                        |
-| T005 | I18N compatibility foundation       | Completed   | one canonical compatibility source; no mass copy rewrite                         | AR/EN parity, fallback, SSR/RTL and compatibility evidence merged                                                                           |
-| T006 | Marketing and onboarding completion | Completed   | public website and owner setup; no payment cutover                               | conversion routes, SEO, inline validation, live preview and bounded browser UAT merged; analytics explicitly deferred to public-launch gate |
+| ID   | Work item                           | State                                     | Scope boundary                                                                   | Required exit evidence                                                                                                                      |
+| ---- | ----------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| T001 | Create unified master tracker       | Complete                                  | documentation only                                                               | merged in PR #38                                                                                                                            |
+| T002 | Ledger reconciliation               | Completed                                 | read-only calculation/reporting; no automatic repair and no production execution | isolated test-database reconciliation evidence recorded                                                                                     |
+| T003 | Authentication closeout             | Completed                                 | account/session security only; no auth-topology rewrite                          | merged through PR #49                                                                                                                       |
+| T004 | Operational readiness closeout      | Completed                                 | backup/restore, RPO/RTO, isolation, monitoring and runbooks                      | current gate closed; measured production/service RPO/RTO deferred to public-launch gate by explicit product decision                        |
+| T005 | I18N compatibility foundation       | Completed                                 | one canonical compatibility source; no mass copy rewrite                         | AR/EN parity, fallback, SSR/RTL and compatibility evidence merged                                                                           |
+| T006 | Marketing and onboarding completion | Completed                                 | public website and owner setup; no payment cutover                               | conversion routes, SEO, inline validation, live preview and bounded browser UAT merged; analytics explicitly deferred to public-launch gate |
 | T007 | Isolated staging and Closed Beta    | In progress — `DEFERRED_REAL_CLOSED_BETA` | non-production only                                                              | technical Staging gate is evidenced; complete 5-10 real-business Beta + participant issue log + explicit human Go/No-Go                     |
-| T008 | Public launch readiness             | Blocked     | signup/legal/billing/payment/release                                             | T007 evidence, measured launch recovery, analytics decision, rollback rehearsal and launch approval                                         |
+| T008 | Public launch readiness             | Blocked                                   | signup/legal/billing/payment/release                                             | T007 evidence, measured launch recovery, analytics decision, rollback rehearsal and launch approval                                         |
 
 ## Update rules
 

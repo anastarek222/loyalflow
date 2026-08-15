@@ -79,7 +79,7 @@ test("password reset delivery configuration is server-only and fails closed", ()
 test("successful password reset returns to login with visible confirmation", () => {
   const action = source("app/reset-password/actions.ts");
   const login = source("app/login/page.tsx");
-  const catalog = source("lib/i18n/catalog.ts");
+  const catalog = source("packages/i18n/src/locales/en/auth.ts");
 
   assert.match(action, /redirect\("\/login\?reset=success"\)/);
   assert.match(login, /includesValue\(params\.reset, "success"\)/);

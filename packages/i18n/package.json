@@ -5,6 +5,8 @@
   "type": "module",
   "description": "LoyalFlow locale messages and presentation-only formatting.",
   "exports": {
-    "./common": "./src/common.ts"
+    "./auth": "./src/auth.ts",
+    "./common": "./src/common.ts",
+    "./navigation": "./src/navigation.ts"
   }
 }

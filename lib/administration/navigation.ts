@@ -1,7 +1,10 @@
+import { navigationMessages } from "@loyalflow/i18n/navigation";
+
 import type { TenantUser } from "@/lib/permissions";
 import { canManageBusiness, canPerform } from "@/lib/permissions";
 
-export type AdministrationSection = "settings" | "program" | "users" | "branches" | "playbooks";
+export type AdministrationSection =
+  "settings" | "program" | "users" | "branches" | "playbooks";
 
 export type AdministrationNavigationItem = {
   id: AdministrationSection;
@@ -10,23 +13,6 @@ export type AdministrationNavigationItem = {
   description: string;
 };
 
-const copy = {
-  AR: {
-    settings: ["إعدادات النشاط", "الملف والتشغيل والتكاملات"],
-    program: ["برنامج الولاء", "قواعد الكسب وبطاقة العميل ورسائله"],
-    users: ["الفريق", "الأدوار وحسابات الفريق ووصول الواجهة"],
-    branches: ["الفروع", "الفروع والموظفون المكلّفون"],
-    playbooks: ["قوالب التشغيل", "معاينة إعدادات قابلة للتطبيق بأمان"],
-  },
-  EN: {
-    settings: ["Business settings", "Profile, operations, and integrations"],
-    program: ["Loyalty Program", "Earning rules, customer card, and messages"],
-    users: ["Team", "Roles, team accounts, and interface access"],
-    branches: ["Branches", "Locations and assigned staff"],
-    playbooks: ["Playbooks", "Safely preview reusable configurations"],
-  },
-} as const;
-
 /** Presentation only. Every linked route and mutation re-checks authority. */
 export function getAdministrationNavigation(
   user: TenantUser,
@@ -34,16 +20,42 @@ export function getAdministrationNavigation(
   slug: string,
   language: "AR" | "EN" = "AR",
 ): AdministrationNavigationItem[] {
-  const labels = copy[language];
+  const copy =
+    language === "AR" ? navigationMessages.ar : navigationMessages.en;
   const items: AdministrationNavigationItem[] = [];
   if (canManageBusiness(user, businessId)) {
-    items.push({ id: "settings", href: `/businesses/${slug}/settings`, label: labels.settings[0], description: labels.settings[1] });
-    items.push({ id: "program", href: `/businesses/${slug}/program`, label: labels.program[0], description: labels.program[1] });
-    items.push({ id: "branches", href: `/businesses/${slug}/branches`, label: labels.branches[0], description: labels.branches[1] });
-    items.push({ id: "playbooks", href: `/businesses/${slug}/playbooks`, label: labels.playbooks[0], description: labels.playbooks[1] });
+    items.push({
+      id: "settings",
+      href: `/businesses/${slug}/settings`,
+      label: copy.administrationSettingsLabel,
+      description: copy.administrationSettingsDescription,
+    });
+    items.push({
+      id: "program",
+      href: `/businesses/${slug}/program`,
+      label: copy.administrationProgramLabel,
+      description: copy.administrationProgramDescription,
+    });
+    items.push({
+      id: "branches",
+      href: `/businesses/${slug}/branches`,
+      label: copy.administrationBranchesLabel,
+      description: copy.administrationBranchesDescription,
+    });
+    items.push({
+      id: "playbooks",
+      href: `/businesses/${slug}/playbooks`,
+      label: copy.administrationPlaybooksLabel,
+      description: copy.administrationPlaybooksDescription,
+    });
   }
   if (canPerform(user, businessId, "STAFF_MANAGE")) {
-    items.splice(1, 0, { id: "users", href: `/businesses/${slug}/users`, label: labels.users[0], description: labels.users[1] });
+    items.splice(1, 0, {
+      id: "users",
+      href: `/businesses/${slug}/users`,
+      label: copy.administrationUsersLabel,
+      description: copy.administrationUsersDescription,
+    });
   }
   return items;
 }

@@ -45,11 +45,17 @@ test("T006 login denial diagnostics are bounded and never include account identi
   assert.match(observability, /event: "login_denied"/);
   assert.match(observability, /stage,/);
   assert.match(observability, /reason,/);
-  assert.doesNotMatch(observability, /console\.warn\([\s\S]*(email:|password:|userId:|businessId:|clientAddress:|headers:)/i);
+  assert.doesNotMatch(
+    observability,
+    /console\.warn\([\s\S]*(email:|password:|userId:|businessId:|clientAddress:|headers:)/i,
+  );
 });
 
 test("T006 login and conditional MFA copy remains bilingual", () => {
-  const catalog = source("lib/i18n/catalog.ts");
+  const catalogs = [
+    source("packages/i18n/src/locales/en/auth.ts"),
+    source("packages/i18n/src/locales/ar/auth.ts"),
+  ];
 
   for (const key of [
     "auth.signInBody",
@@ -59,7 +65,10 @@ test("T006 login and conditional MFA copy remains bilingual", () => {
     "auth.mfaSetupTitle",
     "auth.noRoleSelection",
   ]) {
-    const occurrences = catalog.split(`"${key}"`).length - 1;
+    const occurrences = catalogs.reduce(
+      (total, catalog) => total + catalog.split(`"${key}"`).length - 1,
+      0,
+    );
     assert.equal(occurrences, 2, `${key} should exist once per locale`);
   }
 });
