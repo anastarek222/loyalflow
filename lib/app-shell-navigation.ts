@@ -1,4 +1,5 @@
 import type { UserRole } from "@/generated/prisma/client";
+import { navigationMessages } from "@loyalflow/i18n/navigation";
 
 import { canPerform, type TenantUser } from "@/lib/permissions";
 import { hasFeatureEntitlement, type LoyalFlowPlan } from "@/lib/entitlements";
@@ -77,68 +78,8 @@ export type ShellNavigationGroup = {
   items: ShellNavigationItem[];
 };
 
-const labels = {
-  AR: {
-    overview: "الرئيسية",
-    businesses: "الأنشطة التجارية",
-    owners: "ملاك الأنشطة",
-    platformOps: "مركز التشغيل",
-    plans: "الخطط والحدود",
-    operations: "العمليات",
-    growth: "النمو",
-    loyalty: "الولاء",
-    analytics: "التحليلات",
-    administration: "الإدارة",
-    scan: "المسح",
-    customers: "العملاء",
-    activity: "النشاط",
-    program: "برنامج الولاء",
-    rewards: "المكافآت",
-    offers: "العروض",
-    campaigns: "الحملات",
-    recovery: "الاستعادة",
-    reports: "التقارير",
-    staffReports: "تقارير الموظفين",
-    team: "الفريق",
-    branches: "الفروع",
-    settings: "الإعدادات",
-    duplicates: "السجلات المكررة",
-    playbooks: "دليل الإعداد",
-    home: "الرئيسية",
-    more: "المزيد",
-    advancedTools: "أدوات متقدمة",
-  },
-  EN: {
-    overview: "Overview",
-    businesses: "Businesses",
-    owners: "Business owners",
-    platformOps: "Operations centre",
-    plans: "Plans & limits",
-    operations: "Operations",
-    growth: "Growth",
-    loyalty: "Loyalty",
-    analytics: "Analytics",
-    administration: "Administration",
-    scan: "Scan",
-    customers: "Customers",
-    activity: "Activity",
-    program: "Loyalty Program",
-    rewards: "Rewards",
-    offers: "Offers",
-    campaigns: "Campaigns",
-    recovery: "Recovery",
-    reports: "Reports",
-    staffReports: "Staff reports",
-    team: "Team",
-    branches: "Branches",
-    settings: "Settings",
-    duplicates: "Duplicates",
-    playbooks: "Setup playbooks",
-    home: "Home",
-    more: "More",
-    advancedTools: "Advanced tools",
-  },
-} as const;
+const getNavigationCopy = (language: "AR" | "EN") =>
+  language === "AR" ? navigationMessages.ar : navigationMessages.en;
 
 type BuildNavigationInput = {
   language: "AR" | "EN";
@@ -152,7 +93,7 @@ function item(
   id: Exclude<NavigationId, "advancedTools">,
   href: string,
 ): ShellNavigationItem {
-  return { id, href, icon: id, label: labels[language][id] };
+  return { id, href, icon: id, label: getNavigationCopy(language)[id] };
 }
 
 export function buildShellNavigation({
@@ -161,6 +102,7 @@ export function buildShellNavigation({
   business,
   experienceMode = "ADVANCED",
 }: BuildNavigationInput): ShellNavigationGroup[] {
+  const labels = getNavigationCopy(language);
   const globalItems = [item(language, "overview", "/dashboard")];
 
   if (user.role === "SUPER_ADMIN") {
@@ -176,9 +118,7 @@ export function buildShellNavigation({
         id: "global",
         label:
           user.role === "SUPER_ADMIN"
-            ? language === "AR"
-              ? "إدارة المنصة"
-              : "Platform administration"
+            ? labels.platformAdministration
             : undefined,
         items: globalItems,
       },
@@ -242,18 +182,18 @@ export function buildShellNavigation({
 
   const advancedNavigation = [
     { id: "global", items: globalItems },
-    { id: "operations", label: labels[language].operations, items: operations },
+    { id: "operations", label: labels.operations, items: operations },
     ...(loyalty.length
-      ? [{ id: "loyalty", label: labels[language].loyalty, items: loyalty }]
+      ? [{ id: "loyalty", label: labels.loyalty, items: loyalty }]
       : []),
     ...(growth.length
-      ? [{ id: "growth", label: labels[language].growth, items: growth }]
+      ? [{ id: "growth", label: labels.growth, items: growth }]
       : []),
     ...(analytics.length
       ? [
           {
             id: "analytics",
-            label: labels[language].analytics,
+            label: labels.analytics,
             items: analytics,
           },
         ]
@@ -262,7 +202,7 @@ export function buildShellNavigation({
       ? [
           {
             id: "administration",
-            label: labels[language].administration,
+            label: labels.administration,
             items: administration,
           },
         ]
@@ -292,9 +232,7 @@ export function buildShellNavigation({
     .flatMap((group) => group.items)
     .filter((entry) => primaryIds.has(entry.id))
     .map((entry) =>
-      entry.id === "overview"
-        ? { ...entry, label: labels[language].home }
-        : entry,
+      entry.id === "overview" ? { ...entry, label: labels.home } : entry,
     );
 
   return [
@@ -303,7 +241,7 @@ export function buildShellNavigation({
       ? [
           {
             id: "more",
-            label: labels[language].more,
+            label: labels.more,
             items: [
               ...advancedDestinations.filter(
                 (entry) => entry.id === "reports" || entry.id === "program",
@@ -312,7 +250,7 @@ export function buildShellNavigation({
                 ? [
                     {
                       id: "advancedTools" as const,
-                      label: labels[language].advancedTools,
+                      label: labels.advancedTools,
                       icon: "settings" as const,
                       href: "#experience-mode",
                       action: "switch-mode" as const,
@@ -341,9 +279,8 @@ export function getShellPageContext(
   language: "AR" | "EN",
   business?: ShellBusiness,
 ) {
-  const text = labels[language];
-  const platformParent =
-    language === "AR" ? "إدارة المنصة" : "Platform administration";
+  const text = getNavigationCopy(language);
+  const platformParent = text.platformAdministration;
   if (pathname === "/businesses")
     return { title: text.businesses, parent: platformParent };
   if (pathname === "/business-owners")
@@ -358,9 +295,7 @@ export function getShellPageContext(
 
   const suffix = pathname?.replace(`/businesses/${business.slug}`, "") || "";
   const title = suffix.startsWith("/customers/")
-    ? language === "AR"
-      ? "تفاصيل العميل"
-      : "Customer details"
+    ? text.customerDetails
     : suffix === "/customers"
       ? text.customers
       : suffix === "/duplicates"

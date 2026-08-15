@@ -1,51 +1,11 @@
+import { authMessages } from "@loyalflow/i18n/auth";
 import { commonMessages } from "@loyalflow/i18n/common";
 import { DEFAULT_LOCALE, type SupportedLocale } from "./config";
 
 export const messages = {
   en: {
     ...commonMessages.en,
-    "auth.signIn": "Sign in",
-    "auth.signInWorkspace": "Sign in to your workspace",
-    "auth.email": "Email address",
-    "auth.password": "Password",
-    "auth.forgotPassword": "Forgot password?",
-    "auth.secureWorkspace": "Secure LoyalFlow workspace",
-    "auth.emailPlaceholder": "name@company.com",
-    "auth.passwordPlaceholder": "Enter your password",
-    "auth.signingIn": "Checking account…",
-    "auth.invalid": "The sign-in details or security code are incorrect.",
-    "auth.welcomeBack": "Welcome back",
-    "auth.signInBody":
-      "Use the same sign-in for every LoyalFlow role. We will route you to the right workspace securely.",
-    "auth.backHome": "Back to homepage",
-    "auth.protectedAccess": "Protected workspace access",
-    "auth.workspaceReadyTitle": "Your loyalty workspace is ready when you are.",
-    "auth.workspaceReadyBody":
-      "Return to the place where your team runs customers, rewards, branches, and daily loyalty activity.",
-    "auth.benefitCustomers": "Customer activity in one connected view",
-    "auth.benefitRewards": "Clear reward progress and operations",
-    "auth.benefitRoles": "Access that follows each team member’s role",
-    "auth.mfaTitle": "One more security step",
-    "auth.mfaBody":
-      "Enter the current code from your authenticator app or use one of your recovery codes.",
-    "auth.mfaLabel": "Security code",
-    "auth.mfaPlaceholder": "123456 or recovery code",
-    "auth.verify": "Verify and continue",
-    "auth.verifying": "Verifying…",
-    "auth.back": "Back to sign in",
-    "auth.mfaSetupTitle": "Secure setup required",
-    "auth.mfaSetupBody":
-      "Your credentials are correct, but this account must finish multi-factor authentication setup before access is allowed.",
-    "auth.mfaSetupCta": "Set up secure access",
-    "auth.resendVerification": "Need a new verification email?",
-    "auth.noRoleSelection":
-      "No role selection is needed. LoyalFlow opens the correct experience after secure sign-in.",
-    "auth.passwordResetSuccess":
-      "Your password has been updated. Sign in with your new password.",
-    "auth.verificationSuccess":
-      "Your email has been verified. You can sign in now.",
-    "auth.mfaEnabledSuccess":
-      "Multi-factor authentication is enabled. Sign in to continue.",
+    ...authMessages.en,
     "marketing.metaTitle":
       "LoyalFlow | Loyalty operations for growing businesses",
     "marketing.metaDescription":
@@ -161,9 +121,11 @@ export const messages = {
       "This Beta is invitation-only. Public self-signup and payment checkout are not enabled, so this page does not create an unsupported account path.",
     "conversion.backHome": "Back to homepage",
     "ownerInvite.metaTitle": "Accept owner invitation | LoyalFlow Beta",
-    "ownerInvite.metaDescription": "Accept a secure LoyalFlow Beta owner invitation.",
+    "ownerInvite.metaDescription":
+      "Accept a secure LoyalFlow Beta owner invitation.",
     "ownerInvite.title": "Accept owner invitation",
-    "ownerInvite.body": "Choose your LoyalFlow password to activate your invited owner account.",
+    "ownerInvite.body":
+      "Choose your LoyalFlow password to activate your invited owner account.",
     "ownerInvite.invalid": "This invitation link is invalid or has expired.",
     "ownerInvite.backLogin": "Back to login",
     "ownerInvite.passwordMismatch": "The passwords do not match.",
@@ -183,49 +145,7 @@ export const messages = {
   },
   ar: {
     ...commonMessages.ar,
-    "auth.signIn": "تسجيل الدخول",
-    "auth.signInWorkspace": "سجّل الدخول إلى مساحة العمل الخاصة بك",
-    "auth.email": "البريد الإلكتروني",
-    "auth.password": "كلمة المرور",
-    "auth.forgotPassword": "هل نسيت كلمة المرور؟",
-    "auth.secureWorkspace": "مساحة عمل LoyalFlow آمنة",
-    "auth.emailPlaceholder": "name@company.com",
-    "auth.passwordPlaceholder": "أدخل كلمة المرور",
-    "auth.signingIn": "جارٍ التحقق من الحساب…",
-    "auth.invalid": "بيانات تسجيل الدخول أو رمز الأمان غير صحيحة.",
-    "auth.welcomeBack": "مرحبًا بعودتك",
-    "auth.signInBody":
-      "استخدم نفس تسجيل الدخول لكل أدوار LoyalFlow، وسنوجّهك بأمان إلى مساحة العمل المناسبة.",
-    "auth.backHome": "العودة إلى الصفحة الرئيسية",
-    "auth.protectedAccess": "دخول محمي إلى مساحة العمل",
-    "auth.workspaceReadyTitle":
-      "مساحة الولاء الخاصة بك جاهزة عندما تكون جاهزًا.",
-    "auth.workspaceReadyBody":
-      "عُد إلى المكان الذي يدير فيه فريقك العملاء والمكافآت والفروع ونشاط الولاء اليومي.",
-    "auth.benefitCustomers": "نشاط العملاء في واجهة مترابطة واحدة",
-    "auth.benefitRewards": "تقدّم واضح للمكافآت وعملياتها",
-    "auth.benefitRoles": "وصول يتبع الدور الحقيقي لكل عضو في الفريق",
-    "auth.mfaTitle": "خطوة أمان أخيرة",
-    "auth.mfaBody":
-      "أدخل الرمز الحالي من تطبيق المصادقة أو استخدم أحد رموز الاسترداد.",
-    "auth.mfaLabel": "رمز الأمان",
-    "auth.mfaPlaceholder": "123456 أو رمز الاسترداد",
-    "auth.verify": "تحقق وتابع",
-    "auth.verifying": "جارٍ التحقق…",
-    "auth.back": "العودة لتسجيل الدخول",
-    "auth.mfaSetupTitle": "يلزم إكمال إعداد الأمان",
-    "auth.mfaSetupBody":
-      "بياناتك صحيحة، لكن يجب إكمال إعداد المصادقة متعددة العوامل لهذا الحساب قبل السماح بالدخول.",
-    "auth.mfaSetupCta": "إعداد الدخول الآمن",
-    "auth.resendVerification": "هل تحتاج رسالة تحقق جديدة؟",
-    "auth.noRoleSelection":
-      "لا تحتاج إلى اختيار دورك؛ يفتح LoyalFlow التجربة المناسبة بعد تسجيل الدخول الآمن.",
-    "auth.passwordResetSuccess":
-      "تم تحديث كلمة المرور. سجّل الدخول باستخدام كلمة المرور الجديدة.",
-    "auth.verificationSuccess":
-      "تم تأكيد بريدك الإلكتروني. يمكنك تسجيل الدخول الآن.",
-    "auth.mfaEnabledSuccess":
-      "تم تفعيل المصادقة متعددة العوامل. سجّل الدخول للمتابعة.",
+    ...authMessages.ar,
     "marketing.metaTitle": "LoyalFlow | تشغيل برامج الولاء للشركات المتنامية",
     "marketing.metaDescription":
       "أدر برامج الولاء والمكافآت والعملاء والفروع والفرق والتقارير من مساحة عمل آمنة واحدة.",

@@ -11,6 +11,7 @@ const settings = source("app/businesses/[slug]/settings/page.tsx");
 const settingsForm = source("components/business-settings-form.tsx");
 const actions = source("app/businesses/[slug]/settings/actions.ts");
 const navigation = source("lib/administration/navigation.ts");
+const englishNavigation = source("packages/i18n/src/locales/en/navigation.ts");
 
 test("PA-3A creates a protected tenant-scoped programme workspace", () => {
   assert.equal(existsSync(join(root, programPath)), true);
@@ -57,7 +58,7 @@ test("existing domain actions remain narrow and revalidate the programme route",
 test("one minimal administration item makes the programme route discoverable", () => {
   assert.match(navigation, /id: "program"/);
   assert.match(navigation, /`\/businesses\/\$\{slug\}\/program`/);
-  assert.match(navigation, /Loyalty Program/);
+  assert.match(englishNavigation, /Loyalty Program/);
   assert.doesNotMatch(
     navigation,
     /rewards[\s\S]*program|program[\s\S]*rewards/,

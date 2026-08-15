@@ -48,7 +48,7 @@ test("owner invitation redemption records mailbox possession as verified", () =>
 test("login surfaces verification success and a generic resend recovery path", () => {
   const login = source("app/login/page.tsx");
   const form = source("app/login/login-form.tsx");
-  const catalog = source("lib/i18n/catalog.ts");
+  const catalog = source("packages/i18n/src/locales/en/auth.ts");
   const resend = source("app/verify-email/resend/actions.ts");
 
   assert.match(login, /includesValue\(params\.verification, "success"\)/);
