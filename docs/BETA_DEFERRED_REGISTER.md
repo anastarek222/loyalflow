@@ -35,7 +35,7 @@ This is the single durable register for work that has a merged Beta foundation b
 
 | Decision | Status | Bounded use | Durability authority | Exit/portability boundary | Not authorized |
 | --- | --- | --- | --- | --- | --- |
-| Vercel Queues async transport | `APPROVED_BETA` on 2026-08-15 | Wake the TC6 Google Sheets integration-job consumer with a `jobId`-only message on isolated Staging Beta | PostgreSQL `IntegrationJob`; Queue publication is not the domain commit or source of truth | `IntegrationJobTransport` keeps domain callers provider-neutral; another transport can replace Vercel Queues without changing the outbox record | Production activation, additional providers/job kinds, retry/backoff policy, stranded-job dispatcher, SLO/alert policy, or broader mutation cutover |
+| Vercel Queues async transport | `APPROVED_BETA`; runtime `BLOCKED_STAGING_ENV_SCOPE` on 2026-08-15 | Wake the TC6 Google Sheets integration-job consumer with a `jobId`-only message on isolated Staging Beta | PostgreSQL `IntegrationJob`; Queue publication is not the domain commit or source of truth | Release `23899e0fb78d` proved transactional enqueue, Queue delivery, one consumer claim/attempt, safe failure persistence, lease release, and zero cleanup. The deployed `staging` Preview reported `MISSING_SERVICE_ACCOUNT_EMAIL`; scope both Google credentials to Preview branch `staging`, redeploy, and resume only the provider-success/duplicate replay boundary. | Production activation, additional providers/job kinds, retry/backoff policy, stranded-job dispatcher, SLO/alert policy, or broader mutation cutover |
 
 ## Current next technical direction
 
