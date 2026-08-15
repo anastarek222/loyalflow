@@ -1,6 +1,8 @@
 # TC6.5 Vercel Queues Beta transport
 
-Status: implemented and locally tested; isolated-Staging runtime verification remains open.
+Status: `BLOCKED_STAGING_ENV_SCOPE`; implementation remains valid and the first
+isolated-Staging runtime rehearsal reached the Queue consumer, but the deployed
+`staging` runtime did not receive `GOOGLE_SERVICE_ACCOUNT_EMAIL`.
 
 ## Bounded slice
 
@@ -36,3 +38,20 @@ message minimization, adapter ownership, trigger configuration, and lease-owned
 result persistence. TC6.5 is not Staging Verified until a synthetic isolated
 Staging business creation proves enqueue, Queue delivery, consumer execution,
 duplicate prevention, provider-safe failure handling, and fixture cleanup.
+
+## Isolated-Staging runtime evidence — 2026-08-15
+
+- release `23899e0fb78d` redeployed from the unchanged TC6.5 tree and reached
+  `READY` with `environment: staging`;
+- one pending-Owner business creation committed one durable job;
+- Vercel Queues delivered the wake-up and the consumer claimed the job exactly
+  once (`attemptCount=1`), then released the lease through the safe failure path;
+- provider execution stopped with `MISSING_SERVICE_ACCOUNT_EMAIL`, proving the
+  credential was not present in the deployed branch-scoped Preview runtime;
+- cleanup verified zero rehearsal businesses, users, and orphan jobs; no Google
+  Sheet mutation occurred and Production was not accessed.
+
+The next action is provider configuration only: scope both Google Service
+Account variables to Preview branch `staging`, then redeploy and run one new
+bounded rehearsal. Previous local, CI, enqueue, Queue-delivery, lease, safe
+failure, and cleanup evidence must not be repeated.
