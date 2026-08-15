@@ -1,6 +1,6 @@
 # TC6.5 isolated-Staging runtime rehearsal — 2026-08-15
 
-Status: `BLOCKED_STAGING_GOOGLE_WRITE_PERMISSION`
+Status: `PASS — TC6.5_STAGING_RUNTIME_VERIFIED`
 
 - Environment: isolated Vercel Preview branch `staging`; Neon branch `staging`.
 - Release: `23899e0fb78d`; deployment `dpl_5QbSeRpr2c8pd5Q6PA8XtyVDffCq` reached `READY`.
@@ -25,6 +25,22 @@ do not repeat previous local or CI checks.
 - The first provider write stopped at `GOOGLE_API_FAILED`; `googleSheetId` remained `null`, so no Google tab was created.
 - Cleanup again returned zero rehearsal businesses, users, and orphan jobs.
 
-The remaining gate is Editor-level write access for the Staging Service Account
-on the test Spreadsheet. Resume only provider success and mapped-sheet
-idempotency after that access is granted.
+## Provider-success and duplicate-prevention closeout
+
+- Editor access became effective without a redeploy; the unchanged release
+  `0c719a3634ed` was used.
+- One synthetic pending-Owner business reached `SUCCEEDED` with no provider
+  error and mapped sheet ID `2063009995`.
+- Before replay: one business, one durable job, and one mapped sheet.
+- One manual Google Sheets sync returned `sheetSync=success`; the mapped sheet ID
+  and title remained unchanged, and the business/job cardinality remained `1/1`.
+- This proves mapped-sheet reuse and prevents a duplicate provider mapping or
+  duplicate durable job for the replayed sync.
+- Application cleanup verified zero rehearsal businesses, zero rehearsal users,
+  and zero orphan jobs; the synthetic browser session was closed.
+- The isolated provider-created tab remains in the dedicated Staging test
+  Spreadsheet as the provider-success artifact. Production was not accessed.
+
+Conclusion: TC6.5 provider success, duplicate prevention, idempotent mapped-sheet
+reuse, and application fixture cleanup pass on isolated Staging. TC6.5 is closed
+for the approved Beta scope.

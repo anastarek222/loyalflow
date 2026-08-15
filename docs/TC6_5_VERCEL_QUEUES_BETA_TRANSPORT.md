@@ -1,8 +1,8 @@
 # TC6.5 Vercel Queues Beta transport
 
-Status: `BLOCKED_STAGING_GOOGLE_WRITE_PERMISSION`; the deployed `staging`
-runtime now receives both Service Account variables and can read Spreadsheet
-metadata, but the Service Account cannot complete the first `addSheet` write.
+Status: `STAGING_RUNTIME_VERIFIED`; TC6.5 is closed for the approved Beta scope.
+The deployed `staging` runtime completed the provider write and reused the same
+mapped sheet on a second sync.
 
 ## Bounded slice
 
@@ -60,8 +60,15 @@ the remaining gate is write access on the Staging Spreadsheet. Cleanup again
 verified zero rehearsal businesses, users, and orphan jobs, with no Google tab
 created.
 
-The next action is provider configuration only: grant the Staging Service
-Account Editor access that permits adding a sheet to the test Spreadsheet, then
-run one provider-success and mapped-sheet idempotency rehearsal. Previous local,
-CI, enqueue, Queue-delivery, lease, environment, authentication, read-access,
-safe-failure, and cleanup evidence must not be repeated.
+After Editor access was granted, the unchanged release `0c719a3634ed` completed
+one bounded provider-success rehearsal. The synthetic business reached
+`googleSheetsSyncState=SUCCEEDED` with mapped sheet ID `2063009995`, one business,
+and one durable job. One manual replay returned `sheetSync=success`, preserved the
+same mapped sheet ID and title, and left the business/job cardinality at `1/1`;
+no duplicate mapping or durable job was created. Application fixture cleanup
+then verified zero rehearsal businesses, users, and orphan jobs. The isolated
+provider-created tab remains in the dedicated Staging test Spreadsheet as the
+observable provider-success artifact; no Production resource was accessed.
+
+TC6.5 requires no further runtime replay. Remaining TC6 retry/reconciliation,
+recovery, SLO, and Production decisions stay deferred to their named gates.
