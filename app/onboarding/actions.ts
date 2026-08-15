@@ -23,6 +23,7 @@ import {
 } from "@/lib/onboarding/pending-owner-lifecycle";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { logServerEvent } from "@/lib/server/logging";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 import {
   businessIdentityFields,
   loyaltyProgramFields,
@@ -88,7 +89,6 @@ async function pendingOwner() {
     redirect("/dashboard");
   return user;
 }
-
 async function draftFrom(formData: FormData) {
   const input = Object.fromEntries(formData);
   input.contactPhone = normalizeOwnerOnboardingPhone(
@@ -143,7 +143,7 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
   )
     redirect("/onboarding?error=incomplete");
   const data = parsed.data;
-  const business = await createWithGeneratedSlug(data.name, (slug) =>
+  const { business, integrationJobId } = await createWithGeneratedSlug(data.name, (slug) =>
     prisma.$transaction(async (tx) => {
       const created = await tx.business.create({
         data: {
@@ -184,10 +184,16 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
         throw new Error("Pending owner onboarding is no longer available");
       }
 
-      return created;
+      const integrationJob = await enqueueIntegrationJob(tx, {
+        businessId: created.id,
+        kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+        idempotencyKey: `business-created:${created.id}`,
+      });
+
+      return { business: created, integrationJobId: integrationJob.id };
     }),
   );
-  scheduleBusinessGoogleSheetsSync(business.id);
+  scheduleBusinessGoogleSheetsSync(integrationJobId);
   logServerEvent("OWNER_ONBOARDING_SHEETS_SYNC_SCHEDULED", {
     businessId: business.id,
   });

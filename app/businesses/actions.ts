@@ -28,6 +28,7 @@ import { redirect } from "next/navigation";
 import { hash } from "bcryptjs";
 import { randomUUID } from "node:crypto";
 import { logServerError, logServerEvent } from "@/lib/server/logging";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 async function requireSuperAdmin() {
   const session = await auth();
@@ -205,10 +206,11 @@ logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });
 const ownerEmailVerification = createEmailVerificationToken();
 
 let createdBusiness;
+let integrationJobId;
 
 try {
   logServerEvent("BUSINESS_CREATE_TX_START", { creationAttemptId });
-  createdBusiness = await createWithGeneratedSlug(
+  const creationResult = await createWithGeneratedSlug(
     parsed.data.name,
     (slug) =>
       prisma.$transaction(async (transaction) => {
@@ -336,9 +338,17 @@ try {
           )
         `;
 
-        return business;
+        const integrationJob = await enqueueIntegrationJob(transaction, {
+          businessId: business.id,
+          kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+          idempotencyKey: `business-created:${business.id}`,
+        });
+
+        return { business, integrationJobId: integrationJob.id };
       })
   );
+  createdBusiness = creationResult.business;
+  integrationJobId = creationResult.integrationJobId;
   logServerEvent("BUSINESS_CREATE_TX_COMMITTED", {
     creationAttemptId,
     businessId: createdBusiness.id,
@@ -369,7 +379,7 @@ try {
     }
   }
 
-  scheduleBusinessGoogleSheetsSync(createdBusiness.id);
+  scheduleBusinessGoogleSheetsSync(integrationJobId);
   logServerEvent("BUSINESS_CREATE_SYNC_SCHEDULED", {
     creationAttemptId,
     businessId: createdBusiness.id,

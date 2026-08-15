@@ -138,7 +138,6 @@ test("TC6.4 enqueue is business-scoped and idempotent without resetting state", 
   await enqueueIntegrationJob(store.store, { ...input, businessId: "business-b" });
   assert.equal(store.jobs.length, 2);
 });
-
 test("TC6.4 claim uses an atomic lease and increments attempts once", async () => {
   const store = createStore();
   const job = await enqueueIntegrationJob(store.store, {
@@ -247,7 +246,7 @@ test("TC6.4 rejects malformed identities and caller-supplied invalid timing", as
   );
 });
 
-test("TC6.4 migration is additive and runtime activation remains deferred", () => {
+test("TC6.4 migration remains additive after the bounded Beta transport activation", () => {
   const migration = readFileSync(
     new URL(
       "../prisma/migrations/20260814213000_add_integration_outbox_jobs/migration.sql",
@@ -255,11 +254,6 @@ test("TC6.4 migration is additive and runtime activation remains deferred", () =
     ),
     "utf8",
   );
-  const scheduler = readFileSync(
-    new URL("../lib/google-sheets-sync-scheduler.ts", import.meta.url),
-    "utf8",
-  );
-
   assert.match(migration, /CREATE TABLE "IntegrationJob"/);
   assert.match(
     migration,
@@ -267,5 +261,4 @@ test("TC6.4 migration is additive and runtime activation remains deferred", () =
   );
   assert.match(migration, /FOREIGN KEY \("businessId"\)/);
   assert.doesNotMatch(migration, /DROP\s|TRUNCATE\s|DELETE\sFROM|ALTER\s+COLUMN/i);
-  assert.doesNotMatch(scheduler, /integrationJob|enqueueIntegrationJob/);
 });
