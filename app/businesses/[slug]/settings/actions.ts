@@ -17,6 +17,7 @@ import {
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { updateBusinessSettingsCommand } from "@/lib/server/business/settings-command";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -137,49 +138,15 @@ async function updateSettingsDomain(input: {
   syncSheet?: boolean;
   enforceOperateEntitlement?: boolean;
 }) {
-  const activityContext = await getActivityRequestContext();
-  const actorFields = activityActorFields(input.user, input.businessId);
-  const createdById =
-    "createdById" in actorFields ? actorFields.createdById : undefined;
-  const actorMetadata =
-    "metadata" in actorFields ? actorFields.metadata : undefined;
-
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      input.enforceOperateEntitlement &&
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        input.businessId,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    await transaction.business.update({
-      where: { id: input.businessId },
-      data: input.data,
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "BUSINESS_SETTINGS_UPDATED",
-        description: input.description,
-        businessId: input.businessId,
-        ...(createdById ? { createdById } : {}),
-        ...(actorMetadata || input.metadata
-          ? {
-              metadata: {
-                ...(actorMetadata ?? {}),
-                ...(input.metadata ?? {}),
-              },
-            }
-          : {}),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const result = await updateBusinessSettingsCommand({
+    businessId: input.businessId,
+    user: input.user,
+    description: input.description,
+    data: input.data,
+    metadata: input.metadata,
+    enforceOperateEntitlement: input.enforceOperateEntitlement,
   });
-  if (!updated) return false;
+  if (!result.ok) return false;
   if (input.syncSheet) {
     await syncBusinessToGoogleSheetSafely(input.businessId);
   }
