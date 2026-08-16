@@ -74,7 +74,7 @@ export function PublicLoyaltyCardViewer({
         </div>
       </div>
 
-      <div key={side} className="lf-card-reveal mx-auto w-full max-w-[680px]">
+      <div className="mx-auto w-full max-w-[680px]">
         <LoyaltyCard {...cardProps} language={language} side={side} />
       </div>
 
