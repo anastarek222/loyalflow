@@ -1,0 +1,88 @@
+name: TC5 Business Settings Wiring Patch
+
+on:
+  push:
+    branches: [agent/tc5-business-settings-wiring]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    if: github.event.head_commit.message != 'feat(tc5): wire business settings actions to command'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact-marker patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/businesses/[slug]/settings/actions.ts')
+          text = path.read_text()
+
+          import_anchor = 'import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";\n'
+          command_import = 'import { updateBusinessSettingsCommand } from "@/lib/server/business/settings-command";\n'
+          if command_import not in text:
+              if text.count(import_anchor) != 1:
+                  raise SystemExit('expected one Google Sheets import anchor')
+              text = text.replace(import_anchor, import_anchor + command_import, 1)
+
+          start_marker = 'async function updateSettingsDomain(input: {'
+          end_marker = '\nexport async function updateBusinessProfileAction('
+          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
+              raise SystemExit('settings helper markers changed; refusing to patch')
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+
+          helper = '''async function updateSettingsDomain(input: {
+            businessId: string;
+            slug: string;
+            user: Parameters<typeof activityActorFields>[0];
+            description: string;
+            data: Parameters<typeof prisma.business.update>[0]["data"];
+            metadata?: Prisma.InputJsonObject;
+            syncSheet?: boolean;
+            enforceOperateEntitlement?: boolean;
+          }) {
+            const result = await updateBusinessSettingsCommand({
+              businessId: input.businessId,
+              user: input.user,
+              description: input.description,
+              data: input.data,
+              metadata: input.metadata,
+              enforceOperateEntitlement: input.enforceOperateEntitlement,
+            });
+            if (!result.ok) return false;
+            if (input.syncSheet) {
+              await syncBusinessToGoogleSheetSafely(input.businessId);
+            }
+            revalidatePath("/dashboard");
+            revalidatePath("/businesses");
+            revalidatePath(`/businesses/${input.slug}`);
+            revalidatePath(`/businesses/${input.slug}/customers`);
+            revalidatePath(`/businesses/${input.slug}/settings`);
+            revalidatePath(`/businesses/${input.slug}/program`);
+            revalidatePath(`/businesses/${input.slug}/activity`);
+            revalidatePath("/card/[token]", "page");
+            return true;
+          }
+          '''
+          text = text[:start] + helper + text[end:]
+          path.write_text(text)
+          PY
+
+          git diff --check
+          git diff -- app/businesses/'[slug]'/settings/actions.ts
+
+      - name: Commit wiring
+        run: |
+          git config user.name "anastarek222"
+          git config user.email "116379197+anastarek222@users.noreply.github.com"
+          git add app/businesses/'[slug]'/settings/actions.ts
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat(tc5): wire business settings actions to command'
+          git push origin HEAD:agent/tc5-business-settings-wiring
