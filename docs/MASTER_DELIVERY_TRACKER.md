@@ -1,6 +1,6 @@
 # LoyalFlow Master Delivery Tracker
 
-Last verified: 2026-08-15
+Last verified: 2026-08-16
 
 Baseline: `main` at `f2bf363bc289a177be7a36c02a7c26ea04446cdc` (merged PR #63)
 
@@ -68,6 +68,18 @@ TypeScript, full ESLint with 0 errors, the local Next.js 16.2.11 webpack build,
 and `git diff --check`. This remains Internal/Synthetic Beta evidence. See
 [`TC2_4_AUTH_LOCALE_EXTRACTION.md`](./TC2_4_AUTH_LOCALE_EXTRACTION.md).
 
+TC2.5 continues bounded Phase 3 extraction by moving the password-confirmation
+mismatch validation copy into separately sourced AR/EN modules exposed through
+`@loyalflow/i18n/password-policy`. The current exported schema remains
+Arabic-backed for compatibility, while a locale-aware schema factory is now
+available for later bounded callers. The 10/100 password-length security policy,
+authentication, sessions, authorization, rate limits, reset/invitation flows,
+and persistence remain unchanged. Focused TC2.5 evidence passes 5/5 and the
+validation head passes 1020/1020 tests, TypeScript, workspace boundaries,
+ESLint, the Next.js production build, and patch integrity. This remains
+Internal/Synthetic Beta evidence and is not runtime-authentication or
+Real-Closed-Beta evidence. See [`TC2_5_PASSWORD_POLICY_LOCALIZATION.md`](./TC2_5_PASSWORD_POLICY_LOCALIZATION.md).
+
 TC4.2 adds a read-only Beta compatibility projection from the current manual billing states into the provider-neutral lifecycle and exposes aggregate counts in Operations. It changes no persisted state, entitlement, transition, checkout, provider, schema, migration, or Production behavior. Unsupported lifecycle states remain fail-closed and deferred. See [`TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md`](./TC4_2_SUBSCRIPTION_RUNTIME_PROJECTION.md).
 
 TC4.3 adds the approved Beta lifecycle persistence boundary: an additive enum and migration with truthful legacy-state backfill, compare-and-swap versioning, explicit Super Admin transitions, and bounded audit metadata. It does not activate a payment provider, consume webhooks, initiate checkout, or enforce lifecycle entitlements. Isolated migration/runtime UAT remains required before operational completion. See [`TC4_3_SUBSCRIPTION_LIFECYCLE_PERSISTENCE.md`](./TC4_3_SUBSCRIPTION_LIFECYCLE_PERSISTENCE.md).
@@ -132,7 +144,7 @@ Current local working-tree checkpoint on 2026-08-12: the uncommitted T006/P9 pre
 | P3 Account and authentication   | Complete           |     100% | secure password reset, self-service password change, logout-everywhere PR #42, pending-owner lifecycle PR #43, Owner Invitation PR #44, Email Verification PR #46, Super Admin MFA PR #47, distributed auth rate limiting PR #48, Security Notifications PR #49 | reopen only for an approved authentication/security policy change                                                                                        |
 | P4 Database and operations      | In progress        |      92% | environment isolation, dedicated Neon Staging, 48/48 migration parity, monitoring/performance proof, rollback/forward recovery, runbooks and T004 closeout                                                                                                      | measured disposable-database restore and later Production/service RPO/RTO evidence                                                                       |
 | P5 Architecture boundaries      | In progress        |      52% | workspace/domain packages, transport-neutral contracts, approved same-origin BFF, four `/api/v1` reads, authenticated tenant/capability parity, and TC1-TC6 boundaries                                                                                          | approve and execute write extraction before legacy/web database removal or external publication                                                          |
-| P6 UX, design system, languages | In progress        |      88% | shared UI foundations, canonical AR/EN compatibility source, extracted common/navigation/auth catalogs, SSR direction, broad T006 authenticated/public surfaces and critical browser evidence                                                                   | final accessibility/device matrix, remaining inline-source migration, and presentation pass                                                              |
+| P6 UX, design system, languages | In progress        |      88% | shared UI foundations, canonical AR/EN compatibility source, extracted common/navigation/auth/password-policy catalogs, SSR direction, broad T006 authenticated/public surfaces and critical browser evidence                                                   | final accessibility/device matrix, remaining inline-source migration, and presentation pass                                                              |
 | P7 Marketing website            | In progress        |      90% | bilingual homepage, localized SEO, `/get-started`, invitation-only Beta acquisition boundary and browser UAT                                                                                                                                                    | final content/media plus approved analytics, legal, pricing and later launch acquisition policy                                                          |
 | P8 Business onboarding          | Complete           |     100% | invitation and draft foundations, bilingual owner onboarding, inline validation, supported path selection, live Standard Card preview and bounded browser UAT                                                                                                   | reopen only for approved onboarding/product-policy changes                                                                                               |
 | P9 Role experiences             | In progress        |      88% | Super Admin, Owner, Manager, Staff, Viewer, Scan, Customer Card, reports and permissions plus isolated-Staging role/MFA evidence                                                                                                                                | repeat only materially affected journeys; complete final device/accessibility and presentation acceptance                                                |
