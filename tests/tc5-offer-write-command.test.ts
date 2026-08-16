@@ -24,8 +24,8 @@ test("TC5 Offer actions keep presentation preflight and delegate persisted write
 test("TC5 Offer creation rechecks persisted lifecycle, plan feature and limit before write", () => {
   const entitlement = command.indexOf("await canBusinessPerformSubscriptionOperation");
   const businessRead = command.indexOf("transaction.business.findUnique");
-  const feature = command.indexOf("hasFeatureEntitlement");
-  const limit = command.indexOf("isWithinPlanLimit");
+  const feature = command.indexOf("hasFeatureEntitlement(business.plan");
+  const limit = command.indexOf("isWithinPlanLimit(");
   const create = command.indexOf("transaction.offer.create");
 
   for (const position of [entitlement, businessRead, feature, limit, create]) {
