@@ -41,6 +41,10 @@ const branchPersistedAuthorities = [
   source("lib/server/business/branch-staff-assignment-command.ts"),
 ].join("\n");
 
+const offerWriteAuthority = source(
+  "lib/server/business/offer-write-command.ts",
+);
+
 const teamExperienceAccessAuthority = source(
   "lib/server/business/team-experience-access-command.ts",
 );
@@ -131,6 +135,17 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(branchPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
       assert.match(branchPersistedAuthorities, /"EXPAND"/);
       assert.match(branchPersistedAuthorities, /"OPERATE"/);
+    } else if (fileKey === "offers") {
+      assert.match(sourceText, /createOfferCommand/);
+      assert.match(sourceText, /updateOfferCommand/);
+      assert.match(sourceText, /setOfferStatusCommand/);
+      assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+      assert.doesNotMatch(sourceText, /transaction\.offer\.(create|update)/);
+      assert.match(offerWriteAuthority, /canBusinessPerformSubscriptionOperation/);
+      assert.match(offerWriteAuthority, /"EXPAND"/);
+      assert.match(offerWriteAuthority, /"OPERATE"/);
+      assert.match(offerWriteAuthority, /transaction\.offer\.create/);
+      assert.match(offerWriteAuthority, /transaction\.offer\.update/);
     } else if (fileKey === "users") {
       assert.match(sourceText, /updateTeamExperienceAccessCommand/);
       assert.match(
