@@ -18,12 +18,12 @@ import {
   isSuperAdmin as isSuperAdminRole,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBusinessNotification } from "@/lib/notifications";
+import { updateTeamExperienceAccessCommand } from "@/lib/server/business/team-experience-access-command";
 import { provisionBusinessUserCommand } from "@/lib/server/business/team-provisioning-command";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import {
@@ -321,37 +321,20 @@ export async function updateBusinessUserExperienceAccessAction(
     redirect(`/businesses/${slug}/users?error=not-found`);
   }
 
-  const experienceAccess = resolveExperienceAccess(targetUser.role, parsedAccess.data);
-  const activityContext = await getActivityRequestContext();
-
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    await transaction.user.update({
-      where: { id: targetUser.id },
-      data: { experienceAccess },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "USER_EXPERIENCE_ACCESS_UPDATED",
-        description: `تم تحديث وصول الواجهة للحساب ${targetUser.email}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const result = await updateTeamExperienceAccessCommand({
+    businessId: business.id,
+    userId: targetUser.id,
+    requestedAccess: parsedAccess.data,
+    actor: session.user,
   });
-  if (!updated) {
-    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${slug}/users?error=${
+        result.reason === "SUBSCRIPTION_RESTRICTED"
+          ? "subscription-restricted"
+          : "not-found"
+      }`,
+    );
   }
 
   revalidateTeamPages(slug);

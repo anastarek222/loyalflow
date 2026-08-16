@@ -19,6 +19,9 @@ function action(sourceText: string, name: string, nextName?: string) {
 const branchActions = source("app/businesses/[slug]/branches/actions.ts");
 const branchStaffCommand = source("lib/server/business/branch-staff-assignment-command.ts");
 const userActions = source("app/businesses/[slug]/users/actions.ts");
+const teamExperienceAccessCommand = source(
+  "lib/server/business/team-experience-access-command.ts",
+);
 const branchPage = source("app/businesses/[slug]/branches/page.tsx");
 const userPage = source("app/businesses/[slug]/users/page.tsx");
 
@@ -54,12 +57,23 @@ test("TC4.9 guards workforce topology writes as OPERATE", () => {
     "setBusinessUserStatusAction",
   );
   assert.match(userAction, /canPerformSubscriptionOperation\(/);
-  assert.match(userAction, /canBusinessPerformSubscriptionOperation\(/);
   assert.match(userAction, /"OPERATE"/);
+  assert.match(userAction, /updateTeamExperienceAccessCommand\(/);
   assert.match(userAction, /subscription-restricted/);
+  assert.doesNotMatch(userAction, /transaction\.user\.update/);
+
+  assert.match(teamExperienceAccessCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(teamExperienceAccessCommand, /"OPERATE"/);
+  assert.match(teamExperienceAccessCommand, /transaction\.user\.findFirst/);
+  assert.match(teamExperienceAccessCommand, /businessId: input\.businessId/);
   assert.ok(
-    userAction.indexOf("await canBusinessPerformSubscriptionOperation") <
-      userAction.indexOf("transaction.user.update"),
+    teamExperienceAccessCommand.indexOf(
+      "await canBusinessPerformSubscriptionOperation",
+    ) < teamExperienceAccessCommand.indexOf("transaction.user.update"),
+  );
+  assert.ok(
+    teamExperienceAccessCommand.indexOf("transaction.user.findFirst") <
+      teamExperienceAccessCommand.indexOf("transaction.user.update"),
   );
 });
 
@@ -84,7 +98,7 @@ test("TC4.9 exposes bounded feedback without provider or schema behavior", () =>
   assert.match(userPage, /query\.error === "subscription-restricted"/);
   assert.match(userPage, /security controls remain accessible/);
   assert.doesNotMatch(
-    `${branchActions}\n${branchStaffCommand}\n${userActions}`,
+    `${branchActions}\n${branchStaffCommand}\n${userActions}\n${teamExperienceAccessCommand}`,
     /stripe|checkout|webhook|process\.env/i,
   );
 });
