@@ -7,6 +7,7 @@ function source(path: string) {
 }
 
 const branchActions = source("app/businesses/[slug]/branches/actions.ts");
+const branchCommand = source("lib/server/business/branch-creation-command.ts");
 const teamActions = source("app/businesses/[slug]/users/actions.ts");
 const teamCommand = source("lib/server/business/team-provisioning-command.ts");
 const branchPage = source("app/businesses/[slug]/branches/page.tsx");
@@ -23,13 +24,15 @@ test("TC4.5 runtime reads persisted lifecycle state and fails closed", () => {
 test("TC4.5 guards branch and team expansion before authoritative writes", () => {
   assert.match(branchActions, /subscriptionLifecycleState: true/);
   assert.match(branchActions, /canPerformSubscriptionOperation\(/);
-  assert.match(branchActions, /canBusinessPerformSubscriptionOperation\(/);
-  assert.match(branchActions, /"EXPAND"/);
-  assert.ok(
-    branchActions.indexOf("await canBusinessPerformSubscriptionOperation") <
-      branchActions.indexOf("transaction.branch.create"),
-  );
+  assert.match(branchActions, /createBranchCommand/);
   assert.match(branchActions, /subscription-restricted/);
+
+  assert.match(branchCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(branchCommand, /"EXPAND"/);
+  assert.ok(
+    branchCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      branchCommand.indexOf("transaction.branch.create"),
+  );
 
   assert.match(teamActions, /subscriptionLifecycleState: true/);
   assert.match(teamActions, /canPerformSubscriptionOperation\(/);
@@ -49,7 +52,7 @@ test("TC4.5 exposes bounded restriction feedback without removing read access", 
   assert.match(teamPage, /subscription-restricted/);
   assert.match(teamPage, /language === "AR"/);
   assert.doesNotMatch(
-    `${branchActions}\n${teamActions}\n${teamCommand}`,
+    `${branchActions}\n${branchCommand}\n${teamActions}\n${teamCommand}`,
     /stripe|checkout|webhook|process\.env/i,
   );
 });
