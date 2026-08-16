@@ -10,7 +10,6 @@ permissions:
 jobs:
   patch:
     runs-on: ubuntu-latest
-    if: github.event.head_commit.message != 'feat(tc5): wire business settings actions to command'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -71,18 +70,18 @@ jobs:
             return true;
           }
           '''
-          text = text[:start] + helper + text[end:]
-          path.write_text(text)
+          replacement = text[:start] + helper + text[end:]
+          path.write_text(replacement)
           PY
 
           git diff --check
           git diff -- app/businesses/'[slug]'/settings/actions.ts
 
-      - name: Commit wiring
+      - name: Commit wiring if changed
         run: |
           git config user.name "anastarek222"
           git config user.email "116379197+anastarek222@users.noreply.github.com"
           git add app/businesses/'[slug]'/settings/actions.ts
           git diff --cached --quiet && exit 0
-          git commit -m 'feat(tc5): wire business settings actions to command'
+          git commit -m "feat(tc5): wire business settings actions to command"
           git push origin HEAD:agent/tc5-business-settings-wiring
