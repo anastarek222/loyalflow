@@ -24,6 +24,7 @@ import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createBusinessNotification } from "@/lib/notifications";
+import { provisionBusinessUserCommand } from "@/lib/server/business/team-provisioning-command";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import {
   EXPERIENCE_ACCESS_VALUES,
@@ -254,99 +255,33 @@ export async function createBusinessUserAction(
       parsed.data.password,
       12
     );
-  const activityContext = await getActivityRequestContext();
+  const creation = await provisionBusinessUserCommand({
+    businessId: business.id,
+    actor: session.user,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName || null,
+    email,
+    passwordHash,
+    role: parsed.data.role,
+    experienceAccess: resolveExperienceAccess(
+      parsed.data.role,
+      parsed.data.experienceAccess ?? getDefaultExperienceAccess(parsed.data.role),
+    ),
+  });
 
-  const created = await prisma.$transaction(
-    async (transaction) => {
-      if (
-        !(await canBusinessPerformSubscriptionOperation(
-          transaction,
-          business.id,
-          "EXPAND",
-        ))
-      ) {
-        return false;
-      }
-
-      const createdUser = await transaction.user.create({
-        data: {
-          firstName:
-            parsed.data.firstName,
-          lastName:
-            parsed.data.lastName ||
-            null,
-          email,
-          passwordHash,
-          role: parsed.data.role,
-          experienceAccess: resolveExperienceAccess(
-            parsed.data.role,
-            parsed.data.experienceAccess ?? getDefaultExperienceAccess(parsed.data.role),
-          ),
-          businessId:
-            business.id,
-          isActive: true,
-        },
-      });
-
-      // Team accounts are provisioned by an authenticated Owner or Super Admin.
-      // Record that trusted provisioning explicitly so credentials created here
-      // are immediately sign-in ready instead of depending on the legacy
-      // missing-verification-state compatibility fallback.
-      await transaction.$executeRaw`
-        INSERT INTO "EmailVerificationState" (
-          "userId", "verifiedAt", "createdAt", "updatedAt"
-        ) VALUES (
-          ${createdUser.id}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-        )
-      `;
-
-      await transaction
-        .businessActivity
-        .create({
-          data: {
-            type: "USER_CREATED",
-            description:
-              `تم إنشاء حساب ${
-                parsed.data.role === "OWNER"
-                  ? "مالك"
-                  : parsed.data.role === "MANAGER"
-                    ? "مدير"
-                    : parsed.data.role === "VIEWER"
-                      ? "مشاهد"
-                      : "موظف"
-              } للبريد ${email}`,
-            businessId:
-              business.id,
-            ...activityActorFields(session.user, business.id),
-            ...activityRequestMetadata(activityContext),
-          },
-        });
-
-      await createBusinessNotification(
-        transaction,
-        {
-          type: "USER_CREATED",
-          title: "تم إنشاء حساب فريق جديد",
-          message:
-            `تم إنشاء حساب ${
-              parsed.data.role === "OWNER"
-                ? "مالك"
-                : parsed.data.role === "MANAGER"
-                  ? "مدير"
-                  : parsed.data.role === "VIEWER"
-                    ? "مشاهد"
-                    : "موظف"
-            } للبريد ${email}`,
-          businessId:
-            business.id,
-        }
-      );
-      return true;
+  if (!creation.ok) {
+    if (creation.reason === "BUSINESS_NOT_FOUND") {
+      redirect("/businesses");
     }
-  );
-
-  if (!created) {
-    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+    const error =
+      creation.reason === "PLAN_LIMIT"
+        ? "plan-limit"
+        : creation.reason === "OWNER_EXISTS"
+          ? "owner-exists"
+          : creation.reason === "EMAIL_EXISTS"
+            ? "email"
+            : "subscription-restricted";
+    redirect(`/businesses/${slug}/users?error=${error}`);
   }
 
   revalidateTeamPages(slug);
