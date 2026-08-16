@@ -148,11 +148,50 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
   );
 }
 
+function LoyaltyCardFace({
+  side,
+  useCustom,
+  props,
+}: {
+  side: "front" | "back";
+  useCustom: boolean;
+  props: LoyaltyCardProps;
+}) {
+  return useCustom
+    ? <CustomLoyaltyCard {...props} side={side} />
+    : <StandardLoyaltyCard {...props} side={side} />;
+}
+
 export function LoyaltyCard(props: LoyaltyCardProps) {
+  const side = props.side ?? "front";
   const useCustom =
     cardDesignMode(props.designMode) === "CUSTOM" &&
     props.customDesignEnabled === true &&
     Boolean(props.customFrontArtworkUrl && props.customBackArtworkUrl);
 
-  return useCustom ? <CustomLoyaltyCard {...props} /> : <StandardLoyaltyCard {...props} />;
+  return (
+    <div
+      data-testid="loyalty-card-flip"
+      data-card-side={side}
+      className="w-full [perspective:1200px]"
+    >
+      <div
+        className="grid transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none"
+        style={{ transform: side === "back" ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        <div
+          className="[grid-area:1/1] [backface-visibility:hidden]"
+          aria-hidden={side !== "front"}
+        >
+          <LoyaltyCardFace side="front" useCustom={useCustom} props={props} />
+        </div>
+        <div
+          className="[grid-area:1/1] [backface-visibility:hidden] [transform:rotateY(180deg)]"
+          aria-hidden={side !== "back"}
+        >
+          <LoyaltyCardFace side="back" useCustom={useCustom} props={props} />
+        </div>
+      </div>
+    </div>
+  );
 }
