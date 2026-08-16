@@ -83,7 +83,7 @@ export default function AppSidebar({
 
   return (
     <aside
-      className="lf-nav-sidebar sticky top-0 hidden h-screen w-72 shrink-0 border-e lg:flex lg:flex-col"
+      className="lf-nav-sidebar sticky top-0 hidden h-screen w-72 shrink-0 self-start border-e lg:flex lg:flex-col"
       aria-label={language === "AR" ? "التنقل الرئيسي" : "Primary navigation"}
       data-platform-sidebar={platformWorkspace ? "true" : undefined}
     >
