@@ -49,7 +49,7 @@ export default async function RootLayout({
       dir={direction}
       className={cn("h-full bg-surface-subtle antialiased", "font-sans", geist.variable)}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col overflow-x-clip">
         {children}
       </body>
     </html>
