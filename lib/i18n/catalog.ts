@@ -1,5 +1,6 @@
 import { authMessages } from "@loyalflow/i18n/auth";
 import { commonMessages } from "@loyalflow/i18n/common";
+import { onboardingMessages } from "@loyalflow/i18n/onboarding";
 import { ownerInviteMessages } from "@loyalflow/i18n/owner-invite";
 import { DEFAULT_LOCALE, type SupportedLocale } from "./config";
 
@@ -8,6 +9,7 @@ export const messages = {
     ...commonMessages.en,
     ...authMessages.en,
     ...ownerInviteMessages.en,
+    ...onboardingMessages.en,
     "marketing.metaTitle":
       "LoyalFlow | Loyalty operations for growing businesses",
     "marketing.metaDescription":
@@ -122,20 +124,12 @@ export const messages = {
     "conversion.noSignup":
       "This Beta is invitation-only. Public self-signup and payment checkout are not enabled, so this page does not create an unsupported account path.",
     "conversion.backHome": "Back to homepage",
-    "onboarding.metaTitle": "Owner onboarding | LoyalFlow",
-    "onboarding.metaDescription":
-      "Complete the private LoyalFlow owner setup flow.",
-    "onboarding.eyebrow": "Owner setup",
-    "onboarding.title": "Set up your LoyalFlow workspace",
-    "onboarding.description":
-      "Complete your business profile, loyalty program, rewards, branding, and card setup before launch.",
-    "onboarding.privateNote":
-      "This setup is private to your account and is not indexed by search engines.",
   },
   ar: {
     ...commonMessages.ar,
     ...authMessages.ar,
     ...ownerInviteMessages.ar,
+    ...onboardingMessages.ar,
     "marketing.metaTitle": "LoyalFlow | تشغيل برامج الولاء للشركات المتنامية",
     "marketing.metaDescription":
       "أدر برامج الولاء والمكافآت والعملاء والفروع والفرق والتقارير من مساحة عمل آمنة واحدة.",
@@ -246,14 +240,6 @@ export const messages = {
     "conversion.noSignup":
       "هذه النسخة التجريبية متاحة بالدعوة فقط. التسجيل الذاتي العام والدفع غير مفعّلين، لذلك لا تنشئ هذه الصفحة مسار حساب غير مدعوم.",
     "conversion.backHome": "العودة للصفحة الرئيسية",
-    "onboarding.metaTitle": "إعداد المالك | LoyalFlow",
-    "onboarding.metaDescription": "أكمل إعداد المالك الخاص بك في LoyalFlow.",
-    "onboarding.eyebrow": "إعداد المالك",
-    "onboarding.title": "جهّز مساحة عمل LoyalFlow الخاصة بك",
-    "onboarding.description":
-      "أكمل بيانات النشاط وبرنامج الولاء والمكافآت والهوية والبطاقة قبل الإطلاق.",
-    "onboarding.privateNote":
-      "هذا الإعداد خاص بحسابك ولا تتم فهرسته في محركات البحث.",
   },
 } as const;
 

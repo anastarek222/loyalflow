@@ -8,6 +8,7 @@
     "./auth": "./src/auth.ts",
     "./common": "./src/common.ts",
     "./navigation": "./src/navigation.ts",
+    "./onboarding": "./src/onboarding.ts",
     "./owner-invite": "./src/owner-invite.ts",
     "./password-policy": "./src/password-policy.ts"
   }
