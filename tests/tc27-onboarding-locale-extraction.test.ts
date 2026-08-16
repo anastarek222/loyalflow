@@ -17,11 +17,18 @@ test("TC2.7 keeps onboarding AR/EN keys in parity", () => {
 });
 
 test("TC2.7 preserves compatibility catalog values", () => {
-  for (const [key, value] of Object.entries(onboardingMessages.en)) {
-    assert.equal(messages.en[key], value);
+  const englishKeys = Object.keys(onboardingMessages.en) as Array<
+    keyof typeof onboardingMessages.en
+  >;
+  const arabicKeys = Object.keys(onboardingMessages.ar) as Array<
+    keyof typeof onboardingMessages.ar
+  >;
+
+  for (const key of englishKeys) {
+    assert.equal(messages.en[key], onboardingMessages.en[key]);
   }
-  for (const [key, value] of Object.entries(onboardingMessages.ar)) {
-    assert.equal(messages.ar[key], value);
+  for (const key of arabicKeys) {
+    assert.equal(messages.ar[key], onboardingMessages.ar[key]);
   }
 });
 
