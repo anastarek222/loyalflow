@@ -37,20 +37,21 @@ assert.ok(createCommandStart >= 0 && updateCommandStart > createCommandStart);
 const createCommand = command.slice(createCommandStart, updateCommandStart);
 const updateCommand = command.slice(updateCommandStart);
 
-test("TC5 Customer note actions keep presentation checks and delegate persisted writes", () => {
+test("TC5 Customer note extraction preserves the active action contract until the wiring slice", () => {
   for (const sourceText of [createAction, updateAction]) {
     assert.match(sourceText, /customerNoteContentSchema\.safeParse/);
     assert.match(sourceText, /canPerformSubscriptionOperation/);
+    assert.match(sourceText, /canBusinessPerformSubscriptionOperation/);
     assert.match(sourceText, /subscription-restricted/);
-    assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
-    assert.doesNotMatch(sourceText, /transaction\.customerNote\.(create|update)/);
+    assert.match(sourceText, /prisma\.\$transaction/);
   }
-  assert.match(createAction, /createCustomerNoteCommand/);
+  assert.match(createAction, /transaction\.customerNote\.create/);
   assert.match(updateAction, /opaqueIdSchema\.safeParse/);
-  assert.match(updateAction, /updateCustomerNoteCommand/);
+  assert.match(updateAction, /transaction\.customerNote\.update/);
+  assert.doesNotMatch(actions, /createCustomerNoteCommand|updateCustomerNoteCommand/);
 });
 
-test("TC5 Customer note creation rechecks lifecycle and tenant ownership before atomic note and audit", () => {
+test("TC5 Customer note creation command rechecks lifecycle and tenant ownership before atomic note and audit", () => {
   const guard = createCommand.indexOf(
     "await canBusinessPerformSubscriptionOperation",
   );
@@ -68,7 +69,7 @@ test("TC5 Customer note creation rechecks lifecycle and tenant ownership before 
   assert.match(createCommand, /type: "CUSTOMER_NOTE_CREATED"/);
 });
 
-test("TC5 Customer note update rechecks Customer and note tenant ownership before atomic update and audit", () => {
+test("TC5 Customer note update command rechecks Customer and note tenant ownership before atomic update and audit", () => {
   const guard = updateCommand.indexOf(
     "await canBusinessPerformSubscriptionOperation",
   );
