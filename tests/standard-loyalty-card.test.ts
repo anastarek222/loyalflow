@@ -107,9 +107,9 @@ test("loyalty mode semantics format visits, points, sales and reward-ready state
   assert.equal(getLoyaltyCardMetrics({ balance: 850, loyaltyMode: "POINTS", unitName: "PTS", rewardThreshold: 1000, language: "EN" }).ratioText, "850 / 1,000 PTS");
   assert.equal(getLoyaltyCardMetrics({ balance: 1850, loyaltyMode: "SALES_AMOUNT", currency: "EGP", rewardThreshold: 2500, language: "EN" }).remainingText, "EGP 650 TO NEXT REWARD");
   assert.equal(getLoyaltyCardMetrics({ balance: 10, loyaltyMode: "VISITS", rewardThreshold: 10, language: "EN" }).rewardReady, true);
-  assert.equal(getPreviewBalance("VISITS", 5), 4);
-  assert.equal(getPreviewBalance("POINTS", 1000), 850);
-  assert.equal(getPreviewBalance("SALES_AMOUNT", 2500), 1850);
+  assert.equal(getPreviewBalance("VISITS", 5), 3);
+  assert.equal(getPreviewBalance("POINTS", 1000), 500);
+  assert.equal(getPreviewBalance("SALES_AMOUNT", 2500), 1250);
 });
 
 test("unit, target and reward remain distinct in English and Arabic", () => {
@@ -139,13 +139,13 @@ test("unit, target and reward remain distinct in English and Arabic", () => {
 
 test("builder preview identity and balances are explicit and deterministic", () => {
   assert.deepEqual(getLoyaltyCardPreviewData("POINTS", 1000), {
-    customerName: "Ahmed Mohamed Hassan",
-    customerId: "LF-001234",
-    balance: 850,
+    customerName: "Sample Customer",
+    customerId: "PREVIEW-001",
+    balance: 500,
   });
-  assert.equal(getLoyaltyCardPreviewData("POINTS", 5).balance, 4);
+  assert.equal(getLoyaltyCardPreviewData("POINTS", 5).balance, 3);
   const renderer = source("components/standard-loyalty-card.tsx");
-  assert.doesNotMatch(renderer, /\b850\b|Ahmed Mohamed Hassan|LF-001234/);
+  assert.doesNotMatch(renderer, /Sample Customer|PREVIEW-001|Ahmed Mohamed Hassan|LF-001234/);
 });
 
 test("editor QR is deterministic while public cards can supply the real token QR", () => {
