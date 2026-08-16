@@ -1,11 +1,13 @@
 import { authMessages } from "@loyalflow/i18n/auth";
 import { commonMessages } from "@loyalflow/i18n/common";
+import { ownerInviteMessages } from "@loyalflow/i18n/owner-invite";
 import { DEFAULT_LOCALE, type SupportedLocale } from "./config";
 
 export const messages = {
   en: {
     ...commonMessages.en,
     ...authMessages.en,
+    ...ownerInviteMessages.en,
     "marketing.metaTitle":
       "LoyalFlow | Loyalty operations for growing businesses",
     "marketing.metaDescription":
@@ -120,19 +122,6 @@ export const messages = {
     "conversion.noSignup":
       "This Beta is invitation-only. Public self-signup and payment checkout are not enabled, so this page does not create an unsupported account path.",
     "conversion.backHome": "Back to homepage",
-    "ownerInvite.metaTitle": "Accept owner invitation | LoyalFlow Beta",
-    "ownerInvite.metaDescription":
-      "Accept a secure LoyalFlow Beta owner invitation.",
-    "ownerInvite.title": "Accept owner invitation",
-    "ownerInvite.body":
-      "Choose your LoyalFlow password to activate your invited owner account.",
-    "ownerInvite.invalid": "This invitation link is invalid or has expired.",
-    "ownerInvite.backLogin": "Back to login",
-    "ownerInvite.passwordMismatch": "The passwords do not match.",
-    "ownerInvite.passwordInvalid": "Please choose a valid password.",
-    "ownerInvite.password": "Password",
-    "ownerInvite.confirmPassword": "Confirm password",
-    "ownerInvite.activate": "Activate owner account",
     "onboarding.metaTitle": "Owner onboarding | LoyalFlow",
     "onboarding.metaDescription":
       "Complete the private LoyalFlow owner setup flow.",
@@ -146,6 +135,7 @@ export const messages = {
   ar: {
     ...commonMessages.ar,
     ...authMessages.ar,
+    ...ownerInviteMessages.ar,
     "marketing.metaTitle": "LoyalFlow | تشغيل برامج الولاء للشركات المتنامية",
     "marketing.metaDescription":
       "أدر برامج الولاء والمكافآت والعملاء والفروع والفرق والتقارير من مساحة عمل آمنة واحدة.",
@@ -256,17 +246,6 @@ export const messages = {
     "conversion.noSignup":
       "هذه النسخة التجريبية متاحة بالدعوة فقط. التسجيل الذاتي العام والدفع غير مفعّلين، لذلك لا تنشئ هذه الصفحة مسار حساب غير مدعوم.",
     "conversion.backHome": "العودة للصفحة الرئيسية",
-    "ownerInvite.metaTitle": "قبول دعوة المالك | LoyalFlow Beta",
-    "ownerInvite.metaDescription": "اقبل دعوة مالك آمنة في LoyalFlow Beta.",
-    "ownerInvite.title": "قبول دعوة المالك",
-    "ownerInvite.body": "اختر كلمة مرور LoyalFlow لتفعيل حساب المالك المدعو.",
-    "ownerInvite.invalid": "رابط الدعوة غير صالح أو انتهت صلاحيته.",
-    "ownerInvite.backLogin": "العودة لتسجيل الدخول",
-    "ownerInvite.passwordMismatch": "كلمتا المرور غير متطابقتين.",
-    "ownerInvite.passwordInvalid": "اختر كلمة مرور صالحة.",
-    "ownerInvite.password": "كلمة المرور",
-    "ownerInvite.confirmPassword": "تأكيد كلمة المرور",
-    "ownerInvite.activate": "تفعيل حساب المالك",
     "onboarding.metaTitle": "إعداد المالك | LoyalFlow",
     "onboarding.metaDescription": "أكمل إعداد المالك الخاص بك في LoyalFlow.",
     "onboarding.eyebrow": "إعداد المالك",
