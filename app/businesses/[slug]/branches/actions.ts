@@ -16,6 +16,7 @@ import prisma from "@/lib/prisma";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
+import { createBranchCommand } from "@/lib/server/business/branch-creation-command";
 import {
   actionBooleanSchema,
   opaqueIdSchema,
@@ -91,37 +92,26 @@ export async function createBranchAction(slug: string, formData: FormData) {
   }
 
   try {
-    const activityContext = await getActivityRequestContext();
-    const created = await prisma.$transaction(async (transaction) => {
-      if (
-        !(await canBusinessPerformSubscriptionOperation(
-          transaction,
-          business.id,
-          "EXPAND",
-        ))
-      ) {
-        return false;
-      }
-
-      const branch = await transaction.branch.create({
-        data: { businessId: business.id, ...normalizeBranchInput(parsed.data) },
-      });
-      await transaction.businessActivity.create({
-        data: buildBranchAuditActivity({
-          operation: "CREATE",
-          businessId: business.id,
-          actorId: session.user.id,
-          actorBusinessId: session.user.businessId,
-          actorEmail: session.user.email,
-          branch,
-          activityContext,
-        }),
-      });
-      return true;
+    const result = await createBranchCommand({
+      businessId: business.id,
+      actor: {
+        id: session.user.id,
+        businessId: session.user.businessId,
+        email: session.user.email,
+      },
+      branch: normalizeBranchInput(parsed.data),
     });
 
-    if (!created) {
-      redirectWithError(business.slug, "subscription-restricted");
+    if (!result.ok) {
+      if (result.reason === "SUBSCRIPTION_RESTRICTED") {
+        redirectWithError(business.slug, "subscription-restricted");
+      }
+      if (result.reason === "PLAN_LIMIT") {
+        redirectWithError(business.slug, "plan-limit");
+      }
+      if (result.reason === "BUSINESS_NOT_FOUND") {
+        redirectWithError(business.slug, "not-found");
+      }
     }
   } catch (error) {
     if (isDuplicateBranchAssignmentError(error)) {
