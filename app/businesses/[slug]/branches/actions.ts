@@ -1,19 +1,13 @@
 "use server";
 
 import { auth } from "@/auth";
-import { buildBranchAuditActivity } from "@/lib/activity/business-activity";
-import { getActivityRequestContext } from "@/lib/activity/request-context";
 import {
   branchInputSchema,
   canManageBranches,
-  getBranchAssignmentEligibility,
-  getTenantScopedAssignmentWhere,
-  getTenantScopedBranchWhere,
   isDuplicateBranchAssignmentError,
   normalizeBranchInput,
 } from "@/lib/branches/management";
 import prisma from "@/lib/prisma";
-import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { createBranchCommand } from "@/lib/server/business/branch-creation-command";
@@ -21,6 +15,10 @@ import {
   setBranchStatusCommand,
   updateBranchCommand,
 } from "@/lib/server/business/branch-maintenance-command";
+import {
+  assignStaffToBranchCommand,
+  removeStaffAssignmentCommand,
+} from "@/lib/server/business/branch-staff-assignment-command";
 import {
   actionBooleanSchema,
   opaqueIdSchema,
@@ -247,64 +245,29 @@ export async function assignStaffToBranchAction(
     redirectWithError(business.slug, "subscription-restricted");
   }
 
-  const [branch, user] = await Promise.all([
-    prisma.branch.findFirst({
-      where: getTenantScopedBranchWhere(parsedBranchId.data, business.id),
-      select: { id: true, businessId: true, isActive: true, name: true },
-    }),
-    prisma.user.findUnique({
-      where: { id: parsedUserId.data },
-      select: { id: true, businessId: true, isActive: true, role: true, email: true },
-    }),
-  ]);
-
-  if (!branch) redirectWithError(business.slug, "not-found");
-  if (!user) redirectWithError(business.slug, "ineligible-user");
-
-  const eligibility = getBranchAssignmentEligibility({
-    businessId: business.id,
-    branch,
-    user,
-  });
-  if (eligibility !== "ELIGIBLE") {
-    redirectWithError(business.slug, "ineligible-user");
-  }
-
   try {
-    const activityContext = await getActivityRequestContext();
-    const assigned = await prisma.$transaction(async (transaction) => {
-      if (
-        !(await canBusinessPerformSubscriptionOperation(
-          transaction,
-          business.id,
-          "OPERATE",
-        ))
-      ) {
-        return false;
-      }
-
-      await transaction.branchStaffAssignment.create({
-        data: {
-          businessId: business.id,
-          branchId: branch.id,
-          userId: user.id,
-        },
-      });
-      await transaction.businessActivity.create({
-        data: buildBranchAuditActivity({
-          operation: "ASSIGN_STAFF",
-          businessId: business.id,
-          actorId: session.user.id,
-          actorBusinessId: session.user.businessId,
-          actorEmail: session.user.email,
-          branch,
-          assignedUser: user,
-          activityContext,
-        }),
-      });
-      return true;
+    const result = await assignStaffToBranchCommand({
+      businessId: business.id,
+      branchId: parsedBranchId.data,
+      userId: parsedUserId.data,
+      actor: {
+        id: session.user.id,
+        businessId: session.user.businessId,
+        email: session.user.email,
+      },
     });
-    if (!assigned) redirectWithError(business.slug, "subscription-restricted");
+
+    if (!result.ok) {
+      if (result.reason === "SUBSCRIPTION_RESTRICTED") {
+        redirectWithError(business.slug, "subscription-restricted");
+      }
+      if (result.reason === "BRANCH_NOT_FOUND") {
+        redirectWithError(business.slug, "not-found");
+      }
+      if (result.reason === "INELIGIBLE_USER") {
+        redirectWithError(business.slug, "ineligible-user");
+      }
+    }
   } catch (error) {
     if (isDuplicateBranchAssignmentError(error)) {
       redirectWithError(business.slug, "duplicate-assignment");
@@ -333,46 +296,23 @@ export async function removeStaffAssignmentAction(
     redirectWithError(business.slug, "subscription-restricted");
   }
 
-  const assignment = await prisma.branchStaffAssignment.findFirst({
-    where: getTenantScopedAssignmentWhere(parsedAssignmentId.data, business.id),
-    select: {
-      id: true,
-      branch: { select: { id: true, name: true } },
-      user: { select: { id: true, email: true } },
+  const result = await removeStaffAssignmentCommand({
+    businessId: business.id,
+    assignmentId: parsedAssignmentId.data,
+    actor: {
+      id: session.user.id,
+      businessId: session.user.businessId,
+      email: session.user.email,
     },
   });
-  if (!assignment) redirectWithError(business.slug, "not-found");
-
-  const activityContext = await getActivityRequestContext();
-  const removed = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    await transaction.branchStaffAssignment.delete({
-      where: { id: assignment.id },
-    });
-    await transaction.businessActivity.create({
-      data: buildBranchAuditActivity({
-        operation: "REMOVE_STAFF",
-        businessId: business.id,
-        actorId: session.user.id,
-        actorBusinessId: session.user.businessId,
-        actorEmail: session.user.email,
-        branch: assignment.branch,
-        assignedUser: assignment.user,
-        activityContext,
-      }),
-    });
-    return true;
-  });
-  if (!removed) redirectWithError(business.slug, "subscription-restricted");
+  if (!result.ok) {
+    redirectWithError(
+      business.slug,
+      result.reason === "SUBSCRIPTION_RESTRICTED"
+        ? "subscription-restricted"
+        : "not-found",
+    );
+  }
 
   revalidateBranchPaths(business.slug);
   redirect(`${branchesPath(business.slug)}?success=assignment-removed`);
