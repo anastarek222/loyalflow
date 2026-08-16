@@ -26,5 +26,5 @@ test("workspace packages expose only approved runtime code and satisfy the impor
     },
   );
 
-  assert.match(output, /4 packages, 11 approved runtime exports, no cycles/);
+  assert.match(output, /4 packages, 12 approved runtime exports, no cycles/);
 });
