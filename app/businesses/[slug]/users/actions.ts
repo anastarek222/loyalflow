@@ -268,7 +268,7 @@ export async function createBusinessUserAction(
         return false;
       }
 
-      await transaction.user.create({
+      const createdUser = await transaction.user.create({
         data: {
           firstName:
             parsed.data.firstName,
@@ -287,6 +287,18 @@ export async function createBusinessUserAction(
           isActive: true,
         },
       });
+
+      // Team accounts are provisioned by an authenticated Owner or Super Admin.
+      // Record that trusted provisioning explicitly so credentials created here
+      // are immediately sign-in ready instead of depending on the legacy
+      // missing-verification-state compatibility fallback.
+      await transaction.$executeRaw`
+        INSERT INTO "EmailVerificationState" (
+          "userId", "verifiedAt", "createdAt", "updatedAt"
+        ) VALUES (
+          ${createdUser.id}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        )
+      `;
 
       await transaction
         .businessActivity
