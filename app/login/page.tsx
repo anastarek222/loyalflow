@@ -189,6 +189,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     locale,
                     "auth.resendVerification",
                   ),
+                  verificationRequiredTitle: translate(
+                    locale,
+                    "auth.verificationRequiredTitle",
+                  ),
+                  verificationRequiredBody: translate(
+                    locale,
+                    "auth.verificationRequiredBody",
+                  ),
+                  verificationRequiredCta: translate(
+                    locale,
+                    "auth.verificationRequiredCta",
+                  ),
                 }}
               />
             </div>

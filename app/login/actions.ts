@@ -15,7 +15,12 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 export type LoginState = {
-  status?: "invalid" | "mfa-required" | "mfa-invalid" | "mfa-setup-required";
+  status?:
+    | "invalid"
+    | "verification-required"
+    | "mfa-required"
+    | "mfa-invalid"
+    | "mfa-setup-required";
 };
 
 const loginStepSchema = z.object({
@@ -75,7 +80,7 @@ export async function loginAction(
 
     if (!(await isEmailVerificationSatisfied(user.id))) {
       recordLoginDenial("primary", "email_unverified");
-      return { status: "invalid" };
+      return { status: "verification-required" };
     }
 
     if (user.role === "SUPER_ADMIN") {

@@ -35,6 +35,9 @@ type LoginCopy = {
   setupBody: string;
   setupCta: string;
   resendVerification: string;
+  verificationRequiredTitle: string;
+  verificationRequiredBody: string;
+  verificationRequiredCta: string;
 };
 
 const initialState: LoginState = {};
@@ -94,6 +97,27 @@ export function LoginForm({
         >
           {copy.invalid}
         </p>
+      ) : null}
+
+      {state.status === "verification-required" && showPrimaryStep ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-warning/25 bg-warning-subtle px-4 py-4"
+          data-testid="login-verification-required"
+        >
+          <p className="text-sm font-black text-foreground">
+            {copy.verificationRequiredTitle}
+          </p>
+          <p className="mt-1 text-sm leading-6 text-foreground-muted">
+            {copy.verificationRequiredBody}
+          </p>
+          <Link
+            href="/verify-email/resend"
+            className="mt-3 inline-flex min-h-10 items-center font-bold text-primary hover:underline"
+          >
+            {copy.verificationRequiredCta}
+          </Link>
+        </div>
       ) : null}
 
       {showPrimaryStep ? (
