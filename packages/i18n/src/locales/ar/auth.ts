@@ -35,6 +35,10 @@ export const arabicAuthMessages = {
     "بياناتك صحيحة، لكن يجب إكمال إعداد المصادقة متعددة العوامل لهذا الحساب قبل السماح بالدخول.",
   "auth.mfaSetupCta": "إعداد الدخول الآمن",
   "auth.resendVerification": "هل تحتاج رسالة تحقق جديدة؟",
+  "auth.verificationRequiredTitle": "أكّد بريدك الإلكتروني للمتابعة",
+  "auth.verificationRequiredBody":
+    "البريد وكلمة المرور صحيحان، لكن هذا الحساب ما زال يحتاج إلى تأكيد البريد الإلكتروني قبل فتح مساحة العمل.",
+  "auth.verificationRequiredCta": "إرسال رابط تحقق جديد",
   "auth.noRoleSelection":
     "لا تحتاج إلى اختيار دورك؛ يفتح LoyalFlow التجربة المناسبة بعد تسجيل الدخول الآمن.",
   "auth.passwordResetSuccess":
