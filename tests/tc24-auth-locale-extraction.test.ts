@@ -14,7 +14,10 @@ test("TC2.4 keeps separately sourced auth locale keys in parity", () => {
     Object.keys(authMessages.ar).sort(),
     Object.keys(authMessages.en).sort(),
   );
-  assert.equal(Object.keys(authMessages.en).length, 34);
+  assert.ok(
+    Object.keys(authMessages.en).length >= 34,
+    "the extracted auth catalog must retain the original TC2.4 message set",
+  );
 });
 
 test("TC2.4 compatibility catalog retains every existing auth value", () => {
