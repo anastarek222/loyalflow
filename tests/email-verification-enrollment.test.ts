@@ -7,16 +7,21 @@ const root = process.cwd();
 const source = (relativePath: string) =>
   fs.readFileSync(path.join(root, relativePath), "utf8");
 
-test("custom business owner is enrolled unverified and receives only plaintext email token", () => {
+test("Super Admin custom business creation provisions its Owner as verified", () => {
   const action = source("app/businesses/actions.ts");
+  const directCreation = action.slice(
+    action.indexOf("export async function createBusinessAction"),
+  );
 
-  assert.match(action, /createEmailVerificationToken\(\)/);
-  assert.match(action, /INSERT INTO "EmailVerificationState"/);
-  assert.match(action, /\$\{owner\.id\}, NULL/);
-  assert.match(action, /INSERT INTO "EmailVerificationToken"/);
-  assert.match(action, /\$\{ownerEmailVerification\.tokenHash\}/);
-  assert.match(action, /token: ownerEmailVerification\.token/);
-  assert.doesNotMatch(action, /token: ownerEmailVerification\.tokenHash/);
+  assert.match(directCreation, /await requireSuperAdmin\(\)/);
+  assert.match(directCreation, /INSERT INTO "EmailVerificationState"/);
+  assert.match(
+    directCreation,
+    /\$\{owner\.id\}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP/,
+  );
+  assert.doesNotMatch(directCreation, /createEmailVerificationToken\(\)/);
+  assert.doesNotMatch(directCreation, /INSERT INTO "EmailVerificationToken"/);
+  assert.doesNotMatch(directCreation, /sendEmailVerificationEmail/);
 });
 
 test("credentials login blocks only accounts explicitly enrolled as unverified", () => {
