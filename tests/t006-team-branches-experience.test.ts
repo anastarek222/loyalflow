@@ -10,6 +10,15 @@ const team = source("app/businesses/[slug]/users/page.tsx");
 const teamActions = source("app/businesses/[slug]/users/actions.ts");
 const branches = source("app/businesses/[slug]/branches/page.tsx");
 const branchActions = source("app/businesses/[slug]/branches/actions.ts");
+const branchCreationCommand = source(
+  "lib/server/business/branch-creation-command.ts",
+);
+const branchMaintenanceCommand = source(
+  "lib/server/business/branch-maintenance-command.ts",
+);
+const branchStaffCommand = source(
+  "lib/server/business/branch-staff-assignment-command.ts",
+);
 
 test("T006 Team workspace preserves tenant capability, filtering, and pagination", () => {
   assert.match(
@@ -90,13 +99,22 @@ test("T006 Branch mutations retain plan, tenant, eligibility, and audit safeguar
     /canManageBranches\(session\.user, business\.id\)/,
   );
   assert.match(branchActions, /isWithinPlanLimit\(/);
-  assert.match(branchActions, /getTenantScopedBranchWhere\(/);
-  assert.match(branchActions, /getTenantScopedAssignmentWhere\(/);
-  assert.match(branchActions, /getBranchAssignmentEligibility\(/);
-  assert.match(branchActions, /eligibility !== "ELIGIBLE"/);
-  assert.match(branchActions, /buildBranchAuditActivity\(/);
-  assert.match(branchActions, /transaction\.branchStaffAssignment\.create/);
-  assert.match(branchActions, /transaction\.branchStaffAssignment\.delete/);
+  assert.match(branchActions, /createBranchCommand/);
+  assert.match(branchActions, /updateBranchCommand/);
+  assert.match(branchActions, /setBranchStatusCommand/);
+  assert.match(branchActions, /assignStaffToBranchCommand/);
+  assert.match(branchActions, /removeStaffAssignmentCommand/);
+  assert.match(branchCreationCommand, /transaction\.branch\.count/);
+  assert.match(branchCreationCommand, /transaction\.businessActivity\.create/);
+  assert.match(branchMaintenanceCommand, /getTenantScopedBranchWhere\(/);
+  assert.match(branchMaintenanceCommand, /transaction\.businessActivity\.create/);
+  assert.match(branchStaffCommand, /getTenantScopedBranchWhere\(/);
+  assert.match(branchStaffCommand, /getTenantScopedAssignmentWhere\(/);
+  assert.match(branchStaffCommand, /getBranchAssignmentEligibility\(/);
+  assert.match(branchStaffCommand, /eligibility !== "ELIGIBLE"/);
+  assert.match(branchStaffCommand, /buildBranchAuditActivity\(/);
+  assert.match(branchStaffCommand, /transaction\.branchStaffAssignment\.create/);
+  assert.match(branchStaffCommand, /transaction\.branchStaffAssignment\.delete/);
 });
 
 test("T006 Team and Branches expose one refreshed administration workspace", () => {
