@@ -81,14 +81,27 @@ test("U10 presentation access never expands authorization and all three policies
 test("U10 server actions retain tenant-scoped team and branch safeguards", () => {
   const teamActions = source("app/businesses/[slug]/users/actions.ts");
   const branchActions = source("app/businesses/[slug]/branches/actions.ts");
+  const branchAuthorities = [
+    source("lib/server/business/branch-creation-command.ts"),
+    source("lib/server/business/branch-maintenance-command.ts"),
+    source("lib/server/business/branch-staff-assignment-command.ts"),
+  ].join("\n");
   assert.match(
     teamActions,
     /canPerform\(session\.user, business\.id, "STAFF_MANAGE"\)/,
   );
   assert.match(teamActions, /where:\s*\{\s*id: userId,\s*businessId/);
   assert.match(teamActions, /!isBusinessOwner && !isSuperAdmin/);
-  assert.match(branchActions, /getTenantScopedBranchWhere/);
-  assert.match(branchActions, /getBranchAssignmentEligibility/);
+  assert.match(branchActions, /canManageBranches\(session\.user, business\.id\)/);
+  assert.match(branchActions, /createBranchCommand/);
+  assert.match(branchActions, /updateBranchCommand/);
+  assert.match(branchActions, /setBranchStatusCommand/);
+  assert.match(branchActions, /assignStaffToBranchCommand/);
+  assert.match(branchActions, /removeStaffAssignmentCommand/);
+  assert.match(branchAuthorities, /getTenantScopedBranchWhere/);
+  assert.match(branchAuthorities, /getTenantScopedAssignmentWhere/);
+  assert.match(branchAuthorities, /getBranchAssignmentEligibility/);
+  assert.match(branchAuthorities, /buildBranchAuditActivity/);
   assert.match(branchActions, /isDuplicateBranchAssignmentError/);
   assert.equal(
     getBranchAssignmentEligibility({
