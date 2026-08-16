@@ -30,7 +30,7 @@ test("TC5 Customer create command rechecks persisted EXPAND, duplicate and plan 
   const business = command.indexOf("transaction.business.findUnique");
   const duplicate = command.indexOf("transaction.customer.findUnique");
   const count = command.indexOf("transaction.customer.count");
-  const code = command.indexOf("generateCustomerCode");
+  const code = command.indexOf("const customerCode = await generateCustomerCode");
   const create = command.indexOf("transaction.customer.create");
   const audit = command.indexOf("transaction.businessActivity.create");
 
