@@ -1,7 +1,7 @@
 # TC2.5 Password Policy Validation Localization
 
 Date: 2026-08-16
-Status: `IMPLEMENTED_PENDING_CI`
+Status: `INTERNAL_BETA_VERIFIED`
 Environment: code and synthetic test evidence only
 
 ## Outcome
@@ -19,9 +19,19 @@ database, schema, provider, UI, or Production behavior changes in this slice.
 
 ## Evidence
 
-- Focused TC2.5 source/parity/policy tests are included in this branch.
-- Full CI, TypeScript, ESLint, build, workspace validation, and diff integrity
-  remain required before this slice can be marked verified.
+- focused TC2.5 source/parity/policy tests: 5/5 PASS
+- full test suite: 1020/1020 PASS
+- TypeScript: PASS
+- workspace boundaries: PASS, including 12 approved runtime exports
+- ESLint: PASS
+- Next.js production build: PASS
+- patch whitespace/diff integrity: PASS
+- GitHub Staging PR Validation run `31951794657`: PASS
+
+The feature-branch Vercel Preview remains outside this evidence because its
+Prisma postinstall cannot resolve `DATABASE_URL`; this is the established
+branch-scoped Preview environment limitation, not a TC2.5 runtime regression.
+The isolated `staging` deployment remains the runtime gate after merge.
 
 ## Boundary
 
