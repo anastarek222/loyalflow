@@ -60,7 +60,7 @@ export function LoyaltyCardPreview({
           ))}
         </div>
       </div>
-      <div key={side} className="lf-card-reveal mx-auto w-full max-w-[680px]">
+      <div className="mx-auto w-full max-w-[680px]">
         <LoyaltyCard {...props} side={side} />
       </div>
     </section>
