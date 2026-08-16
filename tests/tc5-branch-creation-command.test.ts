@@ -31,7 +31,7 @@ test("TC5 Branch command keeps presentation and input parsing outside", () => {
   assert.doesNotMatch(command, /isDuplicateBranchAssignmentError/);
 });
 
-test("TC5 Branch extraction leaves the active compatibility writer unchanged", () => {
+test("TC5 Branch creation delegates authoritative persistence to the command", () => {
   const actions = source("app/businesses/[slug]/branches/actions.ts");
   const createAction = actions.slice(
     actions.indexOf("export async function createBranchAction"),
@@ -39,8 +39,12 @@ test("TC5 Branch extraction leaves the active compatibility writer unchanged", (
   );
 
   assert.match(createAction, /parseBranchForm/);
-  assert.match(createAction, /prisma\.\$transaction/);
-  assert.match(createAction, /transaction\.branch\.create/);
+  assert.match(createAction, /createBranchCommand/);
+  assert.doesNotMatch(createAction, /prisma\.\$transaction/);
+  assert.doesNotMatch(createAction, /transaction\.branch\.create/);
+  assert.match(createAction, /PLAN_LIMIT/);
+  assert.match(createAction, /SUBSCRIPTION_RESTRICTED/);
+  assert.match(createAction, /BUSINESS_NOT_FOUND/);
   assert.match(createAction, /isDuplicateBranchAssignmentError/);
   assert.match(createAction, /revalidateBranchPaths/);
 });
