@@ -33,6 +33,10 @@ export const englishAuthMessages = {
     "Your credentials are correct, but this account must finish multi-factor authentication setup before access is allowed.",
   "auth.mfaSetupCta": "Set up secure access",
   "auth.resendVerification": "Need a new verification email?",
+  "auth.verificationRequiredTitle": "Verify your email to continue",
+  "auth.verificationRequiredBody":
+    "Your email and password are correct, but this account still needs email verification before workspace access is allowed.",
+  "auth.verificationRequiredCta": "Send a new verification link",
   "auth.noRoleSelection":
     "No role selection is needed. LoyalFlow opens the correct experience after secure sign-in.",
   "auth.passwordResetSuccess":
