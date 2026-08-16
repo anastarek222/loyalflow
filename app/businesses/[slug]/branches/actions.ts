@@ -18,6 +18,10 @@ import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { createBranchCommand } from "@/lib/server/business/branch-creation-command";
 import {
+  setBranchStatusCommand,
+  updateBranchCommand,
+} from "@/lib/server/business/branch-maintenance-command";
+import {
   actionBooleanSchema,
   opaqueIdSchema,
 } from "@/lib/validation/action-input";
@@ -146,43 +150,24 @@ export async function updateBranchAction(
   }
 
   try {
-    const existingBranch = await prisma.branch.findFirst({
-      where: getTenantScopedBranchWhere(parsedBranchId.data, business.id),
-      select: { id: true, name: true },
+    const result = await updateBranchCommand({
+      businessId: business.id,
+      branchId: parsedBranchId.data,
+      branch: normalizeBranchInput(parsed.data),
+      actor: {
+        id: session.user.id,
+        businessId: session.user.businessId,
+        email: session.user.email,
+      },
     });
-    if (!existingBranch) redirectWithError(business.slug, "not-found");
-
-    const activityContext = await getActivityRequestContext();
-    const updated = await prisma.$transaction(async (transaction) => {
-      if (
-        !(await canBusinessPerformSubscriptionOperation(
-          transaction,
-          business.id,
-          "OPERATE",
-        ))
-      ) {
-        return false;
-      }
-
-      const branch = await transaction.branch.update({
-        where: { id: existingBranch.id },
-        data: normalizeBranchInput(parsed.data),
-        select: { id: true, name: true },
-      });
-      await transaction.businessActivity.create({
-        data: buildBranchAuditActivity({
-          operation: "UPDATE",
-          businessId: business.id,
-          actorId: session.user.id,
-          actorBusinessId: session.user.businessId,
-          actorEmail: session.user.email,
-          branch,
-          activityContext,
-        }),
-      });
-      return true;
-    });
-    if (!updated) redirectWithError(business.slug, "subscription-restricted");
+    if (!result.ok) {
+      redirectWithError(
+        business.slug,
+        result.reason === "SUBSCRIPTION_RESTRICTED"
+          ? "subscription-restricted"
+          : "not-found",
+      );
+    }
   } catch (error) {
     if (isDuplicateBranchAssignmentError(error)) {
       redirectWithError(business.slug, "duplicate-name");
@@ -215,43 +200,24 @@ export async function setBranchStatusAction(
     redirectWithError(business.slug, "subscription-restricted");
   }
 
-  const existingBranch = await prisma.branch.findFirst({
-    where: getTenantScopedBranchWhere(parsedBranchId.data, business.id),
-    select: { id: true, name: true },
+  const result = await setBranchStatusCommand({
+    businessId: business.id,
+    branchId: parsedBranchId.data,
+    isActive: parsedStatus.data,
+    actor: {
+      id: session.user.id,
+      businessId: session.user.businessId,
+      email: session.user.email,
+    },
   });
-  if (!existingBranch) redirectWithError(business.slug, "not-found");
-
-  const activityContext = await getActivityRequestContext();
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    const branch = await transaction.branch.update({
-      where: { id: existingBranch.id },
-      data: { isActive: parsedStatus.data },
-      select: { id: true, name: true },
-    });
-    await transaction.businessActivity.create({
-      data: buildBranchAuditActivity({
-        operation: parsedStatus.data ? "ACTIVATE" : "DEACTIVATE",
-        businessId: business.id,
-        actorId: session.user.id,
-        actorBusinessId: session.user.businessId,
-        actorEmail: session.user.email,
-        branch,
-        activityContext,
-      }),
-    });
-    return true;
-  });
-  if (!updated) redirectWithError(business.slug, "subscription-restricted");
+  if (!result.ok) {
+    redirectWithError(
+      business.slug,
+      result.reason === "SUBSCRIPTION_RESTRICTED"
+        ? "subscription-restricted"
+        : "not-found",
+    );
+  }
 
   revalidateBranchPaths(business.slug);
   redirect(
