@@ -1,7 +1,7 @@
 # TC2.7 Owner Onboarding Locale Extraction
 
 Date: 2026-08-16
-Status: `IMPLEMENTED_PENDING_CI`
+Status: `INTERNAL_BETA_VERIFIED`
 Environment: code and synthetic test evidence only
 
 ## Outcome
@@ -16,11 +16,22 @@ resolution, save action, launch action, database reads/writes, and wizard
 behavior. This slice does not localize or otherwise change the page's existing
 static Next.js metadata declaration.
 
-## Required evidence
+## Verified evidence
 
-GitHub Staging PR Validation must pass focused TC2.7 tests, the full suite,
-TypeScript, workspace boundaries, ESLint, the Next.js production build, and
-patch whitespace before merge.
+GitHub Staging PR Validation run `31953676478` passed on the implementation
+head after updating the pre-existing T006 structural test to follow the new
+canonical catalog ownership:
+
+- focused TC2.7 parity/compatibility/source/route-boundary tests: 4/4 PASS;
+- full test suite: 1028/1028 PASS;
+- TypeScript (`tsc --noEmit`): PASS;
+- workspace boundaries: PASS with 4 packages and 14 approved runtime exports;
+- ESLint: PASS;
+- Next.js production build: PASS;
+- patch whitespace / `git diff --check`: PASS.
+
+The documentation closeout head must still pass the same required Staging PR
+Validation before merge.
 
 ## Boundary
 
