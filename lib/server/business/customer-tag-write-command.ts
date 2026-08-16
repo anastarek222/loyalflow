@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
 
@@ -11,7 +12,7 @@ export type CustomerTagWriteResult =
   | CustomerTagWriteFailure;
 
 async function findTenantCustomer(
-  transaction: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  transaction: Prisma.TransactionClient,
   businessId: string,
   customerId: string,
 ) {
