@@ -25,7 +25,6 @@ export async function updateTeamExperienceAccessCommand(input: {
     id: string;
     businessId: string | null;
     email?: string | null;
-    role: string;
   }>;
 }): Promise<UpdateTeamExperienceAccessCommandResult> {
   const activityContext = await getActivityRequestContext();
