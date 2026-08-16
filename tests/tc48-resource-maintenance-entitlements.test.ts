@@ -19,6 +19,7 @@ function action(sourceText: string, name: string, nextName?: string) {
 const branchActions = source("app/businesses/[slug]/branches/actions.ts");
 const branchCommand = source("lib/server/business/branch-maintenance-command.ts");
 const offerActions = source("app/businesses/[slug]/offers/actions.ts");
+const offerCommand = source("lib/server/business/offer-write-command.ts");
 const rewardActions = source("app/businesses/[slug]/rewards/actions.ts");
 const branchPage = source("app/businesses/[slug]/branches/page.tsx");
 const offerPage = source("app/businesses/[slug]/offers/page.tsx");
@@ -42,14 +43,30 @@ test("TC4.8 guards branch, offer, and reward maintenance as OPERATE", () => {
       branchCommand.indexOf("transaction.branch.update"),
   );
 
-  const guardedActions = [
-    [action(offerActions, "updateOfferAction", "toggleOfferStatusAction"), "transaction.offer.update"],
-    [action(offerActions, "toggleOfferStatusAction"), "transaction.offer.update"],
-    [action(rewardActions, "updateRewardAction", "toggleRewardStatusAction"), "transaction.reward.update"],
-    [action(rewardActions, "toggleRewardStatusAction"), "transaction.reward.update"],
-  ] as const;
+  for (const offerAction of [
+    action(offerActions, "updateOfferAction", "toggleOfferStatusAction"),
+    action(offerActions, "toggleOfferStatusAction"),
+  ]) {
+    assert.match(offerAction, /canPerformSubscriptionOperation\(/);
+    assert.match(offerAction, /"OPERATE"/);
+    assert.match(offerAction, /subscription-restricted/);
+  }
+  assert.match(offerActions, /updateOfferCommand\(/);
+  assert.match(offerActions, /setOfferStatusCommand\(/);
+  assert.match(offerCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(offerCommand, /"OPERATE"/);
+  assert.ok(
+    offerCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      offerCommand.indexOf("transaction.offer.update"),
+  );
 
-  for (const [sourceText, mutation] of guardedActions) {
+  for (const [sourceText, mutation] of [
+    [
+      action(rewardActions, "updateRewardAction", "toggleRewardStatusAction"),
+      "transaction.reward.update",
+    ],
+    [action(rewardActions, "toggleRewardStatusAction"), "transaction.reward.update"],
+  ] as const) {
     assert.match(sourceText, /canPerformSubscriptionOperation\(/);
     assert.match(sourceText, /canBusinessPerformSubscriptionOperation\(/);
     assert.match(sourceText, /"OPERATE"/);
@@ -70,6 +87,8 @@ test("TC4.8 keeps expansion and maintenance classifications separate", () => {
     /"OPERATE"/,
   );
   assert.match(branchCommand, /"OPERATE"/);
+  assert.match(offerCommand, /"EXPAND"/);
+  assert.match(offerCommand, /"OPERATE"/);
 });
 
 test("TC4.8 exposes bounded restriction feedback without provider behavior", () => {
@@ -77,7 +96,7 @@ test("TC4.8 exposes bounded restriction feedback without provider behavior", () 
     assert.match(page, /query\.error === "subscription-restricted"/);
   }
   assert.doesNotMatch(
-    `${branchActions}\n${branchCommand}\n${offerActions}\n${rewardActions}`,
+    `${branchActions}\n${branchCommand}\n${offerActions}\n${offerCommand}\n${rewardActions}`,
     /stripe|checkout|webhook|process\.env/i,
   );
 });

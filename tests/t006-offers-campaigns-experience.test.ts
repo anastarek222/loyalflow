@@ -8,6 +8,7 @@ const source = (path: string) =>
 
 const offers = source("app/businesses/[slug]/offers/page.tsx");
 const offerActions = source("app/businesses/[slug]/offers/actions.ts");
+const offerCommand = source("lib/server/business/offer-write-command.ts");
 const campaigns = source("app/businesses/[slug]/campaigns/page.tsx");
 const builder = source("components/campaign-builder.tsx");
 
@@ -47,7 +48,17 @@ test("T006 Offer mutations retain validation, plan limits, tenant scope, and aud
     offerActions,
     /where: \{ id: parsedOfferId\.data, businessId: business\.id \}/,
   );
-  assert.match(offerActions, /transaction\.businessActivity\.create/);
+  assert.match(offerActions, /createOfferCommand\(/);
+  assert.match(offerActions, /updateOfferCommand\(/);
+  assert.match(offerActions, /setOfferStatusCommand\(/);
+  assert.match(offerCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(offerCommand, /hasFeatureEntitlement\(business\.plan, "OFFERS"\)/);
+  assert.match(offerCommand, /isWithinPlanLimit\(/);
+  assert.match(
+    offerCommand,
+    /where: \{ id: input\.offerId, businessId: input\.businessId \}/,
+  );
+  assert.match(offerCommand, /transaction\.businessActivity\.create/);
   assert.match(offerActions, /revalidateOfferPaths\(business\.slug\)/);
 });
 
