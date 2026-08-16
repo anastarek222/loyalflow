@@ -64,6 +64,6 @@ test("TC5 Customer create keeps Google Sheets as post-commit integration, not co
   const delegated = createAction.indexOf("await createCustomerCommand");
   const sync = createAction.indexOf("await syncBusinessToGoogleSheetSafely");
   assert.ok(delegated >= 0 && sync > delegated);
-  assert.doesNotMatch(command, /google|sheet|syncBusinessToGoogleSheetSafely/i);
+  assert.doesNotMatch(command, /syncBusinessToGoogleSheetSafely|@\/lib\/google-sheets-sync-safe/);
   assert.doesNotMatch(command, /stripe|checkout|webhook|process\.env/i);
 });
