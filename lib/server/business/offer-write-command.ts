@@ -29,37 +29,13 @@ type OfferWriteFailure = Readonly<{
 
 export type OfferWriteCommandResult = Readonly<{ ok: true }> | OfferWriteFailure;
 
-async function getPersistedOfferExpansionState(
-  transaction: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
-  businessId: string,
-) {
-  const business = await transaction.business.findUnique({
-    where: { id: businessId },
-    select: { plan: true },
-  });
-  if (!business) return null;
-
-  const [configuration, offerCount] = await Promise.all([
-    transaction.planConfiguration.findUnique({
-      where: { plan: business.plan },
-      select: {
-        customerLimit: true,
-        userLimit: true,
-        branchLimit: true,
-        offerLimit: true,
-        rewardLimit: true,
-      },
-    }),
-    transaction.offer.count({ where: { businessId } }),
-  ]);
-
-  return {
-    plan: business.plan,
-    offerCount,
-    planLimits: configurationToPlanLimits(configuration, business.plan),
-  };
-}
-
+/**
+ * Authoritative non-financial Offer creation boundary.
+ *
+ * The caller keeps authentication, tenant authorization, input parsing,
+ * presentation preflight, redirects and revalidation. This command owns the
+ * persisted subscription/plan checks and the atomic Offer + audit write.
+ */
 export async function createOfferCommand(input: {
   businessId: string;
   offer: NormalizedOfferInput;
@@ -78,23 +54,39 @@ export async function createOfferCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
-    const expansionState = await getPersistedOfferExpansionState(
-      transaction,
-      input.businessId,
-    );
-    if (!expansionState) {
+    const business = await transaction.business.findUnique({
+      where: { id: input.businessId },
+      select: { plan: true },
+    });
+    if (!business) {
       return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
     }
-    if (!hasFeatureEntitlement(expansionState.plan, "OFFERS")) {
+
+    const [configuration, offerCount] = await Promise.all([
+      transaction.planConfiguration.findUnique({
+        where: { plan: business.plan },
+        select: {
+          customerLimit: true,
+          userLimit: true,
+          branchLimit: true,
+          offerLimit: true,
+          rewardLimit: true,
+        },
+      }),
+      transaction.offer.count({ where: { businessId: input.businessId } }),
+    ]);
+    const planLimits = configurationToPlanLimits(configuration, business.plan);
+
+    if (!hasFeatureEntitlement(business.plan, "OFFERS")) {
       return { ok: false, reason: "PLAN_FEATURE" } as const;
     }
     if (
       !isWithinPlanLimit(
-        expansionState.plan,
+        business.plan,
         "OFFERS",
-        expansionState.offerCount,
+        offerCount,
         1,
-        expansionState.planLimits,
+        planLimits,
       )
     ) {
       return { ok: false, reason: "PLAN_LIMIT" } as const;
