@@ -7,35 +7,48 @@ function source(path: string) {
 }
 
 const offerActions = source("app/businesses/[slug]/offers/actions.ts");
+const offerCommand = source("lib/server/business/offer-write-command.ts");
 const rewardActions = source("app/businesses/[slug]/rewards/actions.ts");
 const offerPage = source("app/businesses/[slug]/offers/page.tsx");
 const rewardPage = source("app/businesses/[slug]/rewards/page.tsx");
 
 test("TC4.6 guards offer and reward expansion before authoritative writes", () => {
-  for (const [sourceText, mutation] of [
-    [offerActions, "transaction.offer.create"],
-    [rewardActions, "transaction.reward.create"],
-  ] as const) {
-    assert.match(sourceText, /subscriptionLifecycleState: true/);
-    assert.match(sourceText, /canPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /"EXPAND"/);
-    assert.ok(
-      sourceText.indexOf("await canBusinessPerformSubscriptionOperation") <
-        sourceText.indexOf(mutation),
-    );
-    assert.match(sourceText, /subscription-restricted/);
-  }
+  assert.match(offerActions, /subscriptionLifecycleState: true/);
+  assert.match(offerActions, /canPerformSubscriptionOperation\(/);
+  assert.match(offerActions, /"EXPAND"/);
+  assert.match(offerActions, /subscription-restricted/);
+  assert.match(offerActions, /createOfferCommand\(/);
+
+  assert.match(offerCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(offerCommand, /"EXPAND"/);
+  assert.ok(
+    offerCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      offerCommand.indexOf("transaction.offer.create"),
+  );
+
+  assert.match(rewardActions, /subscriptionLifecycleState: true/);
+  assert.match(rewardActions, /canPerformSubscriptionOperation\(/);
+  assert.match(rewardActions, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(rewardActions, /"EXPAND"/);
+  assert.ok(
+    rewardActions.indexOf("await canBusinessPerformSubscriptionOperation") <
+      rewardActions.indexOf("transaction.reward.create"),
+  );
+  assert.match(rewardActions, /subscription-restricted/);
 });
 
 test("TC4.6 retains plan, tenant, capability, and audit boundaries", () => {
   assert.match(offerActions, /hasFeatureEntitlement\(business\.plan, "OFFERS"\)/);
+  assert.match(offerActions, /isWithinPlanLimit\(/);
+  assert.match(offerActions, /canManageBusiness\(session\.user, business\.id\)/);
+  assert.match(offerCommand, /hasFeatureEntitlement\(business\.plan, "OFFERS"\)/);
+  assert.match(offerCommand, /isWithinPlanLimit\(/);
+  assert.match(offerCommand, /transaction\.businessActivity\.create/);
+
   assert.match(rewardActions, /hasFeatureEntitlement\(business\.plan, "REWARDS"\)/);
-  for (const sourceText of [offerActions, rewardActions]) {
-    assert.match(sourceText, /canManageBusiness\(session\.user, business\.id\)/);
-    assert.match(sourceText, /isWithinPlanLimit\(/);
-    assert.match(sourceText, /transaction\.businessActivity\.create/);
-  }
+  assert.match(rewardActions, /canManageBusiness\(session\.user, business\.id\)/);
+  assert.match(rewardActions, /isWithinPlanLimit\(/);
+  assert.match(rewardActions, /transaction\.businessActivity\.create/);
 });
 
 test("TC4.6 exposes bilingual bounded restriction feedback", () => {
@@ -44,7 +57,7 @@ test("TC4.6 exposes bilingual bounded restriction feedback", () => {
     assert.match(page, /language === "AR"/);
   }
   assert.doesNotMatch(
-    `${offerActions}\n${rewardActions}`,
+    `${offerActions}\n${offerCommand}\n${rewardActions}`,
     /stripe|checkout|webhook|process\.env/i,
   );
 });
