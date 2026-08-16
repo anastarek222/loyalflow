@@ -17,44 +17,50 @@ function action(sourceText: string, name: string, nextName?: string) {
 }
 
 const branchActions = source("app/businesses/[slug]/branches/actions.ts");
+const branchStaffCommand = source("lib/server/business/branch-staff-assignment-command.ts");
 const userActions = source("app/businesses/[slug]/users/actions.ts");
 const branchPage = source("app/businesses/[slug]/branches/page.tsx");
 const userPage = source("app/businesses/[slug]/users/page.tsx");
 
 test("TC4.9 guards workforce topology writes as OPERATE", () => {
-  const guardedActions = [
-    [
-      action(
-        branchActions,
-        "assignStaffToBranchAction",
-        "removeStaffAssignmentAction",
-      ),
-      "transaction.branchStaffAssignment.create",
-    ],
-    [
-      action(branchActions, "removeStaffAssignmentAction"),
-      "transaction.branchStaffAssignment.delete",
-    ],
-    [
-      action(
-        userActions,
-        "updateBusinessUserExperienceAccessAction",
-        "setBusinessUserStatusAction",
-      ),
-      "transaction.user.update",
-    ],
-  ] as const;
-
-  for (const [sourceText, mutation] of guardedActions) {
-    assert.match(sourceText, /canPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /"OPERATE"/);
-    assert.match(sourceText, /subscription-restricted/);
-    assert.ok(
-      sourceText.indexOf("await canBusinessPerformSubscriptionOperation") <
-        sourceText.indexOf(mutation),
-    );
+  for (const branchAction of [
+    action(
+      branchActions,
+      "assignStaffToBranchAction",
+      "removeStaffAssignmentAction",
+    ),
+    action(branchActions, "removeStaffAssignmentAction"),
+  ]) {
+    assert.match(branchAction, /canPerformSubscriptionOperation\(/);
+    assert.match(branchAction, /"OPERATE"/);
+    assert.match(branchAction, /subscription-restricted/);
   }
+  assert.match(branchActions, /assignStaffToBranchCommand/);
+  assert.match(branchActions, /removeStaffAssignmentCommand/);
+  assert.match(branchStaffCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(branchStaffCommand, /"OPERATE"/);
+  assert.ok(
+    branchStaffCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      branchStaffCommand.indexOf("transaction.branchStaffAssignment.create"),
+  );
+  assert.ok(
+    branchStaffCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      branchStaffCommand.indexOf("transaction.branchStaffAssignment.delete"),
+  );
+
+  const userAction = action(
+    userActions,
+    "updateBusinessUserExperienceAccessAction",
+    "setBusinessUserStatusAction",
+  );
+  assert.match(userAction, /canPerformSubscriptionOperation\(/);
+  assert.match(userAction, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(userAction, /"OPERATE"/);
+  assert.match(userAction, /subscription-restricted/);
+  assert.ok(
+    userAction.indexOf("await canBusinessPerformSubscriptionOperation") <
+      userAction.indexOf("transaction.user.update"),
+  );
 });
 
 test("TC4.9 intentionally preserves account status and password security controls", () => {
@@ -78,7 +84,7 @@ test("TC4.9 exposes bounded feedback without provider or schema behavior", () =>
   assert.match(userPage, /query\.error === "subscription-restricted"/);
   assert.match(userPage, /security controls remain accessible/);
   assert.doesNotMatch(
-    `${branchActions}\n${userActions}`,
+    `${branchActions}\n${branchStaffCommand}\n${userActions}`,
     /stripe|checkout|webhook|process\.env/i,
   );
 });
