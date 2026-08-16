@@ -30,8 +30,8 @@ export function cardDesignMode(value: string | null | undefined): CardDesignMode
 export type LoyaltyCardMode = "VISITS" | "POINTS" | "SALES_AMOUNT";
 
 export const LOYALTY_CARD_PREVIEW_CUSTOMER = {
-  name: "Ahmed Mohamed Hassan",
-  id: "LF-001234",
+  name: "Sample Customer",
+  id: "PREVIEW-001",
 } as const;
 
 function safeWholeNumber(value: number) {
@@ -172,11 +172,10 @@ export function getLoyaltyCardMetrics(input: {
   };
 }
 
-export function getPreviewBalance(mode: LoyaltyCardMode, threshold: number) {
+export function getPreviewBalance(_mode: LoyaltyCardMode, threshold: number) {
   const target = Math.max(1, safeWholeNumber(threshold));
   if (target === 1) return 0;
-  const ratio = mode === "SALES_AMOUNT" ? 0.74 : mode === "POINTS" ? 0.85 : 0.8;
-  return Math.max(1, Math.min(target - 1, Math.round(target * ratio)));
+  return Math.max(1, Math.min(target - 1, Math.round(target * 0.5)));
 }
 
 export function getLoyaltyCardPreviewData(mode: LoyaltyCardMode, threshold: number) {
