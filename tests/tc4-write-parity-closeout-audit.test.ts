@@ -41,6 +41,10 @@ const branchPersistedAuthorities = [
   source("lib/server/business/branch-staff-assignment-command.ts"),
 ].join("\n");
 
+const teamExperienceAccessAuthority = source(
+  "lib/server/business/team-experience-access-command.ts",
+);
+
 const guardedOperationalActions = {
   branches: [
     "createBranchAction",
@@ -127,6 +131,20 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(branchPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
       assert.match(branchPersistedAuthorities, /"EXPAND"/);
       assert.match(branchPersistedAuthorities, /"OPERATE"/);
+    } else if (fileKey === "users") {
+      assert.match(sourceText, /updateTeamExperienceAccessCommand/);
+      assert.match(
+        teamExperienceAccessAuthority,
+        /canBusinessPerformSubscriptionOperation/,
+      );
+      assert.match(teamExperienceAccessAuthority, /"OPERATE"/);
+      assert.match(teamExperienceAccessAuthority, /transaction\.user\.findFirst/);
+      assert.match(teamExperienceAccessAuthority, /businessId: input\.businessId/);
+      assert.ok(
+        teamExperienceAccessAuthority.indexOf(
+          "await canBusinessPerformSubscriptionOperation",
+        ) < teamExperienceAccessAuthority.indexOf("transaction.user.update"),
+      );
     } else {
       assert.match(sourceText, /canBusinessPerformSubscriptionOperation/);
     }
