@@ -1,18 +1,21 @@
 "use server";
 
 import { auth } from "@/auth";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
-import { getActivityRequestContext } from "@/lib/activity/request-context";
-import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
+import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { offerInputSchema, normalizeOfferInput } from "@/lib/offers/catalog";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
-import { getEffectivePlanLimits } from "@/lib/entitlements-server";
-import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import {
+  createOfferCommand,
+  setOfferStatusCommand,
+  updateOfferCommand,
+  type OfferWriteCommandResult,
+} from "@/lib/server/business/offer-write-command";
+import {
+  actionBooleanSchema,
+  opaqueIdSchema,
+} from "@/lib/validation/action-input";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -53,17 +56,36 @@ function parseOfferForm(formData: FormData) {
   });
 }
 
+function offerCommandError(result: OfferWriteCommandResult) {
+  if (result.ok) return null;
+  switch (result.reason) {
+    case "SUBSCRIPTION_RESTRICTED":
+      return "subscription-restricted";
+    case "PLAN_FEATURE":
+      return "plan-feature";
+    case "PLAN_LIMIT":
+      return "plan-limit";
+    case "BUSINESS_NOT_FOUND":
+    case "TARGET_NOT_FOUND":
+      return "not-found";
+  }
+}
+
 export async function createOfferAction(slug: string, formData: FormData) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsed = parseOfferForm(formData);
-  if (!parsed.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
   if (
     !canPerformSubscriptionOperation(
       business.subscriptionLifecycleState,
       "EXPAND",
     )
   ) {
-    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/offers?error=subscription-restricted`,
+    );
   }
   if (!hasFeatureEntitlement(business.plan, "OFFERS")) {
     redirect(`/businesses/${business.slug}/offers?error=plan-feature`);
@@ -76,36 +98,16 @@ export async function createOfferAction(slug: string, formData: FormData) {
     redirect(`/businesses/${business.slug}/offers?error=plan-limit`);
   }
 
-  const activityContext = await getActivityRequestContext();
-  const created = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "EXPAND",
-      ))
-    ) {
-      return false;
-    }
-
-    const offer = await transaction.offer.create({
-      data: { ...normalizeOfferInput(parsed.data), businessId: business.id },
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_CREATED",
-        description: `تم إنشاء العرض ${offer.name}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const result = await createOfferCommand({
+    businessId: business.id,
+    offer: normalizeOfferInput(parsed.data),
+    actor: session.user,
   });
-  if (!created) {
-    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  const error = offerCommandError(result);
+  if (error) {
+    redirect(`/businesses/${business.slug}/offers?error=${error}`);
   }
+
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=created`);
 }
@@ -113,57 +115,42 @@ export async function createOfferAction(slug: string, formData: FormData) {
 export async function updateOfferAction(
   slug: string,
   offerId: string,
-  formData: FormData
+  formData: FormData,
 ) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsed = parseOfferForm(formData);
-  if (!parsed.success || !parsedOfferId.success) redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  if (!parsed.success || !parsedOfferId.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
   if (
     !canPerformSubscriptionOperation(
       business.subscriptionLifecycleState,
       "OPERATE",
     )
   ) {
-    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/offers?error=subscription-restricted`,
+    );
   }
 
   const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
     select: { id: true },
   });
-  if (!existingOffer) redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  if (!existingOffer) {
+    redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  }
 
-  const activityContext = await getActivityRequestContext();
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    const offer = await transaction.offer.update({
-      where: { id: existingOffer.id },
-      data: normalizeOfferInput(parsed.data),
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_UPDATED",
-        description: `تم تحديث العرض ${offer.name}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const result = await updateOfferCommand({
+    businessId: business.id,
+    offerId: existingOffer.id,
+    offer: normalizeOfferInput(parsed.data),
+    actor: session.user,
   });
-  if (!updated) {
-    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  const error = offerCommandError(result);
+  if (error) {
+    redirect(`/businesses/${business.slug}/offers?error=${error}`);
   }
 
   revalidateOfferPaths(business.slug);
@@ -173,7 +160,7 @@ export async function updateOfferAction(
 export async function toggleOfferStatusAction(
   slug: string,
   offerId: string,
-  isActive: boolean
+  isActive: boolean,
 ) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
@@ -188,47 +175,28 @@ export async function toggleOfferStatusAction(
       "OPERATE",
     )
   ) {
-    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/offers?error=subscription-restricted`,
+    );
   }
 
   const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
     select: { id: true },
   });
-  if (!existingOffer) redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  if (!existingOffer) {
+    redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  }
 
-  const activityContext = await getActivityRequestContext();
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    const offer = await transaction.offer.update({
-      where: { id: existingOffer.id },
-      data: { isActive: parsedStatus.data },
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_STATUS_CHANGED",
-        description: parsedStatus.data
-          ? `تم تفعيل العرض ${offer.name}`
-          : `تم إيقاف العرض ${offer.name}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const result = await setOfferStatusCommand({
+    businessId: business.id,
+    offerId: existingOffer.id,
+    isActive: parsedStatus.data,
+    actor: session.user,
   });
-  if (!updated) {
-    redirect(`/businesses/${business.slug}/offers?error=subscription-restricted`);
+  const error = offerCommandError(result);
+  if (error) {
+    redirect(`/businesses/${business.slug}/offers?error=${error}`);
   }
 
   revalidateOfferPaths(business.slug);
