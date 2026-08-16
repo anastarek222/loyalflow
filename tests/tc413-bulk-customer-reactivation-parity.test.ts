@@ -7,6 +7,7 @@ function source(path: string) {
 }
 
 const bulkActions = source("app/businesses/[slug]/customers/actions.ts");
+const bulkCommand = source("lib/server/business/customer-bulk-command.ts");
 const bulkActionStart = bulkActions.indexOf(
   "export async function bulkCustomerAction",
 );
@@ -16,6 +17,15 @@ const bulkActionEnd = bulkActions.indexOf(
 );
 assert.ok(bulkActionStart >= 0 && bulkActionEnd > bulkActionStart);
 const bulkAction = bulkActions.slice(bulkActionStart, bulkActionEnd);
+const statusCommandStart = bulkCommand.indexOf(
+  "export async function setBulkCustomerStatusCommand",
+);
+const tagCommandStart = bulkCommand.indexOf(
+  "export async function mutateBulkCustomerTagCommand",
+  statusCommandStart,
+);
+assert.ok(statusCommandStart >= 0 && tagCommandStart > statusCommandStart);
+const statusCommand = bulkCommand.slice(statusCommandStart, tagCommandStart);
 const customerPage = source("app/businesses/[slug]/customers/page.tsx");
 const customerCopy = source("lib/customers/ui-copy.ts");
 
@@ -26,24 +36,24 @@ test("TC4.13 guards bulk customer reactivation as OPERATE", () => {
     /activate &&[\s\S]*canPerformSubscriptionOperation\(/,
   );
   assert.match(
-    bulkAction,
-    /activate &&[\s\S]*canBusinessPerformSubscriptionOperation\(/,
+    statusCommand,
+    /input\.activate &&[\s\S]*canBusinessPerformSubscriptionOperation\(/,
   );
-  assert.match(bulkAction, /"OPERATE"/);
+  assert.match(statusCommand, /"OPERATE"/);
   assert.ok(
-    bulkAction.indexOf("await canBusinessPerformSubscriptionOperation") <
-      bulkAction.indexOf("transaction.customer.updateMany"),
+    statusCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      statusCommand.indexOf("transaction.customer.updateMany"),
   );
 });
 
 test("TC4.13 preserves bulk deactivation and no-op replay", () => {
-  assert.match(bulkAction, /if \(changedIds\.length > 0\)/);
-  assert.match(bulkAction, /activate &&/);
-  assert.match(bulkAction, /CUSTOMER_DEACTIVATED/);
-  assert.match(bulkAction, /data: \{ isActive: activate \}/);
+  assert.match(statusCommand, /if \(changedIds\.length === 0\)/);
+  assert.match(statusCommand, /input\.activate &&/);
+  assert.match(statusCommand, /CUSTOMER_DEACTIVATED/);
+  assert.match(statusCommand, /data: \{ isActive: input\.activate \}/);
   assert.ok(
-    bulkAction.indexOf("if (changedIds.length > 0)") <
-      bulkAction.indexOf("canPerformSubscriptionOperation"),
+    statusCommand.indexOf("changedIds.length === 0") <
+      statusCommand.indexOf("canBusinessPerformSubscriptionOperation"),
   );
 });
 
@@ -52,5 +62,8 @@ test("TC4.13 exposes bilingual bounded feedback without provider behavior", () =
   assert.match(customerPage, /copy\.subscriptionRestricted/);
   assert.match(customerCopy, /تظل إجراءات الإيقاف الأمنية متاحة/);
   assert.match(customerCopy, /Security deactivation controls remain available/);
-  assert.doesNotMatch(bulkAction, /stripe|checkout|webhook|process\.env/i);
+  assert.doesNotMatch(
+    `${bulkAction}\n${statusCommand}`,
+    /stripe|checkout|webhook|process\.env/i,
+  );
 });
