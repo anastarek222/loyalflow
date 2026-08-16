@@ -20,11 +20,13 @@ test("TC2.6 keeps owner-invite AR/EN keys in parity", () => {
 });
 
 test("TC2.6 preserves compatibility catalog values", () => {
-  for (const [key, value] of Object.entries(ownerInviteMessages.en)) {
-    assert.equal(messages.en[key], value);
-  }
-  for (const [key, value] of Object.entries(ownerInviteMessages.ar)) {
-    assert.equal(messages.ar[key], value);
+  const keys = Object.keys(ownerInviteMessages.en) as Array<
+    keyof typeof ownerInviteMessages.en
+  >;
+
+  for (const key of keys) {
+    assert.equal(messages.en[key], ownerInviteMessages.en[key]);
+    assert.equal(messages.ar[key], ownerInviteMessages.ar[key]);
   }
 });
 
