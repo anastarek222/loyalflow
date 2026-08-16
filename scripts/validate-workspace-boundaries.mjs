@@ -44,6 +44,7 @@ const expectedPackages = new Map([
       exports: {
         "./auth": "./src/auth.ts",
         "./common": "./src/common.ts",
+        "./conversion": "./src/conversion.ts",
         "./navigation": "./src/navigation.ts",
         "./onboarding": "./src/onboarding.ts",
         "./owner-invite": "./src/owner-invite.ts",
@@ -178,5 +179,5 @@ function visit(packageName) {
 for (const packageName of graph.keys()) visit(packageName);
 
 console.log(
-  "Workspace boundaries are valid (4 packages, 14 approved runtime exports, no cycles).",
+  "Workspace boundaries are valid (4 packages, 15 approved runtime exports, no cycles).",
 );

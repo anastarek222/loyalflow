@@ -7,6 +7,7 @@
   "exports": {
     "./auth": "./src/auth.ts",
     "./common": "./src/common.ts",
+    "./conversion": "./src/conversion.ts",
     "./navigation": "./src/navigation.ts",
     "./onboarding": "./src/onboarding.ts",
     "./owner-invite": "./src/owner-invite.ts",

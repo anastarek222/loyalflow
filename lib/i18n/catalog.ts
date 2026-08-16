@@ -1,5 +1,6 @@
 import { authMessages } from "@loyalflow/i18n/auth";
 import { commonMessages } from "@loyalflow/i18n/common";
+import { conversionMessages } from "@loyalflow/i18n/conversion";
 import { onboardingMessages } from "@loyalflow/i18n/onboarding";
 import { ownerInviteMessages } from "@loyalflow/i18n/owner-invite";
 import { DEFAULT_LOCALE, type SupportedLocale } from "./config";
@@ -10,6 +11,7 @@ export const messages = {
     ...authMessages.en,
     ...ownerInviteMessages.en,
     ...onboardingMessages.en,
+    ...conversionMessages.en,
     "marketing.metaTitle":
       "LoyalFlow | Loyalty operations for growing businesses",
     "marketing.metaDescription":
@@ -106,30 +108,13 @@ export const messages = {
     "marketing.footerAccess": "Access",
     "marketing.footerNote":
       "Bilingual loyalty operations for growing businesses.",
-    "conversion.metaTitle": "Get started | LoyalFlow",
-    "conversion.metaDescription":
-      "Choose the supported LoyalFlow path for an existing account or an owner invitation.",
-    "conversion.eyebrow": "Get started",
-    "conversion.title": "Choose the LoyalFlow path that matches your account.",
-    "conversion.body":
-      "LoyalFlow Beta currently supports existing workspace access and secure owner invitation acceptance. Choose the path that matches how your account was created.",
-    "conversion.existingTitle": "I already have a LoyalFlow account",
-    "conversion.existingBody":
-      "Sign in to your existing workspace. Pending owners are routed to their private setup flow automatically.",
-    "conversion.existingCta": "Sign in",
-    "conversion.invitedTitle": "I received an owner invitation",
-    "conversion.invitedBody":
-      "Open the invitation acceptance flow and use the secure invitation token from your email.",
-    "conversion.invitedCta": "Accept owner invitation",
-    "conversion.noSignup":
-      "This Beta is invitation-only. Public self-signup and payment checkout are not enabled, so this page does not create an unsupported account path.",
-    "conversion.backHome": "Back to homepage",
   },
   ar: {
     ...commonMessages.ar,
     ...authMessages.ar,
     ...ownerInviteMessages.ar,
     ...onboardingMessages.ar,
+    ...conversionMessages.ar,
     "marketing.metaTitle": "LoyalFlow | تشغيل برامج الولاء للشركات المتنامية",
     "marketing.metaDescription":
       "أدر برامج الولاء والمكافآت والعملاء والفروع والفرق والتقارير من مساحة عمل آمنة واحدة.",
@@ -222,24 +207,6 @@ export const messages = {
     "marketing.footerProduct": "المنتج",
     "marketing.footerAccess": "الوصول",
     "marketing.footerNote": "تشغيل ولاء ثنائي اللغة للشركات المتنامية.",
-    "conversion.metaTitle": "ابدأ | LoyalFlow",
-    "conversion.metaDescription":
-      "اختر مسار LoyalFlow المدعوم لحساب موجود أو لدعوة مالك.",
-    "conversion.eyebrow": "ابدأ الآن",
-    "conversion.title": "اختر مسار LoyalFlow المناسب لحسابك.",
-    "conversion.body":
-      "يدعم LoyalFlow Beta حاليًا الدخول إلى مساحة عمل موجودة وقبول دعوة مالك آمنة. اختر المسار الذي يطابق طريقة إنشاء حسابك.",
-    "conversion.existingTitle": "لدي حساب LoyalFlow بالفعل",
-    "conversion.existingBody":
-      "سجّل الدخول إلى مساحة العمل الحالية. يتم توجيه المالك المعلّق تلقائيًا إلى مسار الإعداد الخاص به.",
-    "conversion.existingCta": "تسجيل الدخول",
-    "conversion.invitedTitle": "وصلتني دعوة مالك",
-    "conversion.invitedBody":
-      "افتح مسار قبول الدعوة واستخدم رمز الدعوة الآمن الموجود في البريد الإلكتروني.",
-    "conversion.invitedCta": "قبول دعوة المالك",
-    "conversion.noSignup":
-      "هذه النسخة التجريبية متاحة بالدعوة فقط. التسجيل الذاتي العام والدفع غير مفعّلين، لذلك لا تنشئ هذه الصفحة مسار حساب غير مدعوم.",
-    "conversion.backHome": "العودة للصفحة الرئيسية",
   },
 } as const;
 
