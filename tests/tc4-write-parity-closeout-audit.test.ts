@@ -35,6 +35,12 @@ const operationalFiles = {
   users: source("app/businesses/[slug]/users/actions.ts"),
 } as const;
 
+const branchPersistedAuthorities = [
+  source("lib/server/business/branch-creation-command.ts"),
+  source("lib/server/business/branch-maintenance-command.ts"),
+  source("lib/server/business/branch-staff-assignment-command.ts"),
+].join("\n");
+
 const guardedOperationalActions = {
   branches: [
     "createBranchAction",
@@ -110,8 +116,21 @@ test("every guarded operational module has preflight and persisted-state enforce
     const sourceText =
       operationalFiles[fileKey as keyof typeof operationalFiles];
     assert.match(sourceText, /canPerformSubscriptionOperation/);
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation/);
     assert.match(sourceText, /subscriptionLifecycleState/);
+
+    if (fileKey === "branches") {
+      assert.match(sourceText, /createBranchCommand/);
+      assert.match(sourceText, /updateBranchCommand/);
+      assert.match(sourceText, /setBranchStatusCommand/);
+      assert.match(sourceText, /assignStaffToBranchCommand/);
+      assert.match(sourceText, /removeStaffAssignmentCommand/);
+      assert.match(branchPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
+      assert.match(branchPersistedAuthorities, /"EXPAND"/);
+      assert.match(branchPersistedAuthorities, /"OPERATE"/);
+    } else {
+      assert.match(sourceText, /canBusinessPerformSubscriptionOperation/);
+    }
+
     for (const name of names) {
       assert.match(sourceText, new RegExp(`export async function ${name}`));
     }
