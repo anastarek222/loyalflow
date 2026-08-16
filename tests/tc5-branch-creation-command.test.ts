@@ -28,7 +28,7 @@ test("TC5 Branch command keeps presentation and input parsing outside", () => {
   assert.doesNotMatch(command, /next\/navigation|redirect\(/);
   assert.doesNotMatch(command, /next\/cache|revalidatePath/);
   assert.doesNotMatch(command, /FormData|safeParse/);
-  assert.doesNotMatch(command, /duplicate-name/);
+  assert.doesNotMatch(command, /isDuplicateBranchAssignmentError/);
 });
 
 test("TC5 Branch extraction leaves the active compatibility writer unchanged", () => {
