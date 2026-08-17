@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/custom-card-publish-action";
+import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/program/custom-card-upload-action";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 
 type Props = {
@@ -17,9 +18,9 @@ export function CustomCardArtworkManager({
   selectedVersion,
   versions,
   storageConfigured,
-  uploadAction,
 }: Props) {
   const selected = versions.find((version) => version.id === selectedVersion);
+  const uploadCustomArtwork = uploadCustomCardDraftCommandAction.bind(null, slug);
   const publishCustomArtwork = publishCustomCardArtworkAction.bind(null, slug);
 
   return (
@@ -44,7 +45,7 @@ export function CustomCardArtworkManager({
           remains unchanged and uploads fail closed.
         </p>
       ) : (
-        <form action={uploadAction} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <form action={uploadCustomArtwork} className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-bold">
             Front artwork
             <input
