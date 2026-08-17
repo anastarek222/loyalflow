@@ -49,17 +49,19 @@ import * as QRCode from "qrcode";
 
 import {
   addLoyaltyAction,
-  assignCustomerTagAction,
-  createAndAssignCustomerTagAction,
   createCustomerNoteAction,
   adjustCustomerBalanceAction,
   createCustomerReferralCodeAction,
   redeemRewardAction,
-  removeCustomerTagAction,
   setCustomerStatusAction,
   updateCustomerNoteAction,
   updateCustomerAction,
 } from "./actions";
+import {
+  assignCustomerTagCommandAction,
+  createAndAssignCustomerTagCommandAction,
+  removeCustomerTagCommandAction,
+} from "./tag-actions";
 
 type CustomerDetailsPageProps = {
   params: Promise<{
@@ -375,7 +377,7 @@ export default async function CustomerDetailsPage({
     business.slug,
     customer.id,
   );
-  const createAndAssignTag = createAndAssignCustomerTagAction.bind(
+  const createAndAssignTag = createAndAssignCustomerTagCommandAction.bind(
     null,
     business.slug,
     customer.id,
@@ -833,7 +835,7 @@ export default async function CustomerDetailsPage({
                     </p>
                   ) : (
                     customer.tagAssignments.map((assignment) => {
-                      const removeTag = removeCustomerTagAction.bind(
+                      const removeTag = removeCustomerTagCommandAction.bind(
                         null,
                         business.slug,
                         customer.id,
@@ -890,7 +892,7 @@ export default async function CustomerDetailsPage({
                             ),
                         )
                         .map((tag) => {
-                          const assignTag = assignCustomerTagAction.bind(
+                          const assignTag = assignCustomerTagCommandAction.bind(
                             null,
                             business.slug,
                             customer.id,
