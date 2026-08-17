@@ -10,7 +10,7 @@ const command = source("lib/server/business/loyalty-earn-command.ts");
 const action = source(
   "app/businesses/[slug]/customers/[customerId]/loyalty-earn-actions.ts",
 );
-const legacy = source(
+const facade = source(
   "app/businesses/[slug]/customers/[customerId]/actions.ts",
 );
 
@@ -35,8 +35,7 @@ test("TC5 Loyalty Earn bounded action preserves replay and rapid-operation guard
   assert.doesNotMatch(action, /prisma\.\$transaction/);
 });
 
-test("TC5 Loyalty Earn preparation does not change the active legacy binding yet", () => {
-  assert.match(legacy, /export async function addLoyaltyAction/);
-  assert.match(legacy, /recordLoyaltyEarn\(transaction/);
-  assert.doesNotMatch(legacy, /addLoyaltyCommandAction/);
+test("TC5 Loyalty Earn is adopted through the active compatibility facade", () => {
+  assert.match(facade, /addLoyaltyCommandAction as addLoyaltyAction/);
+  assert.match(facade, /from "\.\/loyalty-earn-actions"/);
 });
