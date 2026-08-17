@@ -56,11 +56,35 @@ test("P1 Owner Onboarding forward validation returns the earliest exact invalid 
   assert.equal(error?.code, "LOYALTY_UNIT_INVALID");
 });
 
-test("P1 Owner Onboarding navigation still needs the through-step guard before this slice can close", () => {
+test("P1 Owner Onboarding desktop and mobile navigation use the forward-jump guard", () => {
   const wizard = readFileSync(
     new URL("../components/owner-onboarding-wizard.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(wizard, /onClick=\{\(\) => transitionToStep\(index\)\}/);
-  assert.doesNotMatch(wizard, /validateOwnerOnboardingThroughStep/);
+
+  assert.equal(
+    wizard.match(/onClick=\{\(\) => navigateToStep\(index\)\}/g)?.length,
+    2,
+  );
+  assert.doesNotMatch(wizard, /onClick=\{\(\) => transitionToStep\(index\)\}/);
+  assert.match(wizard, /validateOwnerOnboardingThroughStep\(\s*boundedStep - 1,/);
+});
+
+test("P1 Owner Onboarding guarded navigation returns to and focuses the exact invalid field", () => {
+  const wizard = readFileSync(
+    new URL("../components/owner-onboarding-wizard.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(wizard, /transitionToStep\(error\.step\)/);
+  assert.match(wizard, /focusValidationField\(error\.field\)/);
+  for (const field of [
+    "loyaltyMode",
+    "unitName",
+    "rewardName",
+    "rewardThreshold",
+    "earnAmount",
+  ]) {
+    assert.match(wizard, new RegExp(`data-onboarding-field="${field}"`));
+  }
 });
