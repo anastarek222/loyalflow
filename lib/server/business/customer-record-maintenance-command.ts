@@ -5,6 +5,7 @@ import {
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerRecordMaintenanceActor = Readonly<{
   id: string;
@@ -18,16 +19,17 @@ type CustomerRecordMaintenanceFailure = Readonly<{
 }>;
 
 export type CustomerRecordMaintenanceResult =
-  | Readonly<{ ok: true }>
+  | Readonly<{ ok: true; integrationJobId: string }>
   | CustomerRecordMaintenanceFailure;
 
 /**
  * Authoritative Customer profile-maintenance boundary.
  *
  * The caller retains authentication, permission checks, input parsing,
- * presentation preflight, redirects, revalidation, and post-commit
- * integrations. This command revalidates persisted lifecycle state, tenant
- * ownership and phone uniqueness before committing the Customer + audit write.
+ * presentation preflight, redirects, revalidation, and post-commit transport
+ * wake-up. This command revalidates persisted lifecycle state, tenant ownership
+ * and phone uniqueness before atomically committing the Customer + audit +
+ * Google Sheets integration-job write.
  */
 export async function updateCustomerRecordCommand(input: {
   businessId: string;
@@ -82,7 +84,7 @@ export async function updateCustomerRecordCommand(input: {
     const updatedCustomerName = [input.firstName, input.lastName]
       .filter(Boolean)
       .join(" ");
-    await transaction.businessActivity.create({
+    const activity = await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_UPDATED",
         description: `تم تحديث بيانات العميل ${updatedCustomerName}`,
@@ -91,9 +93,15 @@ export async function updateCustomerRecordCommand(input: {
         ...activityActorFields(input.actor, input.businessId),
         ...activityRequestMetadata(activityContext),
       },
+      select: { id: true },
+    });
+    const integrationJob = await enqueueIntegrationJob(transaction, {
+      businessId: input.businessId,
+      kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+      idempotencyKey: `customer-record-updated:${activity.id}`,
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobId: integrationJob.id } as const;
   });
 }
 
@@ -102,7 +110,8 @@ export async function updateCustomerRecordCommand(input: {
  *
  * Reactivation remains an OPERATE action and therefore rechecks persisted
  * lifecycle state. Deactivation deliberately remains available as a security
- * exit control. Tenant ownership, status mutation, and audit are atomic.
+ * exit control. Tenant ownership, status mutation, audit and integration-job
+ * enqueue are atomic.
  */
 export async function setCustomerRecordStatusCommand(input: {
   businessId: string;
@@ -137,7 +146,7 @@ export async function setCustomerRecordStatusCommand(input: {
       data: { isActive: input.isActive },
     });
 
-    await transaction.businessActivity.create({
+    const activity = await transaction.businessActivity.create({
       data: {
         type: input.isActive ? "CUSTOMER_REACTIVATED" : "CUSTOMER_DEACTIVATED",
         description: input.isActive
@@ -148,8 +157,14 @@ export async function setCustomerRecordStatusCommand(input: {
         ...activityActorFields(input.actor, input.businessId),
         ...activityRequestMetadata(activityContext),
       },
+      select: { id: true },
+    });
+    const integrationJob = await enqueueIntegrationJob(transaction, {
+      businessId: input.businessId,
+      kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+      idempotencyKey: `customer-record-status:${activity.id}`,
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobId: integrationJob.id } as const;
   });
 }

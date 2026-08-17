@@ -48,6 +48,7 @@ const customerListPersistedAuthorities = [
 
 const customerDetailPresentationAuthorities = [
   source("app/businesses/[slug]/customers/[customerId]/actions-legacy.ts"),
+  source("app/businesses/[slug]/customers/[customerId]/customer-record-actions.ts"),
   source("app/businesses/[slug]/customers/[customerId]/balance-adjustment-action.ts"),
   source("app/businesses/[slug]/customers/[customerId]/referral-actions.ts"),
   source("app/businesses/[slug]/customers/[customerId]/tag-actions.ts"),
@@ -57,6 +58,7 @@ const customerDetailPresentationAuthorities = [
 
 const customerDetailPersistedAuthorities = [
   source("app/businesses/[slug]/customers/[customerId]/actions-legacy.ts"),
+  source("lib/server/business/customer-record-maintenance-command.ts"),
   source("lib/server/business/customer-balance-adjustment-command.ts"),
   source("lib/server/business/customer-referral-code-command.ts"),
   source("lib/server/business/customer-tag-write-command.ts"),
@@ -137,6 +139,8 @@ test("every guarded operational module has preflight and persisted-state enforce
     const sourceText = operationalFiles[fileKey as keyof typeof operationalFiles];
 
     if (fileKey === "customerDetail") {
+      assert.match(sourceText, /updateCustomerRecordCommandAction/);
+      assert.match(sourceText, /setCustomerRecordStatusCommandAction/);
       assert.match(sourceText, /adjustCustomerBalanceCommandAction/);
       assert.match(sourceText, /createCustomerReferralCodeCommandAction/);
       assert.match(sourceText, /createAndAssignCustomerTagCommandAction/);
@@ -144,8 +148,6 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(sourceText, /removeCustomerTagCommandAction/);
       assert.match(sourceText, /addLoyaltyCommandAction/);
       assert.match(sourceText, /redeemRewardCommandAction/);
-      assert.match(sourceText, /legacy\.updateCustomerAction/);
-      assert.match(sourceText, /legacy\.setCustomerStatusAction/);
       assert.match(sourceText, /legacy\.createCustomerNoteAction/);
       assert.match(sourceText, /legacy\.updateCustomerNoteAction/);
       assert.match(customerDetailPresentationAuthorities, /canPerformSubscriptionOperation/);

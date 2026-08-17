@@ -28,6 +28,8 @@ test("TC5 compatibility facade exports async wrappers and routes migrated writer
     assert.match(facade, new RegExp(`export async function ${name}`));
   }
 
+  assert.match(facade, /return updateCustomerRecordCommandAction\(slug, customerId, formData\)/);
+  assert.match(facade, /return setCustomerRecordStatusCommandAction\(slug, customerId, isActive\)/);
   assert.match(facade, /return adjustCustomerBalanceCommandAction\(slug, customerId, formData\)/);
   assert.match(facade, /return addLoyaltyCommandAction\(slug, customerId, formData\)/);
   assert.match(facade, /return redeemRewardCommandAction\(slug, customerId, rewardId, formData\)/);
@@ -37,13 +39,13 @@ test("TC5 compatibility facade exports async wrappers and routes migrated writer
   assert.match(facade, /return removeCustomerTagCommandAction\(slug, customerId, tagId\)/);
 });
 
-test("TC5 remaining compatibility wrappers retain the current staging implementation", () => {
+test("TC5 remaining compatibility wrappers retain only the current note implementation", () => {
   const facade = source(
     "app/businesses/[slug]/customers/[customerId]/actions.ts",
   );
 
-  assert.match(facade, /return legacy\.updateCustomerAction/);
-  assert.match(facade, /return legacy\.setCustomerStatusAction/);
+  assert.doesNotMatch(facade, /return legacy\.updateCustomerAction/);
+  assert.doesNotMatch(facade, /return legacy\.setCustomerStatusAction/);
   assert.match(facade, /return legacy\.createCustomerNoteAction/);
   assert.match(facade, /return legacy\.updateCustomerNoteAction/);
   assert.doesNotMatch(facade, /return legacy\.createCustomerReferralCodeAction/);
