@@ -62,7 +62,9 @@ test("mobile owner onboarding advances only after visible Step 1 validation", ()
   for (const [key, value] of valid.entries()) invalid.set(key, value);
   invalid.set("name", "");
   assert.deepEqual(validateOwnerOnboardingStep(0, invalid), {
+    code: "BUSINESS_NAME_INVALID",
     field: "name",
+    step: 0,
     message: "Enter a business name with at least 2 characters.",
   });
 
