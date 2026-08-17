@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import {
   getRapidEarnRateLimitKey,
   getRapidEarnWhere,
@@ -102,12 +102,8 @@ export async function addLoyaltyCommandAction(
       loyaltyMode: true,
     },
   });
-  if (!business) {
-    redirect("/businesses");
-  }
-  if (!canAccessBusiness(session.user, business.id)) {
-    redirect("/dashboard");
-  }
+  if (!business) redirect("/businesses");
+  if (!canAccessBusiness(session.user, business.id)) redirect("/dashboard");
   if (!canPerform(session.user, business.id, "LOYALTY_EARN")) {
     redirect(
       operationPresentationPath(origin, slug, customerId, {
@@ -124,9 +120,7 @@ export async function addLoyaltyCommandAction(
     },
     select: { id: true, publicToken: true },
   });
-  if (!customer) {
-    redirect(`/businesses/${slug}/customers`);
-  }
+  if (!customer) redirect(`/businesses/${slug}/customers`);
 
   const activityContext = await getActivityRequestContext();
   const branchId = getOptionalOperationId(formData, "branchId");
@@ -222,9 +216,9 @@ export async function addLoyaltyCommandAction(
     );
   }
 
-  let newBalance: number | null;
+  let result;
   try {
-    newBalance = await executeLoyaltyEarnCommand({
+    result = await executeLoyaltyEarnCommand({
       businessId: business.id,
       customerId: customer.id,
       actor: session.user,
@@ -255,7 +249,7 @@ export async function addLoyaltyCommandAction(
     throw error;
   }
 
-  if (newBalance === null) {
+  if (result.balance === null || !result.integrationJobId) {
     redirect(
       origin === "SCAN"
         ? operationPath(origin, slug, customer.id, { error: "generic" })
@@ -263,7 +257,7 @@ export async function addLoyaltyCommandAction(
     );
   }
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  scheduleBusinessGoogleSheetsSync(result.integrationJobId);
   revalidateCustomerEarnSurfaces(slug, customer.id, customer.publicToken);
   redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
 }
