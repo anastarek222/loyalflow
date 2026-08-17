@@ -51,11 +51,12 @@ test("TC5 Playbook settings mutation and audit stay atomic", () => {
   assert.match(command, /createdById: input\.actorId/);
 });
 
-test("TC5 keeps Google Sheets synchronization post-commit in the Action", () => {
-  const commandIndex = actions.indexOf("await applyBusinessPlaybookCommand");
-  const syncIndex = actions.indexOf("await syncBusinessToGoogleSheetSafely");
-  assert.ok(commandIndex >= 0);
-  assert.ok(syncIndex > commandIndex);
+test("TC5 keeps Google Sheets transport post-commit in the Action", () => {
+  assert.match(actions, /const outcome = await applyBusinessPlaybookCommand/);
+  assert.match(actions, /scheduleBusinessGoogleSheetsSync\(outcome\.integrationJobId\)/);
+  assert.doesNotMatch(actions, /syncBusinessToGoogleSheetSafely/);
+  assert.match(command, /enqueueIntegrationJob\(transaction/);
+  assert.doesNotMatch(command, /scheduleBusinessGoogleSheetsSync/);
   assert.doesNotMatch(command, /syncBusinessToGoogleSheetSafely/);
 });
 

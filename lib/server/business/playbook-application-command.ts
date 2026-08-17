@@ -7,6 +7,7 @@ import {
   type PlaybookBusinessState,
 } from "@/lib/playbooks/catalog";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 function playbookStateFromBusiness(business: {
   loyaltyMode: PlaybookBusinessState["loyaltyMode"];
@@ -63,15 +64,16 @@ export type PlaybookApplicationCommandResult =
   | "missing"
   | "confirmation-required"
   | "already-applied"
-  | "applied";
+  | Readonly<{ status: "applied"; integrationJobId: string }>;
 
 /**
  * Authoritative non-financial playbook application boundary.
  *
  * The caller keeps authentication, tenant authorization, canonical playbook
- * lookup, presentation preflight, post-commit integrations, redirects and
- * revalidation. This command owns the persisted maintenance entitlement,
- * current-state overwrite safety, idempotency, settings update and audit.
+ * lookup, presentation preflight, redirects, revalidation and post-commit
+ * Queue publication. This command owns the persisted maintenance entitlement,
+ * current-state overwrite safety, idempotency, settings update, audit and the
+ * durable Sheets integration job created by an actual application.
  */
 export async function applyBusinessPlaybookCommand(input: {
   businessId: string;
@@ -133,21 +135,28 @@ export async function applyBusinessPlaybookCommand(input: {
       return "confirmation-required" as const;
     }
 
-    // Normal settings update + activity are committed together. Playbooks do
-    // not create a reward, promotion, offer, campaign, or paid integration.
     await transaction.business.update({
       where: { id: input.businessId },
       data: getPlaybookBusinessUpdate(input.playbook),
     });
-    await transaction.businessActivity.create({
+    const activity = await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: `تم تطبيق قالب تشغيل قابل للتعديل: ${input.playbook.name}`,
         businessId: input.businessId,
         createdById: input.actorId,
       },
+      select: { id: true },
+    });
+    const integrationJob = await enqueueIntegrationJob(transaction, {
+      businessId: input.businessId,
+      kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+      idempotencyKey: `playbook-applied:${activity.id}`,
     });
 
-    return "applied" as const;
+    return {
+      status: "applied",
+      integrationJobId: integrationJob.id,
+    } as const;
   });
 }
