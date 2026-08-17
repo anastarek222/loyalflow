@@ -12,6 +12,7 @@ import {
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerCreateActor = Readonly<{
   id: string;
@@ -34,16 +35,20 @@ type CreatedCustomer = Readonly<{
 }>;
 
 export type CustomerCreateCommandResult =
-  | Readonly<{ ok: true; customer: CreatedCustomer }>
+  | Readonly<{
+      ok: true;
+      customer: CreatedCustomer;
+      integrationJobId: string;
+    }>
   | CustomerCreateFailure;
 
 /**
  * Authoritative Customer creation boundary.
  *
  * The caller keeps authentication, tenant authorization, input parsing,
- * presentation preflight, redirects, revalidation and post-commit integrations.
- * This command owns persisted duplicate/plan/subscription checks and the atomic
- * Customer + business activity write.
+ * presentation preflight, redirects, revalidation and post-commit transport
+ * wake-up. This command owns persisted duplicate/plan/subscription checks and
+ * atomically commits Customer + business activity + Sheets integration job.
  */
 export async function createCustomerCommand(input: {
   businessId: string;
@@ -127,7 +132,7 @@ export async function createCustomerCommand(input: {
       select: { id: true, publicToken: true },
     });
 
-    await transaction.businessActivity.create({
+    const activity = await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_CREATED",
         description: `تم إنشاء العميل ${customerName}`,
@@ -136,8 +141,18 @@ export async function createCustomerCommand(input: {
         ...activityActorFields(input.actor, input.businessId),
         ...activityRequestMetadata(activityContext),
       },
+      select: { id: true },
+    });
+    const integrationJob = await enqueueIntegrationJob(transaction, {
+      businessId: input.businessId,
+      kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+      idempotencyKey: `customer-created:${activity.id}`,
     });
 
-    return { ok: true, customer } as const;
+    return {
+      ok: true,
+      customer,
+      integrationJobId: integrationJob.id,
+    } as const;
   });
 }
