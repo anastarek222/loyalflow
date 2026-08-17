@@ -2,6 +2,10 @@
 
 import * as legacy from "./actions-legacy";
 import { adjustCustomerBalanceCommandAction } from "./balance-adjustment-action";
+import {
+  setCustomerRecordStatusCommandAction,
+  updateCustomerRecordCommandAction,
+} from "./customer-record-actions";
 import { addLoyaltyCommandAction } from "./loyalty-earn-actions";
 import { createCustomerReferralCodeCommandAction } from "./referral-actions";
 import { redeemRewardCommandAction } from "./redemption-actions";
@@ -16,7 +20,7 @@ export async function updateCustomerAction(
   customerId: string,
   formData: FormData,
 ) {
-  return legacy.updateCustomerAction(slug, customerId, formData);
+  return updateCustomerRecordCommandAction(slug, customerId, formData);
 }
 
 export async function setCustomerStatusAction(
@@ -24,7 +28,7 @@ export async function setCustomerStatusAction(
   customerId: string,
   isActive: boolean,
 ) {
-  return legacy.setCustomerStatusAction(slug, customerId, isActive);
+  return setCustomerRecordStatusCommandAction(slug, customerId, isActive);
 }
 
 export async function adjustCustomerBalanceAction(
