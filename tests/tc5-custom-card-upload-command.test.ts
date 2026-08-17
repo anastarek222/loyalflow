@@ -66,8 +66,17 @@ test("TC5 Custom Card geometry failure returns INVALID_UPLOAD before version cre
   assert.ok(geometry < invalid);
   assert.ok(invalid < version);
   assert.ok(invalid < upload);
+});
+
+test("TC5 invalid Custom Card geometry maps to the existing localized Program validation state", () => {
   assert.match(action, /result\.reason === "STORAGE_UNAVAILABLE"/);
-  assert.ok(action.includes("cardDesign=invalid-upload"));
+  assert.ok(action.includes("cardDesign=invalid"));
+  assert.doesNotMatch(action, /cardDesign=invalid-upload/);
+  assert.match(programPage, /query\.cardDesign === "invalid"/);
+  assert.match(
+    programPage,
+    /t\("راجع إعدادات التصميم\.", "Check the card design settings\."\)/,
+  );
 });
 
 test("TC5 Custom Card upload command preserves existing private Blob helper ownership", () => {
@@ -88,12 +97,12 @@ test("TC5 bounded Custom Card upload action re-establishes auth and Super Admin 
   assert.match(action, /uploadCustomCardDraftCommand\(/);
 });
 
-test("TC5 bounded Custom Card upload action preserves existing feedback and draft version redirect", () => {
+test("TC5 bounded Custom Card upload action preserves controlled feedback and draft version redirect", () => {
   for (const state of [
     "forbidden",
     "subscription-restricted",
     "storage-unavailable",
-    "invalid-upload",
+    "cardDesign=invalid",
     "cardDesign=draft&customVersion=",
   ]) {
     assert.ok(action.includes(state));
