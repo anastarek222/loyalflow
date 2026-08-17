@@ -13,6 +13,7 @@ const command = source(
   "lib/server/business/business-export-permission-command.ts",
 );
 const sharedSettingsCommand = source("lib/server/business/settings-command.ts");
+const settingsPage = source("app/businesses/[slug]/settings/page.tsx");
 
 test("TC5 bounded export action re-establishes SUPER_ADMIN and business authority", () => {
   assert.match(action, /await auth\(\)/);
@@ -51,4 +52,19 @@ test("TC5 bounded export action preserves existing success and restriction desti
   assert.match(action, /exportPermissionSaved=subscription-restricted/);
   assert.match(action, /revalidatePath\(`\/businesses\/\$\{business\.slug\}\/reports`\)/);
   assert.match(action, /revalidatePath\(`\/businesses\/\$\{business\.slug\}\/activity`\)/);
+});
+
+test("TC5 Settings export form is bound to the command-backed action", () => {
+  assert.match(
+    settingsPage,
+    /import \{ updateBusinessExportPermissionCommandAction \} from "\.\/export-permission-action"/,
+  );
+  assert.match(
+    settingsPage,
+    /action=\{updateBusinessExportPermissionCommandAction\.bind\(/,
+  );
+  assert.doesNotMatch(
+    settingsPage,
+    /updateBusinessExportPermissionAction,/,
+  );
 });
