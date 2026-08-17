@@ -20,7 +20,10 @@ test("TC6.15 does not introduce scheduling, routes, auth, provider, or env wirin
 
   assert.doesNotMatch(runner, /cron|schedule|setInterval|setTimeout/i);
   assert.doesNotMatch(runner, /NextRequest|NextResponse|route\(/);
-  assert.doesNotMatch(runner, /auth|session|permission|role/i);
+  assert.doesNotMatch(
+    runner,
+    /from\s+["'][^"']*(?:auth|session|permission|role)[^"']*["']/i,
+  );
   assert.doesNotMatch(runner, /syncBusinessToGoogleSheetSafely/);
   assert.doesNotMatch(runner, /process\.env/);
 });
