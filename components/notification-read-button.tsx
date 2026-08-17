@@ -1,56 +1,44 @@
 "use client";
 
-import {
-  useState,
-  useTransition,
-} from "react";
-
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  markBusinessNotificationItemReadAction,
-} from "@/app/businesses/[slug]/notification-actions";
+import { markBusinessNotificationItemReadAction } from "@/app/businesses/[slug]/notification-actions";
+import type { AppLanguage } from "@/lib/i18n";
 
 type Props = {
   slug: string;
   notificationKey: string;
+  language: AppLanguage;
 };
 
-export default function NotificationReadButton({
-  slug,
-  notificationKey,
-}: Props) {
+const copy = {
+  AR: {
+    read: "مقروء ✓",
+    saving: "جاري الحفظ...",
+    retry: "إعادة المحاولة",
+    markRead: "تحديد كمقروء",
+  },
+  EN: {
+    read: "Read ✓",
+    saving: "Saving...",
+    retry: "Try again",
+    markRead: "Mark as read",
+  },
+} as const;
+
+export default function NotificationReadButton({ slug, notificationKey, language }: Props) {
   const router = useRouter();
-
-  const [
-    status,
-    setStatus,
-  ] = useState<
-    "idle" | "read" | "error"
-  >("idle");
-
-  const [
-    isPending,
-    startTransition,
-  ] = useTransition();
+  const t = copy[language];
+  const [status, setStatus] = useState<"idle" | "read" | "error">("idle");
+  const [isPending, startTransition] = useTransition();
 
   function markAsRead() {
-    if (
-      isPending ||
-      status === "read"
-    ) {
-      return;
-    }
-
+    if (isPending || status === "read") return;
     setStatus("idle");
-
     startTransition(async () => {
       try {
-        await markBusinessNotificationItemReadAction(
-          slug,
-          notificationKey
-        );
-
+        await markBusinessNotificationItemReadAction(slug, notificationKey);
         setStatus("read");
         router.refresh();
       } catch {
@@ -62,7 +50,7 @@ export default function NotificationReadButton({
   if (status === "read") {
     return (
       <span className="shrink-0 rounded-[var(--lf-radius-input)] bg-success-subtle px-4 py-2 text-xs font-black text-success">
-        مقروء ✓
+        {t.read}
       </span>
     );
   }
@@ -74,11 +62,7 @@ export default function NotificationReadButton({
       disabled={isPending}
       className="shrink-0 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-2 text-xs font-black text-primary transition hover:border-primary/30 hover:bg-primary-subtle disabled:cursor-wait disabled:opacity-60"
     >
-      {isPending
-        ? "جاري الحفظ..."
-        : status === "error"
-          ? "إعادة المحاولة"
-          : "تحديد كمقروء"}
+      {isPending ? t.saving : status === "error" ? t.retry : t.markRead}
     </button>
   );
 }
