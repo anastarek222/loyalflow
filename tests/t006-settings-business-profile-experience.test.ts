@@ -60,7 +60,7 @@ test("T006 Integrations, card details, and export retain canonical actions", () 
   );
   assert.match(
     settings,
-    /updateBusinessExportPermissionAction\.bind\([\s\S]{0,80}business\.slug/,
+    /updateBusinessExportPermissionCommandAction\.bind\([\s\S]{0,80}business\.slug/,
   );
   assert.match(settings, /session\.user\.role === "SUPER_ADMIN"/);
   assert.match(cardDetails, /data-card-business-details="true"/);
