@@ -6,27 +6,28 @@ function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-function action(sourceText: string, name: string, nextName: string) {
+function action(sourceText: string, name: string, nextName?: string) {
   const start = sourceText.indexOf(`export async function ${name}`);
-  const end = sourceText.indexOf(`export async function ${nextName}`, start);
+  const end = nextName
+    ? sourceText.indexOf(`export async function ${nextName}`, start)
+    : sourceText.length;
   assert.ok(start >= 0 && end > start);
   return sourceText.slice(start, end);
 }
 
 const actions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
+  "app/businesses/[slug]/customers/[customerId]/note-actions.ts",
 );
 const command = source("lib/server/business/customer-note-write-command.ts");
+const facade = source(
+  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+);
 const createAction = action(
   actions,
-  "createCustomerNoteAction",
-  "updateCustomerNoteAction",
+  "createCustomerNoteCommandAction",
+  "updateCustomerNoteCommandAction",
 );
-const updateAction = action(
-  actions,
-  "updateCustomerNoteAction",
-  "addLoyaltyAction",
-);
+const updateAction = action(actions, "updateCustomerNoteCommandAction");
 const createCommandStart = command.indexOf(
   "export async function createCustomerNoteCommand",
 );
@@ -37,17 +38,20 @@ assert.ok(createCommandStart >= 0 && updateCommandStart > createCommandStart);
 const createCommand = command.slice(createCommandStart, updateCommandStart);
 const updateCommand = command.slice(updateCommandStart);
 
-test("TC5 Customer note compatibility implementation preserves the active action contract", () => {
+test("TC5 Customer note actions preserve validation, authorization and presentation while delegating persistence", () => {
   for (const sourceText of [createAction, updateAction]) {
     assert.match(sourceText, /customerNoteContentSchema\.safeParse/);
     assert.match(sourceText, /canPerformSubscriptionOperation/);
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation/);
     assert.match(sourceText, /subscription-restricted/);
-    assert.match(sourceText, /prisma\.\$transaction/);
+    assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+    assert.doesNotMatch(sourceText, /transaction\.customerNote\.(create|update)/);
   }
-  assert.match(createAction, /transaction\.customerNote\.create/);
+  assert.match(createAction, /createCustomerNoteCommand/);
   assert.match(updateAction, /opaqueIdSchema\.safeParse/);
-  assert.match(updateAction, /transaction\.customerNote\.update/);
+  assert.match(updateAction, /updateCustomerNoteCommand/);
+  assert.match(facade, /createCustomerNoteCommandAction/);
+  assert.match(facade, /updateCustomerNoteCommandAction/);
+  assert.doesNotMatch(facade, /actions-legacy|legacy\./);
 });
 
 test("TC5 Customer note creation command rechecks lifecycle and tenant ownership before atomic note and audit", () => {
