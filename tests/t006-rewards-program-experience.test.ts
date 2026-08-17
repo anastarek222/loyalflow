@@ -21,12 +21,13 @@ test("T006 Program experience preserves tenant authorization and its three canon
   );
   assert.match(
     program,
-    /updateBusinessCardDesignAction\.bind\([\s\S]{0,100}business\.slug/,
+    /updateBusinessCardDesignCommandAction\.bind\([\s\S]{0,100}business\.slug/,
   );
   assert.match(
     program,
     /updateCustomerMessagesAction\.bind\([\s\S]{0,100}business\.slug/,
   );
+  assert.doesNotMatch(program, /updateBusinessCardDesignAction\.bind\(/);
   assert.equal((program.match(/<ProgramRulesForm/g) ?? []).length, 1);
   assert.equal((program.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.equal((program.match(/<CustomerMessagesForm/g) ?? []).length, 1);

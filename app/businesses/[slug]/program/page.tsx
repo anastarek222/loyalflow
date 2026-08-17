@@ -17,12 +17,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import {
-  updateBusinessCardDesignAction,
   publishCustomCardArtworkAction,
   uploadCustomCardArtworkAction,
   updateCustomerMessagesAction,
   updateProgramRulesAction,
 } from "../settings/actions";
+import { updateBusinessCardDesignCommandAction } from "./card-design-actions";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -78,7 +78,7 @@ export default async function LoyaltyProgramPage({
   const language = normalizeLanguage(currentUser?.language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const updateProgramRules = updateProgramRulesAction.bind(null, business.slug);
-  const updateCardDesign = updateBusinessCardDesignAction.bind(
+  const updateCardDesign = updateBusinessCardDesignCommandAction.bind(
     null,
     business.slug,
   );
