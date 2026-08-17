@@ -1,12 +1,15 @@
 "use server";
 
-import * as legacy from "./actions-legacy";
 import { adjustCustomerBalanceCommandAction } from "./balance-adjustment-action";
 import {
   setCustomerRecordStatusCommandAction,
   updateCustomerRecordCommandAction,
 } from "./customer-record-actions";
 import { addLoyaltyCommandAction } from "./loyalty-earn-actions";
+import {
+  createCustomerNoteCommandAction,
+  updateCustomerNoteCommandAction,
+} from "./note-actions";
 import { createCustomerReferralCodeCommandAction } from "./referral-actions";
 import { redeemRewardCommandAction } from "./redemption-actions";
 import {
@@ -75,7 +78,7 @@ export async function createCustomerNoteAction(
   customerId: string,
   formData: FormData,
 ) {
-  return legacy.createCustomerNoteAction(slug, customerId, formData);
+  return createCustomerNoteCommandAction(slug, customerId, formData);
 }
 
 export async function updateCustomerNoteAction(
@@ -84,7 +87,7 @@ export async function updateCustomerNoteAction(
   noteId: string,
   formData: FormData,
 ) {
-  return legacy.updateCustomerNoteAction(slug, customerId, noteId, formData);
+  return updateCustomerNoteCommandAction(slug, customerId, noteId, formData);
 }
 
 export async function addLoyaltyAction(
