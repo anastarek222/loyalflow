@@ -51,15 +51,17 @@ import {
   addLoyaltyAction,
   assignCustomerTagAction,
   createAndAssignCustomerTagAction,
-  createCustomerNoteAction,
   adjustCustomerBalanceAction,
   createCustomerReferralCodeAction,
   redeemRewardAction,
   removeCustomerTagAction,
   setCustomerStatusAction,
-  updateCustomerNoteAction,
   updateCustomerAction,
 } from "./actions";
+import {
+  createCustomerNoteCommandAction,
+  updateCustomerNoteCommandAction,
+} from "./note-actions";
 
 type CustomerDetailsPageProps = {
   params: Promise<{
@@ -380,7 +382,7 @@ export default async function CustomerDetailsPage({
     business.slug,
     customer.id,
   );
-  const createNote = createCustomerNoteAction.bind(
+  const createNote = createCustomerNoteCommandAction.bind(
     null,
     business.slug,
     customer.id,
@@ -957,7 +959,7 @@ export default async function CustomerDetailsPage({
                     </p>
                   ) : (
                     customer.notes.map((note) => {
-                      const updateNote = updateCustomerNoteAction.bind(
+                      const updateNote = updateCustomerNoteCommandAction.bind(
                         null,
                         business.slug,
                         customer.id,
