@@ -32,9 +32,11 @@ test("TC6.7 atomically enqueues Sheets work after each customer record mutation 
   const status = command.slice(statusStart);
   assert.ok(status.indexOf("transaction.customer.update") < status.indexOf("const activity = await transaction.businessActivity.create"));
   assert.ok(status.indexOf("const activity = await transaction.businessActivity.create") < status.indexOf("const integrationJob = await enqueueIntegrationJob"));
+  assert.doesNotMatch(command, /@vercel\/queue|publishIntegrationJob|scheduleBusinessGoogleSheetsSync|process\.env|googleapis/i);
 });
 
 test("TC6.7 wakes the Queue only after successful command completion and removes direct provider sync", () => {
+  assert.match(action, /from "@\/lib\/google-sheets-sync-scheduler"/);
   assert.match(action, /scheduleBusinessGoogleSheetsSync\(mutation\.integrationJobId\)/);
   assert.equal((action.match(/scheduleBusinessGoogleSheetsSync\(mutation\.integrationJobId\)/g) ?? []).length, 2);
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
