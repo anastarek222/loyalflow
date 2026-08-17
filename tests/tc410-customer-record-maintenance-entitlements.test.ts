@@ -19,34 +19,42 @@ function action(sourceText: string, name: string, nextName?: string) {
 const customerActions = source(
   "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
 );
+const recordCommand = source(
+  "lib/server/business/customer-record-maintenance-command.ts",
+);
 const customerPage = source(
   "app/businesses/[slug]/customers/[customerId]/page.tsx",
 );
 
 test("TC4.10 guards customer profile and note maintenance as OPERATE", () => {
-  const guardedActions = [
-    [
-      action(customerActions, "updateCustomerAction", "setCustomerStatusAction"),
-      "transaction.customer.update",
-    ],
-    [
-      action(customerActions, "createCustomerNoteAction", "updateCustomerNoteAction"),
-      "transaction.customerNote.create",
-    ],
-    [
-      action(customerActions, "updateCustomerNoteAction", "addLoyaltyAction"),
-      "transaction.customerNote.update",
-    ],
-  ] as const;
+  const updateProfile = action(
+    customerActions,
+    "updateCustomerAction",
+    "setCustomerStatusAction",
+  );
+  assert.match(updateProfile, /canPerformSubscriptionOperation\(/);
+  assert.match(updateProfile, /"OPERATE"/);
+  assert.match(updateProfile, /updateCustomerRecordCommand/);
+  assert.match(updateProfile, /subscription-restricted/);
+  assert.match(recordCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(recordCommand, /"OPERATE"/);
+  assert.ok(
+    recordCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      recordCommand.indexOf("transaction.customer.update"),
+  );
 
-  for (const [sourceText, mutation] of guardedActions) {
-    assert.match(sourceText, /canPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /"OPERATE"/);
-    assert.match(sourceText, /subscription-restricted/);
+  for (const [name, nextName, mutation] of [
+    ["createCustomerNoteAction", "updateCustomerNoteAction", "transaction.customerNote.create"],
+    ["updateCustomerNoteAction", "addLoyaltyAction", "transaction.customerNote.update"],
+  ] as const) {
+    const noteAction = action(customerActions, name, nextName);
+    assert.match(noteAction, /canPerformSubscriptionOperation\(/);
+    assert.match(noteAction, /canBusinessPerformSubscriptionOperation\(/);
+    assert.match(noteAction, /"OPERATE"/);
+    assert.match(noteAction, /subscription-restricted/);
     assert.ok(
-      sourceText.indexOf("await canBusinessPerformSubscriptionOperation") <
-        sourceText.indexOf(mutation),
+      noteAction.indexOf("await canBusinessPerformSubscriptionOperation") <
+        noteAction.indexOf(mutation),
     );
   }
 });
@@ -61,12 +69,13 @@ test("TC4.10 preserves customer deactivation safety", () => {
     statusAction,
     /parsedStatus\.data &&[\s\S]*canPerformSubscriptionOperation/,
   );
-  assert.match(statusAction, /isActive: parsedStatus\.data/);
-
+  assert.match(statusAction, /setCustomerRecordStatusCommand/);
+  assert.match(recordCommand, /input\.isActive &&[\s\S]*canBusinessPerformSubscriptionOperation/);
+  assert.match(recordCommand, /isActive: input\.isActive/);
 });
 
 test("TC4.10 exposes bounded feedback without provider or schema behavior", () => {
   assert.match(customerPage, /query\.error === "subscription-restricted"/);
   assert.match(customerPage, /security controls remain accessible/);
-  assert.doesNotMatch(customerActions, /stripe|checkout|webhook|process\.env/i);
+  assert.doesNotMatch(`${customerActions}\n${recordCommand}`, /stripe|checkout|webhook|process\.env/i);
 });

@@ -39,7 +39,7 @@ test("TC4.12 guards new referral identity creation as EXPAND", () => {
 test("TC4.12 preserves existing-code replay before expansion enforcement", () => {
   assert.ok(
     referralCommand.indexOf("customerReferralCode.findUnique") <
-      referralCommand.indexOf("canBusinessPerformSubscriptionOperation"),
+      referralCommand.indexOf("await canBusinessPerformSubscriptionOperation"),
   );
   assert.match(referralCommand, /if \(existing\)/);
   assert.match(referralCommand, /error\.code === "P2002"/);
