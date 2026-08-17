@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import {
   getBulkStateChangeIds,
   type BulkCustomerOperation,
@@ -9,6 +11,7 @@ import {
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerBulkActor = Readonly<{
   id: string;
@@ -22,17 +25,35 @@ type CustomerBulkFailure = Readonly<{
 }>;
 
 export type CustomerBulkCommandResult =
-  | Readonly<{ ok: true; changedIds: readonly string[] }>
+  | Readonly<{
+      ok: true;
+      changedIds: readonly string[];
+      integrationJobId: string;
+    }>
   | CustomerBulkFailure;
 
 type TagOperation = Extract<BulkCustomerOperation, "ADD_TAG" | "REMOVE_TAG">;
+
+async function enqueueBulkSheetsSync(
+  transaction: Parameters<typeof enqueueIntegrationJob>[0],
+  businessId: string,
+  scope: "status" | "tag",
+) {
+  return enqueueIntegrationJob(transaction, {
+    businessId,
+    kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+    idempotencyKey: `customer-bulk-${scope}:${randomUUID()}`,
+  });
+}
 
 /**
  * Authoritative bulk Customer status boundary.
  *
  * Reactivation remains an OPERATE action and is rechecked against persisted
  * lifecycle state. Deactivation deliberately remains available as a security
- * exit control. Selection, mutation, and audit are revalidated atomically.
+ * exit control. Selection, mutation, audit, and the durable Sheets wake-up job
+ * are committed atomically. Valid no-op submissions still enqueue one job to
+ * preserve the previous post-command synchronization behavior.
  */
 export async function setBulkCustomerStatusCommand(input: {
   businessId: string;
@@ -57,7 +78,16 @@ export async function setBulkCustomerStatusCommand(input: {
       return { ok: false, reason: "INVALID_SELECTION" } as const;
     }
     if (changedIds.length === 0) {
-      return { ok: true, changedIds } as const;
+      const integrationJob = await enqueueBulkSheetsSync(
+        transaction,
+        input.businessId,
+        "status",
+      );
+      return {
+        ok: true,
+        changedIds,
+        integrationJobId: integrationJob.id,
+      } as const;
     }
 
     if (
@@ -93,8 +123,17 @@ export async function setBulkCustomerStatusCommand(input: {
         ...activityRequestMetadata(activityContext),
       })),
     });
+    const integrationJob = await enqueueBulkSheetsSync(
+      transaction,
+      input.businessId,
+      "status",
+    );
 
-    return { ok: true, changedIds } as const;
+    return {
+      ok: true,
+      changedIds,
+      integrationJobId: integrationJob.id,
+    } as const;
   });
 }
 
@@ -103,7 +142,8 @@ export async function setBulkCustomerStatusCommand(input: {
  *
  * The command revalidates tenant selection and tag ownership, preserves no-op
  * replay, rechecks persisted OPERATE entitlement before a changed topology,
- * and commits the topology mutation and audit in one transaction.
+ * and commits the topology mutation, audit, and durable Sheets job in one
+ * transaction. Valid no-op submissions retain the previous sync behavior.
  */
 export async function mutateBulkCustomerTagCommand(input: {
   businessId: string;
@@ -150,7 +190,16 @@ export async function mutateBulkCustomerTagCommand(input: {
         : existingAssignments.map((assignment) => assignment.customerId);
 
     if (changedIds.length === 0) {
-      return { ok: true, changedIds } as const;
+      const integrationJob = await enqueueBulkSheetsSync(
+        transaction,
+        input.businessId,
+        "tag",
+      );
+      return {
+        ok: true,
+        changedIds,
+        integrationJobId: integrationJob.id,
+      } as const;
     }
 
     if (
@@ -207,7 +256,16 @@ export async function mutateBulkCustomerTagCommand(input: {
         ...activityRequestMetadata(activityContext),
       })),
     });
+    const integrationJob = await enqueueBulkSheetsSync(
+      transaction,
+      input.businessId,
+      "tag",
+    );
 
-    return { ok: true, changedIds } as const;
+    return {
+      ok: true,
+      changedIds,
+      integrationJobId: integrationJob.id,
+    } as const;
   });
 }
