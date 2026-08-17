@@ -1,6 +1,12 @@
 import "server-only";
 
 import { get, list, put, type ListBlobResultBlob } from "@vercel/blob";
+import {
+  CUSTOM_CARD_GEOMETRY_ERROR,
+  validateCustomCardArtworkGeometryPair,
+} from "@/lib/cards/custom-card-geometry";
+
+export { CUSTOM_CARD_GEOMETRY_ERROR } from "@/lib/cards/custom-card-geometry";
 
 export const CUSTOM_CARD_MAX_FILE_BYTES = 4 * 1024 * 1024;
 export const CUSTOM_CARD_ALLOWED_TYPES = [
@@ -39,6 +45,11 @@ export function validateCustomCardArtwork(file: unknown): file is File {
   );
 }
 
+export async function validateCustomCardArtworkPair(front: unknown, back: unknown) {
+  if (!validateCustomCardArtwork(front) || !validateCustomCardArtwork(back)) return false;
+  return validateCustomCardArtworkGeometryPair(front, back);
+}
+
 function extensionFor(file: File) {
   if (file.type === "image/png") return "png";
   if (file.type === "image/webp") return "webp";
@@ -56,6 +67,10 @@ export async function uploadCustomCardArtwork(input: {
   front: File;
   back: File;
 }) {
+  if (!(await validateCustomCardArtworkPair(input.front, input.back))) {
+    throw new Error(CUSTOM_CARD_GEOMETRY_ERROR);
+  }
+
   const prefix = customCardVersionPrefix(input.businessId, input.version);
   const [front, back] = await Promise.all(
     (["front", "back"] as const).map((side) => {
@@ -73,26 +88,18 @@ export async function uploadCustomCardArtwork(input: {
 }
 
 function groupCompleteVersions(blobs: ListBlobResultBlob[]) {
-  const versions = new Map<
-    string,
-    Partial<CustomCardArtworkVersion> & { uploadedAt: Date }
-  >();
+  const versions = new Map<string, Partial<CustomCardArtworkVersion> & { uploadedAt: Date }>();
   for (const blob of blobs) {
-    const match = blob.pathname.match(
-      /^custom-card\/[^/]+\/([^/]+)\/(front|back)\.(?:png|jpe?g|webp)$/i,
-    );
+    const match = blob.pathname.match(/^custom-card\/[^/]+\/([^/]+)\/(front|back)\.(?:png|jpe?g|webp)$/i);
     if (!match || !isCustomCardVersion(match[1])) continue;
     const current = versions.get(match[1]) ?? { uploadedAt: blob.uploadedAt };
-    current.uploadedAt =
-      current.uploadedAt > blob.uploadedAt ? current.uploadedAt : blob.uploadedAt;
+    current.uploadedAt = current.uploadedAt > blob.uploadedAt ? current.uploadedAt : blob.uploadedAt;
     if (match[2] === "front") current.frontUrl = blob.url;
     if (match[2] === "back") current.backUrl = blob.url;
     versions.set(match[1], current);
   }
   return [...versions.entries()]
-    .filter((entry): entry is [string, CustomCardArtworkVersion] =>
-      Boolean(entry[1].frontUrl && entry[1].backUrl),
-    )
+    .filter((entry): entry is [string, CustomCardArtworkVersion] => Boolean(entry[1].frontUrl && entry[1].backUrl))
     .map(([id, value]) => ({ ...value, id }))
     .sort((left, right) => right.uploadedAt.getTime() - left.uploadedAt.getTime());
 }
@@ -103,42 +110,24 @@ export async function listCustomCardArtworkVersions(businessId: string) {
   return groupCompleteVersions(result.blobs);
 }
 
-export async function findCustomCardArtworkVersion(
-  businessId: string,
-  version: string,
-) {
+export async function findCustomCardArtworkVersion(businessId: string, version: string) {
   if (!customCardStorageConfigured() || !isCustomCardVersion(version)) return null;
-  const result = await list({
-    prefix: customCardVersionPrefix(businessId, version),
-    limit: 4,
-  });
+  const result = await list({ prefix: customCardVersionPrefix(businessId, version), limit: 4 });
   return groupCompleteVersions(result.blobs)[0] ?? null;
 }
 
-export function isManagedCustomCardArtworkUrl(
-  value: string | null | undefined,
-  businessId?: string,
-) {
+export function isManagedCustomCardArtworkUrl(value: string | null | undefined, businessId?: string) {
   if (!value) return false;
   try {
     const url = new URL(value);
     const expected = businessId ? `/custom-card/${businessId}/` : "/custom-card/";
-    return (
-      url.protocol === "https:" &&
-      url.hostname.endsWith(".blob.vercel-storage.com") &&
-      url.pathname.startsWith(expected)
-    );
+    return url.protocol === "https:" && url.hostname.endsWith(".blob.vercel-storage.com") && url.pathname.startsWith(expected);
   } catch {
     return false;
   }
 }
 
-export function publicCustomCardArtworkUrl(
-  token: string,
-  side: CustomCardSide,
-  storedUrl: string | null | undefined,
-  businessId: string,
-) {
+export function publicCustomCardArtworkUrl(token: string, side: CustomCardSide, storedUrl: string | null | undefined, businessId: string) {
   return isManagedCustomCardArtworkUrl(storedUrl, businessId)
     ? `/api/card-artwork/${encodeURIComponent(token)}/${side}`
     : storedUrl ?? null;
