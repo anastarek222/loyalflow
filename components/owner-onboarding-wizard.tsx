@@ -578,6 +578,7 @@ export function OwnerOnboardingWizard({
             />
             <div className="mt-4">
               <StandardCardSetup
+                language={locale === "ar" ? "AR" : "EN"}
                 initial={{
                   primaryColor: String(draft.primaryColor || "#111827"),
                   themePreset: String(draft.themePreset || "DEFAULT"),
