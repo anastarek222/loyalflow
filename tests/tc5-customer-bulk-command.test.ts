@@ -19,7 +19,8 @@ test("TC5 Customer bulk action keeps presentation preflight and delegates persis
   assert.match(bulkAction, /canPerformSubscriptionOperation/);
   assert.match(bulkAction, /setBulkCustomerStatusCommand/);
   assert.match(bulkAction, /mutateBulkCustomerTagCommand/);
-  assert.match(bulkAction, /syncBusinessToGoogleSheetSafely/);
+  assert.match(bulkAction, /scheduleBusinessGoogleSheetsSync/);
+  assert.doesNotMatch(bulkAction, /syncBusinessToGoogleSheetSafely/);
   assert.doesNotMatch(bulkAction, /prisma\.\$transaction/);
   assert.doesNotMatch(bulkAction, /transaction\.customer\.updateMany/);
   assert.doesNotMatch(
