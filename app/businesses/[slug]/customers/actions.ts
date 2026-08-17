@@ -6,11 +6,7 @@ import {
   activityRequestMetadata,
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
-import {
-  generateCustomerCode,
-  getCustomerDisplayName,
-  parseCustomerRegistration,
-} from "@/lib/customers/registration";
+import { parseCustomerRegistration } from "@/lib/customers/registration";
 import {
   getBulkStateChangeIds,
   parseSelectedCustomerIds,
@@ -25,6 +21,7 @@ import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { revalidatePath } from "next/cache";
@@ -374,54 +371,26 @@ export async function createCustomerAction(slug: string, formData: FormData) {
     redirect(`/businesses/${slug}/customers?error=plan-limit`);
   }
 
-  const customerCode = await generateCustomerCode(
-    prisma,
-    business.id,
-    business.slug,
-  );
-
-  const customerName = getCustomerDisplayName(parsed);
-  const activityContext = await getActivityRequestContext();
-
-  const createdCustomer = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "EXPAND",
-      ))
-    ) {
-      return null;
-    }
-
-    const customer = await transaction.customer.create({
-      data: {
-        firstName: parsed.firstName,
-        lastName: parsed.lastName || null,
-        phone: parsed.phone,
-        customerCode,
-        businessId: business.id,
-      },
-    });
-
-    await transaction.businessActivity.create({
-      data: {
-        type: "CUSTOMER_CREATED",
-        description: `تم إنشاء العميل ${customerName}`,
-        businessId: business.id,
-        customerId: customer.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-
-    return customer;
+  const creation = await createCustomerCommand({
+    businessId: business.id,
+    customer: parsed,
+    actor: session.user,
   });
 
-  if (!createdCustomer) {
+  if (!creation.ok) {
+    if (creation.reason === "BUSINESS_NOT_FOUND") {
+      redirect("/businesses");
+    }
+    if (creation.reason === "DUPLICATE") {
+      redirect(`/businesses/${slug}/customers?error=duplicate`);
+    }
+    if (creation.reason === "PLAN_LIMIT") {
+      redirect(`/businesses/${slug}/customers?error=plan-limit`);
+    }
     redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
   }
 
+  const createdCustomer = creation.customer;
   await syncBusinessToGoogleSheetSafely(business.id);
 
   revalidatePath(`/businesses/${slug}`);
