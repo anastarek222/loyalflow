@@ -49,6 +49,10 @@ const rewardWriteAuthority = source(
   "lib/server/business/reward-write-command.ts",
 );
 
+const playbookApplicationAuthority = source(
+  "lib/server/business/playbook-application-command.ts",
+);
+
 const teamExperienceAccessAuthority = source(
   "lib/server/business/team-experience-access-command.ts",
 );
@@ -150,6 +154,29 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(offerWriteAuthority, /"OPERATE"/);
       assert.match(offerWriteAuthority, /transaction\.offer\.create/);
       assert.match(offerWriteAuthority, /transaction\.offer\.update/);
+    } else if (fileKey === "playbooks") {
+      assert.match(sourceText, /applyBusinessPlaybookCommand/);
+      assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+      assert.doesNotMatch(sourceText, /canBusinessPerformSubscriptionOperation/);
+      assert.doesNotMatch(sourceText, /transaction\.business\.update/);
+      assert.match(
+        playbookApplicationAuthority,
+        /canBusinessPerformSubscriptionOperation/,
+      );
+      assert.match(playbookApplicationAuthority, /"OPERATE"/);
+      assert.match(playbookApplicationAuthority, /prisma\.\$transaction/);
+      assert.match(
+        playbookApplicationAuthority,
+        /transaction\.business\.update/,
+      );
+      assert.ok(
+        playbookApplicationAuthority.indexOf(
+          "await canBusinessPerformSubscriptionOperation",
+        ) <
+          playbookApplicationAuthority.indexOf(
+            "await transaction.business.update",
+          ),
+      );
     } else if (fileKey === "rewards") {
       assert.match(sourceText, /createRewardCommand/);
       assert.match(sourceText, /updateRewardCommand/);
