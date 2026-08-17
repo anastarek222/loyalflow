@@ -39,9 +39,10 @@ test("TC5 bounded balance adjustment action preserves auth capability parsing an
 });
 
 test("TC5 balance adjustment is adopted through the active compatibility facade", () => {
+  assert.match(facade, /export async function adjustCustomerBalanceAction/);
   assert.match(
     facade,
-    /adjustCustomerBalanceCommandAction as adjustCustomerBalanceAction/,
+    /return adjustCustomerBalanceCommandAction\(slug, customerId, formData\)/,
   );
   assert.match(facade, /from "\.\/balance-adjustment-action"/);
 });
