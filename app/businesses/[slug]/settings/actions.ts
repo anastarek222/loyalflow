@@ -17,6 +17,7 @@ import {
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { updateBusinessSettingsCommand } from "@/lib/server/business/settings-command";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -145,10 +146,11 @@ async function updateSettingsDomain(input: {
     data: input.data,
     metadata: input.metadata,
     enforceOperateEntitlement: input.enforceOperateEntitlement,
+    enqueueSheetsSync: input.syncSheet,
   });
   if (!result.ok) return false;
-  if (input.syncSheet) {
-    await syncBusinessToGoogleSheetSafely(input.businessId);
+  if (result.integrationJobId) {
+    scheduleBusinessGoogleSheetsSync(result.integrationJobId);
   }
   revalidatePath("/dashboard");
   revalidatePath("/businesses");
