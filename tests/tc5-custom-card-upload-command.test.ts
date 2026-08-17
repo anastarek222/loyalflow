@@ -10,6 +10,7 @@ const command = source("lib/server/business/custom-card-upload-command.ts");
 const action = source(
   "app/businesses/[slug]/program/custom-card-upload-action.ts",
 );
+const manager = source("components/custom-card-artwork-manager.tsx");
 
 test("TC5 Custom Card upload command owns bounded storage validation and persisted EXPAND enforcement", () => {
   const storage = command.indexOf("customCardStorageConfigured");
@@ -73,4 +74,15 @@ test("TC5 bounded Custom Card upload action preserves existing feedback and draf
   assert.match(action, /customCardBackFile/);
   assert.doesNotMatch(action, /uploadCustomCardArtwork/);
   assert.doesNotMatch(action, /@vercel\/blob|process\.env/);
+});
+
+test("TC5 Custom Card manager actively binds upload to the command-backed action while preserving publish compatibility", () => {
+  assert.match(manager, /uploadCustomCardDraftCommandAction/);
+  assert.match(
+    manager,
+    /uploadCustomCardDraftCommandAction\.bind\(null, slug\)/,
+  );
+  assert.match(manager, /<form action=\{uploadCustomArtwork\}/);
+  assert.match(manager, /<form action=\{publishAction\}>/);
+  assert.doesNotMatch(manager, /<form action=\{uploadAction\}/);
 });
