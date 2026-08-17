@@ -108,10 +108,17 @@ jobs:
             if [ -z "${!name:-}" ]; then
               if [ -n "$missing_names" ]; then missing_names="$missing_names,"; fi
               missing_names="$missing_names$name"
+              payload=$(printf '{"state":"failure","context":"UAT missing %s","description":"Required runtime UAT secret is not configured"}' "$name")
+              curl -fsS -X POST \
+                -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+                -d "$payload"
             fi
           done
           if [ -n "$missing_names" ]; then
-            description="Missing UAT secrets: $missing_names"
+            description="Missing required UAT secrets"
           else
             description="Browser UAT failed after credential preflight"
           fi
