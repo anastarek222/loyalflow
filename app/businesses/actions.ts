@@ -287,6 +287,7 @@ try {
                 }
               : {}),
           },
+          select: { id: true, slug: true },
         });
         logServerEvent("BUSINESS_CREATE_BUSINESS_CREATED", {
           creationAttemptId,
