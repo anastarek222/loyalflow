@@ -173,68 +173,21 @@ function getReviewData(
   logoPreview: string
 ): ReviewData {
   return {
-    name: getValue(
-      formData,
-      "name"
-    ),
-    contactPhone: getValue(
-      formData,
-      "contactPhone"
-    ),
-    industry: getValue(
-      formData,
-      "industry"
-    ),
-    currency: getValue(
-      formData,
-      "currency"
-    ),
-    timezone: getValue(
-      formData,
-      "timezone"
-    ),
-    employeeCount: getValue(
-      formData,
-      "employeeCount"
-    ),
-    email: getValue(
-      formData,
-      "email"
-    ),
-    country: getValue(
-      formData,
-      "country"
-    ),
-    city: getValue(
-      formData,
-      "city"
-    ),
-    website: getValue(
-      formData,
-      "website"
-    ),
-    taxNumber: getValue(
-      formData,
-      "taxNumber"
-    ),
-
-    ownerFirstName: getValue(
-      formData,
-      "ownerFirstName"
-    ),
-    ownerLastName: getValue(
-      formData,
-      "ownerLastName"
-    ),
-    ownerEmail: getValue(
-      formData,
-      "ownerEmail"
-    ),
-    ownerPhone: getValue(
-      formData,
-      "ownerPhone"
-    ),
-
+    name: getValue(formData, "name"),
+    contactPhone: getValue(formData, "contactPhone"),
+    industry: getValue(formData, "industry"),
+    currency: getValue(formData, "currency"),
+    timezone: getValue(formData, "timezone"),
+    employeeCount: getValue(formData, "employeeCount"),
+    email: getValue(formData, "email"),
+    country: getValue(formData, "country"),
+    city: getValue(formData, "city"),
+    website: getValue(formData, "website"),
+    taxNumber: getValue(formData, "taxNumber"),
+    ownerFirstName: getValue(formData, "ownerFirstName"),
+    ownerLastName: getValue(formData, "ownerLastName"),
+    ownerEmail: getValue(formData, "ownerEmail"),
+    ownerPhone: getValue(formData, "ownerPhone"),
     billingInterval: getValue(formData, "billingInterval"),
     billingCustomDays: getValue(formData, "billingCustomDays"),
     subscriptionStartDate: getValue(formData, "subscriptionStartDate"),
@@ -248,36 +201,13 @@ function getReviewData(
     billingNotes: getValue(formData, "billingNotes"),
     adminNotes: getValue(formData, "adminNotes"),
     plan: getValue(formData, "plan"),
-
-    loyaltyMode: getValue(
-      formData,
-      "loyaltyMode"
-    ),
-    unitName: getValue(
-      formData,
-      "unitName"
-    ),
-    rewardName: getValue(
-      formData,
-      "rewardName"
-    ),
-    rewardThreshold: getValue(
-      formData,
-      "rewardThreshold"
-    ),
-    earnAmount: getValue(
-      formData,
-      "earnAmount"
-    ),
-
-    primaryColor: getValue(
-      formData,
-      "primaryColor"
-    ),
-    themePreset: getValue(
-      formData,
-      "themePreset"
-    ),
+    loyaltyMode: getValue(formData, "loyaltyMode"),
+    unitName: getValue(formData, "unitName"),
+    rewardName: getValue(formData, "rewardName"),
+    rewardThreshold: getValue(formData, "rewardThreshold"),
+    earnAmount: getValue(formData, "earnAmount"),
+    primaryColor: getValue(formData, "primaryColor"),
+    themePreset: getValue(formData, "themePreset"),
     logoPreview,
     standardCardArtworkEnabled: formData.get("standardCardArtworkEnabled") === "on",
     standardCardArtworkCategory: getValue(formData, "standardCardArtworkCategory") || "OTHER",
@@ -285,34 +215,14 @@ function getReviewData(
   };
 }
 
-export default function BusinessSetupWizard({
-  action,
-}: Props) {
-  const formRef =
-    useRef<HTMLFormElement>(
-      null
-    );
+export default function BusinessSetupWizard({ action }: Props) {
+  const formRef = useRef<HTMLFormElement>(null);
   const submissionLockRef = useRef(false);
   const [submissionStarted, setSubmissionStarted] = useState(false);
-
-  const [step, setStep] =
-    useState(0);
-
-  const [
-    validationError,
-    setValidationError,
-  ] = useState("");
-
-  const [
-    reviewData,
-    setReviewData,
-  ] =
-    useState<ReviewData | null>(
-      null
-    );
-
-  const [logoPreview, setLogoPreview] =
-    useState("");
+  const [step, setStep] = useState(0);
+  const [validationError, setValidationError] = useState("");
+  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
+  const [logoPreview, setLogoPreview] = useState("");
   const [country, setCountry] = useState("Egypt");
   const [currency, setCurrency] = useState("EGP");
   const [timezone, setTimezone] = useState("Africa/Cairo");
@@ -339,7 +249,19 @@ export default function BusinessSetupWizard({
     customDesignEnabled?: boolean;
     customFrontArtworkUrl?: string;
     customBackArtworkUrl?: string;
-  }>({ businessName: "Your Business", logoUrl: "", loyaltyMode: "VISITS", unitName: "Visit", currency: "EGP", businessPhone: "", businessWebsite: "", businessLocation: "", rewardName: "Free Reward", rewardThreshold: 5 });
+  }>({
+    businessName: "Your Business",
+    logoUrl: "",
+    loyaltyMode: "VISITS",
+    unitName: "Visit",
+    currency: "EGP",
+    businessPhone: "",
+    businessWebsite: "",
+    businessLocation: "",
+    rewardName: "Free Reward",
+    rewardThreshold: 5,
+  });
+
   function fullPhone(local: string) {
     const normalized = local.replace(/[^\d]/g, "").replace(/^0+/, "");
     return normalized ? `${dialCode}${normalized}` : "";
@@ -350,127 +272,61 @@ export default function BusinessSetupWizard({
     if (parsed.success) return null;
     const issue = parsed.error.issues[0];
     const field = String(issue?.path[0] ?? "");
-    const stepForField: Record<string, number> = { name: 0, country: 0, currency: 0, timezone: 0, ownerFirstName: 1, ownerEmail: 1, ownerPassword: 1, billingCustomDays: 2, subscriptionAmount: 2, loyaltyMode: 3, unitName: 3, rewardName: 3, rewardThreshold: 3, earnAmount: 3, primaryColor: 4, themePreset: 4 };
-    const message: Record<string, string> = { billingCustomDays: "Billing: enter custom interval days between 1 and 730.", rewardThreshold: "Loyalty: reward target must be at least 1.", earnAmount: "Loyalty: earn amount must be at least 1." };
-    return { step: stepForField[field] ?? 0, field, message: message[field] ?? "Please check the highlighted field before creating the business." };
+    const stepForField: Record<string, number> = {
+      name: 0,
+      country: 0,
+      currency: 0,
+      timezone: 0,
+      ownerFirstName: 1,
+      ownerEmail: 1,
+      ownerPassword: 1,
+      billingCustomDays: 2,
+      subscriptionAmount: 2,
+      loyaltyMode: 3,
+      unitName: 3,
+      rewardName: 3,
+      rewardThreshold: 3,
+      earnAmount: 3,
+      primaryColor: 4,
+      themePreset: 4,
+    };
+    const message: Record<string, string> = {
+      billingCustomDays: "Billing: enter custom interval days between 1 and 730.",
+      rewardThreshold: "Loyalty: reward target must be at least 1.",
+      earnAmount: "Loyalty: earn amount must be at least 1.",
+    };
+    return {
+      step: stepForField[field] ?? 0,
+      field,
+      message: message[field] ?? "Please check the highlighted field before creating the business.",
+    };
   }
 
-  function validateStep(
-    currentStep: number,
-    formData: FormData
-  ) {
+  function validateStep(currentStep: number, formData: FormData) {
     if (currentStep === 0) {
-      const name =
-        getValue(
-          formData,
-          "name"
-        );
-
-      const employeeCount =
-        getValue(
-          formData,
-          "employeeCount"
-        );
-
-      const email =
-        getValue(
-          formData,
-          "email"
-        );
-
-      const website =
-        getValue(
-          formData,
-          "website"
-        );
-
-      if (name.length < 2) {
-        return "Business name must contain at least 2 characters.";
-      }
-
+      const name = getValue(formData, "name");
+      const employeeCount = getValue(formData, "employeeCount");
+      const email = getValue(formData, "email");
+      const website = getValue(formData, "website");
+      if (name.length < 2) return "Business name must contain at least 2 characters.";
       if (!country) return "Choose a country from the search results.";
       if (!currency) return "Choose a currency.";
       if (!timezone) return timezoneNeedsChoice ? "Choose a timezone for the selected country." : "Choose a timezone.";
-
-      if (
-        employeeCount &&
-        (
-          !Number.isInteger(
-            Number(
-              employeeCount
-            )
-          ) ||
-          Number(
-            employeeCount
-          ) < 0
-        )
-      ) {
+      if (employeeCount && (!Number.isInteger(Number(employeeCount)) || Number(employeeCount) < 0)) {
         return "Number of employees must be a valid non-negative whole number.";
       }
-
-      if (
-        email &&
-        !isValidEmail(
-          email
-        )
-      ) {
-        return "Enter a valid business email address.";
-      }
-
-      if (
-        !isValidHttpUrl(
-          website
-        )
-      ) {
-        return "Enter a valid website, for example xtvco.com.";
-      }
+      if (email && !isValidEmail(email)) return "Enter a valid business email address.";
+      if (!isValidHttpUrl(website)) return "Enter a valid website, for example xtvco.com.";
     }
 
     if (currentStep === 1) {
-      const firstName =
-        getValue(
-          formData,
-          "ownerFirstName"
-        );
-
-      const email =
-        getValue(
-          formData,
-          "ownerEmail"
-        );
-
-      const password =
-        getValue(
-          formData,
-          "ownerPassword"
-        );
-
-      if (
-        firstName.length < 2
-      ) {
-        return "Owner first name must contain at least 2 characters.";
-      }
-
-      if (
-        !isValidEmail(
-          email
-        )
-      ) {
-        return "Enter a valid owner email address.";
-      }
-
-      if (
-        password.length <
-        MIN_PASSWORD_LENGTH
-      ) {
-        return `Owner password must contain at least ${MIN_PASSWORD_LENGTH} characters.`;
-      }
-
-      if (
-        password.length > 100
-      ) {
-        return "Owner password is too long.";
-      }
+      const firstName = getValue(formData, "ownerFirstName");
+      const email = getValue(formData, "ownerEmail");
+      const password = getValue(formData, "ownerPassword");
+      if (firstName.length < 2) return "Owner first name must contain at least 2 characters.";
+      if (!isValidEmail(email)) return "Enter a valid owner email address.";
+      if (password.length < MIN_PASSWORD_LENGTH) return `Owner password must contain at least ${MIN_PASSWORD_LENGTH} characters.`;
+      if (password.length > 100) return "Owner password is too long.";
     }
 
     if (currentStep === 2) {
@@ -478,167 +334,57 @@ export default function BusinessSetupWizard({
       const customDays = getValue(formData, "billingCustomDays");
       const amount = getValue(formData, "subscriptionAmount");
       const nextPaymentDate = getValue(formData, "nextPaymentDate");
-
-      if (
-        interval === "CUSTOM" &&
-        (!/^\d+$/.test(customDays) || Number(customDays) < 1 || Number(customDays) > 730)
-      ) {
+      if (interval === "CUSTOM" && (!/^\d+$/.test(customDays) || Number(customDays) < 1 || Number(customDays) > 730)) {
         return "Custom billing interval must be between 1 and 730 days.";
       }
-
       if (amount && !/^\d+(?:\.\d{1,2})?$/.test(amount)) {
         return "Subscription amount must be a valid non-negative amount with up to two decimals.";
       }
-
       if (nextPaymentDate && !/^\d{4}-\d{2}-\d{2}$/.test(nextPaymentDate)) {
         return "Next payment date must use YYYY-MM-DD.";
       }
     }
 
     if (currentStep === 3) {
-      const unitName =
-        getValue(
-          formData,
-          "unitName"
-        );
-
-      const rewardName =
-        getValue(
-          formData,
-          "rewardName"
-        );
-
-      const rewardThreshold =
-        Number(
-          getValue(
-            formData,
-            "rewardThreshold"
-          )
-        );
-
-      const earnAmount =
-        Number(
-          getValue(
-            formData,
-            "earnAmount"
-          )
-        );
-
-      if (!unitName) {
-        return "Loyalty unit name is required.";
-      }
-
-      if (
-        rewardName.length < 2
-      ) {
-        return "Reward name must contain at least 2 characters.";
-      }
-
-      if (
-        !Number.isInteger(
-          rewardThreshold
-        ) ||
-        rewardThreshold < 1
-      ) {
-        return "Reward threshold must be a positive whole number.";
-      }
-
-      if (
-        !Number.isInteger(
-          earnAmount
-        ) ||
-        earnAmount < 1
-      ) {
-        return "Earn amount must be a positive whole number.";
-      }
+      const unitName = getValue(formData, "unitName");
+      const rewardName = getValue(formData, "rewardName");
+      const rewardThreshold = Number(getValue(formData, "rewardThreshold"));
+      const earnAmount = Number(getValue(formData, "earnAmount"));
+      if (!unitName) return "Loyalty unit name is required.";
+      if (rewardName.length < 2) return "Reward name must contain at least 2 characters.";
+      if (!Number.isInteger(rewardThreshold) || rewardThreshold < 1) return "Reward threshold must be a positive whole number.";
+      if (!Number.isInteger(earnAmount) || earnAmount < 1) return "Earn amount must be a positive whole number.";
     }
 
     if (currentStep === 4) {
-      const primaryColor =
-        getValue(
-          formData,
-          "primaryColor"
-        );
-
-      const secondaryColor =
-        getValue(
-          formData,
-          "secondaryColor"
-        );
-
-      if (
-        !isValidHexColor(
-          primaryColor
-        ) ||
-        !isValidHexColor(
-          secondaryColor
-        )
-      ) {
+      const primaryColor = getValue(formData, "primaryColor");
+      const secondaryColor = getValue(formData, "secondaryColor");
+      if (!isValidHexColor(primaryColor) || !isValidHexColor(secondaryColor)) {
         return "Brand colors must be valid hexadecimal colors.";
       }
     }
-
     return null;
   }
 
   function goNext() {
-    if (
-      !formRef.current
-    ) {
-      return;
-    }
-
-    const formData =
-      new FormData(
-        formRef.current
-      );
-
-    const error =
-      validateStep(
-        step,
-        formData
-      );
-
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
+    const error = validateStep(step, formData);
     if (error) {
-      setValidationError(
-        error
-      );
+      setValidationError(error);
       return;
     }
-
     setValidationError("");
-
-    if (step === 4) {
-      setReviewData(
-        getReviewData(
-          formData,
-          logoPreview
-        )
-      );
-    }
-
-    setStep((current) =>
-      Math.min(
-        current + 1,
-        steps.length - 1
-      )
-    );
+    if (step === 4) setReviewData(getReviewData(formData, logoPreview));
+    setStep((current) => Math.min(current + 1, steps.length - 1));
   }
 
   function goBack() {
     setValidationError("");
-
-    setStep((current) =>
-      Math.max(
-        current - 1,
-        0
-      )
-    );
+    setStep((current) => Math.max(current - 1, 0));
   }
 
-  function editStep(
-    nextStep: number
-  ) {
+  function editStep(nextStep: number) {
     setValidationError("");
     setStep(nextStep);
   }
@@ -691,256 +437,132 @@ export default function BusinessSetupWizard({
     >
       <div className="mb-6">
         <div className="flex items-center justify-between gap-2 overflow-x-auto">
-          {steps.map(
-            (item, index) => (
-              <button
-                key={item}
-                type="button"
-                disabled={
-                  index > step
-                }
-                onClick={() => {
-                  if (
-                    index < step
-                  ) {
-                    editStep(
-                      index
-                    );
-                  }
-                }}
-                className={`whitespace-nowrap text-xs font-bold ${
-                  index === step
-                    ? "text-violet-600"
-                    : index < step
-                      ? "text-slate-700"
-                      : "cursor-default text-slate-400"
-                }`}
-              >
-                {index + 1}.{" "}
-                {item}
-              </button>
-            )
-          )}
+          {steps.map((item, index) => (
+            <button
+              key={item}
+              type="button"
+              disabled={index > step}
+              onClick={() => {
+                if (index < step) editStep(index);
+              }}
+              className={`whitespace-nowrap text-xs font-bold ${
+                index === step
+                  ? "text-violet-600"
+                  : index < step
+                    ? "text-slate-700"
+                    : "cursor-default text-slate-400"
+              }`}
+            >
+              {index + 1}. {item}
+            </button>
+          ))}
         </div>
-
         <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
           <div
             className="h-2 rounded-full bg-violet-600 transition-all"
-            style={{
-              width:
-                `${
-                  (
-                    (step + 1) /
-                    steps.length
-                  ) * 100
-                }%`,
-            }}
+            style={{ width: `${((step + 1) / steps.length) * 100}%` }}
           />
         </div>
       </div>
 
       {validationError ? (
-        <div
-          role="alert"
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
-        >
+        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
           {validationError}
         </div>
       ) : null}
 
-      <div
-        className={
-          step === 0
-            ? "block"
-            : "hidden"
-        }
-      >
+      <div className={step === 0 ? "block" : "hidden"}>
         <section className="space-y-4">
           <div>
-            <h3 className="text-lg font-black">
-              Business Information
-            </h3>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Basic information used to configure the business.
-            </p>
+            <h3 className="text-lg font-black">Business Information</h3>
+            <p className="mt-1 text-sm text-slate-500">Basic information used to configure the business.</p>
           </div>
-
-          <input
-            name="name"
-            required
-            minLength={2}
-            maxLength={80}
-            placeholder="Business name"
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
+          <input name="name" required minLength={2} maxLength={80} placeholder="Business name" className="w-full rounded-xl border px-4 py-3" />
           <input type="hidden" name="contactPhone" value={fullPhone(businessPhone)} />
-          <label className="block text-sm font-semibold text-slate-700">Business phone <span className="font-normal text-slate-500">(optional)</span><div className="mt-2 flex gap-2"><span className="rounded-xl border bg-slate-50 px-3 py-3 text-sm">{dialCode}</span><input value={businessPhone} onChange={(event) => { const value = event.target.value; setBusinessPhone(value); setCardPreview((current) => ({ ...current, businessPhone: fullPhone(value) })); }} inputMode="tel" placeholder="Local number" maxLength={20} className="min-w-0 flex-1 rounded-xl border px-4 py-3" /></div></label>
-
-          <input
-            name="industry"
-            placeholder="Industry"
-            maxLength={100}
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
+          <label className="block text-sm font-semibold text-slate-700">
+            Business phone <span className="font-normal text-slate-500">(optional)</span>
+            <div className="mt-2 flex gap-2">
+              <span className="rounded-xl border bg-slate-50 px-3 py-3 text-sm">{dialCode}</span>
+              <input
+                value={businessPhone}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setBusinessPhone(value);
+                  setCardPreview((current) => ({ ...current, businessPhone: fullPhone(value) }));
+                }}
+                inputMode="tel"
+                placeholder="Local number"
+                maxLength={20}
+                className="min-w-0 flex-1 rounded-xl border px-4 py-3"
+              />
+            </div>
+          </label>
+          <input name="industry" placeholder="Industry" maxLength={100} className="w-full rounded-xl border px-4 py-3" />
           <div className="grid gap-4 sm:grid-cols-2">
-            <select
-              name="currency"
-              value={currency}
-              onChange={(event) => setCurrency(event.target.value)}
-              className="w-full rounded-xl border px-4 py-3"
-            >
+            <select name="currency" value={currency} onChange={(event) => setCurrency(event.target.value)} className="w-full rounded-xl border px-4 py-3">
               {SUPPORTED_CURRENCY_CODES.map((code) => <option key={code} value={code}>{code}</option>)}
             </select>
-
-            <input
-              name="timezone"
-              value={timezone}
-              onChange={(event) => setTimezone(event.target.value)}
-              placeholder="Timezone"
-              className="w-full rounded-xl border px-4 py-3"
-            />
+            <input name="timezone" value={timezone} onChange={(event) => setTimezone(event.target.value)} placeholder="Timezone" className="w-full rounded-xl border px-4 py-3" />
           </div>
-
-          <input
-            name="employeeCount"
-            type="number"
-            min="0"
-            max="100000"
-            step="1"
-            placeholder="Number of employees"
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
-          <input
-            name="email"
-            type="email"
-            placeholder="Business email"
-            maxLength={255}
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
+          <input name="employeeCount" type="number" min="0" max="100000" step="1" placeholder="Number of employees" className="w-full rounded-xl border px-4 py-3" />
+          <input name="email" type="email" placeholder="Business email" maxLength={255} className="w-full rounded-xl border px-4 py-3" />
           <div className="grid gap-4 sm:grid-cols-2">
-            <><input type="hidden" name="country" value={country} /><CountrySelector value={country} required onChange={(selection) => { setCountry(selection.name); setDialCode(selection.dialCode); if (selection.currency) setCurrency(selection.currency); setTimezone(selection.timezone); setTimezoneNeedsChoice(selection.timezoneRequiresChoice); setCardPreview((current) => ({ ...current, currency: selection.currency || current.currency, businessLocation: [getValue(new FormData(formRef.current!), "city"), selection.name].filter(Boolean).join(", ") })); }} /></>
-
-            <input
-              name="city"
-              placeholder="City"
-              maxLength={100}
-              className="w-full rounded-xl border px-4 py-3"
-            />
+            <>
+              <input type="hidden" name="country" value={country} />
+              <CountrySelector
+                value={country}
+                required
+                onChange={(selection) => {
+                  setCountry(selection.name);
+                  setDialCode(selection.dialCode);
+                  if (selection.currency) setCurrency(selection.currency);
+                  setTimezone(selection.timezone);
+                  setTimezoneNeedsChoice(selection.timezoneRequiresChoice);
+                  setCardPreview((current) => ({
+                    ...current,
+                    currency: selection.currency || current.currency,
+                    businessLocation: [getValue(new FormData(formRef.current!), "city"), selection.name].filter(Boolean).join(", "),
+                  }));
+                }}
+              />
+            </>
+            <input name="city" placeholder="City" maxLength={100} className="w-full rounded-xl border px-4 py-3" />
           </div>
-
-          <input
-            name="website"
-            type="text"
-            inputMode="url"
-            autoCapitalize="none"
-            autoCorrect="off"
-            placeholder="example.com"
-            maxLength={300}
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
-          <input
-            name="taxNumber"
-            placeholder="Tax number (optional)"
-            maxLength={100}
-            className="w-full rounded-xl border px-4 py-3"
-          />
+          <input name="website" type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" placeholder="example.com" maxLength={300} className="w-full rounded-xl border px-4 py-3" />
+          <input name="taxNumber" placeholder="Tax number (optional)" maxLength={100} className="w-full rounded-xl border px-4 py-3" />
         </section>
       </div>
 
-      <div
-        className={
-          step === 1
-            ? "block"
-            : "hidden"
-        }
-      >
+      <div className={step === 1 ? "block" : "hidden"}>
         <section className="space-y-4">
           <div>
-            <h3 className="text-lg font-black">
-              Owner Account
-            </h3>
-
-            <p className="mt-1 text-sm text-slate-500">
-              This account will become the business owner.
-            </p>
+            <h3 className="text-lg font-black">Owner Account</h3>
+            <p className="mt-1 text-sm text-slate-500">This account will become the business owner.</p>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
-            <input
-              name="ownerFirstName"
-              required
-              minLength={2}
-              maxLength={80}
-              placeholder="First name"
-              className="w-full rounded-xl border px-4 py-3"
-            />
-
-            <input
-              name="ownerLastName"
-              maxLength={80}
-              placeholder="Last name"
-              className="w-full rounded-xl border px-4 py-3"
-            />
+            <input name="ownerFirstName" required minLength={2} maxLength={80} placeholder="First name" className="w-full rounded-xl border px-4 py-3" />
+            <input name="ownerLastName" maxLength={80} placeholder="Last name" className="w-full rounded-xl border px-4 py-3" />
           </div>
-
-          <input
-            name="ownerEmail"
-            type="email"
-            required
-            maxLength={255}
-            placeholder="Owner email"
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
+          <input name="ownerEmail" type="email" required maxLength={255} placeholder="Owner email" className="w-full rounded-xl border px-4 py-3" />
           <input type="hidden" name="ownerPhone" value={fullPhone(ownerPhone)} />
-          <label className="block text-sm font-semibold text-slate-700">Owner phone <span className="font-normal text-slate-500">(optional)</span><div className="mt-2 flex gap-2"><span className="rounded-xl border bg-slate-50 px-3 py-3 text-sm">{dialCode}</span><input value={ownerPhone} onChange={(event) => setOwnerPhone(event.target.value)} inputMode="tel" placeholder="Local number" maxLength={20} className="min-w-0 flex-1 rounded-xl border px-4 py-3" /></div></label>
-
-          <input
-            name="ownerPassword"
-            type="password"
-            required
-            minLength={
-              MIN_PASSWORD_LENGTH
-            }
-            maxLength={100}
-            autoComplete="new-password"
-            placeholder={`Password — minimum ${MIN_PASSWORD_LENGTH} characters`}
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
-          <p className="text-xs text-slate-500">
-            Minimum{" "}
-            {MIN_PASSWORD_LENGTH}{" "}
-            characters. The password
-            will never appear in the
-            review step.
-          </p>
+          <label className="block text-sm font-semibold text-slate-700">
+            Owner phone <span className="font-normal text-slate-500">(optional)</span>
+            <div className="mt-2 flex gap-2">
+              <span className="rounded-xl border bg-slate-50 px-3 py-3 text-sm">{dialCode}</span>
+              <input value={ownerPhone} onChange={(event) => setOwnerPhone(event.target.value)} inputMode="tel" placeholder="Local number" maxLength={20} className="min-w-0 flex-1 rounded-xl border px-4 py-3" />
+            </div>
+          </label>
+          <input name="ownerPassword" type="password" required minLength={MIN_PASSWORD_LENGTH} maxLength={100} autoComplete="new-password" placeholder={`Password — minimum ${MIN_PASSWORD_LENGTH} characters`} className="w-full rounded-xl border px-4 py-3" />
+          <p className="text-xs text-slate-500">Minimum {MIN_PASSWORD_LENGTH} characters. The password will never appear in the review step.</p>
         </section>
       </div>
 
-      <div
-        className={
-          step === 2
-            ? "block"
-            : "hidden"
-        }
-      >
+      <div className={step === 2 ? "block" : "hidden"}>
         <section className="space-y-4">
           <div>
-            <h3 className="text-lg font-black">
-              Subscription & Billing
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Set the commercial cycle and next payment date for this business.
-            </p>
+            <h3 className="text-lg font-black">Subscription & Billing</h3>
+            <p className="mt-1 text-sm text-slate-500">Set the commercial cycle and next payment date for this business.</p>
           </div>
-
           <label className="block text-sm font-semibold text-slate-700">
             Product plan
             <select name="plan" defaultValue="FREE" className="mt-2 w-full rounded-xl border px-4 py-3">
@@ -950,7 +572,6 @@ export default function BusinessSetupWizard({
               <option value="BUSINESS">Business</option>
             </select>
           </label>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700">
               Billing cycle
@@ -963,13 +584,11 @@ export default function BusinessSetupWizard({
                 <option value="CUSTOM">Custom days</option>
               </select>
             </label>
-
             <label className="text-sm font-semibold text-slate-700">
               Custom interval days
               <input name="billingCustomDays" type="number" min="1" max="730" step="1" placeholder="Only for Custom" className="mt-2 w-full rounded-xl border px-4 py-3" />
             </label>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700">
               Subscription amount
@@ -982,188 +601,76 @@ export default function BusinessSetupWizard({
               </select>
             </label>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-3">
-            <label className="text-sm font-semibold text-slate-700">
-              Subscription start
-              <input name="subscriptionStartDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" />
-            </label>
-            <label className="text-sm font-semibold text-slate-700">
-              Next payment
-              <input name="nextPaymentDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" />
-            </label>
-            <label className="text-sm font-semibold text-slate-700">
-              Last payment
-              <input name="lastPaymentDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" />
-            </label>
+            <label className="text-sm font-semibold text-slate-700">Subscription start<input name="subscriptionStartDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
+            <label className="text-sm font-semibold text-slate-700">Next payment<input name="nextPaymentDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
+            <label className="text-sm font-semibold text-slate-700">Last payment<input name="lastPaymentDate" type="date" className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
           </div>
-
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700">
               Payment status
               <select name="paymentStatus" defaultValue="TRIAL" className="mt-2 w-full rounded-xl border px-4 py-3">
-                <option value="TRIAL">Trial</option>
-                <option value="PAID">Paid</option>
-                <option value="DUE">Due</option>
-                <option value="OVERDUE">Overdue</option>
-                <option value="SUSPENDED">Suspended</option>
+                <option value="TRIAL">Trial</option><option value="PAID">Paid</option><option value="DUE">Due</option><option value="OVERDUE">Overdue</option><option value="SUSPENDED">Suspended</option>
               </select>
             </label>
-            <label className="text-sm font-semibold text-slate-700">
-              Grace period (days)
-              <input name="gracePeriodDays" type="number" min="0" max="60" step="1" defaultValue="3" className="mt-2 w-full rounded-xl border px-4 py-3" />
-            </label>
+            <label className="text-sm font-semibold text-slate-700">Grace period (days)<input name="gracePeriodDays" type="number" min="0" max="60" step="1" defaultValue="3" className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
           </div>
-
           <input name="paymentMethod" maxLength={80} placeholder="Payment method / channel (optional)" className="w-full rounded-xl border px-4 py-3" />
           <textarea name="billingNotes" maxLength={1000} rows={2} placeholder="Payment notes (optional)" className="w-full rounded-xl border px-4 py-3" />
           <textarea name="adminNotes" maxLength={2000} rows={2} placeholder="Internal admin notes — never shown to the business owner" className="w-full rounded-xl border px-4 py-3" />
         </section>
       </div>
 
-      <div
-        className={
-          step === 3
-            ? "block"
-            : "hidden"
-        }
-      >
+      <div className={step === 3 ? "block" : "hidden"}>
         <section className="space-y-4">
           <div>
-            <h3 className="text-lg font-black">
-              Loyalty Setup
-            </h3>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Configure how customers earn and redeem rewards.
-            </p>
+            <h3 className="text-lg font-black">Loyalty Setup</h3>
+            <p className="mt-1 text-sm text-slate-500">Configure how customers earn and redeem rewards.</p>
           </div>
-
-          <select
-            name="loyaltyMode"
-            defaultValue="VISITS"
-            className="w-full rounded-xl border px-4 py-3"
-          >
-            <option value="VISITS">
-              Visits
-            </option>
-            <option value="POINTS">
-              Points
-            </option>
-            <option value="SALES_AMOUNT">
-              Sales Amount
-            </option>
+          <select name="loyaltyMode" defaultValue="VISITS" className="w-full rounded-xl border px-4 py-3">
+            <option value="VISITS">Visits</option><option value="POINTS">Points</option><option value="SALES_AMOUNT">Sales Amount</option>
           </select>
-
-          <input
-            name="unitName"
-            required
-            defaultValue="زيارة"
-            maxLength={30}
-            placeholder="Unit name"
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
-          <input
-            name="rewardName"
-            required
-            minLength={2}
-            maxLength={100}
-            defaultValue="هدية مجانية"
-            placeholder="Reward name"
-            className="w-full rounded-xl border px-4 py-3"
-          />
-
+          <input name="unitName" required defaultValue="زيارة" maxLength={30} placeholder="Unit name" className="w-full rounded-xl border px-4 py-3" />
+          <input name="rewardName" required minLength={2} maxLength={100} defaultValue="هدية مجانية" placeholder="Reward name" className="w-full rounded-xl border px-4 py-3" />
           <div className="grid gap-4 sm:grid-cols-2">
-            <input
-              name="rewardThreshold"
-              type="number"
-              min="1"
-              max="1000000"
-              step="1"
-              required
-              defaultValue="5"
-              placeholder="Reward threshold"
-              className="w-full rounded-xl border px-4 py-3"
-            />
-
-            <input
-              name="earnAmount"
-              type="number"
-              min="1"
-              max="1000000"
-              step="1"
-              required
-              defaultValue="1"
-              placeholder="Earn amount"
-              className="w-full rounded-xl border px-4 py-3"
-            />
+            <input name="rewardThreshold" type="number" min="1" max="1000000" step="1" required defaultValue="5" placeholder="Reward threshold" className="w-full rounded-xl border px-4 py-3" />
+            <input name="earnAmount" type="number" min="1" max="1000000" step="1" required defaultValue="1" placeholder="Earn amount" className="w-full rounded-xl border px-4 py-3" />
           </div>
-
         </section>
       </div>
 
-      <div
-        className={
-          step === 4
-            ? "block"
-            : "hidden"
-        }
-      >
+      <div className={step === 4 ? "block" : "hidden"}>
         <section className="space-y-5">
           <div>
-            <h3 className="text-lg font-black">
-              Card Design
-            </h3>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Configure the one card design used for every customer.
-            </p>
+            <h3 className="text-lg font-black">Card Design</h3>
+            <p className="mt-1 text-sm text-slate-500">Configure the one card design used for every customer.</p>
           </div>
-
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-                Business Logo
-              </p>
-              <div className="mt-4 flex aspect-square max-w-44 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                {logoPreview ? (
-                  <img src={logoPreview} alt="Current business logo preview" className="size-full object-contain p-3" />
-                ) : (
-                  <span className="text-5xl font-black text-slate-300">{cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}</span>
-                )}
-              </div>
-            <label
-              htmlFor="logoFile"
-                className="mt-5 block text-sm font-semibold text-slate-700"
-            >
-                {logoPreview ? "Change Logo" : "Upload Logo"} <span className="font-normal text-slate-500">(optional)</span>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Business Logo</p>
+            <div className="mt-4 flex aspect-square max-w-44 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+              {logoPreview ? (
+                <img src={logoPreview} alt="Current business logo preview" className="size-full object-contain p-3" />
+              ) : (
+                <span className="text-5xl font-black text-slate-300">{cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}</span>
+              )}
+            </div>
+            <label htmlFor="logoFile" className="mt-5 block text-sm font-semibold text-slate-700">
+              {logoPreview ? "Change Logo" : "Upload Logo"} <span className="font-normal text-slate-500">(optional)</span>
             </label>
-
             <input
               id="logoFile"
               type="file"
               accept="image/png,image/jpeg,image/webp"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-
-                if (!file) {
-                  return;
-                }
-
-                if (
-                  file.size > 500 * 1024 ||
-                  !["image/png", "image/jpeg", "image/webp"].includes(file.type)
-                ) {
-                  setValidationError(
-                    "Logo must be a PNG, JPEG, or WebP image smaller than 500KB."
-                  );
+                if (!file) return;
+                if (file.size > 500 * 1024 || !["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+                  setValidationError("Logo must be a PNG, JPEG, or WebP image smaller than 500KB.");
                   event.target.value = "";
                   setLogoPreview("");
                   return;
                 }
-
                 setValidationError("");
-
                 const reader = new FileReader();
                 reader.onload = () => {
                   const preview = typeof reader.result === "string" ? reader.result : "";
@@ -1174,18 +681,12 @@ export default function BusinessSetupWizard({
               }}
               className="mt-2 w-full rounded-xl border bg-white px-4 py-3 text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:font-semibold file:text-white"
             />
-            <input
-              type="hidden"
-              name="logoDataUrl"
-              value={logoPreview.startsWith("data:image/") ? logoPreview : ""}
-            />
-
-            <p className="mt-1 text-xs text-slate-500">
-              PNG, JPEG, or WebP — up to 500KB.
-            </p>
+            <input type="hidden" name="logoDataUrl" value={logoPreview.startsWith("data:image/") ? logoPreview : ""} />
+            <p className="mt-1 text-xs text-slate-500">PNG, JPEG, or WebP — up to 500KB.</p>
           </div>
 
           <StandardCardSetup
+            language="EN"
             allowCustom
             initial={{
               primaryColor: "#B98A4B",
@@ -1195,123 +696,50 @@ export default function BusinessSetupWizard({
               designMode: "STANDARD",
             }}
             preview={{ ...cardPreview, logoUrl: logoPreview }}
-            onPreviewChange={(next) =>
-              setCardPreview((current) => ({ ...current, ...next }))
-            }
+            onPreviewChange={(next) => setCardPreview((current) => ({ ...current, ...next }))}
           />
 
           <input type="hidden" name="logoUrl" value="" />
           <input type="hidden" name="cardStyle" value="CLASSIC" />
           <input type="hidden" name="secondaryColor" value="#FFFFFF" />
           <input type="hidden" name="fontFamily" value="INTER" />
-
         </section>
       </div>
 
-      <div
-        className={
-          step === 5
-            ? "block"
-            : "hidden"
-        }
-      >
+      <div className={step === 5 ? "block" : "hidden"}>
         <section className="space-y-4">
           <div>
-            <h3 className="text-lg font-black">
-              Review & Create
-            </h3>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Review the setup before creating the business.
-            </p>
+            <h3 className="text-lg font-black">Review & Create</h3>
+            <p className="mt-1 text-sm text-slate-500">Review the setup before creating the business.</p>
           </div>
-
           {reviewData ? (
             <div className="space-y-4">
               <ReviewSection
                 title="Business"
-                onEdit={() =>
-                  editStep(0)
-                }
+                onEdit={() => editStep(0)}
                 rows={[
-                  [
-                    "Name",
-                    reviewData.name,
-                  ],
-                  [
-                    "Industry",
-                    reviewData.industry,
-                  ],
-                  [
-                    "Phone",
-                    reviewData.contactPhone,
-                  ],
-                  [
-                    "Email",
-                    reviewData.email,
-                  ],
-                  [
-                    "Location",
-                    [
-                      reviewData.city,
-                      reviewData.country,
-                    ]
-                      .filter(Boolean)
-                      .join(", "),
-                  ],
-                  [
-                    "Currency",
-                    reviewData.currency,
-                  ],
-                  [
-                    "Timezone",
-                    reviewData.timezone,
-                  ],
-                  [
-                    "Employees",
-                    reviewData.employeeCount,
-                  ],
-                  [
-                    "Website",
-                    reviewData.website,
-                  ],
-                  [
-                    "Tax number",
-                    reviewData.taxNumber,
-                  ],
+                  ["Name", reviewData.name],
+                  ["Industry", reviewData.industry],
+                  ["Phone", reviewData.contactPhone],
+                  ["Email", reviewData.email],
+                  ["Location", [reviewData.city, reviewData.country].filter(Boolean).join(", ")],
+                  ["Currency", reviewData.currency],
+                  ["Timezone", reviewData.timezone],
+                  ["Employees", reviewData.employeeCount],
+                  ["Website", reviewData.website],
+                  ["Tax number", reviewData.taxNumber],
                 ]}
               />
-
               <ReviewSection
                 title="Owner"
-                onEdit={() =>
-                  editStep(1)
-                }
+                onEdit={() => editStep(1)}
                 rows={[
-                  [
-                    "Name",
-                    [
-                      reviewData.ownerFirstName,
-                      reviewData.ownerLastName,
-                    ]
-                      .filter(Boolean)
-                      .join(" "),
-                  ],
-                  [
-                    "Email",
-                    reviewData.ownerEmail,
-                  ],
-                  [
-                    "Phone",
-                    reviewData.ownerPhone,
-                  ],
-                  [
-                    "Password",
-                    "••••••••••",
-                  ],
+                  ["Name", [reviewData.ownerFirstName, reviewData.ownerLastName].filter(Boolean).join(" ")],
+                  ["Email", reviewData.ownerEmail],
+                  ["Phone", reviewData.ownerPhone],
+                  ["Password", "••••••••••"],
                 ]}
               />
-
               <ReviewSection
                 title="Billing"
                 onEdit={() => editStep(2)}
@@ -1330,116 +758,51 @@ export default function BusinessSetupWizard({
                   ["Internal notes", reviewData.adminNotes],
                 ]}
               />
-
               <ReviewSection
                 title="Loyalty"
-                onEdit={() =>
-                  editStep(3)
-                }
+                onEdit={() => editStep(3)}
                 rows={[
-                  [
-                    "Mode",
-                    loyaltyLabels[
-                      reviewData.loyaltyMode
-                    ] ??
-                      reviewData.loyaltyMode,
-                  ],
-                  [
-                    "Unit",
-                    reviewData.unitName,
-                  ],
-                  [
-                    "Reward",
-                    reviewData.rewardName,
-                  ],
-                  [
-                    "Threshold",
-                    reviewData.rewardThreshold,
-                  ],
-                  [
-                    "Earn amount",
-                    reviewData.earnAmount,
-                  ],
+                  ["Mode", loyaltyLabels[reviewData.loyaltyMode] ?? reviewData.loyaltyMode],
+                  ["Unit", reviewData.unitName],
+                  ["Reward", reviewData.rewardName],
+                  ["Threshold", reviewData.rewardThreshold],
+                  ["Earn amount", reviewData.earnAmount],
                 ]}
               />
-
               <ReviewSection
                 title="Card Design"
-                onEdit={() =>
-                  editStep(4)
-                }
+                onEdit={() => editStep(4)}
                 rows={[
-                  [
-                    "Theme",
-                    themeLabels[
-                      reviewData.themePreset
-                    ] ??
-                      reviewData.themePreset,
-                  ],
-                  [
-                    "Primary",
-                    reviewData.primaryColor,
-                  ],
-                  [
-                    "Logo",
-                    reviewData.logoPreview ? "Configured" : "Not set",
-                  ],
-                  [
-                    "Design",
-                    reviewData.cardDesignMode === "CUSTOM"
-                      ? "Custom Card"
-                      : "LoyalFlow Standard Card",
-                  ],
-                  [
-                    "Artwork",
-                    reviewData.standardCardArtworkEnabled
-                      ? reviewData.standardCardArtworkCategory
-                      : "Disabled",
-                  ],
+                  ["Theme", themeLabels[reviewData.themePreset] ?? reviewData.themePreset],
+                  ["Primary", reviewData.primaryColor],
+                  ["Logo", reviewData.logoPreview ? "Configured" : "Not set"],
+                  ["Design", reviewData.cardDesignMode === "CUSTOM" ? "Custom Card" : "LoyalFlow Standard Card"],
+                  ["Artwork", reviewData.standardCardArtworkEnabled ? reviewData.standardCardArtworkCategory : "Disabled"],
                 ]}
               />
-
               {reviewData.logoPreview ? (
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <img
-                    src={reviewData.logoPreview}
-                    alt="Business logo preview"
-                    className="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1"
-                  />
-                  <span className="text-sm font-medium text-slate-700">
-                    Logo preview
-                  </span>
+                  <img src={reviewData.logoPreview} alt="Business logo preview" className="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1" />
+                  <span className="text-sm font-medium text-slate-700">Logo preview</span>
                 </div>
               ) : null}
             </div>
           ) : (
-            <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">
-              Complete the previous steps to generate the review.
-            </p>
+            <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Complete the previous steps to generate the review.</p>
           )}
         </section>
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
         {step > 0 ? (
-          <button
-            type="button"
-            onClick={goBack}
-            className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50"
-          >
+          <button type="button" onClick={goBack} className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50">
             Back
           </button>
         ) : (
           <span />
         )}
-
-        {step <
-        steps.length - 1 ? (
-          <button
-            type="button"
-            onClick={goNext}
-            className="ml-auto rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
-          >
+        {step < steps.length - 1 ? (
+          <button type="button" onClick={goNext} className="ml-auto rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700">
             Next
           </button>
         ) : (
@@ -1456,47 +819,22 @@ function ReviewSection({
   onEdit,
 }: {
   title: string;
-  rows: Array<
-    [string, string]
-  >;
+  rows: Array<[string, string]>;
   onEdit: () => void;
 }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between gap-4">
-        <h4 className="font-black text-slate-950">
-          {title}
-        </h4>
-
-        <button
-          type="button"
-          onClick={onEdit}
-          className="text-sm font-bold text-violet-600 hover:text-violet-800"
-        >
-          Edit
-        </button>
+        <h4 className="font-black text-slate-950">{title}</h4>
+        <button type="button" onClick={onEdit} className="text-sm font-bold text-violet-600 hover:text-violet-800">Edit</button>
       </div>
-
       <dl className="mt-4 space-y-2">
-        {rows.map(
-          ([label, value]) => (
-            <div
-              key={label}
-              className="flex items-start justify-between gap-5 border-b border-slate-100 pb-2 last:border-0 last:pb-0"
-            >
-              <dt className="text-sm text-slate-500">
-                {label}
-              </dt>
-
-              <dd
-                dir="auto"
-                className="max-w-[65%] break-words text-right text-sm font-semibold text-slate-900"
-              >
-                {value || "—"}
-              </dd>
-            </div>
-          )
-        )}
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-start justify-between gap-5 border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+            <dt className="text-sm text-slate-500">{label}</dt>
+            <dd dir="auto" className="max-w-[65%] break-words text-right text-sm font-semibold text-slate-900">{value || "—"}</dd>
+          </div>
+        ))}
       </dl>
     </section>
   );
