@@ -1,29 +1,18 @@
 "use server";
 
 import { publicMembershipRegistrationProblemCodes } from "@loyalflow/contracts/customers/public-membership";
-
-import {
-  generateCustomerCode,
-  getCustomerDisplayName,
-  parseCustomerRegistration,
-} from "@/lib/customers/registration";
-import {
-  canApplyPublicReferral,
-  canCreatePublicMembership,
-} from "@/lib/customers/public-membership-policy";
-import { getEffectivePlanLimits } from "@/lib/entitlements-server";
-import { canRecordReferral, normalizeReferralCode } from "@/lib/referrals/code";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
-import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
-import prisma from "@/lib/prisma";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
-import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
-class PublicMembershipPlanLimitError extends Error {}
-class PublicMembershipSubscriptionRestrictedError extends Error {}
+import { parseCustomerRegistration } from "@/lib/customers/registration";
+import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
+import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import prisma from "@/lib/prisma";
+import { normalizeReferralCode } from "@/lib/referrals/code";
+import { createPublicMembershipCommand } from "@/lib/server/business/public-membership-command";
+import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export async function joinBusinessAction(slug: string, formData: FormData) {
   const business = await prisma.business.findUnique({
@@ -86,9 +75,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
         phone: parsed.phone,
       },
     },
-    select: {
-      id: true,
-    },
+    select: { id: true },
   });
 
   if (existingCustomer) {
@@ -97,135 +84,18 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     );
   }
 
-  const customerCode = await generateCustomerCode(
-    prisma,
-    business.id,
-    business.slug,
-  );
-  const customerName = getCustomerDisplayName(parsed);
-  const planLimits = await getEffectivePlanLimits(business.plan);
   const referralCode = canApplyPublicReferral(business.plan)
     ? normalizeReferralCode(formData.get("ref"))
     : null;
 
+  let result: Awaited<ReturnType<typeof createPublicMembershipCommand>>;
   try {
-    const customer = await prisma.$transaction(
-      async (transaction) => {
-        if (
-          !(await canBusinessPerformSubscriptionOperation(
-            transaction,
-            business.id,
-            "EXPAND",
-          ))
-        ) {
-          throw new PublicMembershipSubscriptionRestrictedError();
-        }
-
-        const customerCount = await transaction.customer.count({
-          where: { businessId: business.id },
-        });
-
-        if (
-          !canCreatePublicMembership(business.plan, customerCount, planLimits)
-        ) {
-          throw new PublicMembershipPlanLimitError();
-        }
-
-        const createdCustomer = await transaction.customer.create({
-          data: {
-            firstName: parsed.firstName,
-            lastName: parsed.lastName || null,
-            phone: parsed.phone,
-            customerCode,
-            businessId: business.id,
-          },
-        });
-
-        await transaction.businessActivity.create({
-          data: {
-            type: "CUSTOMER_CREATED",
-            description: `انضم العميل ${customerName} عبر التسجيل الذاتي`,
-            businessId: business.id,
-            customerId: createdCustomer.id,
-          },
-        });
-
-        if (referralCode) {
-          const referrerCode = await transaction.customerReferralCode.findFirst(
-            {
-              where: {
-                businessId: business.id,
-                code: referralCode,
-                isActive: true,
-                customer: {
-                  isActive: true,
-                },
-              },
-              select: {
-                customerId: true,
-                businessId: true,
-                customer: {
-                  select: {
-                    isActive: true,
-                  },
-                },
-              },
-            },
-          );
-
-          if (
-            referrerCode &&
-            canRecordReferral({
-              businessId: business.id,
-              referrerBusinessId: referrerCode.businessId,
-              referrerCustomerId: referrerCode.customerId,
-              referredCustomerId: createdCustomer.id,
-              referrerIsActive: referrerCode.customer.isActive,
-            })
-          ) {
-            await transaction.referral.create({
-              data: {
-                businessId: business.id,
-                referrerCustomerId: referrerCode.customerId,
-                referredCustomerId: createdCustomer.id,
-              },
-            });
-            await transaction.businessActivity.create({
-              data: {
-                type: "REFERRAL_RECORDED",
-                description: "تم تسجيل إحالة عميل جديد",
-                businessId: business.id,
-                customerId: createdCustomer.id,
-              },
-            });
-          }
-        }
-
-        return createdCustomer;
-      },
-      { isolationLevel: "Serializable" },
-    );
-
-    await syncBusinessToGoogleSheetSafely(business.id);
-
-    revalidatePath(`/businesses/${business.slug}`);
-    revalidatePath(`/businesses/${business.slug}/customers`);
-    revalidatePath(`/card/${customer.publicToken}`);
-
-    redirect(`/card/${customer.publicToken}?welcome=1`);
+    result = await createPublicMembershipCommand({
+      businessId: business.id,
+      customer: parsed,
+      referralCode,
+    });
   } catch (error) {
-    if (error instanceof PublicMembershipSubscriptionRestrictedError) {
-      redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
-      );
-    }
-
-    if (error instanceof PublicMembershipPlanLimitError) {
-      redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.customerLimitReached}`,
-      );
-    }
-
     if (
       typeof error === "object" &&
       error &&
@@ -237,20 +107,32 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
       );
     }
 
-    // Redirect errors are control flow. Every other failure gets a bounded
-    // public state rather than exposing database or integration details.
-    if (
-      typeof error === "object" &&
-      error &&
-      "digest" in error &&
-      typeof error.digest === "string" &&
-      error.digest.startsWith("NEXT_REDIRECT")
-    ) {
-      throw error;
-    }
-
     redirect(
       `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
     );
   }
+
+  if (!result.ok) {
+    if (result.reason === "DUPLICATE") {
+      redirect(
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
+      );
+    }
+    if (result.reason === "PLAN_LIMIT") {
+      redirect(
+        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.customerLimitReached}`,
+      );
+    }
+    redirect(
+      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
+    );
+  }
+
+  await syncBusinessToGoogleSheetSafely(business.id);
+
+  revalidatePath(`/businesses/${business.slug}`);
+  revalidatePath(`/businesses/${business.slug}/customers`);
+  revalidatePath(`/card/${result.customer.publicToken}`);
+
+  redirect(`/card/${result.customer.publicToken}?welcome=1`);
 }

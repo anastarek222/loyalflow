@@ -76,13 +76,19 @@ test("TC5 bounded Custom Card upload action preserves existing feedback and draf
   assert.doesNotMatch(action, /@vercel\/blob|process\.env/);
 });
 
-test("TC5 Custom Card manager actively binds upload to the command-backed action while preserving publish compatibility", () => {
+test("TC5 Custom Card manager actively binds upload and publish to their command-backed actions", () => {
   assert.match(manager, /uploadCustomCardDraftCommandAction/);
   assert.match(
     manager,
     /uploadCustomCardDraftCommandAction\.bind\(null, slug\)/,
   );
+  assert.match(manager, /publishCustomCardArtworkAction/);
+  assert.match(
+    manager,
+    /publishCustomCardArtworkAction\.bind\(null, slug\)/,
+  );
   assert.match(manager, /<form action=\{uploadCustomArtwork\}/);
-  assert.match(manager, /<form action=\{publishAction\}>/);
+  assert.match(manager, /<form action=\{publishCustomArtwork\}>/);
   assert.doesNotMatch(manager, /<form action=\{uploadAction\}/);
+  assert.doesNotMatch(manager, /<form action=\{publishAction\}/);
 });
