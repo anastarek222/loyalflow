@@ -16,7 +16,6 @@ import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
 import {
   mutateBulkCustomerTagCommand,
@@ -110,41 +109,38 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
     }
 
-    let committedChangedIds = changedIds;
-    if (changedIds.length > 0) {
-      if (
-        activate &&
-        !canPerformSubscriptionOperation(
-          business.subscriptionLifecycleState,
-          "OPERATE",
-        )
-      ) {
-        redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
-      }
-
-      const mutation = await setBulkCustomerStatusCommand({
-        businessId: business.id,
-        customerIds: parsedIds,
-        activate,
-        actor: session.user,
-      });
-      if (!mutation.ok) {
-        if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
-          redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
-        }
-        redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
-      }
-      committedChangedIds = [...mutation.changedIds];
+    if (
+      activate &&
+      changedIds.length > 0 &&
+      !canPerformSubscriptionOperation(
+        business.subscriptionLifecycleState,
+        "OPERATE",
+      )
+    ) {
+      redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
     }
 
-    await syncBusinessToGoogleSheetSafely(business.id);
+    const mutation = await setBulkCustomerStatusCommand({
+      businessId: business.id,
+      customerIds: parsedIds,
+      activate,
+      actor: session.user,
+    });
+    if (!mutation.ok) {
+      if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+        redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+      }
+      redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
+    }
+
+    scheduleBusinessGoogleSheetsSync(mutation.integrationJobId);
     revalidateBulkCustomerPages(slug);
     redirect(
       bulkResultUrl(
         slug,
         operation.toLowerCase(),
         parsedIds.length,
-        committedChangedIds.length,
+        mutation.changedIds.length,
       ),
     );
   }
@@ -174,44 +170,41 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       ? parsedIds.filter((customerId) => !existingCustomerIds.has(customerId))
       : existingAssignments.map((assignment) => assignment.customerId);
 
-  let committedChangedIds = changedIds;
-  if (changedIds.length > 0) {
-    if (
-      !canPerformSubscriptionOperation(
-        business.subscriptionLifecycleState,
-        "OPERATE",
-      )
-    ) {
-      redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
-    }
-
-    const mutation = await mutateBulkCustomerTagCommand({
-      businessId: business.id,
-      customerIds: parsedIds,
-      tagId: tag.id,
-      operation: operation as "ADD_TAG" | "REMOVE_TAG",
-      actor: session.user,
-    });
-    if (!mutation.ok) {
-      if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
-        redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
-      }
-      if (mutation.reason === "INVALID_SELECTION") {
-        redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
-      }
-      redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
-    }
-    committedChangedIds = [...mutation.changedIds];
+  if (
+    changedIds.length > 0 &&
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
   }
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  const mutation = await mutateBulkCustomerTagCommand({
+    businessId: business.id,
+    customerIds: parsedIds,
+    tagId: tag.id,
+    operation: operation as "ADD_TAG" | "REMOVE_TAG",
+    actor: session.user,
+  });
+  if (!mutation.ok) {
+    if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+      redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+    }
+    if (mutation.reason === "INVALID_SELECTION") {
+      redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
+    }
+    redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
+  }
+
+  scheduleBusinessGoogleSheetsSync(mutation.integrationJobId);
   revalidateBulkCustomerPages(slug);
   redirect(
     bulkResultUrl(
       slug,
       operation.toLowerCase(),
       parsedIds.length,
-      committedChangedIds.length,
+      mutation.changedIds.length,
     ),
   );
 }
