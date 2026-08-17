@@ -10,6 +10,8 @@ export const CUSTOM_CARD_ALLOWED_TYPES = [
   "image/webp",
 ] as const;
 export const CUSTOM_CARD_ASPECT_RATIO_TOLERANCE = 0.01;
+export const CUSTOM_CARD_GEOMETRY_ERROR =
+  "Custom Card front and back artwork must use matching pixel dimensions and the standard ID-1 aspect ratio.";
 
 export type CustomCardSide = "front" | "back";
 
@@ -136,6 +138,10 @@ export async function uploadCustomCardArtwork(input: {
   front: File;
   back: File;
 }) {
+  if (!(await validateCustomCardArtworkPair(input.front, input.back))) {
+    throw new Error(CUSTOM_CARD_GEOMETRY_ERROR);
+  }
+
   const prefix = customCardVersionPrefix(input.businessId, input.version);
   const [front, back] = await Promise.all(
     (["front", "back"] as const).map((side) => {
