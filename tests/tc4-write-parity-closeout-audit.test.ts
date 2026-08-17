@@ -26,7 +26,7 @@ const operationalFiles = {
   branches: source("app/businesses/[slug]/branches/actions.ts"),
   customerList: source("app/businesses/[slug]/customers/actions.ts"),
   customerDetail: source(
-    "app/businesses/[slug]/customers/[customerId]/actions.ts",
+    "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
   ),
   offers: source("app/businesses/[slug]/offers/actions.ts"),
   playbooks: source("app/businesses/[slug]/playbooks/actions.ts"),
