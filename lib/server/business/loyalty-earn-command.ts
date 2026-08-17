@@ -12,6 +12,12 @@ import {
   getRewardUnlockRedemptionState,
 } from "@/lib/rewards/expiration";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
+
+export type LoyaltyEarnCommandResult = Readonly<{
+  balance: number | null;
+  integrationJobId: string | null;
+}>;
 
 async function createRewardUnlocksForEarn(
   transaction: Prisma.TransactionClient,
@@ -49,9 +55,7 @@ async function createRewardUnlocksForEarn(
       select: { id: true },
     });
 
-    if (reward.expiresAfterDays === null) {
-      continue;
-    }
+    if (reward.expiresAfterDays === null) continue;
 
     if (currentUnlock) {
       const unlock = await transaction.rewardUnlock.findFirstOrThrow({
@@ -72,9 +76,7 @@ async function createRewardUnlocksForEarn(
         now,
       });
 
-      if (unlockState === "ACTIVE") {
-        continue;
-      }
+      if (unlockState === "ACTIVE") continue;
 
       if (!unlock.expiredAt) {
         const expired = await transaction.rewardUnlock.updateMany({
@@ -149,9 +151,10 @@ async function createRewardUnlocksForEarn(
  * Authoritative Loyalty Earn transaction boundary.
  *
  * Presentation validation, rapid-operation protection, replay checks,
- * authentication and redirects remain in the Server Action. This command owns
- * the mutation transaction, promotion selection/application, canonical earn
- * persistence and reward-unlock lifecycle updates.
+ * authentication, redirects and post-commit transport wake-up remain in the
+ * Server Action. This command owns promotion selection/application, canonical
+ * earn persistence, reward-unlock lifecycle updates and the durable Sheets job
+ * in the same transaction.
  */
 export async function executeLoyaltyEarnCommand(input: {
   businessId: string;
@@ -167,7 +170,7 @@ export async function executeLoyaltyEarnCommand(input: {
   transactionNote: string;
   activityDescription: string;
   reportContextFailure: boolean;
-}): Promise<number | null> {
+}): Promise<LoyaltyEarnCommandResult> {
   return prisma.$transaction(async (transaction) => {
     const occurredAt = new Date();
     const promotions = await transaction.promotion.findMany({
@@ -175,12 +178,8 @@ export async function executeLoyaltyEarnCommand(input: {
         businessId: input.businessId,
         isActive: true,
         AND: [
-          {
-            OR: [{ startsAt: null }, { startsAt: { lte: occurredAt } }],
-          },
-          {
-            OR: [{ endsAt: null }, { endsAt: { gte: occurredAt } }],
-          },
+          { OR: [{ startsAt: null }, { startsAt: { lte: occurredAt } }] },
+          { OR: [{ endsAt: null }, { endsAt: { gte: occurredAt } }] },
         ],
       },
       select: {
@@ -228,15 +227,23 @@ export async function executeLoyaltyEarnCommand(input: {
       reportContextFailure: input.reportContextFailure,
     });
 
-    if (balanceAfter !== null) {
-      await createRewardUnlocksForEarn(transaction, {
-        businessId: input.businessId,
-        customerId: input.customerId,
-        createdById: input.actor.id,
-        balanceAfter,
-      });
+    if (balanceAfter === null) {
+      return { balance: null, integrationJobId: null };
     }
 
-    return balanceAfter;
+    await createRewardUnlocksForEarn(transaction, {
+      businessId: input.businessId,
+      customerId: input.customerId,
+      createdById: input.actor.id,
+      balanceAfter,
+    });
+
+    const integrationJob = await enqueueIntegrationJob(transaction, {
+      businessId: input.businessId,
+      kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+      idempotencyKey: `loyalty-earn:${input.idempotencyKey}`,
+    });
+
+    return { balance: balanceAfter, integrationJobId: integrationJob.id };
   });
 }
