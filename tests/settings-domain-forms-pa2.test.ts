@@ -173,6 +173,19 @@ test("Settings retains two independent PA-2 forms with pending feedback", () => 
   assert.match(pageSource, /operations: updateOperationsSettings/);
 });
 
+test("Settings keeps missing card contact details empty instead of saveable examples", () => {
+  const start = pageSource.indexOf("<CardBusinessDetailsForm");
+  assert.ok(start >= 0);
+  const end = pageSource.indexOf("/>", start);
+  assert.ok(end > start);
+  const binding = pageSource.slice(start, end);
+
+  assert.match(binding, /contactPhone=\{business\.contactPhone \?\? ""\}/);
+  assert.match(binding, /address=\{business\.address \?\? ""\}/);
+  assert.doesNotMatch(binding, /01033196610/);
+  assert.doesNotMatch(binding, /Dr\. Lasheen|دكتور لاشين|المريوطية|فيصل/);
+});
+
 test("PA-1 removals remain intact after programme extraction", () => {
   assert.equal((pageSource.match(/<StandardCardSetup/g) ?? []).length, 0);
   assert.doesNotMatch(

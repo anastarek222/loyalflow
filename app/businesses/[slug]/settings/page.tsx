@@ -517,13 +517,8 @@ export default async function BusinessSettingsPage({
           </summary>
           <div className="border-t border-border p-4 sm:p-5">
             <CardBusinessDetailsForm
-              contactPhone={business.contactPhone ?? "01033196610"}
-              address={
-                business.address ??
-                (language === "AR"
-                  ? "١ شارع دكتور لاشين، المريوطية الرئيسي، فيصل، الجيزة"
-                  : "1 Dr. Lasheen Street, Mariouteya Main Road, Faisal, Giza")
-              }
+              contactPhone={business.contactPhone ?? ""}
+              address={business.address ?? ""}
               cardTerms={
                 business.cardTerms ??
                 (language === "AR"
