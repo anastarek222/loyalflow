@@ -15,6 +15,7 @@ import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
 import {
@@ -93,8 +94,6 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     select: { id: true, businessId: true, isActive: true },
   });
 
-  // Presentation preflight rejects partial/cross-tenant selections early. The
-  // command revalidates the same invariant inside the authoritative transaction.
   if (customers.length !== parsedIds.length) {
     redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
   }
@@ -120,9 +119,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
           "OPERATE",
         )
       ) {
-        redirect(
-          `/businesses/${slug}/customers?error=subscription-restricted`,
-        );
+        redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
       }
 
       const mutation = await setBulkCustomerStatusCommand({
@@ -133,13 +130,9 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       });
       if (!mutation.ok) {
         if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
-          redirect(
-            `/businesses/${slug}/customers?error=subscription-restricted`,
-          );
+          redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
         }
-        redirect(
-          bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0),
-        );
+        redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
       }
       committedChangedIds = [...mutation.changedIds];
     }
@@ -204,9 +197,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
         redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
       }
       if (mutation.reason === "INVALID_SELECTION") {
-        redirect(
-          bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0),
-        );
+        redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
       }
       redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
     }
@@ -241,9 +232,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   }
 
   const business = await prisma.business.findUnique({
-    where: {
-      slug,
-    },
+    where: { slug },
     select: {
       id: true,
       slug: true,
@@ -257,7 +246,6 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   }
 
   const canAccess = canPerform(session.user, business.id, "CUSTOMERS_EDIT");
-
   if (!canAccess) {
     redirect("/dashboard");
   }
@@ -288,9 +276,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
         phone: parsed.phone,
       },
     },
-    select: {
-      id: true,
-    },
+    select: { id: true },
   });
 
   if (existingCustomer) {
@@ -327,14 +313,12 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   }
 
   const createdCustomer = creation.customer;
-  await syncBusinessToGoogleSheetSafely(business.id);
+  scheduleBusinessGoogleSheetsSync(creation.integrationJobId);
 
   revalidatePath(`/businesses/${slug}`);
   revalidatePath(`/businesses/${slug}/customers`);
   revalidatePath(`/card/${createdCustomer.publicToken}`);
   revalidatePath("/dashboard");
 
-  redirect(
-    `/businesses/${slug}/customers/${createdCustomer.id}?success=created`,
-  );
+  redirect(`/businesses/${slug}/customers/${createdCustomer.id}?success=created`);
 }

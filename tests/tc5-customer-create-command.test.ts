@@ -23,7 +23,8 @@ test("TC5 Customer creation action keeps presentation checks and delegates the a
   assert.match(createCustomer, /parseCustomerRegistration/);
   assert.match(createCustomer, /isWithinPlanLimit/);
   assert.match(createCustomer, /createCustomerCommand/);
-  assert.match(createCustomer, /syncBusinessToGoogleSheetSafely/);
+  assert.match(createCustomer, /scheduleBusinessGoogleSheetsSync/);
+  assert.doesNotMatch(createCustomer, /syncBusinessToGoogleSheetSafely/);
   assert.doesNotMatch(createCustomer, /prisma\.\$transaction/);
   assert.doesNotMatch(createCustomer, /transaction\.customer\.create/);
   assert.doesNotMatch(createCustomer, /businessActivity\.create/);
