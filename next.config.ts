@@ -35,12 +35,19 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+const configuredDevOrigin =
+  process.env.NODE_ENV === "development"
+    ? process.env.LOYALFLOW_DEV_ORIGIN?.trim()
+    : undefined;
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
 
-  allowedDevOrigins: [
-    "192.168.100.107",
-  ],
+  ...(configuredDevOrigin
+    ? {
+        allowedDevOrigins: [configuredDevOrigin],
+      }
+    : {}),
 
   async headers() {
     return [
