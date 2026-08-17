@@ -295,8 +295,8 @@ test("Back keeps artwork secondary and fills RTL progress deliberately from the 
 
 test("Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target", () => {
   const setup = source("components/standard-card-setup.tsx");
-  for (const label of ["Mode", "Unit", "Target", "Reward"]) {
-    assert.match(setup, new RegExp(`>${label}<`));
+  for (const [ar, en] of [["الوضع", "Mode"], ["الوحدة", "Unit"], ["الهدف", "Target"], ["المكافأة", "Reward"]] as const) {
+    assert.match(setup, new RegExp(`t\\(\\"${ar}\\", \\"${en}\\"\\)`));
   }
   assert.match(setup, /summaryMetrics\.targetText/);
   assert.doesNotMatch(setup, /values\.rewardThreshold\.toLocaleString\(\)\} \{values\.unitName/);
