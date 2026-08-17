@@ -9,6 +9,7 @@ const source = (path: string) =>
 const program = source("app/businesses/[slug]/program/page.tsx");
 const rewards = source("app/businesses/[slug]/rewards/page.tsx");
 const rewardActions = source("app/businesses/[slug]/rewards/actions.ts");
+const rewardCommand = source("lib/server/business/reward-write-command.ts");
 const rulesForm = source("components/program-rules-form.tsx");
 const messagesForm = source("components/customer-messages-form.tsx");
 
@@ -70,7 +71,15 @@ test("T006 reward mutations retain plan limits, tenant lookups, audit records, a
     /where: \{ id: parsedRewardId\.data, businessId: business\.id \}/,
   );
   assert.match(rewardActions, /expiresAfterDays:/);
-  assert.match(rewardActions, /transaction\.businessActivity\.create/);
+  assert.match(rewardActions, /createRewardCommand/);
+  assert.match(rewardActions, /updateRewardCommand/);
+  assert.match(rewardActions, /setRewardStatusCommand/);
+  assert.match(rewardCommand, /canBusinessPerformSubscriptionOperation/);
+  assert.match(
+    rewardCommand,
+    /where: \{ id: input\.rewardId, businessId: input\.businessId \}/,
+  );
+  assert.match(rewardCommand, /transaction\.businessActivity\.create/);
   assert.match(rewardActions, /revalidateRewardPaths\(business\.slug\)/);
 });
 
