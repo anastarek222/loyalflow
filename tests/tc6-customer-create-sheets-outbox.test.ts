@@ -21,13 +21,17 @@ test("TC6.11 atomically couples customer creation with one durable Sheets job", 
   assert.match(command, /integrationJobId: integrationJob\.id/);
 });
 
-test("TC6.11 schedules create transport after command success while leaving bulk on its existing path", () => {
+test("TC6.11 and TC6.12 both wake durable jobs after successful commands", () => {
   const createStart = action.indexOf("export async function createCustomerAction");
   const createSource = action.slice(createStart);
   const bulkSource = action.slice(0, createStart);
 
   assert.match(createSource, /createCustomerCommand\(/);
-  assert.match(createSource, /scheduleBusinessGoogleSheetsSync\(creation\.integrationJobId\)/);
+  assert.match(
+    createSource,
+    /scheduleBusinessGoogleSheetsSync\(creation\.integrationJobId\)/,
+  );
+  assert.match(bulkSource, /scheduleBusinessGoogleSheetsSync\(mutation\.integrationJobId\)/);
   assert.doesNotMatch(createSource, /syncBusinessToGoogleSheetSafely/);
-  assert.match(bulkSource, /syncBusinessToGoogleSheetSafely/);
+  assert.doesNotMatch(bulkSource, /syncBusinessToGoogleSheetSafely/);
 });
