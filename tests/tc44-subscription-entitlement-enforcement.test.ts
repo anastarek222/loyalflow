@@ -28,6 +28,13 @@ const customerActions = readFileSync(
   new URL("../app/businesses/[slug]/customers/actions.ts", import.meta.url),
   "utf8",
 );
+const customerCreateCommand = readFileSync(
+  new URL(
+    "../lib/server/business/customer-create-command.ts",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("TC4.4 reads the persisted lifecycle state and fails closed", () => {
   assert.match(runtime, /subscriptionLifecycleState: true/);
@@ -62,7 +69,9 @@ test("TC4.4 blocks customer expansion in public and authenticated paths", () => 
   assert.match(customerActions, /subscriptionLifecycleState: true/);
   assert.match(customerActions, /canPerformSubscriptionOperation\(/);
   assert.match(customerActions, /"EXPAND"/);
-  assert.match(customerActions, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(customerActions, /createCustomerCommand/);
+  assert.match(customerCreateCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(customerCreateCommand, /"EXPAND"/);
 
   assert.match(publicJoin, /businessUnavailable/);
   assert.match(customerActions, /subscription-restricted/);
