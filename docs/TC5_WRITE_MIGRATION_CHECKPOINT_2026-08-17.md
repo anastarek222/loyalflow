@@ -1,6 +1,6 @@
 # TC5 Write Migration Checkpoint — 2026-08-17
 
-Status: `BETA_STAGING_COORDINATION_ONLY`
+Status: `BETA_STAGING_TC_TR_COMPLETE`
 
 This checkpoint records the current TC5 safe-write Strangler migration without changing runtime behavior.
 
@@ -22,49 +22,40 @@ This checkpoint records the current TC5 safe-write Strangler migration without c
 - PR #172 — Public membership persistence — `FINAL_HEAD_TR_PASS / NEON_SLOT_RECOVERED / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 - PR #174 — Custom Card draft upload — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 - PR #175 — Manual Google Sheets sync — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
+- PR #179 — Financial writer reconciliation for Balance Adjustment, Earn and Redemption — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 
-## Financial write boundaries — TC/TR pass, active binding pending
+## Financial write reconciliation
 
-- PR #176 — Customer manual balance adjustment — `COMMAND_TR_PASS / BOUNDED_ACTION_TR_PASS / PAGE_BINDING_PENDING / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
-- PR #177 — Loyalty Earn — `COMMAND_TR_PASS / BOUNDED_ACTION_TR_PASS / PAGE_BINDING_PENDING / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
-- PR #178 — Loyalty Redemption — `COMMAND_TR_PASS / BOUNDED_ACTION_TR_PASS / PAGE_BINDING_PENDING / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
+PRs #176, #177 and #178 independently established and validated the command/action boundaries for Customer manual balance adjustment, Loyalty Earn and Loyalty Redemption. PR #179 closes their previously pending active-adoption gap.
 
-The three financial Drafts deliberately preserve the canonical financial helpers and move only semantic transaction authority into commands. Their existing Customer/Scan bindings remain legacy compatibility bindings until a safe reconciliation/adoption step can update the shared Customer detail surface.
+The reconciliation avoids replacing the large Customer or Scan pages. Their existing imports continue through `app/businesses/[slug]/customers/[customerId]/actions.ts`, which is now a Next-compatible async-only compatibility facade:
 
-None of these Drafts is merged by this checkpoint.
+- `adjustCustomerBalanceAction` delegates to `adjustCustomerBalanceCommandAction`;
+- `addLoyaltyAction` delegates to `addLoyaltyCommandAction`;
+- `redeemRewardAction` delegates to `redeemRewardCommandAction`;
+- the remaining non-financial compatibility names delegate to the retained legacy implementation.
 
-No runtime/browser TCR is claimed for heads without fresh Preview evidence.
+PR #179 head `89ca4ebd2387ba249fa092c25886b8835b9d1aaf` passed GitHub `Staging PR Validation` run #194 (`32012907919`): focused entitlement tests, **1079/1079 full tests**, typecheck, workspace validation, lint, Next build and patch whitespace all passed. Exact-head Vercel is blocked by Hobby `build-rate-limit`, so no fresh runtime/browser TCR is claimed.
 
-## Wiring progress notes
+## Final TC5 writer inventory
 
-- PR #175 is actively wired: Business Settings manual Google Sheets sync uses `syncGoogleSheetCommandAction`. Final-head run #172 passed focused tests, the full suite, typecheck, workspace validation, lint, Next build, and patch whitespace. Exact-head Vercel is blocked by Hobby `build-rate-limit`.
-- PR #174 is actively wired: `CustomCardArtworkManager` routes front/back draft upload through `uploadCustomCardDraftCommandAction`. Final-head run #157 passed all GitHub application gates. Publish remains separate in PR #169. Exact-head Vercel is blocked by Hobby `build-rate-limit`.
-- PR #169 is actively wired through a Program-scoped Server Action. Custom Card Publish no longer uses the legacy direct-persistence Settings action.
-- PR #166 is actively wired through a Settings-scoped Server Action.
-- PR #167 is actively wired through `updateBusinessExportPermissionCommandAction`; final-head run #140 passed all GitHub application gates.
-- PR #168 is actively wired through `updateBusinessCardDesignCommandAction`; final-head run #139 passed all GitHub application gates.
-- PR #163 is actively wired for Customer Note create/update; final-head run #143 passed all GitHub application gates.
-- PR #164 is actively wired for Customer referral-code creation; final-head run #151 passed all GitHub application gates.
-- PR #165 is actively wired for Customer Tag create/assign/remove; final-head run #153 passed all GitHub application gates.
-- PR #176 prepared Customer balance adjustment command/action; run #174 passed every GitHub application gate. Exact-head Vercel is blocked by Hobby `build-rate-limit`.
-- PR #177 prepared Loyalty Earn command/action while preserving promotion, reward-unlock, idempotency and canonical financial semantics; run #175 passed every GitHub application gate. Exact-head Vercel is blocked by Hobby `build-rate-limit`.
-- PR #178 prepared Loyalty Redemption command/action while preserving reward-expiry, balance, idempotency and canonical financial semantics; run #176 passed every GitHub application gate. Exact-head Vercel is blocked by Hobby `build-rate-limit`.
+The bounded audit found no additional active persistence surface requiring another TC5 safe-write migration slice. Campaigns and Recovery are read/presentation/export surfaces; Duplicate Review is intentionally read-only and has no merge/delete writer. Current UI consumption remains on Server Actions as the approved compatibility transport; no `/api/v1` write Route Handler is introduced merely for migration symmetry.
 
-## Remaining TC5 closeout
+Accordingly, the identified **TC5 safe-write code migration is TC/TR complete across the Draft set**. This is not a claim that the unmerged Draft code is already present on `staging`, and it is not runtime/browser TCR completion.
 
-1. Adopt the prepared financial actions on the shared Customer/Scan surfaces: Balance Adjustment (#176), Earn (#177), Redemption (#178). The current connector can read the complete page but does not provide an atomic partial-file patch, while the local GitHub path is DNS-blocked. Do not replace the large shared page merely to work around tooling; use a safe bounded patch path when available.
-2. Run final-head GitHub validation after financial active adoption and fix only migration-related stale structural assertions if encountered.
-3. The final operational writer inventory found no additional persistence surface: Campaigns and Recovery are read/presentation/export surfaces; Duplicate Review is explicitly read-only and intentionally has no merge/delete writer.
-4. Do not introduce `/api/v1` write Route Handlers for current UI consumption. Server Actions remain the approved compatibility transport under the TC5 safe-write policy.
-5. Runtime/TCR evidence remains distinct from TC/TR and must be collected only when a fresh Staging/Preview runtime is available.
-6. Vercel Hobby build-rate-limit remains an external runtime-evidence blocker for several exact heads; do not reinterpret GitHub TC/TR success as browser TCR completion.
+## Remaining evidence / coordination
+
+1. Merge remains separately gated by explicit Product Owner approval and dependency-aware ordering.
+2. Runtime/browser TCR remains distinct from TC/TR and must be collected only from fresh Staging/Preview executions after the relevant code is integrated.
+3. Vercel Hobby `build-rate-limit` remains an external runtime-evidence blocker on several exact heads; GitHub CI success must not be relabelled as browser TCR.
+4. PR #160 retains its separately recorded Preview `DATABASE_URL` blocker.
+5. PRs #167 and #168 retain their separately recorded runtime TCR status.
 
 ## Downstream Beta gate status
 
-- TC6: the provider-neutral health/retry/outbox/Queue foundation is already implemented and TC6.5 is isolated-Staging runtime verified. The TC6 completion audit and Beta Deferred Register explicitly keep retry/backoff policy, stranded-job dispatcher/reconciliation, remaining mutation enqueue cutover, pending-aging thresholds, SLO/severity/alerts, and recovery rehearsal behind named Product/operations decisions. No additional pure TC6 slice is authorized merely to continue coding.
-- TC7: the invitation-only acquisition foundation is `BETA_FOUNDATION_COMPLETE`. Self-service signup, tenant/trial bootstrap, legal consent, pricing, analytics, billing and payments remain deferred commercial/Production gates.
+- TC6: the provider-neutral health/retry/outbox/Queue foundation is already implemented and TC6.5 is isolated-Staging runtime verified. Retry/backoff policy, stranded-job dispatcher/reconciliation, remaining mutation enqueue cutover, pending-aging thresholds, SLO/severity/alerts and recovery rehearsal remain decision-gated by the existing audit/register.
+- TC7: invitation-only acquisition is `BETA_FOUNDATION_COMPLETE`. Self-service signup, tenant/trial bootstrap, legal consent, pricing, analytics, billing and payments remain deferred commercial/Production gates.
 - TC8: the technical entry gate is ready on isolated Staging, but the governed real Closed Beta remains `DEFERRED_REAL_CLOSED_BETA`. Five to ten real businesses, participant issue disposition and an explicit human Go/No-Go remain mandatory and cannot be substituted with synthetic fixtures.
-- The Beta Technical Completion Audit states that the remaining gates are decision/runtime/real-participant boundaries rather than another broad safe-code-cleanup backlog. Therefore the project must not invent extra TC6/TC7/TC8 implementation solely to create activity.
 
 ## Operating contract
 
@@ -73,9 +64,8 @@ No runtime/browser TCR is claimed for heads without fresh Preview evidence.
 - No merge without explicit Product Owner approval.
 - No schema/migration in these wiring slices.
 - No provider/credential/environment changes without a separate gate.
-- One bounded wiring surface per PR.
 - Code/CI alone does not claim runtime TCR completion when Preview/browser evidence is required.
 
 ## Master-plan interpretation
 
-`TC5_COMPLETION_AUDIT.md` closes the approved read foundation only and explicitly leaves broader TC5 write architecture open. The current command migration is therefore a continuation of TC5, not a replacement of or contradiction to that audit.
+`TC5_COMPLETION_AUDIT.md` closes the approved read foundation. This checkpoint records completion of the subsequent bounded safe-write migration at the TC/TR level across the current Draft set. Integration/merge and runtime TCR remain separate gates.
