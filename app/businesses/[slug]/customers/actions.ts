@@ -1,11 +1,6 @@
 "use server";
 
 import { auth } from "@/auth";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
-import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { parseCustomerRegistration } from "@/lib/customers/registration";
 import {
   getBulkStateChangeIds,
@@ -22,8 +17,11 @@ import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
+import {
+  mutateBulkCustomerTagCommand,
+  setBulkCustomerStatusCommand,
+} from "@/lib/server/business/customer-bulk-command";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
-import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -95,8 +93,8 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     select: { id: true, businessId: true, isActive: true },
   });
 
-  // Do not mutate a subset: any missing/cross-tenant identifier aborts the
-  // entire operation before a transaction starts.
+  // Presentation preflight rejects partial/cross-tenant selections early. The
+  // command revalidates the same invariant inside the authoritative transaction.
   if (customers.length !== parsedIds.length) {
     redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
   }
@@ -113,6 +111,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
     }
 
+    let committedChangedIds = changedIds;
     if (changedIds.length > 0) {
       if (
         activate &&
@@ -126,47 +125,23 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
         );
       }
 
-      const activityContext = await getActivityRequestContext();
-      const updatedAll = await prisma.$transaction(async (transaction) => {
-        if (
-          activate &&
-          !(await canBusinessPerformSubscriptionOperation(
-            transaction,
-            business.id,
-            "OPERATE",
-          ))
-        ) {
-          return false;
-        }
-
-        const updated = await transaction.customer.updateMany({
-          where: { businessId: business.id, id: { in: changedIds } },
-          data: { isActive: activate },
-        });
-        if (updated.count !== changedIds.length) {
-          throw new Error(
-            "Bulk customer status update did not affect every selected customer.",
+      const mutation = await setBulkCustomerStatusCommand({
+        businessId: business.id,
+        customerIds: parsedIds,
+        activate,
+        actor: session.user,
+      });
+      if (!mutation.ok) {
+        if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+          redirect(
+            `/businesses/${slug}/customers?error=subscription-restricted`,
           );
         }
-        await transaction.businessActivity.createMany({
-          data: changedIds.map((customerId) => ({
-            type: activate ? "CUSTOMER_REACTIVATED" : "CUSTOMER_DEACTIVATED",
-            description: activate
-              ? "تمت إعادة تفعيل العميل عبر عملية جماعية"
-              : "تم إيقاف العميل عبر عملية جماعية",
-            businessId: business.id,
-            customerId,
-            ...activityActorFields(session.user, business.id),
-            ...activityRequestMetadata(activityContext),
-          })),
-        });
-        return true;
-      });
-      if (!updatedAll) {
         redirect(
-          `/businesses/${slug}/customers?error=subscription-restricted`,
+          bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0),
         );
       }
+      committedChangedIds = [...mutation.changedIds];
     }
 
     await syncBusinessToGoogleSheetSafely(business.id);
@@ -176,7 +151,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
         slug,
         operation.toLowerCase(),
         parsedIds.length,
-        changedIds.length,
+        committedChangedIds.length,
       ),
     );
   }
@@ -206,6 +181,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       ? parsedIds.filter((customerId) => !existingCustomerIds.has(customerId))
       : existingAssignments.map((assignment) => assignment.customerId);
 
+  let committedChangedIds = changedIds;
   if (changedIds.length > 0) {
     if (
       !canPerformSubscriptionOperation(
@@ -215,66 +191,26 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     ) {
       redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
     }
-    const activityContext = await getActivityRequestContext();
-    const updatedAll = await prisma.$transaction(async (transaction) => {
-      if (
-        !(await canBusinessPerformSubscriptionOperation(
-          transaction,
-          business.id,
-          "OPERATE",
-        ))
-      ) {
-        return false;
-      }
-      if (operation === "ADD_TAG") {
-        const added = await transaction.customerTagAssignment.createMany({
-          data: changedIds.map((customerId) => ({
-            businessId: business.id,
-            customerId,
-            tagId: tag.id,
-          })),
-        });
-        if (added.count !== changedIds.length) {
-          throw new Error(
-            "Bulk tag assignment did not affect every expected customer.",
-          );
-        }
-      } else {
-        const removed = await transaction.customerTagAssignment.deleteMany({
-          where: {
-            businessId: business.id,
-            tagId: tag.id,
-            customerId: { in: changedIds },
-          },
-        });
-        if (removed.count !== changedIds.length) {
-          throw new Error(
-            "Bulk tag removal did not affect every expected assignment.",
-          );
-        }
-      }
 
-      await transaction.businessActivity.createMany({
-        data: changedIds.map((customerId) => ({
-          type:
-            operation === "ADD_TAG"
-              ? "CUSTOMER_TAG_ASSIGNED"
-              : "CUSTOMER_TAG_REMOVED",
-          description:
-            operation === "ADD_TAG"
-              ? `تمت إضافة وسم العميل عبر عملية جماعية: ${tag.name}`
-              : `تمت إزالة وسم العميل عبر عملية جماعية: ${tag.name}`,
-          businessId: business.id,
-          customerId,
-          ...activityActorFields(session.user, business.id),
-          ...activityRequestMetadata(activityContext),
-        })),
-      });
-      return true;
+    const mutation = await mutateBulkCustomerTagCommand({
+      businessId: business.id,
+      customerIds: parsedIds,
+      tagId: tag.id,
+      operation: operation as "ADD_TAG" | "REMOVE_TAG",
+      actor: session.user,
     });
-    if (!updatedAll) {
-      redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+    if (!mutation.ok) {
+      if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+        redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+      }
+      if (mutation.reason === "INVALID_SELECTION") {
+        redirect(
+          bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0),
+        );
+      }
+      redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
     }
+    committedChangedIds = [...mutation.changedIds];
   }
 
   await syncBusinessToGoogleSheetSafely(business.id);
@@ -284,7 +220,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       slug,
       operation.toLowerCase(),
       parsedIds.length,
-      changedIds.length,
+      committedChangedIds.length,
     ),
   );
 }

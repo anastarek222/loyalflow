@@ -41,6 +41,11 @@ const branchPersistedAuthorities = [
   source("lib/server/business/branch-staff-assignment-command.ts"),
 ].join("\n");
 
+const customerListPersistedAuthorities = [
+  source("lib/server/business/customer-create-command.ts"),
+  source("lib/server/business/customer-bulk-command.ts"),
+].join("\n");
+
 const offerWriteAuthority = source(
   "lib/server/business/offer-write-command.ts",
 );
@@ -143,6 +148,17 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(branchPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
       assert.match(branchPersistedAuthorities, /"EXPAND"/);
       assert.match(branchPersistedAuthorities, /"OPERATE"/);
+    } else if (fileKey === "customerList") {
+      assert.match(sourceText, /createCustomerCommand/);
+      assert.match(sourceText, /setBulkCustomerStatusCommand/);
+      assert.match(sourceText, /mutateBulkCustomerTagCommand/);
+      assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+      assert.match(customerListPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
+      assert.match(customerListPersistedAuthorities, /"EXPAND"/);
+      assert.match(customerListPersistedAuthorities, /"OPERATE"/);
+      assert.match(customerListPersistedAuthorities, /transaction\.customer\.create/);
+      assert.match(customerListPersistedAuthorities, /transaction\.customer\.updateMany/);
+      assert.match(customerListPersistedAuthorities, /transaction\.customerTagAssignment/);
     } else if (fileKey === "offers") {
       assert.match(sourceText, /createOfferCommand/);
       assert.match(sourceText, /updateOfferCommand/);
