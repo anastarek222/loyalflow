@@ -131,7 +131,7 @@ test("classifies lifecycle states with redeemed, expired, inactive, then active 
   );
 });
 
-test("retains database protection and compatibility paths without mutating lifecycle rows", () => {
+test("retains database protection and canonical redemption paths without mutating lifecycle rows", () => {
   const migration = readFileSync(
     join(process.cwd(), "prisma/migrations/20260720210000_add_reward_expiration/migration.sql"),
     "utf8",
@@ -142,8 +142,8 @@ test("retains database protection and compatibility paths without mutating lifec
     /ON "RewardUnlock"\("customerId", "rewardId"\)\s+WHERE "redeemedAt" IS NULL AND "expiredAt" IS NULL/,
   );
 
-  const legacyActions = readFileSync(
-    join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts"),
+  const redemptionAction = readFileSync(
+    join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts"),
     "utf8",
   );
   const redemptionCommand = readFileSync(
@@ -152,8 +152,10 @@ test("retains database protection and compatibility paths without mutating lifec
   );
   const transactions = readFileSync(join(process.cwd(), "lib/loyalty/transactions.ts"), "utf8");
 
-  assert.match(legacyActions, /isActive: true,[\s\S]*expiresAfterDays: \{ not: null \}/);
-  assert.match(legacyActions, /No unlock means this balance predates enabling expiry/);
+  assert.match(redemptionAction, /redeemLoyaltyRewardCommand/);
+  assert.match(redemptionAction, /expiresAfterDays: true/);
+  assert.match(redemptionCommand, /getRewardUnlockRedemptionState/);
   assert.match(redemptionCommand, /recordRewardRedemption/);
+  assert.match(redemptionCommand, /transaction\.rewardUnlock\.findFirst/);
   assert.match(transactions, /expiresAt: \{ gt: new Date\(\) \}/);
 });
