@@ -12,7 +12,7 @@ const command = source(
 const action = source(
   "app/businesses/[slug]/customers/[customerId]/balance-adjustment-action.ts",
 );
-const legacy = source(
+const facade = source(
   "app/businesses/[slug]/customers/[customerId]/actions.ts",
 );
 
@@ -38,7 +38,10 @@ test("TC5 bounded balance adjustment action preserves auth capability parsing an
   assert.doesNotMatch(action, /recordBalanceAdjustment\(/);
 });
 
-test("TC5 balance adjustment preparation does not replace the active compatibility writer yet", () => {
-  assert.match(legacy, /export async function adjustCustomerBalanceAction/);
-  assert.match(legacy, /recordBalanceAdjustment\(transaction/);
+test("TC5 balance adjustment is adopted through the active compatibility facade", () => {
+  assert.match(
+    facade,
+    /adjustCustomerBalanceCommandAction as adjustCustomerBalanceAction/,
+  );
+  assert.match(facade, /from "\.\/balance-adjustment-action"/);
 });
