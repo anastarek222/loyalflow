@@ -31,9 +31,12 @@ test("TC4.18 preserves playbook safety and post-commit sync boundaries", () => {
   assert.match(command, /confirmedExisting/);
   assert.doesNotMatch(command, /transaction\.(reward|promotion|offer|campaign)\.create/);
   assert.doesNotMatch(actions, /prisma\.\$transaction/);
+  assert.match(command, /enqueueIntegrationJob\(transaction/);
+  assert.match(actions, /scheduleBusinessGoogleSheetsSync\(outcome\.integrationJobId\)/);
+  assert.doesNotMatch(actions, /syncBusinessToGoogleSheetSafely/);
   assert.ok(
     actions.indexOf("await applyBusinessPlaybookCommand") <
-      actions.indexOf("await syncBusinessToGoogleSheetSafely"),
+      actions.indexOf("scheduleBusinessGoogleSheetsSync"),
   );
 });
 
