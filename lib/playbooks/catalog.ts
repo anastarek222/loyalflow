@@ -28,13 +28,20 @@ type PlaybookSettings = {
 export type BusinessPlaybook = {
   id: BusinessPlaybookId;
   name: string;
+  nameEn: string;
   summary: string;
+  summaryEn: string;
   settings: PlaybookSettings;
   promotionSuggestion?: string;
+  promotionSuggestionEn?: string;
   offerSuggestion?: string;
+  offerSuggestionEn?: string;
   vipSuggestion?: string;
+  vipSuggestionEn?: string;
   recoverySuggestion?: string;
+  recoverySuggestionEn?: string;
   campaignSuggestion?: string;
+  campaignSuggestionEn?: string;
 };
 
 // These are templates, never separate runtime programmes. Applying one only
@@ -42,8 +49,10 @@ export type BusinessPlaybook = {
 export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
   BARBER: {
     id: "BARBER",
-    name: "Barber / حلاق",
+    name: "حلاق",
+    nameEn: "Barber",
     summary: "5 زيارات مقابل حلاقة مجانية مع اقتراح عملاء VIP واستعادة العملاء المتوقفين.",
+    summaryEn: "5 visits toward a free haircut, with optional VIP and customer-recovery suggestions.",
     settings: {
       loyaltyMode: "VISITS", unitName: "زيارة", rewardName: "حلاقة مجانية",
       rewardType: "GIFT", rewardDescription: "حلاقة مجانية بعد إكمال الزيارات.",
@@ -51,13 +60,18 @@ export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
       pointsName: "زيارة", membershipName: "عضوية العميل",
     },
     vipSuggestion: "راجع شرائح VIP تلقائيًا بعد 5 دورات مكافآت.",
+    vipSuggestionEn: "Review VIP segments after 5 completed reward cycles.",
     recoverySuggestion: "استخدم جمهور العملاء غير النشطين لحملة حجز جديدة يراجعها الموظف.",
+    recoverySuggestionEn: "Use the inactive-customer audience for a staff-reviewed rebooking campaign.",
     campaignSuggestion: "قالب تذكير بالحجز القادم أو المكافأة الجاهزة.",
+    campaignSuggestionEn: "A reminder template for the next booking or a ready reward.",
   },
   COFFEE_SHOP: {
     id: "COFFEE_SHOP",
-    name: "Coffee Shop / مقهى",
+    name: "مقهى",
+    nameEn: "Coffee Shop",
     summary: "10 زيارات مقابل قهوة مجانية، مع اقتراح Double Points Tuesday قابل للمراجعة.",
+    summaryEn: "10 visits toward a free coffee, with a reviewable Double Points Tuesday suggestion.",
     settings: {
       loyaltyMode: "VISITS", unitName: "زيارة", rewardName: "قهوة مجانية",
       rewardType: "GIFT", rewardDescription: "قهوة مجانية بعد إكمال الزيارات.",
@@ -65,12 +79,16 @@ export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
       pointsName: "زيارة", membershipName: "عضوية القهوة",
     },
     promotionSuggestion: "اقترح Promotion باسم Double Points Tuesday؛ راجع التاريخ والقاعدة يدويًا لأن التكرار الأسبوعي غير مفعّل تلقائيًا.",
+    promotionSuggestionEn: "Suggest a Double Points Tuesday promotion; review the date and rule manually because weekly recurrence is not enabled automatically.",
     offerSuggestion: "عرض قهوة موسمية محدود المدة لكل العملاء النشطين.",
+    offerSuggestionEn: "A limited-time seasonal coffee offer for active customers.",
   },
   SALON: {
     id: "SALON",
-    name: "Salon / صالون",
+    name: "صالون",
+    nameEn: "Salon",
     summary: "زيارات متكررة تقود إلى مكافأة خدمة قابلة للتخصيص لكل صالون.",
+    summaryEn: "Repeat visits lead to a service reward that each salon can customize.",
     settings: {
       loyaltyMode: "VISITS", unitName: "موعد", rewardName: "خدمة مجانية",
       rewardType: "GIFT", rewardDescription: "خدمة مجانية بعد تكرار المواعيد.",
@@ -78,12 +96,16 @@ export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
       pointsName: "موعد", membershipName: "عضوية الصالون",
     },
     offerSuggestion: "عرض عناية موسمي لفئة العملاء النشطين، يراجعه المالك قبل نشره.",
+    offerSuggestionEn: "A seasonal care offer for active customers, reviewed by the owner before publication.",
     recoverySuggestion: "استعادة العملاء المعرضين للتوقف برسالة حجز يدوية.",
+    recoverySuggestionEn: "Recover customers at risk of lapsing with a manually reviewed booking message.",
   },
   RETAIL: {
     id: "RETAIL",
-    name: "Retail / متجر",
+    name: "متجر",
+    nameEn: "Retail",
     summary: "نقاط أو قيمة مبيعات قابلة للتعديل، مع اقتراحات مكافأة إنفاق وVIP.",
+    summaryEn: "Configurable points or sales-value loyalty, with spend-reward and VIP suggestions.",
     settings: {
       loyaltyMode: "SALES_AMOUNT", unitName: "جنيه", rewardName: "قسيمة خصم",
       rewardType: "DISCOUNT", rewardDescription: "قسيمة خصم بعد بلوغ قيمة الإنفاق المطلوبة.",
@@ -91,12 +113,16 @@ export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
       pointsName: "جنيه مؤهل", membershipName: "عضوية المتجر",
     },
     vipSuggestion: "راجع شريحة الإنفاق المرتفع ودرجات VIP المحسوبة قبل منح أي ميزة.",
+    vipSuggestionEn: "Review the high-spend segment and calculated VIP grades before granting any benefit.",
     offerSuggestion: "عرض حصري للعملاء VIP أو شريحة الإنفاق المرتفع.",
+    offerSuggestionEn: "An exclusive offer for VIP customers or the high-spend segment.",
   },
   GYM: {
     id: "GYM",
-    name: "Gym / جيم",
+    name: "جيم",
+    nameEn: "Gym",
     summary: "زيارات التمرين تقود إلى مكافأة عضوية أو جلسة، مع بقاء تفاصيل العضوية قابلة للتعديل.",
+    summaryEn: "Workout visits lead to a membership or session reward while membership details remain configurable.",
     settings: {
       loyaltyMode: "VISITS", unitName: "حصة", rewardName: "جلسة مجانية",
       rewardType: "GIFT", rewardDescription: "جلسة أو يوم عضوية مجاني بعد الالتزام بالحضور.",
@@ -104,12 +130,16 @@ export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
       pointsName: "حصة", membershipName: "عضوية النادي",
     },
     campaignSuggestion: "تذكير يدوي بالعودة للعملاء المتوقفين عن الحضور.",
+    campaignSuggestionEn: "A manually reviewed return reminder for customers who stopped attending.",
     vipSuggestion: "استخدم درجات VIP كتوجيه لبرامج الالتزام، لا كميزة تلقائية.",
+    vipSuggestionEn: "Use VIP grades as guidance for retention programmes, not as an automatic benefit.",
   },
   RESTAURANT: {
     id: "RESTAURANT",
-    name: "Restaurant / مطعم",
+    name: "مطعم",
+    nameEn: "Restaurant",
     summary: "برنامج زيارات قابل للتحويل إلى نقاط أو إنفاق، مع مكافأة لزيارة متكررة.",
+    summaryEn: "A visit programme that can be adapted to points or spend, with a repeat-visit reward.",
     settings: {
       loyaltyMode: "VISITS", unitName: "زيارة", rewardName: "طبق مجاني",
       rewardType: "GIFT", rewardDescription: "طبق مجاني بعد تكرار الزيارات.",
@@ -117,7 +147,9 @@ export const businessPlaybooks: Record<BusinessPlaybookId, BusinessPlaybook> = {
       pointsName: "زيارة", membershipName: "عضوية الضيف",
     },
     offerSuggestion: "عرض نهاية أسبوع محدود المدة لعملاء مختارين.",
+    offerSuggestionEn: "A limited-time weekend offer for selected customers.",
     campaignSuggestion: "رسالة شكر ومراجعة يدوية بعد زيارة العميل.",
+    campaignSuggestionEn: "A thank-you message with manual review after a customer visit.",
   },
 };
 
