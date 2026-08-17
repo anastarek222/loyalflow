@@ -10,6 +10,7 @@ const command = source("lib/server/business/google-sheets-sync-command.ts");
 const action = source(
   "app/businesses/[slug]/settings/google-sheets-sync-action.ts",
 );
+const settingsPage = source("app/businesses/[slug]/settings/page.tsx");
 
 test("TC5 Google Sheets sync command rechecks persisted OPERATE before integration side effect", () => {
   const entitlement = command.indexOf(
@@ -49,4 +50,20 @@ test("TC5 bounded Google Sheets sync action owns no provider configuration or di
   assert.doesNotMatch(action, /googleapis|GoogleAuth|process\.env/);
   assert.doesNotMatch(action, /prisma\.business\.update/);
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
+});
+
+test("TC5 Settings page actively binds manual Google Sheets sync to the command-backed action", () => {
+  assert.match(
+    settingsPage,
+    /import \{ syncGoogleSheetCommandAction \} from "\.\/google-sheets-sync-action";/,
+  );
+  assert.match(
+    settingsPage,
+    /const syncGoogleSheet = syncGoogleSheetCommandAction\.bind\(null, business\.slug\);/,
+  );
+  assert.match(settingsPage, /<form action=\{syncGoogleSheet\}>/);
+  assert.doesNotMatch(settingsPage, /\bsyncGoogleSheetAction\b/);
+  assert.match(settingsPage, /updateBusinessProfileAction/);
+  assert.match(settingsPage, /updateOperationsSettingsAction/);
+  assert.match(settingsPage, /deleteBusinessAction/);
 });
