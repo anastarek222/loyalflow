@@ -6,6 +6,7 @@ import {
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type UpdateBusinessSettingsCommandInput = Readonly<{
   businessId: string;
@@ -14,18 +15,20 @@ export type UpdateBusinessSettingsCommandInput = Readonly<{
   data: Parameters<typeof prisma.business.update>[0]["data"];
   metadata?: Prisma.InputJsonObject;
   enforceOperateEntitlement?: boolean;
+  enqueueSheetsSync?: boolean;
 }>;
 
 export type UpdateBusinessSettingsCommandResult =
-  | Readonly<{ ok: true }>
+  | Readonly<{ ok: true; integrationJobId: string | null }>
   | Readonly<{ ok: false; reason: "SUBSCRIPTION_RESTRICTED" }>;
 
 /**
  * Authoritative non-financial Business Settings write boundary.
  *
- * Presentation concerns (redirects, path revalidation and optional provider
- * synchronization) deliberately remain with the existing Server Action
- * compatibility layer. The business mutation and its audit record stay atomic.
+ * Presentation concerns (redirects, path revalidation and post-commit Queue
+ * publication) remain with the existing Server Action compatibility layer.
+ * The business mutation, audit record and optional durable Sheets job stay
+ * atomic in this command transaction.
  */
 export async function updateBusinessSettingsCommand(
   input: UpdateBusinessSettingsCommandInput,
@@ -37,7 +40,7 @@ export async function updateBusinessSettingsCommand(
   const actorMetadata =
     "metadata" in actorFields ? actorFields.metadata : undefined;
 
-  const updated = await prisma.$transaction(async (transaction) => {
+  return prisma.$transaction(async (transaction) => {
     if (
       input.enforceOperateEntitlement &&
       !(await canBusinessPerformSubscriptionOperation(
@@ -46,7 +49,7 @@ export async function updateBusinessSettingsCommand(
         "OPERATE",
       ))
     ) {
-      return false;
+      return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
     await transaction.business.update({
@@ -54,7 +57,7 @@ export async function updateBusinessSettingsCommand(
       data: input.data,
     });
 
-    await transaction.businessActivity.create({
+    const activity = await transaction.businessActivity.create({
       data: {
         type: "BUSINESS_SETTINGS_UPDATED",
         description: input.description,
@@ -70,12 +73,20 @@ export async function updateBusinessSettingsCommand(
           : {}),
         ...activityRequestMetadata(activityContext),
       },
+      select: { id: true },
     });
 
-    return true;
-  });
+    const integrationJob = input.enqueueSheetsSync
+      ? await enqueueIntegrationJob(transaction, {
+          businessId: input.businessId,
+          kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+          idempotencyKey: `business-settings:${activity.id}`,
+        })
+      : null;
 
-  return updated
-    ? { ok: true }
-    : { ok: false, reason: "SUBSCRIPTION_RESTRICTED" };
+    return {
+      ok: true,
+      integrationJobId: integrationJob?.id ?? null,
+    } as const;
+  });
 }
