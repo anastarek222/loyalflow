@@ -1,0 +1,72 @@
+name: Slice D Exact-SHA Runtime UAT
+
+on:
+  push:
+    branches:
+      - agent/slice-d-runtime-uat-run
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-uat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      STAGING_UAT_BASE_URL: https://loyalflow-ukz4t66jt-anas-tarek.vercel.app
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL || secrets.DATABASE_URL }}
+      UAT_FIXTURE_PASSWORD: ${{ secrets.UAT_FIXTURE_PASSWORD }}
+      LOYALFLOW_ENVIRONMENT: staging
+      LOYALFLOW_STAGING_DATABASE: ${{ secrets.LOYALFLOW_STAGING_DATABASE }}
+      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+      BLOB_STORE_ID: ${{ secrets.BLOB_STORE_ID }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+        with:
+          ref: 62f656e2850253a31c2b561eb33e1602306d2340
+
+      - name: Verify required UAT secrets exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in DATABASE_URL UAT_FIXTURE_PASSWORD LOYALFLOW_STAGING_DATABASE VERCEL_AUTOMATION_BYPASS_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::$name is not configured for the Slice D runtime runner"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Run exact-SHA browser UAT
+        run: pnpm test:browser-uat
+
+      - name: Upload failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slice-d-runtime-uat-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
