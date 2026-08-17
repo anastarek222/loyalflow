@@ -1,6 +1,7 @@
 import { handleCallback } from "@vercel/queue";
 
 import { scheduleNextIntegrationRecoveryHeartbeat } from "@/lib/server/integrations/reconciliation-heartbeat";
+import { getBetaQueueRetryDelaySeconds } from "@/lib/server/integrations/retry-policy";
 import { processIntegrationJob } from "@/lib/server/integrations/worker";
 import {
   parseIntegrationJobMessage,
@@ -15,7 +16,12 @@ const queueCallback = handleCallback<IntegrationJobMessage>(
     await scheduleNextIntegrationRecoveryHeartbeat();
     await processIntegrationJob(jobId, metadata.messageId);
   },
-  { visibilityTimeoutSeconds: 300 },
+  {
+    visibilityTimeoutSeconds: 300,
+    retry: (_error, metadata) => ({
+      afterSeconds: getBetaQueueRetryDelaySeconds(metadata.deliveryCount),
+    }),
+  },
 );
 
 export function POST(request: Request) {
