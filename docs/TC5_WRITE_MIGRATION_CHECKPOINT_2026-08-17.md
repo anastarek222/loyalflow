@@ -29,7 +29,7 @@ This checkpoint records the current TC5 safe-write Strangler migration without c
 - PR #177 — Loyalty Earn — `COMMAND_TR_PASS / BOUNDED_ACTION_TR_PASS / PAGE_BINDING_PENDING / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 - PR #178 — Loyalty Redemption — `COMMAND_TR_PASS / BOUNDED_ACTION_TR_PASS / PAGE_BINDING_PENDING / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 
-The three financial Drafts deliberately preserve the canonical financial helpers and move only semantic transaction authority into commands. Their existing Customer/Scan bindings remain legacy compatibility bindings until an approved reconciliation/adoption step can update the shared Customer detail surface safely.
+The three financial Drafts deliberately preserve the canonical financial helpers and move only semantic transaction authority into commands. Their existing Customer/Scan bindings remain legacy compatibility bindings until a safe reconciliation/adoption step can update the shared Customer detail surface.
 
 None of these Drafts is merged by this checkpoint.
 
@@ -52,12 +52,19 @@ No runtime/browser TCR is claimed for heads without fresh Preview evidence.
 
 ## Remaining TC5 closeout
 
-1. Adopt the prepared financial actions on the shared Customer/Scan surfaces: Balance Adjustment (#176), Earn (#177), Redemption (#178). This must be done with a safe bounded page reconciliation; do not rewrite the large shared Customer page from incomplete/truncated source.
+1. Adopt the prepared financial actions on the shared Customer/Scan surfaces: Balance Adjustment (#176), Earn (#177), Redemption (#178). The current connector can read the complete page but does not provide an atomic partial-file patch, while the local GitHub path is DNS-blocked. Do not replace the large shared page merely to work around tooling; use a safe bounded patch path when available.
 2. Run final-head GitHub validation after financial active adoption and fix only migration-related stale structural assertions if encountered.
-3. Perform one final operational writer inventory. Campaigns and Recovery are currently read/presentation/export surfaces; Duplicate Review is explicitly read-only and intentionally has no merge/delete writer.
+3. The final operational writer inventory found no additional persistence surface: Campaigns and Recovery are read/presentation/export surfaces; Duplicate Review is explicitly read-only and intentionally has no merge/delete writer.
 4. Do not introduce `/api/v1` write Route Handlers for current UI consumption. Server Actions remain the approved compatibility transport under the TC5 safe-write policy.
 5. Runtime/TCR evidence remains distinct from TC/TR and must be collected only when a fresh Staging/Preview runtime is available.
 6. Vercel Hobby build-rate-limit remains an external runtime-evidence blocker for several exact heads; do not reinterpret GitHub TC/TR success as browser TCR completion.
+
+## Downstream Beta gate status
+
+- TC6: the provider-neutral health/retry/outbox/Queue foundation is already implemented and TC6.5 is isolated-Staging runtime verified. The TC6 completion audit and Beta Deferred Register explicitly keep retry/backoff policy, stranded-job dispatcher/reconciliation, remaining mutation enqueue cutover, pending-aging thresholds, SLO/severity/alerts, and recovery rehearsal behind named Product/operations decisions. No additional pure TC6 slice is authorized merely to continue coding.
+- TC7: the invitation-only acquisition foundation is `BETA_FOUNDATION_COMPLETE`. Self-service signup, tenant/trial bootstrap, legal consent, pricing, analytics, billing and payments remain deferred commercial/Production gates.
+- TC8: the technical entry gate is ready on isolated Staging, but the governed real Closed Beta remains `DEFERRED_REAL_CLOSED_BETA`. Five to ten real businesses, participant issue disposition and an explicit human Go/No-Go remain mandatory and cannot be substituted with synthetic fixtures.
+- The Beta Technical Completion Audit states that the remaining gates are decision/runtime/real-participant boundaries rather than another broad safe-code-cleanup backlog. Therefore the project must not invent extra TC6/TC7/TC8 implementation solely to create activity.
 
 ## Operating contract
 
