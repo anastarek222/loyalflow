@@ -9,7 +9,7 @@ import { ReversalExceptionResolutionPanel } from "../reversal-exception-resoluti
 
 type PageProps = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ error?: string; success?: string }>;
+  searchParams: Promise<{ error?: string; success?: string; after?: string }>;
 };
 
 function feedbackCopy(
@@ -108,6 +108,7 @@ export default async function ReversalExceptionsPage({
     { dateStyle: "medium", timeStyle: "short" },
   );
 
+  const pageSize = 50;
   const exceptions = await prisma.reversalException.findMany({
     where: {
       businessId: business.id,
@@ -115,7 +116,8 @@ export default async function ReversalExceptionsPage({
       blockReason: "INSUFFICIENT_BALANCE",
     },
     orderBy: [{ createdAt: "asc" }, { id: "asc" }],
-    take: 50,
+    ...(query.after ? { cursor: { id: query.after }, skip: 1 } : {}),
+    take: pageSize + 1,
     select: {
       id: true,
       reversalKind: true,
@@ -140,8 +142,11 @@ export default async function ReversalExceptionsPage({
     },
   });
 
+  const hasMore = exceptions.length > pageSize;
+  const visibleExceptions = exceptions.slice(0, pageSize);
+  const nextCursor = hasMore ? visibleExceptions.at(-1)?.id : null;
   const feedback = feedbackCopy(language, query);
-  const items = exceptions.map((exception) => ({
+  const items = visibleExceptions.map((exception) => ({
     id: exception.id,
     reversalKind: exception.reversalKind,
     attemptedAmount: exception.attemptedAmount,
@@ -191,7 +196,7 @@ export default async function ReversalExceptionsPage({
               </p>
             </div>
             <span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-sm font-bold text-amber-800">
-              {items.length} {language === "AR" ? "مفتوحة" : "open"}
+              {items.length} {language === "AR" ? "معروضة" : "shown"}
             </span>
           </div>
         </header>
@@ -217,13 +222,16 @@ export default async function ReversalExceptionsPage({
           />
         </div>
 
-        {exceptions.length === 50 && (
-          <p className="mt-4 text-xs text-foreground-subtle">
-            {language === "AR"
-              ? "يتم عرض أقدم 50 حالة مفتوحة فقط في هذه النسخة."
-              : "This view shows the oldest 50 open exceptions only."}
-          </p>
-        )}
+        {hasMore && nextCursor ? (
+          <div className="mt-5 flex justify-end">
+            <Link
+              href={`/businesses/${business.slug}/reports/reversal-exceptions?after=${encodeURIComponent(nextCursor)}`}
+              className="rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm font-bold text-foreground hover:bg-surface-subtle"
+            >
+              {language === "AR" ? "عرض الحالات الأحدث التالية" : "Show next newer exceptions"}
+            </Link>
+          </div>
+        ) : null}
       </div>
     </main>
   );
