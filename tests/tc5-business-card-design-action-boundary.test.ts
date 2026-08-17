@@ -15,6 +15,7 @@ const command = source(
 );
 const permissions = source("lib/cards/card-design-permissions.ts");
 const legacyActions = source("app/businesses/[slug]/settings/actions.ts");
+const programPage = source("app/businesses/[slug]/program/page.tsx");
 
 test("TC5 Card design input contract preserves the existing bounded design vocabulary", () => {
   assert.match(input, /cardDesignMode: z\.enum\(\["STANDARD", "CUSTOM"\]\)/);
@@ -68,13 +69,24 @@ test("TC5 Card design authorization still protects Super Admin custom artwork st
   assert.match(action, /forbidden/);
 });
 
-test("TC5 Card design bounded action preserves current page outcomes while binding remains separate", () => {
+test("TC5 Program Card design form is bound to the command-backed action", () => {
   assert.match(action, /cardDesign=invalid/);
   assert.match(action, /cardDesign=subscription-restricted/);
   assert.match(action, /cardDesign=saved/);
   assert.match(action, /revalidatePath\(`\/businesses\/\$\{business\.slug\}\/program`\)/);
   assert.match(action, /revalidatePath\("\/card\/\[token\]", "page"\)/);
 
-  // The active Program page migration remains a separate, small binding step.
+  assert.match(
+    programPage,
+    /import \{ updateBusinessCardDesignCommandAction \} from "\.\/card-design-actions"/,
+  );
+  assert.match(
+    programPage,
+    /const updateCardDesign = updateBusinessCardDesignCommandAction\.bind/,
+  );
+  assert.doesNotMatch(programPage, /updateBusinessCardDesignAction,/);
+  assert.match(programPage, /<form action=\{updateCardDesign\}>/);
+
+  // Legacy compatibility remains available for later cleanup, but is not the active Program binding.
   assert.match(legacyActions, /export async function updateBusinessCardDesignAction/);
 });
