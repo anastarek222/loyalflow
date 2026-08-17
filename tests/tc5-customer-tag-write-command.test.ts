@@ -13,22 +13,25 @@ function action(sourceText: string, name: string, nextName: string) {
   return sourceText.slice(start, end);
 }
 
-const actions = source(
+const facade = source(
   "app/businesses/[slug]/customers/[customerId]/actions.ts",
 );
+const tagActions = source(
+  "app/businesses/[slug]/customers/[customerId]/tag-actions.ts",
+);
 const command = source("lib/server/business/customer-tag-write-command.ts");
-const createAndAssignAction = action(
-  actions,
+const createAndAssignFacade = action(
+  facade,
   "createAndAssignCustomerTagAction",
   "assignCustomerTagAction",
 );
-const assignAction = action(
-  actions,
+const assignFacade = action(
+  facade,
   "assignCustomerTagAction",
   "removeCustomerTagAction",
 );
-const removeAction = action(
-  actions,
+const removeFacade = action(
+  facade,
   "removeCustomerTagAction",
   "createCustomerNoteAction",
 );
@@ -47,20 +50,19 @@ const createCommand = command.slice(createStart, assignStart);
 const assignCommand = command.slice(assignStart, removeStart);
 const removeCommand = command.slice(removeStart);
 
-test("TC5 Customer tag extraction preserves active actions until wiring", () => {
-  for (const sourceText of [createAndAssignAction, assignAction, removeAction]) {
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation/);
-    assert.match(sourceText, /prisma\.\$transaction/);
-    assert.match(sourceText, /subscription-restricted/);
+test("TC5 Customer tag compatibility facade routes all active paths to command-backed actions", () => {
+  assert.match(createAndAssignFacade, /createAndAssignCustomerTagCommandAction/);
+  assert.match(assignFacade, /assignCustomerTagCommandAction/);
+  assert.match(removeFacade, /removeCustomerTagCommandAction/);
+  for (const sourceText of [createAndAssignFacade, assignFacade, removeFacade]) {
+    assert.doesNotMatch(sourceText, /prisma\.\$transaction|customerTagAssignment\.(createMany|deleteMany)/);
   }
-  assert.match(createAndAssignAction, /existingTag \? "OPERATE" : "EXPAND"/);
-  assert.match(createAndAssignAction, /skipDuplicates: true/);
-  assert.match(assignAction, /skipDuplicates: true/);
-  assert.match(removeAction, /if \(assignment\)/);
-  assert.doesNotMatch(
-    actions,
-    /createAndAssignCustomerTagCommand|assignCustomerTagCommand|removeCustomerTagCommand/,
-  );
+  assert.match(tagActions, /canManageCustomerNotesTags/);
+  assert.match(tagActions, /canPerformSubscriptionOperation/);
+  assert.match(tagActions, /createAndAssignCustomerTagCommand/);
+  assert.match(tagActions, /assignCustomerTagCommand/);
+  assert.match(tagActions, /removeCustomerTagCommand/);
+  assert.match(tagActions, /subscription-restricted/);
 });
 
 test("TC5 create-or-assign tag command preserves EXPAND versus OPERATE classification and no-op replay", () => {
@@ -69,30 +71,17 @@ test("TC5 create-or-assign tag command preserves EXPAND versus OPERATE classific
   const existingAssignment = createCommand.indexOf(
     "transaction.customerTagAssignment.findUnique",
   );
-  const noOp = createCommand.indexOf("existingAssignment");
   const intent = createCommand.indexOf(
     'const intent = existingTag ? "OPERATE" : "EXPAND"',
   );
-  const guard = createCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
+  const guard = createCommand.indexOf("await canBusinessPerformSubscriptionOperation");
   const upsert = createCommand.indexOf("transaction.customerTag.upsert");
-  const assign = createCommand.indexOf(
-    "transaction.customerTagAssignment.createMany",
-  );
+  const assign = createCommand.indexOf("transaction.customerTagAssignment.createMany");
   const audit = createCommand.indexOf("transaction.businessActivity.create");
 
-  for (const position of [
-    customer,
-    existingTag,
-    existingAssignment,
-    noOp,
-    intent,
-    guard,
-    upsert,
-    assign,
-    audit,
-  ]) assert.ok(position >= 0);
+  for (const position of [customer, existingTag, existingAssignment, intent, guard, upsert, assign, audit]) {
+    assert.ok(position >= 0);
+  }
   assert.ok(customer < existingTag);
   assert.ok(existingTag < existingAssignment);
   assert.ok(existingAssignment < intent);
@@ -100,26 +89,19 @@ test("TC5 create-or-assign tag command preserves EXPAND versus OPERATE classific
   assert.ok(guard < upsert);
   assert.ok(guard < assign);
   assert.ok(assign < audit);
+  assert.match(createCommand, /if \(existingAssignment\)/);
   assert.match(createCommand, /skipDuplicates: true/);
 });
 
 test("TC5 assign-existing tag command revalidates tenant topology and OPERATE before changed assignment", () => {
   const customer = assignCommand.indexOf("findTenantCustomer(");
   const tag = assignCommand.indexOf("transaction.customerTag.findFirst");
-  const existing = assignCommand.indexOf(
-    "transaction.customerTagAssignment.findUnique",
-  );
-  const guard = assignCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
-  const assign = assignCommand.indexOf(
-    "transaction.customerTagAssignment.createMany",
-  );
+  const existing = assignCommand.indexOf("transaction.customerTagAssignment.findUnique");
+  const guard = assignCommand.indexOf("await canBusinessPerformSubscriptionOperation");
+  const assign = assignCommand.indexOf("transaction.customerTagAssignment.createMany");
   const audit = assignCommand.indexOf("transaction.businessActivity.create");
 
-  for (const position of [customer, tag, existing, guard, assign, audit]) {
-    assert.ok(position >= 0);
-  }
+  for (const position of [customer, tag, existing, guard, assign, audit]) assert.ok(position >= 0);
   assert.ok(customer < tag);
   assert.ok(tag < existing);
   assert.ok(existing < guard);
@@ -132,21 +114,13 @@ test("TC5 assign-existing tag command revalidates tenant topology and OPERATE be
 
 test("TC5 remove tag command preserves missing-assignment no-op and guards changed removal", () => {
   const customer = removeCommand.indexOf("findTenantCustomer(");
-  const assignment = removeCommand.indexOf(
-    "transaction.customerTagAssignment.findFirst",
-  );
+  const assignment = removeCommand.indexOf("transaction.customerTagAssignment.findFirst");
   const noOp = removeCommand.indexOf("if (!assignment)");
-  const guard = removeCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
-  const remove = removeCommand.indexOf(
-    "transaction.customerTagAssignment.deleteMany",
-  );
+  const guard = removeCommand.indexOf("await canBusinessPerformSubscriptionOperation");
+  const remove = removeCommand.indexOf("transaction.customerTagAssignment.deleteMany");
   const audit = removeCommand.indexOf("transaction.businessActivity.create");
 
-  for (const position of [customer, assignment, noOp, guard, remove, audit]) {
-    assert.ok(position >= 0);
-  }
+  for (const position of [customer, assignment, noOp, guard, remove, audit]) assert.ok(position >= 0);
   assert.ok(customer < assignment);
   assert.ok(assignment < noOp);
   assert.ok(noOp < guard);

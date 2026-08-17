@@ -14,22 +14,14 @@ function action(sourceText: string, name: string, nextName: string) {
 }
 
 const actions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
 );
 const command = source(
   "lib/server/business/customer-record-maintenance-command.ts",
 );
 
-const updateAction = action(
-  actions,
-  "updateCustomerAction",
-  "setCustomerStatusAction",
-);
-const statusAction = action(
-  actions,
-  "setCustomerStatusAction",
-  "adjustCustomerBalanceAction",
-);
+const updateAction = action(actions, "updateCustomerAction", "setCustomerStatusAction");
+const statusAction = action(actions, "setCustomerStatusAction", "adjustCustomerBalanceAction");
 
 const updateCommandStart = command.indexOf(
   "export async function updateCustomerRecordCommand",
@@ -41,7 +33,7 @@ assert.ok(updateCommandStart >= 0 && statusCommandStart > updateCommandStart);
 const updateCommand = command.slice(updateCommandStart, statusCommandStart);
 const statusCommand = command.slice(statusCommandStart);
 
-test("TC5 Customer record actions keep presentation checks and delegate persisted writes", () => {
+test("TC5 Customer record compatibility actions keep presentation checks and delegate persisted writes", () => {
   assert.match(updateAction, /customerSchema\.safeParse/);
   assert.match(updateAction, /canPerformSubscriptionOperation/);
   assert.match(updateAction, /duplicateCustomer/);
@@ -59,9 +51,7 @@ test("TC5 Customer record actions keep presentation checks and delegate persiste
 });
 
 test("TC5 Customer profile command rechecks lifecycle, tenant ownership and duplicate phone before atomic write", () => {
-  const guard = updateCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
+  const guard = updateCommand.indexOf("await canBusinessPerformSubscriptionOperation");
   const target = updateCommand.indexOf("transaction.customer.findFirst");
   const duplicate = updateCommand.indexOf(
     "const duplicateCustomer = await transaction.customer.findFirst",
@@ -69,9 +59,7 @@ test("TC5 Customer profile command rechecks lifecycle, tenant ownership and dupl
   const update = updateCommand.indexOf("transaction.customer.update");
   const audit = updateCommand.indexOf("transaction.businessActivity.create");
 
-  for (const position of [guard, target, duplicate, update, audit]) {
-    assert.ok(position >= 0);
-  }
+  for (const position of [guard, target, duplicate, update, audit]) assert.ok(position >= 0);
   assert.ok(guard < target);
   assert.ok(target < duplicate);
   assert.ok(duplicate < update);
@@ -85,15 +73,11 @@ test("TC5 Customer profile command rechecks lifecycle, tenant ownership and dupl
 
 test("TC5 Customer status command guards reactivation but preserves deactivation security exit", () => {
   const target = statusCommand.indexOf("transaction.customer.findFirst");
-  const guard = statusCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
+  const guard = statusCommand.indexOf("await canBusinessPerformSubscriptionOperation");
   const update = statusCommand.indexOf("transaction.customer.update");
   const audit = statusCommand.indexOf("transaction.businessActivity.create");
 
-  for (const position of [target, guard, update, audit]) {
-    assert.ok(position >= 0);
-  }
+  for (const position of [target, guard, update, audit]) assert.ok(position >= 0);
   assert.ok(target < guard);
   assert.ok(guard < update);
   assert.ok(update < audit);

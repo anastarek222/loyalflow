@@ -14,7 +14,7 @@ function action(sourceText: string, name: string, nextName: string) {
 }
 
 const actions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
 );
 const command = source("lib/server/business/customer-note-write-command.ts");
 const createAction = action(
@@ -37,7 +37,7 @@ assert.ok(createCommandStart >= 0 && updateCommandStart > createCommandStart);
 const createCommand = command.slice(createCommandStart, updateCommandStart);
 const updateCommand = command.slice(updateCommandStart);
 
-test("TC5 Customer note extraction preserves the active action contract until the wiring slice", () => {
+test("TC5 Customer note compatibility implementation preserves the active action contract", () => {
   for (const sourceText of [createAction, updateAction]) {
     assert.match(sourceText, /customerNoteContentSchema\.safeParse/);
     assert.match(sourceText, /canPerformSubscriptionOperation/);
@@ -48,17 +48,13 @@ test("TC5 Customer note extraction preserves the active action contract until th
   assert.match(createAction, /transaction\.customerNote\.create/);
   assert.match(updateAction, /opaqueIdSchema\.safeParse/);
   assert.match(updateAction, /transaction\.customerNote\.update/);
-  assert.doesNotMatch(actions, /createCustomerNoteCommand|updateCustomerNoteCommand/);
 });
 
 test("TC5 Customer note creation command rechecks lifecycle and tenant ownership before atomic note and audit", () => {
-  const guard = createCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
+  const guard = createCommand.indexOf("await canBusinessPerformSubscriptionOperation");
   const customer = createCommand.indexOf("transaction.customer.findFirst");
   const create = createCommand.indexOf("transaction.customerNote.create");
   const audit = createCommand.indexOf("transaction.businessActivity.create");
-
   for (const position of [guard, customer, create, audit]) assert.ok(position >= 0);
   assert.ok(guard < customer);
   assert.ok(customer < create);
@@ -70,14 +66,11 @@ test("TC5 Customer note creation command rechecks lifecycle and tenant ownership
 });
 
 test("TC5 Customer note update command rechecks Customer and note tenant ownership before atomic update and audit", () => {
-  const guard = updateCommand.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
+  const guard = updateCommand.indexOf("await canBusinessPerformSubscriptionOperation");
   const customer = updateCommand.indexOf("transaction.customer.findFirst");
   const note = updateCommand.indexOf("transaction.customerNote.findFirst");
   const update = updateCommand.indexOf("transaction.customerNote.update");
   const audit = updateCommand.indexOf("transaction.businessActivity.create");
-
   for (const position of [guard, customer, note, update, audit]) assert.ok(position >= 0);
   assert.ok(guard < customer);
   assert.ok(customer < note);
