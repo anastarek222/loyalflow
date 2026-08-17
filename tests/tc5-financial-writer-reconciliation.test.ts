@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
@@ -37,19 +37,22 @@ test("TC5 compatibility facade exports async wrappers and routes migrated writer
   assert.match(facade, /return createAndAssignCustomerTagCommandAction\(slug, customerId, formData\)/);
   assert.match(facade, /return assignCustomerTagCommandAction\(slug, customerId, tagId\)/);
   assert.match(facade, /return removeCustomerTagCommandAction\(slug, customerId, tagId\)/);
+  assert.match(facade, /return createCustomerNoteCommandAction\(slug, customerId, formData\)/);
+  assert.match(facade, /return updateCustomerNoteCommandAction\(slug, customerId, noteId, formData\)/);
 });
 
-test("TC5 remaining compatibility wrappers retain only the current note implementation", () => {
+test("TC5 compatibility facade has no remaining legacy Customer Detail fallback", () => {
   const facade = source(
     "app/businesses/[slug]/customers/[customerId]/actions.ts",
   );
 
-  assert.doesNotMatch(facade, /return legacy\.updateCustomerAction/);
-  assert.doesNotMatch(facade, /return legacy\.setCustomerStatusAction/);
-  assert.match(facade, /return legacy\.createCustomerNoteAction/);
-  assert.match(facade, /return legacy\.updateCustomerNoteAction/);
-  assert.doesNotMatch(facade, /return legacy\.createCustomerReferralCodeAction/);
-  assert.doesNotMatch(facade, /return legacy\.(createAndAssignCustomerTagAction|assignCustomerTagAction|removeCustomerTagAction)/);
+  assert.doesNotMatch(facade, /actions-legacy|legacy\./);
+  assert.equal(
+    existsSync(
+      join(root, "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts"),
+    ),
+    false,
+  );
 });
 
 test("TC5 customer and scan surfaces continue through the compatibility facade", () => {
@@ -65,14 +68,4 @@ test("TC5 customer and scan surfaces continue through the compatibility facade",
     scanPage,
     /from "@\/app\/businesses\/\[slug\]\/customers\/\[customerId\]\/actions";/,
   );
-});
-
-test("TC5 legacy implementation is retained only as the compatibility fallback", () => {
-  const legacy = source(
-    "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
-  );
-
-  assert.match(legacy, /export async function adjustCustomerBalanceAction/);
-  assert.match(legacy, /export async function addLoyaltyAction/);
-  assert.match(legacy, /export async function redeemRewardAction/);
 });

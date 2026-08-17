@@ -67,8 +67,11 @@ test("P9.8 customer pages use the same shared policies as their active server ac
   const listPage = source("app/businesses/[slug]/customers/page.tsx");
   const listActions = source("app/businesses/[slug]/customers/actions.ts");
   const detailPage = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
-  const detailLegacyActions = source(
-    "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
+  const noteActions = source(
+    "app/businesses/[slug]/customers/[customerId]/note-actions.ts",
+  );
+  const recordActions = source(
+    "app/businesses/[slug]/customers/[customerId]/customer-record-actions.ts",
   );
   const referralActions = source(
     "app/businesses/[slug]/customers/[customerId]/referral-actions.ts",
@@ -76,7 +79,7 @@ test("P9.8 customer pages use the same shared policies as their active server ac
   const tagActions = source(
     "app/businesses/[slug]/customers/[customerId]/tag-actions.ts",
   );
-  const detailAuthorities = `${detailLegacyActions}\n${referralActions}\n${tagActions}`;
+  const detailAuthorities = `${noteActions}\n${recordActions}\n${referralActions}\n${tagActions}`;
 
   assert.match(listPage, /canUseCustomerBulkOperations/);
   assert.match(listPage, /canUseCustomerCampaigns/);

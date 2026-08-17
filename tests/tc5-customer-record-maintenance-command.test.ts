@@ -6,22 +6,31 @@ function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-function action(sourceText: string, name: string, nextName: string) {
+function action(sourceText: string, name: string, nextName?: string) {
   const start = sourceText.indexOf(`export async function ${name}`);
-  const end = sourceText.indexOf(`export async function ${nextName}`, start);
+  const end = nextName
+    ? sourceText.indexOf(`export async function ${nextName}`, start)
+    : sourceText.length;
   assert.ok(start >= 0 && end > start);
   return sourceText.slice(start, end);
 }
 
 const actions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
+  "app/businesses/[slug]/customers/[customerId]/customer-record-actions.ts",
+);
+const facade = source(
+  "app/businesses/[slug]/customers/[customerId]/actions.ts",
 );
 const command = source(
   "lib/server/business/customer-record-maintenance-command.ts",
 );
 
-const updateAction = action(actions, "updateCustomerAction", "setCustomerStatusAction");
-const statusAction = action(actions, "setCustomerStatusAction", "adjustCustomerBalanceAction");
+const updateAction = action(
+  actions,
+  "updateCustomerRecordCommandAction",
+  "setCustomerRecordStatusCommandAction",
+);
+const statusAction = action(actions, "setCustomerRecordStatusCommandAction");
 
 const updateCommandStart = command.indexOf(
   "export async function updateCustomerRecordCommand",
@@ -33,21 +42,23 @@ assert.ok(updateCommandStart >= 0 && statusCommandStart > updateCommandStart);
 const updateCommand = command.slice(updateCommandStart, statusCommandStart);
 const statusCommand = command.slice(statusCommandStart);
 
-test("TC5 Customer record compatibility actions keep presentation checks and delegate persisted writes", () => {
+test("TC5 Customer record actions keep presentation checks and delegate persisted writes", () => {
   assert.match(updateAction, /customerSchema\.safeParse/);
   assert.match(updateAction, /canPerformSubscriptionOperation/);
   assert.match(updateAction, /duplicateCustomer/);
   assert.match(updateAction, /updateCustomerRecordCommand/);
-  assert.match(updateAction, /syncBusinessToGoogleSheetSafely/);
   assert.doesNotMatch(updateAction, /prisma\.\$transaction/);
   assert.doesNotMatch(updateAction, /transaction\.customer\.update/);
 
   assert.match(statusAction, /actionBooleanSchema\.safeParse/);
   assert.match(statusAction, /parsedStatus\.data &&[\s\S]*canPerformSubscriptionOperation/);
   assert.match(statusAction, /setCustomerRecordStatusCommand/);
-  assert.match(statusAction, /syncBusinessToGoogleSheetSafely/);
   assert.doesNotMatch(statusAction, /prisma\.\$transaction/);
   assert.doesNotMatch(statusAction, /transaction\.customer\.update/);
+
+  assert.match(facade, /updateCustomerRecordCommandAction/);
+  assert.match(facade, /setCustomerRecordStatusCommandAction/);
+  assert.doesNotMatch(facade, /actions-legacy|legacy\./);
 });
 
 test("TC5 Customer profile command rechecks lifecycle, tenant ownership and duplicate phone before atomic write", () => {
