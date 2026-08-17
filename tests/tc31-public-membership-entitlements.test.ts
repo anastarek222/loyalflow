@@ -40,23 +40,38 @@ test("TC3.1 applies the canonical referral entitlement to public enrollment", ()
   assert.equal(canApplyPublicReferral("BUSINESS"), true);
 });
 
-test("TC3.1 Join enforces the limit inside the authoritative write transaction", () => {
+test("TC3.1 command enforces effective limits inside the authoritative write transaction", () => {
+  const command = source("lib/server/business/public-membership-command.ts");
   const action = source("app/join/[slug]/actions.ts");
 
-  assert.match(action, /plan:\s*true/);
-  assert.match(action, /getEffectivePlanLimits\(business\.plan\)/);
-  assert.match(action, /transaction\.customer\.count/);
-  assert.match(action, /canCreatePublicMembership/);
-  assert.match(action, /isolationLevel:\s*"Serializable"/);
+  assert.match(command, /transaction\.planConfiguration\.findUnique/);
+  assert.match(command, /configurationToPlanLimits\(configuration, business\.plan\)/);
+  assert.match(command, /transaction\.customer\.count/);
+  assert.match(command, /canCreatePublicMembership\(business\.plan, customerCount, planLimits\)/);
+  assert.match(command, /reason:\s*"PLAN_LIMIT"/);
+  assert.match(command, /transaction\.customer\.create/);
+  assert.match(command, /isolationLevel:\s*"Serializable"/);
+
+  assert.match(action, /createPublicMembershipCommand/);
+  assert.match(action, /result\.reason === "PLAN_LIMIT"/);
   assert.match(action, /customerLimitReached/);
 });
 
-test("TC3.1 referral feedback and writes require entitlement and a live tenant code", () => {
-  const action = source("app/join/[slug]/actions.ts");
+test("TC3.1 command referral writes require entitlement and a live same-tenant code", () => {
+  const command = source("lib/server/business/public-membership-command.ts");
   const joinPage = source("app/join/[slug]/page.tsx");
   const publicCard = source("app/card/[token]/page.tsx");
 
-  assert.match(action, /canApplyPublicReferral\(business\.plan\)/);
+  assert.match(command, /canApplyPublicReferral\(business\.plan\)/);
+  assert.match(command, /businessId:\s*input\.businessId/);
+  assert.match(command, /code:\s*input\.referralCode/);
+  assert.match(command, /isActive:\s*true/);
+  assert.match(command, /customer:\s*\{ isActive:\s*true \}/);
+  assert.match(command, /canRecordReferral\(/);
+  assert.match(command, /referrerBusinessId:\s*referrerCode\.businessId/);
+  assert.match(command, /referrerIsActive:\s*referrerCode\.customer\.isActive/);
+  assert.match(command, /transaction\.referral\.create/);
+
   assert.match(joinPage, /canApplyPublicReferral\(business\.plan\)/);
   assert.match(joinPage, /businessId:\s*business\.id/);
   assert.match(joinPage, /customer:\s*\{ isActive:\s*true \}/);

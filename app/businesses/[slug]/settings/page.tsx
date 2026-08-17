@@ -28,9 +28,9 @@ import {
   deleteBusinessAction,
   updateBusinessCardDetailsAction,
   updateBusinessProfileAction,
-  updateBusinessExportPermissionAction,
   updateOperationsSettingsAction,
 } from "./actions";
+import { updateBusinessExportPermissionCommandAction } from "./export-permission-action";
 
 type BusinessSettingsPageProps = {
   params: Promise<{
@@ -572,7 +572,7 @@ export default async function BusinessSettingsPage({
               </div>
 
               <form
-                action={updateBusinessExportPermissionAction.bind(
+                action={updateBusinessExportPermissionCommandAction.bind(
                   null,
                   business.slug,
                 )}
