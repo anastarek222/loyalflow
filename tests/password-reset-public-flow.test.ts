@@ -20,6 +20,18 @@ test("forgot-password request stays enumeration-safe and rate limited", () => {
   assert.doesNotMatch(actions, /user-not-found/);
 });
 
+test("forgot-password delivery failure remains private and returns the generic response", () => {
+  const actions = source("app/forgot-password/actions.ts");
+
+  assert.match(actions, /try\s*\{/);
+  assert.match(actions, /issuePasswordResetToken/);
+  assert.match(actions, /sendPasswordResetEmail/);
+  assert.match(actions, /catch\s*\(error\)/);
+  assert.match(actions, /logServerError\(\s*"password_reset_request_delivery_failed"/);
+  assert.match(actions, /redirect\("\/forgot-password\?sent=1"\)/);
+  assert.doesNotMatch(actions, /user-not-found|not-configured|delivery-failed/i);
+});
+
 test("reset action consumes only an explicit token and matching password confirmation", () => {
   const actions = source("app/reset-password/actions.ts");
 
