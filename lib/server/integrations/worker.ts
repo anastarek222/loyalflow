@@ -5,6 +5,7 @@ import {
   completeIntegrationJob,
   failIntegrationJob,
 } from "@/lib/server/integrations/outbox";
+import { shouldRetryIntegrationFailure } from "@/lib/server/integrations/retry-policy";
 
 const LEASE_DURATION_MS = 5 * 60 * 1000;
 
@@ -36,13 +37,17 @@ export async function processIntegrationJob(jobId: string, deliveryId: string) {
     return;
   }
 
+  const retry = shouldRetryIntegrationFailure({
+    retryable: result.retryable,
+    attemptCount: claimed.attemptCount,
+  });
   const failed = await failIntegrationJob(prisma, {
     jobId: claimed.id,
     workerId,
     failedAt: finishedAt,
     errorCode: result.reason,
-    retryAt: result.retryable ? new Date(finishedAt.getTime() + 1) : null,
+    retryAt: retry ? new Date(finishedAt.getTime() + 1) : null,
   });
   if (failed.count !== 1) throw new Error("Integration job lease was lost.");
-  if (result.retryable) throw new Error("Retryable integration job failure.");
+  if (retry) throw new Error("Retryable integration job failure.");
 }
