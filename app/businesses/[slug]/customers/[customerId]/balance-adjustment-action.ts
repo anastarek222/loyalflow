@@ -2,13 +2,11 @@
 
 import { auth } from "@/auth";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
-import {
-  isFinancialOperationConflictError,
-} from "@/lib/loyalty/transactions";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { isFinancialOperationConflictError } from "@/lib/loyalty/transactions";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { adjustCustomerBalanceCommand } from "@/lib/server/business/customer-balance-adjustment-command";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { opaqueIdSchema } from "@/lib/validation/action-input";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -98,9 +96,9 @@ export async function adjustCustomerBalanceCommandAction(
 
   const activityContext = await getActivityRequestContext();
 
-  let newBalance: number | null;
+  let result;
   try {
-    newBalance = await adjustCustomerBalanceCommand({
+    result = await adjustCustomerBalanceCommand({
       businessId: business.id,
       customerId: customer.id,
       actor: session.user,
@@ -121,7 +119,7 @@ export async function adjustCustomerBalanceCommandAction(
     throw error;
   }
 
-  if (newBalance === null) {
+  if (result.balance === null || !result.integrationJobId) {
     redirect(
       parsed.data.direction === "SUBTRACT"
         ? `/businesses/${slug}/customers/${customer.id}?error=adjustment-negative`
@@ -129,7 +127,7 @@ export async function adjustCustomerBalanceCommandAction(
     );
   }
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  scheduleBusinessGoogleSheetsSync(result.integrationJobId);
   revalidateCustomerBalanceSurfaces(slug, customer.id, customer.publicToken);
   redirect(`/businesses/${slug}/customers/${customer.id}?success=adjusted`);
 }
