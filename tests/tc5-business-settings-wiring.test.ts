@@ -20,14 +20,18 @@ test("TC5 Business Settings actions delegate authoritative writes to the server 
   assert.doesNotMatch(helper, /transaction\.businessActivity\.create/);
 });
 
-test("TC5 Business Settings presentation adapter preserves sync and revalidation responsibilities", () => {
+test("TC5/TC6 Business Settings presentation adapter preserves durable sync wake-up and revalidation responsibilities", () => {
   const actions = source("app/businesses/[slug]/settings/actions.ts");
   const helper = actions.slice(
     actions.indexOf("async function updateSettingsDomain"),
     actions.indexOf("export async function updateBusinessProfileAction"),
   );
 
-  assert.match(helper, /syncBusinessToGoogleSheetSafely/);
+  assert.match(helper, /syncSheet\?: boolean/);
+  assert.match(helper, /enqueueSheetsSync: input\.syncSheet/);
+  assert.match(helper, /result\.integrationJobId/);
+  assert.match(helper, /scheduleBusinessGoogleSheetsSync\(result\.integrationJobId\)/);
+  assert.doesNotMatch(helper, /syncBusinessToGoogleSheetSafely/);
   for (const expected of [
     'revalidatePath("/dashboard")',
     'revalidatePath("/businesses")',
