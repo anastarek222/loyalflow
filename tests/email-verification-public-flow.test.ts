@@ -26,6 +26,30 @@ test("verification email uses existing Resend configuration and a 24-hour link",
   assert.doesNotMatch(email, /tokenHash/);
 });
 
+test("verification delivery configuration is server-only and fails closed", () => {
+  const email = source("lib/auth/email-verification-email.ts");
+  const env = source(".env.example");
+
+  assert.match(email, /EmailVerificationEmailError\("NOT_CONFIGURED"\)/);
+  assert.match(email, /if\s*\(!response\.ok\)/);
+  assert.match(email, /EmailVerificationEmailError\("DELIVERY_FAILED"\)/);
+  assert.match(env, /RESEND_API_KEY=""/);
+  assert.match(env, /PASSWORD_RESET_FROM_EMAIL=""/);
+  assert.doesNotMatch(env, /re_[A-Za-z0-9]{10,}/);
+});
+
+test("verification resend keeps delivery failures private and enumeration-safe", () => {
+  const resend = source("app/verify-email/resend/actions.ts");
+
+  assert.match(resend, /try\s*\{/);
+  assert.match(resend, /issueEmailVerificationToken/);
+  assert.match(resend, /sendEmailVerificationEmail/);
+  assert.match(resend, /catch\s*\(error\)/);
+  assert.match(resend, /logServerError\("email_verification_resend_failed"/);
+  assert.match(resend, /redirect\("\/verify-email\/resend\?sent=1"\)/);
+  assert.doesNotMatch(resend, /user-not-found|not-configured|delivery-failed/i);
+});
+
 test("verification runtime consumes token and marks state in one transaction", () => {
   const runtime = source("lib/auth/email-verification-runtime.ts");
 
