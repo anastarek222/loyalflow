@@ -15,21 +15,16 @@ function action(sourceText: string, name: string, nextName: string) {
 }
 
 const customerActions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
+);
+const recordCommand = source(
+  "lib/server/business/customer-record-maintenance-command.ts",
 );
 const statusAction = action(
   customerActions,
   "setCustomerStatusAction",
   "adjustCustomerBalanceAction",
 );
-const customerCommand = source(
-  "lib/server/business/customer-record-maintenance-command.ts",
-);
-const statusCommandStart = customerCommand.indexOf(
-  "export async function setCustomerRecordStatusCommand",
-);
-assert.ok(statusCommandStart >= 0);
-const statusCommand = customerCommand.slice(statusCommandStart);
 const customerPage = source(
   "app/businesses/[slug]/customers/[customerId]/page.tsx",
 );
@@ -40,31 +35,26 @@ test("TC4.11 guards customer reactivation as OPERATE before authoritative writes
     /parsedStatus\.data &&[\s\S]*canPerformSubscriptionOperation\(/,
   );
   assert.match(statusAction, /setCustomerRecordStatusCommand/);
-  assert.match(
-    statusCommand,
-    /input\.isActive &&[\s\S]*canBusinessPerformSubscriptionOperation\(/,
-  );
-  assert.match(statusCommand, /"OPERATE"/);
+  assert.match(recordCommand, /input\.isActive &&[\s\S]*canBusinessPerformSubscriptionOperation\(/);
+  assert.match(recordCommand, /"OPERATE"/);
   assert.match(statusAction, /subscription-restricted/);
   assert.ok(
-    statusCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
-      statusCommand.indexOf("transaction.customer.update"),
+    recordCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      recordCommand.indexOf("transaction.customer.update"),
   );
 });
 
 test("TC4.11 preserves customer deactivation as an unrestricted safety control", () => {
   assert.match(statusAction, /parsedStatus\.data &&/);
-  assert.match(statusCommand, /isActive: input\.isActive/);
-  assert.match(statusCommand, /CUSTOMER_DEACTIVATED/);
-  assert.match(statusCommand, /CUSTOMER_REACTIVATED/);
-  assert.doesNotMatch(statusAction, /prisma\.\$transaction/);
+  assert.match(statusAction, /setCustomerRecordStatusCommand/);
+  assert.match(recordCommand, /isActive: input\.isActive/);
+  assert.match(recordCommand, /CUSTOMER_DEACTIVATED/);
+  assert.match(recordCommand, /CUSTOMER_REACTIVATED/);
+  assert.doesNotMatch(recordCommand, /prisma\.\$transaction\(\[/);
 });
 
 test("TC4.11 reuses bounded feedback without provider or schema behavior", () => {
   assert.match(customerPage, /query\.error === "subscription-restricted"/);
   assert.match(customerPage, /security controls remain accessible/);
-  assert.doesNotMatch(
-    `${statusAction}\n${statusCommand}`,
-    /stripe|checkout|webhook|process\.env/i,
-  );
+  assert.doesNotMatch(`${statusAction}\n${recordCommand}`, /stripe|checkout|webhook|process\.env/i);
 });

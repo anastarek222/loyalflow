@@ -13,11 +13,14 @@ function action(sourceText: string, name: string, nextName: string) {
   return sourceText.slice(start, end);
 }
 
-const actions = source(
+const facade = source(
   "app/businesses/[slug]/customers/[customerId]/actions.ts",
 );
-const referralAction = action(
-  actions,
+const referralActions = source(
+  "app/businesses/[slug]/customers/[customerId]/referral-actions.ts",
+);
+const referralFacade = action(
+  facade,
   "createCustomerReferralCodeAction",
   "createAndAssignCustomerTagAction",
 );
@@ -25,25 +28,20 @@ const command = source(
   "lib/server/business/customer-referral-code-command.ts",
 );
 
-test("TC5 Customer referral extraction preserves the active action contract until wiring", () => {
-  assert.match(referralAction, /customerReferralCode\.findUnique/);
-  assert.match(referralAction, /canPerformSubscriptionOperation/);
-  assert.match(referralAction, /canBusinessPerformSubscriptionOperation/);
-  assert.match(referralAction, /prisma\.\$transaction/);
-  assert.match(referralAction, /transaction\.customerReferralCode\.create/);
-  assert.match(referralAction, /error\.code === "P2002"/);
-  assert.doesNotMatch(referralAction, /ensureCustomerReferralCodeCommand/);
+test("TC5 Customer referral compatibility facade routes the active path to the command-backed action", () => {
+  assert.match(referralFacade, /createCustomerReferralCodeCommandAction/);
+  assert.doesNotMatch(referralFacade, /prisma\.\$transaction|customerReferralCode\.create/);
+  assert.match(referralActions, /canUseCustomerReferrals/);
+  assert.match(referralActions, /canPerformSubscriptionOperation/);
+  assert.match(referralActions, /ensureCustomerReferralCodeCommand/);
+  assert.match(referralActions, /subscription-restricted/);
 });
 
 test("TC5 Customer referral command keeps existing replay before persisted EXPAND enforcement", () => {
   const customer = command.indexOf("transaction.customer.findFirst");
-  const existing = command.indexOf(
-    "transaction.customerReferralCode.findUnique",
-  );
+  const existing = command.indexOf("transaction.customerReferralCode.findUnique");
   const existingReturn = command.indexOf('state: "EXISTING"');
-  const guard = command.indexOf(
-    "await canBusinessPerformSubscriptionOperation",
-  );
+  const guard = command.indexOf("await canBusinessPerformSubscriptionOperation");
   const create = command.indexOf("transaction.customerReferralCode.create");
 
   for (const position of [customer, existing, existingReturn, guard, create]) {

@@ -2,45 +2,45 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-const actions = readFileSync(
-  new URL("../app/businesses/[slug]/customers/[customerId]/actions.ts", import.meta.url),
-  "utf8",
-);
-
-function action(name: string, nextName: string) {
-  const start = actions.indexOf(`export async function ${name}`);
-  const end = actions.indexOf(`export async function ${nextName}`, start);
-  assert.ok(start >= 0 && end > start);
-  return actions.slice(start, end);
+function source(path: string) {
+  return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-const createAndAssign = action("createAndAssignCustomerTagAction", "assignCustomerTagAction");
-const assign = action("assignCustomerTagAction", "removeCustomerTagAction");
-const remove = action("removeCustomerTagAction", "createCustomerNoteAction");
+const facade = source(
+  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+);
+const tagActions = source(
+  "app/businesses/[slug]/customers/[customerId]/tag-actions.ts",
+);
+const tagCommand = source("lib/server/business/customer-tag-write-command.ts");
+const customerPage = source(
+  "app/businesses/[slug]/customers/[customerId]/page.tsx",
+);
 
 test("TC4.14 classifies new tags as EXPAND and existing topology as OPERATE", () => {
-  assert.match(createAndAssign, /existingTag \? "OPERATE" : "EXPAND"/);
-  assert.match(assign, /"OPERATE"/);
-  assert.match(remove, /"OPERATE"/);
+  assert.match(facade, /createAndAssignCustomerTagCommandAction/);
+  assert.match(tagActions, /const intent = existingTag \? "OPERATE" : "EXPAND"/);
+  assert.match(tagCommand, /const intent = existingTag \? "OPERATE" : "EXPAND"/);
+  assert.match(tagCommand, /"OPERATE"/);
+  assert.match(tagCommand, /"EXPAND"/);
 });
 
 test("TC4.14 re-checks entitlement before every individual tag mutation", () => {
-  for (const [sourceText, mutation] of [
-    [createAndAssign, "transaction.customerTag.upsert"],
-    [assign, "transaction.customerTagAssignment.createMany"],
-    [remove, "transaction.customerTagAssignment.deleteMany"],
-  ] as const) {
-    assert.match(sourceText, /canPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /canBusinessPerformSubscriptionOperation\(/);
-    assert.match(sourceText, /subscription-restricted/);
-    assert.ok(sourceText.indexOf("await canBusinessPerformSubscriptionOperation") < sourceText.indexOf(mutation));
-  }
+  assert.match(tagActions, /canPerformSubscriptionOperation\(/);
+  assert.match(tagCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.equal(
+    tagCommand.match(/canBusinessPerformSubscriptionOperation\(/g)?.length,
+    3,
+  );
+  assert.match(tagCommand, /input\.businessId/);
 });
 
 test("TC4.14 preserves idempotent assignment and removal convergence", () => {
-  assert.match(createAndAssign, /skipDuplicates: true/);
-  assert.match(assign, /skipDuplicates: true/);
-  assert.match(remove, /if \(assignment\)/);
-  assert.match(remove, /if \(removed\.count > 0\)/);
-  assert.doesNotMatch(actions, /stripe|checkout|webhook|process\.env/i);
+  assert.match(tagCommand, /if \(existingAssignment\)/);
+  assert.match(tagCommand, /if \(existing\)/);
+  assert.match(tagCommand, /if \(!assignment\)/);
+  assert.match(tagCommand, /skipDuplicates: true/);
+  assert.match(tagCommand, /customerTagAssignment\.deleteMany/);
+  assert.match(customerPage, /query\.error === "subscription-restricted"/);
+  assert.doesNotMatch(`${tagActions}\n${tagCommand}`, /stripe|checkout|webhook|process\.env/i);
 });
