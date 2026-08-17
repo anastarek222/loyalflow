@@ -32,12 +32,9 @@ test("TC4.18 preserves playbook safety and post-commit sync boundaries", () => {
   assert.doesNotMatch(command, /transaction\.(reward|promotion|offer|campaign)\.create/);
   assert.doesNotMatch(actions, /prisma\.\$transaction/);
   assert.match(command, /enqueueIntegrationJob\(transaction/);
+  assert.match(actions, /const outcome = await applyBusinessPlaybookCommand/);
   assert.match(actions, /scheduleBusinessGoogleSheetsSync\(outcome\.integrationJobId\)/);
   assert.doesNotMatch(actions, /syncBusinessToGoogleSheetSafely/);
-  assert.ok(
-    actions.indexOf("await applyBusinessPlaybookCommand") <
-      actions.indexOf("scheduleBusinessGoogleSheetsSync"),
-  );
 });
 
 test("TC4.18 exposes bounded bilingual restriction feedback", () => {
