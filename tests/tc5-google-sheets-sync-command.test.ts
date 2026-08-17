@@ -15,7 +15,9 @@ test("TC5 Google Sheets sync command rechecks persisted OPERATE before integrati
   const entitlement = command.indexOf(
     "await canBusinessPerformSubscriptionOperation",
   );
-  const sync = command.indexOf("syncBusinessToGoogleSheetSafely");
+  const sync = command.indexOf(
+    "await syncBusinessToGoogleSheetSafely(input.businessId)",
+  );
 
   assert.ok(entitlement >= 0);
   assert.ok(sync >= 0);
@@ -38,10 +40,9 @@ test("TC5 bounded Google Sheets sync action preserves auth, management and feedb
   assert.match(action, /canPerformSubscriptionOperation/);
   assert.match(action, /"OPERATE"/);
   assert.match(action, /syncBusinessGoogleSheetCommand/);
-
-  for (const state of ["subscription-restricted", "sheetSync=success", "sheetSync=error"]) {
-    assert.ok(action.includes(state));
-  }
+  assert.match(action, /sheetSync=subscription-restricted/);
+  assert.match(action, /sheetSync=\$\{/);
+  assert.match(action, /result\.status === "success" \? "success" : "error"/);
 });
 
 test("TC5 bounded Google Sheets sync action owns no provider configuration or direct sync-state persistence", () => {
