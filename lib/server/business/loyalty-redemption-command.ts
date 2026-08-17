@@ -6,20 +6,20 @@ import {
 } from "@/lib/loyalty/transactions";
 import { getRewardUnlockRedemptionState } from "@/lib/rewards/expiration";
 import prisma from "@/lib/prisma";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type LoyaltyRedemptionCommandResult =
-  | Readonly<{ ok: true; balance: number }>
+  | Readonly<{ ok: true; balance: number; integrationJobId: string }>
   | Readonly<{ ok: false; reason: "REWARD_EXPIRED" | "INSUFFICIENT_BALANCE" }>;
 
 /**
  * Authoritative loyalty redemption transaction boundary.
  *
  * Authentication, capability checks, reward selection, replay validation,
- * rapid-operation protection, presentation redirects, Sheets sync and page
- * revalidation remain in the bounded action. This command preserves the
- * existing reward-unlock expiry lifecycle and delegates the canonical balance,
- * idempotency, attribution, subscription and audit semantics to
- * `recordRewardRedemption` inside one Prisma transaction.
+ * rapid-operation protection, presentation redirects, post-commit transport
+ * wake-up and page revalidation remain in the bounded action. This command
+ * preserves reward-unlock expiry semantics and atomically commits the canonical
+ * redemption plus one durable Google Sheets integration job.
  */
 export async function redeemLoyaltyRewardCommand(input: {
   businessId: string;
@@ -52,8 +52,6 @@ export async function redeemLoyaltyRewardCommand(input: {
           orderBy: { unlockedAt: "desc" },
         });
 
-        // Preserve legacy balances created before reward expiry was enabled:
-        // a missing unlock does not make an otherwise valid redemption fail.
         if (unlock) {
           const unlockState = getRewardUnlockRedemptionState({
             expectedBusinessId: input.businessId,
@@ -126,7 +124,13 @@ export async function redeemLoyaltyRewardCommand(input: {
         return { ok: false, reason: "INSUFFICIENT_BALANCE" } as const;
       }
 
-      return { ok: true, balance } as const;
+      const integrationJob = await enqueueIntegrationJob(transaction, {
+        businessId: input.businessId,
+        kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+        idempotencyKey: `loyalty-redemption:${input.idempotencyKey}`,
+      });
+
+      return { ok: true, balance, integrationJobId: integrationJob.id } as const;
     });
   } catch (error) {
     if (isFinancialOperationAbortedError(error)) {
