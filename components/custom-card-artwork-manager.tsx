@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/custom-card-publish-action";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 
 type Props = {
@@ -17,9 +18,9 @@ export function CustomCardArtworkManager({
   versions,
   storageConfigured,
   uploadAction,
-  publishAction,
 }: Props) {
   const selected = versions.find((version) => version.id === selectedVersion);
+  const publishCustomArtwork = publishCustomCardArtworkAction.bind(null, slug);
 
   return (
     <section className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-5">
@@ -86,7 +87,7 @@ export function CustomCardArtworkManager({
                 {selected.id}
               </p>
             </div>
-            <form action={publishAction}>
+            <form action={publishCustomArtwork}>
               <input type="hidden" name="customVersion" value={selected.id} />
               <button
                 type="submit"

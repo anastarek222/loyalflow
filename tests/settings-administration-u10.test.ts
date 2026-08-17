@@ -128,6 +128,9 @@ test("U10 preserves canonical profile, loyalty, branding, enrollment, and playbo
   const settingsDomains = source("lib/business/settings-domains.ts");
   const settings = source("app/businesses/[slug]/settings/page.tsx");
   const playbookActions = source("app/businesses/[slug]/playbooks/actions.ts");
+  const playbookCommand = source(
+    "lib/server/business/playbook-application-command.ts",
+  );
   assert.match(settingsDomains, /currency: businessIdentityFields\.currency/);
   assert.match(settingsDomains, /timezone: businessIdentityFields\.timezone/);
   assert.match(domainValidation, /isSupportedCurrency/);
@@ -141,7 +144,8 @@ test("U10 preserves canonical profile, loyalty, branding, enrollment, and playbo
   assert.match(settings, /\/join\/\$\{business\.slug\}/);
   assert.match(playbookActions, /canManageBusiness/);
   assert.match(playbookActions, /confirmedExisting/);
-  assert.match(playbookActions, /playbookMatchesBusiness/);
+  assert.match(playbookActions, /applyBusinessPlaybookCommand/);
+  assert.match(playbookCommand, /playbookMatchesBusiness/);
   assert.doesNotMatch(playbookActions, /transaction\.create/);
 });
 
