@@ -122,9 +122,11 @@ test("retains database protection and compatibility paths without mutating lifec
   const redemptionAction = readFileSync(join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts"), "utf8");
   const redemptionCommand = readFileSync(join(process.cwd(), "lib/server/business/loyalty-redemption-command.ts"), "utf8");
   const transactions = readFileSync(join(process.cwd(), "lib/loyalty/transactions.ts"), "utf8");
-  assert.match(redemptionCommand, /isActive: true,[\s\S]*expiresAfterDays: \{ not: null \}/);
-  assert.match(redemptionCommand, /No unlock means this balance predates enabling expiry/);
+  assert.match(redemptionAction, /businessId: business\.id, isActive: true/);
+  assert.match(redemptionAction, /expiresAfterDays: true/);
+  assert.match(redemptionAction, /rewardExpiresAfterDays: selectedReward\?\.expiresAfterDays/);
+  assert.match(redemptionCommand, /getRewardUnlockRedemptionState/);
+  assert.match(redemptionCommand, /expiresAt: \{ lte: now \}/);
   assert.match(redemptionCommand, /recordRewardRedemption\(transaction/);
-  assert.match(redemptionAction, /redeemLoyaltyRewardCommand/);
   assert.match(transactions, /expiresAt: \{ gt: new Date\(\) \}/);
 });
