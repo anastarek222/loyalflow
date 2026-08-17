@@ -16,6 +16,7 @@ import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
 import {
   mutateBulkCustomerTagCommand,
@@ -136,6 +137,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       committedChangedIds = [...mutation.changedIds];
     }
 
+    await syncBusinessToGoogleSheetSafely(business.id);
     revalidateBulkCustomerPages(slug);
     redirect(
       bulkResultUrl(
@@ -202,6 +204,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     committedChangedIds = [...mutation.changedIds];
   }
 
+  await syncBusinessToGoogleSheetSafely(business.id);
   revalidateBulkCustomerPages(slug);
   redirect(
     bulkResultUrl(
