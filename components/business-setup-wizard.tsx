@@ -1,31 +1,22 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import {
-  useRef,
-  useState,
-} from "react";
+import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import {
-  MIN_PASSWORD_LENGTH,
-} from "@/lib/auth/password-policy";
-import { businessCreationSchema } from "@/lib/business/creation-input";
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
+import { getBusinessSetupValidationIssue } from "@/lib/business/setup-validation";
 import { CountrySelector } from "@/components/onboarding/country-selector";
 import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
 import { StandardCardSetup } from "@/components/standard-card-setup";
-import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
 
 type Props = {
-  action: (
-    formData: FormData
-  ) => void | Promise<void>;
+  action: (formData: FormData) => void | Promise<void>;
 };
 
 function CreateBusinessSubmitButton({ locked }: { locked: boolean }) {
   const { pending } = useFormStatus();
   const submitting = locked || pending;
-
   return (
     <button
       type="submit"
@@ -37,14 +28,8 @@ function CreateBusinessSubmitButton({ locked }: { locked: boolean }) {
   );
 }
 
-const steps = [
-  "Business",
-  "Owner",
-  "Billing",
-  "Loyalty",
-  "Card Design",
-  "Review",
-] as const;
+const steps = ["Business", "Owner", "Billing", "Loyalty", "Card Design", "Review"] as const;
+type SetupStep = 0 | 1 | 2 | 3 | 4;
 
 type ReviewData = {
   name: string;
@@ -58,12 +43,10 @@ type ReviewData = {
   city: string;
   website: string;
   taxNumber: string;
-
   ownerFirstName: string;
   ownerLastName: string;
   ownerEmail: string;
   ownerPhone: string;
-
   billingInterval: string;
   billingCustomDays: string;
   subscriptionStartDate: string;
@@ -77,13 +60,11 @@ type ReviewData = {
   billingNotes: string;
   adminNotes: string;
   plan: string;
-
   loyaltyMode: string;
   unitName: string;
   rewardName: string;
   rewardThreshold: string;
   earnAmount: string;
-
   primaryColor: string;
   themePreset: string;
   logoPreview: string;
@@ -92,19 +73,13 @@ type ReviewData = {
   cardDesignMode: "STANDARD" | "CUSTOM";
 };
 
-const loyaltyLabels: Record<
-  string,
-  string
-> = {
+const loyaltyLabels: Record<string, string> = {
   VISITS: "Visits",
   POINTS: "Points",
   SALES_AMOUNT: "Sales Amount",
 };
 
-const themeLabels: Record<
-  string,
-  string
-> = {
+const themeLabels: Record<string, string> = {
   DEFAULT: "Default",
   MINIMAL: "Minimal",
   LUXURY: "Luxury",
@@ -137,41 +112,11 @@ const planLabels: Record<string, string> = {
   BUSINESS: "Business",
 };
 
-function getValue(
-  formData: FormData,
-  name: string
-) {
-  return String(
-    formData.get(name) ?? ""
-  ).trim();
+function getValue(formData: FormData, name: string) {
+  return String(formData.get(name) ?? "").trim();
 }
 
-function isValidEmail(
-  value: string
-) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    value
-  );
-}
-
-function isValidHttpUrl(
-  value: string
-) {
-  return normalizeWebsiteUrl(value) !== null;
-}
-
-function isValidHexColor(
-  value: string
-) {
-  return /^#[0-9a-fA-F]{6}$/.test(
-    value
-  );
-}
-
-function getReviewData(
-  formData: FormData,
-  logoPreview: string
-): ReviewData {
+function getReviewData(formData: FormData, logoPreview: string): ReviewData {
   return {
     name: getValue(formData, "name"),
     contactPhone: getValue(formData, "contactPhone"),
@@ -267,111 +212,21 @@ export default function BusinessSetupWizard({ action }: Props) {
     return normalized ? `${dialCode}${normalized}` : "";
   }
 
-  function validateWholeForm(formData: FormData) {
-    const parsed = businessCreationSchema.safeParse(Object.fromEntries(formData));
-    if (parsed.success) return null;
-    const issue = parsed.error.issues[0];
-    const field = String(issue?.path[0] ?? "");
-    const stepForField: Record<string, number> = {
-      name: 0,
-      country: 0,
-      currency: 0,
-      timezone: 0,
-      ownerFirstName: 1,
-      ownerEmail: 1,
-      ownerPassword: 1,
-      billingCustomDays: 2,
-      subscriptionAmount: 2,
-      loyaltyMode: 3,
-      unitName: 3,
-      rewardName: 3,
-      rewardThreshold: 3,
-      earnAmount: 3,
-      primaryColor: 4,
-      themePreset: 4,
-    };
-    const message: Record<string, string> = {
-      billingCustomDays: "Billing: enter custom interval days between 1 and 730.",
-      rewardThreshold: "Loyalty: reward target must be at least 1.",
-      earnAmount: "Loyalty: earn amount must be at least 1.",
-    };
-    return {
-      step: stepForField[field] ?? 0,
-      field,
-      message: message[field] ?? "Please check the highlighted field before creating the business.",
-    };
-  }
-
-  function validateStep(currentStep: number, formData: FormData) {
-    if (currentStep === 0) {
-      const name = getValue(formData, "name");
-      const employeeCount = getValue(formData, "employeeCount");
-      const email = getValue(formData, "email");
-      const website = getValue(formData, "website");
-      if (name.length < 2) return "Business name must contain at least 2 characters.";
-      if (!country) return "Choose a country from the search results.";
-      if (!currency) return "Choose a currency.";
-      if (!timezone) return timezoneNeedsChoice ? "Choose a timezone for the selected country." : "Choose a timezone.";
-      if (employeeCount && (!Number.isInteger(Number(employeeCount)) || Number(employeeCount) < 0)) {
-        return "Number of employees must be a valid non-negative whole number.";
-      }
-      if (email && !isValidEmail(email)) return "Enter a valid business email address.";
-      if (!isValidHttpUrl(website)) return "Enter a valid website, for example xtvco.com.";
-    }
-
-    if (currentStep === 1) {
-      const firstName = getValue(formData, "ownerFirstName");
-      const email = getValue(formData, "ownerEmail");
-      const password = getValue(formData, "ownerPassword");
-      if (firstName.length < 2) return "Owner first name must contain at least 2 characters.";
-      if (!isValidEmail(email)) return "Enter a valid owner email address.";
-      if (password.length < MIN_PASSWORD_LENGTH) return `Owner password must contain at least ${MIN_PASSWORD_LENGTH} characters.`;
-      if (password.length > 100) return "Owner password is too long.";
-    }
-
-    if (currentStep === 2) {
-      const interval = getValue(formData, "billingInterval");
-      const customDays = getValue(formData, "billingCustomDays");
-      const amount = getValue(formData, "subscriptionAmount");
-      const nextPaymentDate = getValue(formData, "nextPaymentDate");
-      if (interval === "CUSTOM" && (!/^\d+$/.test(customDays) || Number(customDays) < 1 || Number(customDays) > 730)) {
-        return "Custom billing interval must be between 1 and 730 days.";
-      }
-      if (amount && !/^\d+(?:\.\d{1,2})?$/.test(amount)) {
-        return "Subscription amount must be a valid non-negative amount with up to two decimals.";
-      }
-      if (nextPaymentDate && !/^\d{4}-\d{2}-\d{2}$/.test(nextPaymentDate)) {
-        return "Next payment date must use YYYY-MM-DD.";
-      }
-    }
-
-    if (currentStep === 3) {
-      const unitName = getValue(formData, "unitName");
-      const rewardName = getValue(formData, "rewardName");
-      const rewardThreshold = Number(getValue(formData, "rewardThreshold"));
-      const earnAmount = Number(getValue(formData, "earnAmount"));
-      if (!unitName) return "Loyalty unit name is required.";
-      if (rewardName.length < 2) return "Reward name must contain at least 2 characters.";
-      if (!Number.isInteger(rewardThreshold) || rewardThreshold < 1) return "Reward threshold must be a positive whole number.";
-      if (!Number.isInteger(earnAmount) || earnAmount < 1) return "Earn amount must be a positive whole number.";
-    }
-
-    if (currentStep === 4) {
-      const primaryColor = getValue(formData, "primaryColor");
-      const secondaryColor = getValue(formData, "secondaryColor");
-      if (!isValidHexColor(primaryColor) || !isValidHexColor(secondaryColor)) {
-        return "Brand colors must be valid hexadecimal colors.";
-      }
-    }
-    return null;
+  function focusIssue(field: string) {
+    window.setTimeout(
+      () => (document.querySelector(`[name="${field}"]`) as HTMLElement | null)?.focus(),
+      0,
+    );
   }
 
   function goNext() {
-    if (!formRef.current) return;
+    if (!formRef.current || step > 4) return;
     const formData = new FormData(formRef.current);
-    const error = validateStep(step, formData);
-    if (error) {
-      setValidationError(error);
+    const issue = getBusinessSetupValidationIssue(formData, step as SetupStep);
+    if (issue) {
+      setValidationError(issue.message);
+      setStep(issue.step);
+      focusIssue(issue.field);
       return;
     }
     setValidationError("");
@@ -409,11 +264,20 @@ export default function BusinessSetupWizard({ action }: Props) {
         }
         if (key === "city" || key === "country") {
           const formData = new FormData(event.currentTarget);
-          const location = [getValue(formData, "city"), getValue(formData, "country")].filter(Boolean).join(", ");
+          const location = [getValue(formData, "city"), getValue(formData, "country")]
+            .filter(Boolean)
+            .join(", ");
           setCardPreview((current) => ({ ...current, businessLocation: location }));
         }
-        if (key === "loyaltyMode") setCardPreview((current) => ({ ...current, loyaltyMode: target.value as "VISITS" | "POINTS" | "SALES_AMOUNT" }));
-        if (key === "rewardThreshold") setCardPreview((current) => ({ ...current, rewardThreshold: Number(target.value) || 1 }));
+        if (key === "loyaltyMode") {
+          setCardPreview((current) => ({
+            ...current,
+            loyaltyMode: target.value as "VISITS" | "POINTS" | "SALES_AMOUNT",
+          }));
+        }
+        if (key === "rewardThreshold") {
+          setCardPreview((current) => ({ ...current, rewardThreshold: Number(target.value) || 1 }));
+        }
       }}
       onSubmit={(event) => {
         if (submissionLockRef.current) {
@@ -421,12 +285,12 @@ export default function BusinessSetupWizard({ action }: Props) {
           return;
         }
         const data = new FormData(event.currentTarget);
-        const error = validateWholeForm(data);
-        if (error) {
+        const issue = getBusinessSetupValidationIssue(data);
+        if (issue) {
           event.preventDefault();
-          setValidationError(error.message);
-          setStep(error.step);
-          window.setTimeout(() => (document.querySelector(`[name="${error.field}"]`) as HTMLElement | null)?.focus(), 0);
+          setValidationError(issue.message);
+          setStep(issue.step);
+          focusIssue(issue.field);
           return;
         }
         setValidationError("");
@@ -466,7 +330,10 @@ export default function BusinessSetupWizard({ action }: Props) {
       </div>
 
       {validationError ? (
-        <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800">
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800"
+        >
           {validationError}
         </div>
       ) : null}
@@ -521,13 +388,19 @@ export default function BusinessSetupWizard({ action }: Props) {
                   setCardPreview((current) => ({
                     ...current,
                     currency: selection.currency || current.currency,
-                    businessLocation: [getValue(new FormData(formRef.current!), "city"), selection.name].filter(Boolean).join(", "),
+                    businessLocation: [
+                      getValue(new FormData(formRef.current!), "city"),
+                      selection.name,
+                    ].filter(Boolean).join(", "),
                   }));
                 }}
               />
             </>
             <input name="city" placeholder="City" maxLength={100} className="w-full rounded-xl border px-4 py-3" />
           </div>
+          {timezoneNeedsChoice ? (
+            <p className="text-xs font-medium text-amber-700">Choose a timezone for the selected country.</p>
+          ) : null}
           <input name="website" type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" placeholder="example.com" maxLength={300} className="w-full rounded-xl border px-4 py-3" />
           <input name="taxNumber" placeholder="Tax number (optional)" maxLength={100} className="w-full rounded-xl border px-4 py-3" />
         </section>
@@ -566,34 +439,20 @@ export default function BusinessSetupWizard({ action }: Props) {
           <label className="block text-sm font-semibold text-slate-700">
             Product plan
             <select name="plan" defaultValue="FREE" className="mt-2 w-full rounded-xl border px-4 py-3">
-              <option value="FREE">Free</option>
-              <option value="STARTER">Starter</option>
-              <option value="PRO">Pro</option>
-              <option value="BUSINESS">Business</option>
+              <option value="FREE">Free</option><option value="STARTER">Starter</option><option value="PRO">Pro</option><option value="BUSINESS">Business</option>
             </select>
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-semibold text-slate-700">
               Billing cycle
               <select name="billingInterval" defaultValue="MONTHLY" className="mt-2 w-full rounded-xl border px-4 py-3">
-                <option value="FIFTEEN_DAYS">Every 15 days</option>
-                <option value="MONTHLY">Monthly</option>
-                <option value="QUARTERLY">Every 3 months</option>
-                <option value="SEMIANNUAL">Every 6 months</option>
-                <option value="ANNUAL">Annual</option>
-                <option value="CUSTOM">Custom days</option>
+                <option value="FIFTEEN_DAYS">Every 15 days</option><option value="MONTHLY">Monthly</option><option value="QUARTERLY">Every 3 months</option><option value="SEMIANNUAL">Every 6 months</option><option value="ANNUAL">Annual</option><option value="CUSTOM">Custom days</option>
               </select>
             </label>
-            <label className="text-sm font-semibold text-slate-700">
-              Custom interval days
-              <input name="billingCustomDays" type="number" min="1" max="730" step="1" placeholder="Only for Custom" className="mt-2 w-full rounded-xl border px-4 py-3" />
-            </label>
+            <label className="text-sm font-semibold text-slate-700">Custom interval days<input name="billingCustomDays" type="number" min="1" max="730" step="1" placeholder="Only for Custom" className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold text-slate-700">
-              Subscription amount
-              <input name="subscriptionAmount" inputMode="decimal" placeholder="1500.00" className="mt-2 w-full rounded-xl border px-4 py-3" />
-            </label>
+            <label className="text-sm font-semibold text-slate-700">Subscription amount<input name="subscriptionAmount" inputMode="decimal" placeholder="1500.00" className="mt-2 w-full rounded-xl border px-4 py-3" /></label>
             <label className="text-sm font-semibold text-slate-700">
               Billing currency
               <select name="billingCurrency" defaultValue="EGP" className="mt-2 w-full rounded-xl border px-4 py-3">
@@ -623,13 +482,8 @@ export default function BusinessSetupWizard({ action }: Props) {
 
       <div className={step === 3 ? "block" : "hidden"}>
         <section className="space-y-4">
-          <div>
-            <h3 className="text-lg font-black">Loyalty Setup</h3>
-            <p className="mt-1 text-sm text-slate-500">Configure how customers earn and redeem rewards.</p>
-          </div>
-          <select name="loyaltyMode" defaultValue="VISITS" className="w-full rounded-xl border px-4 py-3">
-            <option value="VISITS">Visits</option><option value="POINTS">Points</option><option value="SALES_AMOUNT">Sales Amount</option>
-          </select>
+          <div><h3 className="text-lg font-black">Loyalty Setup</h3><p className="mt-1 text-sm text-slate-500">Configure how customers earn and redeem rewards.</p></div>
+          <select name="loyaltyMode" defaultValue="VISITS" className="w-full rounded-xl border px-4 py-3"><option value="VISITS">Visits</option><option value="POINTS">Points</option><option value="SALES_AMOUNT">Sales Amount</option></select>
           <input name="unitName" required defaultValue="زيارة" maxLength={30} placeholder="Unit name" className="w-full rounded-xl border px-4 py-3" />
           <input name="rewardName" required minLength={2} maxLength={100} defaultValue="هدية مجانية" placeholder="Reward name" className="w-full rounded-xl border px-4 py-3" />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -641,22 +495,13 @@ export default function BusinessSetupWizard({ action }: Props) {
 
       <div className={step === 4 ? "block" : "hidden"}>
         <section className="space-y-5">
-          <div>
-            <h3 className="text-lg font-black">Card Design</h3>
-            <p className="mt-1 text-sm text-slate-500">Configure the one card design used for every customer.</p>
-          </div>
+          <div><h3 className="text-lg font-black">Card Design</h3><p className="mt-1 text-sm text-slate-500">Configure the one card design used for every customer.</p></div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Business Logo</p>
             <div className="mt-4 flex aspect-square max-w-44 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-              {logoPreview ? (
-                <img src={logoPreview} alt="Current business logo preview" className="size-full object-contain p-3" />
-              ) : (
-                <span className="text-5xl font-black text-slate-300">{cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}</span>
-              )}
+              {logoPreview ? <img src={logoPreview} alt="Current business logo preview" className="size-full object-contain p-3" /> : <span className="text-5xl font-black text-slate-300">{cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}</span>}
             </div>
-            <label htmlFor="logoFile" className="mt-5 block text-sm font-semibold text-slate-700">
-              {logoPreview ? "Change Logo" : "Upload Logo"} <span className="font-normal text-slate-500">(optional)</span>
-            </label>
+            <label htmlFor="logoFile" className="mt-5 block text-sm font-semibold text-slate-700">{logoPreview ? "Change Logo" : "Upload Logo"} <span className="font-normal text-slate-500">(optional)</span></label>
             <input
               id="logoFile"
               type="file"
@@ -688,13 +533,7 @@ export default function BusinessSetupWizard({ action }: Props) {
           <StandardCardSetup
             language="EN"
             allowCustom
-            initial={{
-              primaryColor: "#B98A4B",
-              themePreset: "DEFAULT",
-              artworkEnabled: true,
-              artworkCategory: "OTHER",
-              designMode: "STANDARD",
-            }}
+            initial={{ primaryColor: "#B98A4B", themePreset: "DEFAULT", artworkEnabled: true, artworkCategory: "OTHER", designMode: "STANDARD" }}
             preview={{ ...cardPreview, logoUrl: logoPreview }}
             onPreviewChange={(next) => setCardPreview((current) => ({ ...current, ...next }))}
           />
@@ -708,78 +547,24 @@ export default function BusinessSetupWizard({ action }: Props) {
 
       <div className={step === 5 ? "block" : "hidden"}>
         <section className="space-y-4">
-          <div>
-            <h3 className="text-lg font-black">Review & Create</h3>
-            <p className="mt-1 text-sm text-slate-500">Review the setup before creating the business.</p>
-          </div>
+          <div><h3 className="text-lg font-black">Review & Create</h3><p className="mt-1 text-sm text-slate-500">Review the setup before creating the business.</p></div>
           {reviewData ? (
             <div className="space-y-4">
-              <ReviewSection
-                title="Business"
-                onEdit={() => editStep(0)}
-                rows={[
-                  ["Name", reviewData.name],
-                  ["Industry", reviewData.industry],
-                  ["Phone", reviewData.contactPhone],
-                  ["Email", reviewData.email],
-                  ["Location", [reviewData.city, reviewData.country].filter(Boolean).join(", ")],
-                  ["Currency", reviewData.currency],
-                  ["Timezone", reviewData.timezone],
-                  ["Employees", reviewData.employeeCount],
-                  ["Website", reviewData.website],
-                  ["Tax number", reviewData.taxNumber],
-                ]}
-              />
-              <ReviewSection
-                title="Owner"
-                onEdit={() => editStep(1)}
-                rows={[
-                  ["Name", [reviewData.ownerFirstName, reviewData.ownerLastName].filter(Boolean).join(" ")],
-                  ["Email", reviewData.ownerEmail],
-                  ["Phone", reviewData.ownerPhone],
-                  ["Password", "••••••••••"],
-                ]}
-              />
-              <ReviewSection
-                title="Billing"
-                onEdit={() => editStep(2)}
-                rows={[
-                  ["Plan", planLabels[reviewData.plan] ?? reviewData.plan],
-                  ["Cycle", billingIntervalLabels[reviewData.billingInterval] ?? reviewData.billingInterval],
-                  ["Custom days", reviewData.billingCustomDays],
-                  ["Amount", reviewData.subscriptionAmount ? `${reviewData.subscriptionAmount} ${reviewData.billingCurrency}` : ""],
-                  ["Status", paymentStatusLabels[reviewData.paymentStatus] ?? reviewData.paymentStatus],
-                  ["Start date", reviewData.subscriptionStartDate],
-                  ["Next payment", reviewData.nextPaymentDate],
-                  ["Last payment", reviewData.lastPaymentDate],
-                  ["Grace days", reviewData.gracePeriodDays],
-                  ["Payment method", reviewData.paymentMethod],
-                  ["Payment notes", reviewData.billingNotes],
-                  ["Internal notes", reviewData.adminNotes],
-                ]}
-              />
-              <ReviewSection
-                title="Loyalty"
-                onEdit={() => editStep(3)}
-                rows={[
-                  ["Mode", loyaltyLabels[reviewData.loyaltyMode] ?? reviewData.loyaltyMode],
-                  ["Unit", reviewData.unitName],
-                  ["Reward", reviewData.rewardName],
-                  ["Threshold", reviewData.rewardThreshold],
-                  ["Earn amount", reviewData.earnAmount],
-                ]}
-              />
-              <ReviewSection
-                title="Card Design"
-                onEdit={() => editStep(4)}
-                rows={[
-                  ["Theme", themeLabels[reviewData.themePreset] ?? reviewData.themePreset],
-                  ["Primary", reviewData.primaryColor],
-                  ["Logo", reviewData.logoPreview ? "Configured" : "Not set"],
-                  ["Design", reviewData.cardDesignMode === "CUSTOM" ? "Custom Card" : "LoyalFlow Standard Card"],
-                  ["Artwork", reviewData.standardCardArtworkEnabled ? reviewData.standardCardArtworkCategory : "Disabled"],
-                ]}
-              />
+              <ReviewSection title="Business" onEdit={() => editStep(0)} rows={[
+                ["Name", reviewData.name], ["Industry", reviewData.industry], ["Phone", reviewData.contactPhone], ["Email", reviewData.email], ["Location", [reviewData.city, reviewData.country].filter(Boolean).join(", ")], ["Currency", reviewData.currency], ["Timezone", reviewData.timezone], ["Employees", reviewData.employeeCount], ["Website", reviewData.website], ["Tax number", reviewData.taxNumber],
+              ]} />
+              <ReviewSection title="Owner" onEdit={() => editStep(1)} rows={[
+                ["Name", [reviewData.ownerFirstName, reviewData.ownerLastName].filter(Boolean).join(" ")], ["Email", reviewData.ownerEmail], ["Phone", reviewData.ownerPhone], ["Password", "••••••••••"],
+              ]} />
+              <ReviewSection title="Billing" onEdit={() => editStep(2)} rows={[
+                ["Plan", planLabels[reviewData.plan] ?? reviewData.plan], ["Cycle", billingIntervalLabels[reviewData.billingInterval] ?? reviewData.billingInterval], ["Custom days", reviewData.billingCustomDays], ["Amount", reviewData.subscriptionAmount ? `${reviewData.subscriptionAmount} ${reviewData.billingCurrency}` : ""], ["Status", paymentStatusLabels[reviewData.paymentStatus] ?? reviewData.paymentStatus], ["Start date", reviewData.subscriptionStartDate], ["Next payment", reviewData.nextPaymentDate], ["Last payment", reviewData.lastPaymentDate], ["Grace days", reviewData.gracePeriodDays], ["Payment method", reviewData.paymentMethod], ["Payment notes", reviewData.billingNotes], ["Internal notes", reviewData.adminNotes],
+              ]} />
+              <ReviewSection title="Loyalty" onEdit={() => editStep(3)} rows={[
+                ["Mode", loyaltyLabels[reviewData.loyaltyMode] ?? reviewData.loyaltyMode], ["Unit", reviewData.unitName], ["Reward", reviewData.rewardName], ["Threshold", reviewData.rewardThreshold], ["Earn amount", reviewData.earnAmount],
+              ]} />
+              <ReviewSection title="Card Design" onEdit={() => editStep(4)} rows={[
+                ["Theme", themeLabels[reviewData.themePreset] ?? reviewData.themePreset], ["Primary", reviewData.primaryColor], ["Logo", reviewData.logoPreview ? "Configured" : "Not set"], ["Design", reviewData.cardDesignMode === "CUSTOM" ? "Custom Card" : "LoyalFlow Standard Card"], ["Artwork", reviewData.standardCardArtworkEnabled ? reviewData.standardCardArtworkCategory : "Disabled"],
+              ]} />
               {reviewData.logoPreview ? (
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <img src={reviewData.logoPreview} alt="Business logo preview" className="h-12 w-12 rounded-lg border border-slate-200 bg-white object-contain p-1" />
@@ -795,33 +580,17 @@ export default function BusinessSetupWizard({ action }: Props) {
 
       <div className="flex items-center justify-between gap-3 pt-2">
         {step > 0 ? (
-          <button type="button" onClick={goBack} className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50">
-            Back
-          </button>
-        ) : (
-          <span />
-        )}
+          <button type="button" onClick={goBack} className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50">Back</button>
+        ) : <span />}
         {step < steps.length - 1 ? (
-          <button type="button" onClick={goNext} className="ml-auto rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700">
-            Next
-          </button>
-        ) : (
-          <CreateBusinessSubmitButton locked={submissionStarted} />
-        )}
+          <button type="button" onClick={goNext} className="ml-auto rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-violet-700">Next</button>
+        ) : <CreateBusinessSubmitButton locked={submissionStarted} />}
       </div>
     </form>
   );
 }
 
-function ReviewSection({
-  title,
-  rows,
-  onEdit,
-}: {
-  title: string;
-  rows: Array<[string, string]>;
-  onEdit: () => void;
-}) {
+function ReviewSection({ title, rows, onEdit }: { title: string; rows: Array<[string, string]>; onEdit: () => void }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between gap-4">

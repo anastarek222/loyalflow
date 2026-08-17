@@ -33,12 +33,14 @@ test("Standard Card has one business-logo source and keeps preview in normal lay
   assert.match(setup, /Back/);
 });
 
-test("blank optional numeric billing values do not coerce to zero and raw Zod messages are not displayed", () => {
+test("blank optional numeric billing values do not coerce to zero and validation returns to the canonical field", () => {
   const value = businessCreationSchema.safeParse({ name: "Demo", contactPhone: "", currency: "EGP", timezone: "Africa/Cairo", industry: "", website: "", email: "", country: "Egypt", city: "", taxNumber: "", employeeCount: "", ownerFirstName: "Ahmed", ownerLastName: "", ownerEmail: "ahmed@example.test", ownerPhone: "", ownerPassword: "1234567890", logoUrl: "", loyaltyMode: "VISITS", unitName: "Visit", rewardName: "Reward", rewardThreshold: "5", earnAmount: "1", primaryColor: "#111827", secondaryColor: "#ffffff", themePreset: "DEFAULT", cardStyle: "CLASSIC", fontFamily: "INTER", billingInterval: "MONTHLY", billingCustomDays: "", subscriptionAmount: "", billingCurrency: "EGP", paymentStatus: "TRIAL", gracePeriodDays: "3", standardCardArtworkEnabled: "true", standardCardArtworkCategory: "OTHER" });
   assert.equal(value.success, true);
   const wizard = read("components/business-setup-wizard.tsx");
   assert.doesNotMatch(wizard, /parsed\.error\.issues\[0\]\?\.message/);
-  assert.match(wizard, /setStep\(error\.step\)/);
+  assert.match(wizard, /getBusinessSetupValidationIssue/);
+  assert.match(wizard, /setStep\(issue\.step\)/);
+  assert.match(wizard, /focusIssue\(issue\.field\)/);
 });
 
 test("review includes one editable loyalty section and one canonical card-design section", () => {
