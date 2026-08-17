@@ -59,9 +59,7 @@ export async function uploadCustomCardDraftCommandAction(
         `/businesses/${business.slug}/program?cardDesign=storage-unavailable`,
       );
     }
-    redirect(
-      `/businesses/${business.slug}/program?cardDesign=invalid-upload`,
-    );
+    redirect(`/businesses/${business.slug}/program?cardDesign=invalid`);
   }
 
   redirect(

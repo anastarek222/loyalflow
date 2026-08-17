@@ -5,6 +5,7 @@ import {
   customCardStorageConfigured,
   uploadCustomCardArtwork,
   validateCustomCardArtwork,
+  validateCustomCardArtworkPair,
 } from "@/lib/cards/custom-card-storage";
 import prisma from "@/lib/prisma";
 
@@ -26,10 +27,10 @@ export type CustomCardUploadCommandResult =
 /**
  * Authoritative Custom Card draft-upload boundary.
  *
- * The command owns storage readiness, bounded front/back validation, the
- * persisted EXPAND entitlement re-check immediately before the external write,
- * and immutable version creation. Authentication and tenant-management policy
- * remain in the Server Action transport.
+ * The command owns storage readiness, bounded front/back validation including
+ * matching ID-1 geometry, the persisted EXPAND entitlement re-check immediately
+ * before the external write, and immutable version creation. Authentication and
+ * tenant-management policy remain in the Server Action transport.
  */
 export async function uploadCustomCardDraftCommand(input: {
   businessId: string;
@@ -44,6 +45,10 @@ export async function uploadCustomCardDraftCommand(input: {
     !validateCustomCardArtwork(input.front) ||
     !validateCustomCardArtwork(input.back)
   ) {
+    return { ok: false, reason: "INVALID_UPLOAD" };
+  }
+
+  if (!(await validateCustomCardArtworkPair(input.front, input.back))) {
     return { ok: false, reason: "INVALID_UPLOAD" };
   }
 
