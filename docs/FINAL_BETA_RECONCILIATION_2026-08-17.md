@@ -4,7 +4,9 @@ Status: `TECHNICAL_BETA_READY_REAL_CLOSED_BETA_PENDING`
 
 Verified staging code baseline: `ea77456bcca49a311ad63aa2971774ba546ecb0a`
 
-This record reconciles the current TC/TR/TCR execution state after the TC6 recovery proof/cleanup sequence, the TC8 preparation pack, and the latest TC3 Custom Card artwork geometry guard. It does not authorize Production and it does not substitute synthetic evidence for the required real-business Closed Beta.
+> Current authority note: this is a point-in-time reconciliation snapshot. The later consolidated pre-final audit opened GitHub Issue #206 with status `PRE_FINAL_BETA_CLEANUP_REQUIRED`. While Issue #206 remains open, it is the current execution authority and supersedes this record's earlier immediate-next-action statement. See `PRE_FINAL_BETA_CLEANUP_AUTHORITY_2026-08-17.md`.
+
+This record reconciles the TC/TR/TCR execution state captured after the TC6 recovery proof/cleanup sequence, the TC8 preparation pack, and the latest TC3 Custom Card artwork geometry guard. It does not authorize Production and it does not substitute synthetic evidence for the required real-business Closed Beta.
 
 ## 1. TC6 recovery and durable integration runtime
 
@@ -84,6 +86,6 @@ This reconciliation does not authorize or perform:
 
 ## Current handoff state
 
-`TECHNICAL_BETA_READY_REAL_CLOSED_BETA_PENDING`
+Point-in-time classification: `TECHNICAL_BETA_READY_REAL_CLOSED_BETA_PENDING`.
 
-The next master-plan action is governed TC8 Real Closed Beta activation once an actual 5–10 business cohort is approved and a fresh current-code Staging deployment is available. Production remains out of scope.
+Current execution authority: GitHub Issue #206, `PRE_FINAL_BETA_CLEANUP_REQUIRED`. The pre-final cleanup must close before TC8 Real Closed Beta becomes the immediate master-plan action again. Production remains out of scope.
