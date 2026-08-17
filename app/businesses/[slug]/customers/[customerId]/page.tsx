@@ -53,13 +53,13 @@ import {
   createAndAssignCustomerTagAction,
   createCustomerNoteAction,
   adjustCustomerBalanceAction,
-  createCustomerReferralCodeAction,
   redeemRewardAction,
   removeCustomerTagAction,
   setCustomerStatusAction,
   updateCustomerNoteAction,
   updateCustomerAction,
 } from "./actions";
+import { createCustomerReferralCodeCommandAction } from "./referral-actions";
 
 type CustomerDetailsPageProps = {
   params: Promise<{
@@ -370,7 +370,7 @@ export default async function CustomerDetailsPage({
     business.slug,
     customer.id,
   );
-  const createReferralCode = createCustomerReferralCodeAction.bind(
+  const createReferralCode = createCustomerReferralCodeCommandAction.bind(
     null,
     business.slug,
     customer.id,
@@ -1196,7 +1196,6 @@ export default async function CustomerDetailsPage({
                     name="operationId"
                     value={loyaltyOperationId}
                   />
-
                   {business.loyaltyMode === "SALES_AMOUNT" && (
                     <>
                       <label
