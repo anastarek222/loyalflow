@@ -6,38 +6,30 @@ function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-function action(sourceText: string, name: string, nextName: string) {
-  const start = sourceText.indexOf(`export async function ${name}`);
-  assert.ok(start >= 0, `${name} must exist`);
-  const end = sourceText.indexOf(`export async function ${nextName}`, start);
-  assert.ok(end > start, `${name} must have a bounded source slice`);
-  return sourceText.slice(start, end);
-}
-
-const customerActions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
+const customerFacade = source(
+  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+);
+const recordActions = source(
+  "app/businesses/[slug]/customers/[customerId]/customer-record-actions.ts",
 );
 const recordCommand = source(
   "lib/server/business/customer-record-maintenance-command.ts",
-);
-const statusAction = action(
-  customerActions,
-  "setCustomerStatusAction",
-  "adjustCustomerBalanceAction",
 );
 const customerPage = source(
   "app/businesses/[slug]/customers/[customerId]/page.tsx",
 );
 
 test("TC4.11 guards customer reactivation as OPERATE before authoritative writes", () => {
+  assert.match(customerFacade, /setCustomerRecordStatusCommandAction/);
+  assert.doesNotMatch(customerFacade, /actions-legacy|legacy\./);
   assert.match(
-    statusAction,
+    recordActions,
     /parsedStatus\.data &&[\s\S]*canPerformSubscriptionOperation\(/,
   );
-  assert.match(statusAction, /setCustomerRecordStatusCommand/);
+  assert.match(recordActions, /setCustomerRecordStatusCommand/);
   assert.match(recordCommand, /input\.isActive &&[\s\S]*canBusinessPerformSubscriptionOperation\(/);
   assert.match(recordCommand, /"OPERATE"/);
-  assert.match(statusAction, /subscription-restricted/);
+  assert.match(recordActions, /subscription-restricted/);
   assert.ok(
     recordCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
       recordCommand.indexOf("transaction.customer.update"),
@@ -45,8 +37,8 @@ test("TC4.11 guards customer reactivation as OPERATE before authoritative writes
 });
 
 test("TC4.11 preserves customer deactivation as an unrestricted safety control", () => {
-  assert.match(statusAction, /parsedStatus\.data &&/);
-  assert.match(statusAction, /setCustomerRecordStatusCommand/);
+  assert.match(recordActions, /parsedStatus\.data &&/);
+  assert.match(recordActions, /setCustomerRecordStatusCommand/);
   assert.match(recordCommand, /isActive: input\.isActive/);
   assert.match(recordCommand, /CUSTOMER_DEACTIVATED/);
   assert.match(recordCommand, /CUSTOMER_REACTIVATED/);
@@ -56,5 +48,8 @@ test("TC4.11 preserves customer deactivation as an unrestricted safety control",
 test("TC4.11 reuses bounded feedback without provider or schema behavior", () => {
   assert.match(customerPage, /query\.error === "subscription-restricted"/);
   assert.match(customerPage, /security controls remain accessible/);
-  assert.doesNotMatch(`${statusAction}\n${recordCommand}`, /stripe|checkout|webhook|process\.env/i);
+  assert.doesNotMatch(
+    `${customerFacade}\n${recordActions}\n${recordCommand}`,
+    /stripe|checkout|webhook|process\.env/i,
+  );
 });
