@@ -58,6 +58,63 @@ function roleLabel(role: string, language: "AR" | "EN") {
   return labels[language][role as keyof typeof labels.EN] ?? role;
 }
 
+function menuItems(menu: HTMLDivElement | null) {
+  if (!menu) return [];
+  return Array.from(
+    menu.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])'),
+  );
+}
+
+function focusMenuItem(menu: HTMLDivElement | null, target: "first" | "last") {
+  requestAnimationFrame(() => {
+    const items = menuItems(menu);
+    const item = target === "first" ? items[0] : items.at(-1);
+    item?.focus();
+  });
+}
+
+function handleMenuNavigation(
+  event: React.KeyboardEvent<HTMLDivElement>,
+  onClose: () => void,
+  trigger: HTMLButtonElement | null,
+) {
+  const items = menuItems(event.currentTarget);
+  const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+
+  if (event.key === "Escape") {
+    event.preventDefault();
+    onClose();
+    trigger?.focus();
+    return;
+  }
+
+  if (!items.length) return;
+
+  if (event.key === "Home") {
+    event.preventDefault();
+    items[0]?.focus();
+    return;
+  }
+
+  if (event.key === "End") {
+    event.preventDefault();
+    items.at(-1)?.focus();
+    return;
+  }
+
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    items[(currentIndex + 1 + items.length) % items.length]?.focus();
+    return;
+  }
+
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    const nextIndex = currentIndex < 0 ? items.length - 1 : currentIndex - 1;
+    items[(nextIndex + items.length) % items.length]?.focus();
+  }
+}
+
 export default function AppTopbar({
   language,
   experienceMode,
@@ -71,6 +128,10 @@ export default function AppTopbar({
   const [businessOpen, setBusinessOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
   const businessRef = useRef<HTMLDivElement>(null);
+  const accountButtonRef = useRef<HTMLButtonElement>(null);
+  const businessButtonRef = useRef<HTMLButtonElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const businessMenuRef = useRef<HTMLDivElement>(null);
   const fullName = `${user.firstName} ${user.lastName}`.trim();
   const context = getShellPageContext(pathname, language, activeBusiness);
   const platformWorkspace = user.role === "SUPER_ADMIN" && !activeBusiness;
@@ -102,14 +163,7 @@ export default function AppTopbar({
       if (!businessRef.current?.contains(event.target as Node))
         setBusinessOpen(false);
     }
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setAccountOpen(false);
-        setBusinessOpen(false);
-      }
-    }
     document.addEventListener("mousedown", closeWhenOutside);
-    window.addEventListener("keydown", closeOnEscape);
     const openExperienceMode = () => setAccountOpen(true);
     window.addEventListener(
       "loyalflow:open-experience-mode",
@@ -117,7 +171,6 @@ export default function AppTopbar({
     );
     return () => {
       document.removeEventListener("mousedown", closeWhenOutside);
-      window.removeEventListener("keydown", closeOnEscape);
       window.removeEventListener(
         "loyalflow:open-experience-mode",
         openExperienceMode,
@@ -161,10 +214,22 @@ export default function AppTopbar({
             data-current-business-context="true"
           >
             <button
+              ref={businessButtonRef}
               type="button"
               aria-expanded={businessOpen}
               aria-haspopup="menu"
+              aria-controls="topbar-business-menu"
               onClick={() => setBusinessOpen((value) => !value)}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setBusinessOpen(true);
+                  focusMenuItem(
+                    businessMenuRef.current,
+                    event.key === "ArrowDown" ? "first" : "last",
+                  );
+                }
+              }}
               className="flex min-h-10 max-w-52 items-center gap-2 rounded-xl border border-border bg-white/70 px-3 text-sm font-semibold text-foreground-muted shadow-sm hover:border-primary/30 hover:bg-white"
             >
               <Building2 size={16} aria-hidden="true" />
@@ -173,9 +238,18 @@ export default function AppTopbar({
             </button>
             {businessOpen && (
               <div
+                ref={businessMenuRef}
+                id="topbar-business-menu"
                 role="menu"
                 aria-label={
                   language === "AR" ? "تبديل النشاط" : "Switch business"
+                }
+                onKeyDown={(event) =>
+                  handleMenuNavigation(
+                    event,
+                    () => setBusinessOpen(false),
+                    businessButtonRef.current,
+                  )
                 }
                 className="absolute start-0 top-12 z-50 w-64 rounded-[var(--lf-radius-input)] border border-border bg-surface p-1 shadow-[var(--lf-shadow-overlay)]"
               >
@@ -184,6 +258,7 @@ export default function AppTopbar({
                     key={business.id}
                     href={`/businesses/${business.slug}`}
                     role="menuitem"
+                    tabIndex={-1}
                     onClick={() => setBusinessOpen(false)}
                     className={`flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold ${business.slug === activeBusiness.slug ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}
                   >
@@ -218,11 +293,23 @@ export default function AppTopbar({
         <LanguageSwitcher language={language} />
         <div ref={accountRef} className="relative">
           <button
+            ref={accountButtonRef}
             type="button"
             aria-expanded={accountOpen}
             aria-haspopup="menu"
+            aria-controls="topbar-account-menu"
             aria-label={language === "AR" ? "قائمة الحساب" : "Account menu"}
             onClick={() => setAccountOpen((value) => !value)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                setAccountOpen(true);
+                focusMenuItem(
+                  accountMenuRef.current,
+                  event.key === "ArrowDown" ? "first" : "last",
+                );
+              }
+            }}
             className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-1.5 hover:bg-surface-subtle"
           >
             <Avatar
@@ -237,8 +324,17 @@ export default function AppTopbar({
           </button>
           {accountOpen && (
             <div
+              ref={accountMenuRef}
+              id="topbar-account-menu"
               role="menu"
               aria-label={language === "AR" ? "الحساب" : "Account"}
+              onKeyDown={(event) =>
+                handleMenuNavigation(
+                  event,
+                  () => setAccountOpen(false),
+                  accountButtonRef.current,
+                )
+              }
               className="absolute end-0 top-12 z-50 w-72 rounded-[var(--lf-radius-input)] border border-border bg-surface p-2 shadow-[var(--lf-shadow-overlay)]"
             >
               <div className="border-b border-border px-4 py-2">
@@ -266,6 +362,7 @@ export default function AppTopbar({
                 <Link
                   href="/account/security"
                   role="menuitem"
+                  tabIndex={-1}
                   onClick={() => setAccountOpen(false)}
                   className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
                 >
@@ -277,6 +374,7 @@ export default function AppTopbar({
                     <Link
                       href="/businesses"
                       role="menuitem"
+                      tabIndex={-1}
                       onClick={() => setAccountOpen(false)}
                       className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
                     >
@@ -286,6 +384,7 @@ export default function AppTopbar({
                     <Link
                       href="/business-owners"
                       role="menuitem"
+                      tabIndex={-1}
                       onClick={() => setAccountOpen(false)}
                       className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
                     >
@@ -298,6 +397,7 @@ export default function AppTopbar({
                   <button
                     type="submit"
                     role="menuitem"
+                    tabIndex={-1}
                     className="flex min-h-11 w-full items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-danger hover:bg-surface-subtle"
                   >
                     <LogOut size={16} aria-hidden="true" />
