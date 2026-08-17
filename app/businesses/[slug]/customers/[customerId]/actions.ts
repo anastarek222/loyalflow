@@ -49,14 +49,14 @@ import {
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/utils/rate-limiter";
 import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import {
+  setCustomerRecordStatusCommand,
+  updateCustomerRecordCommand,
+} from "@/lib/server/business/customer-record-maintenance-command";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
 import { createBusinessNotification } from "@/lib/notifications";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
@@ -479,49 +479,24 @@ export async function updateCustomerAction(
     redirect(`/businesses/${slug}/customers/${customerId}?error=duplicate`);
   }
 
-  const updatedCustomerName = [parsed.data.firstName, parsed.data.lastName]
-    .filter(Boolean)
-    .join(" ");
-  const activityContext = await getActivityRequestContext();
-
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    await transaction.customer.update({
-      where: {
-        id: customer.id,
-      },
-      data: {
-        firstName: parsed.data.firstName,
-        lastName: parsed.data.lastName || null,
-        phone,
-      },
-    });
-
-    await transaction.businessActivity.create({
-      data: {
-        type: "CUSTOMER_UPDATED",
-        description: `تم تحديث بيانات العميل ${updatedCustomerName}`,
-        businessId: business.id,
-        customerId: customer.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const mutation = await updateCustomerRecordCommand({
+    businessId: business.id,
+    customerId: customer.id,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName,
+    phone,
+    actor: session.user,
   });
-  if (!updated) {
-    redirect(
-      `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
-    );
+  if (!mutation.ok) {
+    if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+      redirect(
+        `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
+      );
+    }
+    if (mutation.reason === "DUPLICATE") {
+      redirect(`/businesses/${slug}/customers/${customerId}?error=duplicate`);
+    }
+    redirect(`/businesses/${slug}/customers`);
   }
 
   await syncBusinessToGoogleSheetSafely(business.id);
@@ -557,49 +532,20 @@ export async function setCustomerStatusAction(
       `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
     );
   }
-  const activityContext = await getActivityRequestContext();
 
-  const updated = await prisma.$transaction(async (transaction) => {
-    if (
-      parsedStatus.data &&
-      !(await canBusinessPerformSubscriptionOperation(
-        transaction,
-        business.id,
-        "OPERATE",
-      ))
-    ) {
-      return false;
-    }
-
-    await transaction.customer.update({
-      where: {
-        id: customer.id,
-      },
-      data: {
-        isActive: parsedStatus.data,
-      },
-    });
-
-    await transaction.businessActivity.create({
-      data: {
-        type: parsedStatus.data
-          ? "CUSTOMER_REACTIVATED"
-          : "CUSTOMER_DEACTIVATED",
-        description: parsedStatus.data
-          ? "تم إعادة تفعيل حساب العميل"
-          : "تم إيقاف حساب العميل",
-        businessId: business.id,
-        customerId: customer.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-    return true;
+  const mutation = await setCustomerRecordStatusCommand({
+    businessId: business.id,
+    customerId: customer.id,
+    isActive: parsedStatus.data,
+    actor: session.user,
   });
-  if (!updated) {
-    redirect(
-      `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
-    );
+  if (!mutation.ok) {
+    if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+      redirect(
+        `/businesses/${slug}/customers/${customerId}?error=subscription-restricted`,
+      );
+    }
+    redirect(`/businesses/${slug}/customers`);
   }
 
   await syncBusinessToGoogleSheetSafely(business.id);

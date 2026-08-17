@@ -41,8 +41,21 @@ const branchPersistedAuthorities = [
   source("lib/server/business/branch-staff-assignment-command.ts"),
 ].join("\n");
 
+const customerListPersistedAuthorities = [
+  source("lib/server/business/customer-create-command.ts"),
+  source("lib/server/business/customer-bulk-command.ts"),
+].join("\n");
+
 const offerWriteAuthority = source(
   "lib/server/business/offer-write-command.ts",
+);
+
+const rewardWriteAuthority = source(
+  "lib/server/business/reward-write-command.ts",
+);
+
+const playbookApplicationAuthority = source(
+  "lib/server/business/playbook-application-command.ts",
 );
 
 const teamExperienceAccessAuthority = source(
@@ -135,6 +148,17 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(branchPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
       assert.match(branchPersistedAuthorities, /"EXPAND"/);
       assert.match(branchPersistedAuthorities, /"OPERATE"/);
+    } else if (fileKey === "customerList") {
+      assert.match(sourceText, /createCustomerCommand/);
+      assert.match(sourceText, /setBulkCustomerStatusCommand/);
+      assert.match(sourceText, /mutateBulkCustomerTagCommand/);
+      assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+      assert.match(customerListPersistedAuthorities, /canBusinessPerformSubscriptionOperation/);
+      assert.match(customerListPersistedAuthorities, /"EXPAND"/);
+      assert.match(customerListPersistedAuthorities, /"OPERATE"/);
+      assert.match(customerListPersistedAuthorities, /transaction\.customer\.create/);
+      assert.match(customerListPersistedAuthorities, /transaction\.customer\.updateMany/);
+      assert.match(customerListPersistedAuthorities, /transaction\.customerTagAssignment/);
     } else if (fileKey === "offers") {
       assert.match(sourceText, /createOfferCommand/);
       assert.match(sourceText, /updateOfferCommand/);
@@ -146,6 +170,40 @@ test("every guarded operational module has preflight and persisted-state enforce
       assert.match(offerWriteAuthority, /"OPERATE"/);
       assert.match(offerWriteAuthority, /transaction\.offer\.create/);
       assert.match(offerWriteAuthority, /transaction\.offer\.update/);
+    } else if (fileKey === "playbooks") {
+      assert.match(sourceText, /applyBusinessPlaybookCommand/);
+      assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+      assert.doesNotMatch(sourceText, /canBusinessPerformSubscriptionOperation/);
+      assert.doesNotMatch(sourceText, /transaction\.business\.update/);
+      assert.match(
+        playbookApplicationAuthority,
+        /canBusinessPerformSubscriptionOperation/,
+      );
+      assert.match(playbookApplicationAuthority, /"OPERATE"/);
+      assert.match(playbookApplicationAuthority, /prisma\.\$transaction/);
+      assert.match(
+        playbookApplicationAuthority,
+        /transaction\.business\.update/,
+      );
+      assert.ok(
+        playbookApplicationAuthority.indexOf(
+          "await canBusinessPerformSubscriptionOperation",
+        ) <
+          playbookApplicationAuthority.indexOf(
+            "await transaction.business.update",
+          ),
+      );
+    } else if (fileKey === "rewards") {
+      assert.match(sourceText, /createRewardCommand/);
+      assert.match(sourceText, /updateRewardCommand/);
+      assert.match(sourceText, /setRewardStatusCommand/);
+      assert.doesNotMatch(sourceText, /prisma\.\$transaction/);
+      assert.doesNotMatch(sourceText, /transaction\.reward\.(create|update)/);
+      assert.match(rewardWriteAuthority, /canBusinessPerformSubscriptionOperation/);
+      assert.match(rewardWriteAuthority, /"EXPAND"/);
+      assert.match(rewardWriteAuthority, /"OPERATE"/);
+      assert.match(rewardWriteAuthority, /transaction\.reward\.create/);
+      assert.match(rewardWriteAuthority, /transaction\.reward\.update/);
     } else if (fileKey === "users") {
       assert.match(sourceText, /updateTeamExperienceAccessCommand/);
       assert.match(

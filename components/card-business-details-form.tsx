@@ -1,6 +1,8 @@
 "use client";
 
+import { updateBusinessCardDetailsCommandAction } from "@/app/businesses/[slug]/settings/card-details-action";
 import { ContactRound, Save } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useFormStatus } from "react-dom";
 
 type CardBusinessDetailsFormProps = {
@@ -36,16 +38,18 @@ export default function CardBusinessDetailsForm({
   address,
   cardTerms,
   language,
-  action,
 }: CardBusinessDetailsFormProps) {
+  const params = useParams<{ slug: string }>();
+  const businessSlug = params.slug;
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
 
   return (
     <form
-      action={action}
+      action={updateBusinessCardDetailsCommandAction}
       className="rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-7"
       data-card-business-details="true"
     >
+      <input type="hidden" name="businessSlug" value={businessSlug} />
       <div className="flex items-start gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-[var(--lf-radius-input)] bg-primary-soft text-primary">
           <ContactRound className="size-5" aria-hidden="true" />
