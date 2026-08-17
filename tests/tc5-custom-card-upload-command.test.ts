@@ -11,6 +11,7 @@ const action = source(
   "app/businesses/[slug]/program/custom-card-upload-action.ts",
 );
 const manager = source("components/custom-card-artwork-manager.tsx");
+const programPage = source("app/businesses/[slug]/program/page.tsx");
 
 test("TC5 Custom Card upload command owns bounded storage validation and persisted EXPAND enforcement", () => {
   const storage = command.indexOf("customCardStorageConfigured");
@@ -91,4 +92,13 @@ test("TC5 Custom Card manager actively binds upload and publish to their command
   assert.match(manager, /<form action=\{publishCustomArtwork\}>/);
   assert.doesNotMatch(manager, /<form action=\{uploadAction\}/);
   assert.doesNotMatch(manager, /<form action=\{publishAction\}/);
+});
+
+test("Program exposes no legacy Settings Custom Card upload or publish wiring", () => {
+  assert.doesNotMatch(programPage, /uploadCustomCardArtworkAction/);
+  assert.doesNotMatch(programPage, /publishCustomCardArtworkAction/);
+  assert.doesNotMatch(programPage, /uploadCustomArtwork/);
+  assert.doesNotMatch(programPage, /publishCustomArtwork/);
+  assert.doesNotMatch(programPage, /uploadAction=|publishAction=/);
+  assert.doesNotMatch(manager, /uploadAction:|publishAction:/);
 });

@@ -17,8 +17,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import {
-  publishCustomCardArtworkAction,
-  uploadCustomCardArtworkAction,
   updateCustomerMessagesAction,
   updateProgramRulesAction,
 } from "../settings/actions";
@@ -79,14 +77,6 @@ export default async function LoyaltyProgramPage({
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const updateProgramRules = updateProgramRulesAction.bind(null, business.slug);
   const updateCardDesign = updateBusinessCardDesignCommandAction.bind(
-    null,
-    business.slug,
-  );
-  const uploadCustomArtwork = uploadCustomCardArtworkAction.bind(
-    null,
-    business.slug,
-  );
-  const publishCustomArtwork = publishCustomCardArtworkAction.bind(
     null,
     business.slug,
   );
@@ -306,8 +296,6 @@ export default async function LoyaltyProgramPage({
               selectedVersion={query.customVersion}
               versions={customArtworkVersions}
               storageConfigured={customCardStorageConfigured()}
-              uploadAction={uploadCustomArtwork}
-              publishAction={publishCustomArtwork}
             />
           ) : null}
           <form action={updateCardDesign}>

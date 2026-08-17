@@ -26,7 +26,7 @@ const manager = source("components/custom-card-artwork-manager.tsx");
 const command = source("lib/server/business/custom-card-publish-command.ts");
 const sharedSettingsCommand = source("lib/server/business/settings-command.ts");
 
-test("TC5 Custom Card manager routes the active Publish form through the wired command action", () => {
+test("TC5 Custom Card manager routes the active Publish form through the command-backed Program action", () => {
   assert.match(
     manager,
     /publishCustomCardArtworkAction.*custom-card-publish-action/,
@@ -37,10 +37,10 @@ test("TC5 Custom Card manager routes the active Publish form through the wired c
   );
   assert.match(manager, /form action=\{publishCustomArtwork\}/);
   assert.doesNotMatch(manager, /form action=\{publishAction\}/);
-
-  // Keep the existing prop shape temporarily so the Program page does not need
-  // a broad integration edit in this bounded wiring slice.
-  assert.match(manager, /publishAction: \(formData: FormData\) => Promise<void>/);
+  assert.doesNotMatch(
+    manager,
+    /publishAction: \(formData: FormData\) => Promise<void>/,
+  );
 });
 
 test("TC5 wired Custom Card publish action preserves transport policy and delegates persistence", () => {

@@ -9,8 +9,6 @@ type Props = {
   selectedVersion?: string;
   versions: CustomCardArtworkVersion[];
   storageConfigured: boolean;
-  uploadAction: (formData: FormData) => Promise<void>;
-  publishAction: (formData: FormData) => Promise<void>;
 };
 
 export function CustomCardArtworkManager({
