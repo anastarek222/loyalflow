@@ -6,6 +6,9 @@ on:
       - agent/slice-d-runtime-uat-run
     paths-ignore:
       - "uat-handshake/**"
+  pull_request:
+    branches:
+      - staging
   workflow_dispatch:
 
 permissions:
