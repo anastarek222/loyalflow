@@ -13,24 +13,62 @@ function action(sourceText: string, name: string, nextName: string) {
   return sourceText.slice(start, end);
 }
 
-const actions = source("app/businesses/[slug]/settings/actions.ts");
-const publishAction = action(
-  actions,
+const legacyActions = source("app/businesses/[slug]/settings/actions.ts");
+const legacyPublishAction = action(
+  legacyActions,
   "publishCustomCardArtworkAction",
   "syncGoogleSheetAction",
 );
+const wiredAction = source(
+  "app/businesses/[slug]/program/custom-card-publish-action.ts",
+);
+const manager = source("components/custom-card-artwork-manager.tsx");
 const command = source("lib/server/business/custom-card-publish-command.ts");
 const sharedSettingsCommand = source("lib/server/business/settings-command.ts");
 
-test("TC5 Custom Card publish extraction preserves authorization, storage lookup and active action until wiring", () => {
-  assert.match(publishAction, /session\.user\.role !== "SUPER_ADMIN"/);
-  assert.match(publishAction, /canManageBusiness/);
-  assert.match(publishAction, /canPerformSubscriptionOperation/);
-  assert.match(publishAction, /findCustomCardArtworkVersion/);
-  assert.match(publishAction, /canBusinessPerformSubscriptionOperation/);
-  assert.match(publishAction, /prisma\.\$transaction/);
-  assert.match(publishAction, /transaction\.business\.update/);
-  assert.doesNotMatch(publishAction, /publishCustomCardArtworkCommand/);
+test("TC5 Custom Card manager routes the active Publish form through the wired command action", () => {
+  assert.match(
+    manager,
+    /publishCustomCardArtworkAction.*custom-card-publish-action/,
+  );
+  assert.match(
+    manager,
+    /publishCustomCardArtworkAction\.bind\(null, slug\)/,
+  );
+  assert.match(manager, /form action=\{publishCustomArtwork\}/);
+  assert.doesNotMatch(manager, /form action=\{publishAction\}/);
+
+  // Keep the existing prop shape temporarily so the Program page does not need
+  // a broad integration edit in this bounded wiring slice.
+  assert.match(manager, /publishAction: \(formData: FormData\) => Promise<void>/);
+});
+
+test("TC5 wired Custom Card publish action preserves transport policy and delegates persistence", () => {
+  assert.match(wiredAction, /session\.user\.role !== "SUPER_ADMIN"/);
+  assert.match(wiredAction, /canManageBusiness/);
+  assert.match(wiredAction, /canPerformSubscriptionOperation/);
+  assert.match(wiredAction, /findCustomCardArtworkVersion/);
+  assert.match(wiredAction, /publishCustomCardArtworkCommand/);
+  assert.match(wiredAction, /frontUrl: artwork\.frontUrl/);
+  assert.match(wiredAction, /backUrl: artwork\.backUrl/);
+  assert.match(wiredAction, /if \(!published\.ok\)/);
+  assert.match(wiredAction, /revalidatePath/);
+  assert.match(wiredAction, /cardDesign=published/);
+  assert.doesNotMatch(
+    wiredAction,
+    /prisma\.\$transaction|transaction\.business\.update|canBusinessPerformSubscriptionOperation/,
+  );
+});
+
+test("TC5 legacy Settings publish action remains compatibility-only during bounded wiring", () => {
+  assert.match(legacyPublishAction, /session\.user\.role !== "SUPER_ADMIN"/);
+  assert.match(legacyPublishAction, /findCustomCardArtworkVersion/);
+  assert.match(legacyPublishAction, /prisma\.\$transaction/);
+  assert.match(legacyPublishAction, /transaction\.business\.update/);
+  assert.doesNotMatch(
+    legacyPublishAction,
+    /publishCustomCardArtworkCommand/,
+  );
 });
 
 test("TC5 Custom Card publish semantic command persists only resolved artwork URLs and fixed safe-zone state", () => {
