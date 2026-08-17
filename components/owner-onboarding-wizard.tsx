@@ -16,7 +16,9 @@ import {
 import { getOwnerOnboardingCopy } from "@/lib/onboarding/owner-onboarding-copy";
 import {
   normalizeOwnerOnboardingPhone,
+  type OwnerOnboardingFieldError,
   validateOwnerOnboardingStep,
+  validateOwnerOnboardingThroughStep,
 } from "@/lib/onboarding/owner-onboarding-validation";
 import {
   COUNTRY_OPTIONS,
@@ -85,6 +87,60 @@ export function OwnerOnboardingWizard({
     setStep(boundedStep);
   };
 
+  const getValidationFormData = () => {
+    if (!formRef.current) return null;
+    const formData = new FormData(formRef.current);
+    const normalizedPhone = normalizeOwnerOnboardingPhone(phone, country);
+    formData.set("contactPhone", normalizedPhone);
+    setPhone(normalizedPhone);
+    return formData;
+  };
+
+  const focusValidationField = (field: OwnerOnboardingFieldError["field"]) => {
+    window.requestAnimationFrame(() => {
+      const container = formRef.current?.querySelector<HTMLElement>(
+        `[data-onboarding-field="${field}"]`,
+      );
+      const target = container?.matches("input, select, textarea")
+        ? container
+        : container?.querySelector<HTMLElement>("input, select, textarea");
+      target?.focus({ preventScroll: true });
+      (container || target)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+  };
+
+  const showValidationError = (error: OwnerOnboardingFieldError) => {
+    setFieldErrors({ [error.field]: error.message });
+    setNotice(`${copy.fixField}: ${error.message}`);
+    transitionToStep(error.step);
+    focusValidationField(error.field);
+  };
+
+  const navigateToStep = (nextStep: number) => {
+    const boundedStep = Math.max(0, Math.min(sections.length - 1, nextStep));
+    if (boundedStep <= step) {
+      transitionToStep(boundedStep);
+      return;
+    }
+    const formData = getValidationFormData();
+    if (!formData) return;
+    const error = validateOwnerOnboardingThroughStep(
+      boundedStep - 1,
+      formData,
+      locale,
+    );
+    if (error) {
+      showValidationError(error);
+      return;
+    }
+    setFieldErrors({});
+    setNotice("");
+    transitionToStep(boundedStep);
+  };
+
   useLayoutEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
@@ -104,28 +160,11 @@ export function OwnerOnboardingWizard({
 
   const goNext = () => {
     ownerOnboardingDiagnostic("OWNER_NEXT_CLICK");
-    if (!formRef.current) return;
-    const formData = new FormData(formRef.current);
-    const normalizedPhone = normalizeOwnerOnboardingPhone(phone, country);
-    formData.set("contactPhone", normalizedPhone);
-    setPhone(normalizedPhone);
+    const formData = getValidationFormData();
+    if (!formData) return;
     const error = validateOwnerOnboardingStep(step, formData, locale);
     if (error) {
-      setFieldErrors({ [error.field]: error.message });
-      setNotice(`${copy.fixField}: ${error.message}`);
-      window.requestAnimationFrame(() => {
-        const container = formRef.current?.querySelector<HTMLElement>(
-          `[data-onboarding-field="${error.field}"]`,
-        );
-        const target = container?.matches("input, select, textarea")
-          ? container
-          : container?.querySelector<HTMLElement>("input, select, textarea");
-        target?.focus({ preventScroll: true });
-        (container || target)?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      });
+      showValidationError(error);
       return;
     }
     ownerOnboardingDiagnostic("OWNER_STEP1_VALID");
@@ -174,7 +213,7 @@ export function OwnerOnboardingWizard({
               <button
                 type="button"
                 key={section}
-                onClick={() => transitionToStep(index)}
+                onClick={() => navigateToStep(index)}
                 aria-current={step === index ? "step" : undefined}
                 className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-start text-sm font-bold transition ${step === index ? "bg-white text-primary shadow-sm ring-1 ring-border" : "text-foreground-muted hover:bg-white/75 hover:text-foreground"}`}
               >
@@ -237,7 +276,7 @@ export function OwnerOnboardingWizard({
               <button
                 type="button"
                 key={section}
-                onClick={() => transitionToStep(index)}
+                onClick={() => navigateToStep(index)}
                 aria-current={step === index ? "step" : undefined}
                 className={`min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 text-sm font-bold ${step === index ? "bg-primary text-white" : "bg-surface-subtle text-foreground-muted"}`}
               >
@@ -423,7 +462,9 @@ export function OwnerOnboardingWizard({
             <label className="block text-sm font-bold">
               {copy.loyaltyMode}
               <select
+                data-onboarding-field="loyaltyMode"
                 name="loyaltyMode"
+                aria-invalid={Boolean(fieldErrors.loyaltyMode)}
                 defaultValue={String(draft.loyaltyMode || "VISITS")}
                 onChange={updateCardPreview}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
@@ -436,7 +477,9 @@ export function OwnerOnboardingWizard({
             <label className="block text-sm font-bold">
               {copy.loyaltyUnit}
               <input
+                data-onboarding-field="unitName"
                 name="unitName"
+                aria-invalid={Boolean(fieldErrors.unitName)}
                 defaultValue={String(draft.unitName || "Visit")}
                 onChange={updateCardPreview}
                 maxLength={30}
@@ -458,7 +501,9 @@ export function OwnerOnboardingWizard({
             <label className="block text-sm font-bold">
               {copy.reward}
               <input
+                data-onboarding-field="rewardName"
                 name="rewardName"
+                aria-invalid={Boolean(fieldErrors.rewardName)}
                 defaultValue={String(draft.rewardName || "Reward")}
                 onChange={updateCardPreview}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
@@ -467,7 +512,9 @@ export function OwnerOnboardingWizard({
             <label className="block text-sm font-bold">
               {copy.target}
               <input
+                data-onboarding-field="rewardThreshold"
                 name="rewardThreshold"
+                aria-invalid={Boolean(fieldErrors.rewardThreshold)}
                 type="number"
                 min="1"
                 defaultValue={String(draft.rewardThreshold || 5)}
@@ -478,7 +525,9 @@ export function OwnerOnboardingWizard({
             <label className="block text-sm font-bold">
               {copy.earnAmount}
               <input
+                data-onboarding-field="earnAmount"
                 name="earnAmount"
+                aria-invalid={Boolean(fieldErrors.earnAmount)}
                 type="number"
                 min="1"
                 defaultValue={String(draft.earnAmount || 1)}
