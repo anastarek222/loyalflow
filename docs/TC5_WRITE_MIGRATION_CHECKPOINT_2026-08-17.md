@@ -11,6 +11,8 @@ This checkpoint records the current TC5 safe-write Strangler migration without c
 - PR #160 — Customer creation — `WIRED_TC_TR_PASS / PREVIEW_DATABASE_URL_BLOCKED`
 - PR #161 — Customer bulk status/tag writes — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 - PR #162 — Customer record profile/status maintenance — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
+- PR #166 — Business Card Details settings — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
+- PR #169 — Custom Card publish persistence — `WIRED_TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 - PR #171 — Notification read state — `TC_TR_PASS / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 - PR #172 — Public membership persistence — `FINAL_HEAD_TR_PASS / NEON_SLOT_RECOVERED / VERCEL_BUILD_RATE_LIMIT_BLOCKED`
 
@@ -21,20 +23,23 @@ None of these Drafts is merged by this checkpoint.
 - PR #163 — Customer Notes
 - PR #164 — Customer Referral identity
 - PR #165 — Individual Customer Tag topology
-- PR #166 — Business Card Details settings
 - PR #167 — Business Export Permission setting
 - PR #168 — Business Card Design settings
-- PR #169 — Custom Card publish persistence
 
 Classification: `EXTRACTION_TR_PASS / WIRING_PENDING / VERCEL_BUILD_RATE_LIMIT_BLOCKED`.
 
+## Wiring progress notes
+
+- PR #169 is now actively wired through a small Program-scoped Server Action. The active Custom Card Publish form no longer uses the legacy direct-persistence Settings action. Super Admin authorization, immutable version/storage lookup, front/back artwork URLs, fixed `ID1_V1` safe-zone behavior, and public-card revalidation are preserved.
+- PR #166 is now actively wired through a small Settings-scoped Server Action. The submitted business slug is treated only as a route locator; authentication, canonical Business lookup, and authorization are re-established server-side before the semantic command owns persistence.
+- Both wiring patterns avoid broad rewrites of the existing large multi-domain page/action modules and leave their legacy actions as compatibility-only code for a later cleanup slice.
+
 ## Dependency and execution order
 
-1. Customer-detail wiring (#163–#165) follows the #162 record-maintenance integration path because these slices share the same large Customer detail Server Action module. Avoid duplicate/conflicting runtime edits.
-2. Settings-family wiring (#166–#169) must remain bounded around the existing shared `updateBusinessSettingsCommand`; do not broadly rewrite the multi-domain settings action merely to wire one semantic command.
-3. Custom Card publish (#169) is the first settings-family wiring priority. Preserve Super Admin authorization, immutable version/storage lookup, fixed `ID1_V1` safe-zone state, front/back artwork URLs, existing revalidation, and public-card rendering. Only authoritative Business persistence/audit ownership should move behind the command.
-4. No `/api/v1` write Route Handler is required for current UI consumption. Existing Server Actions remain the compatibility transport under the approved TC5 safe-write policy.
-5. Runtime/TCR evidence remains distinct from TC/TR. Current Vercel Hobby build-rate limiting blocks fresh Preview evidence for most heads.
+1. Customer-detail wiring (#163–#165) follows the #162 record-maintenance integration path because these slices share the same large Customer detail Server Action/page modules. Prefer small dedicated Server Actions/components over broad rewrites.
+2. Remaining Settings-family wiring is #167 then #168. Keep each bounded around the existing shared `updateBusinessSettingsCommand`; do not broadly rewrite the multi-domain Settings/Program pages merely to wire one semantic command.
+3. No `/api/v1` write Route Handler is required for current UI consumption. Existing Server Actions remain the compatibility transport under the approved TC5 safe-write policy.
+4. Runtime/TCR evidence remains distinct from TC/TR. Current Vercel Hobby build-rate limiting blocks fresh Preview evidence for most heads.
 
 ## Operating contract
 
