@@ -103,9 +103,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          missing_names=""
+          for name in DATABASE_URL UAT_FIXTURE_PASSWORD LOYALFLOW_STAGING_DATABASE VERCEL_AUTOMATION_BYPASS_SECRET; do
+            if [ -z "${!name:-}" ]; then
+              if [ -n "$missing_names" ]; then missing_names="$missing_names,"; fi
+              missing_names="$missing_names$name"
+            fi
+          done
+          if [ -n "$missing_names" ]; then
+            description="Missing UAT secrets: $missing_names"
+          else
+            description="Browser UAT failed after credential preflight"
+          fi
+          payload=$(printf '{"state":"failure","context":"Slice D Runtime UAT","description":"%s"}' "$description")
           curl -fsS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d '{"state":"failure","context":"Slice D Runtime UAT","description":"Exact-SHA browser UAT failed; inspect Actions logs"}'
+            -d "$payload"
