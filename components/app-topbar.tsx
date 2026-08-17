@@ -65,9 +65,12 @@ function menuItems(menu: HTMLDivElement | null) {
   );
 }
 
-function focusMenuItem(menu: HTMLDivElement | null, target: "first" | "last") {
+function focusMenuItem(
+  getMenu: () => HTMLDivElement | null,
+  target: "first" | "last",
+) {
   requestAnimationFrame(() => {
-    const items = menuItems(menu);
+    const items = menuItems(getMenu());
     const item = target === "first" ? items[0] : items.at(-1);
     item?.focus();
   });
@@ -225,7 +228,7 @@ export default function AppTopbar({
                   event.preventDefault();
                   setBusinessOpen(true);
                   focusMenuItem(
-                    businessMenuRef.current,
+                    () => businessMenuRef.current,
                     event.key === "ArrowDown" ? "first" : "last",
                   );
                 }
@@ -305,7 +308,7 @@ export default function AppTopbar({
                 event.preventDefault();
                 setAccountOpen(true);
                 focusMenuItem(
-                  accountMenuRef.current,
+                  () => accountMenuRef.current,
                   event.key === "ArrowDown" ? "first" : "last",
                 );
               }
