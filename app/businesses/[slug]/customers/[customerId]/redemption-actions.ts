@@ -21,7 +21,7 @@ import {
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/utils/rate-limiter";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { opaqueIdSchema } from "@/lib/validation/action-input";
 import { redeemLoyaltyRewardCommand } from "@/lib/server/business/loyalty-redemption-command";
@@ -237,7 +237,7 @@ export async function redeemRewardCommandAction(
     );
   }
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  scheduleBusinessGoogleSheetsSync(result.integrationJobId);
   revalidateCustomerSurfaces(slug, customer.id, customer.publicToken);
   redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
 }
