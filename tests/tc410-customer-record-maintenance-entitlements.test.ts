@@ -17,7 +17,7 @@ function action(sourceText: string, name: string, nextName?: string) {
 }
 
 const customerActions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
 );
 const customerPage = source(
   "app/businesses/[slug]/customers/[customerId]/page.tsx",
