@@ -9,7 +9,8 @@ import {
 } from "@/lib/onboarding/owner-onboarding-validation";
 
 function validForm() {
-  return new FormData(Object.entries({
+  const form = new FormData();
+  for (const [key, value] of Object.entries({
     name: "Demo Business",
     country: "Egypt",
     currency: "EGP",
@@ -20,7 +21,10 @@ function validForm() {
     rewardName: "Reward",
     rewardThreshold: "5",
     earnAmount: "1",
-  }));
+  })) {
+    form.set(key, value);
+  }
+  return form;
 }
 
 test("P1 Owner Onboarding exposes stable localized validation codes", () => {
