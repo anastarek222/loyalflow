@@ -27,7 +27,8 @@ test("TC5 Loyalty Redemption bounded action preserves presentation and replay gu
   assert.match(actionSource, /getRapidRedemptionRateLimitKey/);
   assert.match(actionSource, /getRapidRedemptionWhere/);
   assert.match(actionSource, /LOYALTY_REDEEM/);
-  assert.match(actionSource, /syncBusinessToGoogleSheetSafely/);
+  assert.match(actionSource, /scheduleBusinessGoogleSheetsSync/);
+  assert.doesNotMatch(actionSource, /syncBusinessToGoogleSheetSafely/);
   assert.match(actionSource, /revalidatePath/);
   assert.doesNotMatch(actionSource, /prisma\.\$transaction/);
   assert.doesNotMatch(actionSource, /recordRewardRedemption\(/);
