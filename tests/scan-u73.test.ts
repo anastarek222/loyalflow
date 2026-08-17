@@ -9,8 +9,15 @@ import {
 
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
-const actions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+const earnAction = source(
+  "app/businesses/[slug]/customers/[customerId]/loyalty-earn-actions.ts",
+);
+const redemptionAction = source(
+  "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts",
+);
+const earnCommand = source("lib/server/business/loyalty-earn-command.ts");
+const redemptionCommand = source(
+  "lib/server/business/loyalty-redemption-command.ts",
 );
 const scanPage = source(
   "app/businesses/[slug]/scan/customer/[customerId]/page.tsx",
@@ -76,15 +83,18 @@ test("U7.3 routes Scan successes and known failures to its fixed customer route"
     }),
     `${scanPath}?error=insufficient-balance`,
   );
-  assert.match(actions, /getOperationOrigin\(formData\)/);
-  assert.match(actions, /operationPresentationPath\(origin, slug, customerId/);
-  assert.match(actions, /success: "earned"/);
-  assert.match(actions, /success: "redeemed"/);
-  assert.match(actions, /error: "permission"/);
-  assert.match(actions, /scanContextError\(error\.reason\)/);
-  assert.match(actions, /\? "invalid-branch"/);
-  assert.match(actions, /\? "invalid-staff"/);
-  assert.match(actions, /: "generic"/);
+  for (const action of [earnAction, redemptionAction]) {
+    assert.match(action, /getOperationOrigin\(formData\)/);
+    assert.match(action, /operationPresentationPath\(origin, slug, customerId/);
+    assert.match(action, /error: "permission"/);
+  }
+  assert.match(earnAction, /success: "earned"/);
+  assert.match(redemptionAction, /success: "redeemed"/);
+  assert.match(earnAction, /scanContextError\(error\.reason\)/);
+  assert.match(redemptionAction, /scanContextError\(error\.reason\)/);
+  assert.match(earnAction, /\? "invalid-branch"/);
+  assert.match(redemptionAction, /\? "invalid-staff"/);
+  assert.match(earnAction, /: "generic"/);
 });
 
 test("U7.3 retains canonical customer-profile destinations for missing or invalid origins", () => {
@@ -94,10 +104,10 @@ test("U7.3 retains canonical customer-profile destinations for missing or invali
     }),
     "/businesses/cafe/customers/customer_123?success=earned",
   );
-  assert.match(actions, /"sale-invalid"/);
-  assert.match(actions, /"redemption-invalid"/);
-  assert.match(actions, /"earned-too-soon"/);
-  assert.match(actions, /"redeemed-too-soon"/);
+  assert.match(earnAction, /"sale-invalid"/);
+  assert.match(redemptionAction, /"redemption-invalid"/);
+  assert.match(earnAction, /"earned-too-soon"/);
+  assert.match(redemptionAction, /"redeemed-too-soon"/);
 });
 
 test("U7.3 success and errors are bounded presentation state with Scan Next first", () => {
@@ -126,8 +136,8 @@ test("U7.3 preserves idempotency, pending accessibility, branch/staff, and canon
   assert.match(button, /useFormStatus/);
   assert.match(button, /disabled=\{pending\}/);
   assert.match(button, /aria-busy=\{pending\}/);
-  assert.match(actions, /recordLoyaltyEarn\(transaction/);
-  assert.match(actions, /recordRewardRedemption\(transaction/);
+  assert.match(earnCommand, /recordLoyaltyEarn\(transaction/);
+  assert.match(redemptionCommand, /recordRewardRedemption\(transaction/);
   assert.doesNotMatch(
     scanPage,
     /recordLoyaltyEarn|recordRewardRedemption|\$transaction/,
@@ -146,7 +156,8 @@ test("U7.3 keeps tenant/capability checks and has localized safe copy", () => {
     scanPage,
     /canPerform\(session\.user, business\.id, "LOYALTY_REDEEM"\)/,
   );
-  assert.match(actions, /businessId: business\.id/);
+  assert.match(earnAction, /businessId: business\.id/);
+  assert.match(redemptionAction, /businessId: business\.id/);
   for (const language of ["AR", "EN"]) {
     assert.match(
       scanCopy,
