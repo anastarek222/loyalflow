@@ -1,10 +1,10 @@
 "use server";
 
 import { auth } from "@/auth";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { getBusinessPlaybook } from "@/lib/playbooks/catalog";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import { applyBusinessPlaybookCommand } from "@/lib/server/business/playbook-application-command";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
@@ -55,7 +55,7 @@ export async function applyBusinessPlaybookAction(slug: string, formData: FormDa
   if (outcome === "subscription-restricted") redirect(`/businesses/${business.slug}/playbooks?error=subscription-restricted`);
   if (outcome === "missing") redirect("/businesses");
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  scheduleBusinessGoogleSheetsSync(outcome.integrationJobId);
   revalidatePlaybookPaths(business.slug);
   redirect(`/businesses/${business.slug}/playbooks?playbook=${playbook.id}&saved=1`);
 }
