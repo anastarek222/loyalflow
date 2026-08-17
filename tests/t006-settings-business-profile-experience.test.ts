@@ -53,7 +53,7 @@ test("T006 Profile and operations remain independent pending-aware forms", () =>
 });
 
 test("T006 Integrations, card details, and export retain canonical actions", () => {
-  assert.match(settings, /syncGoogleSheetAction\.bind\(null, business\.slug\)/);
+  assert.match(settings, /syncGoogleSheetCommandAction\.bind\(null, business\.slug\)/);
   assert.match(
     settings,
     /updateBusinessCardDetailsAction\.bind\([\s\S]{0,80}business\.slug/,
