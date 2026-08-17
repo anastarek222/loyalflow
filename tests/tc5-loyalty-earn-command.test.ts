@@ -36,6 +36,10 @@ test("TC5 Loyalty Earn bounded action preserves replay and rapid-operation guard
 });
 
 test("TC5 Loyalty Earn is adopted through the active compatibility facade", () => {
-  assert.match(facade, /addLoyaltyCommandAction as addLoyaltyAction/);
+  assert.match(facade, /export async function addLoyaltyAction/);
+  assert.match(
+    facade,
+    /return addLoyaltyCommandAction\(slug, customerId, formData\)/,
+  );
   assert.match(facade, /from "\.\/loyalty-earn-actions"/);
 });
