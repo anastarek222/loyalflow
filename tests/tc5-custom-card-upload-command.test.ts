@@ -13,10 +13,13 @@ const action = source(
 const manager = source("components/custom-card-artwork-manager.tsx");
 const programPage = source("app/businesses/[slug]/program/page.tsx");
 
-test("TC5 Custom Card upload command owns bounded storage validation and persisted EXPAND enforcement", () => {
+test("TC5 Custom Card upload command validates files and matching geometry before entitlement and Blob upload", () => {
   const storage = command.indexOf("customCardStorageConfigured");
   const frontValidation = command.indexOf("validateCustomCardArtwork(input.front)");
   const backValidation = command.indexOf("validateCustomCardArtwork(input.back)");
+  const geometryValidation = command.indexOf(
+    "await validateCustomCardArtworkPair(input.front, input.back)",
+  );
   const entitlement = command.indexOf(
     "await canBusinessPerformSubscriptionOperation",
   );
@@ -27,6 +30,7 @@ test("TC5 Custom Card upload command owns bounded storage validation and persist
     storage,
     frontValidation,
     backValidation,
+    geometryValidation,
     entitlement,
     version,
     upload,
@@ -35,12 +39,35 @@ test("TC5 Custom Card upload command owns bounded storage validation and persist
   }
 
   assert.ok(storage < frontValidation);
-  assert.ok(frontValidation < entitlement);
-  assert.ok(backValidation < entitlement);
+  assert.ok(frontValidation < geometryValidation);
+  assert.ok(backValidation < geometryValidation);
+  assert.ok(geometryValidation < entitlement);
   assert.ok(entitlement < version);
   assert.ok(version < upload);
   assert.match(command, /"EXPAND"/);
   assert.match(command, /businessId: input\.businessId/);
+});
+
+test("TC5 Custom Card geometry failure returns INVALID_UPLOAD before version creation or Blob write", () => {
+  const geometry = command.indexOf(
+    "if (!(await validateCustomCardArtworkPair(input.front, input.back)))",
+  );
+  const invalid = command.indexOf(
+    'return { ok: false, reason: "INVALID_UPLOAD" };',
+    geometry,
+  );
+  const version = command.indexOf("randomUUID()");
+  const upload = command.indexOf("uploadCustomCardArtwork({");
+
+  for (const position of [geometry, invalid, version, upload]) {
+    assert.ok(position >= 0);
+  }
+
+  assert.ok(geometry < invalid);
+  assert.ok(invalid < version);
+  assert.ok(invalid < upload);
+  assert.match(action, /result\.reason === "STORAGE_UNAVAILABLE"/);
+  assert.ok(action.includes("cardDesign=invalid-upload"));
 });
 
 test("TC5 Custom Card upload command preserves existing private Blob helper ownership", () => {
