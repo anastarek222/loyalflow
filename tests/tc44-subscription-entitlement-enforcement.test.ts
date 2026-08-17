@@ -17,8 +17,22 @@ const publicJoin = readFileSync(
   new URL("../app/join/[slug]/actions.ts", import.meta.url),
   "utf8",
 );
+const publicMembershipCommand = readFileSync(
+  new URL(
+    "../lib/server/business/public-membership-command.ts",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const customerActions = readFileSync(
   new URL("../app/businesses/[slug]/customers/actions.ts", import.meta.url),
+  "utf8",
+);
+const customerCreateCommand = readFileSync(
+  new URL(
+    "../lib/server/business/customer-create-command.ts",
+    import.meta.url,
+  ),
   "utf8",
 );
 
@@ -44,12 +58,21 @@ test("TC4.4 guards every authoritative loyalty balance mutation", () => {
 });
 
 test("TC4.4 blocks customer expansion in public and authenticated paths", () => {
-  for (const source of [publicJoin, customerActions]) {
-    assert.match(source, /subscriptionLifecycleState: true/);
-    assert.match(source, /canPerformSubscriptionOperation\(/);
-    assert.match(source, /"EXPAND"/);
-    assert.match(source, /canBusinessPerformSubscriptionOperation\(/);
-  }
+  assert.match(publicJoin, /subscriptionLifecycleState: true/);
+  assert.match(publicJoin, /canPerformSubscriptionOperation\(/);
+  assert.match(publicJoin, /"EXPAND"/);
+  assert.match(publicJoin, /createPublicMembershipCommand/);
+
+  assert.match(publicMembershipCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(publicMembershipCommand, /"EXPAND"/);
+
+  assert.match(customerActions, /subscriptionLifecycleState: true/);
+  assert.match(customerActions, /canPerformSubscriptionOperation\(/);
+  assert.match(customerActions, /"EXPAND"/);
+  assert.match(customerActions, /createCustomerCommand/);
+  assert.match(customerCreateCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(customerCreateCommand, /"EXPAND"/);
+
   assert.match(publicJoin, /businessUnavailable/);
   assert.match(customerActions, /subscription-restricted/);
 });

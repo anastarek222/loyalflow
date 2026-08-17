@@ -6,7 +6,7 @@ import test from "node:test";
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 
-test("TC5 financial compatibility facade exports async wrappers and overrides financial writers", () => {
+test("TC5 compatibility facade exports async wrappers and routes migrated writers to commands", () => {
   const facade = source(
     "app/businesses/[slug]/customers/[customerId]/actions.ts",
   );
@@ -31,21 +31,23 @@ test("TC5 financial compatibility facade exports async wrappers and overrides fi
   assert.match(facade, /return adjustCustomerBalanceCommandAction\(slug, customerId, formData\)/);
   assert.match(facade, /return addLoyaltyCommandAction\(slug, customerId, formData\)/);
   assert.match(facade, /return redeemRewardCommandAction\(slug, customerId, rewardId, formData\)/);
+  assert.match(facade, /return createCustomerReferralCodeCommandAction\(slug, customerId\)/);
+  assert.match(facade, /return createAndAssignCustomerTagCommandAction\(slug, customerId, formData\)/);
+  assert.match(facade, /return assignCustomerTagCommandAction\(slug, customerId, tagId\)/);
+  assert.match(facade, /return removeCustomerTagCommandAction\(slug, customerId, tagId\)/);
 });
 
-test("TC5 non-financial compatibility wrappers retain the legacy implementation", () => {
+test("TC5 remaining compatibility wrappers retain the current staging implementation", () => {
   const facade = source(
     "app/businesses/[slug]/customers/[customerId]/actions.ts",
   );
 
   assert.match(facade, /return legacy\.updateCustomerAction/);
   assert.match(facade, /return legacy\.setCustomerStatusAction/);
-  assert.match(facade, /return legacy\.createCustomerReferralCodeAction/);
-  assert.match(facade, /return legacy\.createAndAssignCustomerTagAction/);
-  assert.match(facade, /return legacy\.assignCustomerTagAction/);
-  assert.match(facade, /return legacy\.removeCustomerTagAction/);
   assert.match(facade, /return legacy\.createCustomerNoteAction/);
   assert.match(facade, /return legacy\.updateCustomerNoteAction/);
+  assert.doesNotMatch(facade, /return legacy\.createCustomerReferralCodeAction/);
+  assert.doesNotMatch(facade, /return legacy\.(createAndAssignCustomerTagAction|assignCustomerTagAction|removeCustomerTagAction)/);
 });
 
 test("TC5 customer and scan surfaces continue through the compatibility facade", () => {

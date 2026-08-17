@@ -24,13 +24,13 @@ import { notFound, redirect } from "next/navigation";
 import * as QRCode from "qrcode";
 
 import {
-  syncGoogleSheetAction,
   deleteBusinessAction,
   updateBusinessCardDetailsAction,
   updateBusinessProfileAction,
-  updateBusinessExportPermissionAction,
   updateOperationsSettingsAction,
 } from "./actions";
+import { updateBusinessExportPermissionCommandAction } from "./export-permission-action";
+import { syncGoogleSheetCommandAction } from "./google-sheets-sync-action";
 
 type BusinessSettingsPageProps = {
   params: Promise<{
@@ -128,7 +128,7 @@ export default async function BusinessSettingsPage({
   );
   const deleteBusiness = deleteBusinessAction.bind(null, business.slug);
 
-  const syncGoogleSheet = syncGoogleSheetAction.bind(null, business.slug);
+  const syncGoogleSheet = syncGoogleSheetCommandAction.bind(null, business.slug);
 
   const updateCardDetails = updateBusinessCardDetailsAction.bind(
     null,
@@ -572,7 +572,7 @@ export default async function BusinessSettingsPage({
               </div>
 
               <form
-                action={updateBusinessExportPermissionAction.bind(
+                action={updateBusinessExportPermissionCommandAction.bind(
                   null,
                   business.slug,
                 )}

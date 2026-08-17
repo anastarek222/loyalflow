@@ -3,7 +3,13 @@
 import * as legacy from "./actions-legacy";
 import { adjustCustomerBalanceCommandAction } from "./balance-adjustment-action";
 import { addLoyaltyCommandAction } from "./loyalty-earn-actions";
+import { createCustomerReferralCodeCommandAction } from "./referral-actions";
 import { redeemRewardCommandAction } from "./redemption-actions";
+import {
+  assignCustomerTagCommandAction,
+  createAndAssignCustomerTagCommandAction,
+  removeCustomerTagCommandAction,
+} from "./tag-actions";
 
 export async function updateCustomerAction(
   slug: string,
@@ -33,7 +39,7 @@ export async function createCustomerReferralCodeAction(
   slug: string,
   customerId: string,
 ) {
-  return legacy.createCustomerReferralCodeAction(slug, customerId);
+  return createCustomerReferralCodeCommandAction(slug, customerId);
 }
 
 export async function createAndAssignCustomerTagAction(
@@ -41,7 +47,7 @@ export async function createAndAssignCustomerTagAction(
   customerId: string,
   formData: FormData,
 ) {
-  return legacy.createAndAssignCustomerTagAction(slug, customerId, formData);
+  return createAndAssignCustomerTagCommandAction(slug, customerId, formData);
 }
 
 export async function assignCustomerTagAction(
@@ -49,7 +55,7 @@ export async function assignCustomerTagAction(
   customerId: string,
   tagId: string,
 ) {
-  return legacy.assignCustomerTagAction(slug, customerId, tagId);
+  return assignCustomerTagCommandAction(slug, customerId, tagId);
 }
 
 export async function removeCustomerTagAction(
@@ -57,7 +63,7 @@ export async function removeCustomerTagAction(
   customerId: string,
   tagId: string,
 ) {
-  return legacy.removeCustomerTagAction(slug, customerId, tagId);
+  return removeCustomerTagCommandAction(slug, customerId, tagId);
 }
 
 export async function createCustomerNoteAction(

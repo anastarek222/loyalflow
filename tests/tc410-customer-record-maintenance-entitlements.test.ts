@@ -17,18 +17,45 @@ function action(sourceText: string, name: string, nextName?: string) {
 }
 
 const customerActions = source(
-  "app/businesses/[slug]/customers/[customerId]/actions-legacy.ts",
+  "app/businesses/[slug]/customers/[customerId]/actions.ts",
+);
+const customerCommand = source(
+  "lib/server/business/customer-record-maintenance-command.ts",
 );
 const customerPage = source(
   "app/businesses/[slug]/customers/[customerId]/page.tsx",
 );
 
+const updateCommandStart = customerCommand.indexOf(
+  "export async function updateCustomerRecordCommand",
+);
+const statusCommandStart = customerCommand.indexOf(
+  "export async function setCustomerRecordStatusCommand",
+);
+assert.ok(updateCommandStart >= 0 && statusCommandStart > updateCommandStart);
+const updateCommand = customerCommand.slice(
+  updateCommandStart,
+  statusCommandStart,
+);
+const statusCommand = customerCommand.slice(statusCommandStart);
+
 test("TC4.10 guards customer profile and note maintenance as OPERATE", () => {
-  const guardedActions = [
-    [
-      action(customerActions, "updateCustomerAction", "setCustomerStatusAction"),
-      "transaction.customer.update",
-    ],
+  const updateAction = action(
+    customerActions,
+    "updateCustomerAction",
+    "setCustomerStatusAction",
+  );
+  assert.match(updateAction, /canPerformSubscriptionOperation\(/);
+  assert.match(updateAction, /updateCustomerRecordCommand/);
+  assert.match(updateAction, /subscription-restricted/);
+  assert.match(updateCommand, /canBusinessPerformSubscriptionOperation\(/);
+  assert.match(updateCommand, /"OPERATE"/);
+  assert.ok(
+    updateCommand.indexOf("await canBusinessPerformSubscriptionOperation") <
+      updateCommand.indexOf("transaction.customer.update"),
+  );
+
+  const guardedNoteActions = [
     [
       action(customerActions, "createCustomerNoteAction", "updateCustomerNoteAction"),
       "transaction.customerNote.create",
@@ -39,7 +66,7 @@ test("TC4.10 guards customer profile and note maintenance as OPERATE", () => {
     ],
   ] as const;
 
-  for (const [sourceText, mutation] of guardedActions) {
+  for (const [sourceText, mutation] of guardedNoteActions) {
     assert.match(sourceText, /canPerformSubscriptionOperation\(/);
     assert.match(sourceText, /canBusinessPerformSubscriptionOperation\(/);
     assert.match(sourceText, /"OPERATE"/);
@@ -61,12 +88,19 @@ test("TC4.10 preserves customer deactivation safety", () => {
     statusAction,
     /parsedStatus\.data &&[\s\S]*canPerformSubscriptionOperation/,
   );
-  assert.match(statusAction, /isActive: parsedStatus\.data/);
-
+  assert.match(statusAction, /setCustomerRecordStatusCommand/);
+  assert.match(
+    statusCommand,
+    /input\.isActive &&[\s\S]*canBusinessPerformSubscriptionOperation/,
+  );
+  assert.match(statusCommand, /isActive: input\.isActive/);
 });
 
 test("TC4.10 exposes bounded feedback without provider or schema behavior", () => {
   assert.match(customerPage, /query\.error === "subscription-restricted"/);
   assert.match(customerPage, /security controls remain accessible/);
-  assert.doesNotMatch(customerActions, /stripe|checkout|webhook|process\.env/i);
+  assert.doesNotMatch(
+    `${customerActions}\n${customerCommand}`,
+    /stripe|checkout|webhook|process\.env/i,
+  );
 });

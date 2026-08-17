@@ -38,7 +38,10 @@ test("P9.8 progressively enables customer features by plan", () => {
 
   assert.equal(canViewCustomerNotesTags(owner, businessId, "STARTER"), true);
   assert.equal(canManageCustomerNotesTags(owner, businessId, "STARTER"), true);
-  assert.equal(canUseCustomerBulkOperations(owner, businessId, "STARTER"), false);
+  assert.equal(
+    canUseCustomerBulkOperations(owner, businessId, "STARTER"),
+    false,
+  );
   assert.equal(canUseCustomerReferrals(owner, businessId, "STARTER"), false);
   assert.equal(canUseCustomerCampaigns(owner, businessId, "STARTER"), false);
 
@@ -48,30 +51,70 @@ test("P9.8 progressively enables customer features by plan", () => {
 });
 
 test("P9.8 combines plan entitlements with role capabilities", () => {
-  assert.equal(canManageCustomerNotesTags(user("MANAGER"), businessId, "PRO"), true);
-  assert.equal(canUseCustomerBulkOperations(user("MANAGER"), businessId, "PRO"), true);
-  assert.equal(canUseCustomerReferrals(user("MANAGER"), businessId, "PRO"), true);
-  assert.equal(canUseCustomerCampaigns(user("MANAGER"), businessId, "PRO"), false);
-  assert.equal(canViewCustomerNotesTags(user("VIEWER"), businessId, "PRO"), true);
-  assert.equal(canManageCustomerNotesTags(user("VIEWER"), businessId, "PRO"), false);
-  assert.equal(canUseCustomerBulkOperations(user("STAFF"), businessId, "PRO"), false);
+  assert.equal(
+    canManageCustomerNotesTags(user("MANAGER"), businessId, "PRO"),
+    true,
+  );
+  assert.equal(
+    canUseCustomerBulkOperations(user("MANAGER"), businessId, "PRO"),
+    true,
+  );
+  assert.equal(
+    canUseCustomerReferrals(user("MANAGER"), businessId, "PRO"),
+    true,
+  );
+  assert.equal(
+    canUseCustomerCampaigns(user("MANAGER"), businessId, "PRO"),
+    false,
+  );
+  assert.equal(
+    canViewCustomerNotesTags(user("VIEWER"), businessId, "PRO"),
+    true,
+  );
+  assert.equal(
+    canManageCustomerNotesTags(user("VIEWER"), businessId, "PRO"),
+    false,
+  );
+  assert.equal(
+    canUseCustomerBulkOperations(user("STAFF"), businessId, "PRO"),
+    false,
+  );
 });
 
 test("P9.8 preserves tenant isolation for every customer feature policy", () => {
   const otherTenantOwner = user("OWNER", "business-b");
 
-  assert.equal(canViewCustomerNotesTags(otherTenantOwner, businessId, "BUSINESS"), false);
-  assert.equal(canManageCustomerNotesTags(otherTenantOwner, businessId, "BUSINESS"), false);
-  assert.equal(canUseCustomerBulkOperations(otherTenantOwner, businessId, "BUSINESS"), false);
-  assert.equal(canUseCustomerReferrals(otherTenantOwner, businessId, "BUSINESS"), false);
-  assert.equal(canUseCustomerCampaigns(otherTenantOwner, businessId, "BUSINESS"), false);
+  assert.equal(
+    canViewCustomerNotesTags(otherTenantOwner, businessId, "BUSINESS"),
+    false,
+  );
+  assert.equal(
+    canManageCustomerNotesTags(otherTenantOwner, businessId, "BUSINESS"),
+    false,
+  );
+  assert.equal(
+    canUseCustomerBulkOperations(otherTenantOwner, businessId, "BUSINESS"),
+    false,
+  );
+  assert.equal(
+    canUseCustomerReferrals(otherTenantOwner, businessId, "BUSINESS"),
+    false,
+  );
+  assert.equal(
+    canUseCustomerCampaigns(otherTenantOwner, businessId, "BUSINESS"),
+    false,
+  );
 });
 
 test("P9.8 customer pages use the same shared policies as their server actions", () => {
   const listPage = source("app/businesses/[slug]/customers/page.tsx");
   const listActions = source("app/businesses/[slug]/customers/actions.ts");
-  const detailPage = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
-  const detailActions = source("app/businesses/[slug]/customers/[customerId]/actions-legacy.ts");
+  const detailPage = source(
+    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+  );
+  const detailActions = source(
+    "app/businesses/[slug]/customers/[customerId]/actions.ts",
+  );
 
   assert.match(listPage, /canUseCustomerBulkOperations/);
   assert.match(listPage, /canUseCustomerCampaigns/);
