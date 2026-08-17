@@ -49,19 +49,19 @@ import * as QRCode from "qrcode";
 
 import {
   addLoyaltyAction,
-  createCustomerNoteAction,
+  assignCustomerTagAction,
+  createAndAssignCustomerTagAction,
   adjustCustomerBalanceAction,
   createCustomerReferralCodeAction,
   redeemRewardAction,
+  removeCustomerTagAction,
   setCustomerStatusAction,
-  updateCustomerNoteAction,
   updateCustomerAction,
 } from "./actions";
 import {
-  assignCustomerTagCommandAction,
-  createAndAssignCustomerTagCommandAction,
-  removeCustomerTagCommandAction,
-} from "./tag-actions";
+  createCustomerNoteCommandAction,
+  updateCustomerNoteCommandAction,
+} from "./note-actions";
 
 type CustomerDetailsPageProps = {
   params: Promise<{
@@ -377,12 +377,12 @@ export default async function CustomerDetailsPage({
     business.slug,
     customer.id,
   );
-  const createAndAssignTag = createAndAssignCustomerTagCommandAction.bind(
+  const createAndAssignTag = createAndAssignCustomerTagAction.bind(
     null,
     business.slug,
     customer.id,
   );
-  const createNote = createCustomerNoteAction.bind(
+  const createNote = createCustomerNoteCommandAction.bind(
     null,
     business.slug,
     customer.id,
@@ -835,7 +835,7 @@ export default async function CustomerDetailsPage({
                     </p>
                   ) : (
                     customer.tagAssignments.map((assignment) => {
-                      const removeTag = removeCustomerTagCommandAction.bind(
+                      const removeTag = removeCustomerTagAction.bind(
                         null,
                         business.slug,
                         customer.id,
@@ -892,7 +892,7 @@ export default async function CustomerDetailsPage({
                             ),
                         )
                         .map((tag) => {
-                          const assignTag = assignCustomerTagCommandAction.bind(
+                          const assignTag = assignCustomerTagAction.bind(
                             null,
                             business.slug,
                             customer.id,
@@ -959,7 +959,7 @@ export default async function CustomerDetailsPage({
                     </p>
                   ) : (
                     customer.notes.map((note) => {
-                      const updateNote = updateCustomerNoteAction.bind(
+                      const updateNote = updateCustomerNoteCommandAction.bind(
                         null,
                         business.slug,
                         customer.id,
