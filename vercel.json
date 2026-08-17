@@ -7,6 +7,14 @@
           "topic": "loyalflow-integration-jobs-beta"
         }
       ]
+    },
+    "app/api/queues/integration-recovery/route.ts": {
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "loyalflow-integration-recovery-beta"
+        }
+      ]
     }
   }
 }
