@@ -34,7 +34,7 @@ test("U12 mobile shell keeps bounded, safe-area-aware overlays", () => {
   const shell = source("components/authenticated-app-shell.tsx");
   const sidebar = source("components/mobile-sidebar.tsx");
   const bottomNavigation = source("components/mobile-bottom-navigation.tsx");
-  const notifications = source("components/business-notifications-dialog.tsx");
+  const notifications = source("components/business-notifications-dialog-client.tsx");
   const css = source("app/globals.css");
   assert.match(sidebar, /type="search"/);
   assert.match(sidebar, /max-h-48 overflow-y-auto/);
