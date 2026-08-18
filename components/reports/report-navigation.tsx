@@ -61,7 +61,7 @@ export function ReportNavigation({
               aria-current={active === item.id ? "page" : undefined}
               className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 active === item.id
-                  ? "bg-primary text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-foreground-muted hover:bg-surface-subtle hover:text-primary"
               }`}
             >
