@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      STAGING_UAT_BASE_URL: https://loyalflow-ukz4t66jt-anas-tarek.vercel.app
+      STAGING_UAT_BASE_URL: https://loyalflow-3grcrgavu-anas-tarek.vercel.app
       LOYALFLOW_ENVIRONMENT: staging
       LOYALFLOW_STAGING_DATABASE: neondb
       LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
@@ -103,7 +103,7 @@ jobs:
       - name: Checkout exact certified source
         uses: actions/checkout@v4
         with:
-          ref: 62f656e2850253a31c2b561eb33e1602306d2340
+          ref: 16053d9263c2e5346a2d2627d625a14b77930d05
           clean: true
 
       - name: Setup pnpm
@@ -143,7 +143,7 @@ jobs:
           let health;
           try { health = JSON.parse(fs.readFileSync(path, 'utf8')); }
           catch { throw new Error('Share-link cookie session returned non-JSON content'); }
-          if (health?.environment !== 'staging' || health?.release !== '62f656e28502') {
+          if (health?.environment !== 'staging' || health?.release !== '16053d9263c2') {
             throw new Error('Share-link cookie session reached the wrong runtime identity');
           }
           NODE
@@ -220,4 +220,4 @@ jobs:
           payload="$(jq -nc --arg target "$target" '{state:"failure",context:"Slice D Runtime UAT",description:"Exact-SHA Slice D browser matrix failed",target_url:$target}')"
           curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "$payload" >/dev/null
 
-# trigger: cookie-session-final
+# target: staging-16053d9263c2
