@@ -47,6 +47,21 @@ type BusinessSettingsPageProps = {
   }>;
 };
 
+function planUsageResourceLabel(resource: string, isArabic: boolean) {
+  const fallback = resource.replaceAll("_", " ");
+  if (!isArabic) return fallback;
+
+  const labels: Record<string, string> = {
+    CUSTOMERS: "العملاء",
+    USERS: "الفريق",
+    BRANCHES: "الفروع",
+    OFFERS: "العروض",
+    REWARDS: "المكافآت",
+  };
+
+  return labels[resource] ?? fallback;
+}
+
 export default async function BusinessSettingsPage({
   params,
   searchParams,
@@ -244,7 +259,7 @@ export default async function BusinessSettingsPage({
                 className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-3"
               >
                 <p className="text-[11px] font-semibold text-foreground-subtle">
-                  {item.resource.replaceAll("_", " ")}
+                  {planUsageResourceLabel(item.resource, language === "AR")}
                 </p>
                 <p dir="ltr" className="mt-1 font-bold text-foreground">
                   {item.used} / {item.limit ?? "∞"}
