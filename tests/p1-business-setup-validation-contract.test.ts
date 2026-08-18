@@ -34,8 +34,10 @@ test("P1 Business Setup validates through the authoritative creation schema and 
 test("P1 Business Setup Next and final submit share the canonical validator and exact-field focus", () => {
   assert.match(wizard, /getBusinessSetupValidationIssue\(formData, step as SetupStep\)/);
   assert.match(wizard, /getBusinessSetupValidationIssue\(data\)/);
-  assert.match(wizard, /setStep\(issue\.step\)/);
-  assert.match(wizard, /focusIssue\(issue\.field\)/);
+  assert.match(wizard, /function setIssue\(message: string, field: string, issueStep: SetupStep\)/);
+  assert.match(wizard, /setStep\(issueStep\)/);
+  assert.match(wizard, /focusIssue\(field\)/);
+  assert.match(wizard, /setIssue\(issue\.message, issue\.field, issue\.step\)/);
   assert.doesNotMatch(wizard, /function validateStep\(/);
   assert.doesNotMatch(wizard, /function validateWholeForm\(/);
   assert.doesNotMatch(wizard, /stepForField/);
