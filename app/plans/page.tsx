@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { Card } from "@/components/ui/card";
 import { ListPageTemplate, PageHeader } from "@/components/page-layout";
 import {
+  isLoyalFlowPlan,
   loyalFlowPlans,
   planCatalog,
   type LoyalFlowPlan,
@@ -60,6 +61,11 @@ export default async function PlansPage({
   ]);
   const language = normalizeLanguage(currentUser?.language);
   const t = (ar: string, en: string) => language === "AR" ? ar : en;
+  const feedbackPlan =
+    params.plan && isLoyalFlowPlan(params.plan) ? params.plan : null;
+  const feedbackPlanName = feedbackPlan
+    ? planCatalog[feedbackPlan].name
+    : null;
 
   const businessCounts = new Map<LoyalFlowPlan, number>(
     usageByPlan.map((row) => [row.plan, row._count._all]),
@@ -89,7 +95,15 @@ export default async function PlansPage({
           role="status"
           className="mb-5 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success"
         >
-          {t("تم تحديث حدود الخطة بنجاح.", "Plan limits updated successfully.")}
+          {feedbackPlanName
+            ? t(
+                `تم تحديث حدود خطة ${feedbackPlanName} بنجاح.`,
+                `${feedbackPlanName} plan limits updated successfully.`,
+              )
+            : t(
+                "تم تحديث حدود الخطة بنجاح.",
+                "Plan limits updated successfully.",
+              )}
         </div>
       ) : null}
       {params.error ? (
@@ -97,7 +111,15 @@ export default async function PlansPage({
           role="alert"
           className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger"
         >
-          {t("تعذر تحديث الحدود. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.", "Plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.")}
+          {feedbackPlanName
+            ? t(
+                `تعذر تحديث حدود خطة ${feedbackPlanName}. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.`,
+                `${feedbackPlanName} plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.`,
+              )
+            : t(
+                "تعذر تحديث الحدود. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.",
+                "Plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.",
+              )}
         </div>
       ) : null}
 
