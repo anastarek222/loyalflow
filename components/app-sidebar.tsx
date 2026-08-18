@@ -92,7 +92,7 @@ export default function AppSidebar({
           href="/dashboard"
           className="flex items-center gap-3 rounded-[var(--lf-radius-input)] px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
         >
-          <span className="lf-brand-mark flex size-10 items-center justify-center rounded-xl text-lg font-black text-white shadow-sm">
+          <span className="lf-brand-mark flex size-10 items-center justify-center rounded-[var(--lf-radius-md)] text-lg font-black text-primary-foreground shadow-sm">
             L
           </span>
           <span>
@@ -113,7 +113,7 @@ export default function AppSidebar({
       </div>
       {business && (
         <div
-          className="mx-4 rounded-xl border border-primary/10 bg-primary-subtle/70 px-4 py-3"
+          className="mx-4 rounded-[var(--lf-radius-lg)] border border-primary/10 bg-[var(--lf-primary-soft)] px-4 py-3"
           data-current-business-context="true"
         >
           <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/75">
@@ -129,7 +129,7 @@ export default function AppSidebar({
       )}
       {platformWorkspace ? (
         <div
-          className="mx-4 rounded-xl border border-primary/20 bg-primary-subtle px-4 py-3"
+          className="mx-4 rounded-[var(--lf-radius-lg)] border border-primary/20 bg-[var(--lf-primary-soft)] px-4 py-3"
           data-platform-context="true"
         >
           <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary">
