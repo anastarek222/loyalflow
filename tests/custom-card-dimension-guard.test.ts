@@ -5,6 +5,7 @@ import test from "node:test";
 
 import {
   getCustomCardArtworkDimensions,
+  validateCustomCardArtworkGeometry,
   validateCustomCardArtworkGeometryPair,
 } from "@/lib/cards/custom-card-geometry";
 
@@ -64,6 +65,11 @@ test("reads actual PNG, JPEG, and WebP artwork dimensions", async () => {
   }
 });
 
+test("accepts one front artwork at the standard ID-1 aspect ratio", async () => {
+  assert.equal(await validateCustomCardArtworkGeometry(png(856, 540)), true);
+  assert.equal(await validateCustomCardArtworkGeometry(jpeg(800, 600)), false);
+});
+
 test("accepts matching front/back artwork at the standard ID-1 aspect ratio", async () => {
   assert.equal(
     await validateCustomCardArtworkGeometryPair(png(856, 540), webp(856, 540)),
@@ -90,22 +96,38 @@ test("rejects malformed image bytes instead of trusting MIME type", async () => 
     type: "image/png",
   });
   assert.equal(await getCustomCardArtworkDimensions(malformed), null);
+  assert.equal(await validateCustomCardArtworkGeometry(malformed), false);
   assert.equal(
     await validateCustomCardArtworkGeometryPair(malformed, malformed),
     false,
   );
 });
 
-test("storage validates geometry before the first Vercel Blob write", () => {
+test("storage validates selected geometry before the first Vercel Blob write", () => {
   const storage = source("lib/cards/custom-card-storage.ts");
   const uploadStart = storage.indexOf("export async function uploadCustomCardArtwork");
-  const validation = storage.indexOf(
+  const validation = storage.indexOf("const validGeometry", uploadStart);
+  const pairValidation = storage.indexOf(
     "validateCustomCardArtworkPair(input.front, input.back)",
     uploadStart,
   );
-  const blobWrite = storage.indexOf("return put(", uploadStart);
+  const singleValidation = storage.indexOf(
+    "validateSingleCustomCardArtwork(input.front)",
+    uploadStart,
+  );
+  const blobWrite = storage.indexOf("await put(", uploadStart);
 
-  assert.ok(uploadStart >= 0);
-  assert.ok(validation > uploadStart);
-  assert.ok(blobWrite > validation);
+  for (const position of [
+    uploadStart,
+    validation,
+    pairValidation,
+    singleValidation,
+    blobWrite,
+  ]) {
+    assert.ok(position >= 0);
+  }
+  assert.ok(validation < pairValidation);
+  assert.ok(validation < singleValidation);
+  assert.ok(pairValidation < blobWrite);
+  assert.ok(singleValidation < blobWrite);
 });
