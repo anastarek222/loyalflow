@@ -172,7 +172,7 @@ export default function AppTopbar({
               aria-expanded={businessOpen}
               aria-controls="topbar-business-popover"
               onClick={() => setBusinessOpen((value) => !value)}
-              className="flex min-h-10 max-w-52 items-center gap-2 rounded-xl border border-border bg-white/70 px-3 text-sm font-semibold text-foreground-muted shadow-sm hover:border-primary/30 hover:bg-white"
+              className="flex min-h-10 max-w-52 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface/80 px-3 text-sm font-semibold text-foreground-muted shadow-[var(--lf-shadow-raised)] transition hover:border-primary/30 hover:bg-surface"
             >
               <Building2 size={16} aria-hidden="true" />
               <span className="truncate">{activeBusiness.name}</span>
@@ -198,7 +198,7 @@ export default function AppTopbar({
                     key={business.id}
                     href={`/businesses/${business.slug}`}
                     onClick={() => setBusinessOpen(false)}
-                    className={`flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold ${business.slug === activeBusiness.slug ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}
+                    className={`flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold ${business.slug === activeBusiness.slug ? "bg-[var(--lf-primary-soft)] text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}
                   >
                     {business.name}
                   </Link>
@@ -213,7 +213,7 @@ export default function AppTopbar({
           <Link
             href={`/businesses/${activeBusiness.slug}/scan`}
             aria-label={language === "AR" ? "فتح المسح" : "Open scan"}
-            className="hidden min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary-hover hover:shadow-md sm:inline-flex"
+            className="hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/20 transition hover:bg-primary-hover hover:shadow-md sm:inline-flex"
           >
             <ScanLine size={17} aria-hidden="true" />
             <span>{language === "AR" ? "مسح" : "Scan"}</span>
@@ -223,7 +223,7 @@ export default function AppTopbar({
           <Link
             href={`/businesses/${activeBusiness.slug}?notifications=1`}
             aria-label={language === "AR" ? "الإشعارات" : "Notifications"}
-            className="flex size-11 items-center justify-center rounded-xl border border-transparent text-foreground-muted transition hover:border-border hover:bg-white hover:shadow-sm"
+            className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-transparent text-foreground-muted transition hover:border-border hover:bg-surface hover:shadow-sm"
           >
             <Bell size={19} aria-hidden="true" />
           </Link>
@@ -241,7 +241,7 @@ export default function AppTopbar({
           >
             <Avatar
               name={fullName || user.email}
-              className="bg-foreground text-white"
+              className="bg-primary text-primary-foreground"
             />
             <ChevronDown
               className="hidden text-foreground-subtle sm:block"
