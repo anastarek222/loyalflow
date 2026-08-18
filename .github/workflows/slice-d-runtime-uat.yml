@@ -149,7 +149,7 @@ jobs:
           NODE
           node <<'NODE'
           const fs = require('fs');
-          const lines = fs.readFileSync('/tmp/lf-vercel-cookies.txt', 'utf8').split(/\r?\n/).filter(l => l && !l.startsWith('#'));
+          const lines = fs.readFileSync('/tmp/lf-vercel-cookies.txt', 'utf8').split(/\r?\n/).filter(l => l && (!l.startsWith('#') || l.startsWith('#HttpOnly_')));
           const cookies = lines.map(line => {
             const [domain, includeSubdomains, path, secure, expires, name, ...valueParts] = line.split('\t');
             return { name, value: valueParts.join('\t'), domain: domain.replace(/^#HttpOnly_/, ''), path, expires: Number(expires) || -1, httpOnly: line.startsWith('#HttpOnly_'), secure: secure === 'TRUE', sameSite: 'Lax' };
