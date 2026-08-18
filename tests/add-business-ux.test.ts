@@ -13,10 +13,12 @@ test("Businesses listing links to dedicated Add Business route and no longer emb
   assert.match(read("app/businesses/new/page.tsx"), /AddBusinessExperience/);
 });
 
-test("Add Business page offers separate Custom Setup and Owner Invitation paths", () => {
+test("Add Business page offers separate localized Custom Setup and Owner Invitation paths", () => {
   const experience = read("components/add-business-experience.tsx");
-  assert.match(experience, /Custom Setup/);
-  assert.match(experience, /Owner Invitation/);
+  assert.match(experience, /custom: "Custom setup"/);
+  assert.match(experience, /custom: "إعداد مخصص"/);
+  assert.match(experience, /invite: "Owner invitation"/);
+  assert.match(experience, /invite: "دعوة المالك"/);
   assert.match(experience, /BusinessSetupWizard/);
   assert.match(experience, /OwnerInvitationForm/);
   assert.doesNotMatch(experience, /prisma\.business/);
@@ -39,8 +41,10 @@ test("blank optional numeric billing values do not coerce to zero and validation
   const wizard = read("components/business-setup-wizard.tsx");
   assert.doesNotMatch(wizard, /parsed\.error\.issues\[0\]\?\.message/);
   assert.match(wizard, /getBusinessSetupValidationIssue/);
-  assert.match(wizard, /setStep\(issue\.step\)/);
-  assert.match(wizard, /focusIssue\(issue\.field\)/);
+  assert.match(wizard, /function setIssue\(message: string, field: string, issueStep: SetupStep\)/);
+  assert.match(wizard, /setStep\(issueStep\)/);
+  assert.match(wizard, /focusIssue\(field\)/);
+  assert.match(wizard, /setIssue\(issue\.message, issue\.field, issue\.step\)/);
 });
 
 test("review includes one editable loyalty section and one canonical card-design section", () => {
