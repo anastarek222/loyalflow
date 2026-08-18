@@ -102,4 +102,4 @@ test("Z9 successful financial operations refresh merchant and customer surfaces"
     assert.match(action, /revalidatePath\("\/dashboard"\)/);
     assert.match(action, /scheduleBusinessGoogleSheetsSync/);
   }
-}
+});
