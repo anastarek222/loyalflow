@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   statuses: write
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: agent/slice-d-runtime-uat-run
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Mark runtime UAT pending
         env:
@@ -44,19 +44,34 @@ jobs:
             -d '{"state":"pending","context":"Slice D Runtime UAT","description":"Waiting for encrypted ephemeral UAT handoff"}'
 
       - name: Generate ephemeral handoff key
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf uat-handshake
-          mkdir -p uat-handshake
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/lf-uat-private.pem >/dev/null 2>&1
-          openssl pkey -in /tmp/lf-uat-private.pem -pubout -out uat-handshake/public.pem
-          printf '%s\n' "$GITHUB_RUN_ID" > uat-handshake/request-id
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add uat-handshake/public.pem uat-handshake/request-id
-          git commit -m "chore: publish ephemeral UAT public key"
-          git push origin HEAD:agent/slice-d-runtime-uat-run
+          public_b64="$(openssl pkey -in /tmp/lf-uat-private.pem -pubout -outform DER | base64 -w0)"
+
+          publish_status() {
+            context="$1"
+            description="$2"
+            payload="$(jq -nc --arg context "$context" --arg description "$description" '{state:"pending",context:$context,description:$description}')"
+            curl -fsS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              -d "$payload" >/dev/null
+          }
+
+          publish_status "LFUATREQ:${GITHUB_RUN_ID}" "Ephemeral UAT handoff request"
+          index=1
+          while [ -n "$public_b64" ]; do
+            chunk="${public_b64:0:70}"
+            public_b64="${public_b64:70}"
+            publish_status "LFUATKEY${index}:${chunk}" "Ephemeral UAT public-key chunk"
+            index=$((index + 1))
+          done
 
       - name: Wait for encrypted handoff
         env:
