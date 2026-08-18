@@ -10,6 +10,10 @@ const rendererSource = readFileSync(
   new URL("../components/standard-loyalty-card.tsx", import.meta.url),
   "utf8",
 );
+const setupSource = readFileSync(
+  new URL("../components/standard-card-setup.tsx", import.meta.url),
+  "utf8",
+);
 
 test("Z3 defines a bounded Standard Card theme contract", () => {
   assert.match(
@@ -43,6 +47,25 @@ test("Z3 presets carry separate Light and Dark safe accents", () => {
   for (const [, , light, dark] of paletteRows) {
     assert.notEqual(light, dark);
   }
+});
+
+test("Z3 Standard Card setup uses approved presets instead of free-form colour editing", () => {
+  assert.match(setupSource, /STANDARD_CARD_COLOR_PRESETS\.map/);
+  assert.match(setupSource, /STANDARD_CARD_THEME_PRESETS\.map/);
+  assert.match(setupSource, /updateColorPreset\(preset\.id\)/);
+  assert.match(setupSource, /updateThemePreset\(theme\)/);
+  assert.doesNotMatch(setupSource, /type="color"/);
+  assert.doesNotMatch(setupSource, /Brand colour hex value/);
+});
+
+test("Z3 preserves a legacy colour until an approved palette is explicitly selected", () => {
+  assert.match(setupSource, /initial\.primaryColor \? null : DEFAULT_STANDARD_CARD_COLOR_PRESET/);
+  assert.match(setupSource, /colorPreset === null/);
+  assert.match(
+    setupSource,
+    /colorPreset[\s\S]*?standardCardPresetColor\(colorPreset, theme\)[\s\S]*?: card\.primaryColor/,
+  );
+  assert.match(setupSource, /name="primaryColor" value=\{values\.primaryColor\}/);
 });
 
 test("Z3 preset foundation does not replace the canonical card geometry authority", () => {
