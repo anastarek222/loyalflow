@@ -10,6 +10,7 @@ import {
   listCustomCardArtworkVersions,
 } from "@/lib/cards/custom-card-storage";
 import { normalizeLanguage } from "@/lib/i18n";
+import { loyaltyProgrammeSummary } from "@/lib/loyalty/presentation";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
@@ -75,6 +76,14 @@ export default async function LoyaltyProgramPage({
   });
   const language = normalizeLanguage(currentUser?.language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
+  const programSummary = loyaltyProgrammeSummary({
+    loyaltyMode: business.loyaltyMode,
+    language,
+    unitName: business.unitName,
+    currency: business.currency,
+    earnAmount: business.earnAmount,
+    rewardThreshold: business.rewardThreshold,
+  });
   const updateProgramRules = updateProgramRulesAction.bind(null, business.slug);
   const updateCardDesign = updateBusinessCardDesignCommandAction.bind(
     null,
@@ -134,23 +143,11 @@ export default async function LoyaltyProgramPage({
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              <ProgramSummary
-                label={t("النظام", "Mode")}
-                value={
-                  business.loyaltyMode === "VISITS"
-                    ? t("زيارات", "Visits")
-                    : business.loyaltyMode === "POINTS"
-                      ? t("نقاط", "Points")
-                      : t("مبيعات", "Sales")
-                }
-              />
-              <ProgramSummary
-                label={t("قيمة الكسب", "Earn")}
-                value={`${business.earnAmount} ${business.unitName}`}
-              />
+              <ProgramSummary label={t("النظام", "Mode")} value={programSummary.mode} />
+              <ProgramSummary label={t("الكسب", "Earn")} value={programSummary.earn} />
               <ProgramSummary
                 label={t("هدف المكافأة", "Target")}
-                value={`${business.rewardThreshold} ${business.unitName}`}
+                value={programSummary.target}
               />
             </div>
           </div>
@@ -365,8 +362,8 @@ export default async function LoyaltyProgramPage({
                 rewardThreshold: business.rewardThreshold,
                 designMode: business.cardDesignMode,
                 customDesignEnabled: business.customCardArtworkEnabled,
-                customFrontArtworkUrl: business.customCardFrontArtworkUrl ?? "",
-                customBackArtworkUrl: business.customCardBackArtworkUrl ?? "",
+                customFrontArtworkUrl: business.customFrontArtworkUrl ?? "",
+                customBackArtworkUrl: business.customBackArtworkUrl ?? "",
                 customFrontArtworkPreviewUrl: isManagedCustomCardArtworkUrl(
                   business.customCardFrontArtworkUrl,
                   business.id,
