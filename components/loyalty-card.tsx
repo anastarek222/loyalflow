@@ -167,7 +167,7 @@ export function LoyaltyCard(props: LoyaltyCardProps) {
   const useCustom =
     cardDesignMode(props.designMode) === "CUSTOM" &&
     props.customDesignEnabled === true &&
-    Boolean(props.customFrontArtworkUrl && props.customBackArtworkUrl);
+    Boolean(props.customFrontArtworkUrl);
 
   return (
     <div

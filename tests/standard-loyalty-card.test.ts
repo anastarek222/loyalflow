@@ -348,7 +348,9 @@ test("Custom UX delegates lifecycle uploads while preserving published URLs", ()
   assert.match(setup, /name="customCardBackArtworkUrl"\s+type="hidden"/);
   assert.match(canonical, /props\.customFrontArtworkUrl/);
   assert.match(canonical, /props\.customBackArtworkUrl/);
-  assert.match(canonical, /Boolean\(props\.customFrontArtworkUrl && props\.customBackArtworkUrl\)/);
+  assert.match(canonical, /Boolean\(props\.customFrontArtworkUrl\)/);
+  assert.doesNotMatch(canonical, /Boolean\(props\.customFrontArtworkUrl && props\.customBackArtworkUrl\)/);
+  assert.match(canonical, /radial-gradient/);
   assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
   assert.match(setup, /Managed from the Custom Card artwork panel above/);
   assert.match(manager, /object-contain/);

@@ -2,7 +2,7 @@ import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
 
 export const CUSTOM_CARD_ASPECT_RATIO_TOLERANCE = 0.01;
 export const CUSTOM_CARD_GEOMETRY_ERROR =
-  "Custom Card front and back artwork must use matching pixel dimensions and the standard ID-1 aspect ratio.";
+  "Custom Card front artwork must use the standard ID-1 aspect ratio; an uploaded back must also use matching pixel dimensions.";
 
 export type CustomCardArtworkDimensions = Readonly<{
   width: number;
@@ -132,6 +132,11 @@ export function hasStandardCustomCardAspectRatio(
     Math.abs(ratio / LOYALTY_CARD_ASPECT_RATIO - 1) <=
     CUSTOM_CARD_ASPECT_RATIO_TOLERANCE
   );
+}
+
+export async function validateCustomCardArtworkGeometry(file: File) {
+  const dimensions = await getCustomCardArtworkDimensions(file);
+  return Boolean(dimensions && hasStandardCustomCardAspectRatio(dimensions));
 }
 
 export async function validateCustomCardArtworkGeometryPair(
