@@ -54,6 +54,78 @@ export function earnActionLabel(input: LoyaltyPresentationInput) {
     : `Record visit — adds ${formatLoyaltyAmount({ ...input, amount })}`;
 }
 
+export function loyaltyModeLabel(
+  loyaltyMode: LoyaltyMode,
+  language: AppLanguage,
+) {
+  if (loyaltyMode === "VISITS") return language === "AR" ? "زيارات" : "Visits";
+  if (loyaltyMode === "POINTS") return language === "AR" ? "نقاط" : "Points";
+  return language === "AR" ? "قيمة المبيعات" : "Sales amount";
+}
+
+export function loyaltyProgrammeSummary(
+  input: LoyaltyPresentationInput & {
+    earnAmount: number;
+    rewardThreshold: number;
+  },
+) {
+  return {
+    mode: loyaltyModeLabel(input.loyaltyMode, input.language),
+    earn:
+      input.loyaltyMode === "SALES_AMOUNT"
+        ? input.language === "AR"
+          ? "قيمة البيع المسجلة"
+          : "Recorded sale amount"
+        : formatLoyaltyAmount({ ...input, amount: input.earnAmount }),
+    target: formatLoyaltyAmount({ ...input, amount: input.rewardThreshold }),
+  };
+}
+
+export function loyaltyProgrammeFieldHelp(
+  loyaltyMode: LoyaltyMode,
+  language: AppLanguage,
+) {
+  const salesMode = loyaltyMode === "SALES_AMOUNT";
+  return {
+    loyaltyProgramName:
+      language === "AR"
+        ? "اسم إداري للبرنامج؛ لا يغيّر طريقة احتساب الرصيد."
+        : "Administrative programme name; it does not change balance calculation.",
+    loyaltyMode:
+      language === "AR"
+        ? "يحدد مصدر الرصيد: زيارات أو نقاط ثابتة أو قيمة المبيعات المسجلة."
+        : "Defines the balance source: visits, fixed points, or recorded sales value.",
+    unitName:
+      language === "AR"
+        ? salesMode
+          ? "اسم الوحدة لا يحدد قيمة المبيعات؛ وضع المبيعات يستخدم عملة النشاط."
+          : "الاسم الظاهر لوحدة الرصيد على البطاقة والتقارير."
+        : salesMode
+          ? "Unit name does not define sales value; Sales amount uses the business currency."
+          : "Display name for the balance unit on cards and reports.",
+    earnAmount:
+      language === "AR"
+        ? salesMode
+          ? "قيمة البيع المسجلة في العملية هي التي تُضاف فعليًا؛ هذه ليست قيمة بيع ثابتة."
+          : "القيمة الثابتة التي تُضاف لكل عملية كسب مؤهلة."
+        : salesMode
+          ? "The recorded sale amount is what is actually credited; this is not a fixed sale value."
+          : "Fixed amount credited for each eligible earning operation.",
+    rewardThreshold:
+      language === "AR"
+        ? salesMode
+          ? "هدف المكافأة الافتراضي محسوب بعملة النشاط."
+          : "الرصيد المطلوب للوصول إلى المكافأة الافتراضية."
+        : salesMode
+          ? "Fallback reward target measured in the business currency."
+          : "Balance required to reach the fallback reward.",
+    rewardName:
+      language === "AR"
+        ? "اسم المكافأة الافتراضية؛ لا يغيّر تكلفة مكافآت الكتالوج المستقلة."
+        : "Fallback reward name; it does not change independent catalogue reward costs.",
+  };
+}
+
 export function fallbackRewardHelp(language: AppLanguage) {
   return language === "AR"
     ? "هدف المكافأة الافتراضي عند عدم اختيار مكافأة من الكتالوج. كل مكافأة في الكتالوج لها تكلفة مستقلة."
