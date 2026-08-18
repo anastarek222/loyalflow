@@ -75,6 +75,48 @@ function localizedIntervalLabel(
   return intervalLabel(interval, customDays);
 }
 
+function subscriptionLifecycleStateLabel(state: string, isArabic: boolean) {
+  const fallback = state.replaceAll("_", " ");
+  if (!isArabic) return fallback;
+
+  const labels: Record<string, string> = {
+    PENDING: "قيد الانتظار",
+    TRIALING: "تجريبي",
+    ACTIVE: "نشط",
+    PAST_DUE: "متأخر الدفع",
+    SUSPENDED: "موقوف",
+    CANCELED: "ملغي",
+    EXPIRED: "منتهي",
+  };
+
+  return labels[state] ?? fallback;
+}
+
+function subscriptionLifecycleEventLabel(event: string, isArabic: boolean) {
+  const labels: Record<string, { ar: string; en: string }> = {
+    TRIAL_STARTED: { ar: "بدء الفترة التجريبية", en: "Trial started" },
+    ACTIVATION_SUCCEEDED: { ar: "نجح التفعيل", en: "Activation succeeded" },
+    RENEWAL_FAILED: { ar: "فشل التجديد", en: "Renewal failed" },
+    GRACE_PERIOD_EXPIRED: {
+      ar: "انتهت فترة السماح",
+      en: "Grace period expired",
+    },
+    CANCELLATION_REQUESTED: {
+      ar: "تم طلب الإلغاء",
+      en: "Cancellation requested",
+    },
+    CANCELED_PERIOD_EXPIRED: {
+      ar: "انتهت فترة الإلغاء",
+      en: "Canceled period expired",
+    },
+    RECOVERY_SUCCEEDED: { ar: "نجحت الاستعادة", en: "Recovery succeeded" },
+  };
+
+  const label = labels[event];
+  if (!label) return event.replaceAll("_", " ");
+  return isArabic ? label.ar : label.en;
+}
+
 export default async function BusinessOwnersPage({
   searchParams,
 }: {
@@ -248,14 +290,20 @@ export default async function BusinessOwnersPage({
       }
     >
       {params.success ? (
-        <div className="mb-4 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success">
+        <div
+          role="status"
+          className="mb-4 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success"
+        >
           {language === "AR"
             ? "تم تحديث بيانات المنصة بنجاح."
             : "Platform data updated successfully."}
         </div>
       ) : null}
       {params.error ? (
-        <div className="mb-4 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger">
+        <div
+          role="alert"
+          className="mb-4 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger"
+        >
           {language === "AR"
             ? "تعذر تنفيذ التحديث. راجع بيانات الاشتراك."
             : "The update could not be completed. Review the subscription details."}
@@ -491,21 +539,23 @@ export default async function BusinessOwnersPage({
                               planLimitsMap.get(business.plan) ??
                                 planCatalog[business.plan].limits,
                             ) ?? "∞"}{" "}
-                            customers · {business._count.users}/
+                            {isArabic ? "العملاء" : "customers"} ·{" "}
+                            {business._count.users}/
                             {getPlanLimit(
                               business.plan,
                               "USERS",
                               planLimitsMap.get(business.plan) ??
                                 planCatalog[business.plan].limits,
                             ) ?? "∞"}{" "}
-                            users · {business._count.branches}/
+                            {isArabic ? "الفريق" : "users"} ·{" "}
+                            {business._count.branches}/
                             {getPlanLimit(
                               business.plan,
                               "BRANCHES",
                               planLimitsMap.get(business.plan) ??
                                 planCatalog[business.plan].limits,
                             ) ?? "∞"}{" "}
-                            branches
+                            {isArabic ? "الفروع" : "branches"}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -727,9 +777,9 @@ export default async function BusinessOwnersPage({
                               : "Beta subscription lifecycle"}
                           </p>
                           <p className="mt-1 text-sm font-semibold text-foreground">
-                            {business.subscriptionLifecycleState.replace(
-                              "_",
-                              " ",
+                            {subscriptionLifecycleStateLabel(
+                              business.subscriptionLifecycleState,
+                              isArabic,
                             )}{" "}
                             · v{business.subscriptionLifecycleVersion}
                           </p>
@@ -739,24 +789,47 @@ export default async function BusinessOwnersPage({
                             name="event"
                             className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm"
                           >
-                            <option value="TRIAL_STARTED">Trial started</option>
+                            <option value="TRIAL_STARTED">
+                              {subscriptionLifecycleEventLabel(
+                                "TRIAL_STARTED",
+                                isArabic,
+                              )}
+                            </option>
                             <option value="ACTIVATION_SUCCEEDED">
-                              Activation succeeded
+                              {subscriptionLifecycleEventLabel(
+                                "ACTIVATION_SUCCEEDED",
+                                isArabic,
+                              )}
                             </option>
                             <option value="RENEWAL_FAILED">
-                              Renewal failed
+                              {subscriptionLifecycleEventLabel(
+                                "RENEWAL_FAILED",
+                                isArabic,
+                              )}
                             </option>
                             <option value="GRACE_PERIOD_EXPIRED">
-                              Grace period expired
+                              {subscriptionLifecycleEventLabel(
+                                "GRACE_PERIOD_EXPIRED",
+                                isArabic,
+                              )}
                             </option>
                             <option value="CANCELLATION_REQUESTED">
-                              Cancellation requested
+                              {subscriptionLifecycleEventLabel(
+                                "CANCELLATION_REQUESTED",
+                                isArabic,
+                              )}
                             </option>
                             <option value="CANCELED_PERIOD_EXPIRED">
-                              Canceled period expired
+                              {subscriptionLifecycleEventLabel(
+                                "CANCELED_PERIOD_EXPIRED",
+                                isArabic,
+                              )}
                             </option>
                             <option value="RECOVERY_SUCCEEDED">
-                              Recovery succeeded
+                              {subscriptionLifecycleEventLabel(
+                                "RECOVERY_SUCCEEDED",
+                                isArabic,
+                              )}
                             </option>
                           </select>
                           <button
