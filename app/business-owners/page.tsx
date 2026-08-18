@@ -566,7 +566,7 @@ export default async function BusinessOwnersPage({
                         </label>
                         <Field
                           name="billingCustomDays"
-                          label="Custom days"
+                          label={isArabic ? "أيام مخصصة" : "Custom days"}
                           type="number"
                           defaultValue={
                             business.billingCustomDays?.toString() ?? ""
@@ -574,7 +574,7 @@ export default async function BusinessOwnersPage({
                         />
                         <Field
                           name="subscriptionAmount"
-                          label="Amount"
+                          label={isArabic ? "المبلغ" : "Amount"}
                           inputMode="decimal"
                           defaultValue={
                             business.subscriptionAmountMinor === null
@@ -586,7 +586,7 @@ export default async function BusinessOwnersPage({
                         />
                         <Field
                           name="billingCurrency"
-                          label="Currency"
+                          label={isArabic ? "العملة" : "Currency"}
                           defaultValue={
                             business.billingCurrency ||
                             business.currency ||
@@ -596,7 +596,7 @@ export default async function BusinessOwnersPage({
 
                         <Field
                           name="subscriptionStartDate"
-                          label="Start date"
+                          label={isArabic ? "تاريخ البدء" : "Start date"}
                           type="date"
                           defaultValue={dateInputValue(
                             business.subscriptionStartDate,
@@ -604,7 +604,7 @@ export default async function BusinessOwnersPage({
                         />
                         <Field
                           name="nextPaymentDate"
-                          label="Next payment"
+                          label={isArabic ? "الدفعة القادمة" : "Next payment"}
                           type="date"
                           defaultValue={dateInputValue(
                             business.nextPaymentDate,
@@ -612,7 +612,7 @@ export default async function BusinessOwnersPage({
                         />
                         <Field
                           name="lastPaymentDate"
-                          label="Last payment"
+                          label={isArabic ? "آخر دفعة" : "Last payment"}
                           type="date"
                           defaultValue={dateInputValue(
                             business.lastPaymentDate,
@@ -645,23 +645,27 @@ export default async function BusinessOwnersPage({
 
                         <Field
                           name="gracePeriodDays"
-                          label="Grace days"
+                          label={isArabic ? "أيام السماح" : "Grace days"}
                           type="number"
                           defaultValue={business.gracePeriodDays.toString()}
                         />
                         <Field
                           name="paymentMethod"
-                          label="Payment method"
+                          label={isArabic ? "طريقة الدفع" : "Payment method"}
                           defaultValue={business.paymentMethod ?? ""}
                         />
                         <Field
                           name="billingNotes"
-                          label="Payment notes"
+                          label={isArabic ? "ملاحظات الدفع" : "Payment notes"}
                           defaultValue={business.billingNotes ?? ""}
                         />
                         <Field
                           name="adminNotes"
-                          label="Internal admin notes"
+                          label={
+                            isArabic
+                              ? "ملاحظات الإدارة الداخلية"
+                              : "Internal admin notes"
+                          }
                           defaultValue={business.adminNotes ?? ""}
                         />
 
