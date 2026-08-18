@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 export type StatStatus = "neutral" | "success" | "warning" | "danger" | "info";
 
 const statusStyles: Record<StatStatus, string> = {
-  neutral: "before:bg-slate-400",
+  neutral: "before:bg-foreground-subtle",
   success: "before:bg-success",
   warning: "before:bg-warning",
   danger: "before:bg-danger",
@@ -48,7 +48,7 @@ export function StatCard({
   return (
     <Card
       className={cn(
-        "relative min-w-0 space-y-3 overflow-hidden border-white/80 p-5 before:absolute before:inset-y-0 before:start-0 before:w-1",
+        "relative min-w-0 space-y-3 overflow-hidden border-border p-5 before:absolute before:inset-y-0 before:start-0 before:w-1",
         statusStyles[status],
         className,
       )}
@@ -58,7 +58,7 @@ export function StatCard({
         {icon ? (
           <div
             aria-hidden="true"
-            className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-subtle text-primary"
+            className="flex size-9 shrink-0 items-center justify-center rounded-[var(--lf-radius-md)] bg-[var(--lf-primary-soft)] text-primary"
           >
             {icon}
           </div>
