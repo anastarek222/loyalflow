@@ -1,0 +1,1 @@
+Trigger Slice D exact-SHA runtime UAT using the existing branch-only workflow. No application source, staging, production, schema, or environment configuration changes.
