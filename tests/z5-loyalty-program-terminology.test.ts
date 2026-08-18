@@ -5,7 +5,7 @@ import test from "node:test";
 import {
   loyaltyProgrammeFieldHelp,
   loyaltyProgrammeSummary,
-} from "../lib/loyalty/presentation.ts";
+} from "../lib/loyalty/presentation";
 
 function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
