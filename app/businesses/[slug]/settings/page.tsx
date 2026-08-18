@@ -6,7 +6,7 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { canManageBusiness } from "@/lib/permissions";
 import { canDeleteBusiness } from "@/lib/business/deletion";
 import prisma from "@/lib/prisma";
-import { normalizeLanguage } from "@/lib/i18n";
+import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { getPlanUsage, planCatalog } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { getGoogleSheetsConfiguration } from "@/lib/google-sheets";
@@ -108,6 +108,7 @@ export default async function BusinessSettingsPage({
     select: { language: true },
   });
   const language = normalizeLanguage(currentUser?.language);
+  const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const googleSheetsConfiguration = getGoogleSheetsConfiguration();
   const googleSheetsStatus = !googleSheetsConfiguration.configured
@@ -127,9 +128,7 @@ export default async function BusinessSettingsPage({
     business.slug,
   );
   const deleteBusiness = deleteBusinessAction.bind(null, business.slug);
-
   const syncGoogleSheet = syncGoogleSheetCommandAction.bind(null, business.slug);
-
   const updateCardDetails = updateBusinessCardDetailsAction.bind(
     null,
     business.slug,
@@ -143,17 +142,19 @@ export default async function BusinessSettingsPage({
   });
 
   return (
-    <main className="min-h-screen px-4 py-6 sm:px-6 sm:py-8">
+    <main
+      className="min-h-screen px-4 py-6 sm:px-6 sm:py-8"
+      dir={language === "AR" ? "rtl" : "ltr"}
+    >
       <div
         className="mx-auto max-w-7xl"
         data-settings-administration="true"
-        dir={language === "AR" ? "rtl" : "ltr"}
       >
         <Link
           href={`/businesses/${business.slug}`}
           className="inline-flex min-h-10 items-center text-sm font-semibold text-foreground-muted transition-colors hover:text-primary"
         >
-          {t("→ الرجوع إلى", "← Back to")} {business.name}
+          {t("الرجوع إلى", "Back to")} {business.name}
         </Link>
 
         <header className="relative mb-6 mt-4 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7">
@@ -191,22 +192,10 @@ export default async function BusinessSettingsPage({
           data-settings-section-links="true"
         >
           {[
-            [
-              "profile-settings",
-              t("ملف النشاط", "Business profile"),
-              Building2,
-            ],
+            ["profile-settings", t("ملف النشاط", "Business profile"), Building2],
             ["operations-settings", t("التشغيل", "Operations"), Settings2],
-            [
-              "customer-card-settings",
-              t("بيانات الكارت", "Card details"),
-              QrCode,
-            ],
-            [
-              "integration-settings",
-              t("التكاملات", "Integrations"),
-              DatabaseBackup,
-            ],
+            ["customer-card-settings", t("بيانات الكارت", "Card details"), QrCode],
+            ["integration-settings", t("التكاملات", "Integrations"), DatabaseBackup],
           ].map(([id, label, Icon]) => (
             <a
               key={id as string}
@@ -226,10 +215,7 @@ export default async function BusinessSettingsPage({
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
               <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-foreground-subtle">
-                <ChartNoAxesColumnIncreasing
-                  className="size-4"
-                  aria-hidden="true"
-                />
+                <ChartNoAxesColumnIncreasing className="size-4" aria-hidden="true" />
                 {t("الخطة الحالية", "Current plan")}
               </p>
               <h2 className="mt-1 text-xl font-black text-foreground">
@@ -282,16 +268,19 @@ export default async function BusinessSettingsPage({
         </section>
 
         {query.sheetSync === "success" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
-            {t(
-              "تمت مزامنة Google Sheets بنجاح.",
-              "Google Sheets synced successfully.",
-            )}
+          <div
+            role="status"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success"
+          >
+            {t("تمت مزامنة Google Sheets بنجاح.", "Google Sheets synced successfully.")}
           </div>
         )}
 
         {query.sheetSync === "error" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+          <div
+            role="alert"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger"
+          >
             {t(
               "تعذرت مزامنة Google Sheets. حاول مرة أخرى.",
               "Google Sheets sync failed. Please try again.",
@@ -300,7 +289,10 @@ export default async function BusinessSettingsPage({
         )}
 
         {query.sheetSync === "subscription-restricted" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+          <div
+            role="alert"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger"
+          >
             {t(
               "لا يمكن تشغيل مزامنة Google Sheets في حالة الاشتراك الحالية.",
               "Google Sheets sync cannot run in the current subscription state.",
@@ -313,10 +305,7 @@ export default async function BusinessSettingsPage({
             role="status"
             className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success"
           >
-            {t(
-              "تم حفظ صلاحية تصدير البيانات.",
-              "Data export permission saved.",
-            )}
+            {t("تم حفظ صلاحية تصدير البيانات.", "Data export permission saved.")}
           </div>
         )}
 
@@ -363,18 +352,15 @@ export default async function BusinessSettingsPage({
                 <p className="text-sm font-black text-primary">
                   {t("التسجيل الذاتي", "Self-enrolment")}
                 </p>
-
                 <h2 className="mt-1 text-xl font-black text-foreground">
                   {t("QR لانضمام العملاء", "Customer join QR")}
                 </h2>
-
                 <p className="mt-2 max-w-xl text-sm leading-6 text-foreground-muted">
                   {t(
                     "اطبع هذا الرمز أو شارك الرابط حتى يسجل العملاء بأنفسهم ويستلموا كارتهم الرقمي.",
                     "Print this code or share the link so customers can enrol themselves and receive their digital card.",
                   )}
                 </p>
-
                 <a
                   href={joinUrl}
                   target="_blank"
@@ -420,15 +406,11 @@ export default async function BusinessSettingsPage({
               </span>
             </summary>
             <div className="border-t border-border p-4 sm:p-5">
-              <section className="mb-0 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <section className="mb-0 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <div>
                   <h2 className="text-lg font-bold text-foreground">
-                    {t(
-                      "النسخ الاحتياطي على Google Sheets",
-                      "Google Sheets backup",
-                    )}
+                    {t("النسخ الاحتياطي على Google Sheets", "Google Sheets backup")}
                   </h2>
-
                   <p className="mt-1 text-sm text-foreground-subtle">
                     {t(
                       "إرسال أحدث بيانات العملاء والأرصدة والمكافآت إلى ملف النشاط.",
@@ -439,10 +421,9 @@ export default async function BusinessSettingsPage({
                     {t("الحالة: ", "Status: ")}
                     {googleSheetsStatus}
                     {business.googleSheetsLastSyncedAt
-                      ? ` · ${t("آخر نجاح", "Last success")} ${business.googleSheetsLastSyncedAt.toLocaleString()}`
+                      ? ` · ${t("آخر نجاح", "Last success")} ${business.googleSheetsLastSyncedAt.toLocaleString(locale)}`
                       : ""}
-                    {business.googleSheetsSyncState === "FAILED" &&
-                    business.googleSheetsRetryable
+                    {business.googleSheetsSyncState === "FAILED" && business.googleSheetsRetryable
                       ? ` · ${t("يمكن إعادة المحاولة", "Retry available")}`
                       : ""}
                   </p>
@@ -451,7 +432,7 @@ export default async function BusinessSettingsPage({
                 <form action={syncGoogleSheet}>
                   <button
                     type="submit"
-                    className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
+                    className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2 sm:w-auto"
                   >
                     {business.googleSheetsSyncState === "FAILED"
                       ? t("إعادة محاولة المزامنة", "Retry sync")
@@ -464,16 +445,19 @@ export default async function BusinessSettingsPage({
         </section>
 
         {query.cardSaved === "1" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
-            {t(
-              "تم حفظ بيانات الكارت بنجاح.",
-              "Card details saved successfully.",
-            )}
+          <div
+            role="status"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success"
+          >
+            {t("تم حفظ بيانات الكارت بنجاح.", "Card details saved successfully.")}
           </div>
         )}
 
         {query.cardError === "invalid" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+          <div
+            role="alert"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger"
+          >
             {t(
               "راجع رقم الهاتف والعنوان وشروط الكارت.",
               "Review the phone number, address, and card terms.",
@@ -482,7 +466,10 @@ export default async function BusinessSettingsPage({
         )}
 
         {query.cardError === "subscription-restricted" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+          <div
+            role="alert"
+            className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger"
+          >
             {t(
               "لا يمكن تعديل بيانات الكارت في حالة الاشتراك الحالية.",
               "Card details cannot be changed in the current subscription state.",
@@ -553,11 +540,9 @@ export default async function BusinessSettingsPage({
                     {t("إعدادات مدير النظام", "System administrator settings")}
                   </span>
                 </p>
-
                 <h2 className="mt-1 text-xl font-black text-foreground">
                   {t("صلاحية تصدير البيانات", "Data export permission")}
                 </h2>
-
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
                   {t(
                     "عند التفعيل يستطيع مالك النشاط تصدير العملاء وتقارير الحركات. الموظفون لا يحصلون على صلاحية التصدير.",
@@ -577,7 +562,6 @@ export default async function BusinessSettingsPage({
                   <span className="font-black text-foreground-muted">
                     {t("السماح للمالك بالتصدير", "Allow owner exports")}
                   </span>
-
                   <input
                     type="checkbox"
                     name="allowOwnerDataExport"
@@ -588,7 +572,7 @@ export default async function BusinessSettingsPage({
 
                 <button
                   type="submit"
-                  className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle"
+                  className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   {t("حفظ صلاحية التصدير", "Save export permission")}
                 </button>
@@ -597,23 +581,16 @@ export default async function BusinessSettingsPage({
           </section>
         ) : (
           <section
-            className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm"
+            className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
             data-export-permission="true"
           >
             <p className="text-sm font-bold text-foreground-subtle">
               {t("تصدير البيانات", "Data export")}
             </p>
-
             <p className="mt-2 font-black text-foreground">
               {business.allowOwnerDataExport
-                ? t(
-                    "مسموح بواسطة مدير النظام",
-                    "Allowed by system administrator",
-                  )
-                : t(
-                    "غير مسموح بواسطة مدير النظام",
-                    "Not allowed by system administrator",
-                  )}
+                ? t("مسموح بواسطة مدير النظام", "Allowed by system administrator")
+                : t("غير مسموح بواسطة مدير النظام", "Not allowed by system administrator")}
             </p>
           </section>
         )}
@@ -626,7 +603,6 @@ export default async function BusinessSettingsPage({
             coverImageUrl: business.coverImageUrl,
             currency: business.currency,
             timezone: business.timezone,
-
             industry: business.industry,
             website: business.website,
             email: business.email,
@@ -634,10 +610,8 @@ export default async function BusinessSettingsPage({
             city: business.city,
             taxNumber: business.taxNumber,
             employeeCount: business.employeeCount,
-
             description: business.description,
             instagramUrl: business.instagramUrl,
-
             staffAttributionEnabled: business.staffAttributionEnabled,
             staffAttributionRequired: business.staffAttributionRequired,
           }}
