@@ -13,12 +13,17 @@ const action = source(
 const manager = source("components/custom-card-artwork-manager.tsx");
 const programPage = source("app/businesses/[slug]/program/page.tsx");
 
-test("TC5 Custom Card upload command validates files and matching geometry before entitlement and Blob upload", () => {
+test("TC5 Custom Card upload command validates required Front and optional Back geometry before entitlement and Blob upload", () => {
   const storage = command.indexOf("customCardStorageConfigured");
   const frontValidation = command.indexOf("validateCustomCardArtwork(input.front)");
-  const backValidation = command.indexOf("validateCustomCardArtwork(input.back)");
-  const geometryValidation = command.indexOf(
-    "await validateCustomCardArtworkPair(input.front, input.back)",
+  const backNormalization = command.indexOf("const back =");
+  const backValidation = command.indexOf("back !== null && !validateCustomCardArtwork(back)");
+  const geometrySelection = command.indexOf("const validGeometry = back");
+  const pairGeometry = command.indexOf(
+    "await validateCustomCardArtworkPair(input.front, back)",
+  );
+  const singleGeometry = command.indexOf(
+    "await validateSingleCustomCardArtwork(input.front)",
   );
   const entitlement = command.indexOf(
     "await canBusinessPerformSubscriptionOperation",
@@ -29,8 +34,11 @@ test("TC5 Custom Card upload command validates files and matching geometry befor
   for (const position of [
     storage,
     frontValidation,
+    backNormalization,
     backValidation,
-    geometryValidation,
+    geometrySelection,
+    pairGeometry,
+    singleGeometry,
     entitlement,
     version,
     upload,
@@ -39,9 +47,13 @@ test("TC5 Custom Card upload command validates files and matching geometry befor
   }
 
   assert.ok(storage < frontValidation);
-  assert.ok(frontValidation < geometryValidation);
-  assert.ok(backValidation < geometryValidation);
-  assert.ok(geometryValidation < entitlement);
+  assert.ok(frontValidation < backNormalization);
+  assert.ok(backNormalization < backValidation);
+  assert.ok(backValidation < geometrySelection);
+  assert.ok(geometrySelection < pairGeometry);
+  assert.ok(geometrySelection < singleGeometry);
+  assert.ok(pairGeometry < entitlement);
+  assert.ok(singleGeometry < entitlement);
   assert.ok(entitlement < version);
   assert.ok(version < upload);
   assert.match(command, /"EXPAND"/);
@@ -49,21 +61,21 @@ test("TC5 Custom Card upload command validates files and matching geometry befor
 });
 
 test("TC5 Custom Card geometry failure returns INVALID_UPLOAD before version creation or Blob write", () => {
-  const geometry = command.indexOf(
-    "if (!(await validateCustomCardArtworkPair(input.front, input.back)))",
-  );
+  const geometry = command.indexOf("const validGeometry = back");
+  const geometryFailure = command.indexOf("if (!validGeometry)", geometry);
   const invalid = command.indexOf(
     'return { ok: false, reason: "INVALID_UPLOAD" };',
-    geometry,
+    geometryFailure,
   );
   const version = command.indexOf("randomUUID()");
   const upload = command.indexOf("uploadCustomCardArtwork({");
 
-  for (const position of [geometry, invalid, version, upload]) {
+  for (const position of [geometry, geometryFailure, invalid, version, upload]) {
     assert.ok(position >= 0);
   }
 
-  assert.ok(geometry < invalid);
+  assert.ok(geometry < geometryFailure);
+  assert.ok(geometryFailure < invalid);
   assert.ok(invalid < version);
   assert.ok(invalid < upload);
 });
