@@ -1,4 +1,4 @@
-import { STANDARD_CARD_ASPECT_RATIO } from "@/lib/cards/standard-card";
+import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
 
 export const CUSTOM_CARD_ASPECT_RATIO_TOLERANCE = 0.01;
 export const CUSTOM_CARD_GEOMETRY_ERROR =
@@ -129,7 +129,7 @@ export function hasStandardCustomCardAspectRatio(
 ) {
   const ratio = dimensions.width / dimensions.height;
   return (
-    Math.abs(ratio / STANDARD_CARD_ASPECT_RATIO - 1) <=
+    Math.abs(ratio / LOYALTY_CARD_ASPECT_RATIO - 1) <=
     CUSTOM_CARD_ASPECT_RATIO_TOLERANCE
   );
 }
