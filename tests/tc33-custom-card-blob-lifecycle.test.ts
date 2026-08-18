@@ -48,7 +48,7 @@ test("TC3.3 separates upload, preview and explicit publish", () => {
   assert.match(manager, /Draft preview/);
   assert.match(manager, /Publish this version/);
   assert.match(manager, /Retained versions/);
-  assert.match(manager, /currently published card is unchanged until Publish/);
+  assert.match(manager, /currently\s+published card is unchanged until Publish/);
 });
 
 test("TC3.3 private artwork routes derive access from trusted state", () => {

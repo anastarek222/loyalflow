@@ -42,19 +42,22 @@ export const cardDesignInputSchema = z
     customCardSafeZoneVersion: z.literal("ID1_V1"),
   })
   .superRefine((value, context) => {
-    if (
-      value.cardDesignMode === "CUSTOM" &&
-      (!value.customCardArtworkEnabled ||
-        !value.customCardFrontArtworkUrl ||
-        !value.customCardBackArtworkUrl)
-    ) {
+    if (value.cardDesignMode === "CUSTOM" && !value.customCardFrontArtworkUrl) {
       context.addIssue({
         code: "custom",
         path: ["cardDesignMode"],
-        message: "Custom Card requires approved front and back artwork.",
+        message:
+          "Custom Card requires approved front artwork; Back may use the protected generated alternative.",
       });
     }
-  });
+  })
+  .transform((value) => ({
+    ...value,
+    customCardArtworkEnabled:
+      value.cardDesignMode === "CUSTOM"
+        ? Boolean(value.customCardFrontArtworkUrl)
+        : value.customCardArtworkEnabled,
+  }));
 
 export function parseCardDesignFormData(formData: FormData) {
   return cardDesignInputSchema.safeParse({

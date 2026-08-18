@@ -169,9 +169,7 @@ export function StandardCardSetup({
     onPreviewChange?.(next);
   };
 
-  const customReady = Boolean(
-    values.customFrontArtworkUrl && values.customBackArtworkUrl,
-  );
+  const customReady = Boolean(values.customFrontArtworkUrl);
   const previewCustomer = getLoyaltyCardPreviewData(
     values.loyaltyMode,
     values.rewardThreshold,
@@ -247,8 +245,8 @@ export function StandardCardSetup({
                   </span>
                   <span className="mt-1 block text-xs text-foreground-muted">
                     {t(
-                      "لمدير النظام فقط. ارفع تصميم الوجه والظهر، وسيحافظ LoyalFlow على بيانات العميل ورمز QR ومعلومات الولاء داخل المناطق المحمية.",
-                      "Super Admin only. Upload your own front and back card artwork. LoyalFlow keeps customer details, QR and loyalty information in protected areas.",
+                      "لمدير النظام فقط. ارفع تصميم الوجه، ويمكنك رفع الظهر أو ترك LoyalFlow ينشئ ظهرًا آمنًا مع بيانات الولاء الديناميكية.",
+                      "Super Admin only. Upload the Front; upload an optional Back or let LoyalFlow generate the protected Back with dynamic loyalty details.",
                     )}
                   </span>
                 </label>
@@ -345,6 +343,13 @@ export function StandardCardSetup({
                           )}
                           className="size-full object-contain"
                         />
+                      ) : sideName === "back" && values.customFrontArtworkUrl ? (
+                        <span className="px-3 text-center text-xs font-semibold text-white/80">
+                          {t(
+                            "ظهر آمن مولّد بواسطة LoyalFlow مع بيانات الولاء الديناميكية",
+                            "Safe LoyalFlow-generated Back with dynamic loyalty details",
+                          )}
+                        </span>
                       ) : (
                         <span className="px-3 text-center text-xs font-semibold text-white/70">
                           {t("لم يتم رفع تصميم محفوظ", "No persistent artwork uploaded")}
@@ -375,8 +380,8 @@ export function StandardCardSetup({
             {!customReady ? (
               <p role="alert" className="text-sm font-semibold text-danger">
                 {t(
-                  "لا يمكن تفعيل الوضع المخصص حتى يتوفر تصميم محفوظ لكل من الوجه والظهر.",
-                  "Custom mode cannot be activated until persistent Front and Back artwork are both available.",
+                  "لا يمكن تفعيل الوضع المخصص حتى يتوفر تصميم محفوظ للوجه. تصميم الظهر اختياري ويمكن لـLoyalFlow توليده بأمان.",
+                  "Custom mode cannot be activated until persistent Front artwork is available. Back artwork is optional and can be generated safely by LoyalFlow.",
                 )}
               </p>
             ) : null}
