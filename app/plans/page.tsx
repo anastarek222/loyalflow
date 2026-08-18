@@ -76,7 +76,7 @@ export default async function PlansPage({
           primaryAction={
             <Link
               href="/business-owners"
-              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground"
+              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {t("الرجوع لملاك الأنشطة", "Back to business owners")}
             </Link>
@@ -85,12 +85,18 @@ export default async function PlansPage({
       }
     >
       {params.success ? (
-        <div className="mb-5 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success">
+        <div
+          role="status"
+          className="mb-5 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success"
+        >
           {t("تم تحديث حدود الخطة بنجاح.", "Plan limits updated successfully.")}
         </div>
       ) : null}
       {params.error ? (
-        <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger">
+        <div
+          role="alert"
+          className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger"
+        >
           {t("تعذر تحديث الحدود. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.", "Plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.")}
         </div>
       ) : null}
@@ -133,7 +139,7 @@ export default async function PlansPage({
                       step="1"
                       defaultValue={limits[field.key] ?? ""}
                       placeholder={t("بدون حد", "Unlimited")}
-                      className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm text-foreground"
+                      className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
                     />
                   </label>
                 ))}
@@ -144,7 +150,7 @@ export default async function PlansPage({
 
                 <button
                   type="submit"
-                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover sm:col-span-2"
+                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:col-span-2"
                 >
                   {t("حفظ حدود", "Save")} {planCatalog[plan].name} {t("", "limits")}
                 </button>
