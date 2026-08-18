@@ -79,7 +79,7 @@ jobs:
           echo "::error::Encrypted UAT handoff was not received for this run"
           exit 1
 
-      - name: Decrypt, mask, and derive share token
+      - name: Decrypt and mask ephemeral handoff
         shell: bash
         run: |
           set -euo pipefail
@@ -98,10 +98,6 @@ jobs:
             process.stdout.write(`::add-mask::${values[name]}\n`);
             fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<LFUATEOF\n${values[name]}\nLFUATEOF\n`);
           }
-          const token = new URL(values.VERCEL_SHARE_URL).searchParams.get('_vercel_share');
-          if (!token) throw new Error('Shareable URL did not contain _vercel_share');
-          process.stdout.write(`::add-mask::${token}\n`);
-          fs.appendFileSync(process.env.GITHUB_ENV, `VERCEL_SHARE_TOKEN<<LFUATEOF\n${token}\nLFUATEOF\n`);
           NODE
 
       - name: Checkout exact certified source
@@ -127,14 +123,18 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Verify protected Staging share-query access
+      - name: Establish share-link cookie session and verify Staging
         shell: bash
         run: |
           set -euo pipefail
-          body="$(mktemp)"
-          status="$(curl -sS -L -o "$body" -w '%{http_code}' "$STAGING_UAT_BASE_URL/api/health/live?_vercel_share=$VERCEL_SHARE_TOKEN")"
+          jar=/tmp/lf-vercel-cookies.txt
+          body=/tmp/lf-health.json
+          rm -f "$jar" "$body"
+          curl -sS -L -c "$jar" -b "$jar" -o /dev/null "$VERCEL_SHARE_URL"
+          meta="$(curl -sS -L -c "$jar" -b "$jar" -o "$body" -w '%{http_code}|%{content_type}|%{url_effective}' "$STAGING_UAT_BASE_URL/api/health/live")"
+          status="${meta%%|*}"
           if [ "$status" != "200" ]; then
-            echo "::error::Share-query did not reach Staging health (HTTP $status)"
+            echo "::error::Share-link cookie session did not reach Staging health (HTTP $status)"
             exit 1
           fi
           node - "$body" <<'NODE'
@@ -142,33 +142,36 @@ jobs:
           const path = process.argv[2];
           let health;
           try { health = JSON.parse(fs.readFileSync(path, 'utf8')); }
-          catch { throw new Error('Share-query returned non-JSON content'); }
+          catch { throw new Error('Share-link cookie session returned non-JSON content'); }
           if (health?.environment !== 'staging' || health?.release !== '62f656e28502') {
-            throw new Error('Share-query reached the wrong runtime identity');
+            throw new Error('Share-link cookie session reached the wrong runtime identity');
           }
           NODE
-          rm -f "$body"
+          node <<'NODE'
+          const fs = require('fs');
+          const lines = fs.readFileSync('/tmp/lf-vercel-cookies.txt', 'utf8').split(/\r?\n/).filter(l => l && !l.startsWith('#'));
+          const cookies = lines.map(line => {
+            const [domain, includeSubdomains, path, secure, expires, name, ...valueParts] = line.split('\t');
+            return { name, value: valueParts.join('\t'), domain: domain.replace(/^#HttpOnly_/, ''), path, expires: Number(expires) || -1, httpOnly: line.startsWith('#HttpOnly_'), secure: secure === 'TRUE', sameSite: 'Lax' };
+          });
+          if (!cookies.length) throw new Error('Share-link flow produced no cookies');
+          fs.writeFileSync('/tmp/lf-vercel-share-state.json', JSON.stringify({ cookies, origins: [] }), { mode: 0o600 });
+          NODE
+          echo "PLAYWRIGHT_STORAGE_STATE=/tmp/lf-vercel-share-state.json" >> "$GITHUB_ENV"
 
-      - name: Configure share-query browser harness
+      - name: Configure cookie-session browser harness
         shell: bash
         run: |
           set -euo pipefail
           node <<'NODE'
           const fs = require('fs');
-          const configPath = 'playwright.config.ts';
-          let config = fs.readFileSync(configPath, 'utf8');
+          const path = 'playwright.config.ts';
+          let source = fs.readFileSync(path, 'utf8');
           const strict = `if (remoteStaging && !vercelProtectionBypass) {\n  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for protected Remote Staging UAT.");\n}\n`;
-          if (!config.includes(strict)) throw new Error('Expected remote-protection guard was not found');
-          config = config.replace(strict, '');
-          fs.writeFileSync(configPath, config);
-
-          const specPath = 'tests/browser/pre-final-admin-security.spec.ts';
-          let spec = fs.readFileSync(specPath, 'utf8');
-          const marker = 'test.describe.serial("pre-final admin and security browser matrix"';
-          if (!spec.includes(marker)) throw new Error('Expected browser matrix marker was not found');
-          const injected = `\nconst lfShareToken = process.env.VERCEL_SHARE_TOKEN?.trim();\nconst lfShareOrigin = new URL(process.env.STAGING_UAT_BASE_URL!).origin;\ntest.beforeEach(async ({ context }) => {\n  if (!lfShareToken) throw new Error("VERCEL_SHARE_TOKEN missing");\n  await context.route(lfShareOrigin + "/**", async (route) => {\n    const url = new URL(route.request().url());\n    if (!url.searchParams.has("_vercel_share")) url.searchParams.set("_vercel_share", lfShareToken);\n    await route.continue({ url: url.toString() });\n  });\n});\n\n`;
-          spec = spec.replace(marker, injected + marker);
-          fs.writeFileSync(specPath, spec);
+          if (!source.includes(strict)) throw new Error('Expected remote-protection guard was not found');
+          source = source.replace(strict, '');
+          source = source.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
+          fs.writeFileSync(path, source);
           NODE
 
       - name: Run exact-SHA Slice D browser matrix with official fixtures
@@ -187,7 +190,7 @@ jobs:
       - name: Remove ephemeral handoff files
         if: always()
         shell: bash
-        run: rm -f /tmp/lf-uat-private.pem /tmp/lf-uat-payload.json
+        run: rm -f /tmp/lf-uat-private.pem /tmp/lf-uat-payload.json /tmp/lf-vercel-cookies.txt /tmp/lf-health.json /tmp/lf-vercel-share-state.json
 
       - name: Mark runtime UAT success
         if: success()
