@@ -74,11 +74,6 @@ type ReportsPageProps = {
   }>;
 };
 
-const dateTimeFormatter = new Intl.DateTimeFormat("ar-EG", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
 const reportPeriods = ["today", "7d", "30d"] as const;
 
 const reportFieldClass =
@@ -182,6 +177,10 @@ export default async function ReportsPage({
   const simple = experienceMode === "SIMPLE";
   const copy = reportCopy(language);
   const numberFormatter = new Intl.NumberFormat(getLanguageLocale(language));
+  const dateTimeFormatter = new Intl.DateTimeFormat(getLanguageLocale(language), {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
   const loyaltyPresentation = {
     loyaltyMode: business.loyaltyMode,
     language,
@@ -1018,7 +1017,7 @@ export default async function ReportsPage({
             <div>
               <label
                 htmlFor="from"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 {language === "AR" ? "من تاريخ" : "From date"}
               </label>
@@ -1035,7 +1034,7 @@ export default async function ReportsPage({
             <div>
               <label
                 htmlFor="segment"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 {language === "AR" ? "شريحة العملاء" : "Customer segment"}
               </label>
@@ -1060,7 +1059,7 @@ export default async function ReportsPage({
             <div>
               <label
                 htmlFor="loyaltyMode"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 {language === "AR" ? "برنامج الولاء" : "Loyalty programme"}
               </label>
@@ -1085,7 +1084,7 @@ export default async function ReportsPage({
             <div>
               <label
                 htmlFor="to"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 {language === "AR" ? "إلى تاريخ" : "To date"}
               </label>
@@ -1102,7 +1101,7 @@ export default async function ReportsPage({
             <div>
               <label
                 htmlFor="branch"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 {language === "AR" ? "الفرع" : "Branch"}
               </label>
@@ -1134,7 +1133,7 @@ export default async function ReportsPage({
             <div>
               <label
                 htmlFor="staff"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-foreground-muted"
               >
                 {language === "AR" ? "الموظف المنسوب إليه" : "Attributed staff"}
               </label>
@@ -1168,7 +1167,7 @@ export default async function ReportsPage({
 
             <button
               type="submit"
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover sm:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
             >
               <CheckCircle2 className="size-4" aria-hidden="true" />
               {copy.apply}
@@ -1185,7 +1184,7 @@ export default async function ReportsPage({
                   href={`/businesses/${business.slug}/reports?period=${shortcut}${reportFilterSuffix}`}
                   className={`inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border px-4 text-center text-sm font-bold transition-colors ${
                     period === shortcut
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-surface text-foreground-muted hover:border-primary/40 hover:text-primary"
                   }`}
                 >
@@ -1507,82 +1506,82 @@ export default async function ReportsPage({
         <section
           className={`${simple ? "hidden " : ""}mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3`}
         >
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">إجمالي العملاء</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.totalCustomers}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {totalCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-foreground-subtle">
               {segment
-                ? `ضمن شريحة ${getCustomerSegmentLabel(segment)}`
-                : "كل العملاء المسجلين"}
+                ? `${copy.withinSegment} ${getCustomerSegmentLabel(segment, language)}`
+                : copy.allRegisteredCustomers}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">العملاء الجدد</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.newCustomers}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {newCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              تم تسجيلهم خلال الفترة المحددة
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.registeredInPeriod}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">العملاء النشطون</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.activeCustomers}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {activeCustomerGroups.length}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              عملاء لديهم حركات ولاء
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.customersWithLoyaltyActivity}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">العملاء غير النشطين</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.inactiveCustomers}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {inactiveCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              حسب قاعدة عدم النشاط الحالية
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.inactivityRule}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">عملاء معرّضون للتوقف</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.atRiskCustomers}</p>
 
             <p className="mt-3 text-4xl font-bold text-rose-600">
               {atRiskCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              توقف نشاطهم مؤخرًا ويحتاجون متابعة
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.atRiskDetail}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">الحركات</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.operations}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {transactionCount}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              عمليات الإضافة والاستبدال
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.earnAndRedeemOperations}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">رصيد الولاء المكتسب</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.earnedBalance}</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-600">
               {formatLoyaltyAmount({
@@ -1591,14 +1590,14 @@ export default async function ReportsPage({
               })}
             </p>
 
-            <p dir="auto" className="mt-2 text-xs text-slate-400">
-              {earned._count._all} عملية إضافة —{" "}
+            <p dir="auto" className="mt-2 text-xs text-foreground-subtle">
+              {numberFormatter.format(earned._count._all)} {copy.earnOperation} —{" "}
               {operationalUnitLabel(loyaltyPresentation)}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">إجمالي الولاء المكتسب</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.lifetimeEarned}</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-700">
               {formatLoyaltyAmount({
@@ -1607,14 +1606,14 @@ export default async function ReportsPage({
               })}
             </p>
 
-            <p dir="auto" className="mt-2 text-xs text-slate-400">
-              {allTimeEarned._count._all} عملية إضافة منذ بداية البرنامج
+            <p dir="auto" className="mt-2 text-xs text-foreground-subtle">
+              {numberFormatter.format(allTimeEarned._count._all)} {copy.earnOperation} {copy.sinceProgramStart}
             </p>
           </article>
 
           {business.loyaltyMode === "SALES_AMOUNT" && business.currency && (
-            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-              <p className="text-sm text-slate-500">إجمالي الإنفاق المسجل</p>
+            <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-foreground-muted">{copy.totalTrackedSpend}</p>
 
               <p className="mt-3 text-4xl font-bold text-emerald-700">
                 {formatLoyaltyAmount({
@@ -1623,82 +1622,80 @@ export default async function ReportsPage({
                 })}
               </p>
 
-              <p className="mt-2 text-xs text-slate-400">
-                محسوب فقط من عمليات البيع المسجلة في LoyalFlow
+              <p className="mt-2 text-xs text-foreground-subtle">
+                {copy.trackedSalesOnly}
               </p>
             </article>
           )}
 
           {business.loyaltyMode === "VISITS" && (
-            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-              <p className="text-sm text-slate-500">إجمالي الزيارات</p>
+            <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-foreground-muted">{copy.totalVisits}</p>
 
-              <p className="mt-3 text-4xl font-bold text-slate-950">
+              <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
                 {allTimeVisitCount}
               </p>
 
-              <p className="mt-2 text-xs text-slate-400">
-                كل عمليات الإضافة المسجلة كزيارة
+              <p className="mt-2 text-xs text-foreground-subtle">
+                {copy.allRecordedVisits}
               </p>
             </article>
           )}
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">متوسط الوقت لأول مكافأة</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.averageFirstReward}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {averageDaysToFirstReward === null
                 ? "—"
-                : `${averageDaysToFirstReward.toFixed(1)} يوم`}
+                : `${averageDaysToFirstReward.toFixed(1)} ${copy.days}`}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              من إنشاء العميل حتى أول استبدال
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.fromCustomerToFirstRedemption}
             </p>
           </article>
 
           {business.loyaltyMode === "SALES_AMOUNT" && business.currency && (
-            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-              <p className="text-sm text-slate-500">متوسط قيمة الشراء</p>
+            <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-foreground-muted">{copy.averagePurchase}</p>
 
-              <p className="mt-3 text-4xl font-bold text-slate-950">
+              <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
                 {averagePurchaseAmount.toFixed(1)}
                 {business.currency ? ` ${business.currency}` : ""}
               </p>
 
-              <p className="mt-2 text-xs text-slate-400">
-                متوسط عمليات الشراء المؤهلة خلال الفترة
+              <p className="mt-2 text-xs text-foreground-subtle">
+                {copy.eligiblePurchaseAverage}
               </p>
             </article>
           )}
 
           {business.loyaltyMode === "VISITS" && (
-            <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-              <p className="text-sm text-slate-500">
-                متوسط الأيام بين الزيارات
-              </p>
+            <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+              <p className="text-sm text-foreground-muted">{copy.averageDaysBetweenVisits}</p>
 
-              <p className="mt-3 text-4xl font-bold text-slate-950">
+              <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
                 {averageDaysBetweenVisits === null
                   ? "—"
-                  : `${averageDaysBetweenVisits.toFixed(1)} يوم`}
+                  : `${averageDaysBetweenVisits.toFixed(1)} ${copy.days}`}
               </p>
 
-              <p className="mt-2 text-xs text-slate-400">
-                بين الزيارات المسجلة خلال الفترة المحددة
+              <p className="mt-2 text-xs text-foreground-subtle">
+                {copy.recordedVisitSpacing}
               </p>
             </article>
           )}
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">المكافآت المستبدلة</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.redeemedRewards}</p>
 
             <p className="mt-3 text-4xl font-bold text-amber-600">
               {redeemed._count._all}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              إجمالي التكلفة خلال الفترة: {redeemedCost} — الإجمالي منذ البداية:{" "}
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.periodCost}: {numberFormatter.format(redeemedCost)} — {copy.lifetimeTotal}:{" "}
               {allTimeRedeemed._count._all}
             </p>
 
@@ -1713,21 +1710,20 @@ export default async function ReportsPage({
             )}
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">مكافآت فُتحت</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.unlockedRewards}</p>
 
             <p className="mt-3 text-4xl font-bold text-violet-600">
               {rewardUnlocks}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              مقياس على مستوى النشاط؛ لا يحمل فتح المكافأة فرعًا أو موظفًا في
-              السجل الحالي.
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.unlockScopeDetail}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">أرصدة العملاء الحالية</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.currentBalances}</p>
 
             <p className="mt-3 text-4xl font-bold text-violet-600">
               {formatLoyaltyAmount({
@@ -1736,136 +1732,135 @@ export default async function ReportsPage({
               })}
             </p>
 
-            <p dir="auto" className="mt-2 text-xs text-slate-400">
-              إجمالي {operationalUnitLabel(loyaltyPresentation)} المتاحة
+            <p dir="auto" className="mt-2 text-xs text-foreground-subtle">
+              {copy.availableBalanceTotal}: {operationalUnitLabel(loyaltyPresentation)}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">العملاء العائدون</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.returningCustomers}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {returningCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              عميل لديه عمليتا إضافة أو أكثر خلال الفترة
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.returningDetail}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">معدل تكرار العملاء</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.repeatCustomerRate}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {repeatCustomerRate.toFixed(1)}%
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              العملاء ذوو عمليتي إضافة أو أكثر من العملاء النشطين بالولاء
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.repeatCustomerDetail}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">العملاء المستعادون</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.recoveredCustomers}</p>
 
             <p className="mt-3 text-4xl font-bold text-emerald-600">
               {recoveredCustomers}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              حسابات أعيد تفعيلها خلال الفترة
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.recoveredDetail}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">متوسط نشاط الولاء</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.averageLoyaltyActivity}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {averageLoyaltyActivity.toFixed(1)}
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              عمليات إضافة لكل عميل نشط
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.averageLoyaltyDetail}
             </p>
           </article>
 
-          <article className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
-            <p className="text-sm text-slate-500">معدل استبدال المكافآت</p>
+          <article className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
+            <p className="text-sm text-foreground-muted">{copy.redemptionRate}</p>
 
-            <p className="mt-3 text-4xl font-bold text-slate-950">
+            <p className="mt-3 lf-type-numeric text-4xl font-bold text-foreground">
               {redemptionRate.toFixed(1)}%
             </p>
 
-            <p className="mt-2 text-xs text-slate-400">
-              نسبة الاستبدالات إلى عمليات الإضافة
+            <p className="mt-2 text-xs text-foreground-subtle">
+              {copy.redemptionRateDetail}
             </p>
           </article>
         </section>
 
         <section
-          className={`${simple ? "hidden " : ""}mt-8 rounded-3xl border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-7`}
+          className={`${simple ? "hidden " : ""}mt-8 rounded-[var(--lf-radius-card)] border border-border bg-foreground p-5 text-background shadow-sm sm:p-7`}
         >
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
               <p className="text-sm font-black text-emerald-300">
-                أثر برنامج الولاء
+                {copy.impactEyebrow}
               </p>
-              <h2 className="mt-1 text-2xl font-black">مؤشرات تشغيلية موثقة</h2>
+              <h2 className="mt-1 text-2xl font-black">{copy.verifiedOperationalMetrics}</h2>
             </div>
 
-            <p className="max-w-xl text-sm leading-6 text-slate-300">
-              تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا
-              للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.
+            <p className="max-w-xl text-sm leading-6 text-background/70">
+              {copy.impactDisclaimer}
             </p>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {[
               {
-                label: "عملاء عائدون",
+                label: copy.returningCustomers,
                 value: returningCustomers,
-                detail: "عمليتا إضافة أو أكثر خلال الفترة",
+                detail: copy.twoOrMoreEarns,
               },
               {
-                label: "عملاء مستعادون",
+                label: copy.recoveredCustomers,
                 value: recoveredCustomers,
-                detail: "حسابات أعيد تفعيلها خلال الفترة",
+                detail: copy.recoveredDetail,
               },
               {
-                label: "حركات ولاء مسجلة",
+                label: copy.loyaltyOperations,
                 value: transactionCount,
-                detail: "إضافة، استبدال، أو تعديل ضمن الفترة",
+                detail: copy.loyaltyOperationsDetail,
               },
               {
-                label: "مكافآت مستبدلة",
+                label: copy.redeemedRewards,
                 value: redeemed._count._all,
-                detail: "استبدالات مسجلة خلال الفترة",
+                detail: copy.redemptionsInPeriod,
               },
               {
-                label: "معدل تكرار العملاء",
+                label: copy.repeatCustomerRate,
                 value: `${repeatCustomerRate.toFixed(1)}%`,
-                detail: "من العملاء ذوي نشاط الولاء",
+                detail: copy.amongLoyaltyActive,
               },
               ...(business.loyaltyMode === "SALES_AMOUNT" && business.currency
                 ? [
                     {
-                      label: "مبيعات ولاء مسجلة",
+                      label: copy.trackedLoyaltySales,
                       value: `${trackedSalesAmount}${business.currency ? ` ${business.currency}` : ""}`,
                       detail:
-                        "مبيعات أدخلها الموظفون خلال الفترة، وليست إسنادًا تسويقيًا",
+                        copy.trackedLoyaltySalesDetail,
                     },
                   ]
                 : []),
             ].map((metric) => (
               <article
                 key={metric.label}
-                className="rounded-2xl bg-white/10 p-4"
+                className="rounded-2xl bg-background/10 p-4"
               >
-                <p className="text-sm text-slate-300">{metric.label}</p>
-                <p className="mt-2 text-3xl font-black text-white">
+                <p className="text-sm text-background/70">{metric.label}</p>
+                <p className="mt-2 text-3xl font-black text-background">
                   {metric.value}
                 </p>
-                <p className="mt-2 text-xs leading-5 text-slate-300">
+                <p className="mt-2 text-xs leading-5 text-background/70">
                   {metric.detail}
                 </p>
               </article>
@@ -1878,57 +1873,57 @@ export default async function ReportsPage({
         >
           {[
             {
-              title: "الأكثر نشاطًا",
-              description: "حسب كل حركات الولاء خلال الفترة.",
+              title: copy.mostActive,
+              description: copy.mostActiveDescription,
               items: mostActiveCustomers,
-              suffix: "حركة",
+              suffix: copy.movement,
             },
             {
-              title: "أعلى قيمة مكتسبة",
-              description: "حسب الرصيد المكتسب خلال الفترة.",
+              title: copy.highestEarned,
+              description: copy.highestEarnedDescription,
               items: highestValueEarnedCustomers,
               suffix: business.unitName,
             },
             {
-              title: "الأكثر استبدالًا",
-              description: "حسب المكافآت المستبدلة خلال الفترة.",
+              title: copy.mostRedeemed,
+              description: copy.mostRedeemedDescription,
               items: mostRedeemedCustomers,
-              suffix: "مكافأة",
+              suffix: copy.reward,
             },
           ].map((ranking) => (
             <article
               key={ranking.title}
-              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm"
             >
-              <h2 className="text-lg font-bold text-slate-950">
+              <h2 className="text-lg font-bold text-foreground">
                 {ranking.title}
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-foreground-muted">
                 {ranking.description}
               </p>
 
               <div className="mt-5 space-y-3">
                 {ranking.items.length === 0 ? (
-                  <p className="text-sm text-slate-500">
-                    لا توجد بيانات خلال هذه الفترة.
+                  <p className="text-sm text-foreground-muted">
+                    {copy.noData}
                   </p>
                 ) : (
                   ranking.items.map(({ customer, value }, index) => (
                     <Link
                       key={customer.id}
                       href={`/businesses/${business.slug}/customers/${customer.id}`}
-                      className="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 transition hover:border-violet-300 hover:bg-violet-50"
+                      className="flex items-center gap-3 rounded-2xl border border-border p-3 transition hover:border-primary/30 hover:bg-primary-soft"
                     >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-950 text-xs font-bold text-white">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-bold text-background">
                         {index + 1}
                       </span>
 
-                      <span className="min-w-0 flex-1 truncate font-semibold text-slate-950">
+                      <span className="min-w-0 flex-1 truncate font-semibold text-foreground">
                         {getCustomerName(customer)}
                       </span>
 
-                      <span className="text-sm font-bold text-violet-700">
+                      <span className="text-sm font-bold text-primary">
                         {value} {ranking.suffix}
                       </span>
                     </Link>
@@ -1942,39 +1937,39 @@ export default async function ReportsPage({
         <section
           className={`${simple ? "hidden " : ""}mt-8 grid gap-8 xl:grid-cols-[1fr_360px]`}
         >
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
-              <h2 className="text-xl font-bold text-slate-950">أحدث الحركات</h2>
+          <div className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
+            <div className="border-b border-border px-4 py-5 sm:px-6">
+              <h2 className="text-xl font-bold text-foreground">{copy.recentTransactions}</h2>
 
-              <p className="mt-1 text-sm text-slate-500">
-                أحدث 50 عملية خلال الفترة المحددة.
+              <p className="mt-1 text-sm text-foreground-muted">
+                {copy.recentTransactionsDetail}
               </p>
             </div>
 
             {recentTransactions.length === 0 ? (
               <div className="p-10 text-center text-slate-500">
-                لا توجد حركات خلال هذه الفترة.
+                {copy.noTransactions}
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-right text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                <table dir={language === "AR" ? "rtl" : "ltr"} className="min-w-full text-start text-sm">
+                  <thead className="bg-surface-subtle text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                      <th className="px-6 py-4">العميل</th>
+                      <th className="px-6 py-4">{copy.customer}</th>
 
-                      <th className="px-6 py-4">النوع</th>
+                      <th className="px-6 py-4">{copy.type}</th>
 
-                      <th className="px-6 py-4">القيمة</th>
+                      <th className="px-6 py-4">{copy.value}</th>
 
-                      <th className="px-6 py-4">الرصيد</th>
+                      <th className="px-6 py-4">{copy.balance}</th>
 
-                      <th className="px-6 py-4">الموظف</th>
+                      <th className="px-6 py-4">{copy.staffMember}</th>
 
-                      <th className="px-6 py-4">التاريخ</th>
+                      <th className="px-6 py-4">{copy.date}</th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border">
                     {recentTransactions.map((transaction) => {
                       const customerName = [
                         transaction.customer.firstName,
@@ -1990,19 +1985,19 @@ export default async function ReportsPage({
                           ]
                             .filter(Boolean)
                             .join(" ")
-                        : "النظام";
+                        : copy.system;
 
                       return (
-                        <tr key={transaction.id} className="hover:bg-slate-50">
+                        <tr key={transaction.id} className="hover:bg-surface-subtle">
                           <td className="px-6 py-4">
                             <Link
                               href={`/businesses/${business.slug}/customers/${transaction.customer.id}`}
-                              className="font-semibold text-slate-950 hover:text-violet-700"
+                              className="font-semibold text-foreground hover:text-primary"
                             >
                               {customerName}
                             </Link>
 
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-foreground-subtle">
                               {transaction.customer.customerCode}
                             </p>
                           </td>
@@ -2014,14 +2009,14 @@ export default async function ReportsPage({
                                   ? "rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700"
                                   : transaction.type === "REDEEM"
                                     ? "rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700"
-                                    : "rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
+                                    : "rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-foreground-muted"
                               }
                             >
                               {transaction.type === "EARN"
-                                ? "إضافة رصيد"
+                                ? copy.addBalance
                                 : transaction.type === "REDEEM"
-                                  ? "استبدال مكافأة"
-                                  : "تعديل رصيد"}
+                                  ? copy.redeemReward
+                                  : copy.adjustBalance}
                             </span>
                           </td>
 
@@ -2036,11 +2031,11 @@ export default async function ReportsPage({
                             {transaction.amount}
                           </td>
 
-                          <td className="px-6 py-4 font-semibold text-slate-700">
+                          <td className="px-6 py-4 font-semibold text-foreground-muted">
                             {transaction.balanceAfter}
                           </td>
 
-                          <td className="px-6 py-4 text-slate-600">
+                          <td className="px-6 py-4 text-foreground-muted">
                             {employeeName}
                           </td>
 
@@ -2056,17 +2051,17 @@ export default async function ReportsPage({
             )}
           </div>
 
-          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-bold text-slate-950">أفضل العملاء</h2>
+          <aside className="h-fit rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 shadow-sm">
+            <h2 className="text-xl font-bold text-foreground">{copy.topCustomers}</h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              الترتيب حسب إجمالي رصيد الولاء المكتسب.
+            <p className="mt-1 text-sm text-foreground-muted">
+              {copy.topCustomersDetail}
             </p>
 
             <div className="mt-6 space-y-4">
               {topCustomers.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  لا يوجد عملاء حتى الآن.
+                <p className="text-sm text-foreground-muted">
+                  {copy.noCustomers}
                 </p>
               ) : (
                 topCustomers.map((customer, index) => {
@@ -2078,29 +2073,29 @@ export default async function ReportsPage({
                     <Link
                       key={customer.id}
                       href={`/businesses/${business.slug}/customers/${customer.id}`}
-                      className="flex items-center gap-4 rounded-2xl border border-slate-200 p-4 transition hover:border-violet-300 hover:bg-violet-50"
+                      className="flex items-center gap-4 rounded-2xl border border-border p-4 transition hover:border-primary/30 hover:bg-primary-soft"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 font-bold text-white">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground font-bold text-background">
                         {index + 1}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-slate-950">
+                        <p className="truncate font-semibold text-foreground">
                           {customerName}
                         </p>
 
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs text-foreground-subtle">
                           {customer.customerCode}
                         </p>
                       </div>
 
-                      <div className="text-right">
-                        <p className="font-bold text-violet-700">
+                      <div className="text-end">
+                        <p className="font-bold text-primary">
                           {customer.lifetimeEarned}
                         </p>
 
-                        <p className="text-xs text-slate-400">
-                          الرصيد {customer.balance}
+                        <p className="text-xs text-foreground-subtle">
+                          {copy.balance}: {numberFormatter.format(customer.balance)}
                         </p>
                       </div>
                     </Link>
