@@ -13,7 +13,7 @@ const input = source("lib/cards/card-design-input.ts");
 test("Z4 upload UI requires Front while Back is explicitly optional", () => {
   assert.match(manager, /Front artwork · required/);
   assert.match(manager, /Back artwork · optional/);
-  assert.match(manager, /name="customCardFrontFile"[\s\S]*?required/);
+  assert.match(manager, /required[\s\S]*?name="customCardFrontFile"/);
   assert.doesNotMatch(
     manager,
     /Back artwork · optional[\s\S]*?<input[\s\S]*?required[\s\S]*?name="customCardBackFile"/,
