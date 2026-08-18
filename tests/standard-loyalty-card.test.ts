@@ -23,7 +23,7 @@ const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 
 test("standard card keeps the ISO bank-card aspect ratio contract", () => {
   assert.ok(Math.abs(STANDARD_CARD_ASPECT_RATIO - 1.586) < 0.002);
-  assert.match(source("components/standard-loyalty-card.tsx"), /data-card-aspect-ratio="1\.586"/);
+  assert.match(source("components/standard-loyalty-card.tsx"), /data-card-aspect-ratio=\{STANDARD_CARD_ASPECT_RATIO\.toFixed\(3\)\}/);
 });
 
 test("standard card uses one browser-independent SVG canvas", () => {
