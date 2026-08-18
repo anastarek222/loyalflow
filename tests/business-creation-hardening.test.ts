@@ -136,11 +136,14 @@ test("business creation emits secret-safe lifecycle checkpoints and protects dou
   assert.match(source("components/business-setup-wizard.tsx"), /submissionLockRef\.current/);
 });
 
-test("Add Business branding uses upload preview without an owner-facing logo URL field", () => {
+test("Add Business branding uses localized upload preview without an owner-facing logo URL field", () => {
   const wizard = source("components/business-setup-wizard.tsx");
-  assert.match(wizard, /Business Logo/);
-  assert.match(wizard, /Current business logo preview/);
-  assert.match(wizard, /Change Logo|Upload Logo/);
+  assert.match(wizard, /businessLogo: "Business logo"/);
+  assert.match(wizard, /businessLogo: "شعار النشاط"/);
+  assert.match(wizard, /logoAlt: "Current business logo preview"/);
+  assert.match(wizard, /logoAlt: "معاينة شعار النشاط الحالي"/);
+  assert.match(wizard, /changeLogo: "Change logo"/);
+  assert.match(wizard, /uploadLogo: "Upload logo"/);
   assert.match(wizard, /Configure the one card design used for every customer/);
   assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.doesNotMatch(wizard, /Or use a logo image URL/);
