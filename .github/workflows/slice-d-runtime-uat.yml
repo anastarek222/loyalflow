@@ -21,6 +21,9 @@ jobs:
       STAGING_UAT_BASE_URL: https://loyalflow-ukz4t66jt-anas-tarek.vercel.app
       LOYALFLOW_ENVIRONMENT: staging
       LOYALFLOW_STAGING_DATABASE: neondb
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+      LOYALFLOW_STAGING_DATABASE_HOST: ep-lucky-mountain-adz1ckw2.c-2.us-east-1.aws.neon.tech
+      LOYALFLOW_PRODUCTION_DATABASE_HOST: ep-spring-lake-adstmkl2.c-2.us-east-1.aws.neon.tech
     steps:
       - name: Checkout handshake branch
         uses: actions/checkout@v4
@@ -168,19 +171,32 @@ jobs:
           NODE
           echo "PLAYWRIGHT_STORAGE_STATE=/tmp/lf-vercel-share-state.json" >> "$GITHUB_ENV"
 
-      - name: Configure ephemeral share-session Playwright state
+      - name: Configure ephemeral protected-session test harness
         shell: bash
         run: |
           set -euo pipefail
           node <<'NODE'
           const fs = require('fs');
-          const path = 'playwright.config.ts';
-          let source = fs.readFileSync(path, 'utf8');
+
+          const configPath = 'playwright.config.ts';
+          let config = fs.readFileSync(configPath, 'utf8');
           const strict = `if (remoteStaging && !vercelProtectionBypass) {\n  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for protected Remote Staging UAT.");\n}\n`;
-          if (!source.includes(strict)) throw new Error('Expected remote-protection guard was not found');
-          source = source.replace(strict, '');
-          source = source.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
-          fs.writeFileSync(path, source);
+          if (!config.includes(strict)) throw new Error('Expected remote-protection guard was not found');
+          config = config.replace(strict, '');
+          config = config.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
+          fs.writeFileSync(configPath, config);
+
+          const publicPath = 'tests/browser/t006-public-conversion.spec.ts';
+          let publicSpec = fs.readFileSync(publicPath, 'utf8');
+          const marker = 'test("@desktop public marketing routes into the supported conversion selector"';
+          if (!publicSpec.includes(marker)) throw new Error('Expected public conversion spec marker was not found');
+          const helper = `async function clearCookiesPreservingProtection(page: import("@playwright/test").Page) {\n  const protectionCookies = await page.context().cookies();\n  await page.context().clearCookies();\n  if (protectionCookies.length > 0) {\n    await page.context().addCookies(protectionCookies);\n  }\n}\n\n`;
+          publicSpec = publicSpec.replace(marker, helper + marker);
+          const clearCall = 'await page.context().clearCookies();';
+          const occurrences = publicSpec.split(clearCall).length - 1;
+          if (occurrences !== 4) throw new Error(`Expected 4 public cookie resets, found ${occurrences}`);
+          publicSpec = publicSpec.split(clearCall).join('await clearCookiesPreservingProtection(page);');
+          fs.writeFileSync(publicPath, publicSpec);
           NODE
 
       - name: Run exact-SHA browser UAT
