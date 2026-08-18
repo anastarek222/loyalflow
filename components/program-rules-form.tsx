@@ -5,7 +5,10 @@ import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
 import { getLoyaltyEconomicRuleChanges } from "@/lib/loyalty/program-change-safety";
-import { fallbackRewardHelp } from "@/lib/loyalty/presentation";
+import {
+  fallbackRewardHelp,
+  loyaltyProgrammeFieldHelp,
+} from "@/lib/loyalty/presentation";
 
 type Props = {
   language: "AR" | "EN";
@@ -51,6 +54,14 @@ export function ProgramRulesForm({
   action,
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
+  const fieldHelp = loyaltyProgrammeFieldHelp(business.loyaltyMode, language);
+  const helpByField: Record<string, string | undefined> = {
+    loyaltyProgramName: fieldHelp.loyaltyProgramName,
+    unitName: fieldHelp.unitName,
+    earnAmount: fieldHelp.earnAmount,
+    rewardName: fieldHelp.rewardName,
+    rewardThreshold: fieldHelp.rewardThreshold,
+  };
 
   function confirmEconomicRuleChanges(event: FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -173,7 +184,7 @@ export function ProgramRulesForm({
                       "لا يمكن تعديل قواعد البرنامج في حالة الاشتراك الحالية.",
                       "Programme rules cannot be changed in the current subscription state.",
                     )
-                : t("راجع قواعد البرنامج.", "Review the programme rules.")}
+                  : t("راجع قواعد البرنامج.", "Review the programme rules.")}
         </p>
       ) : null}
       <h2 className="text-xl font-black text-foreground">
@@ -217,6 +228,11 @@ export function ProgramRulesForm({
               maxLength={maxLength}
               className={inputClass}
             />
+            {helpByField[name] ? (
+              <span className="mt-2 block text-xs leading-5 text-foreground-subtle">
+                {helpByField[name]}
+              </span>
+            ) : null}
           </label>
         ))}
         <label className="text-sm font-medium text-foreground-muted">
@@ -245,6 +261,9 @@ export function ProgramRulesForm({
               {t("إجمالي المبيعات", "Sales amount")}
             </option>
           </select>
+          <span className="mt-2 block text-xs leading-5 text-foreground-subtle">
+            {fieldHelp.loyaltyMode}
+          </span>
         </label>
         <label className="text-sm font-medium text-foreground-muted">
           <span className="mb-2 block">{t("نوع المكافأة", "Reward type")}</span>
