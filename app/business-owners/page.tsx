@@ -42,6 +42,39 @@ function paymentBadgeVariant(state: string) {
   return "neutral" as const;
 }
 
+function paymentStatusLabel(state: string, isArabic: boolean) {
+  if (!isArabic) return state.replaceAll("_", " ");
+
+  const labels: Record<string, string> = {
+    TRIAL: "تجريبي",
+    PAID: "مدفوع",
+    DUE_SOON: "مستحق قريبًا",
+    DUE: "مستحق",
+    OVERDUE: "متأخر",
+    SUSPENDED: "موقوف",
+  };
+
+  return labels[state] ?? state.replaceAll("_", " ");
+}
+
+function localizedIntervalLabel(
+  interval: Parameters<typeof intervalLabel>[0],
+  customDays: Parameters<typeof intervalLabel>[1],
+  isArabic: boolean,
+) {
+  if (!isArabic) return intervalLabel(interval, customDays);
+
+  if (interval === "FIFTEEN_DAYS") return "كل 15 يومًا";
+  if (interval === "MONTHLY") return "شهريًا";
+  if (interval === "QUARTERLY") return "كل 3 أشهر";
+  if (interval === "SEMIANNUAL") return "كل 6 أشهر";
+  if (interval === "ANNUAL") return "سنويًا";
+  if (interval === "CUSTOM")
+    return customDays ? `كل ${customDays} يومًا` : "مخصص";
+
+  return intervalLabel(interval, customDays);
+}
+
 export default async function BusinessOwnersPage({
   searchParams,
 }: {
@@ -65,6 +98,7 @@ export default async function BusinessOwnersPage({
 
   const language = normalizeLanguage(user?.language);
   const locale = getLanguageLocale(language);
+  const isArabic = language === "AR";
   const params = await searchParams;
   const query = params.q?.trim().slice(0, 120) ?? "";
   const status =
@@ -267,11 +301,15 @@ export default async function BusinessOwnersPage({
             <option value="all">
               {language === "AR" ? "كل حالات الدفع" : "All payment statuses"}
             </option>
-            <option value="TRIAL">Trial</option>
-            <option value="PAID">Paid</option>
-            <option value="DUE">Due</option>
-            <option value="OVERDUE">Overdue</option>
-            <option value="SUSPENDED">Suspended</option>
+            <option value="TRIAL">{paymentStatusLabel("TRIAL", isArabic)}</option>
+            <option value="PAID">{paymentStatusLabel("PAID", isArabic)}</option>
+            <option value="DUE">{paymentStatusLabel("DUE", isArabic)}</option>
+            <option value="OVERDUE">
+              {paymentStatusLabel("OVERDUE", isArabic)}
+            </option>
+            <option value="SUSPENDED">
+              {paymentStatusLabel("SUSPENDED", isArabic)}
+            </option>
           </select>
 
           <select
@@ -353,7 +391,7 @@ export default async function BusinessOwnersPage({
                             {active ? copy.active : copy.inactive}
                           </Badge>
                           <Badge variant={paymentBadgeVariant(derivedState)}>
-                            {derivedState.replace("_", " ")}
+                            {paymentStatusLabel(derivedState, isArabic)}
                           </Badge>
                           <Badge variant="info">
                             {planCatalog[business.plan].name}
@@ -402,9 +440,10 @@ export default async function BusinessOwnersPage({
                       )}
                     </p>
                     <p className="mt-1 text-xs text-foreground-muted">
-                      {intervalLabel(
+                      {localizedIntervalLabel(
                         business.billingInterval,
                         business.billingCustomDays,
+                        isArabic,
                       )}
                     </p>
                     <div className="mt-3 flex items-center gap-2 text-xs text-foreground-muted">
@@ -499,18 +538,30 @@ export default async function BusinessOwnersPage({
                         className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                       >
                         <label className="text-xs font-semibold text-foreground-muted">
-                          Billing cycle
+                          {isArabic ? "دورة الفوترة" : "Billing cycle"}
                           <select
                             name="billingInterval"
                             defaultValue={business.billingInterval}
                             className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm"
                           >
-                            <option value="FIFTEEN_DAYS">Every 15 days</option>
-                            <option value="MONTHLY">Monthly</option>
-                            <option value="QUARTERLY">Every 3 months</option>
-                            <option value="SEMIANNUAL">Every 6 months</option>
-                            <option value="ANNUAL">Annual</option>
-                            <option value="CUSTOM">Custom</option>
+                            <option value="FIFTEEN_DAYS">
+                              {isArabic ? "كل 15 يومًا" : "Every 15 days"}
+                            </option>
+                            <option value="MONTHLY">
+                              {isArabic ? "شهريًا" : "Monthly"}
+                            </option>
+                            <option value="QUARTERLY">
+                              {isArabic ? "كل 3 أشهر" : "Every 3 months"}
+                            </option>
+                            <option value="SEMIANNUAL">
+                              {isArabic ? "كل 6 أشهر" : "Every 6 months"}
+                            </option>
+                            <option value="ANNUAL">
+                              {isArabic ? "سنويًا" : "Annual"}
+                            </option>
+                            <option value="CUSTOM">
+                              {isArabic ? "مخصص" : "Custom"}
+                            </option>
                           </select>
                         </label>
                         <Field
@@ -568,17 +619,27 @@ export default async function BusinessOwnersPage({
                           )}
                         />
                         <label className="text-xs font-semibold text-foreground-muted">
-                          Payment status
+                          {isArabic ? "حالة الدفع" : "Payment status"}
                           <select
                             name="paymentStatus"
                             defaultValue={business.paymentStatus}
                             className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm"
                           >
-                            <option value="TRIAL">Trial</option>
-                            <option value="PAID">Paid</option>
-                            <option value="DUE">Due</option>
-                            <option value="OVERDUE">Overdue</option>
-                            <option value="SUSPENDED">Suspended</option>
+                            <option value="TRIAL">
+                              {paymentStatusLabel("TRIAL", isArabic)}
+                            </option>
+                            <option value="PAID">
+                              {paymentStatusLabel("PAID", isArabic)}
+                            </option>
+                            <option value="DUE">
+                              {paymentStatusLabel("DUE", isArabic)}
+                            </option>
+                            <option value="OVERDUE">
+                              {paymentStatusLabel("OVERDUE", isArabic)}
+                            </option>
+                            <option value="SUSPENDED">
+                              {paymentStatusLabel("SUSPENDED", isArabic)}
+                            </option>
                           </select>
                         </label>
 
