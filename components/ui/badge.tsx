@@ -15,7 +15,7 @@ const badgeVariants: Record<BadgeVariant, string> = {
   warning: "border-warning/30 bg-[var(--lf-warning-subtle)] text-warning",
   danger: "border-danger/30 bg-[var(--lf-danger-subtle)] text-danger",
   info: "border-info/30 bg-[var(--lf-info-subtle)] text-info",
-  brand: "border-primary/30 bg-primary-subtle text-primary",
+  brand: "border-primary/30 bg-[var(--lf-primary-soft)] text-primary",
 };
 
 export function Badge({
