@@ -168,7 +168,8 @@ test("every domain action reuses tenant authorization and explicit parsing", () 
 test("Settings retains two independent PA-2 forms with pending feedback", () => {
   assert.equal((formSource.match(/<form action=\{actions\./g) ?? []).length, 2);
   assert.match(formSource, /useFormStatus/);
-  assert.match(formSource, /aria-live="polite"/);
+  assert.match(formSource, /role=\{success \? "status" : "alert"\}/);
+  assert.match(formSource, /aria-live=\{success \? "polite" : "assertive"\}/);
   assert.match(pageSource, /profile: updateBusinessProfile/);
   assert.match(pageSource, /operations: updateOperationsSettings/);
 });
