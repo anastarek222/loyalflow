@@ -38,6 +38,9 @@ type StaffReportsPageProps = {
   }>;
 };
 
+const fieldClass =
+  "min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary-soft";
+
 function roleLabel(role: string, language: AppLanguage) {
   const labels: Record<string, [string, string]> = {
     OWNER: ["مالك", "Owner"],
@@ -282,34 +285,42 @@ export default async function StaffReportsPage({
   return (
     <main
       className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
-      style={{ backgroundColor: theme.backgroundColor, fontFamily: theme.fontFamily }}
+      dir={language === "AR" ? "rtl" : "ltr"}
+      style={{
+        backgroundColor: theme.backgroundColor,
+        fontFamily: theme.fontFamily,
+      }}
     >
       <div
         className="mx-auto max-w-7xl"
         data-experience-mode={experienceMode}
-        dir={language === "AR" ? "rtl" : "ltr"}
+        data-staff-reports-workspace="true"
       >
         <Link
           href={`/businesses/${business.slug}/reports?${reportQuery}`}
-          className="text-sm font-bold text-violet-700 hover:text-violet-900"
+          className="inline-flex min-h-10 items-center text-sm font-semibold text-foreground-muted transition-colors hover:text-primary"
         >
-          {t("العودة إلى التقارير ←", "← Back to reports")}
+          {t("العودة إلى التقارير", "Back to reports")}
         </Link>
 
-        <header
-          className={`mt-5 border p-5 text-white sm:p-8 ${theme.cardClass} ${theme.borderClass}`}
-          style={{ backgroundColor: theme.primaryColor }}
-        >
-          <p className="text-sm font-bold text-white/70">{copy.staff}</p>
-          <h1 className="mt-2 text-2xl font-black sm:text-3xl">{copy.staff}</h1>
-          <p className="mt-2 text-sm leading-6 text-white/75">
-            {simple
-              ? copy.simple
-              : t(
-                  "مقارنة العمليات المنسوبة المثبتة لكل مستخدم.",
-                  "Compare operations with persisted staff attribution.",
-                )}
-          </p>
+        <header className="relative mt-5 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7">
+          <div className="pointer-events-none absolute end-0 top-0 size-64 rounded-full bg-[radial-gradient(circle,var(--lf-primary-soft),transparent_68%)]" />
+          <div className="relative max-w-3xl">
+            <span className="inline-flex rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary">
+              {copy.staff}
+            </span>
+            <h1 className="mt-4 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+              {copy.staff}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">
+              {simple
+                ? copy.simple
+                : t(
+                    "قارن العمليات المنسوبة المثبتة لكل مستخدم بدون تغيير سجل الإسناد التاريخي.",
+                    "Compare persisted staff attribution without changing historical attribution records.",
+                  )}
+            </p>
+          </div>
         </header>
 
         <ReportNavigation
@@ -326,33 +337,59 @@ export default async function StaffReportsPage({
 
         <form
           method="get"
-          className={`mt-6 grid gap-4 border bg-white p-5 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end sm:p-6 ${theme.cardClass} ${theme.borderClass}`}
+          className="mt-5 grid gap-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:grid-cols-2 sm:p-6 xl:grid-cols-4"
+          aria-label={t("فلاتر أداء الفريق", "Staff performance filters")}
         >
           <div>
-            <label htmlFor="from" className="mb-2 block text-sm font-bold text-slate-700">
-              {t("من تاريخ", "From")}
+            <label
+              htmlFor="from"
+              className="mb-2 block text-sm font-semibold text-foreground-muted"
+            >
+              {t("من تاريخ", "From date")}
             </label>
             <input
               id="from"
               name="from"
               type="date"
               defaultValue={fromInput}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+              className={fieldClass}
             />
           </div>
 
           <div>
-            <label htmlFor="branch" className="mb-2 block text-sm font-bold text-slate-700">
+            <label
+              htmlFor="to"
+              className="mb-2 block text-sm font-semibold text-foreground-muted"
+            >
+              {t("إلى تاريخ", "To date")}
+            </label>
+            <input
+              id="to"
+              name="to"
+              type="date"
+              defaultValue={toInput}
+              className={fieldClass}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="branch"
+              className="mb-2 block text-sm font-semibold text-foreground-muted"
+            >
               {t("الفرع", "Branch")}
             </label>
             <select
               id="branch"
               name="branch"
               defaultValue={reportScope.branchId ?? "all"}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+              className={fieldClass}
             >
               <option value="all">
-                {t("كل الفروع والسجل التاريخي", "All branches and historical records")}
+                {t(
+                  "كل الفروع والسجل التاريخي",
+                  "All branches and historical records",
+                )}
               </option>
               {reportBranches.map((branch) => (
                 <option key={branch.id} value={branch.id}>
@@ -364,14 +401,17 @@ export default async function StaffReportsPage({
           </div>
 
           <div>
-            <label htmlFor="staff" className="mb-2 block text-sm font-bold text-slate-700">
+            <label
+              htmlFor="staff"
+              className="mb-2 block text-sm font-semibold text-foreground-muted"
+            >
               {t("الموظف المنسوب إليه", "Attributed staff")}
             </label>
             <select
               id="staff"
               name="staff"
               defaultValue={reportScope.attributedStaffId ?? "all"}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+              className={fieldClass}
             >
               <option value="all">
                 {t(
@@ -389,35 +429,26 @@ export default async function StaffReportsPage({
             </select>
           </div>
 
-          <div>
-            <label htmlFor="to" className="mb-2 block text-sm font-bold text-slate-700">
-              {t("إلى تاريخ", "To")}
-            </label>
-            <input
-              id="to"
-              name="to"
-              type="date"
-              defaultValue={toInput}
-              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
-            />
+          <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-4">
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+            >
+              {t("تطبيق الفلاتر", "Apply filters")}
+            </button>
+            <Link
+              href={`/businesses/${business.slug}/reports/staff`}
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-5 text-sm font-bold text-foreground-muted transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              {t("إعادة ضبط", "Reset")}
+            </Link>
           </div>
-
-          <button
-            type="submit"
-            className="rounded-xl bg-violet-600 px-6 py-3 font-bold text-white transition hover:bg-violet-700"
-          >
-            {t("تطبيق الفترة", "Apply period")}
-          </button>
-
-          <Link
-            href={`/businesses/${business.slug}/reports/staff`}
-            className="rounded-xl border border-slate-300 px-6 py-3 text-center font-bold text-slate-700"
-          >
-            {t("آخر 30 يومًا", "Last 30 days")}
-          </Link>
         </form>
 
-        <p className="mt-3 text-sm text-slate-600" role="status">
+        <p
+          className="mt-3 rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 py-3 text-sm text-foreground-muted"
+          role="status"
+        >
           {reportScope.branchId
             ? `${t("سياق الفرع", "Branch context")}: ${
                 reportBranches.find((branch) => branch.id === reportScope.branchId)
@@ -429,64 +460,75 @@ export default async function StaffReportsPage({
               )}
         </p>
 
-        <section className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              {t("المستخدمون النشطون", "Active users")}
-            </p>
-            <p className="mt-3 text-3xl font-black text-slate-950">
-              {numberFormatter.format(activeUsers)}
-            </p>
-          </article>
-
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              {t("إجمالي العمليات", "Total operations")}
-            </p>
-            <p className="mt-3 text-3xl font-black text-slate-950">
-              {numberFormatter.format(totalActions)}
-            </p>
-          </article>
-
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              {t("الرصيد المضاف", "Earned balance")}
-            </p>
-            <p className="mt-3 text-3xl font-black text-emerald-700">
-              {numberFormatter.format(totalEarned)}
-            </p>
-            <p dir="auto" className="mt-1 text-xs text-slate-500">
-              {business.unitName}
-            </p>
-          </article>
-
-          <article className="rounded-2xl bg-white p-5 shadow-sm">
-            <p className="text-sm font-bold text-slate-500">
-              {t("الرصيد المستبدل", "Redeemed balance")}
-            </p>
-            <p className="mt-3 text-3xl font-black text-amber-700">
-              {numberFormatter.format(totalRedeemed)}
-            </p>
-            <p dir="auto" className="mt-1 text-xs text-slate-500">
-              {business.unitName}
-            </p>
-          </article>
+        <section
+          className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4"
+          aria-label={t("ملخص أداء الفريق", "Staff performance summary")}
+        >
+          {[
+            {
+              label: t("المستخدمون النشطون", "Active users"),
+              value: numberFormatter.format(activeUsers),
+              tone: "default",
+            },
+            {
+              label: t("إجمالي العمليات", "Total operations"),
+              value: numberFormatter.format(totalActions),
+              tone: "default",
+            },
+            {
+              label: t("الرصيد المضاف", "Earned balance"),
+              value: numberFormatter.format(totalEarned),
+              tone: "success",
+            },
+            {
+              label: t("الرصيد المستبدل", "Redeemed balance"),
+              value: numberFormatter.format(totalRedeemed),
+              tone: "warning",
+            },
+          ].map((metric) => (
+            <article
+              key={metric.label}
+              className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm sm:p-5"
+            >
+              <p className="text-xs font-semibold text-foreground-subtle sm:text-sm">
+                {metric.label}
+              </p>
+              <p
+                className={`lf-type-numeric mt-2 text-2xl font-black sm:text-3xl ${
+                  metric.tone === "success"
+                    ? "text-emerald-700"
+                    : metric.tone === "warning"
+                      ? "text-amber-700"
+                      : "text-foreground"
+                }`}
+              >
+                {metric.value}
+              </p>
+              {(metric.tone === "success" || metric.tone === "warning") && (
+                <p dir="auto" className="mt-1 text-xs text-foreground-subtle">
+                  {business.unitName}
+                </p>
+              )}
+            </article>
+          ))}
         </section>
 
         {rows.length === 0 ? (
-          <section className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
-            <h2 className="text-xl font-black text-slate-950">
+          <section className="mt-5 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-surface p-10 text-center">
+            <h2 className="text-xl font-black text-foreground">
               {t("لا يوجد مستخدمون", "No users found")}
             </h2>
+            <p className="mt-2 text-sm text-foreground-muted">{copy.noData}</p>
           </section>
         ) : (
           <>
             <section
-              className={`${simple ? "hidden" : "hidden lg:block"} mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm`}
+              className={`${simple ? "hidden" : "hidden lg:block"} mt-5 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm`}
+              aria-label={t("جدول أداء الفريق", "Staff performance table")}
             >
               <div className="overflow-x-auto">
-                <table className="w-full text-start">
-                  <thead className="bg-slate-950 text-sm text-white">
+                <table className="w-full text-start text-sm">
+                  <thead className="bg-surface-subtle text-xs font-bold uppercase tracking-wide text-foreground-subtle">
                     <tr>
                       <th className="px-5 py-4">{t("المستخدم", "User")}</th>
                       <th className="px-5 py-4">{t("العملاء", "Customers")}</th>
@@ -499,54 +541,59 @@ export default async function StaffReportsPage({
                       <th className="px-5 py-4">{t("الإجمالي", "Total")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border">
                     {rows.map((row) => (
-                      <tr key={row.id} className="hover:bg-slate-50">
+                      <tr key={row.id} className="transition-colors hover:bg-surface-subtle/60">
                         <td className="px-5 py-4">
-                          <p dir="auto" className="font-black text-slate-950">
+                          <p dir="auto" className="font-black text-foreground">
                             {row.name}
                           </p>
-                          <p dir="ltr" className="mt-1 text-start text-xs text-slate-500">
+                          <p
+                            dir="ltr"
+                            className="mt-1 text-start text-xs text-foreground-subtle"
+                          >
                             {row.email}
                           </p>
                           <div className="mt-2 flex flex-wrap gap-2">
-                            <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-bold text-violet-700">
+                            <span className="rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-primary">
                               {roleLabel(row.role, language)}
                             </span>
                             <span
                               className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                                 row.isActive
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-slate-100 text-slate-500"
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : "bg-surface-subtle text-foreground-subtle"
                               }`}
                             >
-                              {row.isActive ? t("نشط", "Active") : t("غير نشط", "Inactive")}
+                              {row.isActive
+                                ? t("نشط", "Active")
+                                : t("غير نشط", "Inactive")}
                             </span>
                           </div>
                         </td>
-                        <td className="px-5 py-4 font-bold">
+                        <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.customersCount)}
                         </td>
-                        <td className="px-5 py-4 font-bold">
+                        <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.earnActions)}
                         </td>
                         <td className="px-5 py-4 font-bold text-emerald-700">
                           {numberFormatter.format(row.earnedAmount)}
                         </td>
-                        <td className="px-5 py-4 font-bold">
+                        <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.redeemActions)}
                         </td>
                         <td className="px-5 py-4 font-bold text-amber-700">
                           {numberFormatter.format(row.redeemedAmount)}
                         </td>
-                        <td className="px-5 py-4 font-bold">
+                        <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.rewardRedemptions)}
                         </td>
-                        <td className="px-5 py-4 font-bold">
+                        <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.adjustmentActions)}
                         </td>
                         <td className="px-5 py-4">
-                          <span className="inline-flex min-w-12 justify-center rounded-full bg-slate-950 px-3 py-1.5 font-black text-white">
+                          <span className="inline-flex min-w-12 justify-center rounded-full bg-primary-soft px-3 py-1.5 font-black text-primary">
                             {numberFormatter.format(row.totalActions)}
                           </span>
                         </td>
@@ -557,34 +604,48 @@ export default async function StaffReportsPage({
               </div>
             </section>
 
-            <section className={`${simple ? "hidden" : "lg:hidden"} mt-6 space-y-4`}>
+            <section
+              className={`${simple ? "hidden" : "lg:hidden"} mt-5 space-y-3`}
+              aria-label={t("بطاقات أداء الفريق", "Staff performance cards")}
+            >
               {rows.map((row) => (
                 <article
                   key={row.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                  className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h2 dir="auto" className="truncate text-lg font-black text-slate-950">
+                      <h2
+                        dir="auto"
+                        className="truncate text-lg font-black text-foreground"
+                      >
                         {row.name}
                       </h2>
-                      <p dir="ltr" className="mt-1 truncate text-start text-xs text-slate-500">
+                      <p
+                        dir="ltr"
+                        className="mt-1 truncate text-start text-xs text-foreground-subtle"
+                      >
                         {row.email}
                       </p>
+                      <p className="mt-2 text-xs font-semibold text-primary">
+                        {roleLabel(row.role, language)} · {row.isActive ? t("نشط", "Active") : t("غير نشط", "Inactive")}
+                      </p>
                     </div>
-                    <span className="rounded-full bg-slate-950 px-3 py-1.5 text-sm font-black text-white">
+                    <span className="shrink-0 rounded-full bg-primary-soft px-3 py-1.5 text-sm font-black text-primary">
                       {numberFormatter.format(row.totalActions)} {t("عملية", "operations")}
                     </span>
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <p className="text-slate-500">{t("العملاء", "Customers")}</p>
-                      <p className="mt-1 font-black">
+                    <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3">
+                      <p className="text-foreground-subtle">
+                        {t("العملاء", "Customers")}
+                      </p>
+                      <p className="mt-1 font-black text-foreground">
                         {numberFormatter.format(row.customersCount)}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-amber-50 p-3">
+                    <div className="rounded-[var(--lf-radius-input)] bg-amber-50 p-3">
                       <p className="text-amber-800">
                         {t("مكافآت مستبدلة", "Reward redemptions")}
                       </p>
@@ -592,7 +653,7 @@ export default async function StaffReportsPage({
                         {numberFormatter.format(row.rewardRedemptions)}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-emerald-50 p-3">
+                    <div className="rounded-[var(--lf-radius-input)] bg-emerald-50 p-3">
                       <p className="text-emerald-700">
                         {t("الرصيد المضاف", "Earned balance")}
                       </p>
@@ -600,7 +661,7 @@ export default async function StaffReportsPage({
                         {numberFormatter.format(row.earnedAmount)}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-amber-50 p-3">
+                    <div className="rounded-[var(--lf-radius-input)] bg-amber-50 p-3">
                       <p className="text-amber-700">
                         {t("الرصيد المستبدل", "Redeemed balance")}
                       </p>
@@ -608,11 +669,11 @@ export default async function StaffReportsPage({
                         {numberFormatter.format(row.redeemedAmount)}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-violet-50 p-3">
-                      <p className="text-violet-700">
+                    <div className="rounded-[var(--lf-radius-input)] bg-primary-soft p-3">
+                      <p className="text-primary">
                         {t("التعديلات", "Adjustments")}
                       </p>
-                      <p className="mt-1 font-black text-violet-900">
+                      <p className="mt-1 font-black text-foreground">
                         {numberFormatter.format(row.adjustmentActions)}
                       </p>
                     </div>
