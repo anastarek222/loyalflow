@@ -5,11 +5,19 @@ import { useMemo, useState } from "react";
 import { LoyaltyCard } from "@/components/loyalty-card";
 import {
   CUSTOM_CARD_SAFE_ZONE_VERSION,
+  DEFAULT_STANDARD_CARD_COLOR_PRESET,
   STANDARD_CARD_ARTWORK_CATEGORIES,
+  STANDARD_CARD_COLOR_PRESETS,
+  STANDARD_CARD_THEME_PRESETS,
   getLoyaltyCardMetrics,
   getLoyaltyCardPreviewData,
+  standardCardPresetColor,
+  standardCardPresetForColor,
+  standardCardThemePreset,
   type CardDesignMode,
   type LoyaltyCardMode,
+  type StandardCardColorPreset,
+  type StandardCardThemePreset,
 } from "@/lib/cards/standard-card";
 
 export type CardPreview = Partial<{
@@ -64,6 +72,21 @@ function categoryLabel(category: string, language: CardSetupLanguage) {
   return label ? (language === "AR" ? label[0] : label[1]) : category;
 }
 
+function colorPresetLabel(
+  preset: StandardCardColorPreset,
+  language: CardSetupLanguage,
+) {
+  const labels: Record<StandardCardColorPreset, readonly [string, string]> = {
+    GOLD: ["ذهبي", "Gold"],
+    BLUE: ["أزرق", "Blue"],
+    EMERALD: ["زمردي", "Emerald"],
+    VIOLET: ["بنفسجي", "Violet"],
+    ROSE: ["وردي", "Rose"],
+    SLATE: ["رمادي", "Slate"],
+  };
+  return language === "AR" ? labels[preset][0] : labels[preset][1];
+}
+
 export function StandardCardSetup({
   initial = {},
   preview = {},
@@ -73,9 +96,18 @@ export function StandardCardSetup({
 }: Props) {
   const t = (ar: string, en: string) => translate(language, ar, en);
   const [side, setSide] = useState<"front" | "back">("front");
+  const initialThemePreset = standardCardThemePreset(initial.themePreset);
+  const initialColorPreset =
+    standardCardPresetForColor(initial.primaryColor) ??
+    (initial.primaryColor ? null : DEFAULT_STANDARD_CARD_COLOR_PRESET);
+  const [colorPreset, setColorPreset] = useState<StandardCardColorPreset | null>(
+    initialColorPreset,
+  );
   const [card, setCard] = useState({
-    primaryColor: initial.primaryColor || "#B98A4B",
-    themePreset: initial.themePreset === "DARK" ? "DARK" : "DEFAULT",
+    primaryColor:
+      initial.primaryColor ||
+      standardCardPresetColor(DEFAULT_STANDARD_CARD_COLOR_PRESET, initialThemePreset),
+    themePreset: initialThemePreset,
     artworkEnabled: initial.artworkEnabled ?? true,
     artworkCategory: initial.artworkCategory || "OTHER",
     designMode: initial.designMode || "STANDARD",
@@ -111,6 +143,28 @@ export function StandardCardSetup({
     value: (typeof card)[Key],
   ) => {
     const next = { ...card, [key]: value };
+    setCard(next);
+    onPreviewChange?.(next);
+  };
+
+  const updateColorPreset = (preset: StandardCardColorPreset) => {
+    const next = {
+      ...card,
+      primaryColor: standardCardPresetColor(preset, card.themePreset),
+    };
+    setColorPreset(preset);
+    setCard(next);
+    onPreviewChange?.(next);
+  };
+
+  const updateThemePreset = (theme: StandardCardThemePreset) => {
+    const next = {
+      ...card,
+      themePreset: theme,
+      primaryColor: colorPreset
+        ? standardCardPresetColor(colorPreset, theme)
+        : card.primaryColor,
+    };
     setCard(next);
     onPreviewChange?.(next);
   };
@@ -355,33 +409,70 @@ export function StandardCardSetup({
               </div>
             </div>
 
-            <label className="block text-sm font-bold">
-              {t("لون العلامة التجارية", "Brand colour")}
-              <span className="mt-2 flex items-center gap-3">
-                <input
-                  name="primaryColor"
-                  type="color"
-                  value={values.primaryColor}
-                  onChange={(event) => update("primaryColor", event.target.value)}
-                  className="h-11 w-14 cursor-pointer rounded-lg border border-border bg-white p-1"
-                />
-                <input
-                  value={values.primaryColor}
-                  onChange={(event) =>
-                    /^#[0-9a-fA-F]{0,6}$/.test(event.target.value) &&
-                    update("primaryColor", event.target.value)
-                  }
-                  aria-label={t("قيمة لون العلامة بصيغة hex", "Brand colour hex value")}
-                  className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2.5 font-mono uppercase"
-                />
-              </span>
-            </label>
+            <div>
+              <p className="text-sm font-bold">
+                {t("لون العلامة التجارية", "Brand colour")}
+              </p>
+              <input type="hidden" name="primaryColor" value={values.primaryColor} />
+              {colorPreset === null ? (
+                <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface-subtle p-3 text-xs text-foreground-muted">
+                  <span
+                    className="size-8 shrink-0 rounded-lg border border-border"
+                    style={{ backgroundColor: values.primaryColor }}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t(
+                      "لون قديم محفوظ. سيبقى كما هو حتى تختار لوحة ألوان معتمدة.",
+                      "Existing legacy colour is preserved until you choose an approved palette.",
+                    )}
+                  </span>
+                </div>
+              ) : null}
+              <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                {STANDARD_CARD_COLOR_PRESETS.map((preset) => {
+                  const active = colorPreset === preset.id;
+                  const swatch = standardCardPresetColor(
+                    preset.id,
+                    values.themePreset,
+                  );
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => updateColorPreset(preset.id)}
+                      aria-pressed={active}
+                      aria-label={t(
+                        `اختيار لوحة ${colorPresetLabel(preset.id, language)}`,
+                        `Choose ${colorPresetLabel(preset.id, language)} palette`,
+                      )}
+                      className={`rounded-xl border p-2 text-center text-[11px] font-bold ${active ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-surface-subtle"}`}
+                    >
+                      <span
+                        className="mx-auto block size-8 rounded-lg border border-black/10 shadow-sm"
+                        style={{ backgroundColor: swatch }}
+                        aria-hidden="true"
+                      />
+                      <span className="mt-1.5 block truncate">
+                        {colorPresetLabel(preset.id, language)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-foreground-muted">
+                {t(
+                  "كل لوحة تستخدم درجة محسّنة تلقائيًا لكل من الوضع الفاتح والداكن.",
+                  "Each palette automatically uses an optimized accent for Light and Dark themes.",
+                )}
+              </p>
+            </div>
 
             <div>
               <p className="text-sm font-bold">{t("السمة", "Theme")}</p>
               <input type="hidden" name="themePreset" value={values.themePreset} />
               <div className="mt-2 grid grid-cols-2 gap-3">
-                {(["DEFAULT", "DARK"] as const).map((theme) => (
+                {STANDARD_CARD_THEME_PRESETS.map((theme) => (
                   <label
                     key={theme}
                     className={`cursor-pointer rounded-xl border p-3 ${values.themePreset === theme ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border"}`}
@@ -390,7 +481,7 @@ export function StandardCardSetup({
                       type="radio"
                       value={theme}
                       checked={values.themePreset === theme}
-                      onChange={() => update("themePreset", theme)}
+                      onChange={() => updateThemePreset(theme)}
                       className="sr-only"
                     />
                     <span className="font-bold">
