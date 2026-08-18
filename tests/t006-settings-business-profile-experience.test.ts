@@ -47,7 +47,11 @@ test("T006 Profile and operations remain independent pending-aware forms", () =>
   assert.match(settingsForm, /data-settings-profile="true"/);
   assert.match(settingsForm, /data-settings-operations="true"/);
   assert.match(settingsForm, /useFormStatus/);
-  assert.match(settingsForm, /aria-live="polite"/);
+  assert.match(settingsForm, /role=\{success \? "status" : "alert"\}/);
+  assert.match(
+    settingsForm,
+    /aria-live=\{success \? "polite" : "assertive"\}/,
+  );
   assert.match(settings, /profile: updateBusinessProfile/);
   assert.match(settings, /operations: updateOperationsSettings/);
 });

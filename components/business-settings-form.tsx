@@ -56,7 +56,7 @@ type BusinessSettingsFormProps = {
 const formClass =
   "scroll-mt-24 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7";
 const inputClass =
-  "min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
+  "min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
 
 function SubmitButton({ idle, pending }: { idle: string; pending: string }) {
   const { pending: isPending } = useFormStatus();
@@ -64,7 +64,7 @@ function SubmitButton({ idle, pending }: { idle: string; pending: string }) {
     <button
       type="submit"
       disabled={isPending}
-      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
     >
       <Save className="size-4" aria-hidden="true" />
       {isPending ? pending : idle}
@@ -83,8 +83,8 @@ function Feedback({
   const success = status === "saved";
   return (
     <p
-      role="status"
-      aria-live="polite"
+      role={success ? "status" : "alert"}
+      aria-live={success ? "polite" : "assertive"}
       className={`mb-5 rounded-[var(--lf-radius-input)] border px-4 py-3 text-sm font-semibold ${
         success
           ? "border-success/30 bg-success-subtle text-success"
@@ -361,7 +361,7 @@ export default function BusinessSettingsForm({
               <input
                 name="removeCoverImage"
                 type="checkbox"
-                className="size-4"
+                className="size-4 accent-[var(--lf-primary)]"
               />
               {t("حذف صورة الغلاف الحالية", "Remove current cover image")}
             </label>
@@ -437,14 +437,14 @@ export default function BusinessSettingsForm({
             ].map((option) => (
               <label
                 key={option.value}
-                className="flex cursor-pointer items-start gap-3 rounded-[var(--lf-radius-input)] border border-border bg-white p-4 transition hover:border-primary/30 hover:bg-primary-soft/40"
+                className="flex cursor-pointer items-start gap-3 rounded-[var(--lf-radius-input)] border border-border bg-surface p-4 transition hover:border-primary/30 hover:bg-primary-soft/40"
               >
                 <input
                   type="radio"
                   name="staffAttributionMode"
                   value={option.value}
                   defaultChecked={staffAttributionMode === option.value}
-                  className="size-4"
+                  className="mt-0.5 size-4 accent-[var(--lf-primary)]"
                 />
                 <span>
                   <span className="block font-semibold text-foreground">
