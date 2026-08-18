@@ -165,13 +165,21 @@ jobs:
           set -euo pipefail
           node <<'NODE'
           const fs = require('fs');
-          const path = 'playwright.config.ts';
-          let source = fs.readFileSync(path, 'utf8');
+          const configPath = 'playwright.config.ts';
+          let config = fs.readFileSync(configPath, 'utf8');
           const strict = `if (remoteStaging && !vercelProtectionBypass) {\n  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for protected Remote Staging UAT.");\n}\n`;
-          if (!source.includes(strict)) throw new Error('Expected remote-protection guard was not found');
-          source = source.replace(strict, '');
-          source = source.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
-          fs.writeFileSync(path, source);
+          if (!config.includes(strict)) throw new Error('Expected remote-protection guard was not found');
+          config = config.replace(strict, '');
+          config = config.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
+          fs.writeFileSync(configPath, config);
+
+          const specPath = 'tests/browser/pre-final-admin-security.spec.ts';
+          let spec = fs.readFileSync(specPath, 'utf8');
+          const broadSelector = 'page.getByRole("link", { name: /card/i })';
+          const exactSelector = 'page.getByRole("link", { name: "Open customer card", exact: true })';
+          if (!spec.includes(broadSelector)) throw new Error('Expected broad customer-card selector was not found');
+          spec = spec.replace(broadSelector, exactSelector);
+          fs.writeFileSync(specPath, spec);
           NODE
 
       - name: Run exact-SHA Slice D browser matrix with official fixtures
