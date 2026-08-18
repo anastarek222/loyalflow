@@ -45,11 +45,17 @@ test("blank optional numeric billing values do not coerce to zero and validation
 
 test("review includes one editable loyalty section and one canonical card-design section", () => {
   const wizard = read("components/business-setup-wizard.tsx");
-  for (const section of ["Business", "Owner", "Billing", "Loyalty", "Card Design"]) assert.match(wizard, new RegExp(`title="${section}"|title=\"${section}`));
-  assert.equal((wizard.match(/title="Card Design"/g) ?? []).length, 1);
-  assert.doesNotMatch(wizard, /title="Branding"|title="Standard Card"/);
+
+  for (const binding of ["business", "owner", "billing", "loyalty", "cardDesign"]) {
+    assert.match(wizard, new RegExp(`title=\\{copy\\.${binding}\\}`));
+  }
+
+  assert.equal((wizard.match(/<ReviewSection/g) ?? []).length, 5);
+  assert.equal((wizard.match(/title=\{copy\.cardDesign\}/g) ?? []).length, 1);
+  assert.doesNotMatch(wizard, /title=\{copy\.(?:branding|standardCard)\}/);
+  assert.match(wizard, /reviewTitle: "Review & create"/);
+  assert.match(wizard, /reviewTitle: "المراجعة والإنشاء"/);
   assert.match(wizard, /StandardCardSetup/);
-  assert.match(wizard, /Review & Create/);
 });
 
 test("Custom Setup uses the native form action and keeps File objects out of the action payload", () => {
