@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { markBusinessNotificationsReadAction } from "@/app/businesses/[slug]/notification-actions";
@@ -72,10 +72,7 @@ export default function BusinessNotificationsDialogClient({
   const t = copy[language];
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const [visibleUnreadCount, setVisibleUnreadCount] = useOptimistic(
-    unreadCount,
-    (_currentCount, nextCount: number) => nextCount,
-  );
+  const visibleUnreadCount = unreadCount;
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [isMarkingRead, startMarkingRead] = useTransition();
 
@@ -111,16 +108,13 @@ export default function BusinessNotificationsDialogClient({
   function markAllAsRead() {
     if (visibleUnreadCount === 0 || isMarkingRead) return;
 
-    const previousCount = visibleUnreadCount;
     setStatus(null);
     startMarkingRead(async () => {
-      setVisibleUnreadCount(0);
       try {
         await markBusinessNotificationsReadAction(slug);
         setStatus("success");
         router.refresh();
       } catch {
-        setVisibleUnreadCount(previousCount);
         setStatus("error");
       }
     });
