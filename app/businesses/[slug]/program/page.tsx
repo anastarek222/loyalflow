@@ -1,6 +1,7 @@
 import { BookOpen, CreditCard, MessageCircle } from "lucide-react";
 import { auth } from "@/auth";
 import { CustomerMessagesForm } from "@/components/customer-messages-form";
+import { PrimaryBusinessJoinQr } from "@/components/primary-business-join-qr";
 import { ProgramRulesForm } from "@/components/program-rules-form";
 import { StandardCardSetup } from "@/components/standard-card-setup";
 import { CustomCardArtworkManager } from "@/components/custom-card-artwork-manager";
@@ -174,6 +175,12 @@ export default async function LoyaltyProgramPage({
             label={t("رسائل العملاء", "Customer messages")}
           />
         </nav>
+
+        <PrimaryBusinessJoinQr
+          businessName={business.name}
+          slug={business.slug}
+          language={language}
+        />
 
         <section
           id="earning-rules"
