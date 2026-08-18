@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { markBusinessNotificationsReadAction } from "@/app/businesses/[slug]/notification-actions";
 import type { AppLanguage } from "@/lib/i18n";
@@ -67,7 +67,6 @@ export default function BusinessNotificationsDialogClient({
   trigger = "button",
   language,
 }: Props) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const t = copy[language];
   const [isOpen, setIsOpen] = useState(false);
@@ -113,7 +112,6 @@ export default function BusinessNotificationsDialogClient({
       try {
         await markBusinessNotificationsReadAction(slug);
         setStatus("success");
-        router.refresh();
       } catch {
         setStatus("error");
       }
