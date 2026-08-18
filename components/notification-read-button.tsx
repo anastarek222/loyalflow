@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
 import { markBusinessNotificationItemReadAction } from "@/app/businesses/[slug]/notification-actions";
 import type { AppLanguage } from "@/lib/i18n";
@@ -28,7 +27,6 @@ const copy = {
 } as const;
 
 export default function NotificationReadButton({ slug, notificationKey, language }: Props) {
-  const router = useRouter();
   const t = copy[language];
   const [status, setStatus] = useState<"idle" | "read" | "error">("idle");
   const [isPending, startTransition] = useTransition();
@@ -40,7 +38,6 @@ export default function NotificationReadButton({ slug, notificationKey, language
       try {
         await markBusinessNotificationItemReadAction(slug, notificationKey);
         setStatus("read");
-        router.refresh();
       } catch {
         setStatus("error");
       }
