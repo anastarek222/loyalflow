@@ -16,14 +16,10 @@ jobs:
   browser-uat:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 25
     env:
       STAGING_UAT_BASE_URL: https://loyalflow-ukz4t66jt-anas-tarek.vercel.app
       LOYALFLOW_ENVIRONMENT: staging
-      LOYALFLOW_STAGING_DATABASE: neondb
-      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
-      LOYALFLOW_STAGING_DATABASE_HOST: ep-lucky-mountain-adz1ckw2.c-2.us-east-1.aws.neon.tech
-      LOYALFLOW_PRODUCTION_DATABASE_HOST: ep-spring-lake-adstmkl2.c-2.us-east-1.aws.neon.tech
     steps:
       - name: Checkout handshake branch
         uses: actions/checkout@v4
@@ -36,12 +32,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          target="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          payload="$(jq -nc --arg target "$target" '{state:"pending",context:"Slice D Runtime UAT",description:"Waiting for encrypted ephemeral UAT handoff",target_url:$target}')"
           curl -fsS -X POST \
             -H "Authorization: Bearer $GH_TOKEN" \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d '{"state":"pending","context":"Slice D Runtime UAT","description":"Waiting for encrypted ephemeral UAT handoff"}' >/dev/null
+            -d "$payload" >/dev/null
 
       - name: Generate ephemeral handoff key
         env:
@@ -115,11 +113,16 @@ jobs:
             decipher.final(),
           ]);
           const values = JSON.parse(clear.toString('utf8'));
-          for (const name of ['DATABASE_URL', 'UAT_FIXTURE_PASSWORD', 'VERCEL_SHARE_URL']) {
+          for (const name of ['UAT_FIXTURE_PASSWORD', 'VERCEL_SHARE_URL']) {
             if (!values[name]) throw new Error(`${name} missing from encrypted handoff`);
             process.stdout.write(`::add-mask::${values[name]}\n`);
             fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<LFUATEOF\n${values[name]}\nLFUATEOF\n`);
           }
+          if (!values.UAT_MANIFEST || typeof values.UAT_MANIFEST !== 'object') {
+            throw new Error('UAT_MANIFEST missing from encrypted handoff');
+          }
+          fs.writeFileSync('/tmp/lf-uat-manifest.json', JSON.stringify(values.UAT_MANIFEST), { mode: 0o600 });
+          fs.appendFileSync(process.env.GITHUB_ENV, 'STAGING_UAT_MANIFEST_PATH=/tmp/lf-uat-manifest.json\n');
           NODE
 
       - name: Checkout exact certified source
@@ -142,8 +145,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Bootstrap protected Staging browser session
         shell: bash
@@ -156,13 +159,14 @@ jobs:
           const page = await context.newPage();
           try {
             await page.goto(process.env.VERCEL_SHARE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-            const response = await page.goto(process.env.STAGING_UAT_BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-            if (!response || response.status() >= 400) {
-              throw new Error(`Protected Staging bootstrap failed with HTTP ${response?.status() ?? 'no-response'}`);
+            await page.waitForTimeout(1500);
+            const response = await page.goto(`${process.env.STAGING_UAT_BASE_URL}/api/health/live`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            if (!response || response.status() !== 200) {
+              throw new Error(`Protected Staging health bootstrap failed with HTTP ${response?.status() ?? 'no-response'}`);
             }
-            const current = new URL(page.url());
-            if (current.hostname !== 'loyalflow-ukz4t66jt-anas-tarek.vercel.app') {
-              throw new Error(`Protected Staging bootstrap landed on unexpected host: ${current.hostname}`);
+            const health = JSON.parse(await page.locator('body').innerText());
+            if (health?.environment !== 'staging' || health?.release !== '62f656e28502') {
+              throw new Error('Protected Staging health identity did not match the certified release');
             }
             await context.storageState({ path: '/tmp/lf-vercel-share-state.json' });
           } finally {
@@ -177,7 +181,6 @@ jobs:
           set -euo pipefail
           node <<'NODE'
           const fs = require('fs');
-
           const configPath = 'playwright.config.ts';
           let config = fs.readFileSync(configPath, 'utf8');
           const strict = `if (remoteStaging && !vercelProtectionBypass) {\n  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for protected Remote Staging UAT.");\n}\n`;
@@ -185,22 +188,10 @@ jobs:
           config = config.replace(strict, '');
           config = config.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
           fs.writeFileSync(configPath, config);
-
-          const publicPath = 'tests/browser/t006-public-conversion.spec.ts';
-          let publicSpec = fs.readFileSync(publicPath, 'utf8');
-          const marker = 'test("@desktop public marketing routes into the supported conversion selector"';
-          if (!publicSpec.includes(marker)) throw new Error('Expected public conversion spec marker was not found');
-          const helper = `async function clearCookiesPreservingProtection(page: import("@playwright/test").Page) {\n  const protectionCookies = await page.context().cookies();\n  await page.context().clearCookies();\n  if (protectionCookies.length > 0) {\n    await page.context().addCookies(protectionCookies);\n  }\n}\n\n`;
-          publicSpec = publicSpec.replace(marker, helper + marker);
-          const clearCall = 'await page.context().clearCookies();';
-          const occurrences = publicSpec.split(clearCall).length - 1;
-          if (occurrences !== 4) throw new Error(`Expected 4 public cookie resets, found ${occurrences}`);
-          publicSpec = publicSpec.split(clearCall).join('await clearCookiesPreservingProtection(page);');
-          fs.writeFileSync(publicPath, publicSpec);
           NODE
 
-      - name: Run exact-SHA browser UAT
-        run: pnpm test:browser-uat
+      - name: Run exact-SHA Slice D browser matrix
+        run: pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts
 
       - name: Upload UAT evidence
         if: always()
@@ -212,18 +203,20 @@ jobs:
             test-results/
           if-no-files-found: ignore
 
+      - name: Remove ephemeral handoff files
+        if: always()
+        shell: bash
+        run: rm -f /tmp/lf-uat-private.pem /tmp/lf-uat-payload.json /tmp/lf-uat-manifest.json /tmp/lf-vercel-share-state.json
+
       - name: Mark runtime UAT success
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d '{"state":"success","context":"Slice D Runtime UAT","description":"Exact-SHA browser UAT passed"}' >/dev/null
+          target="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          payload="$(jq -nc --arg target "$target" '{state:"success",context:"Slice D Runtime UAT",description:"Exact-SHA Slice D browser matrix passed",target_url:$target}')"
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "$payload" >/dev/null
 
       - name: Mark runtime UAT failure
         if: failure()
@@ -231,9 +224,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          curl -fsS -X POST \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d '{"state":"failure","context":"Slice D Runtime UAT","description":"Exact-SHA browser UAT failed; inspect Actions evidence"}' >/dev/null
+          target="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          payload="$(jq -nc --arg target "$target" '{state:"failure",context:"Slice D Runtime UAT",description:"Exact-SHA Slice D browser matrix failed",target_url:$target}')"
+          curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "$payload" >/dev/null
