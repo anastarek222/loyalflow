@@ -362,8 +362,8 @@ export default async function LoyaltyProgramPage({
                 rewardThreshold: business.rewardThreshold,
                 designMode: business.cardDesignMode,
                 customDesignEnabled: business.customCardArtworkEnabled,
-                customFrontArtworkUrl: business.customFrontArtworkUrl ?? "",
-                customBackArtworkUrl: business.customBackArtworkUrl ?? "",
+                customFrontArtworkUrl: business.customCardFrontArtworkUrl ?? "",
+                customBackArtworkUrl: business.customCardBackArtworkUrl ?? "",
                 customFrontArtworkPreviewUrl: isManagedCustomCardArtworkUrl(
                   business.customCardFrontArtworkUrl,
                   business.id,
