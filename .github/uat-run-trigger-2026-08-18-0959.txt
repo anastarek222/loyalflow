@@ -1,0 +1,1 @@
+Retry Slice D exact-SHA runtime UAT with a path-specific Vercel share link for the certified health endpoint. Branch-only trigger; application source remains pinned to 62f656e2850253a31c2b561eb33e1602306d2340.
