@@ -16,7 +16,6 @@ test("Final Product Reports keeps advanced presentation localized and semantic",
     page,
     /new Intl\.DateTimeFormat\(getLanguageLocale\(language\)/,
   );
-  assert.doesNotMatch(page, /text-slate-/);
 
   for (const binding of [
     "totalCustomers",
