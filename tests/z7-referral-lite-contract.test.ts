@@ -35,7 +35,9 @@ test("Z7 Referral Lite reuses the canonical public join route for customer invit
 
 test("Z7 referral input stays an optional overlay on the existing Instant Join writer", () => {
   assert.match(joinPage, /ref\?: string/);
-  assert.match(joinPage, /defaultValue=\{query\.ref \?\? ""\}/);
+  assert.match(joinPage, /canApplyPublicReferral\(business\.plan\)/);
+  assert.match(joinPage, /normalizeReferralCode\(query\.ref\)/);
+  assert.match(joinPage, /name="ref" value=\{appliedReferralCode\}/);
   assert.match(joinAction, /normalizeReferralCode/);
   assert.match(joinAction, /referralCode/);
   assert.match(joinAction, /createPublicMembershipCommand/);
