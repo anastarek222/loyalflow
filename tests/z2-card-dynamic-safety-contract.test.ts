@@ -28,7 +28,7 @@ test("Z2 keeps Arabic and English on one geometry with direction-aware text", ()
   assert.match(standardRenderer, /const customerNameIsArabic = \/\[\\u0600-\\u06FF\]\//);
   assert.match(standardRenderer, /direction=\{dir\}/);
   assert.match(standardRenderer, /textAnchor=\{rtl \? "end" : "start"\}/);
-  assert.match(standardRenderer, /viewBox=\{`0 0 \$\{STANDARD_CARD_CANVAS\.width\} \$\{STANDARD_CARD_CANVAS\.height\}`\}/);
+  assert.match(standardRenderer, /viewBox=\{`0 0 \$\{LOYALTY_CARD_CANVAS\.width\} \$\{LOYALTY_CARD_CANVAS\.height\}`\}/);
 });
 
 test("Z2 keeps Custom Card overlays bounded and the QR system-owned", () => {
