@@ -1,6 +1,7 @@
+import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
 import { loyaltyCurrency } from "@/lib/loyalty/presentation";
 
-export const STANDARD_CARD_ASPECT_RATIO = 85.6 / 53.98;
+export const STANDARD_CARD_ASPECT_RATIO = LOYALTY_CARD_ASPECT_RATIO;
 export const CUSTOM_CARD_SAFE_ZONE_VERSION = "ID1_V1";
 
 export const CARD_DESIGN_MODES = ["STANDARD", "CUSTOM"] as const;
