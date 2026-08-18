@@ -411,7 +411,7 @@ export function StandardCardSetup({
 
             <div>
               <p className="text-sm font-bold">
-                {t("لوحة ألوان معتمدة", "Approved colour palette")}
+                {t("لون العلامة التجارية", "Brand colour")}
               </p>
               <input type="hidden" name="primaryColor" value={values.primaryColor} />
               {colorPreset === null ? (
