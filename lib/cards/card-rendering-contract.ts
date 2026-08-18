@@ -20,6 +20,15 @@ export const STANDARD_CARD_QR_ZONE: LoyaltyCardZone = {
   height: 112,
 };
 
+export const STANDARD_CARD_QR_INSET = 10;
+
+export const STANDARD_CARD_QR_CONTENT_ZONE: LoyaltyCardZone = {
+  x: STANDARD_CARD_QR_ZONE.x + STANDARD_CARD_QR_INSET,
+  y: STANDARD_CARD_QR_ZONE.y + STANDARD_CARD_QR_INSET,
+  width: STANDARD_CARD_QR_ZONE.width - STANDARD_CARD_QR_INSET * 2,
+  height: STANDARD_CARD_QR_ZONE.height - STANDARD_CARD_QR_INSET * 2,
+};
+
 export function isLoyaltyCardZoneWithinCanvas(zone: LoyaltyCardZone) {
   return (
     zone.x >= 0 &&
@@ -28,5 +37,17 @@ export function isLoyaltyCardZoneWithinCanvas(zone: LoyaltyCardZone) {
     zone.height > 0 &&
     zone.x + zone.width <= LOYALTY_CARD_CANVAS.width &&
     zone.y + zone.height <= LOYALTY_CARD_CANVAS.height
+  );
+}
+
+export function isLoyaltyCardZoneWithinZone(
+  zone: LoyaltyCardZone,
+  container: LoyaltyCardZone,
+) {
+  return (
+    zone.x >= container.x &&
+    zone.y >= container.y &&
+    zone.x + zone.width <= container.x + container.width &&
+    zone.y + zone.height <= container.y + container.height
   );
 }
