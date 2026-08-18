@@ -3,6 +3,7 @@ import "server-only";
 import { get, list, put, type ListBlobResultBlob } from "@vercel/blob";
 import {
   CUSTOM_CARD_GEOMETRY_ERROR,
+  validateCustomCardArtworkGeometry,
   validateCustomCardArtworkGeometryPair,
 } from "@/lib/cards/custom-card-geometry";
 
@@ -21,7 +22,7 @@ export type CustomCardArtworkVersion = {
   id: string;
   uploadedAt: Date;
   frontUrl: string;
-  backUrl: string;
+  backUrl: string | null;
 };
 
 const versionPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -50,6 +51,11 @@ export async function validateCustomCardArtworkPair(front: unknown, back: unknow
   return validateCustomCardArtworkGeometryPair(front, back);
 }
 
+export async function validateSingleCustomCardArtwork(file: unknown) {
+  if (!validateCustomCardArtwork(file)) return false;
+  return validateCustomCardArtworkGeometry(file);
+}
+
 function extensionFor(file: File) {
   if (file.type === "image/png") return "png";
   if (file.type === "image/webp") return "webp";
@@ -65,30 +71,43 @@ export async function uploadCustomCardArtwork(input: {
   businessId: string;
   version: string;
   front: File;
-  back: File;
+  back?: File | null;
 }) {
-  if (!(await validateCustomCardArtworkPair(input.front, input.back))) {
+  const validGeometry = input.back
+    ? await validateCustomCardArtworkPair(input.front, input.back)
+    : await validateSingleCustomCardArtwork(input.front);
+  if (!validGeometry) {
     throw new Error(CUSTOM_CARD_GEOMETRY_ERROR);
   }
 
   const prefix = customCardVersionPrefix(input.businessId, input.version);
-  const [front, back] = await Promise.all(
-    (["front", "back"] as const).map((side) => {
-      const file = input[side];
-      return put(`${prefix}${side}.${extensionFor(file)}`, file, {
-        access: "private",
-        addRandomSuffix: false,
-        allowOverwrite: false,
-        contentType: file.type,
-        maximumSizeInBytes: CUSTOM_CARD_MAX_FILE_BYTES,
-      });
-    }),
-  );
+  const front = await put(`${prefix}front.${extensionFor(input.front)}`, input.front, {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: false,
+    contentType: input.front.type,
+    maximumSizeInBytes: CUSTOM_CARD_MAX_FILE_BYTES,
+  });
+
+  if (!input.back) {
+    return { frontUrl: front.url, backUrl: null };
+  }
+
+  const back = await put(`${prefix}back.${extensionFor(input.back)}`, input.back, {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: false,
+    contentType: input.back.type,
+    maximumSizeInBytes: CUSTOM_CARD_MAX_FILE_BYTES,
+  });
   return { frontUrl: front.url, backUrl: back.url };
 }
 
 function groupCompleteVersions(blobs: ListBlobResultBlob[]) {
-  const versions = new Map<string, Partial<CustomCardArtworkVersion> & { uploadedAt: Date }>();
+  const versions = new Map<
+    string,
+    Partial<CustomCardArtworkVersion> & { uploadedAt: Date }
+  >();
   for (const blob of blobs) {
     const match = blob.pathname.match(/^custom-card\/[^/]+\/([^/]+)\/(front|back)\.(?:png|jpe?g|webp)$/i);
     if (!match || !isCustomCardVersion(match[1])) continue;
@@ -99,8 +118,13 @@ function groupCompleteVersions(blobs: ListBlobResultBlob[]) {
     versions.set(match[1], current);
   }
   return [...versions.entries()]
-    .filter((entry): entry is [string, CustomCardArtworkVersion] => Boolean(entry[1].frontUrl && entry[1].backUrl))
-    .map(([id, value]) => ({ ...value, id }))
+    .filter(([, value]) => Boolean(value.frontUrl))
+    .map(([id, value]): CustomCardArtworkVersion => ({
+      id,
+      uploadedAt: value.uploadedAt,
+      frontUrl: value.frontUrl as string,
+      backUrl: value.backUrl ?? null,
+    }))
     .sort((left, right) => right.uploadedAt.getTime() - left.uploadedAt.getTime());
 }
 
