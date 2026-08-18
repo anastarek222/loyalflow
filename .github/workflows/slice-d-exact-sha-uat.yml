@@ -101,11 +101,13 @@ jobs:
             decipher.final(),
           ]);
           const values = JSON.parse(clear.toString('utf8'));
-          for (const name of ['DATABASE_URL', 'UAT_FIXTURE_PASSWORD', 'VERCEL_SHARE_URL']) {
+          for (const name of ['DATABASE_URL', 'UAT_FIXTURE_PASSWORD', 'VERCEL_AUTOMATION_BYPASS_SECRET']) {
             if (!values[name]) throw new Error(`${name} missing from encrypted handoff`);
+            process.stdout.write(`::add-mask::${values[name]}\n`);
             fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<LFUATEOF\n${values[name]}\nLFUATEOF\n`);
           }
           NODE
+          rm -f /tmp/lf-uat-handoff/payload.json /tmp/lf-uat-handoff/private.pem
 
       - name: Checkout certified Staging source
         uses: actions/checkout@v4
@@ -130,7 +132,7 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium webkit
 
-      - name: Bootstrap protected Staging and verify exact release
+      - name: Verify protected Staging exact release
         shell: bash
         run: |
           set -euo pipefail
@@ -138,34 +140,20 @@ jobs:
           import { chromium } from '@playwright/test';
           const expected = process.env.CERTIFIED_SHA.slice(0, 12);
           const browser = await chromium.launch();
-          const context = await browser.newContext();
+          const context = await browser.newContext({
+            extraHTTPHeaders: {
+              'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+              'x-vercel-set-bypass-cookie': 'true',
+            },
+          });
           const page = await context.newPage();
-          await page.goto(process.env.VERCEL_SHARE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-          await page.waitForURL(/^https:\/\/loyalflow-git-staging-anas-tarek\.vercel\.app\//, { timeout: 60000 });
           const response = await page.goto(`${process.env.STAGING_UAT_BASE_URL}/api/health/live`, { waitUntil: 'domcontentloaded', timeout: 60000 });
           if (!response?.ok()) throw new Error(`Staging health failed: ${response?.status()}`);
           const health = JSON.parse(await page.locator('body').innerText());
           if (health.environment !== 'staging' || health.release !== expected) {
             throw new Error(`Exact release mismatch: expected ${expected}, received ${health.release}`);
           }
-          await context.storageState({ path: '/tmp/lf-vercel-share-state.json' });
           await browser.close();
-          NODE
-          echo "PLAYWRIGHT_STORAGE_STATE=/tmp/lf-vercel-share-state.json" >> "$GITHUB_ENV"
-
-      - name: Configure ephemeral Playwright share session
-        shell: bash
-        run: |
-          set -euo pipefail
-          node <<'NODE'
-          const fs = require('fs');
-          const path = 'playwright.config.ts';
-          let source = fs.readFileSync(path, 'utf8');
-          const strict = `if (remoteStaging && !vercelProtectionBypass) {\n  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for protected Remote Staging UAT.");\n}\n`;
-          if (!source.includes(strict)) throw new Error('Expected remote-protection guard was not found');
-          source = source.replace(strict, '');
-          source = source.replace('  use: {\n', '  use: {\n    storageState: process.env.PLAYWRIGHT_STORAGE_STATE || undefined,\n');
-          fs.writeFileSync(path, source);
           NODE
 
       - name: Run exact-SHA browser UAT
