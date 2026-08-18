@@ -13,7 +13,7 @@ test("Final Product primary controls use canonical interaction states", () => {
   assert.match(button, /hover:bg-primary-hover/);
   assert.match(button, /active:bg-\[var\(--lf-primary-active\)\]/);
   assert.match(button, /aria-busy=\{loading \|\| undefined\}/);
-  assert.match(button, /disabled:isDisabled/);
+  assert.match(button, /disabled=\{isDisabled\}/);
 });
 
 test("Final Product brand and surface primitives use the LoyalFlow hierarchy", () => {
