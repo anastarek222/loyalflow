@@ -30,7 +30,7 @@ export function PageHeader({
     <header
       {...props}
       className={cn(
-        "lf-page-header flex flex-col gap-5 rounded-[var(--lf-radius-card)] border border-white/70 bg-white/75 p-5 shadow-sm backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between sm:p-6",
+        "lf-page-header flex flex-col gap-5 rounded-[var(--lf-radius-lg)] border border-border bg-surface-raised p-5 shadow-[var(--lf-shadow-raised)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between sm:p-6",
         className,
       )}
     >
