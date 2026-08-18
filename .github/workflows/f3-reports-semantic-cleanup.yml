@@ -1,0 +1,41 @@
+name: F3 Reports semantic cleanup
+
+on:
+  push:
+    branches:
+      - final-product/f3-reports-presentation-parity
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: final-product/f3-reports-presentation-parity
+          fetch-depth: 0
+      - name: Remove remaining legacy report presentation classes
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          path = Path('app/businesses/[slug]/reports/page.tsx')
+          source = path.read_text()
+          count = source.count('text-slate-500')
+          if count != 3:
+              raise SystemExit(f'Expected 3 text-slate-500 residues, found {count}')
+          source = source.replace('text-slate-500', 'text-foreground-muted')
+          path.write_text(source)
+          PY
+      - name: Remove one-time workflow and commit cleanup
+        shell: bash
+        run: |
+          rm .github/workflows/f3-reports-semantic-cleanup.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/businesses/'[slug]'/reports/page.tsx .github/workflows/f3-reports-semantic-cleanup.yml
+          git commit -m "style: finish Reports semantic presentation cleanup"
+          git push origin HEAD:final-product/f3-reports-presentation-parity
