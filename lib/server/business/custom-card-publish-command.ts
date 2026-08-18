@@ -11,14 +11,15 @@ export type CustomCardPublishActor = Parameters<
  * SUPER_ADMIN authorization, version parsing, storage lookup and artwork URL
  * resolution remain in the Server Action. This command owns only the Business
  * persistence payload, persisted OPERATE enforcement and atomic settings audit
- * through the shared settings authority.
+ * through the shared settings authority. A null back URL intentionally selects
+ * the canonical renderer-generated safe back rather than another stored asset.
  */
 export async function publishCustomCardArtworkCommand(input: {
   businessId: string;
   actor: CustomCardPublishActor;
   version: string;
   frontUrl: string;
-  backUrl: string;
+  backUrl: string | null;
 }) {
   return updateBusinessSettingsCommand({
     businessId: input.businessId,
