@@ -4,6 +4,7 @@ import type {
 } from "next";
 
 import "./globals.css";
+import "./loyalflow-theme-aliases.css";
 import { cookies } from "next/headers";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
