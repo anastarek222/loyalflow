@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
+import { PageHeader } from "@/components/page-layout";
+import type { Prisma } from "@/generated/prisma/client";
+import { normalizeLanguage } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { Prisma } from "../../generated/prisma/client";
-
 
 type BusinessesPageProps = {
   searchParams: Promise<{
@@ -31,6 +32,8 @@ const SORT_OPTIONS = {
 
 type SortOption = keyof typeof SORT_OPTIONS;
 
+type Language = "AR" | "EN";
+
 function isSortOption(value: string): value is SortOption {
   return Object.prototype.hasOwnProperty.call(SORT_OPTIONS, value);
 }
@@ -40,17 +43,23 @@ function getSortOption(value: string | undefined): SortOption {
 }
 
 function getPageNumber(page: string | undefined) {
-  if (!page || !/^\d+$/.test(page)) {
-    return 1;
-  }
-
+  if (!page || !/^\d+$/.test(page)) return 1;
   const parsedPage = Number(page);
   return Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 }
 
 function getFilterOptions(values: Array<string | null>) {
-  return [...new Set(values.filter((value): value is string => Boolean(value?.trim())))]
-    .sort((first, second) => first.localeCompare(second));
+  return [
+    ...new Set(values.filter((value): value is string => Boolean(value?.trim()))),
+  ].sort((first, second) => first.localeCompare(second));
+}
+
+function loyaltyModeLabel(mode: string, language: Language) {
+  if (mode === "VISITS") return language === "AR" ? "زيارات" : "Visits";
+  if (mode === "POINTS") return language === "AR" ? "نقاط" : "Points";
+  if (mode === "SALES_AMOUNT")
+    return language === "AR" ? "قيمة المبيعات" : "Sales amount";
+  return mode;
 }
 
 export default async function BusinessesPage({
@@ -58,33 +67,155 @@ export default async function BusinessesPage({
 }: BusinessesPageProps) {
   const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
-
-  if (session.user.role !== "SUPER_ADMIN") {
-    redirect("/dashboard");
-  }
+  if (!session?.user) redirect("/login");
+  if (session.user.role !== "SUPER_ADMIN") redirect("/dashboard");
 
   const params = await searchParams;
-  const filterRecords = await prisma.business.findMany({
-    select: {
-      industry: true,
-      country: true,
-      currency: true,
-    },
-  });
-  const industries = getFilterOptions(filterRecords.map(({ industry }) => industry));
+  const [currentUser, filterRecords] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { language: true },
+    }),
+    prisma.business.findMany({
+      select: {
+        industry: true,
+        country: true,
+        currency: true,
+      },
+    }),
+  ]);
+  const language = normalizeLanguage(currentUser?.language);
+  const copy =
+    language === "AR"
+      ? {
+          eyebrow: "إدارة المنصة",
+          title: "الأنشطة التجارية",
+          description: "أضف أنشطة عملائك وأدرها من مساحة تشغيل واحدة.",
+          back: "العودة إلى لوحة التحكم",
+          total: "إجمالي الأنشطة",
+          add: "إضافة نشاط",
+          invitationSent:
+            "تم إرسال دعوة المالك. يجب على المالك استخدام رابط البريد لتفعيل حسابه وإكمال الإعداد.",
+          created: "تم إنشاء النشاط بنجاح.",
+          deleted: "تم حذف النشاط نهائيًا مع الاحتفاظ بحسابات المستخدمين.",
+          invalid: "راجع البيانات المدخلة.",
+          slugGeneration:
+            "تعذر إنشاء رابط فريد وآمن للنشاط. حاول مرة أخرى.",
+          ownerEmail: "يوجد حساب بالفعل ببريد المالك هذا.",
+          invitationInvalid: "راجع بيانات دعوة المالك.",
+          inviteUnavailable: "تعذر إنشاء الدعوة. حاول مرة أخرى.",
+          search: "البحث في الأنشطة",
+          searchPlaceholder: "ابحث بالاسم أو الرابط أو بيانات التواصل",
+          status: "تصفية حسب الحالة",
+          allStatuses: "كل الحالات",
+          active: "نشط",
+          inactive: "غير نشط",
+          industry: "تصفية حسب المجال",
+          allIndustries: "كل المجالات",
+          country: "تصفية حسب الدولة",
+          allCountries: "كل الدول",
+          currency: "تصفية حسب العملة",
+          allCurrencies: "كل العملات",
+          sort: "ترتيب الأنشطة",
+          newest: "الأحدث أولًا",
+          oldest: "الأقدم أولًا",
+          nameAsc: "الاسم: أ إلى ي",
+          nameDesc: "الاسم: ي إلى أ",
+          apply: "تطبيق",
+          clear: "مسح الفلاتر",
+          results: (filtered: number, total: number) =>
+            `${filtered} نتيجة من ${total} نشاط`,
+          noBusinesses: "لا توجد أنشطة حتى الآن",
+          noBusinessesDescription:
+            "أضف أول نشاط تجاري لبدء إعداد برنامج الولاء.",
+          noMatches: "لا توجد أنشطة مطابقة",
+          noMatchesDescription: "عدّل البحث أو الفلاتر، أو امسحها لعرض كل الأنشطة.",
+          customers: "العملاء",
+          users: "المستخدمون",
+          system: "النظام",
+          reward: "المكافأة",
+          after: "بعد",
+          open: "فتح النشاط",
+          pages: "صفحات الأنشطة",
+          previous: "السابق",
+          next: "التالي",
+          pageOf: (page: number, total: number) => `صفحة ${page} من ${total}`,
+        }
+      : {
+          eyebrow: "Platform administration",
+          title: "Businesses",
+          description: "Add and manage client businesses from one operations workspace.",
+          back: "Back to dashboard",
+          total: "Total businesses",
+          add: "Add business",
+          invitationSent:
+            "Owner invitation sent. The owner must use the email link to activate their account and complete setup.",
+          created: "Business created successfully.",
+          deleted: "Business deleted permanently. User accounts were preserved.",
+          invalid: "Please check the entered information.",
+          slugGeneration:
+            "We could not safely generate a unique business link. Please try again.",
+          ownerEmail: "An account with this owner email already exists.",
+          invitationInvalid: "Check the owner invitation details.",
+          inviteUnavailable: "The invitation could not be created. Please try again.",
+          search: "Search businesses",
+          searchPlaceholder: "Search by name, slug, or contact details",
+          status: "Filter by status",
+          allStatuses: "All statuses",
+          active: "Active",
+          inactive: "Inactive",
+          industry: "Filter by industry",
+          allIndustries: "All industries",
+          country: "Filter by country",
+          allCountries: "All countries",
+          currency: "Filter by currency",
+          allCurrencies: "All currencies",
+          sort: "Sort businesses",
+          newest: "Newest first",
+          oldest: "Oldest first",
+          nameAsc: "Name: A to Z",
+          nameDesc: "Name: Z to A",
+          apply: "Apply",
+          clear: "Clear filters",
+          results: (filtered: number, total: number) =>
+            `${filtered} ${filtered === 1 ? "result" : "results"} from ${total} ${total === 1 ? "business" : "businesses"}`,
+          noBusinesses: "No businesses yet",
+          noBusinessesDescription:
+            "Add your first business to begin configuring its loyalty programme.",
+          noMatches: "No matching businesses",
+          noMatchesDescription: "Adjust or clear the search and filters to see more businesses.",
+          customers: "Customers",
+          users: "Users",
+          system: "System",
+          reward: "Reward",
+          after: "after",
+          open: "Open business",
+          pages: "Business pages",
+          previous: "Previous",
+          next: "Next",
+          pageOf: (page: number, total: number) => `Page ${page} of ${total}`,
+        };
+
+  const industries = getFilterOptions(
+    filterRecords.map(({ industry }) => industry),
+  );
   const countries = getFilterOptions(filterRecords.map(({ country }) => country));
-  const currencies = getFilterOptions(filterRecords.map(({ currency }) => currency));
+  const currencies = getFilterOptions(
+    filterRecords.map(({ currency }) => currency),
+  );
 
   const query = params.q?.trim().slice(0, 200) ?? "";
-  const status = params.status === "active" || params.status === "inactive"
-    ? params.status
-    : "all";
-  const industry = industries.includes(params.industry ?? "") ? params.industry! : "";
+  const status =
+    params.status === "active" || params.status === "inactive"
+      ? params.status
+      : "all";
+  const industry = industries.includes(params.industry ?? "")
+    ? params.industry!
+    : "";
   const country = countries.includes(params.country ?? "") ? params.country! : "";
-  const currency = currencies.includes(params.currency ?? "") ? params.currency! : "";
+  const currency = currencies.includes(params.currency ?? "")
+    ? params.currency!
+    : "";
   const sort = getSortOption(params.sort);
 
   const where: Prisma.BusinessWhereInput = {
@@ -111,7 +242,10 @@ export default async function BusinessesPage({
     prisma.business.count(),
     prisma.business.count({ where }),
   ]);
-  const totalPages = Math.max(1, Math.ceil(filteredBusinesses / BUSINESSES_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredBusinesses / BUSINESSES_PER_PAGE),
+  );
   const currentPage = Math.min(getPageNumber(params.page), totalPages);
   const businesses = await prisma.business.findMany({
     where,
@@ -129,8 +263,14 @@ export default async function BusinessesPage({
   });
 
   const hasActiveFilters = Boolean(
-    query || status !== "all" || industry || country || currency || sort !== "newest",
+    query ||
+      status !== "all" ||
+      industry ||
+      country ||
+      currency ||
+      sort !== "newest",
   );
+
   const buildBusinessesUrl = (page = 1, includeFilters = true) => {
     const urlParams = new URLSearchParams();
 
@@ -153,239 +293,328 @@ export default async function BusinessesPage({
   };
 
   return (
-    <main className="min-h-screen bg-surface-subtle px-4 py-8 sm:px-8">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-primary hover:text-primary"
-            >
-              ← Back to dashboard
-            </Link>
+    <main
+      className="min-h-screen bg-surface-subtle px-4 py-8 sm:px-8"
+      dir={language === "AR" ? "rtl" : "ltr"}
+      data-businesses-language={language}
+    >
+      <div className="mx-auto max-w-7xl space-y-6">
+        <Link
+          href="/dashboard"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:text-primary-hover"
+        >
+          {language === "AR" ? "→" : "←"} {copy.back}
+        </Link>
 
-            <h1 className="mt-2 text-3xl font-bold text-foreground">
-              Businesses
-            </h1>
-
-            <p className="mt-1 text-foreground-subtle">
-              Add and manage your agency clients.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3"><div className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-white"><span className="text-sm text-foreground-subtle">Total businesses</span><strong className="ml-4 text-xl">{totalBusinesses}</strong></div><Link href="/businesses/new" className="rounded-[var(--lf-radius-input)] bg-primary px-5 py-4 font-semibold text-white hover:bg-primary-hover">Add Business</Link></div>
-        </header>
+        <PageHeader
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
+          secondaryActions={
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="rounded-[var(--lf-radius-md)] border border-border bg-surface-subtle px-4 py-3">
+                <span className="text-xs font-semibold text-foreground-subtle">
+                  {copy.total}
+                </span>
+                <strong className="ms-3 text-lg text-foreground">
+                  {totalBusinesses}
+                </strong>
+              </div>
+              <Link
+                href="/businesses/new"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-md)] bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+              >
+                {copy.add}
+              </Link>
+            </div>
+          }
+        />
 
         {(params.created === "1" || params.created === "invitation") && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
-            {params.created === "invitation" ? "Owner invitation sent. The owner must use the email link to activate their account and complete setup." : "Business created successfully."}
+          <div className="rounded-[var(--lf-radius-md)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
+            {params.created === "invitation" ? copy.invitationSent : copy.created}
           </div>
         )}
         {params.businessDelete === "success" ? (
           <div
             role="status"
-            className="mb-6 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-4 text-success"
+            className="rounded-[var(--lf-radius-md)] border border-success/30 bg-success-subtle px-4 py-4 text-success"
           >
-            Business deleted permanently. User accounts were preserved.
+            {copy.deleted}
           </div>
         ) : null}
 
         {params.error === "invalid" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
-            Please check the entered information.
+          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {copy.invalid}
           </div>
         )}
-
         {params.error === "slug-generation" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
-            We could not safely generate a unique business link. Please try again.
+          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {copy.slugGeneration}
           </div>
         )}
-
         {params.error === "owner-email" && (
-          <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
-            An account with this owner email already exists.
+          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {copy.ownerEmail}
           </div>
         )}
-        {params.error === "invitation-invalid" && <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">Check the owner invitation details.</div>}
-        {params.error === "invite-unavailable" && <div className="mb-6 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">The invitation could not be created. Please try again.</div>}
-
+        {params.error === "invitation-invalid" && (
+          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {copy.invitationInvalid}
+          </div>
+        )}
+        {params.error === "invite-unavailable" && (
+          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
+            {copy.inviteUnavailable}
+          </div>
+        )}
 
         <section>
-            <form
-              action="/businesses"
-              className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm"
-            >
-              {params.created && <input type="hidden" name="created" value={params.created} />}
-              {params.error && <input type="hidden" name="error" value={params.error} />}
+          <form
+            action="/businesses"
+            className="mb-6 rounded-[var(--lf-radius-lg)] border border-border bg-surface p-6 shadow-[var(--lf-shadow-raised)]"
+          >
+            {params.created && (
+              <input type="hidden" name="created" value={params.created} />
+            )}
+            {params.error && (
+              <input type="hidden" name="error" value={params.error} />
+            )}
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <input
-                  type="search"
-                  name="q"
-                  defaultValue={query}
-                  placeholder="Search businesses"
-                  aria-label="Search businesses"
-                  className="rounded-[var(--lf-radius-input)] border border-border px-4 py-2.5 text-sm text-foreground outline-none transition placeholder:text-foreground-subtle focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
-                />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <input
+                type="search"
+                name="q"
+                defaultValue={query}
+                placeholder={copy.searchPlaceholder}
+                aria-label={copy.search}
+                className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2.5 text-sm text-foreground outline-none transition placeholder:text-foreground-subtle focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              />
 
-                <select name="status" defaultValue={status} aria-label="Filter by status" className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20">
-                  <option value="all">All statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+              <select
+                name="status"
+                defaultValue={status}
+                aria-label={copy.status}
+                className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="all">{copy.allStatuses}</option>
+                <option value="active">{copy.active}</option>
+                <option value="inactive">{copy.inactive}</option>
+              </select>
 
-                <select name="industry" defaultValue={industry} aria-label="Filter by industry" className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20">
-                  <option value="">All industries</option>
-                  {industries.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+              <select
+                name="industry"
+                defaultValue={industry}
+                aria-label={copy.industry}
+                className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">{copy.allIndustries}</option>
+                {industries.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
 
-                <select name="country" defaultValue={country} aria-label="Filter by country" className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20">
-                  <option value="">All countries</option>
-                  {countries.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+              <select
+                name="country"
+                defaultValue={country}
+                aria-label={copy.country}
+                className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">{copy.allCountries}</option>
+                {countries.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
 
-                <select name="currency" defaultValue={currency} aria-label="Filter by currency" className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20">
-                  <option value="">All currencies</option>
-                  {currencies.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
+              <select
+                name="currency"
+                defaultValue={currency}
+                aria-label={copy.currency}
+                className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="">{copy.allCurrencies}</option>
+                {currencies.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
 
-                <select name="sort" defaultValue={sort} aria-label="Sort businesses" className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20">
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                  <option value="name_asc">Name: A to Z</option>
-                  <option value="name_desc">Name: Z to A</option>
-                </select>
-              </div>
+              <select
+                name="sort"
+                defaultValue={sort}
+                aria-label={copy.sort}
+                className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary/30 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="newest">{copy.newest}</option>
+                <option value="oldest">{copy.oldest}</option>
+                <option value="name_asc">{copy.nameAsc}</option>
+                <option value="name_desc">{copy.nameDesc}</option>
+              </select>
+            </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-4">
-                <button type="submit" className="rounded-[var(--lf-radius-input)] bg-foreground px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-subtle">
-                  Apply
-                </button>
-                {hasActiveFilters && (
-                  <Link href={buildBusinessesUrl(1, false)} className="text-sm font-medium text-primary hover:text-primary">
-                    Clear filters
-                  </Link>
-                )}
-                <p className="text-sm text-foreground-subtle">
-                  {filteredBusinesses} {filteredBusinesses === 1 ? "result" : "results"} from {totalBusinesses} {totalBusinesses === 1 ? "business" : "businesses"}
-                </p>
-              </div>
-            </form>
+            <div className="mt-4 flex flex-wrap items-center gap-4">
+              <button
+                type="submit"
+                className="rounded-[var(--lf-radius-md)] bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+              >
+                {copy.apply}
+              </button>
+              {hasActiveFilters && (
+                <Link
+                  href={buildBusinessesUrl(1, false)}
+                  className="text-sm font-medium text-primary hover:text-primary-hover"
+                >
+                  {copy.clear}
+                </Link>
+              )}
+              <p className="text-sm text-foreground-subtle">
+                {copy.results(filteredBusinesses, totalBusinesses)}
+              </p>
+            </div>
+          </form>
 
-            {businesses.length === 0 && totalBusinesses === 0 ? (
-              <div className="rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
-                <h2 className="text-xl font-semibold text-foreground">
-                  No businesses yet
-                </h2>
-
-                <p className="mt-2 text-foreground-subtle">
-                  Use the form to add your first loyalty card client.
-                </p>
-              </div>
-            ) : businesses.length === 0 ? (
-              <div className="rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
-                <h2 className="text-xl font-semibold text-foreground">
-                  No matching businesses
-                </h2>
-
-                <p className="mt-2 text-foreground-subtle">
-                  Try adjusting or clearing your search and filters.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="grid gap-6 sm:grid-cols-2">
-                  {businesses.map((business) => (
+          {businesses.length === 0 && totalBusinesses === 0 ? (
+            <div className="rounded-[var(--lf-radius-lg)] border border-dashed border-border bg-surface p-12 text-center">
+              <h2 className="text-xl font-semibold text-foreground">
+                {copy.noBusinesses}
+              </h2>
+              <p className="mt-2 text-foreground-subtle">
+                {copy.noBusinessesDescription}
+              </p>
+            </div>
+          ) : businesses.length === 0 ? (
+            <div className="rounded-[var(--lf-radius-lg)] border border-dashed border-border bg-surface p-12 text-center">
+              <h2 className="text-xl font-semibold text-foreground">
+                {copy.noMatches}
+              </h2>
+              <p className="mt-2 text-foreground-subtle">
+                {copy.noMatchesDescription}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2">
+                {businesses.map((business) => (
                   <Link
                     key={business.id}
                     href={`/businesses/${business.slug}`}
-                    className="group block overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
+                    className="group block overflow-hidden rounded-[var(--lf-radius-lg)] border border-border bg-surface shadow-[var(--lf-shadow-raised)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--lf-shadow-overlay)]"
                   >
                     <div
                       className="h-3"
-                      style={{
-                        backgroundColor: business.primaryColor,
-                      }}
+                      style={{ backgroundColor: business.primaryColor }}
                     />
 
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h2 className="text-xl font-bold text-foreground">
+                        <div className="min-w-0">
+                          <h2 className="truncate text-xl font-bold text-foreground">
                             {business.name}
                           </h2>
-
-                          <p className="mt-1 text-sm text-foreground-subtle">
+                          <p
+                            dir="ltr"
+                            className="mt-1 text-start text-sm text-foreground-subtle"
+                          >
                             /{business.slug}
                           </p>
                         </div>
 
-                        <span className={`rounded-full px-4 py-1 text-xs font-semibold ${business.isActive ? "bg-success-subtle text-success" : "bg-surface-subtle text-foreground-muted"}`}>
-                          {business.isActive ? "Active" : "Inactive"}
+                        <span
+                          className={`rounded-full px-4 py-1 text-xs font-semibold ${
+                            business.isActive
+                              ? "bg-success-subtle text-success"
+                              : "bg-surface-subtle text-foreground-muted"
+                          }`}
+                        >
+                          {business.isActive ? copy.active : copy.inactive}
                         </span>
                       </div>
 
                       <div className="mt-6 grid grid-cols-2 gap-4">
-                        <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                          <p className="text-xs text-foreground-subtle">Customers</p>
-                          <p className="mt-1 text-2xl font-bold">
+                        <div className="rounded-[var(--lf-radius-md)] bg-surface-subtle p-4">
+                          <p className="text-xs text-foreground-subtle">
+                            {copy.customers}
+                          </p>
+                          <p className="mt-1 text-2xl font-bold text-foreground">
                             {business._count.customers}
                           </p>
                         </div>
 
-                        <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                          <p className="text-xs text-foreground-subtle">Users</p>
-                          <p className="mt-1 text-2xl font-bold">
+                        <div className="rounded-[var(--lf-radius-md)] bg-surface-subtle p-4">
+                          <p className="text-xs text-foreground-subtle">
+                            {copy.users}
+                          </p>
+                          <p className="mt-1 text-2xl font-bold text-foreground">
                             {business._count.users}
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-6 rounded-[var(--lf-radius-input)] border border-border p-4 text-sm text-foreground-muted">
+                      <div className="mt-6 rounded-[var(--lf-radius-md)] border border-border p-4 text-sm text-foreground-muted">
                         <p>
-                          System:{" "}
-                          <strong>{business.loyaltyMode}</strong>
+                          {copy.system}: {" "}
+                          <strong>
+                            {loyaltyModeLabel(business.loyaltyMode, language)}
+                          </strong>
                         </p>
                         <p className="mt-1">
-                          Reward:{" "}
+                          {copy.reward}: {" "}
                           <strong>
-                            {business.rewardName} after{" "}
+                            {business.rewardName} {copy.after}{" "}
                             {business.rewardThreshold} {business.unitName}
                           </strong>
                         </p>
                       </div>
 
-                      <div className="mt-6 flex items-center justify-between rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition group-hover:bg-primary-subtle">
-                        <span>Open business</span>
-                        <span>→</span>
+                      <div className="mt-6 flex items-center justify-between rounded-[var(--lf-radius-md)] bg-foreground px-6 py-4 font-semibold text-[var(--lf-inverse)] transition-colors group-hover:bg-primary">
+                        <span>{copy.open}</span>
+                        <span>{language === "AR" ? "←" : "→"}</span>
                       </div>
                     </div>
                   </Link>
-                  ))}
-                </div>
+                ))}
+              </div>
 
-                {totalPages > 1 && (
-                  <nav aria-label="Business pages" className="mt-6 flex items-center justify-between gap-4">
-                    {currentPage > 1 ? (
-                      <Link href={buildBusinessesUrl(currentPage - 1)} className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-medium text-foreground-muted transition hover:border-primary/30 hover:text-primary">
-                        ← Previous
-                      </Link>
-                    ) : <span />}
+              {totalPages > 1 && (
+                <nav
+                  aria-label={copy.pages}
+                  className="mt-6 flex items-center justify-between gap-4"
+                >
+                  {currentPage > 1 ? (
+                    <Link
+                      href={buildBusinessesUrl(currentPage - 1)}
+                      className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground-muted transition hover:border-primary/30 hover:text-primary"
+                    >
+                      {language === "AR" ? "→" : "←"} {copy.previous}
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
 
-                    <span className="text-sm text-foreground-subtle">
-                      Page {currentPage} of {totalPages}
-                    </span>
+                  <span className="text-sm text-foreground-subtle">
+                    {copy.pageOf(currentPage, totalPages)}
+                  </span>
 
-                    {currentPage < totalPages ? (
-                      <Link href={buildBusinessesUrl(currentPage + 1)} className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-medium text-foreground-muted transition hover:border-primary/30 hover:text-primary">
-                        Next →
-                      </Link>
-                    ) : <span />}
-                  </nav>
-                )}
-              </>
-            )}
+                  {currentPage < totalPages ? (
+                    <Link
+                      href={buildBusinessesUrl(currentPage + 1)}
+                      className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground-muted transition hover:border-primary/30 hover:text-primary"
+                    >
+                      {copy.next} {language === "AR" ? "←" : "→"}
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                </nav>
+              )}
+            </>
+          )}
         </section>
       </div>
     </main>
