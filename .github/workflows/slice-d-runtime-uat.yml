@@ -161,7 +161,7 @@ jobs:
           NODE
           echo "PLAYWRIGHT_STORAGE_STATE=/tmp/lf-vercel-share-state.json" >> "$GITHUB_ENV"
 
-      - name: Configure cookie-session browser harness
+      - name: Configure MFA-aware cookie-session browser harness
         shell: bash
         run: |
           set -euo pipefail
@@ -181,6 +181,19 @@ jobs:
           const exactSelector = 'page.getByRole("link", { name: "Open customer card", exact: true })';
           if (!spec.includes(broadSelector)) throw new Error('Expected broad customer-card selector was not found');
           spec = spec.replace(broadSelector, exactSelector);
+
+          const importMarker = 'import { deflateSync } from "node:zlib";';
+          if (!spec.includes(importMarker)) throw new Error('Expected zlib import marker was not found');
+          spec = spec.replace(importMarker, `${importMarker}\n\nimport { generateTotpCode } from "../../lib/auth/super-admin-mfa";`);
+
+          const describeMarker = 'test.describe.serial("Pre-final administration and security UAT", () => {';
+          if (!spec.includes(describeMarker)) throw new Error('Expected UAT describe marker was not found');
+          const mfaHelper = `async function loginSuperAdminWithMfa(page: Page) {\n  const email = uatEmail("superadmin", fixture.runId);\n  const password = process.env.UAT_FIXTURE_PASSWORD!;\n\n  const fillPrimary = async () => {\n    await page.getByLabel("Email address").fill(email);\n    await page.getByLabel("Password").fill(password);\n    await page.getByRole("button", { name: "Sign in", exact: true }).press("Enter");\n  };\n\n  await page.goto("/login");\n  await fillPrimary();\n  const setupStep = page.getByTestId("login-mfa-setup-step");\n  await expect(setupStep).toBeVisible();\n  await setupStep.getByRole("link", { name: "Set up secure access", exact: true }).click();\n\n  await page.getByLabel("Super Admin email", { exact: true }).fill(email);\n  await page.getByLabel("Password", { exact: true }).fill(password);\n  await page.getByRole("button", { name: "Start MFA setup", exact: true }).click();\n  await expect(page.getByRole("heading", { name: "Add LoyalFlow to your authenticator", exact: true })).toBeVisible();\n\n  const secret = (await page.locator("code").first().innerText()).trim();\n  const recoveryCode = (await page.locator("code").nth(1).innerText()).trim();\n  expect(secret).toMatch(/^[A-Z2-7]+$/);\n  expect(recoveryCode).toMatch(/^[A-Z0-9-]+$/);\n\n  await page.getByLabel("6-digit authenticator code", { exact: true }).fill(generateTotpCode(secret));\n  await Promise.all([\n    page.waitForURL(/\\/login\\?mfa=enabled$/),\n    page.getByRole("button", { name: "Enable MFA", exact: true }).click(),\n  ]);\n\n  await fillPrimary();\n  await expect(page.getByTestId("login-mfa-step")).toBeVisible();\n  await page.locator("#mfaCode").fill(recoveryCode);\n  await page.locator("#mfaCode").press("Enter");\n  await expect(page).toHaveURL(/\\/dashboard$/);\n}\n\n`;
+          spec = spec.replace(describeMarker, mfaHelper + describeMarker);
+
+          const oldSuperAdminLogin = '    await login(page, "superadmin");';
+          if (!spec.includes(oldSuperAdminLogin)) throw new Error('Expected Super Admin login call was not found');
+          spec = spec.replace(oldSuperAdminLogin, '    await loginSuperAdminWithMfa(page);');
           fs.writeFileSync(specPath, spec);
           NODE
 
@@ -222,4 +235,4 @@ jobs:
           payload="$(jq -nc --arg target "$target" '{state:"failure",context:"Slice D Runtime UAT",description:"Exact-SHA Slice D browser matrix failed",target_url:$target}')"
           curl -fsS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" -d "$payload" >/dev/null
 
-# target: staging-16053d9263c2-direct-share-health
+# target: staging-16053d9263c2-mfa-aware
