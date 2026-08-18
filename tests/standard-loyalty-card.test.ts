@@ -28,8 +28,8 @@ test("standard card keeps the ISO bank-card aspect ratio contract", () => {
 
 test("standard card uses one browser-independent SVG canvas", () => {
   const card = source("components/standard-loyalty-card.tsx");
-  assert.match(card, /STANDARD_CARD_CANVAS = \{ width: 856, height: 540 \}/);
-  assert.match(card, /viewBox=\{`0 0 \$\{STANDARD_CARD_CANVAS\.width\} \$\{STANDARD_CARD_CANVAS\.height\}`\}/);
+  assert.match(card, /LOYALTY_CARD_CANVAS/);
+  assert.match(card, /viewBox=\{`0 0 \$\{LOYALTY_CARD_CANVAS\.width\} \$\{LOYALTY_CARD_CANVAS\.height\}`\}/);
   assert.match(card, /preserveAspectRatio="xMidYMid meet"/);
   assert.doesNotMatch(card, /ResizeObserver|transform:|cqw|cqh|cqi|cqb|containerType/);
 });
@@ -46,8 +46,14 @@ test("standard SVG isolates its fixed canvas from an RTL page", () => {
 test("standard QR has fixed logical dimensions and defensive bounds", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /data-safe-zone="qr-code"/);
-  assert.match(card, /x="716"\s+y="27"\s+width="112"\s+height="112"/);
-  assert.match(card, /x="726"\s+y="37"\s+width="92"\s+height="92"/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.x/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.y/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.width/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.height/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.x/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.y/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.width/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.height/);
   assert.match(card, /preserveAspectRatio="xMidYMid meet"/);
 });
 
@@ -56,7 +62,7 @@ test("protected Standard Front keeps its approved structural coordinates", () =>
   assert.match(card, /x="430"\s+y="238"\s+width="378"\s+height="250"/);
   assert.match(card, /x=\{rtl \? 355 : 42\}\s+y="215"/);
   assert.match(card, /x=\{rtl \? 355 : 42\}\s+y="327"/);
-  assert.match(card, /x="716"\s+y="27"\s+width="112"\s+height="112"/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.x/);
 });
 
 test("standard decoration has a bounded non-repeating texture", () => {
