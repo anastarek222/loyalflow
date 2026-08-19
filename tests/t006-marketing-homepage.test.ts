@@ -33,6 +33,12 @@ test("T006 marketing homepage reuses the canonical locale cookie and direction h
 
 test("T006 marketing copy stays in the canonical bilingual catalog", () => {
   const catalog = source("lib/i18n/catalog.ts");
+  const english = source("lib/i18n/locales/en/marketing.ts");
+  const arabic = source("lib/i18n/locales/ar/marketing.ts");
+
+  assert.match(catalog, /import \{ marketingMessages \} from "\.\/marketing"/);
+  assert.match(catalog, /\.\.\.marketingMessages\.en/);
+  assert.match(catalog, /\.\.\.marketingMessages\.ar/);
 
   for (const key of [
     "marketing.metaTitle",
@@ -45,8 +51,10 @@ test("T006 marketing copy stays in the canonical bilingual catalog", () => {
     "marketing.featureThreeTitle",
     "marketing.workflowTitle",
   ]) {
-    const occurrences = catalog.split(`\"${key}\"`).length - 1;
-    assert.equal(occurrences, 2, `${key} should exist once per locale`);
+    const englishOccurrences = english.split(`\"${key}\"`).length - 1;
+    const arabicOccurrences = arabic.split(`\"${key}\"`).length - 1;
+    assert.equal(englishOccurrences, 1, `${key} should exist once in English`);
+    assert.equal(arabicOccurrences, 1, `${key} should exist once in Arabic`);
   }
 });
 
