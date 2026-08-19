@@ -6,7 +6,3 @@ export const platformBrand = {
   themeColor: "#0f172a",
   backgroundColor: "#f1f5f9",
 } as const;
-
-export function platformTitleTemplate(title: string) {
-  return `${title} | ${platformBrand.name}`;
-}
