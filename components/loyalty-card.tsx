@@ -19,10 +19,10 @@ export type LoyaltyCardProps = StandardLoyaltyCardProps & {
   customSafeZoneVersion?: string | null;
 };
 
-function CustomQr({ src }: { src?: string | null }) {
-  if (src) return <img src={src} alt="Customer loyalty QR code" className="size-full bg-white object-contain" />;
+function CustomQr({ src, label }: { src?: string | null; label: string }) {
+  if (src) return <img src={src} alt={label} className="size-full bg-white object-contain" />;
   return (
-    <div className="grid size-full grid-cols-5 gap-[5%] bg-white p-[10%]" aria-label="Preview QR code">
+    <div className="grid size-full grid-cols-5 gap-[5%] bg-white p-[10%]" aria-label={label}>
       {Array.from({ length: 25 }, (_, index) => (
         <span key={index} className={index % 2 === 0 || [1, 5, 9, 13, 17, 21].includes(index) ? "bg-slate-950" : "bg-white"} />
       ))}
@@ -57,8 +57,8 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const artworkUrl = side === "front" ? props.customFrontArtworkUrl : props.customBackArtworkUrl;
   const accent = readableAccentOnDark(props.primaryColor);
   const labels = language === "AR"
-    ? { member: "اسم العضو", id: "رقم العضوية", balance: "الرصيد", reward: "المكافأة القادمة" }
-    : { member: "MEMBER NAME", id: "LOYALTY ID", balance: "BALANCE", reward: "NEXT REWARD" };
+    ? { card: "بطاقة الولاء", member: "اسم العضو", id: "رقم العضوية", balance: "الرصيد", reward: "المكافأة القادمة", qr: "رمز QR الخاص بالعميل", terms: "تطبق شروط برنامج الولاء" }
+    : { card: "LOYALTY CARD", member: "MEMBER NAME", id: "LOYALTY ID", balance: "BALANCE", reward: "NEXT REWARD", qr: "Customer loyalty QR code", terms: "Loyalty programme terms apply" };
   const website = formatWebsiteForCard(props.businessWebsite);
   const location = props.businessLocation || props.businessAddress;
   const contactItems = [props.businessPhone, website, location].filter(
@@ -87,11 +87,11 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             className="min-w-0 w-fit max-w-full rounded-[2cqw] border border-white/15 bg-black/60 px-[2.5cqw] py-[1.8cqw] backdrop-blur-sm"
           >
             <p dir="auto" title={props.businessName} className="truncate text-[3.7cqw] font-black tracking-[0.06em]">{props.businessName}</p>
-            <p className="mt-[1cqw] text-[1.45cqw] font-bold tracking-[0.22em]" style={{ color: accent }}>LOYALTY CARD</p>
+            <p className="mt-[1cqw] text-[1.45cqw] font-bold tracking-[0.22em]" style={{ color: accent }}>{labels.card}</p>
           </div>
           <div data-safe-zone="custom-qr" className="justify-self-end">
             <div className="size-[18cqw] overflow-hidden rounded-[2cqw] bg-white p-[0.7cqw] shadow-xl">
-              <CustomQr src={props.qrCode} />
+              <CustomQr src={props.qrCode} label={labels.qr} />
             </div>
           </div>
           <div
@@ -140,7 +140,7 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             {contactItems.length ? (
               <p dir="auto" title={contactItems.join(" · ")} className="min-w-0 truncate">{contactItems.join(" · ")}</p>
             ) : <span />}
-            <p className="shrink-0">LOYALFLOW · Loyalty programme terms apply</p>
+            <p className="shrink-0">LOYALFLOW · {labels.terms}</p>
           </div>
         </div>
       )}
