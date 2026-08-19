@@ -246,12 +246,14 @@ function Brand({
   logoUrl,
   accent,
   muted,
+  rtl,
 }: {
   id: string;
   businessName: string;
   logoUrl?: string | null;
   accent: string;
   muted: string;
+  rtl: boolean;
 }) {
   return (
     <g
@@ -306,9 +308,10 @@ function Brand({
         fill={muted}
         fontSize="11"
         fontWeight="600"
-        letterSpacing="4"
+        letterSpacing={rtl ? "0" : "4"}
+        direction={rtl ? "rtl" : "ltr"}
       >
-        LOYALTY PROGRAMME
+        {rtl ? "برنامج الولاء" : "LOYALTY PROGRAMME"}
       </text>
     </g>
   );
@@ -458,6 +461,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         logoUrl={props.logoUrl}
         accent={accent}
         muted={muted}
+        rtl={rtl}
       />
       <g data-safe-zone="qr-code">
         <rect
