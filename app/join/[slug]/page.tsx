@@ -6,6 +6,7 @@ import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy
 import prisma from "@/lib/prisma";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
+import { formatLoyaltyAmount } from "@/lib/loyalty/presentation";
 import { notFound } from "next/navigation";
 
 type JoinBusinessPageProps = {
@@ -66,7 +67,9 @@ export default async function JoinBusinessPage({
       cardStyle: true,
       fontFamily: true,
       loyaltyProgramName: true,
+      loyaltyMode: true,
       unitName: true,
+      currency: true,
       rewardName: true,
       rewardThreshold: true,
       cardDefaultLanguage: true,
@@ -158,6 +161,13 @@ export default async function JoinBusinessPage({
   const message =
     business.welcomeMessage?.trim() ||
     copy.messageFallback;
+  const rewardTarget = formatLoyaltyAmount({
+    loyaltyMode: business.loyaltyMode,
+    language,
+    unitName: business.unitName,
+    currency: business.currency,
+    amount: business.rewardThreshold,
+  });
 
   return (
     <main
@@ -248,7 +258,7 @@ export default async function JoinBusinessPage({
               color: theme.primaryColor,
             }}
           >
-            {copy.reward} {business.rewardThreshold} {business.unitName} {copy.rewardSuffix} {business.rewardName}.
+            {copy.reward} {rewardTarget} {copy.rewardSuffix} {business.rewardName}.
           </div>
 
           {appliedReferralCode ? (
