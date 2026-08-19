@@ -24,6 +24,7 @@ test("public SEO routes stay limited to approved marketing surfaces", async () =
       source("lib/urls/public-site-url.ts"),
     ]);
 
+  assert.match(layout, /metadataBase:\s*new URL\(PUBLIC_SITE_URL\)/);
   assert.match(layout, /index:\s*false/);
   assert.match(layout, /follow:\s*false/);
   assert.match(home, /index:\s*true/);
