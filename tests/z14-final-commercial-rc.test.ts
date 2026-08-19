@@ -41,7 +41,7 @@ test("Z14 reaches release gates without falsely closing real-business, payment, 
   const zPlan = source("docs/FINAL_PRODUCT_Z_PLAN.md");
 
   assert.match(rc, /READY_FOR_RELEASE_GATES/);
-  assert.match(rc, /not `READY_FOR_PRODUCTION`, `GA_READY`, or permission to deploy Production/);
+  assert.match(rc, /\*\*not\*\* `READY_FOR_PRODUCTION`, `GA_READY`, or permission to deploy Production/);
   assert.match(deferred, /self-service signup, tenant\/trial bootstrap, legal-consent lifecycle, pricing, analytics, billing\/payment/);
   assert.match(deferred, /`DEFERRED_REAL_CLOSED_BETA`/);
   assert.match(deferred, /Production status: forbidden until an explicit later authorization/);
