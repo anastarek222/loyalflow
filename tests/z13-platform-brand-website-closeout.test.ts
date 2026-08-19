@@ -41,15 +41,26 @@ test("Z13 keeps marketing and sign-in platform identity out of view hardcodes", 
 
 test("Z13 keeps bilingual website narrative centrally editable through the i18n catalog", () => {
   const catalog = source("lib/i18n/catalog.ts");
+  const marketing = source("lib/i18n/marketing.ts");
+  const english = source("lib/i18n/locales/en/marketing.ts");
+  const arabic = source("lib/i18n/locales/ar/marketing.ts");
 
   assert.match(catalog, /en:\s*\{/);
   assert.match(catalog, /ar:\s*\{/);
   assert.match(catalog, /\.\.\.commonMessages\.en/);
   assert.match(catalog, /\.\.\.commonMessages\.ar/);
-  assert.match(catalog, /"marketing\.metaTitle"/);
-  assert.match(catalog, /"marketing\.heroBody"/);
-  assert.match(catalog, /"marketing\.securityBody"/);
-  assert.match(catalog, /"marketing\.faqThreeQuestion"/);
+  assert.match(catalog, /import \{ marketingMessages \} from "\.\/marketing"/);
+  assert.match(catalog, /\.\.\.marketingMessages\.en/);
+  assert.match(catalog, /\.\.\.marketingMessages\.ar/);
+  assert.match(marketing, /marketingMessagesEn/);
+  assert.match(marketing, /marketingMessagesAr/);
+
+  for (const localeSource of [english, arabic]) {
+    assert.match(localeSource, /"marketing\.metaTitle"/);
+    assert.match(localeSource, /"marketing\.heroBody"/);
+    assert.match(localeSource, /"marketing\.securityBody"/);
+    assert.match(localeSource, /"marketing\.faqThreeQuestion"/);
+  }
 });
 
 test("Z13 does not invent a runtime brand editor or cross the Beta safety boundary", () => {
