@@ -14,6 +14,16 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+function joinRetryUrl(
+  slug: string,
+  problemCode: string,
+  referralCode: string | null,
+) {
+  const params = new URLSearchParams({ error: problemCode });
+  if (referralCode) params.set("ref", referralCode);
+  return `/join/${slug}?${params.toString()}`;
+}
+
 export async function joinBusinessAction(slug: string, formData: FormData) {
   const business = await prisma.business.findUnique({
     where: { slug },
@@ -32,6 +42,10 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     );
   }
 
+  const referralCode = canApplyPublicReferral(business.plan)
+    ? normalizeReferralCode(formData.get("ref"))
+    : null;
+
   if (
     !canPerformSubscriptionOperation(
       business.subscriptionLifecycleState,
@@ -39,7 +53,11 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     )
   ) {
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
+      joinRetryUrl(
+        business.slug,
+        publicMembershipRegistrationProblemCodes.businessUnavailable,
+        referralCode,
+      ),
     );
   }
 
@@ -52,7 +70,11 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
 
   if (!limit.allowed) {
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.rateLimited}`,
+      joinRetryUrl(
+        business.slug,
+        publicMembershipRegistrationProblemCodes.rateLimited,
+        referralCode,
+      ),
     );
   }
 
@@ -64,7 +86,11 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
 
   if (!parsed) {
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.invalidInput}`,
+      joinRetryUrl(
+        business.slug,
+        publicMembershipRegistrationProblemCodes.invalidInput,
+        referralCode,
+      ),
     );
   }
 
@@ -83,10 +109,6 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
       `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
     );
   }
-
-  const referralCode = canApplyPublicReferral(business.plan)
-    ? normalizeReferralCode(formData.get("ref"))
-    : null;
 
   let result: Awaited<ReturnType<typeof createPublicMembershipCommand>>;
   try {
@@ -108,7 +130,11 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     }
 
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
+      joinRetryUrl(
+        business.slug,
+        publicMembershipRegistrationProblemCodes.businessUnavailable,
+        referralCode,
+      ),
     );
   }
 
@@ -120,11 +146,19 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     }
     if (result.reason === "PLAN_LIMIT") {
       redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.customerLimitReached}`,
+        joinRetryUrl(
+          business.slug,
+          publicMembershipRegistrationProblemCodes.customerLimitReached,
+          referralCode,
+        ),
       );
     }
     redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.businessUnavailable}`,
+      joinRetryUrl(
+        business.slug,
+        publicMembershipRegistrationProblemCodes.businessUnavailable,
+        referralCode,
+      ),
     );
   }
 
