@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { platformBrand } from "@/lib/platform-brand";
 
 export const size = {
   width: 512,
@@ -19,7 +20,7 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           background:
-            "linear-gradient(145deg, #020617, #2563eb)",
+            `linear-gradient(145deg, ${platformBrand.iconGradientStart}, ${platformBrand.iconGradientEnd})`,
           color: "white",
           fontSize: 170,
           fontWeight: 900,
@@ -27,7 +28,7 @@ export default function Icon() {
           borderRadius: 100,
         }}
       >
-        LF
+        {platformBrand.iconMark}
       </div>
     ),
     {
