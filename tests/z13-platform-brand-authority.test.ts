@@ -12,6 +12,9 @@ test("Z13 central platform brand authority preserves the current public identity
   assert.deepEqual(platformBrand, {
     name: "LoyalFlow",
     shortName: "LoyalFlow",
+    iconMark: "LF",
+    iconGradientStart: "#020617",
+    iconGradientEnd: "#2563eb",
     metadataDescription: "Secure loyalty card and rewards management system.",
     manifestDescriptionAr: "نظام رقمي لإدارة العملاء وبرامج الولاء والمكافآت.",
     themeColor: "#0f172a",
@@ -38,6 +41,19 @@ test("Z13 root metadata and PWA manifest consume the central brand authority", (
   assert.match(manifest, /background_color:\s*platformBrand\.backgroundColor/);
   assert.match(manifest, /theme_color:\s*platformBrand\.themeColor/);
   assert.doesNotMatch(manifest, /"LoyalFlow"/);
+});
+
+test("Z13 app icons consume the same platform mark and gradient authority", () => {
+  for (const path of ["app/icon.tsx", "app/apple-icon.tsx"]) {
+    const icon = source(path);
+
+    assert.match(icon, /import \{ platformBrand \} from "@\/lib\/platform-brand"/);
+    assert.match(icon, /platformBrand\.iconGradientStart/);
+    assert.match(icon, /platformBrand\.iconGradientEnd/);
+    assert.match(icon, /\{platformBrand\.iconMark\}/);
+    assert.doesNotMatch(icon, />\s*LF\s*</);
+    assert.doesNotMatch(icon, /#020617|#2563eb/);
+  }
 });
 
 test("Z13 keeps bilingual marketing copy owned by the existing i18n catalog", () => {

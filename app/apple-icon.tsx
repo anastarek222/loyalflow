@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { platformBrand } from "@/lib/platform-brand";
 
 export const size = {
   width: 180,
@@ -19,7 +20,7 @@ export default function AppleIcon() {
           alignItems: "center",
           justifyContent: "center",
           background:
-            "linear-gradient(145deg, #020617, #2563eb)",
+            `linear-gradient(145deg, ${platformBrand.iconGradientStart}, ${platformBrand.iconGradientEnd})`,
           color: "white",
           fontSize: 64,
           fontWeight: 900,
@@ -27,7 +28,7 @@ export default function AppleIcon() {
           borderRadius: 38,
         }}
       >
-        LF
+        {platformBrand.iconMark}
       </div>
     ),
     {
