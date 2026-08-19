@@ -161,11 +161,15 @@ export function PublicCardActions({
           </button>
         ) : null}
       </div>
-      {notice && notice !== copy.copied ? (
+      {notice ? (
         <p
           role="status"
           aria-live="polite"
-          className="mt-3 text-center text-xs font-semibold text-slate-600"
+          className={
+            notice === copy.copied
+              ? "sr-only"
+              : "mt-3 text-center text-xs font-semibold text-slate-600"
+          }
         >
           {notice}
         </p>
