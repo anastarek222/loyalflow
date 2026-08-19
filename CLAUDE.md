@@ -1,120 +1,134 @@
-# CLAUDE.md
+# LoyalFlow coding-agent guidance
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is repository guidance for coding agents. The current repository and `staging` branch are the source of truth; do not rely on older handoff assumptions.
 
-## Development Commands
+## Read before changing code
 
-- `npm run dev` - Start the development server on http://localhost:3000
-- `npm run build` - Build the application for production (runs `prisma generate` then `next build`)
-- `npm run start` - Start the production server
-- `npm run lint` - Run ESLint for linting
-- `npm run create-admin` - Create a super admin user (runs `tsx scripts/create-super-admin.ts`)
-- `npm run sync-sheets` - Synchronize data with Google Sheets (runs `tsx scripts/sync-google-sheets.ts`)
+1. Read `AGENTS.md`.
+2. Because this repository uses a current Next.js release with breaking changes, read the relevant guide in `node_modules/next/dist/docs/` before changing Next.js APIs or conventions.
+3. Read `docs/FINAL_PRODUCT_Z_PLAN.md` for completed product boundaries.
+4. Read GitHub issue #206 for the current release-gate state when release status matters.
 
-## Code Structure
+## Current state
 
-This is a Next.js 13+ application using the App Router. Key directories:
+- Working branch authority: `staging`.
+- Final Product Z1–Z14 is complete at source/code/automated-test/CI/merge level.
+- Current authorized work is bounded Final Visual / brand-customization preparation and later visual implementation.
+- This phase is not Z15.
+- Manual UAT and real-business Closed Beta remain deferred until explicitly resumed.
+- Production is not authorized by the current phase.
 
-- `app/` - Contains all application routes, layouts, and components using the App Router structure
-  - `app/api/` - API route handlers (Next.js API routes)
-  - `app/businesses/` - Business-related routes (dashboard, settings, customers, etc.)
-  - `app/dashboard/` - Main dashboard after login
-  - `app/login/` - Authentication pages
-  - `app/card/[token]/` - Public loyalty card pages
-  - `app/apple-icon.tsx`, `app/icon.tsx` - Icon components
-  - `app/layout.tsx` - Root layout
-  - `app/page.tsx` - Home page
-- `components/` - Reusable UI components used across the application
-- `lib/` - Utility functions, utilities for external services (Google Sheets, WhatsApp, etc.), Prisma client, i18n configuration
-- `prisma/` - Prisma ORM schema and migrations
-  - `prisma/schema.prisma` - Database models and relationships
-  - `prisma/migrations/` - Migration history
-- `scripts/` - Utility scripts (admin creation, Google Sheets sync)
-- `public/` - Static assets
-- `components/` - Shared React components
+## Current stack
 
-## Key Conventions and Gotchas
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- PostgreSQL + Prisma 7
+- Tailwind CSS 4
+- Base UI / shadcn-compatible primitives
+- NextAuth credentials authentication
+- pnpm
+- Node test runner plus Playwright release/browser coverage
 
-> ⚠️ **Important**: This Next.js version has breaking changes from older versions. Read the relevant guide in `node_modules/next/dist/docs/` before writing code.
+Use the scripts in `package.json`; do not substitute stale npm commands from old documentation.
 
-- **TypeScript**: The project uses TypeScript with strict mode enabled via `tsconfig.json` (inherited from Next.js).
-- **Internationalization (i18n)**: Uses `next-intl` pattern via `lib/i18n.ts`. Languages: English (en) and Arabic (ar). Language preference stored in user's language field and business's cardDefaultLanguage.
-- **Styling**: Tailwind CSS v4 configured via `tailwind.config.ts` and `globals.css`. Uses CSS variables for theme colors.
-- **Authentication**: Uses `next-auth` (version 5 beta) with custom implementation. Session handling via JWT. See `auth.ts` for configuration.
-- **Database**: PostgreSQL with Prisma ORM. Run `npx prisma generate` after schema changes. Migrations are managed via Prisma Migrate.
-- **API Routes**: Located in `app/api/` using Next.js route handlers. Follow REST-ish patterns with token-based authentication for public endpoints (e.g., card-icon, card-manifest).
-- **Business Context**: Most entities (Business, User, Customer, etc.) are scoped to a business via `businessId`. Multi-tenancy is enforced at the Prisma query level.
-- **Loyalty System**: Supports three loyalty modes (VISITS, POINTS, SALES_AMOUNT) and multiple reward types (GIFT, PROMO_CODE, DISCOUNT, CUSTOM).
-- **Components**: Reusable UI components are in `components/` directory. Business-specific components often live under `app/businesses/[slug]/components/` or similar.
-- **Scripts**: 
-  - `create-super-admin.ts`: Creates an initial admin user
-  - `sync-google-sheets.ts`: Syncs business data to Google Sheets
+## Required workflow
 
-## Important Files
+Start from current Staging:
 
-- `prisma/schema.prisma` - Defines all database models and relationships
-- `app/auth.ts` - NextAuth configuration
-- `lib/i18n.ts` - Internationalization configuration
-- `lib/prisma.ts` - Prisma client singleton
-- `app/layout.tsx` - Root layout with providers and global styles
-- `app/page.tsx` - Home page (landing page)
-- `scripts/create-super-admin.ts` - Admin user creation script
-- `scripts/sync-google-sheets.ts` - Google Sheets synchronization utility
+```bash
+git checkout staging
+git pull --ff-only
+pnpm install --frozen-lockfile
+```
 
-## Database Modeling Notes
+Normal validation before merge:
 
-- All tenant-scoped models (User, Customer, etc.) belong to a Business via `businessId`
-- Prisma enforces cascade deletes where appropriate (e.g., deleting a business deletes its users and customers)
-- Frequently queried fields are indexed (see `@@index` directives in schema.prisma)
-- Enums are used for fixed sets of values (UserRole, LoyaltyMode, RewardType, etc.)
+```bash
+pnpm test
+pnpm run typecheck
+pnpm run validate:workspace
+pnpm run lint
+pnpm run build
+git diff --check
+```
 
-## API Patterns
+Then PR to `staging` and merge only after full CI is green. Merge commit only; do not squash or rebase merge.
 
-- Public endpoints (like card endpoints) use token-based authentication in the URL (`/app/api/card-icon/[token]/route.tsx`)
-- Protected API routes (under `app/businesses/[slug]/...`) typically verify session and business ownership
-- Error handling follows Next.js API route conventions with proper status codes and JSON responses
+## Architecture boundaries
 
-## Styling Guidelines
+Preserve these authorities:
 
-- Tailwind CSS is used for all styling
-- Custom CSS variables are defined in `app/globals.css` for theme colors (primary, secondary, etc.)
-- Component styles should use utility classes; avoid custom CSS when possible
-- Dark mode is not currently implemented; colors are designed for light background
+- `packages/contracts` — runtime-neutral contracts.
+- `packages/domain` — runtime-neutral domain rules.
+- `packages/i18n` — runtime-neutral message ownership.
+- `lib/` — web/runtime adapters and product authorities.
+- `components/ui` — reusable semantic UI primitives.
+- `components/page-layout` — shared page structures.
+- `prisma/schema.prisma` + immutable migration history — database authority.
 
-## Internationalization
+The workspace validator deliberately prevents runtime-neutral packages from silently depending on React, Next.js, Prisma, or unapproved internal packages.
 
-- Text is translated using the `useTranslations` hook from `next-intl` (via `lib/i18n.ts`)
-- Language files are not explicitly shown; translations appear to be handled via a custom solution in `lib/i18n.ts`
-- Language preference is stored in the User model (`language` field) and Business model (`cardDefaultLanguage`)
+## Final Visual rules
 
-## Testing
+Visual work should preferentially change presentation rather than product behavior.
 
-- No test scripts are defined in package.json; testing approach is not established in this codebase
-- Consider adding unit and integration tests as the project grows
+Use:
 
-## Common Tasks
+- semantic `--lf-*` tokens in `app/globals.css`;
+- compatibility aliases in `app/loyalflow-theme-aliases.css` only as aliases, not as a second palette;
+- shared `components/ui` controls;
+- shared page-layout templates;
+- logical RTL/LTR-safe spacing and alignment;
+- existing responsive and accessibility patterns.
 
-### Adding a new API endpoint
-1. Create a route under `app/api/` or under a business-scoped path like `app/businesses/[slug]/api/`
-2. Use Next.js Route Handler syntax (GET, POST, etc. functions)
-3. Protect business-scoped routes with session and business ownership checks
-4. Return JSON responses with appropriate status codes
+Avoid page-specific CSS hacks or new independent color authorities when a semantic token or primitive already exists.
 
-### Adding a new database model
-1. Edit `prisma/schema.prisma`
-2. Run `npx prisma generate` to update types
-3. Create a migration with `npx prisma migrate dev --name <migration-name>`
-4. Update Prisma client usage throughout the codebase
+## i18n rules
 
-### Adding a new UI page
-1. For business-scoped pages: create under `app/businesses/[slug]/` 
-2. For public pages: create under `app/` (like login, card pages)
-3. For dashboard: create under `app/dashboard/`
-4. Use TypeScript and React Server Components by default; add `'use client'` for interactive components
-5. Fetch data using async Server Components or API routes as appropriate
+Arabic and English are presentation variants of the same persisted product state.
 
-### Adding a new reusable component
-1. Place in `components/` directory
-2. Use TypeScript interfaces for props
-3. Follow existing component patterns (props destructuring, tailwind classes)
-4. Consider making it a Server Component unless client interactivity is needed
+- extracted runtime-neutral locale files are under `packages/i18n/src/locales/ar` and `packages/i18n/src/locales/en`;
+- marketing copy is separated under `lib/i18n/locales/ar/marketing.ts` and `lib/i18n/locales/en/marketing.ts`;
+- `lib/i18n/catalog.ts` composes canonical sources;
+- preserve AR/EN key parity and RTL/LTR behavior.
+
+If a screen touched for Final Visual still owns local bilingual literals, migrate only the touched copy to the appropriate canonical source when safe. Do not create a third translation system.
+
+## Card rules
+
+Do not treat card rendering as ordinary freeform design.
+
+- Standard Card is constrained and Business Owner managed.
+- Custom Card artwork is Provider/Super Admin managed.
+- Canonical canvas, QR geometry, customer identity, balance/progress/reward safe zones, Front/Back rendering, and flip behavior are protected product contracts.
+- Do not introduce free QR movement, drag/drop geometry, arbitrary font sizing, or Owner-managed Custom Card artwork as visual polish.
+
+## Security and data rules
+
+Preserve:
+
+- tenant isolation;
+- role/capability authorization;
+- authentication, email verification, MFA, rate limiting, and session invalidation behavior;
+- entitlements and subscription-state enforcement;
+- exact-once/idempotency safeguards for loyalty operations;
+- public-card privacy boundaries;
+- Prisma schema and migration history unless a separately approved database slice explicitly changes them.
+
+Never commit secrets or credentials.
+
+## Separately gated work
+
+Do not perform without explicit Product Owner authorization:
+
+- Production deployment or Production mutation;
+- schema/migration changes;
+- environment, credential, or secret changes;
+- provider/payment activation or behavior changes;
+- loyalty economics, permissions, tenant/auth behavior changes;
+- public pricing/plan-name/capability decisions;
+- legal or analytics policy decisions;
+- Manual UAT or real-business Closed Beta claims.
+
+When a request is purely visual, do not expand it into backend cleanup.
