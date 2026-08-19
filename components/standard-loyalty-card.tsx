@@ -124,7 +124,7 @@ function Artwork({
 }) {
   const paths: Record<StandardCardArtworkCategory, string> = {
     BARBER: "M11 7l12 12M23 7L11 19M10 20l-4 4M20 20l4 4M8 5l18 18",
-    CAFE: "M7 11h14v10H7zM21 13h4v5h-4M10 7c0 2 2 2 2 4M16 7c0 2 2 2 2 4",
+    CAFE: "M7 11h14v10H7zM21 13h4v5h-4M10 7c0 2 2 2 4M16 7c0 2 2 2 2 4",
     RESTAURANT: "M9 6v17M6 6v7a3 3 0 006 0V6M20 6v17M20 6c5 3 5 9 0 11",
     FASHION: "M10 8l5-3 5 3 5 7-5 3v8H10v-8l-5-3z",
     BEAUTY: "M15 5c3 5 9 8 9 13a9 9 0 11-18 0c0-5 6-8 9-13zM11 19c2 2 6 2 8 0",
@@ -246,12 +246,14 @@ function Brand({
   logoUrl,
   accent,
   muted,
+  rtl,
 }: {
   id: string;
   businessName: string;
   logoUrl?: string | null;
   accent: string;
   muted: string;
+  rtl: boolean;
 }) {
   return (
     <g
@@ -306,9 +308,10 @@ function Brand({
         fill={muted}
         fontSize="11"
         fontWeight="600"
-        letterSpacing="4"
+        letterSpacing={rtl ? "0" : "4"}
+        direction={rtl ? "rtl" : "ltr"}
       >
-        LOYALTY PROGRAMME
+        {rtl ? "برنامج الولاء" : "LOYALTY PROGRAMME"}
       </text>
     </g>
   );
@@ -458,6 +461,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         logoUrl={props.logoUrl}
         accent={accent}
         muted={muted}
+        rtl={rtl}
       />
       <g data-safe-zone="qr-code">
         <rect
