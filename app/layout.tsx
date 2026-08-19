@@ -11,10 +11,12 @@ import { cn } from "@/lib/utils";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import { platformBrand } from "@/lib/platform-brand";
+import { PUBLIC_SITE_URL } from "@/lib/urls/public-site-url";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
+  metadataBase: new URL(PUBLIC_SITE_URL),
   manifest: "/manifest.webmanifest",
   title: {
     default: platformBrand.name,
