@@ -10,18 +10,18 @@ import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
+import { platformBrand } from "@/lib/platform-brand";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   title: {
-    default: "LoyalFlow",
-    template: "%s | LoyalFlow",
+    default: platformBrand.name,
+    template: `%s | ${platformBrand.name}`,
   },
-  description:
-    "Secure loyalty card and rewards management system.",
-  applicationName: "LoyalFlow",
+  description: platformBrand.metadataDescription,
+  applicationName: platformBrand.name,
   robots: {
     index: false,
     follow: false,
@@ -32,7 +32,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   colorScheme: "light",
-  themeColor: "#0f172a",
+  themeColor: platformBrand.themeColor,
 };
 
 export default async function RootLayout({

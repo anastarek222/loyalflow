@@ -1,17 +1,17 @@
 import type { MetadataRoute } from "next";
+import { platformBrand } from "@/lib/platform-brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "LoyalFlow",
-    short_name: "LoyalFlow",
-    description:
-      "نظام رقمي لإدارة العملاء وبرامج الولاء والمكافآت.",
+    name: platformBrand.name,
+    short_name: platformBrand.shortName,
+    description: platformBrand.manifestDescriptionAr,
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f1f5f9",
-    theme_color: "#0f172a",
+    background_color: platformBrand.backgroundColor,
+    theme_color: platformBrand.themeColor,
     lang: "ar",
     dir: "rtl",
     categories: [
