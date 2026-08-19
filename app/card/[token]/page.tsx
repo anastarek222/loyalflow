@@ -543,7 +543,7 @@ export default async function PublicCardPage({
           <SalesProgressPanel
             currentAmount={customer.balance}
             targetAmount={cardReward.cost}
-            unitName={business.unitName}
+            currency={business.currency}
             rewardName={cardReward.name}
             rewardType={cardReward.type ?? business.rewardType}
             rewardCode={cardReward.code ?? null}
