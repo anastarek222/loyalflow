@@ -19,13 +19,12 @@ import {
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
-import {
-  calculateRetentionScore,
-  getRetentionPresentation,
-} from "@/lib/customers/retention-score";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
+import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
+import { getCustomerExperienceTheme } from "@/lib/theme";
 import CopyLinkButton from "@/components/copy-link-button";
 import ActivityTimeline from "@/components/customer-profile/activity-timeline";
+import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
 import LoyaltySubmitButton from "@/components/loyalty-submit-button";
 import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
@@ -360,6 +359,7 @@ export default async function CustomerDetailsPage({
   const remaining = canonicalAvailability.remaining;
   const loyaltyModeLabel = getLoyaltyModeLabel(language, business.loyaltyMode);
   const messageReward = canonicalAvailability.defaultReward;
+  const cardTheme = getCustomerExperienceTheme(business);
 
   const updateCustomer = updateCustomerAction.bind(
     null,
@@ -412,21 +412,6 @@ export default async function CustomerDetailsPage({
     language,
   );
 
-  const retentionScore = calculateRetentionScore({
-    createdAt: customer.createdAt,
-    lastActivityAt: customer.transactions[0]?.createdAt ?? null,
-    transactionCount: customer._count.transactions,
-    lifetimeEarned: customer.lifetimeEarned,
-    lifetimeRedeemed: customer.lifetimeRedeemed,
-    balance: customer.balance,
-    loyaltyMode: business.loyaltyMode,
-    earnAmount: business.earnAmount,
-    rewardThreshold: business.rewardThreshold,
-  });
-  const retentionPresentation = getRetentionPresentation({
-    createdAt: customer.createdAt,
-    score: retentionScore,
-  });
   const loyaltyPresentation = {
     loyaltyMode: business.loyaltyMode,
     language,
@@ -689,7 +674,7 @@ export default async function CustomerDetailsPage({
           </section>
         )}
 
-        <div className="mt-6 grid gap-7 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="mt-6 grid gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="flex min-w-0 flex-col">
             <header
               className="relative overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/20 bg-gradient-to-br from-primary via-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-primary/15 sm:p-7"
@@ -744,7 +729,7 @@ export default async function CustomerDetailsPage({
                     </div>
                   ) : null}
                 </div>
-                <div className="grid min-w-40 grid-cols-2 gap-2 sm:grid-cols-1">
+                <div className="min-w-40">
                   <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
                       {loyaltyModeLabel}
@@ -756,14 +741,6 @@ export default async function CustomerDetailsPage({
                       className="mt-1 text-xl font-black text-white"
                     >
                       {formatBalance(customer.balance)}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
-                      {copy.retentionScore}
-                    </p>
-                    <p dir="ltr" className="mt-1 text-xl font-black text-white">
-                      {retentionScore.score}/100
                     </p>
                   </div>
                 </div>
@@ -1526,58 +1503,54 @@ export default async function CustomerDetailsPage({
 
           <aside
             id="customer-card"
-            className="h-fit scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-5 text-center shadow-lg shadow-slate-200/40 sm:p-7 xl:sticky xl:top-24"
+            className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-4 shadow-lg shadow-slate-200/40 xl:sticky xl:top-24"
           >
-            <h2 className="text-xl font-bold text-foreground">
-              {copy.digitalCard}
-            </h2>
-
-            <p className="mt-2 text-sm text-foreground-subtle">
-              {copy.digitalCardDescription}
-            </p>
-
-            <section className="mt-6 rounded-[var(--lf-radius-card)] bg-primary-subtle p-4 text-right">
-              <p className="text-xs font-black text-primary">
-                {copy.retentionScore}
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-4">
-                <p className="text-3xl font-black text-primary">
-                  {retentionScore.score}/100
-                </p>
-                <p className="text-sm font-bold text-primary">
-                  {retentionPresentation.label === "NEW"
-                    ? copy.newCustomer
-                    : retentionPresentation.label === "Very Loyal"
-                      ? copy.veryLoyal
-                      : retentionPresentation.label === "Active"
-                        ? copy.retentionActive
-                        : retentionPresentation.label === "At Risk"
-                          ? copy.atRisk
-                          : copy.highRisk}
-                </p>
-              </div>
-              <p className="mt-2 text-xs leading-5 text-primary">
-                {copy.retentionDescription}
-              </p>
-            </section>
-
-            <img
-              src={qrCode}
-              alt={copy.cardQrAlt}
-              width={240}
-              height={240}
-              className="mx-auto mt-6 rounded-[var(--lf-radius-card)] border border-border p-4"
+            <LoyaltyCardPreview
+              language={language}
+              businessName={business.name}
+              logoUrl={business.logoUrl}
+              primaryColor={cardTheme.primaryColor}
+              themePreset={business.themePreset}
+              customerName={customerName}
+              customerId={customer.customerCode}
+              balance={customer.balance}
+              loyaltyMode={business.loyaltyMode}
+              unitName={business.unitName}
+              currency={business.currency}
+              rewardName={messageReward.name}
+              rewardThreshold={messageReward.cost}
+              qrCode={qrCode}
+              artworkEnabled={business.standardCardArtworkEnabled}
+              artworkCategory={business.standardCardArtworkCategory}
+              designMode={business.cardDesignMode}
+              customDesignEnabled={business.customCardArtworkEnabled}
+              customFrontArtworkUrl={publicCustomCardArtworkUrl(
+                customer.publicToken,
+                "front",
+                business.customCardFrontArtworkUrl,
+                business.id,
+              )}
+              customBackArtworkUrl={publicCustomCardArtworkUrl(
+                customer.publicToken,
+                "back",
+                business.customCardBackArtworkUrl,
+                business.id,
+              )}
+              customSafeZoneVersion={business.customCardSafeZoneVersion}
+              businessPhone={business.contactPhone}
+              businessWebsite={business.website}
+              businessLocation={[business.city, business.country]
+                .filter(Boolean)
+                .join(", ")}
+              businessAddress={business.address}
+              businessSocial={business.instagramUrl}
             />
 
-            <p className="mt-4 break-all text-xs text-foreground-subtle">
-              {cardUrl}
-            </p>
-
-            <div className="mt-6 flex flex-col gap-4">
+            <div className="mt-4 flex flex-col gap-3">
               <Link
                 href={`/card/${customer.publicToken}`}
                 target="_blank"
-                className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle"
+                className="rounded-[var(--lf-radius-input)] bg-foreground px-5 py-3 text-center font-semibold text-white transition hover:bg-primary-subtle"
               >
                 {copy.openCard}
               </Link>
@@ -1586,21 +1559,16 @@ export default async function CustomerDetailsPage({
 
               {canUseReferrals ? (
                 referralLink ? (
-                  <>
-                    <CopyLinkButton
-                      value={referralLink}
-                      label={copy.copyReferral}
-                      language={language}
-                    />
-                    <p className="break-all text-xs text-foreground-subtle">
-                      {referralLink}
-                    </p>
-                  </>
+                  <CopyLinkButton
+                    value={referralLink}
+                    label={copy.copyReferral}
+                    language={language}
+                  />
                 ) : (
                   <form action={createReferralCode}>
                     <button
                       type="submit"
-                      className="w-full rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-6 py-4 font-semibold text-primary transition hover:bg-primary-subtle"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-5 py-3 font-semibold text-primary transition hover:bg-primary-subtle"
                     >
                       {copy.createReferral}
                     </button>
@@ -1612,7 +1580,7 @@ export default async function CustomerDetailsPage({
                 href={welcomeWhatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
+                className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
               >
                 {copy.welcomeMessage}
               </a>
@@ -1621,7 +1589,7 @@ export default async function CustomerDetailsPage({
                 href={balanceWhatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-[var(--lf-radius-input)] bg-info px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
+                className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
               >
                 {copy.balanceMessage}
               </a>
@@ -1631,35 +1599,11 @@ export default async function CustomerDetailsPage({
                   href={rewardWhatsAppUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-6 py-4 font-semibold text-foreground transition hover:bg-warning-subtle"
+                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
                 >
                   {copy.rewardMessage}
                 </a>
-              ) : (
-                <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
-                  {copy.rewardMessageUnavailable}
-                </span>
-              )}
-            </div>
-
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                <p className="text-xs text-foreground-subtle">
-                  {copy.totalEarned}
-                </p>
-                <p dir="ltr" className="mt-1 text-xl font-bold">
-                  {customer.lifetimeEarned}
-                </p>
-              </div>
-
-              <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                <p className="text-xs text-foreground-subtle">
-                  {copy.redeemedRewards}
-                </p>
-                <p dir="ltr" className="mt-1 text-xl font-bold">
-                  {customer._count.redemptions}
-                </p>
-              </div>
+              ) : null}
             </div>
           </aside>
         </div>
