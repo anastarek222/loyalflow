@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,10 @@ export type PageTabItem = {
   href?: string;
   disabled?: boolean;
 };
+
+function preventDisabledNavigation(event: MouseEvent<HTMLAnchorElement>) {
+  event.preventDefault();
+}
 
 export function PageTabs({
   items,
@@ -25,23 +29,31 @@ export function PageTabs({
   className?: string;
 }) {
   return (
-    <nav aria-label={ariaLabel} className={cn("max-w-full overflow-x-auto", className)}>
+    <nav
+      aria-label={ariaLabel}
+      className={cn("max-w-full overflow-x-auto", className)}
+    >
       <div role="tablist" className="flex min-w-max gap-1 border-b border-border">
         {items.map((item) => {
           const active = item.id === activeId;
           const tabClassName = cn(
             "inline-flex min-h-11 shrink-0 items-center border-b-2 px-4 text-sm font-semibold transition-colors",
-            active ? "border-primary text-primary" : "border-transparent text-foreground-muted hover:text-foreground",
+            active
+              ? "border-primary text-primary"
+              : "border-transparent text-foreground-muted hover:text-foreground",
             item.disabled && "pointer-events-none opacity-50",
           );
 
           return item.href ? (
             <a
               key={item.id}
-              href={item.href}
+              href={item.disabled ? undefined : item.href}
               role="tab"
               aria-selected={active}
               aria-current={active ? "page" : undefined}
+              aria-disabled={item.disabled || undefined}
+              tabIndex={item.disabled ? -1 : undefined}
+              onClick={item.disabled ? preventDisabledNavigation : undefined}
               className={tabClassName}
             >
               {item.label}
