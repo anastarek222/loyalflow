@@ -19,6 +19,11 @@ export type LoyaltyCardProps = StandardLoyaltyCardProps & {
   customSafeZoneVersion?: string | null;
 };
 
+// The loyalty card is a product object, not a localized dashboard surface.
+// UI shells may be Arabic or English, but switching their language must never
+// change card geometry, labels, direction, QR placement, or reward layout.
+export const CARD_PRESENTATION_LANGUAGE = "EN" as const;
+
 function CustomQr({ src, label }: { src?: string | null; label: string }) {
   if (src) return <img src={src} alt={label} className="size-full bg-white object-contain" />;
   return (
@@ -51,7 +56,7 @@ function readableAccentOnDark(color?: string | null) {
 
 function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const side = props.side ?? "front";
-  const language = props.language ?? "EN";
+  const language = props.language ?? CARD_PRESENTATION_LANGUAGE;
   const dir = language === "AR" ? "rtl" : "ltr";
   const metrics = getLoyaltyCardMetrics({ ...props, language });
   const artworkUrl = side === "front" ? props.customFrontArtworkUrl : props.customBackArtworkUrl;
@@ -164,15 +169,20 @@ function LoyaltyCardFace({
 
 export function LoyaltyCard(props: LoyaltyCardProps) {
   const side = props.side ?? "front";
+  const cardProps: LoyaltyCardProps = {
+    ...props,
+    language: CARD_PRESENTATION_LANGUAGE,
+  };
   const useCustom =
-    cardDesignMode(props.designMode) === "CUSTOM" &&
-    props.customDesignEnabled === true &&
-    Boolean(props.customFrontArtworkUrl);
+    cardDesignMode(cardProps.designMode) === "CUSTOM" &&
+    cardProps.customDesignEnabled === true &&
+    Boolean(cardProps.customFrontArtworkUrl);
 
   return (
     <div
       data-testid="loyalty-card-flip"
       data-card-side={side}
+      data-card-presentation-language={CARD_PRESENTATION_LANGUAGE}
       className="w-full [perspective:1200px]"
     >
       <div
@@ -183,13 +193,13 @@ export function LoyaltyCard(props: LoyaltyCardProps) {
           className="[grid-area:1/1] [backface-visibility:hidden]"
           aria-hidden={side !== "front"}
         >
-          <LoyaltyCardFace side="front" useCustom={useCustom} props={props} />
+          <LoyaltyCardFace side="front" useCustom={useCustom} props={cardProps} />
         </div>
         <div
           className="[grid-area:1/1] [backface-visibility:hidden] [transform:rotateY(180deg)]"
           aria-hidden={side !== "back"}
         >
-          <LoyaltyCardFace side="back" useCustom={useCustom} props={props} />
+          <LoyaltyCardFace side="back" useCustom={useCustom} props={cardProps} />
         </div>
       </div>
     </div>

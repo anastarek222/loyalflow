@@ -38,11 +38,11 @@ test("Z4 publish persistence represents generated Back as null without schema or
 test("Z4 runtime Custom Card activates from the required Front and renders the protected Back fallback", () => {
   assert.match(
     renderer,
-    /cardDesignMode\(props\.designMode\) === "CUSTOM"[\s\S]*props\.customDesignEnabled === true[\s\S]*Boolean\(props\.customFrontArtworkUrl\)/,
+    /cardDesignMode\(cardProps\.designMode\) === "CUSTOM"[\s\S]*cardProps\.customDesignEnabled === true[\s\S]*Boolean\(cardProps\.customFrontArtworkUrl\)/,
   );
   assert.doesNotMatch(
     renderer,
-    /Boolean\(props\.customFrontArtworkUrl && props\.customBackArtworkUrl\)/,
+    /Boolean\(cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl\)/,
   );
   assert.match(
     renderer,
