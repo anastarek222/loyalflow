@@ -34,7 +34,10 @@ export default async function CustomerLayout({
     <>
       {children}
       {canReverseLoyalty ? (
-        <div className="fixed bottom-5 end-5 z-40 flex flex-col items-stretch gap-2">
+        <div
+          data-customer-reversal-actions="true"
+          className="mx-auto mt-4 flex w-full max-w-7xl flex-col items-stretch gap-2 px-4 pb-4 sm:flex-row sm:justify-end sm:px-8 lg:fixed lg:bottom-5 lg:end-5 lg:z-40 lg:m-0 lg:w-auto lg:max-w-none lg:flex-col lg:px-0 lg:pb-0"
+        >
           <Link
             href={`/businesses/${slug}/customers/${customerId}/redemption-reversal`}
             className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-danger/20 bg-white px-4 py-3 text-sm font-bold text-danger shadow-lg transition hover:bg-danger-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40"
