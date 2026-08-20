@@ -6,6 +6,44 @@ import { businessCreationSchema } from "@/lib/business/creation-input";
 
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
 
+const validCreationInput = {
+  name: "Demo",
+  contactPhone: "",
+  currency: "EGP",
+  timezone: "Africa/Cairo",
+  industry: "",
+  website: "",
+  email: "",
+  country: "Egypt",
+  city: "",
+  taxNumber: "",
+  employeeCount: "",
+  ownerFirstName: "Ahmed",
+  ownerLastName: "",
+  ownerEmail: "ahmed@example.test",
+  ownerPhone: "",
+  ownerPassword: "1234567890",
+  logoUrl: "",
+  loyaltyMode: "VISITS",
+  unitName: "Visit",
+  rewardName: "Reward",
+  rewardThreshold: "5",
+  earnAmount: "1",
+  primaryColor: "#111827",
+  secondaryColor: "#ffffff",
+  themePreset: "DEFAULT",
+  cardStyle: "CLASSIC",
+  fontFamily: "INTER",
+  billingInterval: "MONTHLY",
+  billingCustomDays: "",
+  subscriptionAmount: "",
+  billingCurrency: "EGP",
+  paymentStatus: "TRIAL",
+  gracePeriodDays: "3",
+  standardCardArtworkEnabled: "true",
+  standardCardArtworkCategory: "OTHER",
+};
+
 test("Businesses listing links to dedicated Add Business route and no longer embeds creation", () => {
   const page = read("app/businesses/page.tsx");
   assert.match(page, /href="\/businesses\/new"/);
@@ -36,7 +74,7 @@ test("Standard Card has one business-logo source and keeps preview in normal lay
 });
 
 test("blank optional numeric billing values do not coerce to zero and validation returns to the canonical field", () => {
-  const value = businessCreationSchema.safeParse({ name: "Demo", contactPhone: "", currency: "EGP", timezone: "Africa/Cairo", industry: "", website: "", email: "", country: "Egypt", city: "", taxNumber: "", employeeCount: "", ownerFirstName: "Ahmed", ownerLastName: "", ownerEmail: "ahmed@example.test", ownerPhone: "", ownerPassword: "1234567890", logoUrl: "", loyaltyMode: "VISITS", unitName: "Visit", rewardName: "Reward", rewardThreshold: "5", earnAmount: "1", primaryColor: "#111827", secondaryColor: "#ffffff", themePreset: "DEFAULT", cardStyle: "CLASSIC", fontFamily: "INTER", billingInterval: "MONTHLY", billingCustomDays: "", subscriptionAmount: "", billingCurrency: "EGP", paymentStatus: "TRIAL", gracePeriodDays: "3", standardCardArtworkEnabled: "true", standardCardArtworkCategory: "OTHER" });
+  const value = businessCreationSchema.safeParse(validCreationInput);
   assert.equal(value.success, true);
   const wizard = read("components/business-setup-wizard.tsx");
   assert.doesNotMatch(wizard, /parsed\.error\.issues\[0\]\?\.message/);
@@ -85,9 +123,39 @@ test("editor preview has a physical-card maximum width while preserving the shar
 
 test("six-step custom setup separates loyalty rules from one card-design editor", () => {
   const wizard = read("components/business-setup-wizard.tsx");
+  const setup = read("components/standard-card-setup.tsx");
   assert.match(wizard, /"Loyalty"/);
   assert.match(wizard, /"Card Design"/);
   assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.doesNotMatch(wizard, /LoyaltyCardPreview|cardStyleLabels|fontLabels/);
   assert.match(wizard, /allowCustom/);
+  assert.match(setup, /const customReady = Boolean\(values\.customFrontArtworkUrl\)/);
+  assert.match(setup, /const canSelectCustom = allowCustom && customReady/);
+  assert.match(setup, /disabled=\{!canSelectCustom\}/);
+});
+
+test("Custom Card creation requires published Front artwork but allows the protected generated Back", () => {
+  const frontOnly = businessCreationSchema.safeParse({
+    ...validCreationInput,
+    cardDesignMode: "CUSTOM",
+    customCardArtworkEnabled: "true",
+    customCardFrontArtworkUrl: "https://example.test/custom-card/front.webp",
+    customCardBackArtworkUrl: "",
+  });
+  const missingFront = businessCreationSchema.safeParse({
+    ...validCreationInput,
+    cardDesignMode: "CUSTOM",
+    customCardArtworkEnabled: "true",
+    customCardFrontArtworkUrl: "",
+    customCardBackArtworkUrl: "https://example.test/custom-card/back.webp",
+  });
+
+  assert.equal(frontOnly.success, true);
+  assert.equal(missingFront.success, false);
+  assert.equal(
+    missingFront.success
+      ? ""
+      : missingFront.error.issues.find((issue) => issue.path[0] === "cardDesignMode")?.message,
+    "Custom Card requires approved front artwork.",
+  );
 });

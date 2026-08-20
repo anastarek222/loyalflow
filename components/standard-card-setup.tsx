@@ -170,6 +170,7 @@ export function StandardCardSetup({
   };
 
   const customReady = Boolean(values.customFrontArtworkUrl);
+  const canSelectCustom = allowCustom && customReady;
   const previewCustomer = getLoyaltyCardPreviewData(
     values.loyaltyMode,
     values.rewardThreshold,
@@ -227,13 +228,15 @@ export function StandardCardSetup({
               </label>
               {allowCustom ? (
                 <label
-                  className={`cursor-pointer rounded-xl border p-4 ${values.designMode === "CUSTOM" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border"}`}
+                  aria-disabled={!canSelectCustom}
+                  className={`rounded-xl border p-4 ${canSelectCustom ? "cursor-pointer" : "cursor-not-allowed opacity-60"} ${values.designMode === "CUSTOM" ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border"}`}
                 >
                   <input
                     type="radio"
                     name="cardDesignMode"
                     value="CUSTOM"
                     checked={values.designMode === "CUSTOM"}
+                    disabled={!canSelectCustom}
                     onChange={() => update("designMode", "CUSTOM")}
                     className="sr-only"
                   />
