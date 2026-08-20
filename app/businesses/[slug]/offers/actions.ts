@@ -3,7 +3,8 @@
 import { auth } from "@/auth";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
-import { offerInputSchema, normalizeOfferInput } from "@/lib/offers/catalog";
+import { normalizeOfferInput } from "@/lib/offers/catalog";
+import { parseOfferFormInput } from "@/lib/offers/form-input";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
@@ -45,17 +46,6 @@ function revalidateOfferPaths(slug: string) {
   revalidatePath(`/card`);
 }
 
-function parseOfferForm(formData: FormData) {
-  return offerInputSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description") || undefined,
-    validFrom: formData.get("validFrom") || undefined,
-    validUntil: formData.get("validUntil") || undefined,
-    eligibility: formData.get("eligibility"),
-    segment: formData.get("segment") || undefined,
-  });
-}
-
 function offerCommandError(result: OfferWriteCommandResult) {
   if (result.ok) return null;
   switch (result.reason) {
@@ -73,7 +63,7 @@ function offerCommandError(result: OfferWriteCommandResult) {
 
 export async function createOfferAction(slug: string, formData: FormData) {
   const { business, session } = await getOfferManagementContext(slug);
-  const parsed = parseOfferForm(formData);
+  const parsed = parseOfferFormInput(formData);
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
@@ -119,7 +109,7 @@ export async function updateOfferAction(
 ) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
-  const parsed = parseOfferForm(formData);
+  const parsed = parseOfferFormInput(formData);
   if (!parsed.success || !parsedOfferId.success) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
