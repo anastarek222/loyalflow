@@ -90,12 +90,12 @@ export const businessCreationSchema = z.object({
   }
   if (
     value.cardDesignMode === "CUSTOM" &&
-    (!value.customCardArtworkEnabled || !value.customCardFrontArtworkUrl || !value.customCardBackArtworkUrl)
+    (!value.customCardArtworkEnabled || !value.customCardFrontArtworkUrl)
   ) {
     context.addIssue({
       code: "custom",
       path: ["cardDesignMode"],
-      message: "Custom Card requires approved front and back artwork.",
+      message: "Custom Card requires approved front artwork.",
     });
   }
 });
