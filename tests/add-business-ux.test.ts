@@ -129,8 +129,8 @@ test("six-step custom setup separates loyalty rules from one card-design editor"
   assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.doesNotMatch(wizard, /LoyaltyCardPreview|cardStyleLabels|fontLabels/);
   assert.match(wizard, /allowCustom/);
-  assert.match(setup, /const customArtworkReady =/);
-  assert.match(setup, /const canSelectCustom = allowCustom && customArtworkReady && !readOnly/);
+  assert.match(setup, /const customReady = Boolean\(values\.customFrontArtworkUrl\)/);
+  assert.match(setup, /const canSelectCustom = allowCustom && customReady/);
   assert.match(setup, /disabled=\{!canSelectCustom\}/);
 });
 
