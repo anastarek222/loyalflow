@@ -1,0 +1,27 @@
+@media (min-width: 1024px) {
+  [data-customers-route="true"]
+    main[data-experience-customers="advanced"]
+    div:has(> table) {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  [data-customers-route="true"]
+    main[data-experience-customers="advanced"]
+    table {
+    min-width: 64rem;
+  }
+
+  [data-customers-route="true"]
+    main[data-experience-customers="advanced"]
+    table
+    td:nth-child(4)
+    span,
+  [data-customers-route="true"]
+    main[data-experience-customers="advanced"]
+    table
+    td:last-child
+    a {
+    white-space: nowrap;
+  }
+}
