@@ -102,8 +102,8 @@ test("R9A covers status, password, and experience-access team audit operations",
       activityContext,
       ...(operation === "EXPERIENCE_ACCESS_UPDATE"
         ? {
-            previousExperienceAccess: "SIMPLE" as const,
-            nextExperienceAccess: "ADVANCED" as const,
+            previousExperienceAccess: "SIMPLE_ONLY" as const,
+            nextExperienceAccess: "ADVANCED_ONLY" as const,
           }
         : {}),
     });
