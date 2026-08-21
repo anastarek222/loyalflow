@@ -16,6 +16,7 @@ import {
   StatGrid,
 } from "@/components/page-layout";
 import { getBusinessCustomerGrowth } from "@/lib/dashboard/business-customer-growth";
+import { getBusinessRewardTargetCost } from "@/lib/dashboard/business-reward-target";
 import { getBusinessUnreadSummary } from "@/lib/dashboard/business-unread-summary";
 import {
   getActivityBadgeClass,
@@ -32,7 +33,6 @@ import {
   getCustomerSegmentLabel,
   getCustomerSegmentWhere,
 } from "@/lib/customers/segments";
-import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import {
   getExperienceModeCookieName,
@@ -40,7 +40,6 @@ import {
   resolveExperienceMode,
 } from "@/lib/experience-mode";
 import {
-  individuallyReadNotificationIds,
   isNotificationUnread,
   notificationKeyForActivity,
   notificationKeyForNotification,
@@ -314,53 +313,30 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     )
     .slice(0, 5);
 
-  // Keep the U3 topbar notification entry and its user-specific read state intact.
-  const readState = await prisma.notificationReadState.findUnique({
-    where: {
-      ...notificationReadStateWhere({
-        userId: user.id,
-        businessId: business.id,
-      }),
-    },
-    select: { lastReadAt: true },
-  });
-  const notificationsLastReadAt = readState?.lastReadAt ?? new Date(0);
-  const itemReads = await prisma.notificationItemRead.findMany({
-    where: {
-      userId: user.id,
+  const [readState, rewardTargetCost] = await Promise.all([
+    prisma.notificationReadState.findUnique({
+      where: {
+        ...notificationReadStateWhere({
+          userId: user.id,
+          businessId: business.id,
+        }),
+      },
+      select: { lastReadAt: true },
+    }),
+    getBusinessRewardTargetCost({
       businessId: business.id,
-      readAt: { gt: notificationsLastReadAt },
-    },
-    select: { notificationKey: true },
-  });
-  const individuallyReadKeys = new Set(
-    itemReads.map((item) => item.notificationKey),
-  );
-  const individuallyReadDurableNotificationIds =
-    individuallyReadNotificationIds(individuallyReadKeys);
+      fallbackThreshold: business.rewardThreshold,
+    }),
+  ]);
+  const notificationsLastReadAt = readState?.lastReadAt ?? new Date(0);
 
   const today = startOfToday();
   const month = startOfMonth();
   const chartStart = new Date();
   chartStart.setDate(chartStart.getDate() - 30);
   const segmentShortcuts = getDashboardSegmentShortcuts(business.loyaltyMode);
-  const activeRewards = await prisma.reward.findMany({
-    where: { businessId: business.id, isActive: true },
-    select: { id: true, name: true, cost: true, isActive: true },
-  });
-  const rewardTargetCost = getRewardAvailability({
-    customerActive: true,
-    balance: 0,
-    rewardThreshold: business.rewardThreshold,
-    fallbackReward: {
-      name: business.rewardName,
-      cost: business.rewardThreshold,
-    },
-    catalogueRewards: activeRewards,
-  }).targetCost;
 
   const [
-    unreadNotificationCount,
     recentNotifications,
     rewardReadyCount,
     rewardReadyCustomers,
@@ -379,16 +355,6 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     recentActivities,
     segmentCounts,
   ] = await Promise.all([
-    prisma.notification.count({
-      where: {
-        businessId: business.id,
-        createdAt: { gt: notificationsLastReadAt },
-        OR: [{ userId: null }, { userId: user.id }],
-        ...(individuallyReadDurableNotificationIds.length
-          ? { NOT: { id: { in: individuallyReadDurableNotificationIds } } }
-          : {}),
-      },
-    }),
     prisma.notification.findMany({
       where: {
         businessId: business.id,
@@ -491,9 +457,9 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     }),
     getBusinessUnreadSummary({
       businessId: business.id,
+      userId: user.id,
       rewardTargetCost,
       after: notificationsLastReadAt,
-      individuallyReadKeys,
     }),
     prisma.customer.count({
       where: { businessId: business.id, isActive: true },
@@ -550,6 +516,39 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     ),
   ]);
 
+  const visibleNotificationKeys = Array.from(
+    new Set([
+      ...recentNotifications.map((notification) =>
+        notificationKeyForNotification(notification.id),
+      ),
+      ...rewardReadyCustomers.map(notificationKeyForRewardReady),
+      ...rewardRedeemedActivities.map((activity) =>
+        notificationKeyForActivity(activity.id),
+      ),
+      ...balanceAdjustedActivities.map((activity) =>
+        notificationKeyForActivity(activity.id),
+      ),
+      ...loyaltyEarnedActivities.map((activity) =>
+        notificationKeyForActivity(activity.id),
+      ),
+    ]),
+  );
+  const itemReads = visibleNotificationKeys.length
+    ? await prisma.notificationItemRead.findMany({
+        where: {
+          userId: user.id,
+          businessId: business.id,
+          readAt: { gt: notificationsLastReadAt },
+          notificationKey: { in: visibleNotificationKeys },
+        },
+        select: { notificationKey: true },
+        take: visibleNotificationKeys.length,
+      })
+    : [];
+  const individuallyReadKeys = new Set(
+    itemReads.map((item) => item.notificationKey),
+  );
+
   const withReadState = <T extends { id: string; createdAt: Date }>(
     item: T,
   ) => ({
@@ -575,6 +574,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     }),
   );
   const {
+    unreadNotificationCount,
     unreadRewardReadyCount,
     unreadRewardRedeemedCount,
     unreadBalanceAdjustedCount,
