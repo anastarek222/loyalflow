@@ -111,7 +111,8 @@ test("U6 localizes segments and keeps simple and advanced modes on the same lang
 });
 
 test("U6 language is fetched from the authenticated User and filter URLs stay unchanged", () => {
-  assert.match(list, /select: \{ language: true,/);
+  assert.match(list, /getAuthenticatedRequestContext/);
+  assert.doesNotMatch(list, /prisma\.user\.findUnique/);
   assert.match(detail, /select: \{ language: true,/);
   assert.match(list, /normalizeLanguage\(authenticatedUser\?\.language\)/);
   assert.match(detail, /normalizeLanguage\(authenticatedUser\?\.language\)/);
