@@ -9,12 +9,9 @@ import {
   StatGrid,
 } from "@/components/page-layout";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
-import {
-  derivePaymentState,
-  formatMoneyMinor,
-  monthlyRecurringMinor,
-} from "@/lib/billing/subscription";
+import { formatMoneyMinor } from "@/lib/billing/subscription";
 import { getGlobalDashboardMode } from "@/lib/dashboard/overview";
+import { getSuperAdminBillingSummary } from "@/lib/dashboard/super-admin-billing-summary";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
@@ -197,7 +194,7 @@ export default async function DashboardPage() {
       redemptionsToday,
       recentBusinesses,
       recentOwners,
-      billingBusinesses,
+      billingSummary,
     ] = await Promise.all([
       prisma.business.count(),
       prisma.business.count({ where: { isActive: true } }),
@@ -237,56 +234,20 @@ export default async function DashboardPage() {
           business: { select: { name: true, slug: true, isActive: true } },
         },
       }),
-      prisma.business.findMany({
-        select: {
-          paymentStatus: true,
-          nextPaymentDate: true,
-          gracePeriodDays: true,
-          subscriptionAmountMinor: true,
-          billingCurrency: true,
-          billingInterval: true,
-          billingCustomDays: true,
-        },
-      }),
+      getSuperAdminBillingSummary(today),
     ]);
 
-    const billingStates = billingBusinesses.map((business) => ({
-      ...business,
-      derivedState: derivePaymentState({
-        paymentStatus: business.paymentStatus,
-        nextPaymentDate: business.nextPaymentDate,
-        gracePeriodDays: business.gracePeriodDays,
-      }),
-    }));
-    const overdueSubscriptions = billingStates.filter(
-      (business) => business.derivedState === "OVERDUE",
-    ).length;
-    const dueSoonSubscriptions = billingStates.filter(
-      (business) =>
-        business.derivedState === "DUE_SOON" || business.derivedState === "DUE",
-    ).length;
-    const suspendedSubscriptions = billingStates.filter(
-      (business) => business.derivedState === "SUSPENDED",
-    ).length;
-    const recurringByCurrency = billingStates.reduce<Record<string, number>>(
-      (totals, business) => {
-        const currency = business.billingCurrency || "EGP";
-        totals[currency] =
-          (totals[currency] ?? 0) +
-          monthlyRecurringMinor(
-            business.subscriptionAmountMinor,
-            business.billingInterval,
-            business.billingCustomDays,
-          );
-        return totals;
-      },
-      {},
-    );
+    const {
+      overdueSubscriptions,
+      dueSoonSubscriptions,
+      suspendedSubscriptions,
+      recurringByCurrency,
+    } = billingSummary;
     const recurringSummary =
-      Object.entries(recurringByCurrency)
-        .filter(([, value]) => value > 0)
-        .slice(0, 2)
-        .map(([currency, value]) => formatMoneyMinor(value, currency, locale))
+      recurringByCurrency
+        .map(({ currency, amountMinor }) =>
+          formatMoneyMinor(amountMinor, currency, locale),
+        )
         .join(" · ") || "—";
 
     return (
