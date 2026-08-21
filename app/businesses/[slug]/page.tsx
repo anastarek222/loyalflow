@@ -16,6 +16,7 @@ import {
   StatGrid,
 } from "@/components/page-layout";
 import { getBusinessCustomerGrowth } from "@/lib/dashboard/business-customer-growth";
+import { getBusinessUnreadSummary } from "@/lib/dashboard/business-unread-summary";
 import {
   getActivityBadgeClass,
   activityLabels,
@@ -369,8 +370,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     balanceAdjustedActivities,
     loyaltyEarnedCount,
     loyaltyEarnedActivities,
-    unreadRewardReadyCandidates,
-    unreadActivityCandidates,
+    unreadSummary,
     activeCustomers,
     todayActivity,
     todayRedemptions,
@@ -489,27 +489,11 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
         },
       },
     }),
-    prisma.customer.findMany({
-      where: {
-        businessId: business.id,
-        isActive: true,
-        balance: { gte: rewardTargetCost },
-        updatedAt: { gt: notificationsLastReadAt },
-      },
-      select: {
-        id: true,
-        balance: true,
-        lifetimeRedeemed: true,
-        updatedAt: true,
-      },
-    }),
-    prisma.businessActivity.findMany({
-      where: {
-        businessId: business.id,
-        type: { in: ["REWARD_REDEEMED", "BALANCE_ADJUSTED", "LOYALTY_EARNED"] },
-        createdAt: { gt: notificationsLastReadAt },
-      },
-      select: { id: true, type: true, createdAt: true },
+    getBusinessUnreadSummary({
+      businessId: business.id,
+      rewardTargetCost,
+      after: notificationsLastReadAt,
+      individuallyReadKeys,
     }),
     prisma.customer.count({
       where: { businessId: business.id, isActive: true },
@@ -590,23 +574,13 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
       }),
     }),
   );
-  const unreadRewardReadyCount = unreadRewardReadyCandidates.filter(
-    (customer) =>
-      isNotificationUnread({
-        createdAt: customer.updatedAt,
-        lastReadAt: notificationsLastReadAt,
-        notificationKey: notificationKeyForRewardReady(customer),
-        individuallyReadKeys,
-      }),
-  ).length;
-  const unreadActivityCount = unreadActivityCandidates.filter((activity) =>
-    isNotificationUnread({
-      createdAt: activity.createdAt,
-      lastReadAt: notificationsLastReadAt,
-      notificationKey: notificationKeyForActivity(activity.id),
-      individuallyReadKeys,
-    }),
-  ).length;
+  const {
+    unreadRewardReadyCount,
+    unreadRewardRedeemedCount,
+    unreadBalanceAdjustedCount,
+    unreadLoyaltyEarnedCount,
+    unreadActivityCount,
+  } = unreadSummary;
   const unreadCount =
     unreadNotificationCount + unreadRewardReadyCount + unreadActivityCount;
   const recentNotificationsWithReadState = recentNotifications.map(
@@ -674,48 +648,15 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
           unreadRewardReadyCount={unreadRewardReadyCount}
           rewardReadyCustomers={rewardReadyCustomersWithReadState}
           rewardRedeemedCount={rewardRedeemedCount}
-          unreadRewardRedeemedCount={
-            unreadActivityCandidates.filter(
-              (item) =>
-                item.type === "REWARD_REDEEMED" &&
-                isNotificationUnread({
-                  createdAt: item.createdAt,
-                  lastReadAt: notificationsLastReadAt,
-                  notificationKey: notificationKeyForActivity(item.id),
-                  individuallyReadKeys,
-                }),
-            ).length
-          }
+          unreadRewardRedeemedCount={unreadRewardRedeemedCount}
           rewardRedeemedActivities={rewardRedeemedActivities.map(withReadState)}
           balanceAdjustedCount={balanceAdjustedCount}
-          unreadBalanceAdjustedCount={
-            unreadActivityCandidates.filter(
-              (item) =>
-                item.type === "BALANCE_ADJUSTED" &&
-                isNotificationUnread({
-                  createdAt: item.createdAt,
-                  lastReadAt: notificationsLastReadAt,
-                  notificationKey: notificationKeyForActivity(item.id),
-                  individuallyReadKeys,
-                }),
-            ).length
-          }
+          unreadBalanceAdjustedCount={unreadBalanceAdjustedCount}
           balanceAdjustedActivities={balanceAdjustedActivities.map(
             withReadState,
           )}
           loyaltyEarnedCount={loyaltyEarnedCount}
-          unreadLoyaltyEarnedCount={
-            unreadActivityCandidates.filter(
-              (item) =>
-                item.type === "LOYALTY_EARNED" &&
-                isNotificationUnread({
-                  createdAt: item.createdAt,
-                  lastReadAt: notificationsLastReadAt,
-                  notificationKey: notificationKeyForActivity(item.id),
-                  individuallyReadKeys,
-                }),
-            ).length
-          }
+          unreadLoyaltyEarnedCount={unreadLoyaltyEarnedCount}
           loyaltyEarnedActivities={loyaltyEarnedActivities.map(withReadState)}
           canViewActivity={canViewReports}
           recentNotifications={recentNotificationsWithReadState}
