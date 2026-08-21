@@ -1,6 +1,7 @@
 import type {
   ActivityType,
   ExperienceAccess,
+  LoyaltyMode,
   UserRole,
 } from "@/generated/prisma/client";
 
@@ -179,6 +180,59 @@ export function buildUserAuditActivity(input: UserAuditInput) {
     metadata,
     ...activityRequestMetadata(input.activityContext),
   };
+}
+
+type FinancialActivityMetadataInput =
+  | {
+      type: "LOYALTY_EARNED";
+      amount: number;
+      loyaltyMode: LoyaltyMode;
+      saleAmount?: number;
+    }
+  | {
+      type: "REWARD_REDEEMED";
+      rewardName: string;
+      cost: number;
+    }
+  | {
+      type: "BALANCE_ADJUSTED";
+      signedAmount: number;
+      reason: string;
+    };
+
+/** Locale-neutral presentation inputs for financial activity audit rows. */
+export function buildFinancialActivityMetadata(
+  input: FinancialActivityMetadataInput,
+) {
+  const common = {
+    presentationVersion: STRUCTURED_ACTIVITY_PRESENTATION_VERSION,
+    presentationKind: "FINANCIAL_ACTIVITY",
+    financialType: input.type,
+  } as const;
+
+  switch (input.type) {
+    case "LOYALTY_EARNED":
+      return {
+        ...common,
+        amount: input.amount,
+        loyaltyMode: input.loyaltyMode,
+        ...(typeof input.saleAmount === "number"
+          ? { saleAmount: input.saleAmount }
+          : {}),
+      };
+    case "REWARD_REDEEMED":
+      return {
+        ...common,
+        rewardName: input.rewardName,
+        cost: input.cost,
+      };
+    case "BALANCE_ADJUSTED":
+      return {
+        ...common,
+        signedAmount: input.signedAmount,
+        reason: input.reason,
+      };
+  }
 }
 
 export const branchActivityTypeValues = Object.values(branchActivityTypes);
