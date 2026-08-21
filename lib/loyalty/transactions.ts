@@ -1,4 +1,5 @@
 import { Prisma, type LoyaltyMode } from "@/generated/prisma/client";
+import { buildFinancialActivityMetadata } from "@/lib/activity/business-activity";
 import {
   resolveFinancialOperationContext,
   type FinancialOperationActor,
@@ -314,6 +315,14 @@ export async function recordLoyaltyEarn(
         : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
+      metadata: buildFinancialActivityMetadata({
+        type: "LOYALTY_EARNED",
+        amount: input.amount,
+        loyaltyMode: input.sourceLoyaltyMode,
+        ...(typeof input.saleAmount === "number"
+          ? { saleAmount: input.saleAmount }
+          : {}),
+      }),
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
@@ -520,6 +529,11 @@ export async function recordRewardRedemption(
         : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
+      metadata: buildFinancialActivityMetadata({
+        type: "REWARD_REDEEMED",
+        rewardName: input.rewardName,
+        cost: input.cost,
+      }),
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
@@ -679,6 +693,11 @@ export async function recordBalanceAdjustment(
         : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
+      metadata: buildFinancialActivityMetadata({
+        type: "BALANCE_ADJUSTED",
+        signedAmount,
+        reason: input.reason,
+      }),
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
