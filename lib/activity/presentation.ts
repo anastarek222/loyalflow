@@ -1,5 +1,6 @@
-import type { ActivityType } from "@/generated/prisma/client";
+import type { ActivityType, UserRole } from "@/generated/prisma/client";
 import type { AppLanguage } from "@/lib/i18n";
+import { STRUCTURED_ACTIVITY_PRESENTATION_VERSION } from "@/lib/activity/business-activity";
 
 export const activityTypes = [
   "CUSTOMER_CREATED", "CUSTOMER_UPDATED", "CUSTOMER_DEACTIVATED", "CUSTOMER_REACTIVATED", "CUSTOMER_TAG_ASSIGNED", "CUSTOMER_TAG_REMOVED", "CUSTOMER_NOTE_CREATED", "CUSTOMER_NOTE_UPDATED", "LOYALTY_EARNED", "REWARD_REDEEMED", "REWARD_UNLOCKED", "REWARD_EXPIRED", "REWARD_REDEMPTION_BLOCKED", "REFERRAL_RECORDED", "BALANCE_ADJUSTED", "BUSINESS_SETTINGS_UPDATED", "USER_CREATED", "USER_STATUS_CHANGED", "USER_PASSWORD_CHANGED", "USER_EXPERIENCE_ACCESS_UPDATED", "REWARD_CREATED", "REWARD_UPDATED", "REWARD_STATUS_CHANGED", "OFFER_CREATED", "OFFER_UPDATED", "OFFER_STATUS_CHANGED", "BRANCH_CREATED", "BRANCH_UPDATED", "BRANCH_ACTIVATED", "BRANCH_DEACTIVATED", "BRANCH_STAFF_ASSIGNED", "BRANCH_STAFF_REMOVED",
@@ -34,4 +35,101 @@ export function getActivityMetadataString(metadata: unknown, key: string) {
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return undefined;
   const value = (metadata as Record<string, unknown>)[key];
   return typeof value === "string" ? value : undefined;
+}
+
+function getRoleLabel(role: string | undefined, language: AppLanguage) {
+  const labels: Record<UserRole, Record<AppLanguage, string>> = {
+    OWNER: { AR: "مالك", EN: "Owner" },
+    MANAGER: { AR: "مدير", EN: "Manager" },
+    STAFF: { AR: "موظف", EN: "Staff" },
+    VIEWER: { AR: "مشاهد", EN: "Viewer" },
+    SUPER_ADMIN: { AR: "مدير النظام", EN: "System administrator" },
+  };
+  return role && role in labels
+    ? labels[role as UserRole][language]
+    : language === "AR"
+      ? "مستخدم"
+      : "user";
+}
+
+export function getActivityDescription(
+  activity: Readonly<{
+    type: ActivityType;
+    description: string;
+    metadata?: unknown;
+  }>,
+  language: AppLanguage,
+) {
+  const version = getActivityMetadataString(
+    activity.metadata,
+    "presentationVersion",
+  );
+  if (version !== STRUCTURED_ACTIVITY_PRESENTATION_VERSION) {
+    return activity.description;
+  }
+
+  const kind = getActivityMetadataString(activity.metadata, "presentationKind");
+  const operation = getActivityMetadataString(activity.metadata, "operation");
+
+  if (kind === "BRANCH_AUDIT") {
+    const branchName = getActivityMetadataString(activity.metadata, "branchName");
+    if (!branchName) return activity.description;
+    const assignedUserEmail = getActivityMetadataString(
+      activity.metadata,
+      "assignedUserEmail",
+    );
+
+    if (language === "AR") {
+      switch (operation) {
+        case "CREATE": return `تم إنشاء الفرع ${branchName}`;
+        case "UPDATE": return `تم تحديث بيانات الفرع ${branchName}`;
+        case "ACTIVATE": return `تم تفعيل الفرع ${branchName}`;
+        case "DEACTIVATE": return `تم إيقاف الفرع ${branchName}`;
+        case "ASSIGN_STAFF": return `تم إسناد موظف إلى الفرع ${branchName}${assignedUserEmail ? ` للموظف ${assignedUserEmail}` : ""}`;
+        case "REMOVE_STAFF": return `تمت إزالة إسناد موظف من الفرع ${branchName}${assignedUserEmail ? ` للموظف ${assignedUserEmail}` : ""}`;
+      }
+    } else {
+      switch (operation) {
+        case "CREATE": return `Created branch ${branchName}`;
+        case "UPDATE": return `Updated branch ${branchName}`;
+        case "ACTIVATE": return `Activated branch ${branchName}`;
+        case "DEACTIVATE": return `Deactivated branch ${branchName}`;
+        case "ASSIGN_STAFF": return `Assigned staff to branch ${branchName}${assignedUserEmail ? ` for ${assignedUserEmail}` : ""}`;
+        case "REMOVE_STAFF": return `Removed staff assignment from branch ${branchName}${assignedUserEmail ? ` for ${assignedUserEmail}` : ""}`;
+      }
+    }
+  }
+
+  if (kind === "USER_AUDIT") {
+    const targetUserEmail = getActivityMetadataString(
+      activity.metadata,
+      "targetUserEmail",
+    );
+    if (!targetUserEmail) return activity.description;
+    const targetUserRole = getActivityMetadataString(
+      activity.metadata,
+      "targetUserRole",
+    );
+    const roleLabel = getRoleLabel(targetUserRole, language);
+
+    if (language === "AR") {
+      switch (operation) {
+        case "CREATE": return `تم إنشاء حساب ${roleLabel} للبريد ${targetUserEmail}`;
+        case "ACTIVATE": return `تم إعادة تفعيل الحساب ${targetUserEmail}`;
+        case "DEACTIVATE": return `تم إيقاف الحساب ${targetUserEmail}`;
+        case "PASSWORD_CHANGE": return `تم تغيير كلمة المرور للحساب ${targetUserEmail}`;
+        case "EXPERIENCE_ACCESS_UPDATE": return `تم تحديث وصول الواجهة للحساب ${targetUserEmail}`;
+      }
+    } else {
+      switch (operation) {
+        case "CREATE": return `Created ${roleLabel} account for ${targetUserEmail}`;
+        case "ACTIVATE": return `Reactivated account ${targetUserEmail}`;
+        case "DEACTIVATE": return `Deactivated account ${targetUserEmail}`;
+        case "PASSWORD_CHANGE": return `Changed password for ${targetUserEmail}`;
+        case "EXPERIENCE_ACCESS_UPDATE": return `Updated experience access for ${targetUserEmail}`;
+      }
+    }
+  }
+
+  return activity.description;
 }
