@@ -1,6 +1,8 @@
 import { isValidRemoteImageUrl } from "@/lib/branding/image-data";
 import { z } from "zod";
 
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+
 export const cardDesignInputSchema = z
   .object({
     logoUrl: z
@@ -9,7 +11,8 @@ export const cardDesignInputSchema = z
       .max(500)
       .refine((value) => value === "" || isValidRemoteImageUrl(value)),
     cardDesignMode: z.enum(["STANDARD", "CUSTOM"]),
-    primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+    primaryColor: hexColor,
+    secondaryColor: hexColor,
     themePreset: z.enum(["DEFAULT", "DARK"]),
     standardCardArtworkEnabled: z.preprocess(
       (value) => value === "on" || value === "true" || value === true,
@@ -68,6 +71,7 @@ export function parseCardDesignFormData(formData: FormData) {
     logoUrl: formData.get("logoUrl") ?? "",
     cardDesignMode: formData.get("cardDesignMode") ?? "STANDARD",
     primaryColor: formData.get("primaryColor"),
+    secondaryColor: formData.get("secondaryColor"),
     themePreset: formData.get("themePreset") ?? "DEFAULT",
     standardCardArtworkEnabled:
       formData.get("standardCardArtworkEnabled") ?? false,
