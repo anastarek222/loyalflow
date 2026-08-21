@@ -26,10 +26,14 @@ test("TC5 team provisioning command owns the authoritative atomic lifecycle", ()
 
 test("TC5 team provisioning command preserves trusted sign-in readiness and server audit authority", () => {
   const command = source("lib/server/business/team-provisioning-command.ts");
+  const auditBuilder = source("lib/activity/business-activity.ts");
 
   assert.match(command, /CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP/);
-  assert.match(command, /activityActorFields\(input\.actor, input\.businessId\)/);
-  assert.match(command, /activityRequestMetadata\(activityContext\)/);
+  assert.match(command, /buildUserAuditActivity\(\{[\s\S]*?operation: "CREATE"/);
+  assert.match(command, /actor: input\.actor/);
+  assert.match(command, /activityContext/);
+  assert.match(auditBuilder, /activityActorFields\([\s\S]*?input\.actor[\s\S]*?input\.businessId/);
+  assert.match(auditBuilder, /activityRequestMetadata\(input\.activityContext\)/);
   assert.doesNotMatch(command, /EmailVerificationToken|sendEmailVerificationEmail/);
 });
 
