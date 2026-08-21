@@ -89,9 +89,9 @@ test("R8A governance stays aligned with the existing Beta retry contract", () =>
   assert.match(governanceDoc, /maximum retry delay: \*\*300 seconds\*\*/);
 });
 
-test("R8A explicitly defers scale enforcement to R8B rather than claiming the unbounded rewrite is safe", () => {
-  assert.match(governanceDoc, /R8B must enforce this operating limit before R8 is complete/);
-  assert.match(governanceDoc, /no customer full rewrite can load\/write an unbounded customer collection/);
-  assert.match(governanceDoc, /no over-limit path writes a partial customer snapshot/);
-  assert.match(governanceDoc, /any all-business sync path avoids unbounded fan-out/);
+test("R8A scale authority remains explicit after R8B enforcement", () => {
+  assert.match(governanceDoc, /\*\*2,500 customers per business\.\*\*/);
+  assert.match(governanceDoc, /R8B enforces this boundary/);
+  assert.match(governanceDoc, /never receives a silent partial snapshot/);
+  assert.match(governanceDoc, /all-business helper is also paged in batches/);
 });
