@@ -140,6 +140,7 @@ test("earning updates balance and lifetime earned before recording the audit tra
     createdById: "staff-1",
     amount: 2,
     sourceLoyaltyMode: "VISITS",
+    unitName: "visit",
     transactionNote: "Loyalty credit added",
     activityDescription: "Added 2 loyalty credit",
   });
@@ -252,10 +253,17 @@ test("redemption records the balance change, reward, and audit activity", async 
     {
       data: {
         type: "REWARD_REDEEMED",
-        description: "تم استبدال 20% off مقابل 5",
+        description: "REWARD_REDEEMED rewardName=20% off cost=5",
         businessId: "business-1",
         customerId: "customer-1",
         createdById: "staff-1",
+        metadata: {
+          presentationVersion: "R9_V1",
+          presentationKind: "FINANCIAL_ACTIVITY",
+          financialType: "REWARD_REDEEMED",
+          rewardName: "20% off",
+          cost: 5,
+        },
       },
     },
   ]);
@@ -312,6 +320,7 @@ test("does not record tenant activity when the balance read has a different busi
     createdById: "staff-1",
     amount: 2,
     sourceLoyaltyMode: "VISITS",
+    unitName: "visit",
     transactionNote: "Loyalty credit added",
     activityDescription: "Added 2 loyalty credit",
   });
@@ -330,6 +339,7 @@ test("records the immutable source mode and sale amount for sales earnings", asy
     createdById: "staff-1",
     amount: 3,
     sourceLoyaltyMode: "SALES_AMOUNT",
+    unitName: "CHF",
     saleAmount: 250,
     transactionNote: "Sale recorded",
     activityDescription: "Added loyalty credit from sale",
@@ -361,6 +371,7 @@ test("records optional active branch context on loyalty writes and audit activit
     branchId: "branch-1",
     amount: 3,
     sourceLoyaltyMode: "VISITS",
+    unitName: "visit",
     transactionNote: "Branch earn",
     activityDescription: "Branch earn",
   });
@@ -388,11 +399,19 @@ test("records optional active branch context on loyalty writes and audit activit
   assert.deepEqual(calls.activities[0], {
     data: {
       type: "LOYALTY_EARNED",
-      description: "Branch earn",
+      description: "LOYALTY_EARNED amount=3 loyaltyMode=VISITS unitName=visit",
       businessId: "business-1",
       branchId: "branch-1",
       customerId: "customer-1",
       createdById: undefined,
+      metadata: {
+        presentationVersion: "R9_V1",
+        presentationKind: "FINANCIAL_ACTIVITY",
+        financialType: "LOYALTY_EARNED",
+        amount: 3,
+        loyaltyMode: "VISITS",
+        unitName: "visit",
+      },
     },
   });
 });
@@ -431,6 +450,7 @@ test("credits an eligible promotion once and records its transaction audit link"
     createdById: "staff-1",
     amount: 2,
     sourceLoyaltyMode: "VISITS",
+    unitName: "visit",
     promotion: {
       id: "promotion-1",
       businessId: "business-1",
@@ -477,6 +497,7 @@ test("returns the prior result for the same idempotency key without new writes",
     createdById: "staff-1",
     amount: 2,
     sourceLoyaltyMode: "VISITS",
+    unitName: "visit",
     idempotencyKey: "a9cd3085-1429-4cac-8cf3-599ce4de2ac6",
     transactionNote: "Retry",
     activityDescription: "Retry",
@@ -508,6 +529,7 @@ test("rejected staff branch or staff attribution context writes no financial sid
     attributedStaffId: "staff-1",
     amount: 2,
     sourceLoyaltyMode: "VISITS",
+    unitName: "visit",
     transactionNote: "Rejected context",
     activityDescription: "Rejected context",
   });
@@ -536,6 +558,7 @@ test("context reporting is opt-in, bounded, and has no financial or audit side e
       branchId: "branch-other-tenant-or-inactive",
       amount: 2,
       sourceLoyaltyMode: "VISITS",
+      unitName: "visit",
       transactionNote: "Rejected context",
       activityDescription: "Rejected context",
       reportContextFailure: true,
@@ -632,11 +655,18 @@ test("successful redemptions persist canonical branch, actor, and staff attribut
   assert.deepEqual(calls.activities[0], {
     data: {
       type: "REWARD_REDEEMED",
-      description: "تم استبدال Context reward مقابل 2",
+      description: "REWARD_REDEEMED rewardName=Context reward cost=2",
       businessId: "business-1",
       branchId: "branch-1",
       customerId: "customer-1",
       createdById: "actor-staff",
+      metadata: {
+        presentationVersion: "R9_V1",
+        presentationKind: "FINANCIAL_ACTIVITY",
+        financialType: "REWARD_REDEEMED",
+        rewardName: "Context reward",
+        cost: 2,
+      },
     },
   });
 });
