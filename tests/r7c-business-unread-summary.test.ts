@@ -9,40 +9,41 @@ const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 const overview = source("app/businesses/[slug]/page.tsx");
 const summary = source("lib/dashboard/business-unread-summary.ts");
 
-test("R7C removes unread candidate row loads from Business Overview", () => {
+test("R7C keeps unread candidate row loads out of Business Overview", () => {
   assert.match(overview, /getBusinessUnreadSummary\(\{/);
   assert.match(overview, /after: notificationsLastReadAt/);
-  assert.match(overview, /individuallyReadKeys/);
   assert.doesNotMatch(overview, /unreadRewardReadyCandidates/);
   assert.doesNotMatch(overview, /unreadActivityCandidates/);
 });
 
-test("R7C preserves individual activity read semantics with count queries", () => {
-  assert.match(summary, /parseNotificationReadKey/);
-  assert.match(summary, /parsed\?\.kind === "activity"/);
-  assert.match(summary, /activityReadIds\.push\(parsed\.activityId\)/);
-  assert.match(summary, /createdAt: \{ gt: input\.after \}/);
-  assert.match(summary, /id: \{ notIn: activityReadIds \}/);
+test("R7C preserves individual activity read semantics in database counts", () => {
+  assert.match(summary, /FROM "BusinessActivity" activity/);
+  assert.match(summary, /FROM "NotificationItemRead" item_read/);
+  assert.match(summary, /item_read\."readAt" > \$\{/);
+  assert.match(
+    summary,
+    /item_read\."notificationKey" = CONCAT\('activity:', activity\.id\)/,
+  );
 
   for (const type of ["REWARD_REDEEMED", "BALANCE_ADJUSTED", "LOYALTY_EARNED"]) {
-    assert.match(summary, new RegExp(`type: "${type}"`));
+    assert.match(summary, new RegExp(`activity\\.type::text = '${type}'`));
   }
 });
 
 test("R7C preserves reward-ready state-key semantics without loading candidate rows", () => {
-  assert.match(summary, /parsed\?\.kind === "reward-ready"/);
-  assert.match(summary, /rewardReadyReadStates\.push\(parsed\)/);
-  assert.match(summary, /updatedAt: \{ gt: input\.after \}/);
-  assert.match(summary, /balance: \{ gte: input\.rewardTargetCost \}/);
-  assert.match(summary, /id: target\.customerId/);
-  assert.match(summary, /balance: target\.balance/);
-  assert.match(summary, /lifetimeRedeemed: target\.lifetimeRedeemed/);
-  assert.match(summary, /prisma\.customer\.count\(/);
+  assert.match(summary, /FROM "Customer" customer/);
+  assert.match(summary, /customer\.balance >= \$\{/);
+  assert.match(summary, /customer\."updatedAt" > \$\{/);
+  assert.match(summary, /CONCAT\(\s*'reward-ready:'/);
+  assert.match(summary, /customer\.id/);
+  assert.match(summary, /customer\.balance/);
+  assert.match(summary, /customer\."lifetimeRedeemed"/);
   assert.doesNotMatch(summary, /\.findMany\(/);
 });
 
 test("R7C feeds the existing notification presentation from the summary counts", () => {
   for (const field of [
+    "unreadNotificationCount",
     "unreadRewardReadyCount",
     "unreadRewardRedeemedCount",
     "unreadBalanceAdjustedCount",

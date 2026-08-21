@@ -62,11 +62,13 @@ test("keeps all affordable catalogue alternatives while using the cheapest targe
   assert.deepEqual(result.affordableRewards.map((reward) => reward.id), ["five", "eight"]);
 });
 
-test("availability surfaces use the canonical helper and scanner filters unusable unlocks", () => {
+test("availability surfaces keep canonical reward semantics and scanner filters unusable unlocks", () => {
   const root = process.cwd();
-  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
+  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
     assert.match(readFileSync(join(root, file), "utf8"), /getRewardAvailability/);
   }
+  const dashboard = readFileSync(join(root, "app/businesses/[slug]/page.tsx"), "utf8");
+  assert.match(dashboard, /getBusinessRewardTargetCost/);
   const scanner = readFileSync(join(root, "app/businesses/[slug]/scan/customer/[customerId]/page.tsx"), "utf8");
   assert.match(scanner, /usableUnlocks/);
   assert.match(scanner, /isRewardUnlockActionable/);
