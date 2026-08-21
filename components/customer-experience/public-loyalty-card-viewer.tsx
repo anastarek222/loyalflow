@@ -18,14 +18,14 @@ export function PublicLoyaltyCardViewer({
     language === "AR"
       ? {
           title: "كارت الولاء الرقمي",
-          hint: "اعرض الوجه الآخر لمعرفة تفاصيل المكافأة والتواصل.",
+          hint: "اعرض الوجه الآخر لمعرفة الرصيد وتفاصيل المكافأة.",
           front: "الوجه الأمامي",
           back: "الوجه الخلفي",
           flip: "اقلب الكارت",
         }
       : {
           title: "Digital loyalty card",
-          hint: "View the other side for reward and contact details.",
+          hint: "View the other side for balance and reward details.",
           front: "Front",
           back: "Back",
           flip: "Flip card",
