@@ -1,7 +1,4 @@
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildUserAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import {
@@ -49,6 +46,7 @@ export async function updateTeamExperienceAccessCommand(input: {
         id: true,
         email: true,
         role: true,
+        experienceAccess: true,
       },
     });
     if (!targetUser) {
@@ -65,13 +63,19 @@ export async function updateTeamExperienceAccessCommand(input: {
       data: { experienceAccess },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "USER_EXPERIENCE_ACCESS_UPDATED",
-        description: `تم تحديث وصول الواجهة للحساب ${targetUser.email}`,
+      data: buildUserAuditActivity({
+        operation: "EXPERIENCE_ACCESS_UPDATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        targetUser: {
+          id: targetUser.id,
+          email: targetUser.email,
+          role: targetUser.role,
+        },
+        previousExperienceAccess: targetUser.experienceAccess,
+        nextExperienceAccess: experienceAccess,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;

@@ -4,6 +4,7 @@ import {
   activityLabels,
   activityTypes,
   getActivityBadgeClass,
+  getActivityDescription,
   getActivityLabel,
   getActivityMetadataString,
 } from "@/lib/activity/presentation";
@@ -338,6 +339,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
               const customerName = activity.customer
                 ? [activity.customer.firstName, activity.customer.lastName].filter(Boolean).join(" ")
                 : null;
+              const renderedDescription = getActivityDescription(activity, language);
               return (
                 <article key={activity.id} className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row">
@@ -345,7 +347,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                       <span className={`inline-flex rounded-full px-4 py-1 text-xs font-semibold ${getActivityBadgeClass(activity.type)}`}>
                         {getActivityLabel(activity.type, language)}
                       </span>
-                      <p dir="auto" className="mt-4 font-semibold text-foreground">{localizeActivityDescription(activity.description, language)}</p>
+                      <p dir="auto" className="mt-4 font-semibold text-foreground">{localizeActivityDescription(renderedDescription, language)}</p>
                       {activity.customer && (
                         <Link href={`/businesses/${business.slug}/customers/${activity.customer.id}`} className="mt-4 inline-flex text-sm font-semibold text-primary hover:text-primary">
                           {customerName} — {activity.customer.customerCode}

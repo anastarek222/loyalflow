@@ -31,8 +31,10 @@ test("P1 Activity owns bilingual material copy and language-aware activity label
     assert.ok(activity.includes(pair[1]), `missing Activity English copy: ${pair[1]}`);
   }
   assert.match(activity, /getActivityLabel\(type, language\)/);
-  assert.match(activity, /localizeActivityDescription\(activity\.description, language\)/);
+  assert.match(activity, /getActivityDescription\(activity, language\)/);
+  assert.match(activity, /localizeActivityDescription/);
   assert.match(presentation, /const activityLabelCatalog: Record<AppLanguage/);
+  assert.match(presentation, /export function getActivityDescription/);
   assert.match(presentation, /EN:\s*\{/);
   assert.match(presentation, /Customer created/);
 });

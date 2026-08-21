@@ -2,10 +2,7 @@ import type {
   ExperienceAccess,
   UserRole,
 } from "@/generated/prisma/client";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildUserAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import {
@@ -17,7 +14,7 @@ import prisma from "@/lib/prisma";
 
 export type ProvisionBusinessUserCommandInput = Readonly<{
   businessId: string;
-  actor: Parameters<typeof activityActorFields>[0];
+  actor: Parameters<typeof buildUserAuditActivity>[0]["actor"];
   firstName: string;
   lastName: string | null;
   email: string;
@@ -148,13 +145,17 @@ export async function provisionBusinessUserCommand(
 
     const label = roleLabel(input.role);
     await transaction.businessActivity.create({
-      data: {
-        type: "USER_CREATED",
-        description: `تم إنشاء حساب ${label} للبريد ${normalizedEmail}`,
+      data: buildUserAuditActivity({
+        operation: "CREATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        targetUser: {
+          id: createdUser.id,
+          email: normalizedEmail,
+          role: input.role,
+        },
+        activityContext,
+      }),
     });
 
     await createBusinessNotification(transaction, {

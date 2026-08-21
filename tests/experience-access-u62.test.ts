@@ -90,7 +90,9 @@ test("U6.2 team creation and editing persist the selected policy through server-
   assert.match(command, /"OPERATE"/);
   assert.match(command, /id: input\.userId,\s*businessId: input\.businessId/);
   assert.match(command, /transaction\.user\.update/);
-  assert.match(command, /type: "USER_EXPERIENCE_ACCESS_UPDATED"/);
+  assert.match(command, /buildUserAuditActivity\(\{[\s\S]*?operation: "EXPERIENCE_ACCESS_UPDATE"/);
+  assert.match(command, /previousExperienceAccess: targetUser\.experienceAccess/);
+  assert.match(command, /nextExperienceAccess: experienceAccess/);
 });
 
 test("U6.2 leaves branch assignments unrelated to experience access", () => {
