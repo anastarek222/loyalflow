@@ -101,15 +101,15 @@ export async function getBusinessUnreadSummary(input: {
       ) AS "unreadLoyaltyEarnedCount"
   `;
 
-  const unreadNotificationCount = Number(row?.unreadNotificationCount ?? 0n);
-  const unreadRewardReadyCount = Number(row?.unreadRewardReadyCount ?? 0n);
+  const unreadNotificationCount = Number(row?.unreadNotificationCount ?? 0);
+  const unreadRewardReadyCount = Number(row?.unreadRewardReadyCount ?? 0);
   const unreadRewardRedeemedCount = Number(
-    row?.unreadRewardRedeemedCount ?? 0n,
+    row?.unreadRewardRedeemedCount ?? 0,
   );
   const unreadBalanceAdjustedCount = Number(
-    row?.unreadBalanceAdjustedCount ?? 0n,
+    row?.unreadBalanceAdjustedCount ?? 0,
   );
-  const unreadLoyaltyEarnedCount = Number(row?.unreadLoyaltyEarnedCount ?? 0n);
+  const unreadLoyaltyEarnedCount = Number(row?.unreadLoyaltyEarnedCount ?? 0);
 
   return {
     unreadNotificationCount,
