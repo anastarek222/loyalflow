@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import { customerFeedbackUrl } from "@/lib/customers/feedback";
 import { parseCustomerRegistration } from "@/lib/customers/registration";
 import {
   getBulkStateChangeIds,
@@ -117,7 +118,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
         "OPERATE",
       )
     ) {
-      redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+      redirect(customerFeedbackUrl(slug, "subscription-restricted"));
     }
 
     const mutation = await setBulkCustomerStatusCommand({
@@ -128,7 +129,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     });
     if (!mutation.ok) {
       if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
-        redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+        redirect(customerFeedbackUrl(slug, "subscription-restricted"));
       }
       redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
     }
@@ -177,7 +178,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       "OPERATE",
     )
   ) {
-    redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+    redirect(customerFeedbackUrl(slug, "subscription-restricted"));
   }
 
   const mutation = await mutateBulkCustomerTagCommand({
@@ -189,7 +190,7 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
   });
   if (!mutation.ok) {
     if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
-      redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+      redirect(customerFeedbackUrl(slug, "subscription-restricted"));
     }
     if (mutation.reason === "INVALID_SELECTION") {
       redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
@@ -249,7 +250,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
       "EXPAND",
     )
   ) {
-    redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+    redirect(customerFeedbackUrl(slug, "subscription-restricted"));
   }
 
   const parsed = parseCustomerRegistration({
@@ -259,7 +260,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   });
 
   if (!parsed) {
-    redirect(`/businesses/${slug}/customers?error=invalid`);
+    redirect(customerFeedbackUrl(slug, "invalid"));
   }
 
   const existingCustomer = await prisma.customer.findUnique({
@@ -273,7 +274,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   });
 
   if (existingCustomer) {
-    redirect(`/businesses/${slug}/customers?error=duplicate`);
+    redirect(customerFeedbackUrl(slug, "duplicate"));
   }
 
   const [customerCount, planLimits] = await Promise.all([
@@ -283,7 +284,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   if (
     !isWithinPlanLimit(business.plan, "CUSTOMERS", customerCount, 1, planLimits)
   ) {
-    redirect(`/businesses/${slug}/customers?error=plan-limit`);
+    redirect(customerFeedbackUrl(slug, "plan-limit"));
   }
 
   const creation = await createCustomerCommand({
@@ -297,12 +298,12 @@ export async function createCustomerAction(slug: string, formData: FormData) {
       redirect("/businesses");
     }
     if (creation.reason === "DUPLICATE") {
-      redirect(`/businesses/${slug}/customers?error=duplicate`);
+      redirect(customerFeedbackUrl(slug, "duplicate"));
     }
     if (creation.reason === "PLAN_LIMIT") {
-      redirect(`/businesses/${slug}/customers?error=plan-limit`);
+      redirect(customerFeedbackUrl(slug, "plan-limit"));
     }
-    redirect(`/businesses/${slug}/customers?error=subscription-restricted`);
+    redirect(customerFeedbackUrl(slug, "subscription-restricted"));
   }
 
   const createdCustomer = creation.customer;
