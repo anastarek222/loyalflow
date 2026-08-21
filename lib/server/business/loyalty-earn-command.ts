@@ -165,6 +165,7 @@ export async function executeLoyaltyEarnCommand(input: {
   activityContext?: ActivityRequestContext;
   amount: number;
   loyaltyMode: LoyaltyMode;
+  unitName: string;
   saleAmount?: number;
   idempotencyKey: string;
   transactionNote: string;
@@ -213,6 +214,7 @@ export async function executeLoyaltyEarnCommand(input: {
       attributedStaffId: input.attributedStaffId,
       amount: input.amount,
       sourceLoyaltyMode: input.loyaltyMode,
+      unitName: input.unitName,
       saleAmount: input.saleAmount,
       idempotencyKey: input.idempotencyKey,
       promotion: promotion
