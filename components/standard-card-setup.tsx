@@ -24,6 +24,7 @@ export type CardPreview = Partial<{
   businessName: string;
   logoUrl: string;
   primaryColor: string;
+  secondaryColor: string;
   themePreset: string;
   artworkEnabled: boolean;
   artworkCategory: string;
@@ -52,6 +53,8 @@ type Props = {
   allowCustom?: boolean;
   language: CardSetupLanguage;
 };
+
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 function translate(language: CardSetupLanguage, ar: string, en: string) {
   return language === "AR" ? ar : en;
@@ -87,8 +90,6 @@ function colorPresetLabel(
   return language === "AR" ? labels[preset][0] : labels[preset][1];
 }
 
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
-
 export function StandardCardSetup({
   initial = {},
   preview = {},
@@ -105,15 +106,21 @@ export function StandardCardSetup({
       DEFAULT_STANDARD_CARD_COLOR_PRESET,
       initialThemePreset,
     );
-  const initialColorPreset =
+  const initialSecondaryColor = initial.secondaryColor || "#60A5FA";
+  const [primaryPreset, setPrimaryPreset] = useState<StandardCardColorPreset | null>(
     standardCardPresetForColor(initial.primaryColor) ??
-    (initial.primaryColor ? null : DEFAULT_STANDARD_CARD_COLOR_PRESET);
-  const [colorPreset, setColorPreset] = useState<StandardCardColorPreset | null>(
-    initialColorPreset,
+      (initial.primaryColor ? null : DEFAULT_STANDARD_CARD_COLOR_PRESET),
   );
-  const [hexDraft, setHexDraft] = useState(initialPrimaryColor.toUpperCase());
+  const [secondaryPreset, setSecondaryPreset] = useState<StandardCardColorPreset | null>(
+    standardCardPresetForColor(initial.secondaryColor),
+  );
+  const [primaryDraft, setPrimaryDraft] = useState(initialPrimaryColor.toUpperCase());
+  const [secondaryDraft, setSecondaryDraft] = useState(
+    initialSecondaryColor.toUpperCase(),
+  );
   const [card, setCard] = useState({
     primaryColor: initialPrimaryColor,
+    secondaryColor: initialSecondaryColor,
     themePreset: initialThemePreset,
     artworkEnabled: initial.artworkEnabled ?? true,
     artworkCategory: initial.artworkCategory || "OTHER",
@@ -122,6 +129,7 @@ export function StandardCardSetup({
     customFrontArtworkUrl: initial.customFrontArtworkUrl || "",
     customBackArtworkUrl: initial.customBackArtworkUrl || "",
   });
+
   const customReadOnly = !allowCustom && initial.designMode === "CUSTOM";
   const values = useMemo(
     () => ({
@@ -154,36 +162,64 @@ export function StandardCardSetup({
     onPreviewChange?.(next);
   };
 
-  const updateColorPreset = (preset: StandardCardColorPreset) => {
-    const primaryColor = standardCardPresetColor(preset, card.themePreset);
-    const next = { ...card, primaryColor };
-    setColorPreset(preset);
-    setHexDraft(primaryColor.toUpperCase());
+  const updatePreset = (
+    target: "primary" | "secondary",
+    preset: StandardCardColorPreset,
+  ) => {
+    const value = standardCardPresetColor(preset, card.themePreset).toUpperCase();
+    const next =
+      target === "primary"
+        ? { ...card, primaryColor: value }
+        : { ...card, secondaryColor: value };
+    if (target === "primary") {
+      setPrimaryPreset(preset);
+      setPrimaryDraft(value);
+    } else {
+      setSecondaryPreset(preset);
+      setSecondaryDraft(value);
+    }
     setCard(next);
     onPreviewChange?.(next);
   };
 
-  const updateCustomColor = (value: string) => {
+  const updateCustomColor = (target: "primary" | "secondary", value: string) => {
     const normalized = value.toUpperCase();
     if (!HEX_COLOR.test(normalized)) return false;
-    const next = { ...card, primaryColor: normalized };
-    setColorPreset(null);
-    setHexDraft(normalized);
+    const next =
+      target === "primary"
+        ? { ...card, primaryColor: normalized }
+        : { ...card, secondaryColor: normalized };
+    if (target === "primary") {
+      setPrimaryPreset(null);
+      setPrimaryDraft(normalized);
+    } else {
+      setSecondaryPreset(null);
+      setSecondaryDraft(normalized);
+    }
     setCard(next);
     onPreviewChange?.(next);
     return true;
   };
 
-  const commitHexDraft = () => {
-    if (!updateCustomColor(hexDraft)) setHexDraft(card.primaryColor.toUpperCase());
+  const commitDraft = (target: "primary" | "secondary") => {
+    const draft = target === "primary" ? primaryDraft : secondaryDraft;
+    const fallback = target === "primary" ? card.primaryColor : card.secondaryColor;
+    if (!updateCustomColor(target, draft)) {
+      if (target === "primary") setPrimaryDraft(fallback.toUpperCase());
+      else setSecondaryDraft(fallback.toUpperCase());
+    }
   };
 
   const updateThemePreset = (theme: StandardCardThemePreset) => {
-    const primaryColor = colorPreset
-      ? standardCardPresetColor(colorPreset, theme)
+    const primaryColor = primaryPreset
+      ? standardCardPresetColor(primaryPreset, theme)
       : card.primaryColor;
-    const next = { ...card, themePreset: theme, primaryColor };
-    setHexDraft(primaryColor.toUpperCase());
+    const secondaryColor = secondaryPreset
+      ? standardCardPresetColor(secondaryPreset, theme)
+      : card.secondaryColor;
+    const next = { ...card, themePreset: theme, primaryColor, secondaryColor };
+    setPrimaryDraft(primaryColor.toUpperCase());
+    setSecondaryDraft(secondaryColor.toUpperCase());
     setCard(next);
     onPreviewChange?.(next);
   };
@@ -205,6 +241,82 @@ export function StandardCardSetup({
     language,
   });
 
+  const renderColorControl = (
+    target: "primary" | "secondary",
+    label: string,
+    value: string,
+    draft: string,
+    preset: StandardCardColorPreset | null,
+    setDraft: (value: string) => void,
+  ) => (
+    <div className="rounded-xl border border-border bg-surface-subtle p-4">
+      <p className="text-sm font-black">{label}</p>
+      <input
+        type="hidden"
+        name={target === "primary" ? "primaryColor" : "secondaryColor"}
+        value={value}
+      />
+      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+        {STANDARD_CARD_COLOR_PRESETS.map((candidate) => {
+          const active = preset === candidate.id;
+          const swatch = standardCardPresetColor(candidate.id, values.themePreset);
+          return (
+            <button
+              key={candidate.id}
+              type="button"
+              onClick={() => updatePreset(target, candidate.id)}
+              aria-pressed={active}
+              aria-label={t(
+                `اختيار ${colorPresetLabel(candidate.id, language)}`,
+                `Choose ${colorPresetLabel(candidate.id, language)}`,
+              )}
+              className={`rounded-xl border p-2 text-center text-[11px] font-bold ${active ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-white"}`}
+            >
+              <span
+                className="mx-auto block size-8 rounded-lg border border-black/10 shadow-sm"
+                style={{ backgroundColor: swatch }}
+                aria-hidden="true"
+              />
+              <span className="mt-1.5 block truncate">
+                {colorPresetLabel(candidate.id, language)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+        <label className="text-xs font-bold text-foreground-muted">
+          {t("اختيار لون", "Colour picker")}
+          <input
+            type="color"
+            value={value}
+            onChange={(event) => updateCustomColor(target, event.target.value)}
+            className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-white p-1"
+          />
+        </label>
+        <label className="text-xs font-bold text-foreground-muted">
+          {t("كود HEX", "HEX code")}
+          <input
+            type="text"
+            value={draft}
+            maxLength={7}
+            spellCheck={false}
+            onChange={(event) => setDraft(event.target.value.toUpperCase())}
+            onBlur={() => commitDraft(target)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commitDraft(target);
+              }
+            }}
+            aria-invalid={!HEX_COLOR.test(draft)}
+            className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-white px-3 font-mono text-sm uppercase"
+          />
+        </label>
+      </div>
+    </div>
+  );
+
   return (
     <section
       className="grid min-w-0 gap-8 xl:grid-cols-[minmax(18rem,0.82fr)_minmax(32rem,1.18fr)]"
@@ -221,8 +333,8 @@ export function StandardCardSetup({
               <p className="font-black">{t("بطاقة مخصصة", "Custom Card")}</p>
               <p className="mt-1 text-sm text-foreground-muted">
                 {t(
-                  "يدير مدير نظام LoyalFlow هذا التصميم. زوج الوجه والظهر ومناطق البيانات الديناميكية للقراءة فقط لدى مالك النشاط.",
-                  "This design is managed by LoyalFlow Super Admin. The Front + Back pair and protected dynamic zones are read-only for Business Owners.",
+                  "يدير مدير نظام LoyalFlow زوج الوجه والظهر المنشور. التصميم للقراءة فقط لدى مالك النشاط.",
+                  "LoyalFlow Super Admin manages the published Front + Back pair. The artwork is read-only for Business Owners.",
                 )}
               </p>
             </div>
@@ -242,8 +354,8 @@ export function StandardCardSetup({
                 <span className="block font-black">{t("قياسي", "Standard")}</span>
                 <span className="mt-1 block text-xs text-foreground-muted">
                   {t(
-                    "يصمم LoyalFlow هذه البطاقة ويديرها تلقائيًا.",
-                    "LoyalFlow automatically designs and manages this card.",
+                    "بطاقة LoyalFlow القياسية مع ألوان وسمة قابلة للتخصيص.",
+                    "The LoyalFlow standard card with configurable colours and theme.",
                   )}
                 </span>
               </label>
@@ -269,8 +381,8 @@ export function StandardCardSetup({
                   </span>
                   <span className="mt-1 block text-xs text-foreground-muted">
                     {t(
-                      "لمدير النظام فقط. ارفع الوجه والظهر معًا كزوج واحد؛ LoyalFlow لا ينشئ أي جهة من البطاقة المخصصة.",
-                      "Super Admin only. Upload Front and Back together as one pair; LoyalFlow does not generate either Custom Card side.",
+                      "ارفع الوجه والظهر معًا كزوج واحد؛ LoyalFlow لا ينشئ أي جهة من البطاقة المخصصة.",
+                      "Upload Front and Back together as one pair; LoyalFlow generates neither Custom Card side.",
                     )}
                   </span>
                 </label>
@@ -289,8 +401,8 @@ export function StandardCardSetup({
             </p>
             <p className="mt-2 text-sm text-foreground-muted">
               {t(
-                "سيحافظ حفظ إعدادات النشاط أو برنامج الولاء الأخرى على زوج التصميم المنشور كما هو.",
-                "Saving other Business or Loyalty Program settings preserves the published artwork pair exactly.",
+                "يحافظ النظام على زوج التصميم المنشور كما هو.",
+                "The published artwork pair is preserved exactly as managed by Super Admin.",
               )}
             </p>
           </div>
@@ -300,6 +412,7 @@ export function StandardCardSetup({
               {t("التصميم المخصص", "Custom artwork")}
             </legend>
             <input type="hidden" name="primaryColor" value={values.primaryColor} />
+            <input type="hidden" name="secondaryColor" value={values.secondaryColor} />
             <input type="hidden" name="themePreset" value={values.themePreset} />
             <input
               type="hidden"
@@ -316,12 +429,6 @@ export function StandardCardSetup({
               name="customCardSafeZoneVersion"
               value={CUSTOM_CARD_SAFE_ZONE_VERSION}
             />
-            <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">
-              {t(
-                "يتم رفع الوجه والظهر معًا ومعاينتهما ونشرهما من لوحة مدير النظام بالأعلى. حفظ هذا النموذج لا يغيّر زوج التصميم المنشور.",
-                "Front and Back are uploaded, previewed and published together from the Super Admin panel above. Saving this form does not replace the published pair.",
-              )}
-            </p>
             <input
               name="customCardFrontArtworkUrl"
               type="hidden"
@@ -332,52 +439,43 @@ export function StandardCardSetup({
               type="hidden"
               value={values.customBackArtworkUrl}
             />
+            <p className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">
+              {t(
+                "رفع الوجه والظهر ومعاينتهما ونشرهما يتم من لوحة مدير النظام بالأعلى. حفظ النموذج لا يستبدل النسخة المنشورة.",
+                "Front and Back are uploaded, previewed and published from the Super Admin panel above. Saving this form does not replace the published pair.",
+              )}
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
-              {(
-                [
-                  ["front", values.customFrontArtworkUrl, "customFrontArtworkUrl"],
-                  ["back", values.customBackArtworkUrl, "customBackArtworkUrl"],
-                ] as const
-              ).map(([sideName, artworkUrl, key]) => {
-                const sideLabel =
-                  sideName === "front" ? t("الوجه", "Front") : t("الظهر", "Back");
+              {(["front", "back"] as const).map((sideName) => {
+                const artworkUrl =
+                  sideName === "front"
+                    ? values.customFrontArtworkUrl
+                    : values.customBackArtworkUrl;
+                const previewUrl =
+                  sideName === "front"
+                    ? values.customFrontArtworkPreviewUrl
+                    : values.customBackArtworkPreviewUrl;
                 return (
                   <div
                     key={sideName}
-                    className="min-w-0 rounded-xl border border-border bg-surface-subtle p-3"
+                    className="rounded-xl border border-border bg-surface-subtle p-3"
                   >
                     <p className="text-sm font-black">
-                      {t(`تصميم ${sideLabel}`, `${sideLabel} design`)}
+                      {sideName === "front" ? t("الوجه", "Front") : t("الظهر", "Back")}
                     </p>
                     <div className="mt-2 flex aspect-[1.586] items-center justify-center overflow-hidden rounded-lg border border-border bg-slate-950">
                       {artworkUrl ? (
                         <img
-                          src={
-                            key === "customFrontArtworkUrl"
-                              ? values.customFrontArtworkPreviewUrl || artworkUrl
-                              : values.customBackArtworkPreviewUrl || artworkUrl
-                          }
-                          alt={t(
-                            `التصميم المخصص الحالي — ${sideLabel}`,
-                            `Existing custom ${sideName} artwork`,
-                          )}
+                          src={previewUrl || artworkUrl}
+                          alt=""
                           className="size-full object-cover"
                         />
                       ) : (
                         <span className="px-3 text-center text-xs font-semibold text-white/70">
-                          {t(
-                            "لا يوجد تصميم منشور لهذه الجهة",
-                            `No published ${sideName} artwork`,
-                          )}
+                          {t("لا يوجد تصميم منشور", "No published artwork")}
                         </span>
                       )}
                     </div>
-                    <p className="mt-3 text-xs font-semibold text-foreground-muted">
-                      {t(
-                        "تتم إدارته كجزء من زوج الوجه والظهر بالأعلى.",
-                        "Managed as part of the Front + Back pair above.",
-                      )}
-                    </p>
                   </div>
                 );
               })}
@@ -388,8 +486,8 @@ export function StandardCardSetup({
               </p>
               <p className="mt-1">
                 {t(
-                  "استخدم نسبة 1.586:1 واترك مساحة واضحة فقط لرمز QR واسم العميل والرصيد والتقدم والمكافأة.",
-                  "Use the 1.586:1 ratio and keep clear space only for QR, customer name, balance, progress and reward overlays.",
+                  "استخدم نسبة 1.586:1 واترك مساحة فقط لرمز QR واسم العميل والرصيد/التقدم في الوجه، وللرصيد/التقدم والمكافأة في الظهر.",
+                  "Use the 1.586:1 ratio and reserve space only for QR, customer name and balance/progress on Front, and balance/progress plus reward on Back.",
                 )}
               </p>
             </div>
@@ -409,9 +507,7 @@ export function StandardCardSetup({
             </legend>
 
             <div>
-              <p className="text-sm font-bold">
-                {t("هوية النشاط", "Business identity")}
-              </p>
+              <p className="text-sm font-bold">{t("هوية النشاط", "Business identity")}</p>
               <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface-subtle p-3">
                 <div className="flex size-10 items-center justify-center overflow-hidden rounded-lg border border-border bg-white font-black">
                   {values.logoUrl ? (
@@ -421,9 +517,7 @@ export function StandardCardSetup({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p dir="auto" className="truncate text-sm font-black">
-                    {values.businessName}
-                  </p>
+                  <p dir="auto" className="truncate text-sm font-black">{values.businessName}</p>
                   <p className="text-xs text-foreground-muted">
                     {t("موروثة من إعداد النشاط", "Inherited from Business Setup")}
                   </p>
@@ -431,81 +525,28 @@ export function StandardCardSetup({
               </div>
             </div>
 
-            <div>
-              <p className="text-sm font-bold">
-                {t("اللون الأساسي", "Primary colour")}
-              </p>
-              <input type="hidden" name="primaryColor" value={values.primaryColor} />
-              <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
-                {STANDARD_CARD_COLOR_PRESETS.map((preset) => {
-                  const active = colorPreset === preset.id;
-                  const swatch = standardCardPresetColor(
-                    preset.id,
-                    values.themePreset,
-                  );
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => updateColorPreset(preset.id)}
-                      aria-pressed={active}
-                      aria-label={t(
-                        `اختيار ${colorPresetLabel(preset.id, language)}`,
-                        `Choose ${colorPresetLabel(preset.id, language)}`,
-                      )}
-                      className={`rounded-xl border p-2 text-center text-[11px] font-bold ${active ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-surface-subtle"}`}
-                    >
-                      <span
-                        className="mx-auto block size-8 rounded-lg border border-black/10 shadow-sm"
-                        style={{ backgroundColor: swatch }}
-                        aria-hidden="true"
-                      />
-                      <span className="mt-1.5 block truncate">
-                        {colorPresetLabel(preset.id, language)}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-4 grid gap-3 rounded-xl border border-border bg-surface-subtle p-3 sm:grid-cols-[auto_1fr] sm:items-end">
-                <label className="text-xs font-bold text-foreground-muted">
-                  {t("اختيار لون", "Colour picker")}
-                  <input
-                    type="color"
-                    value={values.primaryColor}
-                    onChange={(event) => updateCustomColor(event.target.value)}
-                    className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-white p-1"
-                  />
-                </label>
-                <label className="text-xs font-bold text-foreground-muted">
-                  {t("كود HEX", "HEX code")}
-                  <input
-                    type="text"
-                    value={hexDraft}
-                    maxLength={7}
-                    inputMode="text"
-                    spellCheck={false}
-                    onChange={(event) => setHexDraft(event.target.value.toUpperCase())}
-                    onBlur={commitHexDraft}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        commitHexDraft();
-                      }
-                    }}
-                    aria-invalid={!HEX_COLOR.test(hexDraft)}
-                    className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-white px-3 font-mono text-sm uppercase"
-                  />
-                </label>
-              </div>
-              <p className="mt-2 text-xs text-foreground-muted">
-                {t(
-                  "يمكنك اختيار لون جاهز أو أي كود HEX. البطاقة تستخدم لونًا أساسيًا واحدًا فقط، ويظل اللون المخصص نفسه عند التبديل بين الفاتح والداكن.",
-                  "Choose a preset or any HEX value. The card has one primary colour only; a custom colour stays unchanged when switching Light/Dark.",
-                )}
-              </p>
-            </div>
+            {renderColorControl(
+              "primary",
+              t("اللون الأساسي", "Primary colour"),
+              values.primaryColor,
+              primaryDraft,
+              primaryPreset,
+              setPrimaryDraft,
+            )}
+            {renderColorControl(
+              "secondary",
+              t("اللون الثانوي", "Secondary colour"),
+              values.secondaryColor,
+              secondaryDraft,
+              secondaryPreset,
+              setSecondaryDraft,
+            )}
+            <p className="text-xs text-foreground-muted">
+              {t(
+                "الألوان الجاهزة اختصارات فقط. يمكنك إدخال أي كود HEX لكل لون، ويظل اختيارك المخصص ثابتًا عند التبديل بين الفاتح والداكن.",
+                "Presets are shortcuts only. Enter any HEX value for either colour; custom colours remain unchanged when switching Light/Dark.",
+              )}
+            </p>
 
             <div>
               <p className="text-sm font-bold">{t("السمة", "Theme")}</p>
@@ -518,7 +559,6 @@ export function StandardCardSetup({
                   >
                     <input
                       type="radio"
-                      value={theme}
                       checked={values.themePreset === theme}
                       onChange={() => updateThemePreset(theme)}
                       className="sr-only"
@@ -567,27 +607,19 @@ export function StandardCardSetup({
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <dt className="text-xs text-foreground-muted">{t("الوضع", "Mode")}</dt>
-                  <dd className="mt-1 truncate font-black">
-                    {values.loyaltyMode.replace("_", " ")}
-                  </dd>
+                  <dd className="mt-1 truncate font-black">{values.loyaltyMode.replace("_", " ")}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-foreground-muted">{t("الوحدة", "Unit")}</dt>
-                  <dd dir="auto" className="mt-1 truncate font-black">
-                    {values.unitName}
-                  </dd>
+                  <dd dir="auto" className="mt-1 truncate font-black">{values.unitName}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-foreground-muted">{t("الهدف", "Target")}</dt>
-                  <dd dir="auto" className="mt-1 truncate font-black">
-                    {summaryMetrics.targetText}
-                  </dd>
+                  <dd dir="auto" className="mt-1 truncate font-black">{summaryMetrics.targetText}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-foreground-muted">{t("المكافأة", "Reward")}</dt>
-                  <dd dir="auto" className="mt-1 truncate font-black">
-                    {values.rewardName}
-                  </dd>
+                  <dd dir="auto" className="mt-1 truncate font-black">{values.rewardName}</dd>
                 </div>
               </dl>
             </div>
@@ -604,11 +636,7 @@ export function StandardCardSetup({
                 {t("نفس البطاقة التي سيراها العملاء.", "The same card customers will see.")}
               </p>
             </div>
-            <div
-              className="flex rounded-xl border border-border bg-surface-subtle p-1"
-              role="group"
-              aria-label={t("جانب البطاقة", "Card side")}
-            >
+            <div className="flex rounded-xl border border-border bg-surface-subtle p-1" role="group">
               {(["front", "back"] as const).map((item) => (
                 <button
                   key={item}
@@ -622,10 +650,7 @@ export function StandardCardSetup({
               ))}
             </div>
           </div>
-          <div
-            className="mx-auto w-full max-w-[680px]"
-            data-testid="standard-card-preview-container"
-          >
+          <div className="mx-auto w-full max-w-[680px]" data-testid="standard-card-preview-container">
             <LoyaltyCard
               side={side}
               {...values}
@@ -641,8 +666,8 @@ export function StandardCardSetup({
                   "For Custom Cards LoyalFlow adds only QR, customer name and balance/progress on Front, plus balance/progress and reward on Back. All other copy belongs to the uploaded artwork.",
                 )
               : t(
-                  "بيانات المعاينة توضيحية فقط. تتم تعبئة بيانات العميل ورمز QR والرصيد تلقائيًا.",
-                  "Preview data is illustrative only. Customer data, QR and balance are populated automatically.",
+                  "بيانات المعاينة توضيحية فقط. اللونان الأساسي والثانوي والسمة هي نفسها التي ستظهر على البطاقة القياسية.",
+                  "Preview data is illustrative only. Primary, secondary and theme settings match the Standard Card customers will see.",
                 )}
           </p>
         </div>
