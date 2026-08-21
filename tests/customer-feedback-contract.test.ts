@@ -7,7 +7,7 @@ import {
   customerFeedbackUrl,
   getCustomerPlanLimitMessage,
   parseCustomerFeedbackCode,
-} from "../lib/customers/feedback.ts";
+} from "../lib/customers/feedback";
 
 const root = process.cwd();
 const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
