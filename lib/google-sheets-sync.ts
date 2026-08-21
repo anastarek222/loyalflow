@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import {
+  BETA_GOOGLE_SHEETS_FULL_REWRITE_CUSTOMER_LIMIT,
   GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS,
   GOOGLE_SHEETS_MANAGED_RANGE,
 } from "@/lib/google-sheets-governance";
@@ -11,6 +12,7 @@ import {
 } from "@/lib/google-sheets";
 import { getConfiguredPublicAppUrl } from "@/lib/public-app-url";
 
+const GOOGLE_SHEETS_BUSINESS_SYNC_BATCH_SIZE = 20;
 
 export type GoogleSheetsSyncFailureReason =
   | GoogleSheetsConfigurationReason
@@ -18,6 +20,7 @@ export type GoogleSheetsSyncFailureReason =
   | "SPREADSHEET_INACCESSIBLE"
   | "MAPPED_SHEET_MISSING"
   | "MAPPING_CONFLICT"
+  | "CUSTOMER_LIMIT_EXCEEDED"
   | "GOOGLE_API_FAILED";
 
 export type GoogleSheetsSyncResult =
@@ -86,10 +89,38 @@ async function resolveMappedSheet(business: { id: string; name: string; slug: st
 export async function syncBusinessToGoogleSheet(businessId: string): Promise<GoogleSheetsSyncResult> {
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    include: { customers: { orderBy: { createdAt: "desc" }, include: { _count: { select: { redemptions: true } } } } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      googleSheetId: true,
+      unitName: true,
+      customers: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: BETA_GOOGLE_SHEETS_FULL_REWRITE_CUSTOMER_LIMIT + 1,
+        select: {
+          customerCode: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          publicToken: true,
+          balance: true,
+          lifetimeEarned: true,
+          lifetimeRedeemed: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          _count: { select: { redemptions: true } },
+        },
+      },
+    },
   });
   if (!business) throw new GoogleSheetsSyncError("GOOGLE_API_FAILED", false);
+  if (business.customers.length > BETA_GOOGLE_SHEETS_FULL_REWRITE_CUSTOMER_LIMIT) {
+    throw new GoogleSheetsSyncError("CUSTOMER_LIMIT_EXCEEDED", false);
+  }
 
+  // The scale gate above runs before metadata access, tab creation, clear, update, or formatting writes.
   const sheet = await resolveMappedSheet(business);
   const headers = [...GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS];
   const baseUrl =
@@ -128,6 +159,27 @@ export async function syncBusinessToGoogleSheet(businessId: string): Promise<Goo
 }
 
 export async function syncAllBusinessesToGoogleSheets() {
-  const businesses = await prisma.business.findMany({ select: { id: true }, orderBy: { createdAt: "asc" } });
-  return Promise.all(businesses.map((business) => syncBusinessToGoogleSheet(business.id)));
+  const results: GoogleSheetsSyncResult[] = [];
+  let cursorId: string | undefined;
+
+  while (true) {
+    const businesses = await prisma.business.findMany({
+      select: { id: true },
+      orderBy: { id: "asc" },
+      take: GOOGLE_SHEETS_BUSINESS_SYNC_BATCH_SIZE,
+      ...(cursorId ? { cursor: { id: cursorId }, skip: 1 } : {}),
+    });
+    if (businesses.length === 0) break;
+
+    const batchResults = await Promise.all(
+      businesses.map((business) => syncBusinessToGoogleSheet(business.id)),
+    );
+    results.push(...batchResults);
+
+    if (businesses.length < GOOGLE_SHEETS_BUSINESS_SYNC_BATCH_SIZE) break;
+    cursorId = businesses[businesses.length - 1]?.id;
+    if (!cursorId) break;
+  }
+
+  return results;
 }
