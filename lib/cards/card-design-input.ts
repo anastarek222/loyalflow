@@ -42,12 +42,14 @@ export const cardDesignInputSchema = z
     customCardSafeZoneVersion: z.literal("ID1_V1"),
   })
   .superRefine((value, context) => {
-    if (value.cardDesignMode === "CUSTOM" && !value.customCardFrontArtworkUrl) {
+    if (
+      value.cardDesignMode === "CUSTOM" &&
+      (!value.customCardFrontArtworkUrl || !value.customCardBackArtworkUrl)
+    ) {
       context.addIssue({
         code: "custom",
         path: ["cardDesignMode"],
-        message:
-          "Custom Card requires approved front artwork; Back may use the protected generated alternative.",
+        message: "Custom Card requires an approved Front + Back artwork pair.",
       });
     }
   })
@@ -55,7 +57,9 @@ export const cardDesignInputSchema = z
     ...value,
     customCardArtworkEnabled:
       value.cardDesignMode === "CUSTOM"
-        ? Boolean(value.customCardFrontArtworkUrl)
+        ? Boolean(
+            value.customCardFrontArtworkUrl && value.customCardBackArtworkUrl,
+          )
         : value.customCardArtworkEnabled,
   }));
 
