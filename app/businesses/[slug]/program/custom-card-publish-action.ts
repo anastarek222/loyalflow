@@ -49,7 +49,7 @@ export async function publishCustomCardArtworkAction(
   const version = String(formData.get("customVersion") ?? "");
   const artwork = await findCustomCardArtworkVersion(business.id, version);
   if (!artwork?.frontUrl || !artwork.backUrl) {
-    redirect(`/businesses/${slug}/program?cardDesign=invalid-upload`);
+    redirect(`/businesses/${slug}/program?cardDesign=invalid`);
   }
 
   const published = await publishCustomCardArtworkCommand({
@@ -65,6 +65,7 @@ export async function publishCustomCardArtworkAction(
 
   revalidatePath(`/businesses/${business.slug}/program`);
   revalidatePath("/card/[token]", "page");
-  revalidatePath("/api/card-artwork/[token]/[side]");
-  redirect(`/businesses/${slug}/program?cardDesign=published`);
+  // The token/side artwork proxy already sends Cache-Control: no-store, so the
+  // newly persisted pair is fetched on the next customer-card request.
+  redirect(`/businesses/${slug}/program?cardDesign=saved`);
 }
