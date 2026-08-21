@@ -1,6 +1,12 @@
-import type { ActivityType } from "@/generated/prisma/client";
+import type {
+  ActivityType,
+  ExperienceAccess,
+  UserRole,
+} from "@/generated/prisma/client";
 
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
+
+export const STRUCTURED_ACTIVITY_PRESENTATION_VERSION = "R9_V1";
 
 export function activityRequestMetadata(
   context: ActivityRequestContext,
@@ -42,6 +48,11 @@ export function activityActorFields(
   };
 }
 
+function actorMetadata(actor: ActivityActor, businessId: string) {
+  const fields = activityActorFields(actor, businessId);
+  return "metadata" in fields ? fields.metadata : undefined;
+}
+
 type BranchAuditOperation =
   | "CREATE"
   | "UPDATE"
@@ -76,49 +87,96 @@ type BranchAuditInput = {
 export function buildBranchAuditActivity(
   input: BranchAuditInput,
 ) {
-  const assignedUserSuffix = input.assignedUser
-    ? ` للموظف ${input.assignedUser.email}`
-    : "";
-  const descriptions: Record<BranchAuditOperation, string> = {
-    CREATE: `تم إنشاء الفرع ${input.branch.name}`,
-    UPDATE: `تم تحديث بيانات الفرع ${input.branch.name}`,
-    ACTIVATE: `تم تفعيل الفرع ${input.branch.name}`,
-    DEACTIVATE: `تم إيقاف الفرع ${input.branch.name}`,
-    ASSIGN_STAFF: `تم إسناد موظف إلى الفرع ${input.branch.name}${assignedUserSuffix}`,
-    REMOVE_STAFF: `تمت إزالة إسناد موظف من الفرع ${input.branch.name}${assignedUserSuffix}`,
+  const actor = {
+    id: input.actorId,
+    businessId: input.actorBusinessId,
+    email: input.actorEmail,
   };
-
+  const type = branchActivityTypes[input.operation];
   const metadata = {
+    ...actorMetadata(actor, input.businessId),
+    presentationVersion: STRUCTURED_ACTIVITY_PRESENTATION_VERSION,
+    presentationKind: "BRANCH_AUDIT",
+    operation: input.operation,
+    branchName: input.branch.name,
     ...(input.assignedUser
       ? {
           assignedUserId: input.assignedUser.id,
           assignedUserEmail: input.assignedUser.email,
         }
       : {}),
-    ...activityActorFields(
-      {
-        id: input.actorId,
-        businessId: input.actorBusinessId,
-        email: input.actorEmail,
-      },
-      input.businessId,
-    ).metadata,
   };
 
   return {
-    type: branchActivityTypes[input.operation],
-    description: descriptions[input.operation],
+    type,
+    description: `${type} branchName=${input.branch.name}${
+      input.assignedUser
+        ? ` assignedUserEmail=${input.assignedUser.email}`
+        : ""
+    }`,
     businessId: input.businessId,
     branchId: input.branch.id,
-    ...activityActorFields(
-      {
-        id: input.actorId,
-        businessId: input.actorBusinessId,
-        email: input.actorEmail,
-      },
-      input.businessId,
-    ),
-    ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+    ...activityActorFields(actor, input.businessId),
+    metadata,
+    ...activityRequestMetadata(input.activityContext),
+  };
+}
+
+type UserAuditOperation =
+  | "CREATE"
+  | "ACTIVATE"
+  | "DEACTIVATE"
+  | "PASSWORD_CHANGE"
+  | "EXPERIENCE_ACCESS_UPDATE";
+
+const userActivityTypes: Record<UserAuditOperation, ActivityType> = {
+  CREATE: "USER_CREATED",
+  ACTIVATE: "USER_STATUS_CHANGED",
+  DEACTIVATE: "USER_STATUS_CHANGED",
+  PASSWORD_CHANGE: "USER_PASSWORD_CHANGED",
+  EXPERIENCE_ACCESS_UPDATE: "USER_EXPERIENCE_ACCESS_UPDATED",
+};
+
+type UserAuditInput = {
+  operation: UserAuditOperation;
+  businessId: string;
+  actor: ActivityActor;
+  targetUser: {
+    id: string;
+    email: string;
+    role?: UserRole;
+  };
+  activityContext: ActivityRequestContext;
+  previousExperienceAccess?: ExperienceAccess;
+  nextExperienceAccess?: ExperienceAccess;
+};
+
+export function buildUserAuditActivity(input: UserAuditInput) {
+  const type = userActivityTypes[input.operation];
+  const metadata = {
+    ...actorMetadata(input.actor, input.businessId),
+    presentationVersion: STRUCTURED_ACTIVITY_PRESENTATION_VERSION,
+    presentationKind: "USER_AUDIT",
+    operation: input.operation,
+    targetUserId: input.targetUser.id,
+    targetUserEmail: input.targetUser.email,
+    ...(input.targetUser.role ? { targetUserRole: input.targetUser.role } : {}),
+    ...(input.previousExperienceAccess
+      ? { previousExperienceAccess: input.previousExperienceAccess }
+      : {}),
+    ...(input.nextExperienceAccess
+      ? { nextExperienceAccess: input.nextExperienceAccess }
+      : {}),
+  };
+
+  return {
+    type,
+    description: `${type} targetUserEmail=${input.targetUser.email}${
+      input.targetUser.role ? ` role=${input.targetUser.role}` : ""
+    }`,
+    businessId: input.businessId,
+    ...activityActorFields(input.actor, input.businessId),
+    metadata,
     ...activityRequestMetadata(input.activityContext),
   };
 }
