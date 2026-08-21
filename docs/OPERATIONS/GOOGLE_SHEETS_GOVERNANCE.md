@@ -1,6 +1,6 @@
 # Google Sheets Governance — Beta Operating Contract
 
-Status: **Staging/Beta operating contract**. This document describes the current LoyalFlow integration and the limits that must be enforced before R8 is considered complete. It is not a Production privacy or provider-SLA claim.
+Status: **Staging/Beta operating contract**. This document describes the current LoyalFlow integration and its enforced Beta scale boundary. It is not a Production privacy or provider-SLA claim.
 
 ## 1. Spreadsheet ownership and access
 
@@ -60,7 +60,7 @@ When the required Google Sheets configuration is missing or malformed:
 - the business sync state is recorded as `FAILED` when that state can be persisted;
 - configuration failures are non-retryable until configuration changes.
 
-Authentication, spreadsheet-access, mapping, and Google API failures are recorded using the existing typed failure reasons. The UI exposes pending/succeeded/failed state and whether another retry is available.
+Authentication, spreadsheet-access, mapping, scale, and Google API failures are recorded using typed failure reasons. The UI exposes pending/succeeded/failed state and whether another retry is available.
 
 ## 5. Durable jobs, retries, and terminal failure
 
@@ -104,20 +104,23 @@ The Beta operating limit for the current clear-and-rewrite strategy is:
 
 This value is a LoyalFlow operating contract, **not a Google Sheets hard provider limit**. It aligns with the highest currently bounded customer plan (`PRO = 2,500`), while the `BUSINESS` plan is intentionally unbounded.
 
-R8B must enforce this operating limit before R8 is complete. A business above the limit must never receive a silent partial snapshot. The implementation must choose an explicit safe outcome, such as rejecting the full rewrite with a typed non-retryable scale reason or moving to a separately reviewed chunked/incremental/snapshot strategy.
+R8B enforces this boundary by loading at most **2,501** customer rows. The extra row is a detection sentinel, not export data. If the sentinel exists, sync fails with the typed non-retryable reason `CUSTOMER_LIMIT_EXCEEDED` **before** Google spreadsheet metadata is read and before any tab creation, clear, update, or formatting write occurs.
 
-The current full-rewrite implementation must not be treated as scale-safe above this threshold merely because a provider request happens to succeed.
+A business above the limit therefore never receives a silent partial snapshot. The existing mapped tab is left untouched by that over-limit attempt.
+
+The all-business helper is also paged in batches of **20 businesses**, so it no longer creates one unbounded `Promise.all` fan-out across every business.
+
+The current full-rewrite implementation must not be treated as scale-safe above 2,500 customers merely because Google Sheets could accept more rows. Supporting larger snapshots requires a separately reviewed bounded strategy.
 
 ## 8. R8 completion boundary
 
-R8A establishes and tests the governance contract without adding destructive provider behavior or changing the sync algorithm.
+R8A established the governance and export contract. R8B enforces the Beta scale boundary while preserving the snapshot model.
 
-R8B must close the scale gap by ensuring:
+R8 is considered complete when CI and Preview verify that:
 
-- no customer full rewrite can load/write an unbounded customer collection;
-- the 2,500-customer Beta limit is enforced or replaced only by an explicitly reviewed bounded strategy;
-- no over-limit path writes a partial customer snapshot;
-- any all-business sync path avoids unbounded fan-out;
-- existing tenant, subscription, retry, mapping, and failure-state boundaries remain intact.
+- customer loading is bounded to the 2,500-row contract plus one detection sentinel;
+- over-limit sync fails before any Google provider access or write and never writes a partial snapshot;
+- all-business sync processes bounded 20-business batches instead of unbounded fan-out;
+- the exact `A:L` export shape, tenant/subscription gates, stable sheet mapping, retry policy, and failure-state behavior remain intact.
 
 No Production rollout or manual UAT is part of R8A/R8B.
