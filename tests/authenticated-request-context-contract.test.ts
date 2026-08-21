@@ -32,7 +32,7 @@ test("authenticated request context caches the canonical current-user read", () 
 
   assert.match(
     context,
-    /business:\s*\{\s*select:\s*\{\s*slug: true,\s*name: true,\s*plan: true,/s,
+    /business:\s*\{\s*select:\s*\{\s*slug: true,\s*name: true,\s*plan: true,/,
   );
 });
 
