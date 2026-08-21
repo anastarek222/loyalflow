@@ -70,9 +70,10 @@ export function CustomCardArtworkManager({
             </label>
           </div>
           <p className="text-xs text-foreground-muted">
-            PNG, JPEG or WebP. Maximum 4 MB per side. Front and Back must have
-            exactly the same pixel dimensions and the standard ID-1 ratio
-            (about 1.586:1). LoyalFlow never generates either side in Custom mode.
+            PNG, JPEG or WebP. Maximum 4 MB total across Front + Back. Both sides
+            must have exactly the same pixel dimensions and the standard ID-1
+            ratio (about 1.586:1). LoyalFlow never generates either side in Custom
+            mode.
           </p>
           <button
             type="submit"
