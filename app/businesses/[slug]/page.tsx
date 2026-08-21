@@ -20,7 +20,8 @@ import { getBusinessRewardTargetCost } from "@/lib/dashboard/business-reward-tar
 import { getBusinessUnreadSummary } from "@/lib/dashboard/business-unread-summary";
 import {
   getActivityBadgeClass,
-  activityLabels,
+  getActivityDescription,
+  getActivityLabel,
 } from "@/lib/activity/presentation";
 import { getBusinessOnboardingState } from "@/lib/business/onboarding";
 import {
@@ -483,6 +484,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
             id: true,
             type: true,
             description: true,
+            metadata: true,
             createdAt: true,
             customer: {
               select: {
@@ -911,13 +913,13 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                                 ]
                                   .filter(Boolean)
                                   .join(" ")
-                              : activityLabels[activity.type]}
+                              : getActivityLabel(activity.type, language)}
                           </p>
                           <p
                             dir="auto"
                             className="mt-0.5 truncate text-xs text-foreground-subtle"
                           >
-                            {activity.description}
+                            {getActivityDescription(activity, language)}
                           </p>
                         </div>
                         <time
@@ -1135,7 +1137,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                               <Badge
                                 className={getActivityBadgeClass(activity.type)}
                               >
-                                {activityLabels[activity.type]}
+                                {getActivityLabel(activity.type, language)}
                               </Badge>
                               {activity.customer ? (
                                 <Link
@@ -1155,7 +1157,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                               dir="auto"
                               className="mt-1 truncate text-sm text-foreground-muted"
                             >
-                              {activity.description}
+                              {getActivityDescription(activity, language)}
                             </p>
                           </div>
                           <time
