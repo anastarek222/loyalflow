@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import CopyLinkButton from "@/components/copy-link-button";
 import ShareLinkButton from "@/components/share-link-button";
 import { getRequestBaseUrl } from "@/lib/app-url";
@@ -21,12 +22,18 @@ import SalesProgressPanel from "@/components/sales-progress-panel";
 import { PublicCardActions } from "@/components/customer-experience/public-card-actions";
 import { PublicLoyaltyCardViewer } from "@/components/customer-experience/public-loyalty-card-viewer";
 import { PublicPageShell } from "@/components/customer-experience/public-page-shell";
+
+// A publish changes the Business artwork pointers. Public cards must read those
+// pointers on the next request instead of retaining a stale rendered page.
+export const dynamic = "force-dynamic";
+
 type PublicCardPageProps = {
   params: Promise<{
     token: string;
   }>;
   searchParams: Promise<{
     welcome?: string;
+    lang?: string;
   }>;
 };
 
@@ -43,12 +50,10 @@ export async function generateMetadata({
     where: {
       publicToken: token,
     },
-
     select: {
       firstName: true,
       lastName: true,
       isActive: true,
-
       business: {
         select: {
           name: true,
@@ -60,9 +65,7 @@ export async function generateMetadata({
   });
 
   if (!customer || !customer.isActive || !customer.business.isActive) {
-    return {
-      title: "كارت غير متاح",
-    };
+    return { title: "كارت غير متاح" };
   }
 
   const customerName = [customer.firstName, customer.lastName]
@@ -75,17 +78,12 @@ export async function generateMetadata({
 
   return {
     title: `${customer.business.name} - ${customerName}`,
-
     description,
-
     manifest: `/api/card-manifest/${token}`,
-
     icons: {
       icon: `/api/card-icon/${token}`,
-
       apple: `/api/card-icon/${token}`,
     },
-
     appleWebApp: {
       capable: true,
       title: customer.business.name,
@@ -102,19 +100,10 @@ export default async function PublicCardPage({
   const query = await searchParams;
   const showWelcome = query.welcome === "1";
 
-  if (!isPublicCardToken(token)) {
-    notFound();
-  }
+  if (!isPublicCardToken(token)) notFound();
 
-  /*
-   * publicToken مختلف لكل عميل،
-   * ومنه يتم تحميل كل بيانات الكارت تلقائيًا.
-   */
   const customer = await prisma.customer.findUnique({
-    where: {
-      publicToken: token,
-    },
-
+    where: { publicToken: token },
     include: {
       // Private staff notes and tag assignments are intentionally absent.
       // Public cards expose loyalty data only, never internal CRM metadata.
@@ -137,27 +126,16 @@ export default async function PublicCardPage({
           },
         },
       },
-
       transactions: {
-        orderBy: {
-          createdAt: "desc",
-        },
-
+        orderBy: { createdAt: "desc" },
         take: 3,
       },
-
       _count: {
-        select: {
-          redemptions: true,
-        },
+        select: { redemptions: true },
       },
       rewardUnlocks: {
-        where: {
-          redeemedAt: null,
-        },
-        orderBy: {
-          unlockedAt: "desc",
-        },
+        where: { redeemedAt: null },
+        orderBy: { unlockedAt: "desc" },
         include: {
           reward: {
             select: {
@@ -168,13 +146,9 @@ export default async function PublicCardPage({
         },
       },
       referralCodes: {
-        where: {
-          isActive: true,
-        },
+        where: { isActive: true },
         take: 1,
-        select: {
-          code: true,
-        },
+        select: { code: true },
       },
     },
   });
@@ -184,10 +158,13 @@ export default async function PublicCardPage({
   }
 
   const business = customer.business;
-
-  const { language, lang, dir } = getLanguageAttributes(
-    business.cardDefaultLanguage,
-  );
+  const requestedLanguage =
+    query.lang === "AR" || query.lang === "EN"
+      ? query.lang
+      : business.cardDefaultLanguage;
+  const { language, lang, dir } = getLanguageAttributes(requestedLanguage);
+  const languageHref = (nextLanguage: "AR" | "EN") =>
+    `/card/${encodeURIComponent(token)}?lang=${nextLanguage}${showWelcome ? "&welcome=1" : ""}`;
 
   const theme = getCustomerExperienceTheme(business);
   const publicOffers = business.offers.filter((offer) =>
@@ -226,16 +203,11 @@ export default async function PublicCardPage({
         };
 
   const baseUrl = await getRequestBaseUrl();
-
-  /*
-   * الرابط ورمز QR مختلفان تلقائيًا
-   * حسب publicToken الخاص بالعميل.
-   */
   const cardUrl = `${baseUrl}/card/${customer.publicToken}`;
   const referralLink =
     canApplyPublicReferral(business.plan) && customer.referralCodes[0]
-    ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
-    : null;
+      ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
+      : null;
 
   const qrStyle =
     business.qrStyle === "ROUNDED" || business.qrStyle === "BRANDED"
@@ -248,7 +220,6 @@ export default async function PublicCardPage({
       width: 360,
       margin: 2,
       errorCorrectionLevel: qrStyle === "BRANDED" ? "H" : "M",
-      // Stored QR style is presentation-only; the destination remains cardUrl.
       color: {
         dark: qrStyle === "BRANDED" ? theme.primaryColor : "#111827",
         light: "#FFFFFFFF",
@@ -273,6 +244,7 @@ export default async function PublicCardPage({
         expiredAt: unlock.expiredAt,
       }),
     }));
+
   const customerName = [customer.firstName, customer.lastName]
     .filter(Boolean)
     .join(" ");
@@ -287,6 +259,8 @@ export default async function PublicCardPage({
       mode: business.loyaltyMode,
       unitName: business.unitName,
       currency: business.currency,
+      // This stays the Business card language. The page-language switch is
+      // intentionally separate and cannot translate the final card object.
       defaultLanguage: business.cardDefaultLanguage,
       reward: cardReward,
     },
@@ -322,6 +296,7 @@ export default async function PublicCardPage({
       customSafeZoneVersion: business.customCardSafeZoneVersion,
     },
   });
+
   const localizedDateFormatter = new Intl.DateTimeFormat(
     language === "AR" ? "ar-EG" : "en-US",
     { dateStyle: "medium", timeZone: "Africa/Cairo" },
@@ -329,7 +304,7 @@ export default async function PublicCardPage({
 
   return (
     <PublicPageShell lang={lang} dir={dir} primaryColor={theme.primaryColor}>
-      <header className="mb-5 flex items-center justify-between gap-4 px-1 sm:px-2">
+      <header className="mb-5 flex items-center justify-between gap-3 px-1 sm:px-2">
         <div className="flex min-w-0 items-center gap-3">
           {business.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -356,10 +331,33 @@ export default async function PublicCardPage({
             </p>
           </div>
         </div>
-        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
-          <BadgeCheck className="size-4" aria-hidden="true" />
-          {language === "AR" ? "كارت نشط" : "Active card"}
-        </span>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <div
+            role="group"
+            aria-label={language === "AR" ? "لغة الصفحة" : "Page language"}
+            className="flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+          >
+            <Link
+              href={languageHref("AR")}
+              aria-current={language === "AR" ? "page" : undefined}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-black transition ${language === "AR" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              عربي
+            </Link>
+            <Link
+              href={languageHref("EN")}
+              aria-current={language === "EN" ? "page" : undefined}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-black transition ${language === "EN" ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              EN
+            </Link>
+          </div>
+          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700 sm:flex">
+            <BadgeCheck className="size-4" aria-hidden="true" />
+            {language === "AR" ? "كارت نشط" : "Active card"}
+          </span>
+        </div>
       </header>
 
       <h1 className="sr-only">
@@ -375,7 +373,6 @@ export default async function PublicCardPage({
                 ? "🎉 تم إنشاء كارتك بنجاح"
                 : "🎉 Your card is ready"}
             </h2>
-
             <p className="mt-1 text-sm leading-6 text-emerald-700">
               {language === "AR"
                 ? `أهلاً بك في برنامج ولاء ${business.name}. كارتك جاهز للاستخدام.`
@@ -405,7 +402,7 @@ export default async function PublicCardPage({
           businessLocation={card.business.location}
           businessAddress={card.business.address}
           businessSocial={card.business.social}
-          language={card.program.defaultLanguage}
+          language={language}
           designMode={card.design.mode}
           customDesignEnabled={card.design.customArtwork.enabled}
           customFrontArtworkUrl={card.design.customArtwork.frontUrl}
@@ -445,9 +442,11 @@ export default async function PublicCardPage({
                   key={offer.id}
                   className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
                 >
-                  <p className="font-black text-slate-950">{offer.name}</p>
+                  <p dir="auto" className="font-black text-slate-950">
+                    {offer.name}
+                  </p>
                   {offer.description ? (
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                    <p dir="auto" className="mt-1 text-sm leading-6 text-slate-600">
                       {offer.description}
                     </p>
                   ) : null}
@@ -517,7 +516,7 @@ export default async function PublicCardPage({
                   key={reward.id}
                   className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm"
                 >
-                  <span className="font-bold text-slate-800">
+                  <span dir="auto" className="font-bold text-slate-800">
                     {reward.name}
                   </span>
                   {reward.state === "EXPIRED" ? (
@@ -549,7 +548,7 @@ export default async function PublicCardPage({
             rewardCode={cardReward.code ?? null}
             rewardDescription={cardReward.description ?? null}
             primaryColor={theme.primaryColor}
-            defaultLanguage={business.cardDefaultLanguage}
+            defaultLanguage={language}
           />
         </div>
       ) : null}

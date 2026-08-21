@@ -1,6 +1,7 @@
 export type CardDesignSubmission = {
   cardDesignMode: "STANDARD" | "CUSTOM";
   primaryColor: string;
+  secondaryColor: string;
   themePreset: "DEFAULT" | "DARK";
   standardCardArtworkEnabled: boolean;
   standardCardArtworkCategory:
@@ -28,6 +29,7 @@ type CardDesignUpdate =
       data: {
         cardDesignMode: "STANDARD" | "CUSTOM";
         primaryColor: string;
+        secondaryColor: string;
         themePreset: "DEFAULT" | "DARK";
         standardCardArtworkEnabled: boolean;
         standardCardArtworkCategory: CardDesignSubmission["standardCardArtworkCategory"];
@@ -55,6 +57,7 @@ export function getAuthorizedCardDesignUpdate(input: {
       data: {
         cardDesignMode: submitted.cardDesignMode,
         primaryColor: submitted.primaryColor,
+        secondaryColor: submitted.secondaryColor,
         themePreset: submitted.themePreset,
         standardCardArtworkEnabled: submitted.standardCardArtworkEnabled,
         standardCardArtworkCategory:
@@ -84,6 +87,7 @@ export function getAuthorizedCardDesignUpdate(input: {
     data: {
       cardDesignMode: "STANDARD",
       primaryColor: submitted.primaryColor,
+      secondaryColor: submitted.secondaryColor,
       themePreset: submitted.themePreset,
       standardCardArtworkEnabled: submitted.standardCardArtworkEnabled,
       standardCardArtworkCategory: submitted.standardCardArtworkCategory,

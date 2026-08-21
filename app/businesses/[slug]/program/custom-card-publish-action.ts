@@ -12,9 +12,10 @@ import { redirect } from "next/navigation";
 /**
  * Active Custom Card publish transport for the Program workspace.
  *
- * Authentication, Super Admin authorization, version selection/storage lookup,
- * presentation preflight, redirects and revalidation stay in the Server Action.
- * Authoritative Business persistence and audit ownership live in the command.
+ * Authentication, Super Admin authorization, complete version selection,
+ * storage lookup, presentation preflight, redirects and revalidation stay in
+ * the Server Action. Authoritative Business persistence and audit ownership
+ * live in the command.
  */
 export async function publishCustomCardArtworkAction(
   slug: string,
@@ -47,8 +48,8 @@ export async function publishCustomCardArtworkAction(
 
   const version = String(formData.get("customVersion") ?? "");
   const artwork = await findCustomCardArtworkVersion(business.id, version);
-  if (!artwork) {
-    redirect(`/businesses/${slug}/program?cardDesign=invalid-upload`);
+  if (!artwork?.frontUrl || !artwork.backUrl) {
+    redirect(`/businesses/${slug}/program?cardDesign=invalid`);
   }
 
   const published = await publishCustomCardArtworkCommand({
@@ -64,5 +65,7 @@ export async function publishCustomCardArtworkAction(
 
   revalidatePath(`/businesses/${business.slug}/program`);
   revalidatePath("/card/[token]", "page");
-  redirect(`/businesses/${slug}/program?cardDesign=published`);
+  // The token/side artwork proxy already sends Cache-Control: no-store, so the
+  // newly persisted pair is fetched on the next customer-card request.
+  redirect(`/businesses/${slug}/program?cardDesign=saved`);
 }
