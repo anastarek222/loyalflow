@@ -102,6 +102,7 @@ jobs:
         env:
           LOYALFLOW_ENVIRONMENT: staging
           LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+          LOYALFLOW_STAGING_DATABASE: loyalflow_ci
           LOYALFLOW_STAGING_DATABASE_HOST: 127.0.0.1
           LOYALFLOW_PRODUCTION_DATABASE_HOST: production-db.invalid
           UAT_FIXTURE_PASSWORD: browser-smoke-only-password-2026
