@@ -7,21 +7,29 @@ function source(path: string) {
 }
 
 const manager = source("components/custom-card-artwork-manager.tsx");
+const frontAction = source(
+  "app/businesses/[slug]/program/custom-card-upload-action.ts",
+);
+const backAction = source(
+  "app/businesses/[slug]/program/custom-card-back-upload-action.ts",
+);
 const setup = source("components/standard-card-setup.tsx");
 const input = source("lib/cards/card-design-input.ts");
 
-test("Z4 upload UI requires Front while Back is explicitly optional", () => {
+test("Z4 upload UI requires Front while Back remains an optional second step", () => {
   assert.match(manager, /Front artwork · required/);
-  assert.match(manager, /Back artwork · optional/);
   assert.match(manager, /required[\s\S]*?name="customCardFrontFile"/);
-  assert.doesNotMatch(
-    manager,
-    /Back artwork · optional[\s\S]*?<input[\s\S]*?required[\s\S]*?name="customCardBackFile"/,
-  );
-  assert.match(manager, /Leave empty to use the safe LoyalFlow-generated Back/);
+  assert.match(manager, /Add custom Back · optional/);
+  assert.match(manager, /name="customCardBackFile"/);
+  assert.match(manager, /Leave Back absent to keep the safe LoyalFlow-generated Back/);
   assert.match(manager, /Maximum 4 MB per uploaded side/);
   assert.match(manager, /1\.586:1/);
-  assert.match(manager, /match the Front pixel dimensions/);
+  assert.match(manager, /match this[\s\S]*?Front&apos;s exact pixel dimensions/);
+
+  assert.match(frontAction, /customCardFrontFile/);
+  assert.doesNotMatch(frontAction, /customCardBackFile/);
+  assert.match(backAction, /customCardBackFile/);
+  assert.match(backAction, /customVersion/);
 });
 
 test("Z4 draft preview never requests a missing private Back object", () => {
