@@ -37,6 +37,12 @@ export function getActivityMetadataString(metadata: unknown, key: string) {
   return typeof value === "string" ? value : undefined;
 }
 
+export function getActivityMetadataNumber(metadata: unknown, key: string) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return undefined;
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function getRoleLabel(role: string | undefined, language: AppLanguage) {
   const labels: Record<UserRole, Record<AppLanguage, string>> = {
     OWNER: { AR: "مالك", EN: "Owner" },
@@ -128,6 +134,53 @@ export function getActivityDescription(
         case "PASSWORD_CHANGE": return `Changed password for ${targetUserEmail}`;
         case "EXPERIENCE_ACCESS_UPDATE": return `Updated experience access for ${targetUserEmail}`;
       }
+    }
+  }
+
+  if (kind === "FINANCIAL_ACTIVITY") {
+    const financialType = getActivityMetadataString(
+      activity.metadata,
+      "financialType",
+    );
+
+    if (financialType === "LOYALTY_EARNED") {
+      const amount = getActivityMetadataNumber(activity.metadata, "amount");
+      const loyaltyMode = getActivityMetadataString(
+        activity.metadata,
+        "loyaltyMode",
+      );
+      if (amount === undefined || !loyaltyMode) return activity.description;
+      const saleAmount = getActivityMetadataNumber(activity.metadata, "saleAmount");
+      const displayedAmount = saleAmount ?? amount;
+      return loyaltyMode === "SALES_AMOUNT"
+        ? language === "AR"
+          ? `تم تسجيل مبلغ مبيعات ${displayedAmount}`
+          : `Recorded sale amount ${displayedAmount}`
+        : language === "AR"
+          ? `تمت إضافة ${amount} إلى رصيد الولاء`
+          : `Added ${amount} loyalty credit`;
+    }
+
+    if (financialType === "REWARD_REDEEMED") {
+      const rewardName = getActivityMetadataString(activity.metadata, "rewardName");
+      const cost = getActivityMetadataNumber(activity.metadata, "cost");
+      if (!rewardName || cost === undefined) return activity.description;
+      return language === "AR"
+        ? `تم استبدال ${rewardName} مقابل ${cost}`
+        : `Redeemed ${rewardName} for ${cost}`;
+    }
+
+    if (financialType === "BALANCE_ADJUSTED") {
+      const signedAmount = getActivityMetadataNumber(
+        activity.metadata,
+        "signedAmount",
+      );
+      const reason = getActivityMetadataString(activity.metadata, "reason");
+      if (signedAmount === undefined || !reason) return activity.description;
+      const displayedAmount = `${signedAmount > 0 ? "+" : ""}${signedAmount}`;
+      return language === "AR"
+        ? `تم تعديل الرصيد بمقدار ${displayedAmount}. السبب: ${reason}`
+        : `Adjusted balance by ${displayedAmount}. Reason: ${reason}`;
     }
   }
 
