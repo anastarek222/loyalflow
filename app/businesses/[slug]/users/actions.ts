@@ -3,10 +3,7 @@
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildUserAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import {
   passwordConfirmationSchema,
@@ -22,7 +19,6 @@ import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createBusinessNotification } from "@/lib/notifications";
 import { updateTeamExperienceAccessCommand } from "@/lib/server/business/team-experience-access-command";
 import { provisionBusinessUserCommand } from "@/lib/server/business/team-provisioning-command";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
@@ -402,16 +398,17 @@ export async function setBusinessUserStatusAction(
     }),
 
     prisma.businessActivity.create({
-      data: {
-        type: "USER_STATUS_CHANGED",
-        description: parsedStatus.data
-          ? `تم إعادة تفعيل الحساب ${targetUser.email}`
-          : `تم إيقاف الحساب ${targetUser.email}`,
-        businessId:
-          business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
+      data: buildUserAuditActivity({
+        operation: parsedStatus.data ? "ACTIVATE" : "DEACTIVATE",
+        businessId: business.id,
+        actor: session.user,
+        targetUser: {
+          id: targetUser.id,
+          email: targetUser.email,
+          role: targetUser.role,
+        },
+        activityContext,
+      }),
     }),
   ]);
 
@@ -507,16 +504,17 @@ export async function resetBusinessUserPasswordAction(
     }),
 
     prisma.businessActivity.create({
-      data: {
-        type:
-          "USER_PASSWORD_CHANGED",
-        description:
-          `تم تغيير كلمة المرور للحساب ${targetUser.email}`,
-        businessId:
-          business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
+      data: buildUserAuditActivity({
+        operation: "PASSWORD_CHANGE",
+        businessId: business.id,
+        actor: session.user,
+        targetUser: {
+          id: targetUser.id,
+          email: targetUser.email,
+          role: targetUser.role,
+        },
+        activityContext,
+      }),
     }),
   ]);
 
