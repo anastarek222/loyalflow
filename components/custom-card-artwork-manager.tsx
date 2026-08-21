@@ -34,7 +34,8 @@ export function CustomCardArtworkManager({
             separate bounded upload; LoyalFlow creates a new immutable Front +
             Back version. If Back is omitted, the protected generated Back keeps
             dynamic loyalty details system-controlled. Preview the draft here,
-            then publish explicitly.
+            then publish explicitly. The currently published card is unchanged
+            until Publish is selected.
           </p>
         </div>
         <span className="rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-black text-primary">
@@ -60,15 +61,15 @@ export function CustomCardArtworkManager({
             />
           </label>
           <p className="text-xs text-foreground-muted">
-            PNG, JPEG or WebP. Maximum 4 MB. Front must use the standard ID-1
-            ratio (about 1.586:1). The Front is uploaded in its own request so it
-            remains below the hosting payload ceiling.
+            PNG, JPEG or WebP. Maximum 4 MB per uploaded side. Front must use
+            the standard ID-1 ratio (about 1.586:1). The Front is uploaded in its
+            own request so it remains below the hosting payload ceiling.
           </p>
           <button
             type="submit"
             className="w-fit rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-black text-[var(--lf-primary-foreground)]"
           >
-            Upload Front draft
+            Upload new draft version
           </button>
         </form>
       )}
@@ -130,7 +131,7 @@ export function CustomCardArtworkManager({
             >
               <input type="hidden" name="customVersion" value={selected.id} />
               <label className="text-sm font-bold">
-                {selected.backUrl ? "Replace Back" : "Add custom Back"}
+                {selected.backUrl ? "Replace Back" : "Add custom Back · optional"}
                 <input
                   required
                   name="customCardBackFile"
@@ -140,9 +141,11 @@ export function CustomCardArtworkManager({
                 />
               </label>
               <p className="mt-2 text-xs text-foreground-muted">
-                Maximum 4 MB. The Back must match this Front&apos;s exact pixel
-                dimensions. LoyalFlow validates the pair server-side and creates
-                a new immutable version; this draft is never modified in place.
+                Leave Back absent to keep the safe LoyalFlow-generated Back.
+                When you add one, it can be up to 4 MB and must match this
+                Front&apos;s exact pixel dimensions. LoyalFlow validates the pair
+                server-side and creates a new immutable version; this draft is
+                never modified in place.
               </p>
               <button
                 type="submit"
