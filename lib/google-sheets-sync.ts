@@ -91,7 +91,7 @@ export async function syncBusinessToGoogleSheet(businessId: string): Promise<Goo
   if (!business) throw new GoogleSheetsSyncError("GOOGLE_API_FAILED", false);
 
   const sheet = await resolveMappedSheet(business);
-  const headers = GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS;
+  const headers = [...GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS];
   const baseUrl =
     getConfiguredPublicAppUrl() ??
     "http://localhost:3000";
