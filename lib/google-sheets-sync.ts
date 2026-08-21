@@ -1,4 +1,8 @@
 import prisma from "@/lib/prisma";
+import {
+  GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS,
+  GOOGLE_SHEETS_MANAGED_RANGE,
+} from "@/lib/google-sheets-governance";
 import { getUniqueGoogleSheetTitle, sanitizeGoogleSheetTitle } from "@/lib/google-sheets-title";
 import {
   getGoogleSheetsClient,
@@ -40,7 +44,7 @@ function safeCellValue(value: string | number | boolean | null | undefined) {
 }
 
 async function resolveMappedSheet(business: { id: string; name: string; slug: string; googleSheetId: number | null }) {
-  const metadata = await getGoogleSpreadsheetMetadata(); // read-only authentication and ownership check before any write
+  const metadata = await getGoogleSpreadsheetMetadata(); // read-only authentication and spreadsheet-access check before any write
   if (business.googleSheetId !== null) {
     const mapped = metadata.sheets.find((sheet) => sheet.sheetId === business.googleSheetId);
     if (!mapped) throw new GoogleSheetsSyncError("MAPPED_SHEET_MISSING", false);
@@ -87,7 +91,7 @@ export async function syncBusinessToGoogleSheet(businessId: string): Promise<Goo
   if (!business) throw new GoogleSheetsSyncError("GOOGLE_API_FAILED", false);
 
   const sheet = await resolveMappedSheet(business);
-  const headers = ["Customer ID", "Customer Name", "Phone Number", "Card Link", "Current Balance", "Unit", "Gifts Redeemed", "Lifetime Earned", "Lifetime Redeemed", "Status", "Registration Date", "Last Updated"];
+  const headers = [...GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS];
   const baseUrl =
     getConfiguredPublicAppUrl() ??
     "http://localhost:3000";
@@ -107,7 +111,7 @@ export async function syncBusinessToGoogleSheet(businessId: string): Promise<Goo
   ]);
 
   const sheets = getGoogleSheetsClient();
-  const range = `${escapeTabName(sheet.title)}!A:L`;
+  const range = `${escapeTabName(sheet.title)}!${GOOGLE_SHEETS_MANAGED_RANGE}`;
   try {
     // Controlled rewrite is limited to the verified, mapped tab and managed A:L range.
     await sheets.spreadsheets.values.clear({ spreadsheetId: sheet.spreadsheetId, range });
