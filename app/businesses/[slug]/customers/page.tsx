@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
 import {
   getCustomerFilterSegments,
   getCustomerSegment,
@@ -71,16 +71,13 @@ export default async function CustomersPage({
   params,
   searchParams,
 }: CustomersPageProps) {
-  const session = await auth();
+  const requestContext = await getAuthenticatedRequestContext();
 
-  if (!session?.user) {
+  if (!requestContext) {
     redirect("/login");
   }
 
-  const authenticatedUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { language: true, role: true, experienceAccess: true },
-  });
+  const { session, user: authenticatedUser } = requestContext;
 
   const { slug } = await params;
   const query = await searchParams;
