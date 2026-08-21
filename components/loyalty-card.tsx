@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import type { CSSProperties, ReactNode } from "react";
 import {
   CUSTOM_CARD_SAFE_ZONE_VERSION,
   STANDARD_CARD_ASPECT_RATIO,
@@ -11,6 +12,7 @@ import {
 } from "@/components/standard-loyalty-card";
 
 export type LoyaltyCardProps = StandardLoyaltyCardProps & {
+  secondaryColor?: string | null;
   designMode?: string | null;
   customDesignEnabled?: boolean;
   customFrontArtworkUrl?: string | null;
@@ -70,6 +72,36 @@ function readableAccentOnDark(color?: string | null) {
   return `#${lightened
     .map((channel) => channel.toString(16).padStart(2, "0"))
     .join("")}`;
+}
+
+function safeSecondaryColor(value?: string | null) {
+  return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value.toUpperCase() : "#60A5FA";
+}
+
+function StandardCardColorScope({
+  secondaryColor,
+  children,
+}: {
+  secondaryColor?: string | null;
+  children: ReactNode;
+}) {
+  const style = {
+    "--lf-card-secondary": safeSecondaryColor(secondaryColor),
+  } as CSSProperties;
+
+  return (
+    <div data-standard-card-color-scope className="contents" style={style}>
+      <style>{`
+        [data-standard-card-color-scope] linearGradient[id$="-progress"] stop:last-child {
+          stop-color: var(--lf-card-secondary) !important;
+        }
+        [data-standard-card-color-scope] [data-safe-zone="card-background"] > g {
+          stroke: var(--lf-card-secondary) !important;
+        }
+      `}</style>
+      {children}
+    </div>
+  );
 }
 
 function MissingCustomArtwork({ side }: { side: "front" | "back" }) {
@@ -241,10 +273,12 @@ function LoyaltyCardFace({
   useCustom: boolean;
   props: LoyaltyCardProps;
 }) {
-  return useCustom ? (
-    <CustomLoyaltyCard {...props} side={side} />
-  ) : (
-    <StandardLoyaltyCard {...props} side={side} />
+  if (useCustom) return <CustomLoyaltyCard {...props} side={side} />;
+
+  return (
+    <StandardCardColorScope secondaryColor={props.secondaryColor}>
+      <StandardLoyaltyCard {...props} side={side} />
+    </StandardCardColorScope>
   );
 }
 
