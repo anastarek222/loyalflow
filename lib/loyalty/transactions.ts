@@ -21,6 +21,7 @@ type EarnTransactionInput = {
   attributedStaffId?: string;
   amount: number;
   sourceLoyaltyMode: LoyaltyMode;
+  unitName: string;
   saleAmount?: number;
   idempotencyKey?: string;
   promotion?: {
@@ -319,6 +320,7 @@ export async function recordLoyaltyEarn(
         type: "LOYALTY_EARNED",
         amount: input.amount,
         loyaltyMode: input.sourceLoyaltyMode,
+        unitName: input.unitName,
         ...(typeof input.saleAmount === "number"
           ? { saleAmount: input.saleAmount }
           : {}),
