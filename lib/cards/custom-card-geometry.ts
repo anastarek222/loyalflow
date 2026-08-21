@@ -2,7 +2,7 @@ import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
 
 export const CUSTOM_CARD_ASPECT_RATIO_TOLERANCE = 0.01;
 export const CUSTOM_CARD_GEOMETRY_ERROR =
-  "Custom Card front artwork must use the standard ID-1 aspect ratio; an uploaded back must also use matching pixel dimensions.";
+  "Custom Card Front and Back must have identical pixel dimensions and use the standard ID-1 aspect ratio.";
 
 export type CustomCardArtworkDimensions = Readonly<{
   width: number;
