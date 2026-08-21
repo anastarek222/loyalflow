@@ -187,6 +187,7 @@ type FinancialActivityMetadataInput =
       type: "LOYALTY_EARNED";
       amount: number;
       loyaltyMode: LoyaltyMode;
+      unitName: string;
       saleAmount?: number;
     }
   | {
@@ -216,6 +217,7 @@ export function buildFinancialActivityMetadata(
         ...common,
         amount: input.amount,
         loyaltyMode: input.loyaltyMode,
+        unitName: input.unitName,
         ...(typeof input.saleAmount === "number"
           ? { saleAmount: input.saleAmount }
           : {}),
