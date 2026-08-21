@@ -43,7 +43,7 @@ test("R8A defines one Beta full-rewrite operating limit and managed export shape
 test("R8A makes the live sync consume the centralized export contract", () => {
   assert.match(sync, /GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS/);
   assert.match(sync, /GOOGLE_SHEETS_MANAGED_RANGE/);
-  assert.match(sync, /const headers = GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS/);
+  assert.match(sync, /const headers = \[\.\.\.GOOGLE_SHEETS_CUSTOMER_EXPORT_HEADERS\]/);
   assert.match(
     sync,
     /const range = `\$\{escapeTabName\(sheet\.title\)\}!\$\{GOOGLE_SHEETS_MANAGED_RANGE\}`/,
