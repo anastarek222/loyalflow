@@ -10,6 +10,7 @@ import {
 export { CUSTOM_CARD_GEOMETRY_ERROR } from "@/lib/cards/custom-card-geometry";
 
 export const CUSTOM_CARD_MAX_FILE_BYTES = 4 * 1024 * 1024;
+export const CUSTOM_CARD_MAX_PAIR_BYTES = 4 * 1024 * 1024;
 export const CUSTOM_CARD_ALLOWED_TYPES = [
   "image/png",
   "image/jpeg",
@@ -25,7 +26,7 @@ export type CustomCardArtworkVersion = {
   backUrl: string;
 };
 
-const versionPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const versionPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{12}$/i;
 
 export function customCardStorageConfigured() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
@@ -48,6 +49,7 @@ export function validateCustomCardArtwork(file: unknown): file is File {
 
 export async function validateCustomCardArtworkPair(front: unknown, back: unknown) {
   if (!validateCustomCardArtwork(front) || !validateCustomCardArtwork(back)) return false;
+  if (front.size + back.size > CUSTOM_CARD_MAX_PAIR_BYTES) return false;
   return validateCustomCardArtworkGeometryPair(front, back);
 }
 
