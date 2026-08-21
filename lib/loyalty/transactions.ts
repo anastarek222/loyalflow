@@ -309,7 +309,9 @@ export async function recordLoyaltyEarn(
   await transaction.businessActivity.create({
     data: {
       type: "LOYALTY_EARNED",
-      description: input.activityDescription,
+      description: `LOYALTY_EARNED amount=${input.amount} loyaltyMode=${input.sourceLoyaltyMode}${
+        typeof input.saleAmount === "number" ? ` saleAmount=${input.saleAmount}` : ""
+      } unitName=${input.unitName}`,
       businessId: input.businessId,
       ...(operationContext.branchId
         ? { branchId: operationContext.branchId }
@@ -524,7 +526,7 @@ export async function recordRewardRedemption(
   await transaction.businessActivity.create({
     data: {
       type: "REWARD_REDEEMED",
-      description: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
+      description: `REWARD_REDEEMED rewardName=${input.rewardName} cost=${input.cost}`,
       businessId: input.businessId,
       ...(operationContext.branchId
         ? { branchId: operationContext.branchId }
@@ -686,9 +688,7 @@ export async function recordBalanceAdjustment(
   await transaction.businessActivity.create({
     data: {
       type: "BALANCE_ADJUSTED",
-      description: `تم تعديل الرصيد بمقدار ${
-        signedAmount > 0 ? "+" : ""
-      }${signedAmount}. السبب: ${input.reason}`,
+      description: `BALANCE_ADJUSTED signedAmount=${signedAmount} reason=${input.reason}`,
       businessId: input.businessId,
       ...(operationContext.branchId
         ? { branchId: operationContext.branchId }
