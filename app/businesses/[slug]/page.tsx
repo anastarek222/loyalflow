@@ -15,7 +15,7 @@ import {
   StatCard,
   StatGrid,
 } from "@/components/page-layout";
-import { createDashboardCustomerGrowth } from "@/lib/analytics/dashboard";
+import { getBusinessCustomerGrowth } from "@/lib/dashboard/business-customer-growth";
 import {
   getActivityBadgeClass,
   activityLabels,
@@ -375,7 +375,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     todayActivity,
     todayRedemptions,
     newCustomersMonth,
-    customerGrowthRows,
+    customerGrowth,
     recentActivities,
     segmentCounts,
   ] = await Promise.all([
@@ -523,11 +523,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
     prisma.customer.count({
       where: { businessId: business.id, createdAt: { gte: month } },
     }),
-    prisma.customer.findMany({
-      where: { businessId: business.id, createdAt: { gte: chartStart } },
-      select: { createdAt: true },
-      orderBy: { createdAt: "asc" },
-    }),
+    getBusinessCustomerGrowth(business.id, chartStart),
     canViewReports
       ? prisma.businessActivity.findMany({
           where: { businessId: business.id },
@@ -636,7 +632,6 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   });
   const showOnboarding =
     shouldShowOnboardingChecklist(onboarding.coreReady) && canManageSettings;
-  const customerGrowth = createDashboardCustomerGrowth(customerGrowthRows);
   const businessContext = [
     business.industry,
     [business.city, business.country].filter(Boolean).join(", "),
