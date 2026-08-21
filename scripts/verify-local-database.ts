@@ -254,6 +254,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 5,
       sourceLoyaltyMode: "VISITS",
+      unitName: visits.unitName,
       transactionNote: "Verification visit earn",
       activityDescription: "Verification visit earn",
     })
@@ -267,6 +268,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 1,
       sourceLoyaltyMode: "POINTS",
+      unitName: points.unitName,
       transactionNote: "Cross tenant verification",
       activityDescription: "Cross tenant verification",
     })
@@ -285,6 +287,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 3,
       sourceLoyaltyMode: "POINTS",
+      unitName: points.unitName,
       transactionNote: "Verification points earn",
       activityDescription: "Verification points earn",
     })
@@ -303,6 +306,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 250,
       sourceLoyaltyMode: "SALES_AMOUNT",
+      unitName: sales.unitName,
       saleAmount: 250,
       transactionNote: "Verification sale earn",
       activityDescription: "Verification sale earn",
