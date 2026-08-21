@@ -149,13 +149,16 @@ export function getActivityDescription(
         activity.metadata,
         "loyaltyMode",
       );
-      if (amount === undefined || !loyaltyMode) return activity.description;
+      const unitName = getActivityMetadataString(activity.metadata, "unitName");
+      if (amount === undefined || !loyaltyMode || !unitName) {
+        return activity.description;
+      }
       const saleAmount = getActivityMetadataNumber(activity.metadata, "saleAmount");
       const displayedAmount = saleAmount ?? amount;
       return loyaltyMode === "SALES_AMOUNT"
         ? language === "AR"
-          ? `تم تسجيل مبلغ مبيعات ${displayedAmount}`
-          : `Recorded sale amount ${displayedAmount}`
+          ? `تم تسجيل مبلغ مبيعات ${displayedAmount} ${unitName}`
+          : `Recorded sale amount ${displayedAmount} ${unitName}`
         : language === "AR"
           ? `تمت إضافة ${amount} إلى رصيد الولاء`
           : `Added ${amount} loyalty credit`;
