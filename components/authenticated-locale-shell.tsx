@@ -19,6 +19,8 @@ type AuthenticatedLocaleShellProps = {
   children: React.ReactNode;
 };
 
+const SUPER_ADMIN_SHELL_BUSINESS_LIMIT = 100;
+
 export default async function AuthenticatedLocaleShell({
   children,
 }: AuthenticatedLocaleShellProps) {
@@ -40,7 +42,8 @@ export default async function AuthenticatedLocaleShell({
   const businesses = user?.role === "SUPER_ADMIN"
     ? await prisma.business.findMany({
         select: { id: true, name: true, slug: true, plan: true },
-        orderBy: { name: "asc" },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        take: SUPER_ADMIN_SHELL_BUSINESS_LIMIT,
       })
     : user?.business
       ? [{
