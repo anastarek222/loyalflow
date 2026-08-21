@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
+import { uploadCustomCardBackCommandAction } from "@/app/businesses/[slug]/program/custom-card-back-upload-action";
 import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/custom-card-publish-action";
 import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/program/custom-card-upload-action";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
@@ -19,6 +20,7 @@ export function CustomCardArtworkManager({
 }: Props) {
   const selected = versions.find((version) => version.id === selectedVersion);
   const uploadCustomArtwork = uploadCustomCardDraftCommandAction.bind(null, slug);
+  const uploadCustomBack = uploadCustomCardBackCommandAction.bind(null, slug);
   const publishCustomArtwork = publishCustomCardArtworkAction.bind(null, slug);
 
   return (
@@ -27,11 +29,12 @@ export function CustomCardArtworkManager({
         <div>
           <p className="font-black">Custom Card artwork · Beta</p>
           <p className="mt-1 max-w-3xl text-sm text-foreground-muted">
-            Upload a required Front and an optional Back as one immutable draft
-            version. If Back is omitted, LoyalFlow uses its protected generated
-            Back with dynamic loyalty details. Preview the draft here, then
-            publish explicitly. Older versions are retained and the currently
-            published card is unchanged until Publish is selected.
+            Upload the required Front first as one immutable draft version. If
+            you want a custom Back, add it to the selected Front draft in a
+            separate bounded upload; LoyalFlow creates a new immutable Front +
+            Back version. If Back is omitted, the protected generated Back keeps
+            dynamic loyalty details system-controlled. Preview the draft here,
+            then publish explicitly.
           </p>
         </div>
         <span className="rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-black text-primary">
@@ -45,7 +48,7 @@ export function CustomCardArtworkManager({
           remains unchanged and uploads fail closed.
         </p>
       ) : (
-        <form action={uploadCustomArtwork} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <form action={uploadCustomArtwork} className="mt-5 grid gap-4">
           <label className="text-sm font-bold">
             Front artwork · required
             <input
@@ -56,29 +59,16 @@ export function CustomCardArtworkManager({
               className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
             />
           </label>
-          <label className="text-sm font-bold">
-            Back artwork · optional
-            <input
-              name="customCardBackFile"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
-            />
-            <span className="mt-2 block text-xs font-normal text-foreground-muted">
-              Leave empty to use the safe LoyalFlow-generated Back.
-            </span>
-          </label>
-          <p className="text-xs text-foreground-muted sm:col-span-2">
-            PNG, JPEG or WebP. Maximum 4 MB per uploaded side. Front must use the
-            standard ID-1 ratio (about 1.586:1). When Back is uploaded, it must
-            match the Front pixel dimensions. Files are stored privately and
-            served through bounded LoyalFlow routes.
+          <p className="text-xs text-foreground-muted">
+            PNG, JPEG or WebP. Maximum 4 MB. Front must use the standard ID-1
+            ratio (about 1.586:1). The Front is uploaded in its own request so it
+            remains below the hosting payload ceiling.
           </p>
           <button
             type="submit"
-            className="w-fit rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-black text-[var(--lf-primary-foreground)] sm:col-span-2"
+            className="w-fit rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-black text-[var(--lf-primary-foreground)]"
           >
-            Upload new draft version
+            Upload Front draft
           </button>
         </form>
       )}
@@ -102,6 +92,7 @@ export function CustomCardArtworkManager({
               </button>
             </form>
           </div>
+
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-foreground-muted">
@@ -131,6 +122,38 @@ export function CustomCardArtworkManager({
               )}
             </div>
           </div>
+
+          {storageConfigured ? (
+            <form
+              action={uploadCustomBack}
+              className="mt-5 rounded-xl border border-border bg-surface-subtle p-4"
+            >
+              <input type="hidden" name="customVersion" value={selected.id} />
+              <label className="text-sm font-bold">
+                {selected.backUrl ? "Replace Back" : "Add custom Back"}
+                <input
+                  required
+                  name="customCardBackFile"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                />
+              </label>
+              <p className="mt-2 text-xs text-foreground-muted">
+                Maximum 4 MB. The Back must match this Front&apos;s exact pixel
+                dimensions. LoyalFlow validates the pair server-side and creates
+                a new immutable version; this draft is never modified in place.
+              </p>
+              <button
+                type="submit"
+                className="mt-3 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-5 py-3 font-black text-primary"
+              >
+                {selected.backUrl
+                  ? "Create new version with replacement Back"
+                  : "Create Front + Back version"}
+              </button>
+            </form>
+          ) : null}
         </div>
       ) : null}
 
