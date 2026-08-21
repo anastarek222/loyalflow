@@ -42,10 +42,11 @@ export async function uploadCustomCardDraftCommandAction(
     );
   }
 
+  // Keep each upload request below Vercel's function payload ceiling. A Back,
+  // when desired, is attached to this immutable Front draft in a second action.
   const result = await uploadCustomCardDraftCommand({
     businessId: business.id,
     front: formData.get("customCardFrontFile"),
-    back: formData.get("customCardBackFile"),
   });
 
   if (!result.ok) {
