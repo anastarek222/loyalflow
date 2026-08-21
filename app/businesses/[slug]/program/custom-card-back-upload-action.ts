@@ -4,10 +4,10 @@ import { auth } from "@/auth";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { uploadCustomCardDraftCommand } from "@/lib/server/business/custom-card-upload-command";
+import { uploadCustomCardBackCommand } from "@/lib/server/business/custom-card-back-upload-command";
 import { redirect } from "next/navigation";
 
-export async function uploadCustomCardDraftCommandAction(
+export async function uploadCustomCardBackCommandAction(
   slug: string,
   formData: FormData,
 ) {
@@ -42,11 +42,10 @@ export async function uploadCustomCardDraftCommandAction(
     );
   }
 
-  // Keep each upload request below Vercel's function payload ceiling. A Back,
-  // when desired, is attached to this immutable Front draft in a second action.
-  const result = await uploadCustomCardDraftCommand({
+  const result = await uploadCustomCardBackCommand({
     businessId: business.id,
-    front: formData.get("customCardFrontFile"),
+    sourceVersion: String(formData.get("customVersion") ?? ""),
+    back: formData.get("customCardBackFile"),
   });
 
   if (!result.ok) {

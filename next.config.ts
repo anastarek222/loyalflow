@@ -43,6 +43,15 @@ const configuredDevOrigin =
 const nextConfig: NextConfig = {
   poweredByHeader: false,
 
+  // Custom Card artwork is uploaded one side per Server Action. Each side is
+  // validated at 4 MB by the application; this leaves bounded multipart
+  // overhead while staying below Vercel Functions' 4.5 MB request ceiling.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4250kb",
+    },
+  },
+
   ...(configuredDevOrigin
     ? {
         allowedDevOrigins: [configuredDevOrigin],

@@ -10,6 +10,12 @@ const command = source("lib/server/business/custom-card-upload-command.ts");
 const action = source(
   "app/businesses/[slug]/program/custom-card-upload-action.ts",
 );
+const backAction = source(
+  "app/businesses/[slug]/program/custom-card-back-upload-action.ts",
+);
+const backCommand = source(
+  "lib/server/business/custom-card-back-upload-command.ts",
+);
 const manager = source("components/custom-card-artwork-manager.tsx");
 const programPage = source("app/businesses/[slug]/program/page.tsx");
 
@@ -82,8 +88,10 @@ test("TC5 Custom Card geometry failure returns INVALID_UPLOAD before version cre
 
 test("TC5 invalid Custom Card geometry maps to the existing localized Program validation state", () => {
   assert.match(action, /result\.reason === "STORAGE_UNAVAILABLE"/);
+  assert.match(backAction, /result\.reason === "STORAGE_UNAVAILABLE"/);
   assert.ok(action.includes("cardDesign=invalid"));
-  assert.doesNotMatch(action, /cardDesign=invalid-upload/);
+  assert.ok(backAction.includes("cardDesign=invalid"));
+  assert.doesNotMatch(action + backAction, /cardDesign=invalid-upload/);
   assert.match(programPage, /query\.cardDesign === "invalid"/);
   assert.match(
     programPage,
@@ -91,45 +99,65 @@ test("TC5 invalid Custom Card geometry maps to the existing localized Program va
   );
 });
 
-test("TC5 Custom Card upload command preserves existing private Blob helper ownership", () => {
+test("TC5 Custom Card upload commands preserve existing private Blob helper ownership", () => {
   assert.match(command, /uploadCustomCardArtwork/);
-  assert.doesNotMatch(command, /@vercel\/blob/);
-  assert.doesNotMatch(command, /process\.env/);
-  assert.doesNotMatch(command, /prisma\.\$transaction/);
-  assert.doesNotMatch(command, /businessActivity/);
+  assert.match(backCommand, /uploadCustomCardArtwork/);
+  assert.match(backCommand, /readPrivateCustomCardArtwork/);
+  assert.doesNotMatch(command + backCommand, /@vercel\/blob/);
+  assert.doesNotMatch(command + backCommand, /process\.env/);
+  assert.doesNotMatch(command + backCommand, /prisma\.\$transaction/);
+  assert.doesNotMatch(command + backCommand, /businessActivity/);
 });
 
-test("TC5 bounded Custom Card upload action re-establishes auth and Super Admin business authority", () => {
-  assert.match(action, /await auth\(\)/);
-  assert.match(action, /prisma\.business\.findUnique/);
-  assert.match(action, /session\.user\.role !== "SUPER_ADMIN"/);
-  assert.match(action, /canManageBusiness\(session\.user, business\.id\)/);
-  assert.match(action, /canPerformSubscriptionOperation/);
-  assert.match(action, /"EXPAND"/);
-  assert.match(action, /uploadCustomCardDraftCommand\(/);
-});
-
-test("TC5 bounded Custom Card upload action preserves controlled feedback and draft version redirect", () => {
-  for (const state of [
-    "forbidden",
-    "subscription-restricted",
-    "storage-unavailable",
-    "cardDesign=invalid",
-    "cardDesign=draft&customVersion=",
-  ]) {
-    assert.ok(action.includes(state));
+test("TC5 bounded Custom Card upload actions re-establish auth and Super Admin business authority", () => {
+  for (const boundedAction of [action, backAction]) {
+    assert.match(boundedAction, /await auth\(\)/);
+    assert.match(boundedAction, /prisma\.business\.findUnique/);
+    assert.match(boundedAction, /session\.user\.role !== "SUPER_ADMIN"/);
+    assert.match(boundedAction, /canManageBusiness\(session\.user, business\.id\)/);
+    assert.match(boundedAction, /canPerformSubscriptionOperation/);
+    assert.match(boundedAction, /"EXPAND"/);
   }
-  assert.match(action, /customCardFrontFile/);
-  assert.match(action, /customCardBackFile/);
-  assert.doesNotMatch(action, /uploadCustomCardArtwork/);
-  assert.doesNotMatch(action, /@vercel\/blob|process\.env/);
+  assert.match(action, /uploadCustomCardDraftCommand\(/);
+  assert.match(backAction, /uploadCustomCardBackCommand\(/);
 });
 
-test("TC5 Custom Card manager actively binds upload and publish to their command-backed actions", () => {
+test("TC5 split upload actions preserve controlled feedback and immutable draft redirects", () => {
+  for (const boundedAction of [action, backAction]) {
+    for (const state of [
+      "forbidden",
+      "subscription-restricted",
+      "storage-unavailable",
+      "cardDesign=invalid",
+      "cardDesign=draft&customVersion=",
+    ]) {
+      assert.ok(boundedAction.includes(state));
+    }
+    assert.doesNotMatch(boundedAction, /uploadCustomCardArtwork/);
+    assert.doesNotMatch(boundedAction, /@vercel\/blob|process\.env/);
+  }
+
+  assert.match(action, /customCardFrontFile/);
+  assert.doesNotMatch(action, /customCardBackFile/);
+  assert.match(backAction, /customCardBackFile/);
+  assert.match(backAction, /customVersion/);
+
+  assert.match(backCommand, /findCustomCardArtworkVersion/);
+  assert.match(backCommand, /readPrivateCustomCardArtwork/);
+  assert.match(backCommand, /validateCustomCardArtworkPair\(front, input\.back\)/);
+  assert.match(backCommand, /const version = randomUUID\(\)/);
+});
+
+test("TC5 Custom Card manager actively binds Front, Back and publish to command-backed actions", () => {
   assert.match(manager, /uploadCustomCardDraftCommandAction/);
   assert.match(
     manager,
     /uploadCustomCardDraftCommandAction\.bind\(null, slug\)/,
+  );
+  assert.match(manager, /uploadCustomCardBackCommandAction/);
+  assert.match(
+    manager,
+    /uploadCustomCardBackCommandAction\.bind\(null, slug\)/,
   );
   assert.match(manager, /publishCustomCardArtworkAction/);
   assert.match(
@@ -137,6 +165,7 @@ test("TC5 Custom Card manager actively binds upload and publish to their command
     /publishCustomCardArtworkAction\.bind\(null, slug\)/,
   );
   assert.match(manager, /<form action=\{uploadCustomArtwork\}/);
+  assert.match(manager, /action=\{uploadCustomBack\}/);
   assert.match(manager, /<form action=\{publishCustomArtwork\}>/);
   assert.doesNotMatch(manager, /<form action=\{uploadAction\}/);
   assert.doesNotMatch(manager, /<form action=\{publishAction\}/);
