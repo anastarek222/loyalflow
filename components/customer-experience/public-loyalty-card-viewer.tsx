@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CreditCard, RotateCcw } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { LoyaltyCard, type LoyaltyCardProps } from "@/components/loyalty-card";
 
@@ -14,6 +15,43 @@ export function PublicLoyaltyCardViewer({
   ...cardProps
 }: PublicLoyaltyCardViewerProps) {
   const [side, setSide] = useState<"front" | "back">("front");
+  const [secondaryColor, setSecondaryColor] = useState(
+    cardProps.secondaryColor || "#60A5FA",
+  );
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (cardProps.secondaryColor) {
+      setSecondaryColor(cardProps.secondaryColor);
+      return;
+    }
+
+    const match = pathname.match(/^\/card\/([^/?#]+)/);
+    const token = match?.[1];
+    if (!token) return;
+
+    const controller = new AbortController();
+    void fetch(`/api/card/${encodeURIComponent(token)}/theme`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as { secondaryColor?: string };
+      })
+      .then((payload) => {
+        if (
+          payload?.secondaryColor &&
+          /^#[0-9a-fA-F]{6}$/.test(payload.secondaryColor)
+        ) {
+          setSecondaryColor(payload.secondaryColor.toUpperCase());
+        }
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [cardProps.secondaryColor, pathname]);
+
   const copy =
     language === "AR"
       ? {
@@ -75,7 +113,12 @@ export function PublicLoyaltyCardViewer({
       </div>
 
       <div className="mx-auto w-full max-w-[680px]">
-        <LoyaltyCard {...cardProps} language={language} side={side} />
+        <LoyaltyCard
+          {...cardProps}
+          secondaryColor={secondaryColor}
+          language={language}
+          side={side}
+        />
       </div>
 
       <button
