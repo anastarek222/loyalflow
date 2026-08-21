@@ -76,7 +76,7 @@ async function logout(page: Page) {
   await page.getByRole("button", { name: "Account menu", exact: true }).click();
   await Promise.all([
     page.waitForURL(/\/login$/),
-    page.getByRole("menuitem", { name: "Log out", exact: true }).click(),
+    page.getByRole("button", { name: "Log out", exact: true }).click(),
   ]);
   await expect(page.getByLabel("Email address")).toBeVisible();
 }

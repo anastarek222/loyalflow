@@ -23,7 +23,7 @@ test.describe.serial("PR browser smoke", () => {
     }
   });
 
-  test("owner can sign in and reach critical business surfaces @desktop @pr-smoke", async ({ page }) => {
+  test("owner can sign in, navigate critical surfaces, and log out @desktop @pr-smoke", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email address").fill(uatEmail("owner-a", fixture.runId));
     await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
@@ -50,5 +50,15 @@ test.describe.serial("PR browser smoke", () => {
 
     await navigation.getByRole("link", { name: "Home", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+
+    await page.getByRole("button", { name: "Account menu", exact: true }).click();
+    await Promise.all([
+      page.waitForURL(/\/login$/),
+      page.getByRole("button", { name: "Log out", exact: true }).click(),
+    ]);
+    await expect(page.getByLabel("Email address")).toBeVisible();
+
+    await page.goto(`/businesses/${fixture.businessA}`);
+    await expect(page).toHaveURL(/\/login$/);
   });
 });
