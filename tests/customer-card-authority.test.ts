@@ -33,16 +33,13 @@ test("owner customer details uses the canonical loyalty card renderer", () => {
   assert.doesNotMatch(page, /copy\.redeemedRewards/);
 });
 
-test("custom card remains front-authoritative with optional generated back", () => {
+test("custom card uses explicit Front and Back artwork without generated fallback", () => {
   const card = source("components/loyalty-card.tsx");
 
-  assert.match(card, /Boolean\(cardProps\.customFrontArtworkUrl\)/);
-  assert.doesNotMatch(
-    card,
-    /Boolean\(cardProps\.customFrontArtworkUrl\)\s*&&\s*Boolean\(cardProps\.customBackArtworkUrl\)/,
-  );
   assert.match(
     card,
-    /const artworkUrl = side === "front" \? props\.customFrontArtworkUrl : props\.customBackArtworkUrl/,
+    /side === "front"\s*\? props\.customFrontArtworkUrl\s*:\s*props\.customBackArtworkUrl/,
   );
+  assert.match(card, /Publish a complete Front \+ Back pair/);
+  assert.doesNotMatch(card, /customBackArtworkUrl\s*\|\|/);
 });
