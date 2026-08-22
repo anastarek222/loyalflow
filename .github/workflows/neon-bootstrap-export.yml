@@ -83,7 +83,13 @@ jobs:
             --column-inserts --no-owner --no-privileges \
             >> /tmp/bootstrap-schema.sql
 
-          echo "LOYALFLOW_BOOTSTRAP_BEGIN"
-          base64 -w0 /tmp/bootstrap-schema.sql
-          echo
-          echo "LOYALFLOW_BOOTSTRAP_END"
+          cp /tmp/bootstrap-schema.sql ./loyalflow-neon-bootstrap.sql
+          sha256sum ./loyalflow-neon-bootstrap.sql
+
+      - name: Upload canonical bootstrap SQL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: loyalflow-neon-bootstrap
+          path: loyalflow-neon-bootstrap.sql
+          if-no-files-found: error
+          retention-days: 1
