@@ -227,6 +227,7 @@ export async function addLoyaltyCommandAction(
       activityContext,
       amount,
       loyaltyMode: business.loyaltyMode,
+      unitName: business.unitName,
       saleAmount,
       idempotencyKey,
       transactionNote,

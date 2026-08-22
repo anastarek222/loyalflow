@@ -143,6 +143,7 @@ async function main() {
       createdById: undefined,
       amount: 2,
       sourceLoyaltyMode: "VISITS",
+      unitName: business.unitName,
       promotion: {
         id: selected.id,
         businessId: business.id,

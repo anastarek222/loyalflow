@@ -1,4 +1,5 @@
 import { Prisma, type LoyaltyMode } from "@/generated/prisma/client";
+import { buildFinancialActivityMetadata } from "@/lib/activity/business-activity";
 import {
   resolveFinancialOperationContext,
   type FinancialOperationActor,
@@ -20,6 +21,7 @@ type EarnTransactionInput = {
   attributedStaffId?: string;
   amount: number;
   sourceLoyaltyMode: LoyaltyMode;
+  unitName: string;
   saleAmount?: number;
   idempotencyKey?: string;
   promotion?: {
@@ -307,13 +309,24 @@ export async function recordLoyaltyEarn(
   await transaction.businessActivity.create({
     data: {
       type: "LOYALTY_EARNED",
-      description: input.activityDescription,
+      description: `LOYALTY_EARNED amount=${input.amount} loyaltyMode=${input.sourceLoyaltyMode}${
+        typeof input.saleAmount === "number" ? ` saleAmount=${input.saleAmount}` : ""
+      } unitName=${input.unitName}`,
       businessId: input.businessId,
       ...(operationContext.branchId
         ? { branchId: operationContext.branchId }
         : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
+      metadata: buildFinancialActivityMetadata({
+        type: "LOYALTY_EARNED",
+        amount: input.amount,
+        loyaltyMode: input.sourceLoyaltyMode,
+        unitName: input.unitName,
+        ...(typeof input.saleAmount === "number"
+          ? { saleAmount: input.saleAmount }
+          : {}),
+      }),
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
@@ -513,13 +526,18 @@ export async function recordRewardRedemption(
   await transaction.businessActivity.create({
     data: {
       type: "REWARD_REDEEMED",
-      description: `تم استبدال ${input.rewardName} مقابل ${input.cost}`,
+      description: `REWARD_REDEEMED rewardName=${input.rewardName} cost=${input.cost}`,
       businessId: input.businessId,
       ...(operationContext.branchId
         ? { branchId: operationContext.branchId }
         : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
+      metadata: buildFinancialActivityMetadata({
+        type: "REWARD_REDEEMED",
+        rewardName: input.rewardName,
+        cost: input.cost,
+      }),
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
@@ -670,15 +688,18 @@ export async function recordBalanceAdjustment(
   await transaction.businessActivity.create({
     data: {
       type: "BALANCE_ADJUSTED",
-      description: `تم تعديل الرصيد بمقدار ${
-        signedAmount > 0 ? "+" : ""
-      }${signedAmount}. السبب: ${input.reason}`,
+      description: `BALANCE_ADJUSTED signedAmount=${signedAmount} reason=${input.reason}`,
       businessId: input.businessId,
       ...(operationContext.branchId
         ? { branchId: operationContext.branchId }
         : {}),
       customerId: input.customerId,
       createdById: operationContext.createdById,
+      metadata: buildFinancialActivityMetadata({
+        type: "BALANCE_ADJUSTED",
+        signedAmount,
+        reason: input.reason,
+      }),
       ...(input.activityContext?.deviceName
         ? { deviceName: input.activityContext.deviceName }
         : {}),
