@@ -102,4 +102,13 @@ test("R10 local and CI runtime database URL behavior remains unchanged", () => {
       DATABASE_URL: "postgresql://user:secret@localhost:5432/loyalflow_test",
     }),
   );
+
+  assert.doesNotThrow(() =>
+    validateRuntimeEnvironment({
+      CI: "true",
+      NODE_ENV: "test",
+      LOYALFLOW_ENVIRONMENT: "staging",
+      DATABASE_URL: "postgresql://user:secret@127.0.0.1:5432/loyalflow_ci",
+    }),
+  );
 });
