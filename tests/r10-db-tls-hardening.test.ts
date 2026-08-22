@@ -37,13 +37,15 @@ test("R10 production-like runtimes accept only encrypted PostgreSQL sslmodes", (
   }
 });
 
-test("R10 production-like runtimes reject missing, insecure, and unknown sslmodes", () => {
+test("R10 production-like runtimes reject missing, insecure, malformed, duplicate, and unknown sslmodes", () => {
   const rejectedDatabaseUrls = [
     "postgresql://user:secret@db.example.test/loyalflow",
     "postgresql://user:secret@db.example.test/loyalflow?sslmode=disable",
     "postgresql://user:secret@db.example.test/loyalflow?sslmode=allow",
     "postgresql://user:secret@db.example.test/loyalflow?sslmode=prefer",
     "postgresql://user:secret@db.example.test/loyalflow?sslmode=unexpected",
+    "not-a-database-url?sslmode=require",
+    "postgresql://user:secret@db.example.test/loyalflow?sslmode=require&sslmode=disable",
   ];
 
   for (const environmentName of ["preview", "staging", "production"] as const) {
