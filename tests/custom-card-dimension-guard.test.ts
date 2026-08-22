@@ -103,16 +103,12 @@ test("rejects malformed image bytes instead of trusting MIME type", async () => 
   );
 });
 
-test("storage validates selected geometry before the first Vercel Blob write", () => {
+test("storage validates the required pair geometry before the first Vercel Blob write", () => {
   const storage = source("lib/cards/custom-card-storage.ts");
   const uploadStart = storage.indexOf("export async function uploadCustomCardArtwork");
   const validation = storage.indexOf("const validGeometry", uploadStart);
   const pairValidation = storage.indexOf(
     "validateCustomCardArtworkPair(input.front, input.back)",
-    uploadStart,
-  );
-  const singleValidation = storage.indexOf(
-    "validateSingleCustomCardArtwork(input.front)",
     uploadStart,
   );
   const blobWrite = storage.indexOf("await put(", uploadStart);
@@ -121,13 +117,10 @@ test("storage validates selected geometry before the first Vercel Blob write", (
     uploadStart,
     validation,
     pairValidation,
-    singleValidation,
     blobWrite,
   ]) {
     assert.ok(position >= 0);
   }
-  assert.ok(validation < pairValidation);
-  assert.ok(validation < singleValidation);
+  assert.ok(validation <= pairValidation);
   assert.ok(pairValidation < blobWrite);
-  assert.ok(singleValidation < blobWrite);
 });

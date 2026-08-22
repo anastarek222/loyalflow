@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { uploadCustomCardBackCommandAction } from "@/app/businesses/[slug]/program/custom-card-back-upload-action";
 import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/custom-card-publish-action";
 import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/program/custom-card-upload-action";
+import { ConfirmedSubmitButton } from "@/components/confirmed-submit-button";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 
 type Props = {
@@ -20,7 +20,6 @@ export function CustomCardArtworkManager({
 }: Props) {
   const selected = versions.find((version) => version.id === selectedVersion);
   const uploadCustomArtwork = uploadCustomCardDraftCommandAction.bind(null, slug);
-  const uploadCustomBack = uploadCustomCardBackCommandAction.bind(null, slug);
   const publishCustomArtwork = publishCustomCardArtworkAction.bind(null, slug);
 
   return (
@@ -29,13 +28,11 @@ export function CustomCardArtworkManager({
         <div>
           <p className="font-black">Custom Card artwork · Beta</p>
           <p className="mt-1 max-w-3xl text-sm text-foreground-muted">
-            Upload the required Front first as one immutable draft version. If
-            you want a custom Back, add it to the selected Front draft in a
-            separate bounded upload; LoyalFlow creates a new immutable Front +
-            Back version. If Back is omitted, the protected generated Back keeps
-            dynamic loyalty details system-controlled. Preview the draft here,
-            then publish explicitly. The currently published card is unchanged
-            until Publish is selected.
+            Upload the Front and Back together. Each successful upload creates one
+            immutable paired draft. Both sides must use the standard ID-1 ratio
+            and identical pixel dimensions. Preview the pair here, then publish
+            it explicitly. The currently published customer card does not change
+            until publishing is confirmed.
           </p>
         </div>
         <span className="rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-black text-primary">
@@ -50,26 +47,39 @@ export function CustomCardArtworkManager({
         </p>
       ) : (
         <form action={uploadCustomArtwork} className="mt-5 grid gap-4">
-          <label className="text-sm font-bold">
-            Front artwork · required
-            <input
-              required
-              name="customCardFrontFile"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
-            />
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-bold">
+              Front artwork · required
+              <input
+                required
+                name="customCardFrontFile"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+              />
+            </label>
+            <label className="text-sm font-bold">
+              Back artwork · required
+              <input
+                required
+                name="customCardBackFile"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+              />
+            </label>
+          </div>
           <p className="text-xs text-foreground-muted">
-            PNG, JPEG or WebP. Maximum 4 MB per uploaded side. Front must use
-            the standard ID-1 ratio (about 1.586:1). The Front is uploaded in its
-            own request so it remains below the hosting payload ceiling.
+            PNG, JPEG or WebP. Maximum 4 MB total across Front + Back. Both sides
+            must have exactly the same pixel dimensions and the standard ID-1
+            ratio (about 1.586:1). LoyalFlow never generates either side in Custom
+            mode.
           </p>
           <button
             type="submit"
             className="w-fit rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-black text-[var(--lf-primary-foreground)]"
           >
-            Upload new draft version
+            Create Front + Back draft
           </button>
         </form>
       )}
@@ -85,12 +95,11 @@ export function CustomCardArtworkManager({
             </div>
             <form action={publishCustomArtwork}>
               <input type="hidden" name="customVersion" value={selected.id} />
-              <button
-                type="submit"
+              <ConfirmedSubmitButton
+                label="Publish this Front + Back pair"
+                confirmMessage="Publish this Front + Back pair to all customer cards for this business? The currently published pair will be replaced."
                 className="rounded-[var(--lf-radius-input)] bg-emerald-600 px-5 py-3 font-black text-white"
-              >
-                Publish this version
-              </button>
+              />
             </form>
           </div>
 
@@ -109,61 +118,25 @@ export function CustomCardArtworkManager({
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-foreground-muted">
                 back
               </p>
-              {selected.backUrl ? (
-                <img
-                  src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/back`}
-                  alt="Custom card back draft"
-                  className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
-                />
-              ) : (
-                <div className="flex aspect-[1.586] w-full items-center justify-center rounded-xl border border-border bg-[radial-gradient(circle_at_80%_15%,#334155_0,transparent_36%),linear-gradient(135deg,#18181b,#020617)] p-5 text-center text-sm font-bold text-white">
-                  Safe generated Back · business, loyalty and reward details stay
-                  system-controlled.
-                </div>
-              )}
+              <img
+                src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/back`}
+                alt="Custom card back draft"
+                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
+              />
             </div>
           </div>
 
-          {storageConfigured ? (
-            <form
-              action={uploadCustomBack}
-              className="mt-5 rounded-xl border border-border bg-surface-subtle p-4"
-            >
-              <input type="hidden" name="customVersion" value={selected.id} />
-              <label className="text-sm font-bold">
-                {selected.backUrl ? "Replace Back" : "Add custom Back · optional"}
-                <input
-                  required
-                  name="customCardBackFile"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
-                />
-              </label>
-              <p className="mt-2 text-xs text-foreground-muted">
-                Leave Back absent to keep the safe LoyalFlow-generated Back.
-                When you add one, it can be up to 4 MB and must match this
-                Front&apos;s exact pixel dimensions. LoyalFlow validates the pair
-                server-side and creates a new immutable version; this draft is
-                never modified in place.
-              </p>
-              <button
-                type="submit"
-                className="mt-3 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-5 py-3 font-black text-primary"
-              >
-                {selected.backUrl
-                  ? "Create new version with replacement Back"
-                  : "Create Front + Back version"}
-              </button>
-            </form>
-          ) : null}
+          <p className="mt-4 rounded-xl border border-border bg-surface-subtle p-3 text-xs text-foreground-muted">
+            Publishing is a separate confirmed action. Uploading or previewing a
+            draft never changes the customer-facing card.
+          </p>
         </div>
       ) : null}
 
       {versions.length > 0 ? (
         <details className="mt-5 rounded-xl border border-border bg-white p-4">
           <summary className="cursor-pointer font-black">
-            Retained versions ({versions.length})
+            Retained paired versions ({versions.length})
           </summary>
           <ul className="mt-3 space-y-2 text-sm">
             {versions.map((version) => (
@@ -173,7 +146,7 @@ export function CustomCardArtworkManager({
                   href={`/businesses/${encodeURIComponent(slug)}/program?cardDesign=draft&customVersion=${version.id}`}
                   className="font-bold text-primary underline"
                 >
-                  Preview
+                  Preview pair
                 </a>
               </li>
             ))}

@@ -20,8 +20,9 @@ const adminArtwork = readFileSync(
   "utf8",
 );
 
-test("TC3.3 stores bounded custom artwork as immutable private Blob versions", () => {
+test("TC3.3 stores bounded custom artwork as immutable private Blob pairs", () => {
   assert.match(storage, /CUSTOM_CARD_MAX_FILE_BYTES = 4 \* 1024 \* 1024/);
+  assert.match(storage, /CUSTOM_CARD_MAX_PAIR_BYTES = 4 \* 1024 \* 1024/);
   assert.match(storage, /"image\/png"/);
   assert.match(storage, /"image\/jpeg"/);
   assert.match(storage, /"image\/webp"/);
@@ -29,31 +30,32 @@ test("TC3.3 stores bounded custom artwork as immutable private Blob versions", (
   assert.match(storage, /addRandomSuffix: false/);
   assert.match(storage, /allowOverwrite: false/);
   assert.match(storage, /custom-card\/\$\{businessId\}\/\$\{version\}\//);
+  assert.match(storage, /Boolean\(value\.frontUrl && value\.backUrl\)/);
   assert.doesNotMatch(storage, /\bdel\s*\(/);
 });
 
-test("TC3.3 upload and publish remain Super Admin only and fail closed", () => {
+test("TC3.3 legacy Settings flow remains Super Admin only and fail closed", () => {
   assert.match(actions, /uploadCustomCardArtworkAction/);
   assert.match(actions, /publishCustomCardArtworkAction/);
   assert.match(actions, /session\.user\.role !== "SUPER_ADMIN"/);
-  assert.match(actions, /validateCustomCardArtwork\(front\)/);
-  assert.match(actions, /validateCustomCardArtwork\(back\)/);
   assert.match(actions, /findCustomCardArtworkVersion\(business\.id, version\)/);
   assert.match(actions, /cardDesignMode: "CUSTOM"/);
   assert.match(actions, /customCardArtworkEnabled: true/);
 });
 
-test("TC3.3 separates Front upload, optional Back versioning, preview and explicit publish", () => {
-  assert.match(manager, /Upload new draft version/);
-  assert.match(manager, /action=\{uploadCustomBack\}/);
-  assert.match(manager, /Create Front \+ Back version/);
+test("TC3.3 Program manager uploads, previews and confirms one Front + Back pair", () => {
+  assert.match(manager, /Create Front \+ Back draft/);
+  assert.match(manager, /name="customCardFrontFile"/);
+  assert.match(manager, /name="customCardBackFile"/);
   assert.match(manager, /Draft preview/);
-  assert.match(manager, /Publish this version/);
-  assert.match(manager, /Retained versions/);
+  assert.match(manager, /Publish this Front \+ Back pair/);
+  assert.match(manager, /ConfirmedSubmitButton/);
+  assert.match(manager, /Retained paired versions/);
   assert.match(
     manager,
-    /currently published card is unchanged[\s\S]*?until Publish/,
+    /currently published customer card does not change[\s\S]*?publishing is confirmed/i,
   );
+  assert.doesNotMatch(manager, /Safe generated Back|optional Back|uploadCustomBack/);
 });
 
 test("TC3.3 private artwork routes derive access from trusted state", () => {
