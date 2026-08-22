@@ -127,9 +127,8 @@ export function validateRuntimeEnvironment(
     "LOYALFLOW_PRODUCTION_DATABASE"
   );
 
-  validateProductionLikeDatabaseTls(databaseUrl, environmentName);
-
   if (environment.NODE_ENV === "production") {
+    validateProductionLikeDatabaseTls(databaseUrl, environmentName);
     getRequiredValue(environment, "AUTH_SECRET");
 
     if (!appUrl) {
