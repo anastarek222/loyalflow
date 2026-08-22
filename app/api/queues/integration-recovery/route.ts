@@ -1,4 +1,4 @@
-import { handleCallback } from "@vercel/queue";
+import { handleCallback } from "@/lib/server/integrations/queue-client";
 
 import {
   parseIntegrationRecoveryHeartbeatMessage,
