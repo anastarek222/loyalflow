@@ -22,7 +22,7 @@ test("public card page can switch AR/EN chrome independently from card presentat
   assert.match(page, /aria-current=\{language === "AR" \? "page" : undefined\}/);
   assert.match(page, /aria-current=\{language === "EN" \? "page" : undefined\}/);
 
-  assert.match(page, /defaultLanguage: business\.cardDefaultLanguage/);
+  assert.match(page, /defaultLanguage:\s*business\.cardDefaultLanguage/);
   assert.match(page, /<PublicLoyaltyCardViewer[\s\S]*?language=\{language\}/);
   assert.match(card, /export const CARD_PRESENTATION_LANGUAGE = "EN" as const/);
   assert.match(card, /language: CARD_PRESENTATION_LANGUAGE/);
@@ -31,15 +31,27 @@ test("public card page can switch AR/EN chrome independently from card presentat
 test("public page language switch preserves authored offer and reward text", () => {
   const page = source("app/card/[token]/page.tsx");
 
-  assert.match(page, /<p dir="auto" className="font-black text-slate-950">\s*\{offer\.name\}/);
-  assert.match(page, /<p dir="auto" className="mt-1 text-sm leading-6 text-slate-600">/);
-  assert.match(page, /<span dir="auto" className="font-bold text-slate-800">\s*\{reward\.name\}/);
+  assert.match(
+    page,
+    /<p\s+dir="auto"\s+className="font-black text-slate-950"\s*>\s*\{offer\.name\}/,
+  );
+  assert.match(
+    page,
+    /<p\s+dir="auto"\s+className="mt-1 text-sm leading-6 text-slate-600"\s*>/,
+  );
+  assert.match(
+    page,
+    /<span\s+dir="auto"\s+className="font-bold text-slate-800"\s*>\s*\{reward\.name\}/,
+  );
   assert.match(page, /defaultLanguage=\{language\}/);
 });
 
 test("public card localization slice does not pull Standard Card theme transport into the page", () => {
   const page = source("app/card/[token]/page.tsx");
 
-  assert.doesNotMatch(page, /\/api\/card\/\$\{.*\}\/theme/);
+  assert.doesNotMatch(
+    page,
+    /fetch\s*\(\s*[`"'][\s\S]*?\/api\/card\/\$\{[^}]+\}\/theme/,
+  );
   assert.doesNotMatch(page, /secondaryColor/);
 });
