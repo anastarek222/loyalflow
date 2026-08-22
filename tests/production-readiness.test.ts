@@ -21,7 +21,8 @@ function productionEnvironment(
 ) {
   return {
     NODE_ENV: "production",
-    DATABASE_URL: "postgresql://user:database-secret@db.example.test/loyalflow",
+    DATABASE_URL:
+      "postgresql://user:database-secret@db.example.test/loyalflow?sslmode=verify-full",
     AUTH_SECRET: "auth-secret-value",
     NEXT_PUBLIC_APP_URL: "https://app.loyalflow.co",
     LOYALFLOW_ENVIRONMENT: "production",

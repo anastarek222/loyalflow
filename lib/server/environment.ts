@@ -81,6 +81,31 @@ function validateProductionAppUrl(value: string) {
   }
 }
 
+function validateProductionLikeDatabaseTls(
+  databaseUrl: string,
+  environmentName: string
+) {
+  if (!["preview", "staging", "production"].includes(environmentName)) {
+    return;
+  }
+
+  try {
+    const url = new URL(databaseUrl);
+    const sslmodes = url.searchParams.getAll("sslmode");
+
+    if (
+      sslmodes.length !== 1 ||
+      !["require", "verify-ca", "verify-full"].includes(sslmodes[0])
+    ) {
+      throw new Error("invalid sslmode");
+    }
+  } catch {
+    throw new EnvironmentValidationError(
+      "DATABASE_URL must use exactly one sslmode=require, sslmode=verify-ca, or sslmode=verify-full in preview, staging, and production runtimes."
+    );
+  }
+}
+
 /**
  * Validates values used by the running application, never Prisma's
  * development-only shadow database configuration.
@@ -103,6 +128,7 @@ export function validateRuntimeEnvironment(
   );
 
   if (environment.NODE_ENV === "production") {
+    validateProductionLikeDatabaseTls(databaseUrl, environmentName);
     getRequiredValue(environment, "AUTH_SECRET");
 
     if (!appUrl) {
