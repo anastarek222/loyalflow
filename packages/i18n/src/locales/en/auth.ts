@@ -9,6 +9,8 @@ export const englishAuthMessages = {
   "auth.passwordPlaceholder": "Enter your password",
   "auth.signingIn": "Checking account…",
   "auth.invalid": "The sign-in details or security code are incorrect.",
+  "auth.serviceUnavailable":
+    "Sign-in is temporarily unavailable. Please try again shortly.",
   "auth.welcomeBack": "Welcome back",
   "auth.signInBody":
     "Use the same sign-in for every LoyalFlow role. We will route you to the right workspace securely.",

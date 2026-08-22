@@ -175,6 +175,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   signIn: translate(locale, "auth.signIn"),
                   signingIn: translate(locale, "auth.signingIn"),
                   invalid: translate(locale, "auth.invalid"),
+                  serviceUnavailable: translate(
+                    locale,
+                    "auth.serviceUnavailable",
+                  ),
                   mfaTitle: translate(locale, "auth.mfaTitle"),
                   mfaBody: translate(locale, "auth.mfaBody"),
                   mfaLabel: translate(locale, "auth.mfaLabel"),

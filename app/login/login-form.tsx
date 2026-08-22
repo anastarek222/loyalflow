@@ -24,6 +24,7 @@ type LoginCopy = {
   signIn: string;
   signingIn: string;
   invalid: string;
+  serviceUnavailable: string;
   mfaTitle: string;
   mfaBody: string;
   mfaLabel: string;
@@ -96,6 +97,16 @@ export function LoginForm({
           className="rounded-2xl border border-danger/20 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger"
         >
           {copy.invalid}
+        </p>
+      ) : null}
+
+      {state.status === "service-unavailable" && showPrimaryStep ? (
+        <p
+          role="alert"
+          data-testid="login-service-unavailable"
+          className="rounded-2xl border border-warning/25 bg-warning-subtle px-4 py-3 text-sm font-semibold text-foreground"
+        >
+          {copy.serviceUnavailable}
         </p>
       ) : null}
 
