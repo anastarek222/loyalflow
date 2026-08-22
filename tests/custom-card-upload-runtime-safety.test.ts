@@ -5,6 +5,7 @@ import test from "node:test";
 const [
   nextConfigSource,
   managerSource,
+  confirmedSubmitSource,
   uploadActionSource,
   uploadCommandSource,
   backCommandSource,
@@ -12,6 +13,7 @@ const [
 ] = await Promise.all([
   readFile("next.config.ts", "utf8"),
   readFile("components/custom-card-artwork-manager.tsx", "utf8"),
+  readFile("components/confirmed-submit-button.tsx", "utf8"),
   readFile(
     "app/businesses/[slug]/program/custom-card-upload-action.ts",
     "utf8",
@@ -60,6 +62,12 @@ test("paired upload command validates both sides before immutable storage", () =
   );
   assert.match(uploadCommandSource, /const version = randomUUID\(\)/);
   assert.match(uploadCommandSource, /uploadCustomCardArtwork/);
+});
+
+test("custom card publish confirmation cancels the submit when approval is declined", () => {
+  assert.match(managerSource, /ConfirmedSubmitButton/);
+  assert.match(confirmedSubmitSource, /window\.confirm\(confirmMessage\)/);
+  assert.match(confirmedSubmitSource, /event\.preventDefault\(\)/);
 });
 
 test("legacy separate Back upload fails closed", () => {
