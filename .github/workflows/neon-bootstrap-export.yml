@@ -1,0 +1,89 @@
+name: Neon Bootstrap Export
+
+on:
+  pull_request:
+    branches: [staging]
+    paths:
+      - ".github/workflows/neon-bootstrap-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export-bootstrap:
+    name: Export migrated bootstrap SQL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: loyalflow_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d loyalflow_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      CI: "true"
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/loyalflow_ci?schema=public
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy canonical Prisma migrations
+        run: pnpm run db:migrate:deploy
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Export canonical bootstrap SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          PGPASSWORD=postgres pg_dump \
+            -h 127.0.0.1 -U postgres -d loyalflow_ci \
+            --schema-only --no-owner --no-privileges --no-comments \
+            > /tmp/bootstrap-schema.sql
+
+          # Neon databases already contain the public schema. Keep all objects,
+          # but omit recreation/ownership statements for that pre-existing schema.
+          sed -i '/^CREATE SCHEMA public;$/d' /tmp/bootstrap-schema.sql
+          sed -i '/^ALTER SCHEMA public OWNER TO /d' /tmp/bootstrap-schema.sql
+
+          PGPASSWORD=postgres pg_dump \
+            -h 127.0.0.1 -U postgres -d loyalflow_ci \
+            --data-only --table=public._prisma_migrations \
+            --column-inserts --no-owner --no-privileges \
+            >> /tmp/bootstrap-schema.sql
+
+          echo "LOYALFLOW_BOOTSTRAP_BEGIN"
+          base64 -w0 /tmp/bootstrap-schema.sql
+          echo
+          echo "LOYALFLOW_BOOTSTRAP_END"
