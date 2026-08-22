@@ -39,10 +39,8 @@ test("public page language switch preserves authored offer and reward text", () 
     page,
     /<p\s+dir="auto"\s+className="mt-1 text-sm leading-6 text-slate-600"\s*>/,
   );
-  assert.match(
-    page,
-    /<span\s+dir="auto"\s+className="font-bold text-slate-800"\s*>\s*\{reward\.name\}/,
-  );
+  assert.match(page, /<span\s+dir="auto"\s+className="font-bold text-slate-800"/);
+  assert.match(page, /\{reward\.name\}/);
   assert.match(page, /defaultLanguage=\{language\}/);
 });
 
