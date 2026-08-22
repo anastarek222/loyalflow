@@ -6,7 +6,6 @@ import {
   uploadCustomCardArtwork,
   validateCustomCardArtwork,
   validateCustomCardArtworkPair,
-  validateSingleCustomCardArtwork,
 } from "@/lib/cards/custom-card-storage";
 import prisma from "@/lib/prisma";
 
@@ -15,7 +14,7 @@ export type CustomCardUploadCommandResult =
       ok: true;
       version: string;
       frontUrl: string;
-      backUrl: string | null;
+      backUrl: string;
     }>
   | Readonly<{
       ok: false;
@@ -28,36 +27,29 @@ export type CustomCardUploadCommandResult =
 /**
  * Authoritative Custom Card draft-upload boundary.
  *
- * The command owns storage readiness, bounded front validation, optional
- * matching ID-1 back validation, the persisted EXPAND entitlement re-check
- * immediately before the external write, and immutable version creation.
- * Authentication and tenant-management policy remain in the Server Action
- * transport. When no back is uploaded, the renderer owns the safe generated
- * back and no second Blob object is created.
+ * A Custom Card draft is always an immutable Front + Back pair. The command
+ * owns storage readiness, bounded file validation, matching ID-1 geometry,
+ * the persisted EXPAND entitlement re-check immediately before the external
+ * write, and immutable version creation. Authentication and tenant-management
+ * policy remain in the Server Action transport.
  */
 export async function uploadCustomCardDraftCommand(input: {
   businessId: string;
   front: unknown;
-  back?: unknown;
+  back: unknown;
 }): Promise<CustomCardUploadCommandResult> {
   if (!customCardStorageConfigured()) {
     return { ok: false, reason: "STORAGE_UNAVAILABLE" };
   }
 
-  if (!validateCustomCardArtwork(input.front)) {
+  if (
+    !validateCustomCardArtwork(input.front) ||
+    !validateCustomCardArtwork(input.back)
+  ) {
     return { ok: false, reason: "INVALID_UPLOAD" };
   }
 
-  const back =
-    input.back instanceof File && input.back.size === 0 ? null : input.back ?? null;
-  if (back !== null && !validateCustomCardArtwork(back)) {
-    return { ok: false, reason: "INVALID_UPLOAD" };
-  }
-
-  const validGeometry = back
-    ? await validateCustomCardArtworkPair(input.front, back)
-    : await validateSingleCustomCardArtwork(input.front);
-  if (!validGeometry) {
+  if (!(await validateCustomCardArtworkPair(input.front, input.back))) {
     return { ok: false, reason: "INVALID_UPLOAD" };
   }
 
@@ -76,7 +68,7 @@ export async function uploadCustomCardDraftCommand(input: {
     businessId: input.businessId,
     version,
     front: input.front,
-    back,
+    back: input.back,
   });
 
   return {

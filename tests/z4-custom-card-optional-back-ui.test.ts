@@ -7,59 +7,45 @@ function source(path: string) {
 }
 
 const manager = source("components/custom-card-artwork-manager.tsx");
-const frontAction = source(
+const uploadAction = source(
   "app/businesses/[slug]/program/custom-card-upload-action.ts",
 );
-const backAction = source(
-  "app/businesses/[slug]/program/custom-card-back-upload-action.ts",
-);
-const setup = source("components/standard-card-setup.tsx");
 const input = source("lib/cards/card-design-input.ts");
 
-test("Z4 upload UI requires Front while Back remains an optional second step", () => {
+test("Z4 upload UI requires Front and Back in the same draft", () => {
   assert.match(manager, /Front artwork · required/);
+  assert.match(manager, /Back artwork · required/);
   assert.match(manager, /required[\s\S]*?name="customCardFrontFile"/);
-  assert.match(manager, /Add custom Back · optional/);
-  assert.match(manager, /name="customCardBackFile"/);
-  assert.match(manager, /Leave Back absent to keep the safe LoyalFlow-generated Back/);
-  assert.match(manager, /Maximum 4 MB per uploaded side/);
+  assert.match(manager, /required[\s\S]*?name="customCardBackFile"/);
+  assert.match(manager, /Maximum 4 MB total across Front \+ Back/);
+  assert.match(manager, /LoyalFlow never generates either side in Custom mode/);
   assert.match(manager, /1\.586:1/);
-  assert.match(manager, /match this[\s\S]*?Front&apos;s exact pixel dimensions/);
 
-  assert.match(frontAction, /customCardFrontFile/);
-  assert.doesNotMatch(frontAction, /customCardBackFile/);
-  assert.match(backAction, /customCardBackFile/);
-  assert.match(backAction, /customVersion/);
+  assert.match(uploadAction, /customCardFrontFile/);
+  assert.match(uploadAction, /customCardBackFile/);
 });
 
-test("Z4 draft preview never requests a missing private Back object", () => {
-  assert.match(manager, /selected\.backUrl \?/);
-  assert.match(manager, /Safe generated Back/);
-  assert.match(manager, /system-controlled/);
+test("Z4 draft preview renders the complete pair only", () => {
+  assert.match(manager, /Custom card front draft/);
+  assert.match(manager, /Custom card back draft/);
+  assert.doesNotMatch(manager, /Safe generated Back/);
+  assert.doesNotMatch(manager, /Add custom Back · optional/);
 });
 
-test("Z4 card design input accepts Front-only Custom Card and derives enabled state", () => {
+test("Z4 card design input requires both published artwork URLs", () => {
   assert.match(
     input,
-    /value\.cardDesignMode === "CUSTOM" && !value\.customCardFrontArtworkUrl/,
+    /!value\.customCardFrontArtworkUrl \|\| !value\.customCardBackArtworkUrl/,
   );
-  assert.doesNotMatch(
-    input,
-    /!value\.customCardBackArtworkUrl/,
-  );
-  assert.match(input, /\.transform\(\(value\) =>/);
+  assert.match(input, /approved Front \+ Back artwork pair/);
   assert.match(
     input,
-    /value\.cardDesignMode === "CUSTOM"[\s\S]*Boolean\(value\.customCardFrontArtworkUrl\)/,
+    /value\.customCardFrontArtworkUrl && value\.customCardBackArtworkUrl/,
   );
 });
 
-test("Z4 Standard Card setup treats Front-only Custom Card as ready", () => {
-  assert.match(setup, /const customReady = Boolean\(values\.customFrontArtworkUrl\);/);
-  assert.doesNotMatch(
-    setup,
-    /values\.customFrontArtworkUrl && values\.customBackArtworkUrl/,
-  );
-  assert.match(setup, /Safe LoyalFlow-generated Back with dynamic loyalty details/);
-  assert.match(setup, /Back artwork is optional and can be generated safely by LoyalFlow/);
+test("Z4 publish remains a separate explicitly confirmed action", () => {
+  assert.match(manager, /ConfirmedSubmitButton/);
+  assert.match(manager, /Publish this Front \+ Back pair/);
+  assert.match(manager, /Publishing is a separate confirmed action/);
 });

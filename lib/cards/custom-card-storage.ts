@@ -10,6 +10,7 @@ import {
 export { CUSTOM_CARD_GEOMETRY_ERROR } from "@/lib/cards/custom-card-geometry";
 
 export const CUSTOM_CARD_MAX_FILE_BYTES = 4 * 1024 * 1024;
+export const CUSTOM_CARD_MAX_PAIR_BYTES = 4 * 1024 * 1024;
 export const CUSTOM_CARD_ALLOWED_TYPES = [
   "image/png",
   "image/jpeg",
@@ -22,7 +23,7 @@ export type CustomCardArtworkVersion = {
   id: string;
   uploadedAt: Date;
   frontUrl: string;
-  backUrl: string | null;
+  backUrl: string;
 };
 
 const versionPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -48,6 +49,7 @@ export function validateCustomCardArtwork(file: unknown): file is File {
 
 export async function validateCustomCardArtworkPair(front: unknown, back: unknown) {
   if (!validateCustomCardArtwork(front) || !validateCustomCardArtwork(back)) return false;
+  if (front.size + back.size > CUSTOM_CARD_MAX_PAIR_BYTES) return false;
   return validateCustomCardArtworkGeometryPair(front, back);
 }
 
@@ -71,11 +73,9 @@ export async function uploadCustomCardArtwork(input: {
   businessId: string;
   version: string;
   front: File;
-  back?: File | null;
+  back: File;
 }) {
-  const validGeometry = input.back
-    ? await validateCustomCardArtworkPair(input.front, input.back)
-    : await validateSingleCustomCardArtwork(input.front);
+  const validGeometry = await validateCustomCardArtworkPair(input.front, input.back);
   if (!validGeometry) {
     throw new Error(CUSTOM_CARD_GEOMETRY_ERROR);
   }
@@ -88,10 +88,6 @@ export async function uploadCustomCardArtwork(input: {
     contentType: input.front.type,
     maximumSizeInBytes: CUSTOM_CARD_MAX_FILE_BYTES,
   });
-
-  if (!input.back) {
-    return { frontUrl: front.url, backUrl: null };
-  }
 
   const back = await put(`${prefix}back.${extensionFor(input.back)}`, input.back, {
     access: "private",
@@ -118,12 +114,12 @@ function groupCompleteVersions(blobs: ListBlobResultBlob[]) {
     versions.set(match[1], current);
   }
   return [...versions.entries()]
-    .filter(([, value]) => Boolean(value.frontUrl))
+    .filter(([, value]) => Boolean(value.frontUrl && value.backUrl))
     .map(([id, value]): CustomCardArtworkVersion => ({
       id,
       uploadedAt: value.uploadedAt,
       frontUrl: value.frontUrl as string,
-      backUrl: value.backUrl ?? null,
+      backUrl: value.backUrl as string,
     }))
     .sort((left, right) => right.uploadedAt.getTime() - left.uploadedAt.getTime());
 }
