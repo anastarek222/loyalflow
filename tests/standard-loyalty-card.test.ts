@@ -335,21 +335,21 @@ test("custom artwork capability stays reserved for super-admin architecture", ()
   assert.match(canonical, /custom-qr|custom-member|custom-balance|custom-reward/);
 });
 
-test("Custom UX delegates lifecycle uploads while preserving published URLs", () => {
+test("Custom UX delegates paired lifecycle uploads while preserving published URLs", () => {
   const setup = source("components/standard-card-setup.tsx");
   const manager = source("components/custom-card-artwork-manager.tsx");
   const canonical = source("components/loyalty-card.tsx");
   assert.match(setup, /Upload, immutable draft versions, preview and publish/);
-  assert.match(manager, /Upload new draft version/);
-  assert.match(manager, /Publish this version/);
+  assert.match(manager, /Create Front \+ Back draft/);
+  assert.match(manager, /Publish this Front \+ Back pair/);
+  assert.match(manager, /ConfirmedSubmitButton/);
   assert.match(manager, /Vercel Blob is not connected/);
   assert.doesNotMatch(setup, /type="url"|Custom front artwork URL|Custom back artwork URL/);
   assert.match(setup, /name="customCardFrontArtworkUrl"\s+type="hidden"/);
   assert.match(setup, /name="customCardBackArtworkUrl"\s+type="hidden"/);
   assert.match(canonical, /props\.customFrontArtworkUrl/);
   assert.match(canonical, /props\.customBackArtworkUrl/);
-  assert.match(canonical, /Boolean\(cardProps\.customFrontArtworkUrl\)/);
-  assert.doesNotMatch(canonical, /Boolean\(props\.customFrontArtworkUrl && props\.customBackArtworkUrl\)/);
+  assert.match(canonical, /cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl/);
   assert.match(canonical, /radial-gradient/);
   assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
   assert.match(setup, /Managed from the Custom Card artwork panel above/);

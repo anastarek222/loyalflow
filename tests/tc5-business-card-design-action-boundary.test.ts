@@ -36,7 +36,7 @@ test("TC5 Card design input contract preserves the existing bounded design vocab
   assert.match(input, /customCardSafeZoneVersion: z\.literal\("ID1_V1"\)/);
   assert.match(
     input,
-    /Custom Card requires approved front artwork; Back may use the protected generated alternative/,
+    /Custom Card requires an approved Front \+ Back artwork pair/,
   );
   assert.match(input, /isValidRemoteImageUrl/);
 });
