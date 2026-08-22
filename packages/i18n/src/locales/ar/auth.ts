@@ -11,6 +11,8 @@ export const arabicAuthMessages = {
   "auth.passwordPlaceholder": "أدخل كلمة المرور",
   "auth.signingIn": "جارٍ التحقق من الحساب…",
   "auth.invalid": "بيانات تسجيل الدخول أو رمز الأمان غير صحيحة.",
+  "auth.serviceUnavailable":
+    "تسجيل الدخول غير متاح مؤقتًا. حاول مرة أخرى بعد قليل.",
   "auth.welcomeBack": "مرحبًا بعودتك",
   "auth.signInBody":
     "استخدم نفس تسجيل الدخول لكل أدوار LoyalFlow، وسنوجّهك بأمان إلى مساحة العمل المناسبة.",

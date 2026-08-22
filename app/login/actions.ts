@@ -2,6 +2,7 @@
 
 import { signIn } from "@/auth";
 import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
+import { isLoginDatabaseUnavailableError } from "@/lib/auth/login-dependency-error";
 import { recordLoginDenial } from "@/lib/auth/login-observability";
 import { isSuperAdminMfaEnabled } from "@/lib/auth/super-admin-mfa-runtime";
 import prisma from "@/lib/prisma";
@@ -20,7 +21,8 @@ export type LoginState = {
     | "verification-required"
     | "mfa-required"
     | "mfa-invalid"
-    | "mfa-setup-required";
+    | "mfa-setup-required"
+    | "service-unavailable";
 };
 
 const loginStepSchema = z.object({
@@ -57,37 +59,46 @@ export async function loginAction(
     }
 
     const email = parsed.data.email.toLowerCase();
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        role: true,
-        isActive: true,
-        passwordHash: true,
-        business: { select: { isActive: true } },
-      },
-    });
 
-    if (!user || !user.isActive || (user.business && !user.business.isActive)) {
-      recordLoginDenial("primary", "account_unavailable");
-      return { status: "invalid" };
-    }
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          role: true,
+          isActive: true,
+          passwordHash: true,
+          business: { select: { isActive: true } },
+        },
+      });
 
-    if (!(await compare(parsed.data.password, user.passwordHash))) {
-      recordLoginDenial("primary", "password_mismatch");
-      return { status: "invalid" };
-    }
+      if (!user || !user.isActive || (user.business && !user.business.isActive)) {
+        recordLoginDenial("primary", "account_unavailable");
+        return { status: "invalid" };
+      }
 
-    if (!(await isEmailVerificationSatisfied(user.id))) {
-      recordLoginDenial("primary", "email_unverified");
-      return { status: "verification-required" };
-    }
+      if (!(await compare(parsed.data.password, user.passwordHash))) {
+        recordLoginDenial("primary", "password_mismatch");
+        return { status: "invalid" };
+      }
 
-    if (user.role === "SUPER_ADMIN") {
-      const enabled = await isSuperAdminMfaEnabled(user.id);
-      return {
-        status: enabled ? "mfa-required" : "mfa-setup-required",
-      };
+      if (!(await isEmailVerificationSatisfied(user.id))) {
+        recordLoginDenial("primary", "email_unverified");
+        return { status: "verification-required" };
+      }
+
+      if (user.role === "SUPER_ADMIN") {
+        const enabled = await isSuperAdminMfaEnabled(user.id);
+        return {
+          status: enabled ? "mfa-required" : "mfa-setup-required",
+        };
+      }
+    } catch (error) {
+      if (isLoginDatabaseUnavailableError(error)) {
+        return { status: "service-unavailable" };
+      }
+
+      throw error;
     }
   }
 
@@ -96,6 +107,10 @@ export async function loginAction(
   try {
     await signIn("credentials", formData);
   } catch (error) {
+    if (isLoginDatabaseUnavailableError(error)) {
+      return { status: "service-unavailable" };
+    }
+
     if (error instanceof AuthError) {
       recordLoginDenial("primary", "credentials_rejected");
       return {
