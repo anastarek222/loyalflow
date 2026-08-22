@@ -6,47 +6,44 @@ function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-const geometry = source("lib/cards/custom-card-geometry.ts");
 const storage = source("lib/cards/custom-card-storage.ts");
 const uploadCommand = source("lib/server/business/custom-card-upload-command.ts");
 const publishCommand = source("lib/server/business/custom-card-publish-command.ts");
 const renderer = source("components/loyalty-card.tsx");
 
-test("Z4 validates a required front independently when no back artwork is supplied", () => {
-  assert.match(geometry, /validateCustomCardArtworkGeometry\(file: File\)/);
-  assert.match(storage, /validateSingleCustomCardArtwork/);
-  assert.match(uploadCommand, /back\?: unknown/);
+test("Z4 validates Custom Card as one required Front + Back pair", () => {
+  assert.match(storage, /validateCustomCardArtworkPair/);
+  assert.match(storage, /CUSTOM_CARD_MAX_PAIR_BYTES/);
+  assert.match(uploadCommand, /back: unknown/);
   assert.match(
     uploadCommand,
-    /back\s*\?\s*await validateCustomCardArtworkPair\(input\.front, back\)\s*:\s*await validateSingleCustomCardArtwork\(input\.front\)/,
+    /validateCustomCardArtworkPair\(input\.front, input\.back\)/,
   );
+  assert.doesNotMatch(uploadCommand, /validateSingleCustomCardArtwork/);
 });
 
-test("Z4 keeps an uploaded back geometry-matched while allowing a generated back", () => {
-  assert.match(storage, /back\?: File \| null/);
-  assert.match(storage, /if \(!input\.back\) \{[\s\S]*backUrl: null/);
-  assert.match(storage, /backUrl: string \| null/);
-  assert.match(storage, /\.filter\(\(\[, value\]\) => Boolean\(value\.frontUrl\)\)/);
+test("Z4 storage lists only complete immutable artwork pairs", () => {
+  assert.match(storage, /backUrl: string;/);
+  assert.match(
+    storage,
+    /Boolean\(value\.frontUrl && value\.backUrl\)/,
+  );
+  assert.doesNotMatch(storage, /backUrl: value\.backUrl \?\? null/);
 });
 
-test("Z4 publish persistence represents generated Back as null without schema or provider invention", () => {
-  assert.match(publishCommand, /backUrl: string \| null/);
+test("Z4 publish persistence requires explicit Back artwork", () => {
+  assert.match(publishCommand, /backUrl: string;/);
   assert.match(publishCommand, /customCardBackArtworkUrl: input\.backUrl/);
   assert.doesNotMatch(publishCommand, /put\(|fetch\(|generateImage|image_gen/i);
 });
 
-test("Z4 runtime Custom Card activates from the required Front and renders the protected Back fallback", () => {
+test("Z4 runtime Custom Card activates only when both artwork sides exist", () => {
   assert.match(
     renderer,
-    /cardDesignMode\(cardProps\.designMode\) === "CUSTOM"[\s\S]*cardProps\.customDesignEnabled === true[\s\S]*Boolean\(cardProps\.customFrontArtworkUrl\)/,
-  );
-  assert.doesNotMatch(
-    renderer,
-    /Boolean\(cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl\)/,
+    /Boolean\(\s*cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl,?\s*\)/,
   );
   assert.match(
     renderer,
-    /artworkUrl \? \([\s\S]*<img[\s\S]*\) : \([\s\S]*radial-gradient/,
+    /const artworkUrl = side === "front" \? props\.customFrontArtworkUrl : props\.customBackArtworkUrl/,
   );
-  assert.match(renderer, /data-safe-zone="custom-reward"/);
 });
