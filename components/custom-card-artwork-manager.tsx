@@ -111,7 +111,7 @@ export function CustomCardArtworkManager({
               <img
                 src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/front`}
                 alt="Custom card front draft"
-                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-cover"
+                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
               />
             </div>
             <div>
@@ -121,7 +121,7 @@ export function CustomCardArtworkManager({
               <img
                 src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/back`}
                 alt="Custom card back draft"
-                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-cover"
+                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
               />
             </div>
           </div>
