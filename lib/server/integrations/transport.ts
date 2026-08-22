@@ -1,4 +1,4 @@
-import { send } from "@vercel/queue";
+import { send } from "@/lib/server/integrations/queue-client";
 
 export const INTEGRATION_JOB_TOPIC = "loyalflow-integration-jobs-beta";
 
