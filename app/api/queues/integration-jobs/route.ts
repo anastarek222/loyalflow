@@ -1,4 +1,4 @@
-import { handleCallback } from "@vercel/queue";
+import { handleCallback } from "@/lib/server/integrations/queue-client";
 
 import { scheduleNextIntegrationRecoveryHeartbeat } from "@/lib/server/integrations/reconciliation-heartbeat";
 import { getBetaQueueRetryDelaySeconds } from "@/lib/server/integrations/retry-policy";
