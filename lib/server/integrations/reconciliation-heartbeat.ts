@@ -1,4 +1,4 @@
-import { send } from "@vercel/queue";
+import { send } from "@/lib/server/integrations/queue-client";
 
 import {
   BETA_RECONCILIATION_TRIGGER_INTERVAL_MS,
