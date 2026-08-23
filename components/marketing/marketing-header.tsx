@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +59,7 @@ export function MarketingHeader({
         </Link>
 
         <nav
-          aria-label={locale === "ar" ? "التنقل الرئيسي" : "Primary navigation"}
+          aria-label={translate(locale, "marketing.primaryNavLabel")}
           className="hidden items-center gap-1 lg:flex"
         >
           {navigation.map((item) => (
@@ -110,7 +111,7 @@ export function MarketingHeader({
           className="border-t border-border/80 bg-white/96 px-4 py-4 shadow-[0_18px_30px_rgb(15_23_42/0.09)] backdrop-blur-xl lg:hidden"
         >
           <nav
-            aria-label={locale === "ar" ? "تنقل الهاتف" : "Mobile navigation"}
+            aria-label={translate(locale, "marketing.mobileNavLabel")}
             className="mx-auto grid max-w-7xl gap-1"
           >
             {navigation.map((item) => (
