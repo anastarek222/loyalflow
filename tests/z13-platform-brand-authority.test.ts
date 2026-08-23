@@ -61,8 +61,15 @@ test("Z13 keeps bilingual marketing copy owned by the existing i18n catalog", ()
   const catalog = source("lib/i18n/catalog.ts");
 
   assert.match(home, /brand=\{copy\("common\.brand"\)\}/);
-  assert.match(home, /title:\s*translate\(locale, "marketing\.metaTitle"\)/);
-  assert.match(home, /description:\s*translate\(locale, "marketing\.metaDescription"\)/);
+  assert.match(
+    home,
+    /const title = translate\(locale, "marketing\.metaTitle"\);/,
+  );
+  assert.match(
+    home,
+    /const description = translate\(locale, "marketing\.metaDescription"\);/,
+  );
+  assert.match(home, /return \{\s*title,\s*description,/);
   assert.match(catalog, /\.\.\.commonMessages\.en/);
   assert.match(catalog, /\.\.\.commonMessages\.ar/);
 });

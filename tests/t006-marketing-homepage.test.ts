@@ -65,11 +65,15 @@ test("T006 public homepage exposes localized indexable metadata without a provid
     page,
     /export async function generateMetadata\(\): Promise<Metadata>/,
   );
-  assert.match(page, /title: translate\(locale, "marketing\.metaTitle"\)/);
   assert.match(
     page,
-    /description: translate\(locale, "marketing\.metaDescription"\)/,
+    /const title = translate\(locale, "marketing\.metaTitle"\);/,
   );
+  assert.match(
+    page,
+    /const description = translate\(locale, "marketing\.metaDescription"\);/,
+  );
+  assert.match(page, /return \{\s*title,\s*description,/);
   assert.match(page, /alternates: \{ canonical: "\/" \}/);
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.doesNotMatch(page, /googleAnalytics|gtag|segment|mixpanel|posthog/i);

@@ -3,6 +3,7 @@ import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
+import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -14,12 +15,19 @@ async function getConversionLocale() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getConversionLocale();
+  const title = translate(locale, "conversion.metaTitle");
+  const description = translate(locale, "conversion.metaDescription");
 
   return {
-    title: translate(locale, "conversion.metaTitle"),
-    description: translate(locale, "conversion.metaDescription"),
+    title,
+    description,
     alternates: { canonical: "/get-started" },
     robots: { index: true, follow: true },
+    ...buildPublicSocialMetadata({
+      title,
+      description,
+      path: "/get-started",
+    }),
   };
 }
 
