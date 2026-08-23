@@ -24,7 +24,7 @@ test("Z3 defines a bounded Standard Card theme contract", () => {
   assert.match(presetSource, /: "DEFAULT";/);
 });
 
-test("Z3 exposes only approved professional colour presets", () => {
+test("Z3 exposes approved professional colour presets", () => {
   for (const preset of ["GOLD", "BLUE", "EMERALD", "VIOLET", "ROSE", "SLATE"]) {
     assert.match(presetSource, new RegExp(`id: "${preset}"`));
   }
@@ -49,23 +49,27 @@ test("Z3 presets carry separate Light and Dark safe accents", () => {
   }
 });
 
-test("Z3 Standard Card setup uses approved presets instead of free-form colour editing", () => {
+test("Z3 Standard Card setup keeps approved presets alongside bounded free-form colour editing", () => {
   assert.match(setupSource, /STANDARD_CARD_COLOR_PRESETS\.map/);
   assert.match(setupSource, /STANDARD_CARD_THEME_PRESETS\.map/);
   assert.match(setupSource, /updateColorPreset\(preset\.id\)/);
   assert.match(setupSource, /updateThemePreset\(theme\)/);
-  assert.doesNotMatch(setupSource, /type="color"/);
-  assert.doesNotMatch(setupSource, /Brand colour hex value/);
+  assert.match(setupSource, /type="color"/);
+  assert.match(setupSource, /"HEX code"/);
+  assert.match(setupSource, /const HEX_COLOR = \/\^#\[0-9a-fA-F\]\{6\}\$\//);
 });
 
-test("Z3 preserves a legacy colour until an approved palette is explicitly selected", () => {
-  assert.match(setupSource, /initial\.primaryColor \? null : DEFAULT_STANDARD_CARD_COLOR_PRESET/);
-  assert.match(setupSource, /colorPreset === null/);
+test("Z3 preserves a custom colour across theme changes until a preset is explicitly selected", () => {
+  assert.match(setupSource, /standardCardPresetForColor\(initial\.primaryColor\) \?\?/);
   assert.match(
     setupSource,
-    /colorPreset[\s\S]*?standardCardPresetColor\(colorPreset, theme\)[\s\S]*?: card\.primaryColor/,
+    /\(initial\.primaryColor \? null : DEFAULT_STANDARD_CARD_COLOR_PRESET\)/,
   );
-  assert.match(setupSource, /name="primaryColor" value=\{values\.primaryColor\}/);
+  assert.match(
+    setupSource,
+    /const primaryColor = colorPreset[\s\S]*?standardCardPresetColor\(colorPreset, theme\)\.toUpperCase\(\)[\s\S]*?: card\.primaryColor/,
+  );
+  assert.match(setupSource, /name="primaryColor"/);
 });
 
 test("Z3 preset foundation does not replace the canonical card geometry authority", () => {

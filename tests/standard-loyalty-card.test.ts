@@ -339,7 +339,7 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   const setup = source("components/standard-card-setup.tsx");
   const manager = source("components/custom-card-artwork-manager.tsx");
   const canonical = source("components/loyalty-card.tsx");
-  assert.match(setup, /Upload, immutable draft versions, preview and publish/);
+  assert.match(setup, /Front \+ Back pair upload, immutable drafts, preview and publish/);
   assert.match(manager, /Create Front \+ Back draft/);
   assert.match(manager, /Publish this Front \+ Back pair/);
   assert.match(manager, /ConfirmedSubmitButton/);

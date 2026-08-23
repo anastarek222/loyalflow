@@ -129,12 +129,15 @@ test("six-step custom setup separates loyalty rules from one card-design editor"
   assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.doesNotMatch(wizard, /LoyaltyCardPreview|cardStyleLabels|fontLabels/);
   assert.match(wizard, /allowCustom/);
-  assert.match(setup, /const customReady = Boolean\(values\.customFrontArtworkUrl\)/);
+  assert.match(
+    setup,
+    /const customReady = Boolean\(\s*values\.customFrontArtworkUrl && values\.customBackArtworkUrl,?\s*\)/,
+  );
   assert.match(setup, /const canSelectCustom = allowCustom && customReady/);
   assert.match(setup, /disabled=\{!canSelectCustom\}/);
 });
 
-test("Custom Card creation requires published Front artwork but allows the protected generated Back", () => {
+test("Custom Card creation requires a published Front + Back pair", () => {
   const frontOnly = businessCreationSchema.safeParse({
     ...validCreationInput,
     cardDesignMode: "CUSTOM",
@@ -142,20 +145,30 @@ test("Custom Card creation requires published Front artwork but allows the prote
     customCardFrontArtworkUrl: "https://example.test/custom-card/front.webp",
     customCardBackArtworkUrl: "",
   });
-  const missingFront = businessCreationSchema.safeParse({
+  const backOnly = businessCreationSchema.safeParse({
     ...validCreationInput,
     cardDesignMode: "CUSTOM",
     customCardArtworkEnabled: "true",
     customCardFrontArtworkUrl: "",
     customCardBackArtworkUrl: "https://example.test/custom-card/back.webp",
   });
+  const completePair = businessCreationSchema.safeParse({
+    ...validCreationInput,
+    cardDesignMode: "CUSTOM",
+    customCardArtworkEnabled: "true",
+    customCardFrontArtworkUrl: "https://example.test/custom-card/front.webp",
+    customCardBackArtworkUrl: "https://example.test/custom-card/back.webp",
+  });
 
-  assert.equal(frontOnly.success, true);
-  assert.equal(missingFront.success, false);
-  assert.equal(
-    missingFront.success
-      ? ""
-      : missingFront.error.issues.find((issue) => issue.path[0] === "cardDesignMode")?.message,
-    "Custom Card requires approved front artwork.",
-  );
+  assert.equal(frontOnly.success, false);
+  assert.equal(backOnly.success, false);
+  assert.equal(completePair.success, true);
+  for (const result of [frontOnly, backOnly]) {
+    assert.equal(
+      result.success
+        ? ""
+        : result.error.issues.find((issue) => issue.path[0] === "cardDesignMode")?.message,
+      "Custom Card requires approved Front + Back artwork.",
+    );
+  }
 });
