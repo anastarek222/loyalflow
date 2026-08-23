@@ -46,6 +46,7 @@ export const marketingMessagesEn = {
   "marketing.trustQr": "QR-based cards",
   "marketing.trustNoApp": "No customer app required",
   "marketing.trustRoles": "Role-aware access",
+  "marketing.trustSectionLabel": "Core product qualities",
   "marketing.howEyebrow": "How it works",
   "marketing.howTitle": "From setup to repeat visits in three clear steps.",
   "marketing.featuresEyebrow": "One connected workspace",
