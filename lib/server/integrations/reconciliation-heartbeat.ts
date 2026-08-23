@@ -8,9 +8,11 @@ import { runStrandedIntegrationJobReconciliation } from "@/lib/server/integratio
 
 export const INTEGRATION_RECOVERY_HEARTBEAT_TOPIC =
   "loyalflow-integration-recovery-beta";
+export const BETA_RECONCILIATION_FOLLOW_UP_PASSES = 1;
 
 export type IntegrationRecoveryHeartbeatMessage = Readonly<{
   scheduledForMs: number;
+  remainingPasses: number;
 }>;
 
 function requireValidNow(now: Date) {
@@ -19,10 +21,23 @@ function requireValidNow(now: Date) {
   return nowMs;
 }
 
+function requireValidRemainingPasses(value: number) {
+  if (
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value > BETA_RECONCILIATION_FOLLOW_UP_PASSES
+  ) {
+    throw new Error("remainingPasses must be within the beta recovery budget.");
+  }
+  return value;
+}
+
 export async function scheduleNextIntegrationRecoveryHeartbeat(
   now: Date = new Date(),
+  remainingPasses: number = BETA_RECONCILIATION_FOLLOW_UP_PASSES,
 ) {
   const nowMs = requireValidNow(now);
+  const boundedRemainingPasses = requireValidRemainingPasses(remainingPasses);
   const scheduledForMs = nowMs + BETA_RECONCILIATION_TRIGGER_INTERVAL_MS;
   const bucket = Math.floor(
     scheduledForMs / BETA_RECONCILIATION_TRIGGER_INTERVAL_MS,
@@ -30,7 +45,10 @@ export async function scheduleNextIntegrationRecoveryHeartbeat(
 
   await send(
     INTEGRATION_RECOVERY_HEARTBEAT_TOPIC,
-    { scheduledForMs } satisfies IntegrationRecoveryHeartbeatMessage,
+    {
+      scheduledForMs,
+      remainingPasses: boundedRemainingPasses,
+    } satisfies IntegrationRecoveryHeartbeatMessage,
     {
       delaySeconds: BETA_RECONCILIATION_TRIGGER_INTERVAL_MS / 1000,
       idempotencyKey: `integration-recovery-heartbeat:${bucket}`,
@@ -50,12 +68,32 @@ export function parseIntegrationRecoveryHeartbeatMessage(
   ) {
     throw new Error("Invalid integration recovery heartbeat message.");
   }
-  return { scheduledForMs: value.scheduledForMs };
+
+  const remainingPasses =
+    "remainingPasses" in value && typeof value.remainingPasses === "number"
+      ? value.remainingPasses
+      : BETA_RECONCILIATION_FOLLOW_UP_PASSES;
+
+  return {
+    scheduledForMs: value.scheduledForMs,
+    remainingPasses: requireValidRemainingPasses(remainingPasses),
+  };
 }
 
-export async function processIntegrationRecoveryHeartbeat(now: Date = new Date()) {
+export async function processIntegrationRecoveryHeartbeat(
+  message: IntegrationRecoveryHeartbeatMessage,
+  now: Date = new Date(),
+) {
   requireValidNow(now);
-  await scheduleNextIntegrationRecoveryHeartbeat(now);
+  requireValidRemainingPasses(message.remainingPasses);
+
+  if (message.remainingPasses > 0) {
+    await scheduleNextIntegrationRecoveryHeartbeat(
+      now,
+      message.remainingPasses - 1,
+    );
+  }
+
   return runStrandedIntegrationJobReconciliation({
     now,
     limit: BETA_RECONCILIATION_TRIGGER_LIMIT,
