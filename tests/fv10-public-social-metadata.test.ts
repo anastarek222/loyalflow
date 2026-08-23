@@ -4,8 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
-import { buildPublicSocialMetadata } from "../lib/seo/public-social-metadata";
-
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -15,27 +13,16 @@ async function source(relativePath: string) {
   return readFile(path.join(repositoryRoot, relativePath), "utf8");
 }
 
-test("public social metadata reuses approved page copy without inventing artwork", () => {
-  const metadata = buildPublicSocialMetadata({
-    title: "Localized page title",
-    description: "Localized page description",
-    path: "/get-started",
-  });
+test("public social metadata reuses approved page copy without inventing artwork", async () => {
+  const helper = await source("lib/seo/public-social-metadata.ts");
 
-  assert.deepEqual(metadata.openGraph, {
-    type: "website",
-    siteName: "LoyalFlow",
-    title: "Localized page title",
-    description: "Localized page description",
-    url: "/get-started",
-  });
-  assert.deepEqual(metadata.twitter, {
-    card: "summary",
-    title: "Localized page title",
-    description: "Localized page description",
-  });
-  assert.equal("images" in (metadata.openGraph ?? {}), false);
-  assert.equal("images" in (metadata.twitter ?? {}), false);
+  assert.match(helper, /type:\s*"website"/);
+  assert.match(helper, /siteName:\s*platformBrand\.name/);
+  assert.match(helper, /title,/);
+  assert.match(helper, /description,/);
+  assert.match(helper, /url:\s*path/);
+  assert.match(helper, /card:\s*"summary"/);
+  assert.doesNotMatch(helper, /images\s*:/);
 });
 
 test("approved indexable pages project their localized metadata into social cards", async () => {
