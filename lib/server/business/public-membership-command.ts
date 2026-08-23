@@ -1,6 +1,7 @@
 import type { PublicMembershipRegistration } from "@loyalflow/contracts/customers/public-membership";
 
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { createPublicCardToken } from "@/lib/customers/public-card-token";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -106,6 +107,7 @@ export async function createPublicMembershipCommand(input: {
           phone: input.customer.phone,
           customerCode,
           businessId: input.businessId,
+          publicToken: createPublicCardToken(),
         },
         select: { id: true, publicToken: true },
       });

@@ -5,6 +5,7 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { createPublicCardToken } from "@/lib/customers/public-card-token";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -128,6 +129,7 @@ export async function createCustomerCommand(input: {
         phone: input.customer.phone,
         customerCode,
         businessId: input.businessId,
+        publicToken: createPublicCardToken(),
       },
       select: { id: true, publicToken: true },
     });
