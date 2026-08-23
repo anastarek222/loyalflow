@@ -1,0 +1,160 @@
+name: Final Runtime Certification
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  certify:
+    if: github.head_ref == 'agent/final-runtime-certification-v2' && github.event.pull_request.base.sha == '3a996e9bc5161b9cb80c5a7eef0a78334a629737'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+      NODE_ENV: production
+      LOYALFLOW_ENVIRONMENT: staging
+      VERCEL_ENV: preview
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+      LOYALFLOW_STAGING_DATABASE: neondb
+      LOYALFLOW_STAGING_DATABASE_HOST: ep-steep-bar-au02osd6-pooler.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_PRODUCTION_DATABASE_HOST: ep-spring-lake-adstmkl2-pooler.c-2.us-east-1.aws.neon.tech
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      CERTIFIED_SHA: ${{ github.event.pull_request.base.sha }}
+      EXPECTED_RELEASE: 3a996e9bc516
+
+    steps:
+      - name: Generate ephemeral handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lf-cert
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/lf-cert/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/lf-cert/private.pem -pubout -out /tmp/lf-cert/public.pem
+          printf '%s\n' "$GITHUB_RUN_ID" > /tmp/lf-cert/request-id
+
+      - name: Publish public handoff key
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-runtime-cert-handoff-${{ github.run_id }}
+          path: |
+            /tmp/lf-cert/public.pem
+            /tmp/lf-cert/request-id
+          retention-days: 1
+
+      - name: Wait for encrypted certification handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="final-runtime-cert:${GITHUB_RUN_ID}:"
+          for attempt in $(seq 1 160); do
+            body=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" | jq -r --arg prefix "$prefix" '[.[] | .body | select(startswith($prefix))] | last // empty')
+            if [ -n "$body" ]; then
+              encoded="${body#${prefix}}"
+              printf '%s' "$encoded" | base64 -d > /tmp/lf-cert/payload.json
+              if jq -e --arg requestId "$GITHUB_RUN_ID" '.requestId == $requestId' /tmp/lf-cert/payload.json >/dev/null 2>&1; then exit 0; fi
+            fi
+            sleep 3
+          done
+          echo "::error::Encrypted certification handoff was not received"
+          exit 1
+
+      - name: Decrypt ephemeral handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs'); const crypto = require('crypto');
+          const payload = JSON.parse(fs.readFileSync('/tmp/lf-cert/payload.json','utf8'));
+          const privateKey = fs.readFileSync('/tmp/lf-cert/private.pem','utf8');
+          const key = crypto.privateDecrypt({key:privateKey,oaepHash:'sha256',padding:crypto.constants.RSA_PKCS1_OAEP_PADDING},Buffer.from(payload.key,'base64'));
+          const decipher = crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(payload.iv,'base64')); decipher.setAuthTag(Buffer.from(payload.tag,'base64'));
+          const clear = Buffer.concat([decipher.update(Buffer.from(payload.data,'base64')),decipher.final()]);
+          const values = JSON.parse(clear.toString('utf8'));
+          for (const name of ['DATABASE_URL','UAT_FIXTURE_PASSWORD','VERCEL_SHARE_URL']) {
+            if (!values[name]) throw new Error(`${name} missing`);
+            process.stdout.write(`::add-mask::${values[name]}\n`);
+            fs.appendFileSync(process.env.GITHUB_ENV,`${name}<<LFCERTEOF\n${values[name]}\nLFCERTEOF\n`);
+          }
+          NODE
+          rm -f /tmp/lf-cert/payload.json /tmp/lf-cert/private.pem
+
+      - name: Checkout certified Staging source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ env.CERTIFIED_SHA }}
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Prepare disposable guarded fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_url=$(node -e 'console.log(new URL(process.env.VERCEL_SHARE_URL).origin)')
+          pnpm prepare:final-uat -- --base-url="$base_url" --manifest=/tmp/lf-cert/manifest.json
+
+      - name: Run health and auth certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'; import { chromium } from '@playwright/test';
+          const manifest=JSON.parse(fs.readFileSync('/tmp/lf-cert/manifest.json','utf8'));
+          const share=new URL(process.env.VERCEL_SHARE_URL); const base=share.origin;
+          const browser=await chromium.launch({headless:true}); const context=await browser.newContext(); const page=await context.newPage();
+          try {
+            await page.goto(process.env.VERCEL_SHARE_URL,{waitUntil:'domcontentloaded',timeout:30000});
+            const health=await context.request.get(`${base}/api/health`); const body=await health.json();
+            if (health.status()!==200 || body.ok!==true || body.environment!=='staging' || body.release!==process.env.EXPECTED_RELEASE) throw new Error(`health certification failed status=${health.status()} body=${JSON.stringify(body)}`);
+            await page.goto(`${base}/login`,{waitUntil:'domcontentloaded',timeout:30000});
+            await page.getByLabel('Email address').fill(`lf-uat-final-owner-a-${manifest.runId}@example.test`);
+            await page.getByLabel('Password').fill(process.env.UAT_FIXTURE_PASSWORD);
+            await page.getByRole('button',{name:'Sign in'}).press('Enter');
+            await page.waitForURL(/\/dashboard$/,{timeout:20000});
+            fs.writeFileSync('/tmp/lf-cert/receipt.txt',`deployment=dpl_EYAxBJN2fRVaZWMsrtp5rVYLhsNu\nsha=${process.env.CERTIFIED_SHA}\nhealth=200\nenvironment=staging\nrelease=${body.release}\nauth=pass\nrun_id=${manifest.runId}\n`);
+          } finally { await browser.close(); }
+          NODE
+
+      - name: Cleanup disposable fixture
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f /tmp/lf-cert/manifest.json ]; then
+            run_id=$(jq -r '.runId' /tmp/lf-cert/manifest.json)
+            pnpm cleanup:final-uat -- --cleanup="$run_id"
+          fi
+
+      - name: Upload non-secret certification receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-runtime-certification-${{ github.run_id }}
+          path: /tmp/lf-cert/receipt.txt
+          if-no-files-found: ignore
+          retention-days: 7
