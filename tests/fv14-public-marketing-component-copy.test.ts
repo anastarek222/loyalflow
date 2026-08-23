@@ -7,7 +7,6 @@ function source(path: string) {
 }
 
 test("FV14 marketing component accessibility labels come from the catalog", () => {
-  const home = source("app/page.tsx");
   const header = source("components/marketing/marketing-header.tsx");
   const en = source("lib/i18n/locales/en/marketing.ts");
   const ar = source("lib/i18n/locales/ar/marketing.ts");
@@ -17,18 +16,20 @@ test("FV14 marketing component accessibility labels come from the catalog", () =
     assert.match(catalog, /"marketing\.mobileNavLabel":/);
   }
 
-  assert.match(header, /navigationLabel:\s*string/);
-  assert.match(header, /mobileNavigationLabel:\s*string/);
-  assert.match(header, /aria-label=\{navigationLabel\}/);
-  assert.match(header, /aria-label=\{mobileNavigationLabel\}/);
+  assert.match(header, /import \{ translate \} from "@\/lib\/i18n\/catalog"/);
+  assert.match(
+    header,
+    /aria-label=\{translate\(locale, "marketing\.primaryNavLabel"\)\}/,
+  );
+  assert.match(
+    header,
+    /aria-label=\{translate\(locale, "marketing\.mobileNavLabel"\)\}/,
+  );
   assert.doesNotMatch(header, /locale === "ar" \? "التنقل الرئيسي"/);
   assert.doesNotMatch(header, /locale === "ar" \? "تنقل الهاتف"/);
-  assert.match(home, /navigationLabel=\{copy\("marketing\.primaryNavLabel"\)\}/);
-  assert.match(home, /mobileNavigationLabel=\{copy\("marketing\.mobileNavLabel"\)\}/);
 });
 
 test("FV14 product preview reward copy comes from the catalog", () => {
-  const home = source("app/page.tsx");
   const preview = source("components/marketing/product-preview.tsx");
   const en = source("lib/i18n/locales/en/marketing.ts");
   const ar = source("lib/i18n/locales/ar/marketing.ts");
@@ -37,8 +38,10 @@ test("FV14 product preview reward copy comes from the catalog", () => {
     assert.match(catalog, /"marketing\.previewRewardName":/);
   }
 
-  assert.match(preview, /rewardName:\s*string/);
-  assert.match(preview, /\{labels\.rewardName\}/);
+  assert.match(preview, /import \{ translate \} from "@\/lib\/i18n\/catalog"/);
+  assert.match(
+    preview,
+    /\{translate\(locale, "marketing\.previewRewardName"\)\}/,
+  );
   assert.doesNotMatch(preview, />Free signature drink</);
-  assert.match(home, /rewardName:\s*copy\("marketing\.previewRewardName"\)/);
 });
