@@ -10,8 +10,8 @@ export const runtime = "nodejs";
 
 const queueCallback = handleCallback<IntegrationRecoveryHeartbeatMessage>(
   async (message) => {
-    parseIntegrationRecoveryHeartbeatMessage(message);
-    await processIntegrationRecoveryHeartbeat();
+    const heartbeat = parseIntegrationRecoveryHeartbeatMessage(message);
+    await processIntegrationRecoveryHeartbeat(heartbeat);
   },
   { visibilityTimeoutSeconds: 300 },
 );
