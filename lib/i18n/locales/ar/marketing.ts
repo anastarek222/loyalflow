@@ -45,6 +45,7 @@ export const marketingMessagesAr = {
   "marketing.trustQr": "بطاقات برمز QR",
   "marketing.trustNoApp": "لا يحتاج العميل إلى تطبيق",
   "marketing.trustRoles": "صلاحيات حسب الدور",
+  "marketing.trustSectionLabel": "مزايا أساسية",
   "marketing.howEyebrow": "كيف يعمل",
   "marketing.howTitle": "من الإعداد إلى تكرار الزيارة في ثلاث خطوات واضحة.",
   "marketing.featuresEyebrow": "مساحة عمل مترابطة",
