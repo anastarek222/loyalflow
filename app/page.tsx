@@ -5,6 +5,7 @@ import { translate, type MessageKey } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
+import { buildPublicWebsiteStructuredData } from "@/lib/seo/public-website-structured-data";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -58,6 +59,10 @@ export default async function HomePage() {
   const locale = await getMarketingLocale();
   const direction = getLocaleDirection(locale);
   const copy = (key: MessageKey) => translate(locale, key);
+  const websiteStructuredData = buildPublicWebsiteStructuredData({
+    description: copy("marketing.metaDescription"),
+    locale,
+  });
 
   const navigation = [
     { href: "#product", label: copy("marketing.navProduct") },
@@ -110,6 +115,12 @@ export default async function HomePage() {
       dir={direction}
       className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <MarketingHeader
         locale={locale}
         brand={copy("common.brand")}
