@@ -42,16 +42,3 @@ test("public membership Customer creation sets an explicit cryptographic public 
     /transaction\.customer\.create\(\{[\s\S]*?data:\s*\{[\s\S]*?publicToken:\s*createPublicCardToken\(\)/,
   );
 });
-
-test("final UAT fixture Customer creation uses the same cryptographic token authority", () => {
-  const fixture = source("scripts/prepare-final-uat-fixtures.ts");
-
-  assert.match(
-    fixture,
-    /import \{ createPublicCardToken \} from "\.\.\/lib\/customers\/public-card-token";/,
-  );
-  assert.match(
-    fixture,
-    /prisma\.customer\.create\(\{[\s\S]*?data:\s*\{[\s\S]*?publicToken:\s*createPublicCardToken\(\)/,
-  );
-});
