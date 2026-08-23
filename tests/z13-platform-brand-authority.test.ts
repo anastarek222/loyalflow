@@ -37,7 +37,12 @@ test("Z13 root metadata and PWA manifest consume the central brand authority", (
   assert.match(manifest, /import \{ platformBrand \} from "@\/lib\/platform-brand"/);
   assert.match(manifest, /name:\s*platformBrand\.name/);
   assert.match(manifest, /short_name:\s*platformBrand\.shortName/);
-  assert.match(manifest, /description:\s*platformBrand\.manifestDescriptionAr/);
+  assert.match(
+    manifest,
+    /description:\s*translate\(locale, "marketing\.metaDescription"\)/,
+  );
+  assert.match(manifest, /lang:\s*locale/);
+  assert.match(manifest, /dir:\s*getLocaleDirection\(locale\)/);
   assert.match(manifest, /background_color:\s*platformBrand\.backgroundColor/);
   assert.match(manifest, /theme_color:\s*platformBrand\.themeColor/);
   assert.doesNotMatch(manifest, /"LoyalFlow"/);
