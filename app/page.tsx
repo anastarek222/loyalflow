@@ -4,6 +4,7 @@ import { ProductPreview } from "@/components/marketing/product-preview";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
+import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -34,12 +35,19 @@ async function getMarketingLocale() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingLocale();
+  const title = translate(locale, "marketing.metaTitle");
+  const description = translate(locale, "marketing.metaDescription");
 
   return {
-    title: translate(locale, "marketing.metaTitle"),
-    description: translate(locale, "marketing.metaDescription"),
+    title,
+    description,
     alternates: { canonical: "/" },
     robots: { index: true, follow: true },
+    ...buildPublicSocialMetadata({
+      title,
+      description,
+      path: "/",
+    }),
   };
 }
 
