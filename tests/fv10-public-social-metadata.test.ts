@@ -35,13 +35,13 @@ test("approved indexable pages project their localized metadata into social card
   assert.match(home, /const description = translate\(locale, "marketing\.metaDescription"\)/);
   assert.match(
     home,
-    /\.\.\.buildPublicSocialMetadata\(\{\s*title,\s*description,\s*path: "\/",\s*\}\)/s,
+    /\.\.\.buildPublicSocialMetadata\(\{\s*title,\s*description,\s*path: "\/",\s*\}\)/,
   );
 
   assert.match(getStarted, /const title = translate\(locale, "conversion\.metaTitle"\)/);
   assert.match(getStarted, /const description = translate\(locale, "conversion\.metaDescription"\)/);
   assert.match(
     getStarted,
-    /\.\.\.buildPublicSocialMetadata\(\{\s*title,\s*description,\s*path: "\/get-started",\s*\}\)/s,
+    /\.\.\.buildPublicSocialMetadata\(\{\s*title,\s*description,\s*path: "\/get-started",\s*\}\)/,
   );
 });
