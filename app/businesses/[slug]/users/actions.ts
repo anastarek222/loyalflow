@@ -386,6 +386,7 @@ export async function setBusinessUserStatusAction(
     );
   }
 
+  const shouldRevokeSessions = targetUser.isActive && !parsedStatus.data;
   const activityContext = await getActivityRequestContext();
   await prisma.$transaction([
     prisma.user.update({
@@ -394,6 +395,13 @@ export async function setBusinessUserStatusAction(
       },
       data: {
         isActive: parsedStatus.data,
+        ...(shouldRevokeSessions
+          ? {
+              authVersion: {
+                increment: 1,
+              },
+            }
+          : {}),
       },
     }),
 
