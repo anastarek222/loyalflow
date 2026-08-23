@@ -58,7 +58,10 @@ test("U11 QR, sharing and install are truthful presentation-only controls", () =
   const page = source("app/card/[token]/page.tsx");
   const actions = source("components/customer-experience/public-card-actions.tsx");
   assert.match(page, /QRCode\.toDataURL\(cardUrl/);
-  assert.match(page, /Stored QR style is presentation-only/);
+  assert.match(
+    page,
+    /errorCorrectionLevel:\s*qrStyle === "BRANDED" \? "H" : "M"/,
+  );
   assert.match(actions, /navigator\.share/);
   assert.match(actions, /AbortError/);
   assert.match(actions, /navigator\.clipboard/);

@@ -155,7 +155,7 @@ test("notification dialog no longer forces RTL", () => {
 
 test("card language remains passed through to existing membership-card behavior", () => {
   const card = source("app/card/[token]/page.tsx");
-  assert.match(card, /defaultLanguage=\{\s*business\.cardDefaultLanguage\s*\}/);
+  assert.match(card, /defaultLanguage:\s*business\.cardDefaultLanguage/);
 });
 
 test("F6 does not require a Prisma migration", () => {
