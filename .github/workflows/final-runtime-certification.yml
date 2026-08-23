@@ -36,10 +36,16 @@ jobs:
           mkdir -p /tmp/lf-cert
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/lf-cert/private.pem >/dev/null 2>&1
           openssl pkey -in /tmp/lf-cert/private.pem -pubout -out /tmp/lf-cert/public.pem
-          echo '---BEGIN LF CERT PUBLIC KEY---'
-          cat /tmp/lf-cert/public.pem
-          echo '---END LF CERT PUBLIC KEY---'
-          echo "LF_CERT_REQUEST_ID=$GITHUB_RUN_ID"
+          printf '%s\n' "$GITHUB_RUN_ID" > /tmp/lf-cert/request-id
+
+      - name: Publish public handoff key
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-runtime-cert-handoff-${{ github.run_id }}
+          path: |
+            /tmp/lf-cert/public.pem
+            /tmp/lf-cert/request-id
+          retention-days: 1
 
       - name: Wait for encrypted certification handoff
         env:
