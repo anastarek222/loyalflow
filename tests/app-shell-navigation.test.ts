@@ -65,7 +65,7 @@ test("the shell has one canonical notification control and direction remains use
   const topbar = source("components/app-topbar.tsx");
   assert.match(topbar, /\?notifications=1/);
   assert.doesNotMatch(topbar, /dir=["']rtl["']/);
-  assert.match(source("components/business-notifications-dialog.tsx"), /searchParams\.get\("notifications"\)/);
+  assert.match(source("components/business-notifications-dialog-client.tsx"), /searchParams\.get\("notifications"\)/);
   assert.match(source("app/businesses/[slug]/page.tsx"), /trigger="shell"/);
   assert.match(source("components/mobile-bottom-navigation.tsx"), /entry\.id === "scan"/);
 });

@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
+import { conversionMessages } from "@loyalflow/i18n/conversion";
+
 const root = process.cwd();
 const source = (relativePath: string) => fs.readFileSync(path.join(root, relativePath), "utf8");
 
@@ -46,16 +48,20 @@ test("T006 path selector is indexable and uses localized metadata", () => {
 });
 
 test("T006 conversion copy remains in the canonical bilingual catalog", () => {
-  const catalog = source("lib/i18n/catalog.ts");
-
   for (const key of [
     "conversion.title",
     "conversion.body",
     "conversion.existingTitle",
     "conversion.invitedTitle",
     "conversion.noSignup",
-  ]) {
-    const occurrences = catalog.split(`\"${key}\"`).length - 1;
-    assert.equal(occurrences, 2, `${key} should exist once per locale`);
+  ] as const) {
+    assert.equal(typeof conversionMessages.en[key], "string");
+    assert.equal(typeof conversionMessages.ar[key], "string");
+    assert.notEqual(conversionMessages.en[key], "");
+    assert.notEqual(conversionMessages.ar[key], "");
   }
+
+  const catalog = source("lib/i18n/catalog.ts");
+  assert.match(catalog, /\.\.\.conversionMessages\.en/);
+  assert.match(catalog, /\.\.\.conversionMessages\.ar/);
 });

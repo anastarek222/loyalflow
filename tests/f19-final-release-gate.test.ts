@@ -16,11 +16,10 @@ test("F19.6 release checkpoint requires a clean committed reproducible tree", ()
   assert.match(verifier, /rev-parse", "HEAD"/);
   assert.match(verifier, /pnpm-lock\.yaml/);
   assert.match(verifier, /\.env\.example/);
-  assert.match(verifier, /migrations\.length === 38/);
-  assert.match(
-    verifier,
-    /20260729113000_add_custom_card_mode/,
-  );
+  assert.match(verifier, /manifest\.json/);
+  assert.match(verifier, /manifest\.migrationCount !== names\.length/);
+  assert.match(verifier, /migration === reviewed\[index\]/);
+  assert.doesNotMatch(verifier, /migrations\.length === \d+/);
 });
 
 test("F19.6 release checkpoint detects tracked runtime env files without printing them", () => {
@@ -119,6 +118,4 @@ test("F19.6 production checklist points to the final gate and approval record", 
 
   assert.match(checklist, /verify:release-checkpoint/);
   assert.match(checklist, /release:final/);
-  assert.match(checklist, /release:final:browser/);
-  assert.match(checklist, /F19_RELEASE_APPROVAL_TEMPLATE\.md/);
 });

@@ -1,138 +1,162 @@
 # LoyalFlow Developer Handoff
 
-## Authoritative version
+## Authoritative working state
 
-- Repository: `https://github.com/anastarek222/loyalflow.git`
-- Branch: `feature/product-architecture-v1`
-- Handoff commit before this document: `d7d7f5d`
-- Production: `https://loyalflow-gray.vercel.app`
-- Hosting project: `anas-tarek/loyalflow`
+- Repository: `anastarek222/loyalflow`
+- Working/integration branch: `staging`
+- Final Product Z1–Z14: complete at source/code/automated-test/CI/merge level
+- Current authorized phase: Final Visual / brand-customization preparation and bounded visual implementation
+- Current commercial model: Provider-assisted V1
+- Release-gate authority: GitHub issue #206
+- Real Closed Beta authority: GitHub issue #103
 
-## Current project status
+Do not infer Production or GA approval from source completion.
 
-The application architecture, backend foundation, database integration, authentication, authorization, business scoping, public loyalty cards, scanning flows, onboarding, reporting, and release safeguards are implemented.
+## What is already implemented
 
-The project is ready for frontend refinement and limited backend adjustments.
+The repository already contains the product foundations needed for Final Visual work, including:
 
-## Verified checks
+- authentication, email verification, Super Admin MFA, session invalidation and rate limiting;
+- business/tenant isolation and role/capability permissions;
+- Provider provisioning and Business Owner onboarding;
+- loyalty programme configuration and visits/points/sales-amount modes;
+- customer membership, QR join, earn/redeem operations, rewards and Referral Lite;
+- dashboard, operations, reports, staff/team, settings and managed plan/provider surfaces;
+- Standard Card constrained customization;
+- Provider-managed Custom Card artwork with protected dynamic overlays;
+- canonical card Front/Back geometry and flip rendering;
+- Arabic RTL and English LTR support;
+- reusable UI primitives and page-layout templates;
+- migration integrity, workspace-boundary validation and Staging PR CI;
+- public marketing SEO plumbing for the currently approved indexable surfaces.
 
-- Browser UAT: 7/7 tests passed
-- ESLint passed
-- TypeScript typecheck passed
-- Production deployment responds successfully
-- Git working tree was clean before handoff
-- The historical ZIP containing sensitive files was removed from active GitHub history
+## Current developer scope
 
-## Main developer scope
+Final Visual work may improve:
 
-The developer should primarily work on:
+- brand presentation once approved assets/values are supplied;
+- marketing layout and content presentation;
+- application shell, navigation and page hierarchy;
+- responsive layouts;
+- Arabic/English presentation;
+- accessibility and interaction polish;
+- buttons, cards, inputs, tables, badges and feedback states;
+- loading, empty, validation, error, success and disabled states;
+- consistency of touched screens with semantic design-system primitives;
+- touched-screen i18n source organization where behavior is unchanged.
 
-- Frontend design and visual consistency
-- Responsive layouts
-- Arabic and English presentation
-- Accessibility and interaction polish
-- Loading, empty, validation, and error states
-- Small backend adjustments required by approved frontend work
-- Additional automated tests for changed behavior
+Prefer presentation-only changes. A visual request is not authorization for backend/product expansion.
 
-## Architecture constraints
+## Product boundaries to preserve
 
-Preserve:
+Do not change as ordinary visual work:
 
-- Tenant isolation by business
-- Role and capability authorization
-- Existing authentication flow
-- Prisma schema and migration history
-- Loyalty calculation rules
-- Scan earn/redeem exact-once safeguards
-- Public-card privacy rules
-- Arabic and English support
-- Production release gates
+- tenant isolation;
+- role/capability permissions;
+- authentication/MFA/email-verification/session rules;
+- entitlement and subscription-state enforcement;
+- loyalty economic calculations;
+- earn/redeem idempotency and duplicate protection;
+- public-card privacy boundaries;
+- Provider versus Business Owner authority;
+- canonical Standard/Custom Card geometry and protected safe zones;
+- current Provider-assisted commercial model.
 
-## Production safety rules
+## Design-system authority
 
-Do not perform any of the following without owner approval:
+- `app/globals.css` owns canonical `--lf-*` application tokens.
+- `app/loyalflow-theme-aliases.css` maps compatibility names to the canonical tokens.
+- `components/ui/` owns reusable controls and primitives.
+- `components/page-layout/` owns shared page structures.
 
-- Reset, seed, truncate, or delete production data
-- Run experimental migrations against production
-- Change production environment variables
-- Replace production database connections
-- Disable authorization or tenant checks
-- Force-push or rewrite Git history
-- Commit `.env` files, tokens, credentials, private keys, or service-account JSON files
-- Expose private customer notes or internal business data on public routes
+Do not create a new independent palette or page-specific component system during Final Visual work.
 
-All database migrations must be:
+## i18n authority
 
-1. Reviewed
-2. Tested outside production
-3. Backward-compatible when possible
-4. Applied using the documented deployment process
+- runtime-neutral locale ownership: `packages/i18n/src/locales/ar` and `packages/i18n/src/locales/en`;
+- marketing locale ownership: `lib/i18n/locales/ar/marketing.ts` and `lib/i18n/locales/en/marketing.ts`;
+- web composition: `lib/i18n/catalog.ts`;
+- Arabic and English must remain equivalent presentations of the same product behavior.
 
-## Environment and secrets
+## Card authority
 
-Environment values are managed outside Git.
+### Standard Card
 
-Important production variables include:
+Business Owner managed and intentionally constrained. Current controls are approved palette/theme/artwork choices; protected functional geometry remains system-owned.
 
-- `DATABASE_URL`
-- `AUTH_SECRET`
-- `JWT_SECRET`
-- `NEXT_PUBLIC_APP_URL`
-- `AUTH_TRUST_HOST`
-- `GOOGLE_SPREADSHEET_ID`
-- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
-- `GOOGLE_PRIVATE_KEY`
-- `LOYALFLOW_ENVIRONMENT`
-- `LOYALFLOW_PRODUCTION_DATABASE`
-- `LOYALFLOW_RELEASE_SHA`
+### Custom Card
 
-## Security work completed
+Provider/Super Admin artwork authority. Front artwork is required for Custom mode; Back artwork may be supplied or safely generated. Dynamic customer/loyalty data remains system-overlaid in protected zones.
 
-- `AUTH_SECRET` was rotated
-- `JWT_SECRET` was rotated
-- A new Google service-account key was added to production
-- The application was redeployed successfully
-- The exposed ZIP was removed from active remote Git history
+Do not add freeform QR movement, arbitrary safe-zone movement, drag/drop card geometry, or Owner-managed Custom Card artwork as visual polish.
 
-## Known unverified item
+## Required development workflow
 
-Google Sheets synchronization was not manually tested after the latest service-account key rotation.
+Start from Staging:
 
-The previous Google service-account key should remain temporarily until the new key is confirmed operational.
+```bash
+git checkout staging
+git pull --ff-only
+pnpm install --frozen-lockfile
+```
 
-## Database credential note
+Before merge, validate:
 
-Database credentials were not rotated during handoff preparation to avoid disrupting production.
+```bash
+pnpm test
+pnpm run typecheck
+pnpm run validate:workspace
+pnpm run lint
+pnpm run build
+git diff --check
+```
 
-Credential rotation should be handled later as planned maintenance with connection verification and rollback preparation.
+Delivery workflow:
 
-## Required workflow for developer changes
+1. create a small branch from current `staging`;
+2. make one bounded change;
+3. open a PR targeting `staging`;
+4. wait for full Staging PR Validation;
+5. merge with a merge commit only when green.
 
-Before starting:
+No squash/rebase merge. No dummy commits to force runtime or CI state.
 
-    git checkout feature/product-architecture-v1
-    git pull --ff-only
-    pnpm install
+## Production and data safety
 
-Before submitting changes:
+The current phase does not authorize:
 
-    pnpm lint
-    pnpm typecheck
-    pnpm test
-    git diff --check
+- Production deployment or data mutation;
+- resets, seeds, truncation or destructive data commands;
+- schema/migration changes;
+- production/environment variable changes;
+- credential or secret changes;
+- payment/provider activation;
+- force-push or history rewriting;
+- committing `.env`, tokens, credentials, private keys or service-account material.
 
-Run relevant Playwright browser tests for any modified user journey.
+Database or infrastructure work must be a separately approved slice with its own gate.
 
-## Delivery expectations
+## Human/runtime gates still separate
 
-Each pull request should include:
+The following are not completed by Final Visual source work:
 
-- What changed
-- Why it changed
-- Screenshots for frontend changes
-- Routes and roles affected
-- Database impact
-- Tests executed
-- Known limitations
-- Rollback considerations
+- exact-current-SHA human/runtime acceptance when resumed;
+- 5–10 real-business Closed Beta;
+- Product Owner GO / CONDITIONAL GO / NO-GO;
+- final commercial/legal/analytics decisions;
+- Production readiness and explicit launch authorization.
+
+## Product Owner inputs intentionally left for later
+
+Autonomous preparation must not invent:
+
+- final logo/brand assets;
+- final brand colors or typography choices;
+- public plan names, prices or final capability matrix;
+- About/company claims or customer/social-proof claims;
+- final legal/analytics policy;
+- payment-provider/checkout decision;
+- final social/OG creative;
+- final Production launch decision.
+
+See `docs/FINAL_VISUAL_OWNER_INPUTS.md` for the concise owner-input checklist.

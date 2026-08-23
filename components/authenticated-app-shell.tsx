@@ -33,27 +33,37 @@ export default function AuthenticatedAppShell({
   const activeBusiness = businesses.find(
     (business) => business.slug === businessSlugFromPathname(pathname),
   );
+  const platformWorkspace = user.role === "SUPER_ADMIN" && !activeBusiness;
 
   return (
-    <div className="flex min-h-screen bg-canvas">
+    <div
+      className="lf-app-shell flex min-h-screen bg-canvas"
+      data-platform-workspace={platformWorkspace ? "true" : undefined}
+    >
       <a
         href="#app-content"
         className="sr-only z-[200] rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 font-semibold text-white focus:not-sr-only focus:fixed focus:start-4 focus:top-4"
       >
         {language === "AR" ? "الانتقال إلى المحتوى" : "Skip to content"}
       </a>
-      <AppSidebar language={language} experienceMode={experienceMode} user={user} business={activeBusiness} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <AppSidebar
+        language={language}
+        experienceMode={experienceMode}
+        user={user}
+        business={activeBusiness}
+      />
+      <div className="relative flex min-w-0 flex-1 flex-col">
         <AppTopbar
           language={language}
-          experienceMode={experienceMode} experienceAccess={experienceAccess}
+          experienceMode={experienceMode}
+          experienceAccess={experienceAccess}
           user={user}
           businesses={businesses}
           activeBusiness={activeBusiness}
         />
         <main
           id="app-content"
-          className="min-w-0 flex-1 px-4 py-6 pb-[calc(var(--lf-mobile-nav-height)+1rem)] sm:px-6 sm:py-6 lg:px-8 lg:pb-8"
+          className="relative min-w-0 flex-1 px-4 py-6 pb-[calc(var(--lf-mobile-nav-height)+1rem)] sm:px-6 sm:py-7 lg:px-8 lg:py-8 lg:pb-8 xl:px-10"
         >
           {children}
         </main>

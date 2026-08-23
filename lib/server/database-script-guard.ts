@@ -1,10 +1,12 @@
 import { getEnvironmentIdentity } from "@/lib/server/environment-identity";
+import { evaluateStagingIsolation } from "@/lib/server/staging-isolation";
 
 export type DatabaseScriptClass =
   | "runtime-application"
   | "migration-deployer"
   | "development-migration-generator"
   | "seed-fixture"
+  | "staging-seed-fixture"
   | "destructive-reset"
   | "controlled-operation"
   | "read-only-verification"
@@ -15,13 +17,14 @@ export function assertDatabaseScriptEnvironment(
   environment: Record<string, string | undefined> = process.env,
 ) {
   const identity = getEnvironmentIdentity(environment);
-  const destructive = scriptClass === "destructive-reset" || scriptClass === "seed-fixture";
+  const stagingFixture = scriptClass === "staging-seed-fixture";
+  const destructive = scriptClass === "destructive-reset" || scriptClass === "seed-fixture" || stagingFixture;
   const privileged = scriptClass === "destructive-reset" || scriptClass === "controlled-operation";
 
   if (identity.environment === "unknown") {
     throw new Error("Database script refused: environment identity is ambiguous.");
   }
-  if ((destructive || scriptClass === "controlled-operation") && (identity.isPreview || identity.environment === "staging")) {
+  if (!stagingFixture && (destructive || scriptClass === "controlled-operation") && (identity.isPreview || identity.environment === "staging")) {
     throw new Error("Database script refused outside development or test for this script class.");
   }
   if (privileged && identity.isProduction && environment.LOYALFLOW_ALLOW_PRODUCTION_MUTATION !== "I_UNDERSTAND_PRODUCTION_MUTATION") {
@@ -29,6 +32,18 @@ export function assertDatabaseScriptEnvironment(
   }
   if (scriptClass === "seed-fixture" && !["development", "test"].includes(identity.environment)) {
     throw new Error("Fixture script refused outside development or test.");
+  }
+  if (stagingFixture) {
+    if (identity.environment !== "staging" || !identity.isPreview) {
+      throw new Error("Staging fixture script refused outside the isolated staging preview.");
+    }
+    if (environment.LOYALFLOW_ALLOW_STAGING_FIXTURE !== "I_UNDERSTAND_STAGING_FIXTURE") {
+      throw new Error("Staging fixture script refused without the documented explicit opt-in.");
+    }
+    const isolation = evaluateStagingIsolation(environment, environment.DATABASE_URL);
+    if (!isolation.required || !isolation.allowed) {
+      throw new Error(`Staging fixture script refused by database isolation guard: ${isolation.reason}.`);
+    }
   }
 
   if (scriptClass === "backup-restore-documentation") {

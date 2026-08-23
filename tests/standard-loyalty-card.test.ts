@@ -23,22 +23,37 @@ const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 
 test("standard card keeps the ISO bank-card aspect ratio contract", () => {
   assert.ok(Math.abs(STANDARD_CARD_ASPECT_RATIO - 1.586) < 0.002);
-  assert.match(source("components/standard-loyalty-card.tsx"), /data-card-aspect-ratio="1\.586"/);
+  assert.match(source("components/standard-loyalty-card.tsx"), /data-card-aspect-ratio=\{STANDARD_CARD_ASPECT_RATIO\.toFixed\(3\)\}/);
 });
 
 test("standard card uses one browser-independent SVG canvas", () => {
   const card = source("components/standard-loyalty-card.tsx");
-  assert.match(card, /STANDARD_CARD_CANVAS = \{ width: 856, height: 540 \}/);
-  assert.match(card, /viewBox=\{`0 0 \$\{STANDARD_CARD_CANVAS\.width\} \$\{STANDARD_CARD_CANVAS\.height\}`\}/);
+  assert.match(card, /LOYALTY_CARD_CANVAS/);
+  assert.match(card, /viewBox=\{`0 0 \$\{LOYALTY_CARD_CANVAS\.width\} \$\{LOYALTY_CARD_CANVAS\.height\}`\}/);
   assert.match(card, /preserveAspectRatio="xMidYMid meet"/);
   assert.doesNotMatch(card, /ResizeObserver|transform:|cqw|cqh|cqi|cqb|containerType/);
+});
+
+test("standard SVG isolates its fixed canvas from an RTL page", () => {
+  const card = source("components/standard-loyalty-card.tsx");
+  assert.match(card, /<svg[\s\S]*?direction="ltr"[\s\S]*?unicodeBidi: "isolate"/);
+  assert.match(
+    card,
+    /data-safe-zone="brand-logo"[\s\S]*?direction="ltr"[\s\S]*?unicodeBidi: "isolate"/,
+  );
 });
 
 test("standard QR has fixed logical dimensions and defensive bounds", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /data-safe-zone="qr-code"/);
-  assert.match(card, /x="716"\s+y="27"\s+width="112"\s+height="112"/);
-  assert.match(card, /x="726"\s+y="37"\s+width="92"\s+height="92"/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.x/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.y/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.width/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.height/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.x/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.y/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.width/);
+  assert.match(card, /STANDARD_CARD_QR_CONTENT_ZONE\.height/);
   assert.match(card, /preserveAspectRatio="xMidYMid meet"/);
 });
 
@@ -47,7 +62,7 @@ test("protected Standard Front keeps its approved structural coordinates", () =>
   assert.match(card, /x="430"\s+y="238"\s+width="378"\s+height="250"/);
   assert.match(card, /x=\{rtl \? 355 : 42\}\s+y="215"/);
   assert.match(card, /x=\{rtl \? 355 : 42\}\s+y="327"/);
-  assert.match(card, /x="716"\s+y="27"\s+width="112"\s+height="112"/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE\.x/);
 });
 
 test("standard decoration has a bounded non-repeating texture", () => {
@@ -98,9 +113,9 @@ test("loyalty mode semantics format visits, points, sales and reward-ready state
   assert.equal(getLoyaltyCardMetrics({ balance: 850, loyaltyMode: "POINTS", unitName: "PTS", rewardThreshold: 1000, language: "EN" }).ratioText, "850 / 1,000 PTS");
   assert.equal(getLoyaltyCardMetrics({ balance: 1850, loyaltyMode: "SALES_AMOUNT", currency: "EGP", rewardThreshold: 2500, language: "EN" }).remainingText, "EGP 650 TO NEXT REWARD");
   assert.equal(getLoyaltyCardMetrics({ balance: 10, loyaltyMode: "VISITS", rewardThreshold: 10, language: "EN" }).rewardReady, true);
-  assert.equal(getPreviewBalance("VISITS", 5), 4);
-  assert.equal(getPreviewBalance("POINTS", 1000), 850);
-  assert.equal(getPreviewBalance("SALES_AMOUNT", 2500), 1850);
+  assert.equal(getPreviewBalance("VISITS", 5), 3);
+  assert.equal(getPreviewBalance("POINTS", 1000), 500);
+  assert.equal(getPreviewBalance("SALES_AMOUNT", 2500), 1250);
 });
 
 test("unit, target and reward remain distinct in English and Arabic", () => {
@@ -130,13 +145,13 @@ test("unit, target and reward remain distinct in English and Arabic", () => {
 
 test("builder preview identity and balances are explicit and deterministic", () => {
   assert.deepEqual(getLoyaltyCardPreviewData("POINTS", 1000), {
-    customerName: "Ahmed Mohamed Hassan",
-    customerId: "LF-001234",
-    balance: 850,
+    customerName: "Sample Customer",
+    customerId: "PREVIEW-001",
+    balance: 500,
   });
-  assert.equal(getLoyaltyCardPreviewData("POINTS", 5).balance, 4);
+  assert.equal(getLoyaltyCardPreviewData("POINTS", 5).balance, 3);
   const renderer = source("components/standard-loyalty-card.tsx");
-  assert.doesNotMatch(renderer, /\b850\b|Ahmed Mohamed Hassan|LF-001234/);
+  assert.doesNotMatch(renderer, /Sample Customer|PREVIEW-001|Ahmed Mohamed Hassan|LF-001234/);
 });
 
 test("editor QR is deterministic while public cards can supply the real token QR", () => {
@@ -286,8 +301,8 @@ test("Back keeps artwork secondary and fills RTL progress deliberately from the 
 
 test("Loyalty summary keeps Mode, Unit, Target and Reward distinct with pluralized target", () => {
   const setup = source("components/standard-card-setup.tsx");
-  for (const label of ["Mode", "Unit", "Target", "Reward"]) {
-    assert.match(setup, new RegExp(`>${label}<`));
+  for (const [ar, en] of [["الوضع", "Mode"], ["الوحدة", "Unit"], ["الهدف", "Target"], ["المكافأة", "Reward"]] as const) {
+    assert.match(setup, new RegExp(`t\\(\\"${ar}\\", \\"${en}\\"\\)`));
   }
   assert.match(setup, /summaryMetrics\.targetText/);
   assert.doesNotMatch(setup, /values\.rewardThreshold\.toLocaleString\(\)\} \{values\.unitName/);
@@ -320,20 +335,38 @@ test("custom artwork capability stays reserved for super-admin architecture", ()
   assert.match(canonical, /custom-qr|custom-member|custom-balance|custom-reward/);
 });
 
-test("Custom UX is upload-oriented, storage-fenced, and preserves existing URLs", () => {
+test("Custom UX delegates paired lifecycle uploads while preserving published URLs", () => {
   const setup = source("components/standard-card-setup.tsx");
+  const manager = source("components/custom-card-artwork-manager.tsx");
   const canonical = source("components/loyalty-card.tsx");
-  assert.match(setup, /Upload \{label\} Design/);
-  assert.match(setup, /Persistent artwork storage is not configured/);
-  assert.match(setup, /Custom Card — storage setup required/);
-  assert.match(setup, /Connect approved\s+persistent storage to upload custom artwork/);
-  assert.match(setup, /type="file"[^>]*disabled/);
+  assert.match(setup, /Front \+ Back pair upload, immutable drafts, preview and publish/);
+  assert.match(manager, /Create Front \+ Back draft/);
+  assert.match(manager, /Publish this Front \+ Back pair/);
+  assert.match(manager, /ConfirmedSubmitButton/);
+  assert.match(manager, /Vercel Blob is not connected/);
   assert.doesNotMatch(setup, /type="url"|Custom front artwork URL|Custom back artwork URL/);
   assert.match(setup, /name="customCardFrontArtworkUrl"\s+type="hidden"/);
   assert.match(setup, /name="customCardBackArtworkUrl"\s+type="hidden"/);
   assert.match(canonical, /props\.customFrontArtworkUrl/);
   assert.match(canonical, /props\.customBackArtworkUrl/);
-  assert.match(canonical, /Boolean\(props\.customFrontArtworkUrl && props\.customBackArtworkUrl\)/);
+  assert.match(canonical, /cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl/);
+  assert.match(canonical, /radial-gradient/);
+  assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
+  assert.match(setup, /Managed from the Custom Card artwork panel above/);
+  assert.match(manager, /object-contain/);
+});
+
+test("custom artwork keeps dynamic data readable over dark artwork", () => {
+  const canonical = source("components/loyalty-card.tsx");
+  assert.match(canonical, /function readableAccentOnDark/);
+  for (const zone of [
+    "custom-brand",
+    "custom-member",
+    "custom-back-brand",
+    "custom-reward",
+  ]) {
+    assert.match(canonical, new RegExp(`data-safe-zone="${zone}"[^>]*bg-black\\/60`));
+  }
 });
 
 test("public card is rendered from dynamic customer and business data", () => {
@@ -347,6 +380,7 @@ test("all Standard Card previews and the public card retain the canonical render
   const setup = source("components/standard-card-setup.tsx");
   const wizard = source("components/business-setup-wizard.tsx");
   const publicCard = source("app/card/[token]/page.tsx");
-  for (const renderer of [preview, setup, wizard, publicCard]) assert.match(renderer, /LoyaltyCard/);
+  for (const renderer of [preview, setup, publicCard]) assert.match(renderer, /LoyaltyCard/);
+  assert.match(wizard, /StandardCardSetup/);
   assert.match(source("components/loyalty-card.tsx"), /StandardLoyaltyCard/);
 });

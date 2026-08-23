@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { isCurrentAuthVersion } from "@/lib/auth/auth-version";
 import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
+import { recordLoginDenial } from "@/lib/auth/login-observability";
 import { isSuperAdminMfaLoginAllowed } from "@/lib/auth/super-admin-mfa";
 import {
   isSuperAdminMfaEnabled,
@@ -46,14 +47,20 @@ export const {
 
       async authorize(credentials, request) {
         const parsed = loginSchema.safeParse(credentials);
-        if (!parsed.success) return null;
+        if (!parsed.success) {
+          recordLoginDenial("authorize", "invalid_input");
+          return null;
+        }
 
         const clientAddress = getClientAddress(request.headers);
         const limit = await distributedRateLimit(
           `credentials-login:${clientAddress}`,
           { limit: 10, windowMs: 15 * 60 * 1000 },
         );
-        if (!limit.allowed) return null;
+        if (!limit.allowed) {
+          recordLoginDenial("authorize", "rate_limited");
+          return null;
+        }
 
         const email = parsed.data.email.toLowerCase();
         const user = await prisma.user.findUnique({
@@ -61,12 +68,20 @@ export const {
           include: { business: { select: { isActive: true } } },
         });
 
-        if (!user || !user.isActive) return null;
-        if (user.business && !user.business.isActive) return null;
+        if (!user || !user.isActive || (user.business && !user.business.isActive)) {
+          recordLoginDenial("authorize", "account_unavailable");
+          return null;
+        }
 
         const passwordMatches = await compare(parsed.data.password, user.passwordHash);
-        if (!passwordMatches) return null;
-        if (!(await isEmailVerificationSatisfied(user.id))) return null;
+        if (!passwordMatches) {
+          recordLoginDenial("authorize", "password_mismatch");
+          return null;
+        }
+        if (!(await isEmailVerificationSatisfied(user.id))) {
+          recordLoginDenial("authorize", "email_unverified");
+          return null;
+        }
 
         if (user.role === "SUPER_ADMIN") {
           const enabled = await isSuperAdminMfaEnabled(user.id);

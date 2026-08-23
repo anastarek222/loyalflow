@@ -58,6 +58,7 @@ async function earn(customerId: string, businessId: string, amount: number) {
       businessId,
       amount,
       sourceLoyaltyMode: "POINTS",
+      unitName: "point",
       idempotencyKey,
       transactionNote: "Reversal concurrency fixture earn",
       activityDescription: "Reversal concurrency fixture earn",

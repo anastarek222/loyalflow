@@ -1,4 +1,8 @@
 import { randomBytes } from "node:crypto";
+import type {
+  PublicMembershipRegistration,
+  PublicMembershipRegistrationInput,
+} from "@loyalflow/contracts/customers/public-membership";
 import { z } from "zod";
 import { normalizePhone } from "@/lib/customers/phone";
 
@@ -24,11 +28,9 @@ type CustomerCodeLookup = {
   };
 };
 
-export function parseCustomerRegistration(value: {
-  firstName: FormDataEntryValue | null;
-  lastName: FormDataEntryValue | null;
-  phone: FormDataEntryValue | null;
-}) {
+export function parseCustomerRegistration(
+  value: PublicMembershipRegistrationInput
+): PublicMembershipRegistration | null {
   const parsed = customerRegistrationSchema.safeParse({
     firstName: value.firstName,
     lastName: value.lastName || undefined,

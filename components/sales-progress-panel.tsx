@@ -1,3 +1,5 @@
+import { formatLoyaltyAmount } from "@/lib/loyalty/presentation";
+
 type RewardType =
   | "GIFT"
   | "PROMO_CODE"
@@ -7,7 +9,7 @@ type RewardType =
 type SalesProgressPanelProps = {
   currentAmount: number;
   targetAmount: number;
-  unitName: string;
+  currency: string | null;
   rewardName: string;
   rewardType: RewardType;
   rewardCode: string | null;
@@ -67,7 +69,7 @@ function getRewardTypeLabel(
 export default function SalesProgressPanel({
   currentAmount,
   targetAmount,
-  unitName,
+  currency,
   rewardName,
   rewardType,
   rewardCode,
@@ -90,16 +92,14 @@ export default function SalesProgressPanel({
     Math.floor((currentAmount / safeTarget) * 100)
   );
 
-  const numberFormatter =
-    new Intl.NumberFormat(
-      defaultLanguage === "AR" ? "ar-EG" : "en-US",
-      {
-        maximumFractionDigits: 0,
-      }
-    );
-
   function formatAmount(amount: number) {
-    return `${numberFormatter.format(amount)} ${unitName}`;
+    return formatLoyaltyAmount({
+      loyaltyMode: "SALES_AMOUNT",
+      language: defaultLanguage,
+      unitName: null,
+      currency,
+      amount,
+    });
   }
 
   return (

@@ -10,9 +10,18 @@ if (baseUrl.protocol !== "https:") {
   throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
 }
 
+const vercelProtectionBypass =
+  process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
+const requestHeaders = vercelProtectionBypass
+  ? {
+      "x-vercel-protection-bypass": vercelProtectionBypass,
+    }
+  : undefined;
+
 const healthUrl = new URL("/api/health", baseUrl);
 const preflight = await fetch(healthUrl, {
   cache: "no-store",
+  headers: requestHeaders,
   redirect: "error",
 });
 
@@ -41,6 +50,7 @@ for (let index = 0; index < sampleCount; index += 1) {
   const startedAt = performance.now();
   const response = await fetch(healthUrl, {
     cache: "no-store",
+    headers: requestHeaders,
     redirect: "error",
   });
   const durationMs = performance.now() - startedAt;

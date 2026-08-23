@@ -1,11 +1,6 @@
 "use server";
 
 import { auth } from "@/auth";
-import { createEmailVerificationToken } from "@/lib/auth/email-verification";
-import {
-  EmailVerificationEmailError,
-  sendEmailVerificationEmail,
-} from "@/lib/auth/email-verification-email";
 import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
 import {
   OwnerInvitationEmailError,
@@ -27,7 +22,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { hash } from "bcryptjs";
 import { randomUUID } from "node:crypto";
-import { logServerError, logServerEvent } from "@/lib/server/logging";
+import { logServerEvent } from "@/lib/server/logging";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 async function requireSuperAdmin() {
   const session = await auth();
@@ -202,13 +198,13 @@ const ownerPasswordHash = await hash(
   12
 );
 logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });
-const ownerEmailVerification = createEmailVerificationToken();
 
 let createdBusiness;
+let integrationJobId;
 
 try {
   logServerEvent("BUSINESS_CREATE_TX_START", { creationAttemptId });
-  createdBusiness = await createWithGeneratedSlug(
+  const creationResult = await createWithGeneratedSlug(
     parsed.data.name,
     (slug) =>
       prisma.$transaction(async (transaction) => {
@@ -291,6 +287,7 @@ try {
                 }
               : {}),
           },
+          select: { id: true, slug: true },
         });
         logServerEvent("BUSINESS_CREATE_BUSINESS_CREATED", {
           creationAttemptId,
@@ -315,30 +312,30 @@ try {
           ownerId: owner.id,
         });
 
+        // The Super Admin is an authenticated trusted provisioning authority for
+        // this path. Mark the provisioned Owner verified in the same transaction
+        // so the credentials supplied during business creation can sign in
+        // immediately. Public verification and Owner Invitation flows keep their
+        // existing mailbox-possession requirements.
         await transaction.$executeRaw`
           INSERT INTO "EmailVerificationState" (
             "userId", "verifiedAt", "createdAt", "updatedAt"
           ) VALUES (
-            ${owner.id}, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            ${owner.id}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           )
         `;
 
-        await transaction.$executeRaw`
-          INSERT INTO "EmailVerificationToken" (
-            "id", "userId", "tokenHash", "expiresAt", "usedAt", "createdAt"
-          ) VALUES (
-            ${ownerEmailVerification.id},
-            ${owner.id},
-            ${ownerEmailVerification.tokenHash},
-            ${ownerEmailVerification.expiresAt},
-            NULL,
-            CURRENT_TIMESTAMP
-          )
-        `;
+        const integrationJob = await enqueueIntegrationJob(transaction, {
+          businessId: business.id,
+          kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+          idempotencyKey: `business-created:${business.id}`,
+        });
 
-        return business;
+        return { business, integrationJobId: integrationJob.id };
       })
   );
+  createdBusiness = creationResult.business;
+  integrationJobId = creationResult.integrationJobId;
   logServerEvent("BUSINESS_CREATE_TX_COMMITTED", {
     creationAttemptId,
     businessId: createdBusiness.id,
@@ -354,22 +351,7 @@ try {
   throw error;
 }
 
-  try {
-    await sendEmailVerificationEmail({
-      email: ownerEmail,
-      token: ownerEmailVerification.token,
-    });
-  } catch (error) {
-    if (error instanceof EmailVerificationEmailError) {
-      logServerError("BUSINESS_OWNER_VERIFICATION_DELIVERY_FAILED", error, {
-        businessId: createdBusiness.id,
-      });
-    } else {
-      throw error;
-    }
-  }
-
-  scheduleBusinessGoogleSheetsSync(createdBusiness.id);
+  scheduleBusinessGoogleSheetsSync(integrationJobId);
   logServerEvent("BUSINESS_CREATE_SYNC_SCHEDULED", {
     creationAttemptId,
     businessId: createdBusiness.id,

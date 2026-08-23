@@ -1,0 +1,48 @@
+/*
+ * Final Product F0: one semantic theme authority for app chrome and UI primitives.
+ *
+ * `globals.css` owns the canonical LoyalFlow `--lf-*` tokens. Base/shadcn UI
+ * primitives consume the compatibility names below, so keep those names as
+ * aliases rather than a second independent palette.
+ */
+:root {
+  --lf-radius-input: var(--lf-radius-md);
+
+  --background: var(--lf-canvas);
+  --foreground: var(--lf-foreground);
+  --card: var(--lf-surface);
+  --card-foreground: var(--lf-foreground);
+  --popover: var(--lf-surface);
+  --popover-foreground: var(--lf-foreground);
+
+  --primary: var(--lf-primary);
+  --primary-foreground: var(--lf-primary-foreground);
+  --secondary: var(--lf-surface-subtle);
+  --secondary-foreground: var(--lf-foreground);
+  --muted: var(--lf-surface-subtle);
+  --muted-foreground: var(--lf-foreground-subtle);
+  --accent: var(--lf-primary-soft);
+  --accent-foreground: var(--lf-primary-active);
+  --destructive: var(--lf-danger);
+
+  --border: var(--lf-border);
+  --input: var(--lf-border-strong);
+  --ring: var(--lf-focus);
+
+  --chart-1: var(--lf-chart-1);
+  --chart-2: var(--lf-chart-2);
+  --chart-3: var(--lf-chart-3);
+  --chart-4: var(--lf-chart-4);
+  --chart-5: var(--lf-chart-5);
+
+  --radius: var(--lf-radius-md);
+
+  --sidebar: var(--lf-surface-raised);
+  --sidebar-foreground: var(--lf-foreground);
+  --sidebar-primary: var(--lf-primary);
+  --sidebar-primary-foreground: var(--lf-primary-foreground);
+  --sidebar-accent: var(--lf-primary-soft);
+  --sidebar-accent-foreground: var(--lf-primary-active);
+  --sidebar-border: var(--lf-border);
+  --sidebar-ring: var(--lf-focus);
+}

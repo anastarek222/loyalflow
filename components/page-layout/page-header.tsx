@@ -27,15 +27,33 @@ export function PageHeader({
   const hasActions = primaryAction || secondaryActions;
 
   return (
-    <header {...props} className={cn("flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
-      <div className="min-w-0 space-y-2">
-        {eyebrow ? <div className="lf-type-supporting text-foreground-muted">{eyebrow}</div> : null}
+    <header
+      {...props}
+      className={cn(
+        "lf-page-header flex flex-col gap-5 rounded-[var(--lf-radius-lg)] border border-border bg-surface-raised p-5 shadow-[var(--lf-shadow-raised)] backdrop-blur-xl sm:flex-row sm:items-start sm:justify-between sm:p-6",
+        className,
+      )}
+    >
+      <div className="min-w-0 space-y-2.5">
+        {eyebrow ? (
+          <div className="lf-type-supporting font-bold uppercase tracking-[0.08em] text-primary/75">
+            {eyebrow}
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="lf-type-display text-foreground">{title}</h1>
           {status}
         </div>
-        {description ? <p className="max-w-3xl lf-type-body text-foreground-muted">{description}</p> : null}
-        {metadata ? <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lf-type-supporting text-foreground-subtle">{metadata}</div> : null}
+        {description ? (
+          <p className="max-w-3xl lf-type-body text-foreground-muted">
+            {description}
+          </p>
+        ) : null}
+        {metadata ? (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 lf-type-supporting text-foreground-subtle">
+            {metadata}
+          </div>
+        ) : null}
       </div>
       {hasActions ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
@@ -61,15 +79,29 @@ export function SectionHeader({
   count?: ReactNode;
 }) {
   return (
-    <header {...props} className={cn("flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
+    <header
+      {...props}
+      className={cn(
+        "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
+        className,
+      )}
+    >
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="lf-type-section text-foreground">{title}</h2>
           {count}
         </div>
-        {description ? <p className="mt-1 lf-type-body text-foreground-muted">{description}</p> : null}
+        {description ? (
+          <p className="mt-1 lf-type-body text-foreground-muted">
+            {description}
+          </p>
+        ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {actions}
+        </div>
+      ) : null}
     </header>
   );
 }

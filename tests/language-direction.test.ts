@@ -71,7 +71,10 @@ test("user language persistence only accepts supported enum values", () => {
   assert.equal(isAppLanguage("EN"), true);
   assert.equal(isAppLanguage("ar"), false);
   assert.equal(isAppLanguage("RTL"), false);
-  assert.match(source("app/language/actions.ts"), /isAppLanguage\([\s\S]*language/);
+  assert.match(
+    source("app/language/actions.ts"),
+    /isAppLanguage\([\s\S]*language/,
+  );
 });
 
 test("authenticated application direction derives from stored user language", () => {
@@ -82,7 +85,10 @@ test("authenticated application direction derives from stored user language", ()
 });
 
 test("public card and join flow derive AR and EN direction from card language", () => {
-  for (const path of ["app/card/[token]/page.tsx", "app/join/[slug]/page.tsx"]) {
+  for (const path of [
+    "app/card/[token]/page.tsx",
+    "app/join/[slug]/page.tsx",
+  ]) {
     const page = source(path);
     assert.match(page, /getLanguageAttributes/);
     assert.match(page, /lang=\{lang\}/);
@@ -94,20 +100,20 @@ test("public-card metadata and manifest use Business.cardDefaultLanguage only", 
   const page = source("app/card/[token]/page.tsx");
   const metadata = page.slice(
     page.indexOf("export async function generateMetadata"),
-    page.indexOf("const dateFormatter")
+    page.indexOf("export default async function PublicCardPage"),
   );
   const manifest = source("app/api/card-manifest/[token]/route.ts");
 
   assert.match(metadata, /cardDefaultLanguage:\s*true/);
   assert.match(
     metadata,
-    /getPublicCardLocalization\(\s*customer\.business\.cardDefaultLanguage/
+    /getPublicCardLocalization\(\s*customer\.business\.cardDefaultLanguage/,
   );
   assert.doesNotMatch(metadata, /searchParams/);
   assert.match(manifest, /cardDefaultLanguage:\s*true/);
   assert.match(
     manifest,
-    /getPublicCardLocalization\(\s*customer\.business\.cardDefaultLanguage/
+    /getPublicCardLocalization\(\s*customer\.business\.cardDefaultLanguage/,
   );
   assert.match(manifest, /lang,\s*\n\s*dir,/);
   assert.doesNotMatch(manifest, /lang:\s*["']ar["']/);
@@ -122,7 +128,10 @@ test("public-card metadata and manifest retain token safety and branding fields"
   assert.match(page, /!customer\s*\|\|\s*!customer\.isActive/);
   assert.match(manifest, /isPublicCardToken\(token\)/);
   assert.match(manifest, /!customer\s*\|\|\s*!customer\.isActive/);
-  assert.match(manifest, /name:\s*\n\s*`\$\{customer\.business\.name\} - \$\{customerName\}`/);
+  assert.match(
+    manifest,
+    /name:\s*\n\s*`\$\{customer\.business\.name\} - \$\{customerName\}`/,
+  );
   assert.match(manifest, /short_name:/);
   assert.match(manifest, /start_url:/);
   assert.match(manifest, /scope:/);
@@ -146,7 +155,7 @@ test("notification dialog no longer forces RTL", () => {
 
 test("card language remains passed through to existing membership-card behavior", () => {
   const card = source("app/card/[token]/page.tsx");
-  assert.match(card, /defaultLanguage=\{\s*business\.cardDefaultLanguage\s*\}/);
+  assert.match(card, /defaultLanguage:\s*business\.cardDefaultLanguage/);
 });
 
 test("F6 does not require a Prisma migration", () => {

@@ -21,19 +21,23 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
     ? {
         scannerStatus: "حالة ماسح QR",
         scannerInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
+        scannerReady: "الكاميرا جاهزة لمسح رمز QR.",
         searchLabel: "البحث عن عميل",
         openCustomer: "فتح العميل",
       }
     : {
         scannerStatus: "QR scanner status",
         scannerInstruction: "Point the camera at the customer QR code.",
+        scannerReady: "Camera ready to scan a QR code.",
         searchLabel: "Find a customer",
         openCustomer: "Open customer",
       };
 
   // The trace confirms search is rendered with the scanner; there is no separate
   // camera-to-search fallback control to activate.
-  await expect(page.getByRole("status", { name: copy.scannerStatus, exact: true })).toHaveText(copy.scannerInstruction);
+  await expect(
+    page.getByRole("status", { name: copy.scannerStatus, exact: true }),
+  ).toHaveText(new RegExp(`^(?:${copy.scannerInstruction}|${copy.scannerReady})$`));
   await page.getByRole("textbox", { name: copy.searchLabel, exact: true }).fill(fixture.activeCustomer.customerCode);
 
   const customerResult = page.getByRole("link", {
@@ -72,7 +76,7 @@ async function logout(page: Page) {
   await page.getByRole("button", { name: "Account menu", exact: true }).click();
   await Promise.all([
     page.waitForURL(/\/login$/),
-    page.getByRole("menuitem", { name: "Log out", exact: true }).click(),
+    page.getByRole("button", { name: "Log out", exact: true }).click(),
   ]);
   await expect(page.getByLabel("Email address")).toBeVisible();
 }
@@ -103,13 +107,20 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     page.on("console", (message) => {
       const isExpectedInvalidPublicCard404 =
         message.type() === "error" &&
-        message.text() === expectedInvalidPublicCard404 &&
+        (message.text() === expectedInvalidPublicCard404 ||
+          message.text().includes("server responded with a status of 404")) &&
         message.location().url.endsWith(invalidPublicCardPath);
+      const isExpectedVercelToolbarCspNoise =
+        message.type() === "error" &&
+        Boolean(process.env.STAGING_UAT_BASE_URL) &&
+        message.text().includes("https://vercel.live/_next-live/feedback/feedback.js") &&
+        message.text().includes("Content Security Policy");
 
       if (
         message.type() === "error" &&
         !message.text().includes("favicon.ico") &&
-        !isExpectedInvalidPublicCard404
+        !isExpectedInvalidPublicCard404 &&
+        !isExpectedVercelToolbarCspNoise
       ) {
         errors.push(message.text());
       }
@@ -128,7 +139,9 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByLabel("Email address").fill("nobody@example.test");
     await page.getByLabel("Password").fill("invalid-password");
     await page.getByRole("button", { name: "Sign in" }).press("Enter");
-    await expect(page.getByText("الإيميل أو كلمة المرور غير صحيحة.")).toBeVisible();
+    await expect(
+      page.getByText("بيانات تسجيل الدخول أو رمز الأمان غير صحيحة."),
+    ).toBeVisible();
 
     await login(page, "owner-a");
     await expect(page.locator("[data-app-language='EN']")).toHaveAttribute("dir", "ltr");
@@ -181,7 +194,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await openCustomerFromScanSearch(page, "EN");
     await expect(currentScanBalance(page, "EN", 4)).toBeVisible();
     await page.getByLabel(/Branch/i).selectOption({ label: "Final UAT A Branch One" });
-    await page.getByRole("button", { name: "+ Add visit", exact: true }).click();
+    await page.getByRole("button", { name: "Record visit", exact: true }).click();
     await expect(page).toHaveURL(scanOperationTerminalUrl(fixture.activeCustomer.id), { timeout: 15_000 });
     await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned$`));
     await expect(page.getByRole("status")).toBeVisible();
@@ -243,7 +256,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     const branch = page.getByLabel(/الفرع/);
     await branch.selectOption({ label: "Final UAT A Branch One" });
     await expect(branch).toHaveValue(fixture.staffBranchId);
-    await page.getByRole("button", { name: "+ إضافة زيارة", exact: true }).click();
+    await page.getByRole("button", { name: "تسجيل زيارة", exact: true }).click();
     await expect(page).toHaveURL(scanOperationTerminalUrl(fixture.activeCustomer.id), { timeout: 15_000 });
     await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned$`));
     await expect(page.getByRole("status")).toBeVisible();

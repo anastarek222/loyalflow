@@ -21,7 +21,6 @@ test("Google Sheets uses complete server-only environment credentials and normal
   if (configuration.configured) assert.match(configuration.credentials.private_key, /\nabc\n/);
   assert.equal(normalizeGooglePrivateKey(privateKey), "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----");
 });
-
 test("Google Sheets distinguishes incomplete and malformed credentials without returning secrets", () => {
   assert.deepEqual(getGoogleSheetsConfiguration({}), { configured: false, reason: "MISSING_SPREADSHEET_ID" });
   assert.deepEqual(getGoogleSheetsConfiguration({ GOOGLE_SPREADSHEET_ID: "id" }), { configured: false, reason: "MISSING_SERVICE_ACCOUNT_EMAIL" });
@@ -48,7 +47,7 @@ test("sync has stable sheet mapping, records retryable failures, and cannot sele
   assert.match(sync, /verified, mapped tab/);
   assert.match(safeSync, /googleSheetsSyncState: "FAILED"/);
   assert.match(safeSync, /googleSheetsRetryable: retryable/);
-  assert.match(creation, /scheduleBusinessGoogleSheetsSync\(createdBusiness\.id\)/);
-  assert.match(scheduler, /await syncBusinessToGoogleSheetSafely\(businessId\)/);
-  assert.doesNotMatch(scheduler, /if \(!.*syncBusinessToGoogleSheetSafely/);
+  assert.match(creation, /scheduleBusinessGoogleSheetsSync\(integrationJobId\)/);
+  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
+  assert.doesNotMatch(scheduler, /syncBusinessToGoogleSheetSafely/);
 });

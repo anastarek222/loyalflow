@@ -5,32 +5,50 @@ import { optionalProfileValue } from "@/lib/business-profile";
 import {
   businessIdentityFields,
   loyaltyProgramFields,
+  validateCountryProfile,
 } from "@/lib/business/domain-validation";
 
-export const businessProfileSettingsSchema = z.object({
-  name: businessIdentityFields.name,
-  coverImageUrl: z
-    .string()
-    .trim()
-    .max(500)
-    .refine((value) => value === "" || isValidRemoteImageUrl(value)),
-  currency: businessIdentityFields.currency,
-  timezone: businessIdentityFields.timezone,
-  industry: businessIdentityFields.industry,
-  website: businessIdentityFields.website,
-  email: businessIdentityFields.email,
-  country: businessIdentityFields.country,
-  city: businessIdentityFields.city,
-  taxNumber: businessIdentityFields.taxNumber,
-  employeeCount: businessIdentityFields.employeeCount,
-  description: businessIdentityFields.description,
-  instagramUrl: z.string().trim().max(300),
-});
+export const businessProfileSettingsSchema = z
+  .object({
+    name: businessIdentityFields.name,
+    coverImageUrl: z
+      .string()
+      .trim()
+      .max(500)
+      .refine((value) => value === "" || isValidRemoteImageUrl(value)),
+    currency: businessIdentityFields.currency,
+    timezone: businessIdentityFields.timezone,
+    industry: businessIdentityFields.industry,
+    website: businessIdentityFields.website,
+    email: businessIdentityFields.email,
+    country: businessIdentityFields.country,
+    city: businessIdentityFields.city,
+    taxNumber: businessIdentityFields.taxNumber,
+    employeeCount: businessIdentityFields.employeeCount,
+    description: businessIdentityFields.description,
+    instagramUrl: z.string().trim().max(300),
+  })
+  .superRefine((value, context) => {
+    const countryProfileFields = [value.country, value.currency, value.timezone];
+    if (countryProfileFields.every((field) => field === "")) return;
+
+    const issue = validateCountryProfile({
+      country: value.country,
+      currency: value.currency,
+      timezone: value.timezone,
+    });
+    if (!issue) return;
+
+    context.addIssue({
+      code: "custom",
+      path: [issue.field],
+      message: issue.reason,
+    });
+  });
 
 export const programRulesSettingsSchema = z
   .object({
     loyaltyProgramName: z.string().trim().max(80),
-    pointsName: z.string().trim().max(30),
     welcomeMessage: z.string().trim().max(300),
     cardDefaultLanguage: z.enum(["AR", "EN"]),
     loyaltyMode: loyaltyProgramFields.loyaltyMode,
@@ -88,7 +106,6 @@ export function getProgramRulesUpdate(
 ) {
   return {
     loyaltyProgramName: value.loyaltyProgramName || null,
-    pointsName: value.pointsName || null,
     welcomeMessage: value.welcomeMessage || null,
     cardDefaultLanguage: value.cardDefaultLanguage,
     loyaltyMode: value.loyaltyMode,

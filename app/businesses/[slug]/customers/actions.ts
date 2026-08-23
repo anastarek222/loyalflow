@@ -1,26 +1,28 @@
 "use server";
 
 import { auth } from "@/auth";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
-import { getActivityRequestContext } from "@/lib/activity/request-context";
-import {
-  generateCustomerCode,
-  getCustomerDisplayName,
-  parseCustomerRegistration,
-} from "@/lib/customers/registration";
+import { customerFeedbackUrl } from "@/lib/customers/feedback";
+import { parseCustomerRegistration } from "@/lib/customers/registration";
 import {
   getBulkStateChangeIds,
   parseSelectedCustomerIds,
   type BulkCustomerOperation,
 } from "@/lib/customers/bulk";
+import {
+  canManageCustomerNotesTags,
+  canUseCustomerBulkOperations,
+} from "@/lib/customers/feature-access";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
+import {
+  mutateBulkCustomerTagCommand,
+  setBulkCustomerStatusCommand,
+} from "@/lib/server/business/customer-bulk-command";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -35,7 +37,7 @@ function bulkResultUrl(
   slug: string,
   result: string,
   selected: number,
-  changed: number
+  changed: number,
 ) {
   const parameters = new URLSearchParams({
     bulk: result,
@@ -51,10 +53,15 @@ async function getBulkCustomerContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true },
+    select: {
+      id: true,
+      slug: true,
+      plan: true,
+      subscriptionLifecycleState: true,
+    },
   });
   if (!business) redirect("/businesses");
-  if (!canPerform(session.user, business.id, "CUSTOMERS_EDIT")) {
+  if (!canUseCustomerBulkOperations(session.user, business.id, business.plan)) {
     redirect(`/businesses/${slug}/customers`);
   }
 
@@ -67,8 +74,19 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
   const operation = formData.get("operation");
   const tagId = formData.get("tagId");
 
-  if (!parsedIds || typeof operation !== "string" || !bulkOperationValues.has(operation as BulkCustomerOperation)) {
+  if (
+    !parsedIds ||
+    typeof operation !== "string" ||
+    !bulkOperationValues.has(operation as BulkCustomerOperation)
+  ) {
     redirect(bulkResultUrl(slug, "invalid", 0, 0));
+  }
+
+  if (
+    (operation === "ADD_TAG" || operation === "REMOVE_TAG") &&
+    !canManageCustomerNotesTags(session.user, business.id, business.plan)
+  ) {
+    redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
   }
 
   const customers = await prisma.customer.findMany({
@@ -76,8 +94,6 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
     select: { id: true, businessId: true, isActive: true },
   });
 
-  // Do not mutate a subset: any missing/cross-tenant identifier aborts the
-  // entire operation before a transaction starts.
   if (customers.length !== parsedIds.length) {
     redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
   }
@@ -88,38 +104,46 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
       customers,
       business.id,
       parsedIds,
-      activate
+      activate,
     );
     if (!changedIds) {
       redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
     }
 
-    if (changedIds.length > 0) {
-      const activityContext = await getActivityRequestContext();
-      await prisma.$transaction(async (transaction) => {
-        const updated = await transaction.customer.updateMany({
-          where: { businessId: business.id, id: { in: changedIds } },
-          data: { isActive: activate },
-        });
-        if (updated.count !== changedIds.length) {
-          throw new Error("Bulk customer status update did not affect every selected customer.");
-        }
-        await transaction.businessActivity.createMany({
-          data: changedIds.map((customerId) => ({
-            type: activate ? "CUSTOMER_REACTIVATED" : "CUSTOMER_DEACTIVATED",
-            description: activate ? "تمت إعادة تفعيل العميل عبر عملية جماعية" : "تم إيقاف العميل عبر عملية جماعية",
-            businessId: business.id,
-            customerId,
-            ...activityActorFields(session.user, business.id),
-            ...activityRequestMetadata(activityContext),
-          })),
-        });
-      });
+    if (
+      activate &&
+      changedIds.length > 0 &&
+      !canPerformSubscriptionOperation(
+        business.subscriptionLifecycleState,
+        "OPERATE",
+      )
+    ) {
+      redirect(customerFeedbackUrl(slug, "subscription-restricted"));
     }
 
-    await syncBusinessToGoogleSheetSafely(business.id);
+    const mutation = await setBulkCustomerStatusCommand({
+      businessId: business.id,
+      customerIds: parsedIds,
+      activate,
+      actor: session.user,
+    });
+    if (!mutation.ok) {
+      if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+        redirect(customerFeedbackUrl(slug, "subscription-restricted"));
+      }
+      redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
+    }
+
+    scheduleBusinessGoogleSheetsSync(mutation.integrationJobId);
     revalidateBulkCustomerPages(slug);
-    redirect(bulkResultUrl(slug, operation.toLowerCase(), parsedIds.length, changedIds.length));
+    redirect(
+      bulkResultUrl(
+        slug,
+        operation.toLowerCase(),
+        parsedIds.length,
+        mutation.changedIds.length,
+      ),
+    );
   }
 
   if (typeof tagId !== "string") {
@@ -132,53 +156,58 @@ export async function bulkCustomerAction(slug: string, formData: FormData) {
   if (!tag) redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
 
   const existingAssignments = await prisma.customerTagAssignment.findMany({
-    where: { businessId: business.id, tagId: tag.id, customerId: { in: parsedIds } },
+    where: {
+      businessId: business.id,
+      tagId: tag.id,
+      customerId: { in: parsedIds },
+    },
     select: { id: true, customerId: true },
   });
-  const existingCustomerIds = new Set(existingAssignments.map((assignment) => assignment.customerId));
-  const changedIds = operation === "ADD_TAG"
-    ? parsedIds.filter((customerId) => !existingCustomerIds.has(customerId))
-    : existingAssignments.map((assignment) => assignment.customerId);
+  const existingCustomerIds = new Set(
+    existingAssignments.map((assignment) => assignment.customerId),
+  );
+  const changedIds =
+    operation === "ADD_TAG"
+      ? parsedIds.filter((customerId) => !existingCustomerIds.has(customerId))
+      : existingAssignments.map((assignment) => assignment.customerId);
 
-  if (changedIds.length > 0) {
-    const activityContext = await getActivityRequestContext();
-    await prisma.$transaction(async (transaction) => {
-      if (operation === "ADD_TAG") {
-        const added = await transaction.customerTagAssignment.createMany({
-          data: changedIds.map((customerId) => ({
-            businessId: business.id,
-            customerId,
-            tagId: tag.id,
-          })),
-        });
-        if (added.count !== changedIds.length) {
-          throw new Error("Bulk tag assignment did not affect every expected customer.");
-        }
-      } else {
-        const removed = await transaction.customerTagAssignment.deleteMany({
-          where: { businessId: business.id, tagId: tag.id, customerId: { in: changedIds } },
-        });
-        if (removed.count !== changedIds.length) {
-          throw new Error("Bulk tag removal did not affect every expected assignment.");
-        }
-      }
-
-      await transaction.businessActivity.createMany({
-        data: changedIds.map((customerId) => ({
-          type: operation === "ADD_TAG" ? "CUSTOMER_TAG_ASSIGNED" : "CUSTOMER_TAG_REMOVED",
-          description: operation === "ADD_TAG" ? `تمت إضافة وسم العميل عبر عملية جماعية: ${tag.name}` : `تمت إزالة وسم العميل عبر عملية جماعية: ${tag.name}`,
-          businessId: business.id,
-          customerId,
-          ...activityActorFields(session.user, business.id),
-          ...activityRequestMetadata(activityContext),
-        })),
-      });
-    });
+  if (
+    changedIds.length > 0 &&
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(customerFeedbackUrl(slug, "subscription-restricted"));
   }
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  const mutation = await mutateBulkCustomerTagCommand({
+    businessId: business.id,
+    customerIds: parsedIds,
+    tagId: tag.id,
+    operation: operation as "ADD_TAG" | "REMOVE_TAG",
+    actor: session.user,
+  });
+  if (!mutation.ok) {
+    if (mutation.reason === "SUBSCRIPTION_RESTRICTED") {
+      redirect(customerFeedbackUrl(slug, "subscription-restricted"));
+    }
+    if (mutation.reason === "INVALID_SELECTION") {
+      redirect(bulkResultUrl(slug, "invalid-selection", parsedIds.length, 0));
+    }
+    redirect(bulkResultUrl(slug, "invalid", parsedIds.length, 0));
+  }
+
+  scheduleBusinessGoogleSheetsSync(mutation.integrationJobId);
   revalidateBulkCustomerPages(slug);
-  redirect(bulkResultUrl(slug, operation.toLowerCase(), parsedIds.length, changedIds.length));
+  redirect(
+    bulkResultUrl(
+      slug,
+      operation.toLowerCase(),
+      parsedIds.length,
+      mutation.changedIds.length,
+    ),
+  );
 }
 
 function revalidateBulkCustomerPages(slug: string) {
@@ -189,10 +218,7 @@ function revalidateBulkCustomerPages(slug: string) {
   revalidatePath(`/businesses/${slug}/activity`);
 }
 
-export async function createCustomerAction(
-  slug: string,
-  formData: FormData
-) {
+export async function createCustomerAction(slug: string, formData: FormData) {
   const session = await auth();
 
   if (!session?.user) {
@@ -200,13 +226,12 @@ export async function createCustomerAction(
   }
 
   const business = await prisma.business.findUnique({
-    where: {
-      slug,
-    },
+    where: { slug },
     select: {
       id: true,
       slug: true,
       plan: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -214,14 +239,18 @@ export async function createCustomerAction(
     redirect("/businesses");
   }
 
-  const canAccess = canPerform(
-    session.user,
-    business.id,
-    "CUSTOMERS_EDIT"
-  );
-
+  const canAccess = canPerform(session.user, business.id, "CUSTOMERS_EDIT");
   if (!canAccess) {
     redirect("/dashboard");
+  }
+
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(customerFeedbackUrl(slug, "subscription-restricted"));
   }
 
   const parsed = parseCustomerRegistration({
@@ -231,7 +260,7 @@ export async function createCustomerAction(
   });
 
   if (!parsed) {
-    redirect(`/businesses/${slug}/customers?error=invalid`);
+    redirect(customerFeedbackUrl(slug, "invalid"));
   }
 
   const existingCustomer = await prisma.customer.findUnique({
@@ -241,67 +270,49 @@ export async function createCustomerAction(
         phone: parsed.phone,
       },
     },
-    select: {
-      id: true,
-    },
+    select: { id: true },
   });
 
   if (existingCustomer) {
-    redirect(`/businesses/${slug}/customers?error=duplicate`);
+    redirect(customerFeedbackUrl(slug, "duplicate"));
   }
 
   const [customerCount, planLimits] = await Promise.all([
     prisma.customer.count({ where: { businessId: business.id } }),
     getEffectivePlanLimits(business.plan),
   ]);
-  if (!isWithinPlanLimit(business.plan, "CUSTOMERS", customerCount, 1, planLimits)) {
-    redirect(`/businesses/${slug}/customers?error=plan-limit`);
+  if (
+    !isWithinPlanLimit(business.plan, "CUSTOMERS", customerCount, 1, planLimits)
+  ) {
+    redirect(customerFeedbackUrl(slug, "plan-limit"));
   }
 
-  const customerCode = await generateCustomerCode(
-    prisma,
-    business.id,
-    business.slug
-  );
+  const creation = await createCustomerCommand({
+    businessId: business.id,
+    customer: parsed,
+    actor: session.user,
+  });
 
-  const customerName = getCustomerDisplayName(parsed);
-  const activityContext = await getActivityRequestContext();
+  if (!creation.ok) {
+    if (creation.reason === "BUSINESS_NOT_FOUND") {
+      redirect("/businesses");
+    }
+    if (creation.reason === "DUPLICATE") {
+      redirect(customerFeedbackUrl(slug, "duplicate"));
+    }
+    if (creation.reason === "PLAN_LIMIT") {
+      redirect(customerFeedbackUrl(slug, "plan-limit"));
+    }
+    redirect(customerFeedbackUrl(slug, "subscription-restricted"));
+  }
 
-  const createdCustomer =
-    await prisma.$transaction(async (transaction) => {
-      const customer =
-        await transaction.customer.create({
-        data: {
-          firstName: parsed.firstName,
-          lastName: parsed.lastName || null,
-          phone: parsed.phone,
-          customerCode,
-          businessId: business.id,
-        },
-      });
-
-    await transaction.businessActivity.create({
-      data: {
-        type: "CUSTOMER_CREATED",
-        description: `تم إنشاء العميل ${customerName}`,
-        businessId: business.id,
-        customerId: customer.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
-
-      return customer;
-    });
-
-  await syncBusinessToGoogleSheetSafely(business.id);
+  const createdCustomer = creation.customer;
+  scheduleBusinessGoogleSheetsSync(creation.integrationJobId);
 
   revalidatePath(`/businesses/${slug}`);
   revalidatePath(`/businesses/${slug}/customers`);
   revalidatePath(`/card/${createdCustomer.publicToken}`);
   revalidatePath("/dashboard");
 
-  redirect(
-    `/businesses/${slug}/customers/${createdCustomer.id}?success=created`
-  );
+  redirect(`/businesses/${slug}/customers/${createdCustomer.id}?success=created`);
 }

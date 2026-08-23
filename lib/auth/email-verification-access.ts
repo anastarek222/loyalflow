@@ -1,6 +1,19 @@
 import prisma from "@/lib/prisma";
 
+export function isEmailVerificationRequired(
+  vercelEnvironment = process.env.VERCEL_ENV,
+) {
+  return vercelEnvironment !== "preview";
+}
+
 export async function isEmailVerificationSatisfied(userId: string) {
+  // Closed Beta / staging runs on Vercel Preview. Mailbox verification is
+  // intentionally deferred there so new owner accounts are not blocked by an
+  // external email-provider/domain gate. Production remains secure-by-default.
+  if (!isEmailVerificationRequired()) {
+    return true;
+  }
+
   const rows = await prisma.$queryRaw<Array<{ verifiedAt: Date | null }>>`
     SELECT "verifiedAt"
     FROM "EmailVerificationState"

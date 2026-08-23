@@ -79,11 +79,20 @@ test("U6.2 resolution is isolated per business-scoped account policy", () => {
 
 test("U6.2 team creation and editing persist the selected policy through server-authorized actions", () => {
   const actions = source("app/businesses/[slug]/users/actions.ts");
+  const command = source("lib/server/business/team-experience-access-command.ts");
+
   assert.match(actions, /experienceAccess:\s*resolveExperienceAccess/);
   assert.match(actions, /updateBusinessUserExperienceAccessAction/);
-  assert.match(actions, /where:\s*\{\s*id: userId,\s*businessId/);
+  assert.match(actions, /updateTeamExperienceAccessCommand/);
   assert.match(actions, /!isBusinessOwner && !isSuperAdmin/);
-  assert.match(actions, /type: "USER_EXPERIENCE_ACCESS_UPDATED"/);
+
+  assert.match(command, /canBusinessPerformSubscriptionOperation/);
+  assert.match(command, /"OPERATE"/);
+  assert.match(command, /id: input\.userId,\s*businessId: input\.businessId/);
+  assert.match(command, /transaction\.user\.update/);
+  assert.match(command, /buildUserAuditActivity\(\{[\s\S]*?operation: "EXPERIENCE_ACCESS_UPDATE"/);
+  assert.match(command, /previousExperienceAccess: targetUser\.experienceAccess/);
+  assert.match(command, /nextExperienceAccess: experienceAccess/);
 });
 
 test("U6.2 leaves branch assignments unrelated to experience access", () => {

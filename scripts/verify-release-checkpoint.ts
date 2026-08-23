@@ -40,6 +40,25 @@ function migrationDirectories() {
     .sort();
 }
 
+function reviewedMigrationNames() {
+  const manifestPath = path.join(root, "prisma", "migrations", "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8")) as {
+    migrationCount?: unknown;
+    migrations?: Array<{ name?: unknown }>;
+  };
+  const names = manifest.migrations?.map((entry) => entry.name);
+
+  if (
+    !Array.isArray(names) ||
+    names.some((name) => typeof name !== "string") ||
+    manifest.migrationCount !== names.length
+  ) {
+    throw new Error("invalid migration manifest");
+  }
+
+  return names as string[];
+}
+
 function main() {
   const checks: Check[] = [];
 
@@ -100,13 +119,17 @@ function main() {
   checks.push(
     safeCheck("migration history", () => {
       const migrations = migrationDirectories();
+      const reviewed = reviewedMigrationNames();
       const latest = migrations.at(-1) ?? "none";
+      const matchesManifest =
+        migrations.length === reviewed.length &&
+        migrations.every((migration, index) => migration === reviewed[index]);
       return {
         name: "migration history",
-        ok:
-          migrations.length === 38 &&
-          latest === "20260729113000_add_custom_card_mode",
-        detail: `${migrations.length} committed migrations; latest ${latest}`,
+        ok: matchesManifest,
+        detail: matchesManifest
+          ? `${migrations.length} reviewed migrations; latest ${latest}`
+          : "committed migrations do not match the reviewed manifest",
       };
     }),
   );

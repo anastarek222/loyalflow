@@ -5,24 +5,34 @@ import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { getCampaignSuggestion } from "@/lib/campaigns/suggestions";
-import { isUnusualManualAdjustment } from "@/lib/loyalty/fraud";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
-import { formatLoyaltyAmount, operationalUnitLabel } from "@/lib/loyalty/presentation";
 import {
-  canAccessBusiness,
-  canPerform,
-} from "@/lib/permissions";
+  formatLoyaltyAmount,
+  operationalUnitLabel,
+} from "@/lib/loyalty/presentation";
+import { canAccessBusiness, canPerform } from "@/lib/permissions";
+import {
+  canManageCustomerNotesTags,
+  canUseCustomerReferrals,
+  canViewCustomerNotesTags,
+} from "@/lib/customers/feature-access";
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
-import { calculateRetentionScore, getRetentionPresentation } from "@/lib/customers/retention-score";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
+import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
+import { getCustomerExperienceTheme } from "@/lib/theme";
 import CopyLinkButton from "@/components/copy-link-button";
+import ActivityTimeline from "@/components/customer-profile/activity-timeline";
+import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
 import LoyaltySubmitButton from "@/components/loyalty-submit-button";
 import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
 import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
-import { getExperienceModeCookieName, resolveExperienceMode } from "@/lib/experience-mode";
+import {
+  getExperienceModeCookieName,
+  resolveExperienceMode,
+} from "@/lib/experience-mode";
 import prisma from "@/lib/prisma";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { customerUiCopy, getLoyaltyModeLabel } from "@/lib/customers/ui-copy";
@@ -40,15 +50,17 @@ import {
   addLoyaltyAction,
   assignCustomerTagAction,
   createAndAssignCustomerTagAction,
-  createCustomerNoteAction,
   adjustCustomerBalanceAction,
   createCustomerReferralCodeAction,
   redeemRewardAction,
   removeCustomerTagAction,
   setCustomerStatusAction,
-  updateCustomerNoteAction,
   updateCustomerAction,
 } from "./actions";
+import {
+  createCustomerNoteCommandAction,
+  updateCustomerNoteCommandAction,
+} from "./note-actions";
 
 type CustomerDetailsPageProps = {
   params: Promise<{
@@ -108,10 +120,7 @@ export default async function CustomerDetailsPage({
     notFound();
   }
 
-  const canAccess = canAccessBusiness(
-    session.user,
-    business.id
-  );
+  const canAccess = canAccessBusiness(session.user, business.id);
 
   if (!canAccess) {
     redirect("/dashboard");
@@ -120,22 +129,33 @@ export default async function CustomerDetailsPage({
   const canManageCustomer = canPerform(
     session.user,
     business.id,
-    "CUSTOMERS_EDIT"
+    "CUSTOMERS_EDIT",
   );
   const canAdjustBalance = canPerform(
     session.user,
     business.id,
-    "LOYALTY_ADJUST"
+    "LOYALTY_ADJUST",
   );
-  const canEarnLoyalty = canPerform(
-    session.user,
-    business.id,
-    "LOYALTY_EARN"
-  );
+  const canEarnLoyalty = canPerform(session.user, business.id, "LOYALTY_EARN");
   const canRedeemLoyalty = canPerform(
     session.user,
     business.id,
-    "LOYALTY_REDEEM"
+    "LOYALTY_REDEEM",
+  );
+  const canViewNotesTags = canViewCustomerNotesTags(
+    session.user,
+    business.id,
+    business.plan,
+  );
+  const canManageNotesTags = canManageCustomerNotesTags(
+    session.user,
+    business.id,
+    business.plan,
+  );
+  const canUseReferrals = canUseCustomerReferrals(
+    session.user,
+    business.id,
+    business.plan,
   );
 
   const operationContextOptions = await getOperationContextOptions(prisma, {
@@ -259,18 +279,21 @@ export default async function CustomerDetailsPage({
     />
   );
 
-  const businessTags = await prisma.customerTag.findMany({
-    where: { businessId: business.id },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const businessTags = canViewNotesTags
+    ? await prisma.customerTag.findMany({
+        where: { businessId: business.id },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      })
+    : [];
 
   const baseUrl = await getRequestBaseUrl();
 
   const cardUrl = `${baseUrl}/card/${customer.publicToken}`;
-  const referralLink = customer.referralCodes[0]
-    ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
-    : null;
+  const referralLink =
+    canUseReferrals && customer.referralCodes[0]
+      ? `${baseUrl}/join/${business.slug}?ref=${customer.referralCodes[0].code}`
+      : null;
 
   const qrCode = await QRCode.toDataURL(cardUrl, {
     width: 240,
@@ -282,26 +305,26 @@ export default async function CustomerDetailsPage({
   const loyaltyOperationId = randomUUID();
   const adjustmentOperationId = randomUUID();
 
-  const availableRewards = getAvailableRewardOptions(
-    business.rewards,
-    {
-      name: business.rewardName,
-      description: business.rewardDescription,
-      type: business.rewardType,
-      code: business.rewardCode,
-      cost: business.rewardThreshold,
-    }
-  );
+  const availableRewards = getAvailableRewardOptions(business.rewards, {
+    name: business.rewardName,
+    description: business.rewardDescription,
+    type: business.rewardType,
+    code: business.rewardCode,
+    cost: business.rewardThreshold,
+  });
   const canonicalAvailability = getRewardAvailability({
     customerActive: customer.isActive,
     balance: customer.balance,
     rewardThreshold: business.rewardThreshold,
-    fallbackReward: { name: business.rewardName, cost: business.rewardThreshold },
+    fallbackReward: {
+      name: business.rewardName,
+      cost: business.rewardThreshold,
+    },
     catalogueRewards: business.rewards,
   });
 
   const rewardUnlocksByRewardId = new Map(
-    customer.rewardUnlocks.map((unlock) => [unlock.rewardId, unlock])
+    customer.rewardUnlocks.map((unlock) => [unlock.rewardId, unlock]),
   );
 
   const rewardStates = availableRewards.map((reward) => {
@@ -319,7 +342,7 @@ export default async function CustomerDetailsPage({
     const progress = calculateRewardProgress(
       customer.balance,
       reward.cost,
-      customer.isActive
+      customer.isActive,
     );
 
     return {
@@ -327,16 +350,16 @@ export default async function CustomerDetailsPage({
       ...progress,
       expirationState,
       expiresAt: unlock?.expiresAt ?? null,
-      rewardAvailable:
-        progress.rewardAvailable && expirationState === "ACTIVE",
+      rewardAvailable: progress.rewardAvailable && expirationState === "ACTIVE",
     };
   });
   const rewardAvailable = rewardStates.some(
-    (rewardState) => rewardState.rewardAvailable
+    (rewardState) => rewardState.rewardAvailable,
   );
   const remaining = canonicalAvailability.remaining;
   const loyaltyModeLabel = getLoyaltyModeLabel(language, business.loyaltyMode);
   const messageReward = canonicalAvailability.defaultReward;
+  const cardTheme = getCustomerExperienceTheme(business);
 
   const updateCustomer = updateCustomerAction.bind(
     null,
@@ -359,7 +382,7 @@ export default async function CustomerDetailsPage({
     business.slug,
     customer.id,
   );
-  const createNote = createCustomerNoteAction.bind(
+  const createNote = createCustomerNoteCommandAction.bind(
     null,
     business.slug,
     customer.id,
@@ -389,23 +412,21 @@ export default async function CustomerDetailsPage({
     language,
   );
 
-  const retentionScore = calculateRetentionScore({
-    createdAt: customer.createdAt,
-    lastActivityAt: customer.transactions[0]?.createdAt ?? null,
-    transactionCount: customer._count.transactions,
-    lifetimeEarned: customer.lifetimeEarned,
-    lifetimeRedeemed: customer.lifetimeRedeemed,
-    balance: customer.balance,
+  const loyaltyPresentation = {
     loyaltyMode: business.loyaltyMode,
+    language,
+    unitName: business.unitName,
+    currency: business.currency,
     earnAmount: business.earnAmount,
-    rewardThreshold: business.rewardThreshold,
-  });
-  const retentionPresentation = getRetentionPresentation({
-    createdAt: customer.createdAt,
-    score: retentionScore,
-  });
-  const loyaltyPresentation = { loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, earnAmount: business.earnAmount } as const;
-  const formatBalance = (amount: number) => formatLoyaltyAmount({ loyaltyMode: business.loyaltyMode, language, unitName: business.unitName, currency: business.currency, amount });
+  } as const;
+  const formatBalance = (amount: number) =>
+    formatLoyaltyAmount({
+      loyaltyMode: business.loyaltyMode,
+      language,
+      unitName: business.unitName,
+      currency: business.currency,
+      amount,
+    });
 
   const whatsappContext = {
     customer: customerName,
@@ -464,14 +485,23 @@ export default async function CustomerDetailsPage({
   return (
     <main
       className="min-h-screen bg-surface-subtle px-4 py-6 sm:px-8 sm:py-8"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at top right, var(--lf-primary-soft), transparent 34rem)",
+      }}
       data-experience-mode={experienceMode}
-      data-experience-customer-detail={isSimpleExperience ? "simple" : "advanced"}
+      data-experience-customer-detail={
+        isSimpleExperience ? "simple" : "advanced"
+      }
     >
       <div className="mx-auto max-w-7xl">
         <Link
           href={`/businesses/${business.slug}/customers`}
-          className="text-sm font-medium text-primary hover:text-primary"
+          className="inline-flex min-h-11 items-center rounded-full border border-primary/15 bg-white/90 px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle"
         >
+          <span aria-hidden="true" className="me-2">
+            ←
+          </span>
           {copy.backToCustomers}
         </Link>
 
@@ -613,10 +643,16 @@ export default async function CustomerDetailsPage({
           </div>
         )}
 
+        {query.error === "subscription-restricted" && (
+          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-warning">
+            {language === "AR"
+              ? "لا تسمح حالة الاشتراك الحالية بتنفيذ تغيير تشغيلي جديد. تظل السجلات والبيانات الحالية متاحة للقراءة، وتظل إجراءات الأمان متاحة."
+              : "The current subscription state does not allow a new operational change. Existing records and data remain readable, and security controls remain accessible."}
+          </div>
+        )}
+
         {!isSimpleExperience && smartWhatsAppSuggestion && (
-          <section
-            className="mt-6 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-6 sm:flex-row sm:items-center sm:justify-between"
-          >
+          <section className="mt-6 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-black text-success">
                 {smartSuggestionCopy?.title}
@@ -638,244 +674,355 @@ export default async function CustomerDetailsPage({
           </section>
         )}
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="mt-6 grid gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="flex min-w-0 flex-col">
-            <header className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 sm:p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-lg font-black text-primary">
+            <header
+              className="relative overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/20 bg-gradient-to-br from-primary via-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-primary/15 sm:p-7"
+              data-customer-profile-hero
+            >
+              <div
+                aria-hidden="true"
+                className="absolute -end-16 -top-20 size-56 rounded-full border-[32px] border-white/5"
+              />
+              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start">
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-xl font-black text-white shadow-inner backdrop-blur-sm">
                   {(customerName || "?").trim().charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground-subtle">{copy.profile}</p>
-                  <h1 dir="auto" className="mt-1 truncate text-2xl font-black text-foreground sm:text-3xl">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/65">
+                    {copy.profile}
+                  </p>
+                  <h1
+                    dir="auto"
+                    className="mt-1 truncate text-2xl font-black text-white sm:text-3xl"
+                  >
                     {customerName}
                   </h1>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${customer.isActive ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger"}`}>
+                    <span
+                      className={`rounded-full border px-3 py-1 text-xs font-bold ${customer.isActive ? "border-emerald-300/30 bg-emerald-300/15 text-emerald-50" : "border-red-300/30 bg-red-300/15 text-red-50"}`}
+                    >
                       {customer.isActive ? copy.active : copy.inactive}
                     </span>
-                    <span dir="ltr" className="text-foreground-muted">{customer.phone}</span>
-                    <span dir="ltr" className="text-xs font-semibold text-foreground-subtle">{copy.code}: {customer.customerCode}</span>
+                    <span dir="ltr" className="font-semibold text-white/85">
+                      {customer.phone}
+                    </span>
+                    <span
+                      dir="ltr"
+                      className="text-xs font-semibold text-white/60"
+                    >
+                      {copy.code}: {customer.customerCode}
+                    </span>
                   </div>
-                  {!isSimpleExperience && customer.tagAssignments.length ? (
+                  {!isSimpleExperience &&
+                  canViewNotesTags &&
+                  customer.tagAssignments.length ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {customer.tagAssignments.map((assignment) => (
-                        <span key={assignment.id} className="rounded-full bg-info-subtle px-2.5 py-1 text-xs font-semibold text-info">
+                        <span
+                          key={assignment.id}
+                          className="rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-xs font-semibold text-white/85"
+                        >
                           {assignment.tag.name}
                         </span>
                       ))}
                     </div>
                   ) : null}
                 </div>
+                <div className="min-w-40">
+                  <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
+                      {loyaltyModeLabel}
+                    </p>
+                    <p
+                      dir={
+                        business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"
+                      }
+                      className="mt-1 text-xl font-black text-white"
+                    >
+                      {formatBalance(customer.balance)}
+                    </p>
+                  </div>
+                </div>
               </div>
             </header>
 
-            {isSimpleExperience ? <section className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary-subtle/40 p-5 sm:p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">{copy.loyaltyToday}</p>
-              <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-                <div>
-                  <p dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="text-4xl font-black text-foreground"><span className="lf-type-numeric">{formatBalance(customer.balance)}</span></p>
-                  <p className="mt-1 text-sm text-foreground-muted">{rewardAvailable ? copy.rewardReadyNamed(messageReward.name) : copy.remainingForReward(remaining, messageReward.name)}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {(canEarnLoyalty || canRedeemLoyalty) ? <a href="#daily-loyalty" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">{copy.loyaltyAction}</a> : null}
-                  <a href="#customer-card" className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-subtle">{copy.customerCard}</a>
-                </div>
-              </div>
-            </section> : null}
-
-            <section className={`order-3 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-foreground">{copy.customerTags}</h2>
-
-              <p className="mt-1 text-sm text-foreground-subtle">
-                {copy.tagsDescription}
-              </p>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                {customer.tagAssignments.length === 0 ? (
-                  <p className="text-sm text-foreground-subtle">{copy.noTags}</p>
-                ) : (
-                  customer.tagAssignments.map((assignment) => {
-                    const removeTag = removeCustomerTagAction.bind(
-                      null,
-                      business.slug,
-                      customer.id,
-                      assignment.tag.id,
-                    );
-
-                    return (
-                      <span
-                        key={assignment.id}
-                        className="inline-flex items-center gap-2 rounded-full bg-primary-subtle px-4 py-2 text-sm font-semibold text-primary"
-                      >
-                        {assignment.tag.name}
-                        {canManageCustomer ? (
-                          <form action={removeTag}>
-                            <button
-                              type="submit"
-                              aria-label={copy.removeTag(assignment.tag.name)}
-                              className="rounded-full px-1 text-primary hover:bg-primary-subtle hover:text-primary"
-                            >
-                              ×
-                            </button>
-                          </form>
-                        ) : null}
+            {isSimpleExperience ? (
+              <section className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary-subtle/40 p-5 sm:p-6">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
+                  {copy.loyaltyToday}
+                </p>
+                <div className="mt-2 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                  <div>
+                    <p
+                      dir={
+                        business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"
+                      }
+                      className="text-4xl font-black text-foreground"
+                    >
+                      <span className="lf-type-numeric">
+                        {formatBalance(customer.balance)}
                       </span>
-                    );
-                  })
-                )}
-              </div>
+                    </p>
+                    <p className="mt-1 text-sm text-foreground-muted">
+                      {rewardAvailable
+                        ? copy.rewardReadyNamed(messageReward.name)
+                        : copy.remainingForReward(
+                            remaining,
+                            messageReward.name,
+                          )}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {canEarnLoyalty || canRedeemLoyalty ? (
+                      <a
+                        href="#daily-loyalty"
+                        className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+                      >
+                        {copy.loyaltyAction}
+                      </a>
+                    ) : null}
+                    <a
+                      href="#customer-card"
+                      className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm font-semibold text-primary hover:bg-surface-subtle"
+                    >
+                      {copy.customerCard}
+                    </a>
+                  </div>
+                </div>
+              </section>
+            ) : null}
 
-              {canManageCustomer ? (
-                <div className="mt-6 grid gap-4 border-t border-border pt-6 sm:grid-cols-2">
-                  <form
-                    action={createAndAssignTag}
-                    className="flex gap-2"
-                  >
-                    <input
-                      name="tagName"
-                      maxLength={50}
+            {canViewNotesTags ? (
+              <section
+                className={`order-3 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}
+              >
+                <h2 className="text-xl font-bold text-foreground">
+                  {copy.customerTags}
+                </h2>
+
+                <p className="mt-1 text-sm text-foreground-subtle">
+                  {copy.tagsDescription}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {customer.tagAssignments.length === 0 ? (
+                    <p className="text-sm text-foreground-subtle">
+                      {copy.noTags}
+                    </p>
+                  ) : (
+                    customer.tagAssignments.map((assignment) => {
+                      const removeTag = removeCustomerTagAction.bind(
+                        null,
+                        business.slug,
+                        customer.id,
+                        assignment.tag.id,
+                      );
+
+                      return (
+                        <span
+                          key={assignment.id}
+                          className="inline-flex items-center gap-2 rounded-full bg-primary-subtle px-4 py-2 text-sm font-semibold text-primary"
+                        >
+                          {assignment.tag.name}
+                          {canManageNotesTags ? (
+                            <form action={removeTag}>
+                              <button
+                                type="submit"
+                                aria-label={copy.removeTag(assignment.tag.name)}
+                                className="rounded-full px-1 text-primary hover:bg-primary-subtle hover:text-primary"
+                              >
+                                ×
+                              </button>
+                            </form>
+                          ) : null}
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+
+                {canManageNotesTags ? (
+                  <div className="mt-6 grid gap-4 border-t border-border pt-6 sm:grid-cols-2">
+                    <form action={createAndAssignTag} className="flex gap-2">
+                      <input
+                        name="tagName"
+                        maxLength={50}
+                        required
+                        placeholder={copy.newTagPlaceholder}
+                        className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm outline-none focus:border-primary/30"
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-bold text-[var(--lf-primary-foreground)] hover:bg-primary-subtle"
+                      >
+                        {copy.add}
+                      </button>
+                    </form>
+
+                    <div className="flex flex-wrap gap-2">
+                      {businessTags
+                        .filter(
+                          (tag) =>
+                            !customer.tagAssignments.some(
+                              (assignment) => assignment.tag.id === tag.id,
+                            ),
+                        )
+                        .map((tag) => {
+                          const assignTag = assignCustomerTagAction.bind(
+                            null,
+                            business.slug,
+                            customer.id,
+                            tag.id,
+                          );
+
+                          return (
+                            <form key={tag.id} action={assignTag}>
+                              <button
+                                type="submit"
+                                className="rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-4 py-2 text-sm font-semibold text-primary hover:bg-primary-subtle"
+                              >
+                                + {tag.name}
+                              </button>
+                            </form>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+
+            {canViewNotesTags ? (
+              <section
+                className={`order-4 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}
+              >
+                <h2 className="text-xl font-bold text-foreground">
+                  {copy.notes}
+                </h2>
+
+                <p className="mt-1 text-sm text-foreground-subtle">
+                  {copy.notesDescription}
+                </p>
+
+                {canManageNotesTags ? (
+                  <form action={createNote} className="mt-6">
+                    <label htmlFor="newCustomerNote" className="sr-only">
+                      {copy.newInternalNote}
+                    </label>
+                    <textarea
+                      id="newCustomerNote"
+                      name="content"
                       required
-                      placeholder={copy.newTagPlaceholder}
-                      className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm outline-none focus:border-primary/30"
+                      minLength={1}
+                      maxLength={2000}
+                      rows={3}
+                      placeholder={copy.notePlaceholder}
+                      className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-sm outline-none focus:border-primary/30"
                     />
                     <button
                       type="submit"
-                      className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-bold text-[var(--lf-primary-foreground)] hover:bg-primary-subtle"
+                      className="mt-4 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white hover:bg-primary-subtle"
                     >
-                      {copy.add}
+                      {copy.saveInternalNote}
                     </button>
                   </form>
+                ) : null}
 
-                  <div className="flex flex-wrap gap-2">
-                    {businessTags
-                      .filter(
-                        (tag) =>
-                          !customer.tagAssignments.some(
-                            (assignment) => assignment.tag.id === tag.id,
-                          ),
-                      )
-                      .map((tag) => {
-                        const assignTag = assignCustomerTagAction.bind(
-                          null,
-                          business.slug,
-                          customer.id,
-                          tag.id,
-                        );
+                <div className="mt-6 space-y-4">
+                  {customer.notes.length === 0 ? (
+                    <p className="text-sm text-foreground-subtle">
+                      {copy.noNotes}
+                    </p>
+                  ) : (
+                    customer.notes.map((note) => {
+                      const updateNote = updateCustomerNoteCommandAction.bind(
+                        null,
+                        business.slug,
+                        customer.id,
+                        note.id,
+                      );
+                      const createdByName = note.createdBy
+                        ? [note.createdBy.firstName, note.createdBy.lastName]
+                            .filter(Boolean)
+                            .join(" ")
+                        : copy.deletedUser;
+                      const updatedByName = note.updatedBy
+                        ? [note.updatedBy.firstName, note.updatedBy.lastName]
+                            .filter(Boolean)
+                            .join(" ")
+                        : copy.deletedUser;
 
-                        return (
-                          <form key={tag.id} action={assignTag}>
-                            <button
-                              type="submit"
-                              className="rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-4 py-2 text-sm font-semibold text-primary hover:bg-primary-subtle"
+                      return (
+                        <article
+                          key={note.id}
+                          className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4"
+                        >
+                          {canManageNotesTags ? (
+                            <form action={updateNote}>
+                              <textarea
+                                name="content"
+                                defaultValue={note.content}
+                                required
+                                minLength={1}
+                                maxLength={2000}
+                                rows={3}
+                                className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary/30"
+                              />
+                              <button
+                                type="submit"
+                                className="mt-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted hover:border-primary/30"
+                              >
+                                {copy.saveEdit}
+                              </button>
+                            </form>
+                          ) : (
+                            <p
+                              dir="auto"
+                              className="whitespace-pre-wrap text-sm leading-6 text-foreground-muted"
                             >
-                              + {tag.name}
-                            </button>
-                          </form>
-                        );
-                      })}
-                  </div>
-                </div>
-              ) : null}
-            </section>
-
-            <section className={`order-4 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-foreground">{copy.notes}</h2>
-
-              <p className="mt-1 text-sm text-foreground-subtle">
-                {copy.notesDescription}
-              </p>
-
-              {canManageCustomer ? (
-                <form action={createNote} className="mt-6">
-                  <label htmlFor="newCustomerNote" className="sr-only">
-                    {copy.newInternalNote}
-                  </label>
-                  <textarea
-                    id="newCustomerNote"
-                    name="content"
-                    required
-                    minLength={1}
-                    maxLength={2000}
-                    rows={3}
-                    placeholder={copy.notePlaceholder}
-                    className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 text-sm outline-none focus:border-primary/30"
-                  />
-                  <button
-                    type="submit"
-                    className="mt-4 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white hover:bg-primary-subtle"
-                  >
-                    {copy.saveInternalNote}
-                  </button>
-                </form>
-              ) : null}
-
-              <div className="mt-6 space-y-4">
-                {customer.notes.length === 0 ? (
-                  <p className="text-sm text-foreground-subtle">{copy.noNotes}</p>
-                ) : (
-                  customer.notes.map((note) => {
-                    const updateNote = updateCustomerNoteAction.bind(
-                      null,
-                      business.slug,
-                      customer.id,
-                      note.id,
-                    );
-                    const createdByName = note.createdBy
-                      ? [note.createdBy.firstName, note.createdBy.lastName]
-                      .filter(Boolean)
-                      .join(" ")
-                      : copy.deletedUser;
-                    const updatedByName = note.updatedBy
-                      ? [note.updatedBy.firstName, note.updatedBy.lastName]
-                      .filter(Boolean)
-                      .join(" ")
-                      : copy.deletedUser;
-
-                    return (
-                      <article key={note.id} className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4">
-                        {canManageCustomer ? (
-                          <form action={updateNote}>
-                            <textarea
-                              name="content"
-                              defaultValue={note.content}
-                              required
-                              minLength={1}
-                              maxLength={2000}
-                              rows={3}
-                              className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary/30"
-                            />
-                            <button
-                              type="submit"
-                              className="mt-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted hover:border-primary/30"
-                            >
-                              {copy.saveEdit}
-                            </button>
-                          </form>
-                        ) : (
-                          <p dir="auto" className="whitespace-pre-wrap text-sm leading-6 text-foreground-muted">
-                            {note.content}
+                              {note.content}
+                            </p>
+                          )}
+                          <p className="mt-4 text-xs text-foreground-subtle">
+                            {copy.addedBy(
+                              createdByName,
+                              note.createdAt.toLocaleString(dateLocale),
+                            )}
+                            {note.updatedAt.getTime() !==
+                            note.createdAt.getTime()
+                              ? copy.lastEditedBy(updatedByName)
+                              : ""}
                           </p>
-                        )}
-                        <p className="mt-4 text-xs text-foreground-subtle">
-                          {copy.addedBy(createdByName, note.createdAt.toLocaleString(dateLocale))}
-                          {note.updatedAt.getTime() !== note.createdAt.getTime()
-                            ? copy.lastEditedBy(updatedByName)
-                            : ""}
-                        </p>
-                      </article>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            ) : null}
 
-            <section id="daily-loyalty" className="order-1 mt-6 scroll-mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8">
+            <section
+              id="daily-loyalty"
+              className="order-1 mt-6 scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-5 shadow-sm sm:p-8"
+            >
               <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
-                  <p className="text-sm text-foreground-subtle">{loyaltyModeLabel} · {business.loyaltyMode === "SALES_AMOUNT" ? copy.eligibleSales : business.loyaltyMode === "VISITS" ? copy.visitsCount : copy.pointsBalance}</p>
+                  <p className="text-sm text-foreground-subtle">
+                    {loyaltyModeLabel} ·{" "}
+                    {business.loyaltyMode === "SALES_AMOUNT"
+                      ? copy.eligibleSales
+                      : business.loyaltyMode === "VISITS"
+                        ? copy.visitsCount
+                        : copy.pointsBalance}
+                  </p>
 
-                  <p dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="mt-2 text-5xl font-bold text-foreground">
+                  <p
+                    dir={
+                      business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"
+                    }
+                    className="mt-2 text-5xl font-bold text-foreground"
+                  >
                     {formatBalance(customer.balance)}
                   </p>
                 </div>
@@ -889,7 +1036,11 @@ export default async function CustomerDetailsPage({
                 >
                   <p className="text-sm font-semibold">
                     {rewardAvailable
-                      ? copy.rewardsReady(rewardStates.filter((rewardState) => rewardState.rewardAvailable).length)
+                      ? copy.rewardsReady(
+                          rewardStates.filter(
+                            (rewardState) => rewardState.rewardAvailable,
+                          ).length,
+                        )
                       : copy.remaining(remaining)}
                   </p>
 
@@ -919,18 +1070,20 @@ export default async function CustomerDetailsPage({
                         </p>
                       </div>
 
-                      <span className={`rounded-full px-4 py-1 text-xs font-black ${
-                        rewardState.expirationState === "EXPIRED"
-                          ? "bg-danger-subtle text-danger"
-                          : rewardState.rewardAvailable
-                          ? "bg-success text-[var(--lf-inverse)]"
-                          : "bg-surface-subtle text-foreground-muted"
-                      }`}>
+                      <span
+                        className={`rounded-full px-4 py-1 text-xs font-black ${
+                          rewardState.expirationState === "EXPIRED"
+                            ? "bg-danger-subtle text-danger"
+                            : rewardState.rewardAvailable
+                              ? "bg-success text-[var(--lf-inverse)]"
+                              : "bg-surface-subtle text-foreground-muted"
+                        }`}
+                      >
                         {rewardState.expirationState === "EXPIRED"
                           ? copy.expired
                           : rewardState.rewardAvailable
-                          ? copy.ready
-                          : copy.remaining(rewardState.remaining)}
+                            ? copy.ready
+                            : copy.remaining(rewardState.remaining)}
                       </span>
                     </div>
 
@@ -945,22 +1098,36 @@ export default async function CustomerDetailsPage({
                     </div>
 
                     <p className="mt-2 text-xs text-foreground-subtle">
-                      <span dir={business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"} className="lf-type-numeric">{formatBalance(customer.balance)} / {formatBalance(rewardState.reward.cost)}</span>
+                      <span
+                        dir={
+                          business.loyaltyMode === "SALES_AMOUNT"
+                            ? "ltr"
+                            : "auto"
+                        }
+                        className="lf-type-numeric"
+                      >
+                        {formatBalance(customer.balance)} /{" "}
+                        {formatBalance(rewardState.reward.cost)}
+                      </span>
                     </p>
 
                     {rewardState.expiresAt ? (
-                      <p className={`mt-2 text-xs font-bold ${
-                        rewardState.expirationState === "EXPIRED"
-                          ? "text-danger"
-                          : "text-foreground-subtle"
-                      }`}>
+                      <p
+                        className={`mt-2 text-xs font-bold ${
+                          rewardState.expirationState === "EXPIRED"
+                            ? "text-danger"
+                            : "text-foreground-subtle"
+                        }`}
+                      >
                         {rewardState.expirationState === "EXPIRED"
                           ? copy.rewardExpired
-                          : copy.rewardValidUntil(new Intl.DateTimeFormat(dateLocale, {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                              timeZone: "Africa/Cairo",
-                          }).format(rewardState.expiresAt))}
+                          : copy.rewardValidUntil(
+                              new Intl.DateTimeFormat(dateLocale, {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                                timeZone: "Africa/Cairo",
+                              }).format(rewardState.expiresAt),
+                            )}
                       </p>
                     ) : rewardState.reward.expiresAfterDays ? (
                       <p className="mt-2 text-xs text-foreground-subtle">
@@ -971,7 +1138,10 @@ export default async function CustomerDetailsPage({
                     {rewardState.rewardAvailable &&
                     rewardState.reward.type === "PROMO_CODE" &&
                     rewardState.reward.code ? (
-                      <p dir="ltr" className="mt-4 select-all rounded-[var(--lf-radius-input)] border border-success/30 bg-white px-4 py-2 text-center text-sm font-black tracking-widest text-success">
+                      <p
+                        dir="ltr"
+                        className="mt-4 select-all rounded-[var(--lf-radius-input)] border border-success/30 bg-white px-4 py-2 text-center text-sm font-black tracking-widest text-success"
+                      >
                         {rewardState.reward.code}
                       </p>
                     ) : null}
@@ -1008,35 +1178,35 @@ export default async function CustomerDetailsPage({
 
                   {business.loyaltyMode === "SALES_AMOUNT" && (
                     <>
-                    <label
-                      htmlFor="saleAmount"
-                      className="mb-2 block text-sm font-black text-primary"
-                    >
-                      {copy.saleAmount}
-                    </label>
-
-                    <div className="flex gap-2">
-                      <input
-                        id="saleAmount"
-                        name="saleAmount"
-                        type="number"
-                        min="1"
-                        max="1000000000"
-                        step="1"
-                        required
-                        inputMode="numeric"
-                        placeholder={copy.saleAmountPlaceholder}
-                        disabled={!customer.isActive || !canEarnLoyalty}
-                        className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-4 text-lg font-black outline-none focus:border-primary/30 disabled:bg-surface-subtle"
-                      />
-
-                      <span
-                        dir="auto"
-                        className="flex items-center rounded-[var(--lf-radius-input)] bg-white px-4 font-black text-primary"
+                      <label
+                        htmlFor="saleAmount"
+                        className="mb-2 block text-sm font-black text-primary"
                       >
-                        {operationalUnitLabel(loyaltyPresentation)}
-                      </span>
-                    </div>
+                        {copy.saleAmount}
+                      </label>
+
+                      <div className="flex gap-2">
+                        <input
+                          id="saleAmount"
+                          name="saleAmount"
+                          type="number"
+                          min="1"
+                          max="1000000000"
+                          step="1"
+                          required
+                          inputMode="numeric"
+                          placeholder={copy.saleAmountPlaceholder}
+                          disabled={!customer.isActive || !canEarnLoyalty}
+                          className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-4 text-lg font-black outline-none focus:border-primary/30 disabled:bg-surface-subtle"
+                        />
+
+                        <span
+                          dir="auto"
+                          className="flex items-center rounded-[var(--lf-radius-input)] bg-white px-4 font-black text-primary"
+                        >
+                          {operationalUnitLabel(loyaltyPresentation)}
+                        </span>
+                      </div>
                     </>
                   )}
 
@@ -1102,8 +1272,10 @@ export default async function CustomerDetailsPage({
             </section>
 
             {canManageCustomer && (
-              <section className={`order-5 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-foreground">
+              <section
+                className={`order-5 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}
+              >
+                <h2 className="text-xl font-bold text-foreground">
                   {copy.manageCustomer}
                 </h2>
 
@@ -1181,103 +1353,107 @@ export default async function CustomerDetailsPage({
                 </form>
 
                 {canAdjustBalance ? (
-                <div className="mt-8 border-t border-border pt-6">
-                  <h3 className="font-bold text-foreground">
-                    {copy.manualBalance}
-                  </h3>
+                  <div className="mt-8 border-t border-border pt-6">
+                    <h3 className="font-bold text-foreground">
+                      {copy.manualBalance}
+                    </h3>
 
-                  <p className="mt-1 text-sm text-foreground-subtle">
-                    {copy.manualBalanceDescription}
-                  </p>
+                    <p className="mt-1 text-sm text-foreground-subtle">
+                      {copy.manualBalanceDescription}
+                    </p>
 
-                  <p className="mt-4 text-sm font-semibold text-primary">
-                    {copy.currentBalance(formatBalance(customer.balance), "")}
-                  </p>
+                    <p className="mt-4 text-sm font-semibold text-primary">
+                      {copy.currentBalance(formatBalance(customer.balance), "")}
+                    </p>
 
-                  <form
-                    action={adjustCustomerBalance}
-                    className="mt-6 grid gap-4 sm:grid-cols-2"
-                  >
-                    <input
-                      type="hidden"
-                      name="operationId"
-                      value={adjustmentOperationId}
-                    />
-                    {operationContextFields(false, "adjust-operation")}
-                    <div>
-                      <label
-                        htmlFor="adjustmentDirection"
-                        className="mb-2 block text-sm font-medium text-foreground-muted"
-                      >
-                        {copy.adjustmentType}
-                      </label>
-
-                      <select
-                        id="adjustmentDirection"
-                        name="direction"
-                        defaultValue="ADD"
-                        className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
-                      >
-                        <option value="ADD">{copy.addBalance}</option>
-
-                        <option value="SUBTRACT">{copy.subtractBalance}</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="adjustmentAmount"
-                        className="mb-2 block text-sm font-medium text-foreground-muted"
-                      >
-                        {copy.amount}
-                      </label>
-
-                      <input
-                        id="adjustmentAmount"
-                        name="amount"
-                        type="number"
-                        min="1"
-                        max="1000000"
-                        required
-                        placeholder="1"
-                        className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label
-                        htmlFor="adjustmentReason"
-                        className="mb-2 block text-sm font-medium text-foreground-muted"
-                      >
-                        {copy.adjustmentReason}
-                      </label>
-
-                      <textarea
-                        id="adjustmentReason"
-                        name="reason"
-                        required
-                        minLength={3}
-                        maxLength={200}
-                        rows={3}
-                        placeholder={copy.adjustmentReasonPlaceholder}
-                        className="w-full resize-none rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-6 py-4 font-semibold text-foreground transition hover:bg-warning-subtle sm:col-span-2"
+                    <form
+                      action={adjustCustomerBalance}
+                      className="mt-6 grid gap-4 sm:grid-cols-2"
                     >
-                      {copy.saveBalanceAdjustment}
-                    </button>
-                  </form>
-                </div>
+                      <input
+                        type="hidden"
+                        name="operationId"
+                        value={adjustmentOperationId}
+                      />
+                      {operationContextFields(false, "adjust-operation")}
+                      <div>
+                        <label
+                          htmlFor="adjustmentDirection"
+                          className="mb-2 block text-sm font-medium text-foreground-muted"
+                        >
+                          {copy.adjustmentType}
+                        </label>
+
+                        <select
+                          id="adjustmentDirection"
+                          name="direction"
+                          defaultValue="ADD"
+                          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
+                        >
+                          <option value="ADD">{copy.addBalance}</option>
+
+                          <option value="SUBTRACT">
+                            {copy.subtractBalance}
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="adjustmentAmount"
+                          className="mb-2 block text-sm font-medium text-foreground-muted"
+                        >
+                          {copy.amount}
+                        </label>
+
+                        <input
+                          id="adjustmentAmount"
+                          name="amount"
+                          type="number"
+                          min="1"
+                          max="1000000"
+                          required
+                          placeholder="1"
+                          className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label
+                          htmlFor="adjustmentReason"
+                          className="mb-2 block text-sm font-medium text-foreground-muted"
+                        >
+                          {copy.adjustmentReason}
+                        </label>
+
+                        <textarea
+                          id="adjustmentReason"
+                          name="reason"
+                          required
+                          minLength={3}
+                          maxLength={200}
+                          rows={3}
+                          placeholder={copy.adjustmentReasonPlaceholder}
+                          className="w-full resize-none rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-6 py-4 font-semibold text-foreground transition hover:bg-warning-subtle sm:col-span-2"
+                      >
+                        {copy.saveBalanceAdjustment}
+                      </button>
+                    </form>
+                  </div>
                 ) : null}
 
                 <div className="mt-8 border-t border-border pt-6">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                      <h3 className="font-bold text-foreground">{copy.accountStatus}</h3>
+                      <h3 className="font-bold text-foreground">
+                        {copy.accountStatus}
+                      </h3>
 
                       <p className="mt-1 text-sm text-foreground-subtle">
                         {copy.inactiveAccountDescription}
@@ -1309,148 +1485,91 @@ export default async function CustomerDetailsPage({
               </section>
             )}
 
-            <section className="order-2 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-xl font-bold text-foreground">{copy.timeline}</h2>
-
-              <p className="mt-1 text-sm text-foreground-subtle">
-                {copy.timelineDescription}
-              </p>
-
-              {timeline.length === 0 ? (
-                <p className="mt-6 text-foreground-subtle">{copy.noEvents}</p>
-              ) : (
-                <div className="mt-6 divide-y divide-slate-100">
-                  {timeline.map((item) => {
-                    const unusualAdjustment =
-                      item.transactionType === "ADJUSTMENT" &&
-                      isUnusualManualAdjustment(
-                        item.amount ?? 0,
-                        business.rewardThreshold
-                      );
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold text-foreground">
-                              {item.title}
-                            </p>
-
-                            {unusualAdjustment && (
-                              <span className="rounded-full bg-warning-subtle px-2 py-1 text-xs font-bold text-warning">
-                                {copy.requiresReview}
-                              </span>
-                            )}
-                          </div>
-
-                        <p className="mt-1 text-xs text-foreground-subtle">
-                          {item.createdAt.toLocaleString(dateLocale)}
-                        </p>
-
-                        {item.description && (
-                          <p dir="auto" className="mt-1 text-xs text-foreground-subtle">
-                            {item.description}
-                          </p>
-                        )}
-
-                        <p className="mt-1 text-xs text-foreground-subtle">
-                          {copy.by(item.actorName)}
-                        </p>
-                      </div>
-
-                      {item.amount !== undefined && (
-                        <div className="text-left sm:text-right">
-                          <p dir="ltr"
-                            className={`text-lg font-bold ${
-                              item.amount > 0
-                                ? "text-success"
-                                : "text-danger"
-                            }`}
-                          >
-                            {item.amount > 0 ? "+" : ""}
-                            {formatBalance(item.amount)}
-                          </p>
-
-                          <p dir="ltr" className="text-xs text-foreground-subtle">
-                            {copy.balanceAfter(item.balanceAfter === undefined ? undefined : formatBalance(item.balanceAfter))}
-                          </p>
-                        </div>
-                      )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+            <ActivityTimeline
+              items={timeline}
+              dateLocale={dateLocale}
+              rewardThreshold={business.rewardThreshold}
+              formatBalance={formatBalance}
+              labels={{
+                title: copy.timeline,
+                description: copy.timelineDescription,
+                empty: copy.noEvents,
+                requiresReview: copy.requiresReview,
+                by: copy.by,
+                balanceAfter: copy.balanceAfter,
+              }}
+            />
           </div>
 
-          <aside id="customer-card" className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 text-center shadow-sm sm:p-8">
-            <h2 className="text-xl font-bold text-foreground">
-              {copy.digitalCard}
-            </h2>
-
-            <p className="mt-2 text-sm text-foreground-subtle">
-              {copy.digitalCardDescription}
-            </p>
-
-            <section className="mt-6 rounded-[var(--lf-radius-card)] bg-primary-subtle p-4 text-right">
-              <p className="text-xs font-black text-primary">
-                {copy.retentionScore}
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-4">
-                <p className="text-3xl font-black text-primary">
-                  {retentionScore.score}/100
-                </p>
-                <p className="text-sm font-bold text-primary">
-                  {retentionPresentation.label === "NEW"
-                    ? copy.newCustomer
-                    : retentionPresentation.label === "Very Loyal"
-                    ? copy.veryLoyal
-                    : retentionPresentation.label === "Active"
-                      ? copy.retentionActive
-                      : retentionPresentation.label === "At Risk"
-                        ? copy.atRisk
-                        : copy.highRisk}
-                </p>
-              </div>
-              <p className="mt-2 text-xs leading-5 text-primary">
-                {copy.retentionDescription}
-              </p>
-            </section>
-
-            <img
-              src={qrCode}
-              alt={copy.cardQrAlt}
-              width={240}
-              height={240}
-              className="mx-auto mt-6 rounded-[var(--lf-radius-card)] border border-border p-4"
+          <aside
+            id="customer-card"
+            className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-4 shadow-lg shadow-slate-200/40 xl:sticky xl:top-24"
+          >
+            <LoyaltyCardPreview
+              language={language}
+              businessName={business.name}
+              logoUrl={business.logoUrl}
+              primaryColor={cardTheme.primaryColor}
+              themePreset={business.themePreset}
+              customerName={customerName}
+              customerId={customer.customerCode}
+              balance={customer.balance}
+              loyaltyMode={business.loyaltyMode}
+              unitName={business.unitName}
+              currency={business.currency}
+              rewardName={messageReward.name}
+              rewardThreshold={messageReward.cost}
+              qrCode={qrCode}
+              artworkEnabled={business.standardCardArtworkEnabled}
+              artworkCategory={business.standardCardArtworkCategory}
+              designMode={business.cardDesignMode}
+              customDesignEnabled={business.customCardArtworkEnabled}
+              customFrontArtworkUrl={publicCustomCardArtworkUrl(
+                customer.publicToken,
+                "front",
+                business.customCardFrontArtworkUrl,
+                business.id,
+              )}
+              customBackArtworkUrl={publicCustomCardArtworkUrl(
+                customer.publicToken,
+                "back",
+                business.customCardBackArtworkUrl,
+                business.id,
+              )}
+              customSafeZoneVersion={business.customCardSafeZoneVersion}
+              businessPhone={business.contactPhone}
+              businessWebsite={business.website}
+              businessLocation={[business.city, business.country]
+                .filter(Boolean)
+                .join(", ")}
+              businessAddress={business.address}
+              businessSocial={business.instagramUrl}
             />
 
-            <p className="mt-4 break-all text-xs text-foreground-subtle">{cardUrl}</p>
-
-            <div className="mt-6 flex flex-col gap-4">
+            <div className="mt-4 flex flex-col gap-3">
               <Link
                 href={`/card/${customer.publicToken}`}
                 target="_blank"
-                className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle"
+                className="rounded-[var(--lf-radius-input)] bg-foreground px-5 py-3 text-center font-semibold text-white transition hover:bg-primary-subtle"
               >
                 {copy.openCard}
               </Link>
 
               <CopyLinkButton value={cardUrl} language={language} />
 
-              {canManageCustomer ? (
+              {canUseReferrals ? (
                 referralLink ? (
-                  <>
-                    <CopyLinkButton value={referralLink} label={copy.copyReferral} language={language} />
-                    <p className="break-all text-xs text-foreground-subtle">{referralLink}</p>
-                  </>
+                  <CopyLinkButton
+                    value={referralLink}
+                    label={copy.copyReferral}
+                    language={language}
+                  />
                 ) : (
                   <form action={createReferralCode}>
-                    <button type="submit" className="w-full rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-6 py-4 font-semibold text-primary transition hover:bg-primary-subtle">
+                    <button
+                      type="submit"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-primary/30 bg-primary-subtle px-5 py-3 font-semibold text-primary transition hover:bg-primary-subtle"
+                    >
                       {copy.createReferral}
                     </button>
                   </form>
@@ -1461,7 +1580,7 @@ export default async function CustomerDetailsPage({
                 href={welcomeWhatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle sm:w-auto"
+                className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
               >
                 {copy.welcomeMessage}
               </a>
@@ -1470,7 +1589,7 @@ export default async function CustomerDetailsPage({
                 href={balanceWhatsAppUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-[var(--lf-radius-input)] bg-info px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
+                className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
               >
                 {copy.balanceMessage}
               </a>
@@ -1480,31 +1599,11 @@ export default async function CustomerDetailsPage({
                   href={rewardWhatsAppUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-6 py-4 font-semibold text-foreground transition hover:bg-warning-subtle"
+                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
                 >
                   {copy.rewardMessage}
                 </a>
-              ) : (
-                <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">
-                  {copy.rewardMessageUnavailable}
-                </span>
-              )}
-            </div>
-
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                <p className="text-xs text-foreground-subtle">{copy.totalEarned}</p>
-                <p dir="ltr" className="mt-1 text-xl font-bold">
-                  {customer.lifetimeEarned}
-                </p>
-              </div>
-
-              <div className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-4">
-                <p className="text-xs text-foreground-subtle">{copy.redeemedRewards}</p>
-                <p dir="ltr" className="mt-1 text-xl font-bold">
-                  {customer._count.redemptions}
-                </p>
-              </div>
+              ) : null}
             </div>
           </aside>
         </div>

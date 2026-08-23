@@ -53,14 +53,21 @@ test("programme updates persist audit metadata without replacing actor metadata"
     new URL("../app/businesses/[slug]/settings/actions.ts", import.meta.url),
     "utf8",
   );
+  const command = readFileSync(
+    new URL("../lib/server/business/settings-command.ts", import.meta.url),
+    "utf8",
+  );
 
   assert.match(actions, /metadata\?: Prisma\.InputJsonObject/);
-  assert.match(actions, /actorMetadata/);
-  assert.match(actions, /\.\.\.\(actorMetadata \?\? \{\}\)/);
-  assert.match(actions, /\.\.\.\(input\.metadata \?\? \{\}\)/);
+  assert.match(actions, /updateBusinessSettingsCommand/);
+  assert.match(actions, /metadata: input\.metadata/);
   assert.match(actions, /getLoyaltyProgramRulesAuditMetadata/);
   assert.match(
     actions,
-    /getLoyaltyProgramRulesAuditMetadata\(\s*currentProgrammeSnapshot,\s*nextProgramme,?\s*\)/,
+    /getLoyaltyProgramRulesAuditMetadata\(\s*currentProgrammeSnapshot,\s*nextProgrammeSnapshot,?\s*\)/,
   );
+
+  assert.match(command, /actorMetadata/);
+  assert.match(command, /\.\.\.\(actorMetadata \?\? \{\}\)/);
+  assert.match(command, /\.\.\.\(input\.metadata \?\? \{\}\)/);
 });

@@ -3,10 +3,7 @@
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildUserAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import {
   passwordConfirmationSchema,
@@ -22,13 +19,15 @@ import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createBusinessNotification } from "@/lib/notifications";
+import { updateTeamExperienceAccessCommand } from "@/lib/server/business/team-experience-access-command";
+import { provisionBusinessUserCommand } from "@/lib/server/business/team-provisioning-command";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import {
   EXPERIENCE_ACCESS_VALUES,
   getDefaultExperienceAccess,
   resolveExperienceAccess,
 } from "@/lib/experience-mode";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const experienceAccessSchema = z.enum(EXPERIENCE_ACCESS_VALUES);
 
@@ -83,6 +82,7 @@ async function getManagementContext(
         id: true,
         slug: true,
         plan: true,
+        subscriptionLifecycleState: true,
       },
     });
 
@@ -182,6 +182,14 @@ export async function createBusinessUserAction(
   if (!isBusinessOwner && !isSuperAdmin) {
     redirect(`/businesses/${slug}/users?error=permission`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  }
 
   if (
     isBusinessOwner &&
@@ -243,73 +251,34 @@ export async function createBusinessUserAction(
       parsed.data.password,
       12
     );
-  const activityContext = await getActivityRequestContext();
+  const creation = await provisionBusinessUserCommand({
+    businessId: business.id,
+    actor: session.user,
+    firstName: parsed.data.firstName,
+    lastName: parsed.data.lastName || null,
+    email,
+    passwordHash,
+    role: parsed.data.role,
+    experienceAccess: resolveExperienceAccess(
+      parsed.data.role,
+      parsed.data.experienceAccess ?? getDefaultExperienceAccess(parsed.data.role),
+    ),
+  });
 
-  await prisma.$transaction(
-    async (transaction) => {
-      await transaction.user.create({
-        data: {
-          firstName:
-            parsed.data.firstName,
-          lastName:
-            parsed.data.lastName ||
-            null,
-          email,
-          passwordHash,
-          role: parsed.data.role,
-          experienceAccess: resolveExperienceAccess(
-            parsed.data.role,
-            parsed.data.experienceAccess ?? getDefaultExperienceAccess(parsed.data.role),
-          ),
-          businessId:
-            business.id,
-          isActive: true,
-        },
-      });
-
-      await transaction
-        .businessActivity
-        .create({
-          data: {
-            type: "USER_CREATED",
-            description:
-              `تم إنشاء حساب ${
-                parsed.data.role === "OWNER"
-                  ? "مالك"
-                  : parsed.data.role === "MANAGER"
-                    ? "مدير"
-                    : parsed.data.role === "VIEWER"
-                      ? "مشاهد"
-                      : "موظف"
-              } للبريد ${email}`,
-            businessId:
-              business.id,
-            ...activityActorFields(session.user, business.id),
-            ...activityRequestMetadata(activityContext),
-          },
-        });
-
-      await createBusinessNotification(
-        transaction,
-        {
-          type: "USER_CREATED",
-          title: "تم إنشاء حساب فريق جديد",
-          message:
-            `تم إنشاء حساب ${
-              parsed.data.role === "OWNER"
-                ? "مالك"
-                : parsed.data.role === "MANAGER"
-                  ? "مدير"
-                  : parsed.data.role === "VIEWER"
-                    ? "مشاهد"
-                    : "موظف"
-            } للبريد ${email}`,
-          businessId:
-            business.id,
-        }
-      );
+  if (!creation.ok) {
+    if (creation.reason === "BUSINESS_NOT_FOUND") {
+      redirect("/businesses");
     }
-  );
+    const error =
+      creation.reason === "PLAN_LIMIT"
+        ? "plan-limit"
+        : creation.reason === "OWNER_EXISTS"
+          ? "owner-exists"
+          : creation.reason === "EMAIL_EXISTS"
+            ? "email"
+            : "subscription-restricted";
+    redirect(`/businesses/${slug}/users?error=${error}`);
+  }
 
   revalidateTeamPages(slug);
 
@@ -334,30 +303,35 @@ export async function updateBusinessUserExperienceAccessAction(
   if (!isBusinessOwner && !isSuperAdmin) {
     redirect(`/businesses/${slug}/users?error=permission`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${slug}/users?error=subscription-restricted`);
+  }
 
   const targetUser = await getTargetUser(business.id, parsedUserId.data);
   if (!targetUser) {
     redirect(`/businesses/${slug}/users?error=not-found`);
   }
 
-  const experienceAccess = resolveExperienceAccess(targetUser.role, parsedAccess.data);
-  const activityContext = await getActivityRequestContext();
-
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: targetUser.id },
-      data: { experienceAccess },
-    }),
-    prisma.businessActivity.create({
-      data: {
-        type: "USER_EXPERIENCE_ACCESS_UPDATED",
-        description: `تم تحديث وصول الواجهة للحساب ${targetUser.email}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    }),
-  ]);
+  const result = await updateTeamExperienceAccessCommand({
+    businessId: business.id,
+    userId: targetUser.id,
+    requestedAccess: parsedAccess.data,
+    actor: session.user,
+  });
+  if (!result.ok) {
+    redirect(
+      `/businesses/${slug}/users?error=${
+        result.reason === "SUBSCRIPTION_RESTRICTED"
+          ? "subscription-restricted"
+          : "not-found"
+      }`,
+    );
+  }
 
   revalidateTeamPages(slug);
   redirect(`/businesses/${slug}/users?success=experience-access`);
@@ -424,16 +398,17 @@ export async function setBusinessUserStatusAction(
     }),
 
     prisma.businessActivity.create({
-      data: {
-        type: "USER_STATUS_CHANGED",
-        description: parsedStatus.data
-          ? `تم إعادة تفعيل الحساب ${targetUser.email}`
-          : `تم إيقاف الحساب ${targetUser.email}`,
-        businessId:
-          business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
+      data: buildUserAuditActivity({
+        operation: parsedStatus.data ? "ACTIVATE" : "DEACTIVATE",
+        businessId: business.id,
+        actor: session.user,
+        targetUser: {
+          id: targetUser.id,
+          email: targetUser.email,
+          role: targetUser.role,
+        },
+        activityContext,
+      }),
     }),
   ]);
 
@@ -529,16 +504,17 @@ export async function resetBusinessUserPasswordAction(
     }),
 
     prisma.businessActivity.create({
-      data: {
-        type:
-          "USER_PASSWORD_CHANGED",
-        description:
-          `تم تغيير كلمة المرور للحساب ${targetUser.email}`,
-        businessId:
-          business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
+      data: buildUserAuditActivity({
+        operation: "PASSWORD_CHANGE",
+        businessId: business.id,
+        actor: session.user,
+        targetUser: {
+          id: targetUser.id,
+          email: targetUser.email,
+          role: targetUser.role,
+        },
+        activityContext,
+      }),
     }),
   ]);
 

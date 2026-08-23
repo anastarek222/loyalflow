@@ -21,7 +21,8 @@ function productionEnvironment(
 ) {
   return {
     NODE_ENV: "production",
-    DATABASE_URL: "postgresql://user:database-secret@db.example.test/loyalflow",
+    DATABASE_URL:
+      "postgresql://user:database-secret@db.example.test/loyalflow?sslmode=verify-full",
     AUTH_SECRET: "auth-secret-value",
     NEXT_PUBLIC_APP_URL: "https://app.loyalflow.co",
     LOYALFLOW_ENVIRONMENT: "production",
@@ -142,6 +143,16 @@ test("health routes expose safe readiness and liveness behavior", () => {
     readinessRoute,
     /database:\s*["'](connected|disconnected)/,
   );
+  assert.match(readinessRoute, /headers\.set\(\s*"Server-Timing"/);
+  assert.match(
+    readinessRoute,
+    /db;dur=\$\{formatDuration\(timings\.databaseMs\)\}/,
+  );
+  assert.match(
+    readinessRoute,
+    /total;dur=\$\{formatDuration\(timings\.totalMs\)\}/,
+  );
+  assert.doesNotMatch(readinessRoute, /Server-Timing[\s\S]{0,200}DATABASE_URL/);
   assert.match(livenessRoute, /status:\s*["']live["']/);
   assert.doesNotMatch(livenessRoute, /lib\/prisma/);
 });
@@ -208,7 +219,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 46);
+  assert.equal(committedMigrations.length, 48);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types",
@@ -218,6 +229,16 @@ test("local database verifier requires the complete reviewed committed migration
   assert.ok(
     committedMigrations.includes("20260724090000_add_experience_access"),
     "The U6.2 experience-access migration must be part of the reviewed history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260813003000_add_subscription_lifecycle_persistence",
+    ),
+    "The TC4.3 subscription lifecycle migration must be part of the reviewed history.",
+  );
+  assert.ok(
+    committedMigrations.includes("20260814213000_add_integration_outbox_jobs"),
+    "The TC6.4 integration outbox migration must be part of the reviewed history.",
   );
   assert.ok(
     committedMigrations.includes(

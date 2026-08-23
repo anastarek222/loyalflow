@@ -1,20 +1,22 @@
 "use server";
 
 import { auth } from "@/auth";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
-import { getActivityRequestContext } from "@/lib/activity/request-context";
-import { canManageBusiness } from "@/lib/permissions";
-import prisma from "@/lib/prisma";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
+import { canManageBusiness } from "@/lib/permissions";
+import prisma from "@/lib/prisma";
 import {
   normalizeRewardInput,
   rewardInputSchema,
 } from "@/lib/rewards/catalog";
+import {
+  createRewardCommand,
+  setRewardStatusCommand,
+  updateRewardCommand,
+  type RewardWriteCommandResult,
+} from "@/lib/server/business/reward-write-command";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -27,7 +29,12 @@ async function getRewardManagementContext(slug: string) {
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, plan: true },
+    select: {
+      id: true,
+      slug: true,
+      plan: true,
+      subscriptionLifecycleState: true,
+    },
   });
 
   if (!business || !canManageBusiness(session.user, business.id)) {
@@ -41,6 +48,21 @@ function revalidateRewardPaths(slug: string) {
   revalidatePath(`/businesses/${slug}/rewards`);
   revalidatePath(`/businesses/${slug}/customers`);
   revalidatePath(`/businesses/${slug}/reports`);
+}
+
+function rewardCommandError(result: RewardWriteCommandResult) {
+  if (result.ok) return null;
+  switch (result.reason) {
+    case "SUBSCRIPTION_RESTRICTED":
+      return "subscription-restricted";
+    case "PLAN_FEATURE":
+      return "plan-feature";
+    case "PLAN_LIMIT":
+      return "plan-limit";
+    case "BUSINESS_NOT_FOUND":
+    case "TARGET_NOT_FOUND":
+      return "not-found";
+  }
 }
 
 export async function createRewardAction(
@@ -61,6 +83,14 @@ export async function createRewardAction(
   if (!parsed.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "EXPAND",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
   if (!hasFeatureEntitlement(business.plan, "REWARDS")) {
     redirect(`/businesses/${business.slug}/rewards?error=plan-feature`);
   }
@@ -72,25 +102,15 @@ export async function createRewardAction(
     redirect(`/businesses/${business.slug}/rewards?error=plan-limit`);
   }
 
-  const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
-    const reward = await transaction.reward.create({
-      data: {
-        ...normalizeRewardInput(parsed.data),
-        businessId: business.id,
-      },
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "REWARD_CREATED",
-        description: `تم إنشاء المكافأة ${reward.name}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
+  const result = await createRewardCommand({
+    businessId: business.id,
+    reward: normalizeRewardInput(parsed.data),
+    actor: session.user,
   });
+  const error = rewardCommandError(result);
+  if (error) {
+    redirect(`/businesses/${business.slug}/rewards?error=${error}`);
+  }
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=created`);
@@ -116,6 +136,14 @@ export async function updateRewardAction(
   if (!parsed.success || !parsedRewardId.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   const existingReward = await prisma.reward.findFirst({
     where: { id: parsedRewardId.data, businessId: business.id },
@@ -125,23 +153,16 @@ export async function updateRewardAction(
     redirect(`/businesses/${business.slug}/rewards?error=not-found`);
   }
 
-  const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
-    const reward = await transaction.reward.update({
-      where: { id: existingReward.id },
-      data: normalizeRewardInput(parsed.data),
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "REWARD_UPDATED",
-        description: `تم تحديث المكافأة ${reward.name}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
+  const result = await updateRewardCommand({
+    businessId: business.id,
+    rewardId: existingReward.id,
+    reward: normalizeRewardInput(parsed.data),
+    actor: session.user,
   });
+  const error = rewardCommandError(result);
+  if (error) {
+    redirect(`/businesses/${business.slug}/rewards?error=${error}`);
+  }
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=updated`);
@@ -159,6 +180,14 @@ export async function toggleRewardStatusAction(
   if (!parsedRewardId.success || !parsedStatus.success) {
     redirect(`/businesses/${business.slug}/rewards?error=invalid`);
   }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+  }
 
   const existingReward = await prisma.reward.findFirst({
     where: { id: parsedRewardId.data, businessId: business.id },
@@ -168,25 +197,16 @@ export async function toggleRewardStatusAction(
     redirect(`/businesses/${business.slug}/rewards?error=not-found`);
   }
 
-  const activityContext = await getActivityRequestContext();
-  await prisma.$transaction(async (transaction) => {
-    const reward = await transaction.reward.update({
-      where: { id: existingReward.id },
-      data: { isActive: parsedStatus.data },
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "REWARD_STATUS_CHANGED",
-        description: parsedStatus.data
-          ? `تم تفعيل المكافأة ${reward.name}`
-          : `تم إيقاف المكافأة ${reward.name}`,
-        businessId: business.id,
-        ...activityActorFields(session.user, business.id),
-        ...activityRequestMetadata(activityContext),
-      },
-    });
+  const result = await setRewardStatusCommand({
+    businessId: business.id,
+    rewardId: existingReward.id,
+    isActive: parsedStatus.data,
+    actor: session.user,
   });
+  const error = rewardCommandError(result);
+  if (error) {
+    redirect(`/businesses/${business.slug}/rewards?error=${error}`);
+  }
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=updated`);

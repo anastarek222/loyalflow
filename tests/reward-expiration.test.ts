@@ -17,7 +17,7 @@ test("keeps rewards active when no explicit expiry policy exists", () => {
       expiresAfterDays: null,
       now: new Date("2026-08-01T00:00:00Z"),
     }),
-    { state: "ACTIVE", expiresAt: null }
+    { state: "ACTIVE", expiresAt: null },
   );
 });
 
@@ -27,7 +27,6 @@ test("calculates expiry from unlock time without changing balance state", () => 
     expiresAfterDays: 7,
     now: new Date("2026-07-08T00:00:00Z"),
   });
-
   assert.equal(result.state, "EXPIRED");
   assert.equal(result.expiresAt?.toISOString(), "2026-07-08T00:00:00.000Z");
 });
@@ -35,7 +34,7 @@ test("calculates expiry from unlock time without changing balance state", () => 
 test("does not create expiry for a reward that is not unlocked", () => {
   assert.deepEqual(
     getRewardExpiration({ unlockedAt: null, expiresAfterDays: 7 }),
-    { state: "NOT_UNLOCKED", expiresAt: null }
+    { state: "NOT_UNLOCKED", expiresAt: null },
   );
 });
 
@@ -45,7 +44,6 @@ test("keeps an unlocked reward active before its deterministic UTC expiry", () =
     expiresAfterDays: 1,
     now: new Date("2026-07-02T23:29:59.999Z"),
   });
-
   assert.equal(result.state, "ACTIVE");
   assert.equal(result.expiresAt?.toISOString(), "2026-07-02T23:30:00.000Z");
 });
@@ -57,7 +55,7 @@ test("treats the exact expiry instant as expired", () => {
       expiresAfterDays: 1,
       now: new Date("2026-07-02T00:00:00.000Z"),
     }).state,
-    "EXPIRED"
+    "EXPIRED",
   );
 });
 
@@ -72,7 +70,7 @@ test("blocks redemption for an expired unlock without treating it as a balance c
       expiredAt: null,
       now: new Date("2026-07-02T00:00:00.000Z"),
     }),
-    "EXPIRED"
+    "EXPIRED",
   );
 });
 
@@ -87,7 +85,7 @@ test("does not allow a reward unlock from another tenant to be redeemed", () => 
       expiredAt: null,
       now: new Date("2026-07-02T00:00:00.000Z"),
     }),
-    "WRONG_TENANT"
+    "WRONG_TENANT",
   );
 });
 
@@ -98,31 +96,66 @@ test("preserves the legacy no-expiry redemption path", () => {
       expiresAfterDays: null,
       now: new Date("2030-07-01T00:00:00.000Z"),
     }),
-    { state: "ACTIVE", expiresAt: null }
+    { state: "ACTIVE", expiresAt: null },
   );
 });
 
 test("classifies lifecycle states with redeemed, expired, inactive, then active precedence", () => {
   const now = new Date("2026-08-04T12:00:00Z");
-  const live = { rewardActive: true, redeemedAt: null, expiredAt: null, expiresAt: new Date("2026-08-05T12:00:00Z"), now };
+  const live = {
+    rewardActive: true,
+    redeemedAt: null,
+    expiredAt: null,
+    expiresAt: new Date("2026-08-05T12:00:00Z"),
+    now,
+  };
   assert.equal(getRewardUnlockLifecycleState(live), "ACTIVE");
   assert.equal(getRewardUnlockLifecycleState({ ...live, expiresAt: now }), "EXPIRED");
-  assert.equal(getRewardUnlockLifecycleState({ ...live, expiresAt: new Date("2026-08-03T12:00:00Z") }), "EXPIRED");
+  assert.equal(
+    getRewardUnlockLifecycleState({ ...live, expiresAt: new Date("2026-08-03T12:00:00Z") }),
+    "EXPIRED",
+  );
   assert.equal(getRewardUnlockLifecycleState({ ...live, expiredAt: now }), "EXPIRED");
   assert.equal(getRewardUnlockLifecycleState({ ...live, rewardActive: false }), "REWARD_INACTIVE");
-  assert.equal(getRewardUnlockLifecycleState({ ...live, rewardActive: false, expiredAt: now }), "EXPIRED");
-  assert.equal(getRewardUnlockLifecycleState({ ...live, rewardActive: false, redeemedAt: now }), "REDEEMED");
-  assert.equal(isRewardUnlockActionable({ ...live, expiresAt: new Date("2026-08-03T12:00:00Z") }), false);
+  assert.equal(
+    getRewardUnlockLifecycleState({ ...live, rewardActive: false, expiredAt: now }),
+    "EXPIRED",
+  );
+  assert.equal(
+    getRewardUnlockLifecycleState({ ...live, rewardActive: false, redeemedAt: now }),
+    "REDEEMED",
+  );
+  assert.equal(
+    isRewardUnlockActionable({ ...live, expiresAt: new Date("2026-08-03T12:00:00Z") }),
+    false,
+  );
 });
 
-test("retains database protection and compatibility paths without mutating lifecycle rows", () => {
-  const migration = readFileSync(join(process.cwd(), "prisma/migrations/20260720210000_add_reward_expiration/migration.sql"), "utf8");
+test("retains database protection and canonical redemption paths without mutating lifecycle rows", () => {
+  const migration = readFileSync(
+    join(process.cwd(), "prisma/migrations/20260720210000_add_reward_expiration/migration.sql"),
+    "utf8",
+  );
   assert.match(migration, /CREATE UNIQUE INDEX "RewardUnlock_one_live_per_customer_reward"/);
-  assert.match(migration, /ON "RewardUnlock"\("customerId", "rewardId"\)\s+WHERE "redeemedAt" IS NULL AND "expiredAt" IS NULL/);
-  const actions = readFileSync(join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/actions.ts"), "utf8");
+  assert.match(
+    migration,
+    /ON "RewardUnlock"\("customerId", "rewardId"\)\s+WHERE "redeemedAt" IS NULL AND "expiredAt" IS NULL/,
+  );
+
+  const redemptionAction = readFileSync(
+    join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts"),
+    "utf8",
+  );
+  const redemptionCommand = readFileSync(
+    join(process.cwd(), "lib/server/business/loyalty-redemption-command.ts"),
+    "utf8",
+  );
   const transactions = readFileSync(join(process.cwd(), "lib/loyalty/transactions.ts"), "utf8");
-  assert.match(actions, /isActive: true,[\s\S]*expiresAfterDays: \{ not: null \}/);
-  assert.match(actions, /No unlock means this balance predates enabling expiry/);
-  assert.match(actions, /recordRewardRedemption/);
+
+  assert.match(redemptionAction, /redeemLoyaltyRewardCommand/);
+  assert.match(redemptionAction, /expiresAfterDays: true/);
+  assert.match(redemptionCommand, /getRewardUnlockRedemptionState/);
+  assert.match(redemptionCommand, /recordRewardRedemption/);
+  assert.match(redemptionCommand, /transaction\.rewardUnlock\.findFirst/);
   assert.match(transactions, /expiresAt: \{ gt: new Date\(\) \}/);
 });

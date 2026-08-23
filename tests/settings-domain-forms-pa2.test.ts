@@ -38,7 +38,6 @@ const validProfile = {
 
 const validProgram = {
   loyaltyProgramName: "Loyal Rewards",
-  pointsName: "Points",
   welcomeMessage: "Welcome",
   cardDefaultLanguage: "EN",
   loyaltyMode: "POINTS",
@@ -102,7 +101,6 @@ test("programme rules update only programme-owned fields", () => {
     "earnAmount",
     "loyaltyMode",
     "loyaltyProgramName",
-    "pointsName",
     "rewardCode",
     "rewardDescription",
     "rewardName",
@@ -170,9 +168,23 @@ test("every domain action reuses tenant authorization and explicit parsing", () 
 test("Settings retains two independent PA-2 forms with pending feedback", () => {
   assert.equal((formSource.match(/<form action=\{actions\./g) ?? []).length, 2);
   assert.match(formSource, /useFormStatus/);
-  assert.match(formSource, /aria-live="polite"/);
+  assert.match(formSource, /role=\{success \? "status" : "alert"\}/);
+  assert.match(formSource, /aria-live=\{success \? "polite" : "assertive"\}/);
   assert.match(pageSource, /profile: updateBusinessProfile/);
   assert.match(pageSource, /operations: updateOperationsSettings/);
+});
+
+test("Settings keeps missing card contact details empty instead of saveable examples", () => {
+  const start = pageSource.indexOf("<CardBusinessDetailsForm");
+  assert.ok(start >= 0);
+  const end = pageSource.indexOf("/>", start);
+  assert.ok(end > start);
+  const binding = pageSource.slice(start, end);
+
+  assert.match(binding, /contactPhone=\{business\.contactPhone \?\? ""\}/);
+  assert.match(binding, /address=\{business\.address \?\? ""\}/);
+  assert.doesNotMatch(binding, /01033196610/);
+  assert.doesNotMatch(binding, /Dr\. Lasheen|دكتور لاشين|المريوطية|فيصل/);
 });
 
 test("PA-1 removals remain intact after programme extraction", () => {

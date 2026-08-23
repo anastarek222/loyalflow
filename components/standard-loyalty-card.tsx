@@ -6,9 +6,12 @@ import {
   type LoyaltyCardMode,
   type StandardCardArtworkCategory,
 } from "@/lib/cards/standard-card";
+import {
+  LOYALTY_CARD_CANVAS,
+  STANDARD_CARD_QR_CONTENT_ZONE,
+  STANDARD_CARD_QR_ZONE,
+} from "@/lib/cards/card-rendering-contract";
 import { formatWebsiteForCard } from "@/lib/urls/business-url";
-
-export const STANDARD_CARD_CANVAS = { width: 856, height: 540 } as const;
 
 export type StandardLoyaltyCardProps = {
   side?: "front" | "back";
@@ -169,13 +172,23 @@ function CardDefinitions({
         <stop offset="1" stopColor={dark ? "#8B8CF8" : "#60A5FA"} />
       </linearGradient>
       <clipPath id={`${id}-card-clip`}>
-        <rect width="856" height="540" rx="28" />
+        <rect
+          width={LOYALTY_CARD_CANVAS.width}
+          height={LOYALTY_CARD_CANVAS.height}
+          rx="28"
+        />
       </clipPath>
       <clipPath id={`${id}-logo-clip`}>
         <rect x="42" y="35" width="64" height="64" rx="10" />
       </clipPath>
       <clipPath id={`${id}-qr-clip`}>
-        <rect x="716" y="27" width="112" height="112" rx="12" />
+        <rect
+          x={STANDARD_CARD_QR_ZONE.x}
+          y={STANDARD_CARD_QR_ZONE.y}
+          width={STANDARD_CARD_QR_ZONE.width}
+          height={STANDARD_CARD_QR_ZONE.height}
+          rx="12"
+        />
       </clipPath>
     </defs>
   );
@@ -192,7 +205,12 @@ function CardBackground({
 }) {
   return (
     <g data-safe-zone="card-background" clipPath={`url(#${id}-card-clip)`}>
-      <rect width="856" height="540" rx="28" fill={`url(#${id}-base)`} />
+      <rect
+        width={LOYALTY_CARD_CANVAS.width}
+        height={LOYALTY_CARD_CANVAS.height}
+        rx="28"
+        fill={`url(#${id}-base)`}
+      />
       <circle
         cx="760"
         cy="58"
@@ -228,15 +246,21 @@ function Brand({
   logoUrl,
   accent,
   muted,
+  rtl,
 }: {
   id: string;
   businessName: string;
   logoUrl?: string | null;
   accent: string;
   muted: string;
+  rtl: boolean;
 }) {
   return (
-    <g data-safe-zone="brand-logo">
+    <g
+      data-safe-zone="brand-logo"
+      direction="ltr"
+      style={{ unicodeBidi: "isolate" }}
+    >
       <rect
         x="42"
         y="35"
@@ -284,9 +308,10 @@ function Brand({
         fill={muted}
         fontSize="11"
         fontWeight="600"
-        letterSpacing="4"
+        letterSpacing={rtl ? "0" : "4"}
+        direction={rtl ? "rtl" : "ltr"}
       >
-        LOYALTY PROGRAMME
+        {rtl ? "برنامج الولاء" : "LOYALTY PROGRAMME"}
       </text>
     </g>
   );
@@ -436,13 +461,14 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         logoUrl={props.logoUrl}
         accent={accent}
         muted={muted}
+        rtl={rtl}
       />
       <g data-safe-zone="qr-code">
         <rect
-          x="716"
-          y="27"
-          width="112"
-          height="112"
+          x={STANDARD_CARD_QR_ZONE.x}
+          y={STANDARD_CARD_QR_ZONE.y}
+          width={STANDARD_CARD_QR_ZONE.width}
+          height={STANDARD_CARD_QR_ZONE.height}
           rx="12"
           fill="#fff"
           stroke="#CBD5E1"
@@ -450,19 +476,23 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         {props.qrCode ? (
           <image
             href={props.qrCode}
-            x="726"
-            y="37"
-            width="92"
-            height="92"
+            x={STANDARD_CARD_QR_CONTENT_ZONE.x}
+            y={STANDARD_CARD_QR_CONTENT_ZONE.y}
+            width={STANDARD_CARD_QR_CONTENT_ZONE.width}
+            height={STANDARD_CARD_QR_CONTENT_ZONE.height}
             preserveAspectRatio="xMidYMid meet"
             clipPath={`url(#${id}-qr-clip)`}
           />
         ) : (
-          <PreviewQr x={726} y={37} size={92} />
+          <PreviewQr
+            x={STANDARD_CARD_QR_CONTENT_ZONE.x}
+            y={STANDARD_CARD_QR_CONTENT_ZONE.y}
+            size={STANDARD_CARD_QR_CONTENT_ZONE.width}
+          />
         )}
         <text
-          x="772"
-          y="158"
+          x={STANDARD_CARD_QR_ZONE.x + STANDARD_CARD_QR_ZONE.width / 2}
+          y={STANDARD_CARD_QR_ZONE.y + STANDARD_CARD_QR_ZONE.height + 19}
           fill={muted}
           fontSize="11"
           fontWeight="700"
@@ -837,7 +867,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   return (
     <article
       data-testid={`standard-card-${side}`}
-      data-card-aspect-ratio="1.586"
+      data-card-aspect-ratio={STANDARD_CARD_ASPECT_RATIO.toFixed(3)}
       className="relative w-full overflow-hidden rounded-[5.2%] shadow-[0_24px_55px_-28px_rgba(15,23,42,0.8)]"
       style={{
         aspectRatio: String(STANDARD_CARD_ASPECT_RATIO),
@@ -845,9 +875,11 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
       }}
     >
       <svg
-        viewBox={`0 0 ${STANDARD_CARD_CANVAS.width} ${STANDARD_CARD_CANVAS.height}`}
+        viewBox={`0 0 ${LOYALTY_CARD_CANVAS.width} ${LOYALTY_CARD_CANVAS.height}`}
         width="100%"
         height="100%"
+        direction="ltr"
+        style={{ unicodeBidi: "isolate" }}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label={`${props.businessName} loyalty card ${side}`}

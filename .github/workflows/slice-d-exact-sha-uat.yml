@@ -1,0 +1,197 @@
+name: Slice D Exact-SHA Runtime UAT
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  browser-uat:
+    if: github.head_ref == 'agent/slice-d-runtime-uat-trigger'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CI: "true"
+      STAGING_UAT_BASE_URL: https://loyalflow-git-staging-anas-tarek.vercel.app
+      LOYALFLOW_ENVIRONMENT: staging
+      LOYALFLOW_STAGING_DATABASE: neondb
+      CERTIFIED_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Generate ephemeral handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lf-uat-handoff
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/lf-uat-handoff/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/lf-uat-handoff/private.pem -pubout -out /tmp/lf-uat-handoff/public.pem
+          printf '%s\n' "$GITHUB_RUN_ID" > /tmp/lf-uat-handoff/request-id
+
+      - name: Publish public handoff key
+        uses: actions/upload-artifact@v4
+        with:
+          name: slice-d-uat-handoff-${{ github.run_id }}
+          path: |
+            /tmp/lf-uat-handoff/public.pem
+            /tmp/lf-uat-handoff/request-id
+          retention-days: 1
+
+      - name: Mark runtime UAT pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d '{"state":"pending","context":"Slice D Runtime UAT","description":"Waiting for encrypted ephemeral handoff"}'
+
+      - name: Wait for encrypted handoff comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="slice-d-uat-handoff:${GITHUB_RUN_ID}:"
+          rm -f /tmp/lf-uat-handoff/payload.json
+          for attempt in $(seq 1 120); do
+            body=$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              | jq -r --arg prefix "$prefix" '[.[] | .body | select(startswith($prefix))] | last // empty')
+            if [ -n "$body" ]; then
+              encoded="${body#${prefix}}"
+              printf '%s' "$encoded" | base64 -d > /tmp/lf-uat-handoff/payload.json
+              if jq -e --arg requestId "$GITHUB_RUN_ID" '.requestId == $requestId' /tmp/lf-uat-handoff/payload.json >/dev/null 2>&1; then
+                exit 0
+              fi
+            fi
+            sleep 3
+          done
+          echo "::error::Encrypted UAT handoff was not received for this run"
+          exit 1
+
+      - name: Decrypt ephemeral handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const payload = JSON.parse(fs.readFileSync('/tmp/lf-uat-handoff/payload.json', 'utf8'));
+          const privateKey = fs.readFileSync('/tmp/lf-uat-handoff/private.pem', 'utf8');
+          const key = crypto.privateDecrypt(
+            { key: privateKey, oaepHash: 'sha256', padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+            Buffer.from(payload.key, 'base64'),
+          );
+          const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(payload.iv, 'base64'));
+          decipher.setAuthTag(Buffer.from(payload.tag, 'base64'));
+          const clear = Buffer.concat([
+            decipher.update(Buffer.from(payload.data, 'base64')),
+            decipher.final(),
+          ]);
+          const values = JSON.parse(clear.toString('utf8'));
+          for (const name of ['DATABASE_URL', 'UAT_FIXTURE_PASSWORD', 'VERCEL_AUTOMATION_BYPASS_SECRET']) {
+            if (!values[name]) throw new Error(`${name} missing from encrypted handoff`);
+            process.stdout.write(`::add-mask::${values[name]}\n`);
+            fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<LFUATEOF\n${values[name]}\nLFUATEOF\n`);
+          }
+          NODE
+          rm -f /tmp/lf-uat-handoff/payload.json /tmp/lf-uat-handoff/private.pem
+
+      - name: Checkout certified Staging source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CERTIFIED_SHA }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Verify protected Staging exact release
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from '@playwright/test';
+          const expected = process.env.CERTIFIED_SHA.slice(0, 12);
+          const browser = await chromium.launch();
+          const context = await browser.newContext({
+            extraHTTPHeaders: {
+              'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET,
+              'x-vercel-set-bypass-cookie': 'true',
+            },
+          });
+          const page = await context.newPage();
+          const response = await page.goto(`${process.env.STAGING_UAT_BASE_URL}/api/health/live`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          if (!response?.ok()) throw new Error(`Staging health failed: ${response?.status()}`);
+          const health = JSON.parse(await page.locator('body').innerText());
+          if (health.environment !== 'staging' || health.release !== expected) {
+            throw new Error(`Exact release mismatch: expected ${expected}, received ${health.release}`);
+          }
+          await browser.close();
+          NODE
+
+      - name: Run exact-SHA browser UAT
+        run: pnpm test:browser-uat
+
+      - name: Upload UAT evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slice-d-runtime-uat-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Mark runtime UAT success
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d '{"state":"success","context":"Slice D Runtime UAT","description":"Exact-SHA browser UAT passed"}'
+
+      - name: Mark runtime UAT failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d '{"state":"failure","context":"Slice D Runtime UAT","description":"Exact-SHA browser UAT failed; inspect Actions evidence"}'

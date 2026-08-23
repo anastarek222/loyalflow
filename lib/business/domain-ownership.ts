@@ -60,7 +60,7 @@ export type LegacyFieldStatus =
   | "DEAD_CANDIDATE";
 
 export const LEGACY_BUSINESS_FIELD_CLASSIFICATION = {
-  pointsName: "ACTIVE_COMPATIBILITY",
+  pointsName: "DEPRECATED_READ_ONLY",
   membershipName: "ACTIVE_COMPATIBILITY",
   secondaryColor: "ACTIVE_COMPATIBILITY",
   themePreset: "ACTIVE_CANONICAL",
@@ -89,4 +89,3 @@ export function pickOwnedFields<
     fields.map((field) => [field, source[field]]),
   ) as Pick<Source, Key[number]>;
 }
-

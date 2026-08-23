@@ -85,11 +85,14 @@ test("F19.5 operations centre exposes aggregate platform signals only", () => {
 
 test("F19.5 Super Admin global navigation exposes the operations centre", () => {
   const navigation = source("lib/app-shell-navigation.ts");
+  const englishNavigation = source(
+    "packages/i18n/src/locales/en/navigation.ts",
+  );
   const sidebar = source("components/app-sidebar.tsx");
 
   assert.match(navigation, /platformOps/);
   assert.match(navigation, /"\/operations"/);
-  assert.match(navigation, /Operations centre/);
+  assert.match(englishNavigation, /Operations centre/);
   assert.match(sidebar, /platformOps:\s*ShieldCheck/);
 });
 

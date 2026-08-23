@@ -55,9 +55,10 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
   }, [onClose, open]);
 
   const groups = buildShellNavigation({ language, user, business, experienceMode });
+  if (!open) return null;
   return <>
-    {open && <button type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="fixed inset-0 z-40 cursor-default bg-foreground/45 lg:hidden" />}
-    <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className={`lf-nav-sidebar fixed start-0 top-0 z-50 flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e shadow-[var(--lf-shadow-overlay)] transition-transform duration-200 lg:hidden ${open ? "translate-x-0" : "ltr:-translate-x-full rtl:translate-x-full"}`}>
+    <button type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="fixed inset-0 z-40 cursor-default bg-foreground/45 lg:hidden" />
+    <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className="lf-nav-sidebar fixed start-0 top-0 z-50 flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e shadow-[var(--lf-shadow-overlay)] transition-transform duration-200 lg:hidden">
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
         <div><p className="font-black text-foreground">LoyalFlow</p><p className="text-xs text-foreground-subtle">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p></div>
         <button ref={closeRef} type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] text-foreground-muted hover:bg-surface-subtle"><X aria-hidden="true" /></button>

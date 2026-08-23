@@ -1,5 +1,3 @@
-import { auth } from "@/auth";
-
 import {
   getLanguageAttributes,
 } from "@/lib/i18n";
@@ -8,6 +6,7 @@ import {
   resolveExperienceAccess,
   resolveExperienceMode,
 } from "@/lib/experience-mode";
+import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
 
 import prisma from "@/lib/prisma";
 
@@ -20,42 +19,19 @@ type AuthenticatedLocaleShellProps = {
   children: React.ReactNode;
 };
 
+const SUPER_ADMIN_SHELL_BUSINESS_LIMIT = 100;
+
 export default async function AuthenticatedLocaleShell({
   children,
 }: AuthenticatedLocaleShellProps) {
 
-  const session = await auth();
+  const requestContext = await getAuthenticatedRequestContext();
 
-  if (!session?.user?.id) {
+  if (!requestContext) {
     redirect("/login");
   }
 
-
-  const user =
-    await prisma.user.findUnique({
-      where: {
-        id: session.user.id,
-      },
-
-      select: {
-        language: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        id: true,
-        role: true,
-        experienceAccess: true,
-        businessId: true,
-        onboardingStatus: true,
-        business: {
-          select: {
-            slug: true,
-            name: true,
-            plan: true,
-          },
-        },
-      },
-    });
+  const { user } = requestContext;
 
   // This shell wraps authenticated dashboard and tenant routes, but not
   // /onboarding itself. Pending owners therefore cannot navigate around setup.
@@ -66,7 +42,8 @@ export default async function AuthenticatedLocaleShell({
   const businesses = user?.role === "SUPER_ADMIN"
     ? await prisma.business.findMany({
         select: { id: true, name: true, slug: true, plan: true },
-        orderBy: { name: "asc" },
+        orderBy: [{ name: "asc" }, { id: "asc" }],
+        take: SUPER_ADMIN_SHELL_BUSINESS_LIMIT,
       })
     : user?.business
       ? [{

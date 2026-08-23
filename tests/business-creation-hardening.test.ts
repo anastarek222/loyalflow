@@ -87,7 +87,6 @@ test("minimal and fully populated realistic creation payloads share one valid co
   assert.equal(full.success, true);
   assert.equal(full.success && full.data.website, "https://www.xtvco.com/");
 });
-
 test("website input is friendly, canonical, and rejects dangerous protocols", () => {
   assert.equal(normalizeWebsiteUrl("xtvco.com"), "https://xtvco.com/");
   assert.equal(normalizeWebsiteUrl("www.xtvco.com"), "https://www.xtvco.com/");
@@ -97,16 +96,18 @@ test("website input is friendly, canonical, and rejects dangerous protocols", ()
   assert.equal(formatWebsiteForCard("https://www.xtvco.com/"), "xtvco.com");
 });
 
-test("business creation commits core state before scheduling optional Google Sheets sync", () => {
+test("business creation commits a durable job before publishing its queue wake-up", () => {
   const action = source("app/businesses/actions.ts");
   const scheduler = source("lib/google-sheets-sync-scheduler.ts");
   const transaction = action.indexOf("prisma.$transaction");
   const backgroundSync = action.indexOf(
-    "scheduleBusinessGoogleSheetsSync(createdBusiness.id)",
+    "scheduleBusinessGoogleSheetsSync(integrationJobId)",
   );
 
   assert.ok(transaction >= 0 && backgroundSync > transaction);
-  assert.match(scheduler, /after\(async \(\) => \{\s*await syncBusinessToGoogleSheetSafely/);
+  assert.match(action, /await enqueueIntegrationJob\(transaction/);
+  assert.match(scheduler, /after\(async \(\) =>/);
+  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
   assert.doesNotMatch(action, /await syncBusinessToGoogleSheetSafely\(createdBusiness\.id\)/);
   assert.match(action, /sheetSync=pending/);
   assert.match(source("app/businesses/[slug]/users/page.tsx"), /مزامنة Google Sheets تعمل في الخلفية/);
@@ -135,12 +136,16 @@ test("business creation emits secret-safe lifecycle checkpoints and protects dou
   assert.match(source("components/business-setup-wizard.tsx"), /submissionLockRef\.current/);
 });
 
-test("Add Business branding uses upload preview without an owner-facing logo URL field", () => {
+test("Add Business branding uses localized upload preview without an owner-facing logo URL field", () => {
   const wizard = source("components/business-setup-wizard.tsx");
-  assert.match(wizard, /Business Logo/);
-  assert.match(wizard, /Current business logo preview/);
-  assert.match(wizard, /Change Logo|Upload Logo/);
-  assert.match(wizard, /Card preview with this business logo/);
+  assert.match(wizard, /businessLogo: "Business logo"/);
+  assert.match(wizard, /businessLogo: "شعار النشاط"/);
+  assert.match(wizard, /logoAlt: "Current business logo preview"/);
+  assert.match(wizard, /logoAlt: "معاينة شعار النشاط الحالي"/);
+  assert.match(wizard, /changeLogo: "Change logo"/);
+  assert.match(wizard, /uploadLogo: "Upload logo"/);
+  assert.match(wizard, /Configure the one card design used for every customer/);
+  assert.equal((wizard.match(/<StandardCardSetup/g) ?? []).length, 1);
   assert.doesNotMatch(wizard, /Or use a logo image URL/);
   assert.doesNotMatch(wizard, /type="url"/);
 });

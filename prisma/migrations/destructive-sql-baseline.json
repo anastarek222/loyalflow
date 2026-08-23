@@ -2,7 +2,7 @@
   "version": 1,
   "algorithm": "sha256",
   "description": "Reviewed historical destructive SQL statements. New or changed matches require explicit review.",
-  "entryCount": 29,
+  "entryCount": 30,
   "entries": [
     {
       "path": "prisma/migrations/20260713182630_add_owner_export_permission/migration.sql",
@@ -206,6 +206,13 @@
       "operation": "UPDATE_DATA",
       "statement": "UPDATE \"Business\" SET \"plan\" = 'BUSINESS';",
       "sha256": "7fd7742f1098a01494c05640eba13f06c03a89437fece7a8caaa5ff9753d3127"
+    },
+    {
+      "path": "prisma/migrations/20260813003000_add_subscription_lifecycle_persistence/migration.sql",
+      "line": 15,
+      "operation": "UPDATE_DATA",
+      "statement": "UPDATE \"Business\" SET \"subscriptionLifecycleState\" = CASE WHEN \"paymentStatus\" = 'PAID' THEN 'ACTIVE'::\"SubscriptionLifecycleState\" WHEN \"paymentStatus\" = 'DUE' THEN 'ACTIVE'::\"SubscriptionLifecycleState\" WHEN \"paymentStatus\" = 'OVERDUE' THEN 'PAST_DUE'::\"SubscriptionLifecycleState\" WHEN \"paymentStatus\" = 'SUSPENDED' THEN 'SUSPENDED'::\"SubscriptionLifecycleState\" ELSE 'TRIALING'::\"SubscriptionLifecycleState\" END;",
+      "sha256": "965a3ce7990245330058276dbe35966243bdd90d854936b2b27c3cba8504fb00"
     }
   ]
 }

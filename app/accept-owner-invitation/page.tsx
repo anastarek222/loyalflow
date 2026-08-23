@@ -1,9 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from "@/lib/auth/password-policy";
+import { translate } from "@/lib/i18n/catalog";
+import { getLocaleDirection } from "@/lib/i18n/config";
+import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 
 import { acceptOwnerInvitationAction } from "./actions";
 
@@ -14,6 +20,21 @@ type Props = {
   }>;
 };
 
+async function getInvitationLocale() {
+  const cookieStore = await cookies();
+  return resolveRequestLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getInvitationLocale();
+
+  return {
+    title: translate(locale, "ownerInvite.metaTitle"),
+    description: translate(locale, "ownerInvite.metaDescription"),
+    robots: { index: false, follow: false },
+  };
+}
+
 export default async function AcceptOwnerInvitationPage({
   searchParams,
 }: Props) {
@@ -21,25 +42,30 @@ export default async function AcceptOwnerInvitationPage({
   const token = typeof params.token === "string" ? params.token : "";
   const error = typeof params.error === "string" ? params.error : "";
   const invalidToken = !token || error === "invalid-token";
+  const locale = await getInvitationLocale();
+  const direction = getLocaleDirection(locale);
 
   return (
-    <main className="min-h-screen bg-surface-subtle px-4 py-12">
+    <main lang={locale} dir={direction} className="min-h-screen bg-surface-subtle px-4 py-12">
       <section className="mx-auto w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-foreground">Accept owner invitation</h1>
+        <div className="mb-6 flex justify-end">
+          <LanguageSwitcher locale={locale} />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground">{translate(locale, "ownerInvite.title")}</h1>
         <p className="mt-2 text-sm text-foreground-muted">
-          Choose your LoyalFlow password to activate your owner account.
+          {translate(locale, "ownerInvite.body")}
         </p>
 
         {invalidToken ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
-              This invitation link is invalid or has expired.
+              {translate(locale, "ownerInvite.invalid")}
             </div>
             <Link
               href="/login"
               className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white"
             >
-              Back to login
+              {translate(locale, "ownerInvite.backLogin")}
             </Link>
           </div>
         ) : (
@@ -48,19 +74,19 @@ export default async function AcceptOwnerInvitationPage({
 
             {error === "password-mismatch" ? (
               <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
-                The passwords do not match.
+                {translate(locale, "ownerInvite.passwordMismatch")}
               </div>
             ) : null}
 
             {error === "password-invalid" ? (
               <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
-                Please choose a valid password.
+                {translate(locale, "ownerInvite.passwordInvalid")}
               </div>
             ) : null}
 
             <div>
               <label htmlFor="password" className="mb-2 block text-sm font-semibold text-foreground-muted">
-                Password
+                {translate(locale, "ownerInvite.password")}
               </label>
               <input
                 id="password"
@@ -76,7 +102,7 @@ export default async function AcceptOwnerInvitationPage({
 
             <div>
               <label htmlFor="confirmPassword" className="mb-2 block text-sm font-semibold text-foreground-muted">
-                Confirm password
+                {translate(locale, "ownerInvite.confirmPassword")}
               </label>
               <input
                 id="confirmPassword"
@@ -94,7 +120,7 @@ export default async function AcceptOwnerInvitationPage({
               type="submit"
               className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white transition hover:bg-primary-hover"
             >
-              Activate owner account
+              {translate(locale, "ownerInvite.activate")}
             </button>
           </form>
         )}

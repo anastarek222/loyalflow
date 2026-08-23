@@ -72,6 +72,10 @@ test("branch assignment and removal audit the canonical actor, branch, and assig
     assert.equal(activity.createdById, actor.actorId);
     assert.equal(activity.branchId, branch.id);
     assert.deepEqual(activity.metadata, {
+      presentationVersion: "R9_V1",
+      presentationKind: "BRANCH_AUDIT",
+      operation,
+      branchName: "Downtown",
       assignedUserId: "staff-a",
       assignedUserEmail: "staff@example.test",
     });
@@ -102,6 +106,10 @@ test("global administrators retain their server-authenticated identity without b
   assert.deepEqual(activity.metadata, {
     actorId: "super-admin-a",
     actorEmail: "admin@example.test",
+    presentationVersion: "R9_V1",
+    presentationKind: "BRANCH_AUDIT",
+    operation: "CREATE",
+    branchName: "Downtown",
   });
   assert.equal(getActivityMetadataString(activity.metadata, "actorEmail"), "admin@example.test");
 });

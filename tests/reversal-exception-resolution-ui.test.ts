@@ -22,13 +22,18 @@ test("resolution workspace is owner or super admin only and keeps tenant scope a
   assert.match(source, /businessId: business\.id/);
 });
 
-test("resolution workspace reads only bounded open insufficient-balance exceptions", async () => {
+test("resolution workspace reads bounded open insufficient-balance exceptions with continuation", async () => {
   const source = await read(pagePath);
 
   assert.match(source, /prisma\.reversalException\.findMany/);
   assert.match(source, /status: "OPEN"/);
   assert.match(source, /blockReason: "INSUFFICIENT_BALANCE"/);
-  assert.match(source, /take: 50/);
+  assert.match(source, /const pageSize = 50/);
+  assert.match(source, /take: pageSize \+ 1/);
+  assert.match(source, /cursor: \{ id: query\.after \}/);
+  assert.match(source, /skip: 1/);
+  assert.match(source, /exceptions\.slice\(0, pageSize\)/);
+  assert.match(source, /after=\$\{encodeURIComponent\(nextCursor\)\}/);
   assert.match(source, /originalTransaction:/);
   assert.match(source, /customer:/);
 });

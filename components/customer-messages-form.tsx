@@ -9,12 +9,12 @@ type Props = {
     whatsappBalanceMessage: string;
     whatsappRewardMessage: string;
   };
-  status: "saved" | "invalid" | undefined;
+  status: "saved" | "invalid" | "subscription-restricted" | undefined;
   action: (formData: FormData) => void | Promise<void>;
 };
 
 const inputClass =
-  "w-full resize-y rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20";
+  "w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
 
 function SaveButton({ language }: { language: "AR" | "EN" }) {
   const { pending } = useFormStatus();
@@ -22,7 +22,7 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
     <button
       type="submit"
       disabled={pending}
-      className="mt-6 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary disabled:cursor-wait disabled:opacity-60"
+      className="mt-7 min-h-12 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
     >
       {pending
         ? language === "AR"
@@ -43,15 +43,28 @@ export function CustomerMessagesForm({
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const fields = [
-    ["whatsappWelcomeMessage", t("رسالة الترحيب", "Welcome message"), messages.whatsappWelcomeMessage],
-    ["whatsappBalanceMessage", t("رسالة تحديث الرصيد", "Balance update message"), messages.whatsappBalanceMessage],
-    ["whatsappRewardMessage", t("رسالة جاهزية المكافأة", "Reward-ready message"), messages.whatsappRewardMessage],
+    [
+      "whatsappWelcomeMessage",
+      t("رسالة الترحيب", "Welcome message"),
+      messages.whatsappWelcomeMessage,
+    ],
+    [
+      "whatsappBalanceMessage",
+      t("رسالة تحديث الرصيد", "Balance update message"),
+      messages.whatsappBalanceMessage,
+    ],
+    [
+      "whatsappRewardMessage",
+      t("رسالة جاهزية المكافأة", "Reward-ready message"),
+      messages.whatsappRewardMessage,
+    ],
   ] as const;
 
   return (
     <form
       action={action}
-      className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
+      className="rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-8"
+      data-customer-messages-form
     >
       {status ? (
         <p
@@ -65,10 +78,15 @@ export function CustomerMessagesForm({
         >
           {status === "saved"
             ? t("تم حفظ رسائل العملاء.", "Customer messages saved.")
-            : t("راجع رسائل العملاء.", "Review the customer messages.")}
+            : status === "subscription-restricted"
+              ? t(
+                  "لا يمكن تعديل رسائل العملاء في حالة الاشتراك الحالية.",
+                  "Customer messages cannot be changed in the current subscription state.",
+                )
+              : t("راجع رسائل العملاء.", "Review the customer messages.")}
         </p>
       ) : null}
-      <h2 className="text-xl font-bold text-foreground">
+      <h2 className="text-xl font-black text-foreground">
         {t("رسائل العملاء", "Customer messages")}
       </h2>
       <p className="mt-1 text-sm text-foreground-subtle">
@@ -77,32 +95,36 @@ export function CustomerMessagesForm({
           "These templates are validated only when this section is saved.",
         )}
       </p>
-      <div className="mt-4 rounded-[var(--lf-radius-card)] bg-primary-subtle p-4 text-sm text-primary">
+      <div className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/10 bg-primary-subtle/50 p-4 text-sm text-primary">
         <p className="font-semibold">
           {t("المتغيرات المتاحة", "Available variables")}
         </p>
         <p className="mt-2 break-words font-mono text-xs">
-          {"{customer} {business} {balance} {unit} {reward} {remaining} {card_link}"}
+          {
+            "{customer} {business} {balance} {unit} {reward} {remaining} {card_link}"
+          }
         </p>
       </div>
-      {fields.map(([name, label, value]) => (
-        <label
-          key={name}
-          className="mt-5 block text-sm font-medium text-foreground-muted"
-        >
-          <span className="mb-2 block">{label}</span>
-          <textarea
-            name={name}
-            defaultValue={value}
-            dir="auto"
-            rows={6}
-            minLength={1}
-            maxLength={1500}
-            required
-            className={inputClass}
-          />
-        </label>
-      ))}
+      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+        {fields.map(([name, label, value]) => (
+          <label
+            key={name}
+            className="block text-sm font-medium text-foreground-muted"
+          >
+            <span className="mb-2 block">{label}</span>
+            <textarea
+              name={name}
+              defaultValue={value}
+              dir="auto"
+              rows={8}
+              minLength={1}
+              maxLength={1500}
+              required
+              className={inputClass}
+            />
+          </label>
+        ))}
+      </div>
       <SaveButton language={language} />
     </form>
   );

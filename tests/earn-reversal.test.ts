@@ -67,6 +67,12 @@ function createTransaction(options: {
   updateCount?: number;
   balanceAfter?: number;
   customerExists?: boolean;
+  subscriptionLifecycleState?:
+    | "ACTIVE"
+    | "SUSPENDED"
+    | "PAST_DUE"
+    | "CANCELED"
+    | "EXPIRED";
 } = {}) {
   const calls: Calls = {
     updates: [],
@@ -91,6 +97,8 @@ function createTransaction(options: {
       findUnique: async () => ({
         staffAttributionEnabled: false,
         staffAttributionRequired: false,
+        subscriptionLifecycleState:
+          options.subscriptionLifecycleState ?? "ACTIVE",
       }),
     },
     customer: {
@@ -435,6 +443,7 @@ test("reusing a blocked operation ID with different immutable intent conflicts",
 
 test("same operation ID with the same immutable reversal intent replays the prior result", async () => {
   const { transaction, calls } = createTransaction({
+    subscriptionLifecycleState: "SUSPENDED",
     existing: {
       id: "reversal-existing",
       businessId: "business-1",
@@ -468,6 +477,33 @@ test("same operation ID with the same immutable reversal intent replays the prio
   assert.equal(calls.updates.length, 0);
   assert.equal(calls.reversals.length, 0);
   assert.equal(calls.exceptions.length, 0);
+});
+
+test("restricted subscription blocks a new earn reversal without financial writes", async () => {
+  const { transaction, calls } = createTransaction({
+    subscriptionLifecycleState: "SUSPENDED",
+  });
+
+  const result = await recordEarnReversal(transaction, {
+    customerId: "customer-1",
+    businessId: "business-1",
+    originalTransactionId: "earn-1",
+    actor: owner,
+    kind: "EARN_REFUND",
+    amount: 4,
+    reason: "Returned item",
+    idempotencyKey: "refund-restricted",
+  });
+
+  assert.deepEqual(result, {
+    status: "BLOCKED",
+    reason: "SUBSCRIPTION_RESTRICTED",
+  });
+  assert.equal(calls.updates.length, 0);
+  assert.equal(calls.reversals.length, 0);
+  assert.equal(calls.exceptions.length, 0);
+  assert.equal(calls.activities.length, 0);
+  assert.equal(calls.notifications.length, 0);
 });
 
 test("void requires an untouched full original operation", async () => {

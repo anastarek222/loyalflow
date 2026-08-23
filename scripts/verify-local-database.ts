@@ -75,6 +75,8 @@ const REVIEWED_MIGRATIONS = [
   "20260809044000_add_email_verification_lifecycle",
   "20260809081000_add_super_admin_mfa_lifecycle",
   "20260809084500_add_security_notification_lifecycle",
+  "20260813003000_add_subscription_lifecycle_persistence",
+  "20260814213000_add_integration_outbox_jobs",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;
@@ -252,6 +254,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 5,
       sourceLoyaltyMode: "VISITS",
+      unitName: visits.unitName,
       transactionNote: "Verification visit earn",
       activityDescription: "Verification visit earn",
     })
@@ -265,6 +268,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 1,
       sourceLoyaltyMode: "POINTS",
+      unitName: points.unitName,
       transactionNote: "Cross tenant verification",
       activityDescription: "Cross tenant verification",
     })
@@ -283,6 +287,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 3,
       sourceLoyaltyMode: "POINTS",
+      unitName: points.unitName,
       transactionNote: "Verification points earn",
       activityDescription: "Verification points earn",
     })
@@ -301,6 +306,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       createdById: undefined,
       amount: 250,
       sourceLoyaltyMode: "SALES_AMOUNT",
+      unitName: sales.unitName,
       saleAmount: 250,
       transactionNote: "Verification sale earn",
       activityDescription: "Verification sale earn",

@@ -3,6 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Reserved boundary for LoyalFlow locale messages and presentation formatting.",
-  "exports": {}
+  "description": "LoyalFlow locale messages and presentation-only formatting.",
+  "exports": {
+    "./auth": "./src/auth.ts",
+    "./common": "./src/common.ts",
+    "./conversion": "./src/conversion.ts",
+    "./navigation": "./src/navigation.ts",
+    "./onboarding": "./src/onboarding.ts",
+    "./owner-invite": "./src/owner-invite.ts",
+    "./password-policy": "./src/password-policy.ts"
+  }
 }

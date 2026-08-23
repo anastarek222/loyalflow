@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import {
   resolveFinancialOperationContext,
   type FinancialOperationActor,
@@ -16,7 +17,8 @@ type TransactionClient = Prisma.TransactionClient;
 export type RedemptionReversalBlockReason =
   | "ORIGINAL_REDEMPTION_NOT_FOUND"
   | "ALREADY_REVERSED"
-  | "UNLOCK_RESTORE_UNSUPPORTED";
+  | "UNLOCK_RESTORE_UNSUPPORTED"
+  | "SUBSCRIPTION_RESTRICTED";
 
 export type RedemptionReversalResult =
   | {
@@ -236,6 +238,16 @@ export async function recordRedemptionReversal(
       balanceAfter: existing.balanceAfter,
       transactionId: existing.id,
     };
+  }
+
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      transaction,
+      input.businessId,
+      "OPERATE",
+    ))
+  ) {
+    return blocked("SUBSCRIPTION_RESTRICTED");
   }
 
   if (input.restoreUnlock) {

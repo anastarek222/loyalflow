@@ -13,7 +13,7 @@ export function Card({
     <div
       {...props}
       className={cn(
-        "rounded-[var(--lf-radius-input)] border border-border bg-surface p-6 shadow-[var(--lf-shadow-raised)]",
+        "rounded-[var(--lf-radius-lg)] border border-border bg-surface p-6 shadow-[var(--lf-shadow-raised)]",
         interactive &&
           "transition-[border-color,box-shadow] hover:border-border-strong hover:shadow-md focus-within:border-primary",
         className

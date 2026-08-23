@@ -19,6 +19,12 @@ test("T006 onboarding shell reuses canonical locale cookie, direction and switch
 
 test("T006 onboarding shell copy stays in the canonical bilingual catalog", () => {
   const catalog = source("lib/i18n/catalog.ts");
+  const english = source("packages/i18n/src/locales/en/onboarding.ts");
+  const arabic = source("packages/i18n/src/locales/ar/onboarding.ts");
+
+  assert.match(catalog, /from "@loyalflow\/i18n\/onboarding"/);
+  assert.match(catalog, /\.\.\.onboardingMessages\.en/);
+  assert.match(catalog, /\.\.\.onboardingMessages\.ar/);
 
   for (const key of [
     "onboarding.eyebrow",
@@ -26,8 +32,21 @@ test("T006 onboarding shell copy stays in the canonical bilingual catalog", () =
     "onboarding.description",
     "onboarding.privateNote",
   ]) {
-    const occurrences = catalog.split(`\"${key}\"`).length - 1;
-    assert.equal(occurrences, 2, `${key} should exist once per locale`);
+    assert.equal(
+      english.split(`\"${key}\"`).length - 1,
+      1,
+      `${key} should exist once in the English source`,
+    );
+    assert.equal(
+      arabic.split(`\"${key}\"`).length - 1,
+      1,
+      `${key} should exist once in the Arabic source`,
+    );
+    assert.equal(
+      catalog.split(`\"${key}\"`).length - 1,
+      0,
+      `${key} should not be duplicated inline by the compatibility catalog`,
+    );
   }
 });
 

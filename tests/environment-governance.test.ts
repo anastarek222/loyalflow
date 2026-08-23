@@ -29,6 +29,22 @@ test("database mutation guard fails closed and never includes a secret", () => {
   assert.throws(() => assertDatabaseScriptEnvironment("destructive-reset", { LOYALFLOW_ENVIRONMENT: "preview", VERCEL_ENV: "production", NODE_ENV: "production" }), /ambiguous/);
 });
 
+test("staging fixture mutation requires explicit opt-in and an isolated host", () => {
+  const stagingFixtureEnvironment = {
+    LOYALFLOW_ENVIRONMENT: "staging",
+    VERCEL_ENV: "preview",
+    DATABASE_URL: "postgresql://user:secret@ep-staging-pooler.example.test/neondb?sslmode=require",
+    LOYALFLOW_STAGING_DATABASE_HOST: "ep-staging.example.test",
+    LOYALFLOW_PRODUCTION_DATABASE_HOST: "ep-production.example.test",
+    LOYALFLOW_ALLOW_STAGING_FIXTURE: "I_UNDERSTAND_STAGING_FIXTURE",
+  };
+
+  assert.doesNotThrow(() => assertDatabaseScriptEnvironment("staging-seed-fixture", stagingFixtureEnvironment));
+  assert.throws(() => assertDatabaseScriptEnvironment("staging-seed-fixture", { ...stagingFixtureEnvironment, LOYALFLOW_ALLOW_STAGING_FIXTURE: undefined }), /explicit opt-in/);
+  assert.throws(() => assertDatabaseScriptEnvironment("staging-seed-fixture", { ...stagingFixtureEnvironment, DATABASE_URL: "postgresql://user:secret@ep-production.example.test/neondb?sslmode=require" }), /production_host_match/);
+  assert.throws(() => assertDatabaseScriptEnvironment("staging-seed-fixture", { ...stagingFixtureEnvironment, LOYALFLOW_ENVIRONMENT: "production", VERCEL_ENV: "production" }), /outside the isolated staging preview/);
+});
+
 test("canonical origins do not use browser hosts or production fallback", () => {
   assert.equal(getCanonicalPublicAppUrl({ LOYALFLOW_ENVIRONMENT: "development" }), "http://localhost:3000");
   assert.equal(getCanonicalPublicAppUrl({ LOYALFLOW_ENVIRONMENT: "preview", NEXT_PUBLIC_APP_URL: "https://preview.loyalflow.co" }), "https://preview.loyalflow.co");

@@ -20,6 +20,18 @@ test("forgot-password request stays enumeration-safe and rate limited", () => {
   assert.doesNotMatch(actions, /user-not-found/);
 });
 
+test("forgot-password delivery failure remains private and returns the generic response", () => {
+  const actions = source("app/forgot-password/actions.ts");
+
+  assert.match(actions, /try\s*\{/);
+  assert.match(actions, /issuePasswordResetToken/);
+  assert.match(actions, /sendPasswordResetEmail/);
+  assert.match(actions, /catch\s*\(error\)/);
+  assert.match(actions, /logServerError\(\s*"password_reset_request_delivery_failed"/);
+  assert.match(actions, /redirect\("\/forgot-password\?sent=1"\)/);
+  assert.doesNotMatch(actions, /user-not-found|not-configured|delivery-failed/i);
+});
+
 test("reset action consumes only an explicit token and matching password confirmation", () => {
   const actions = source("app/reset-password/actions.ts");
 
@@ -32,7 +44,10 @@ test("reset action consumes only an explicit token and matching password confirm
 });
 
 test("login exposes the forgot-password recovery path", () => {
-  const login = source("app/login/page.tsx");
+  const login = [
+    source("app/login/page.tsx"),
+    source("app/login/login-form.tsx"),
+  ].join("\n");
   assert.match(login, /href="\/forgot-password"/);
 });
 
@@ -58,7 +73,6 @@ test("password reset email delivery uses the canonical app origin and never logs
   assert.doesNotMatch(delivery, /console\.(log|info|debug)/);
 });
 
-
 test("password reset delivery configuration is server-only and fails closed", () => {
   const email = source("lib/auth/password-reset-email.ts");
   const env = source(".env.example");
@@ -77,11 +91,12 @@ test("password reset delivery configuration is server-only and fails closed", ()
 test("successful password reset returns to login with visible confirmation", () => {
   const action = source("app/reset-password/actions.ts");
   const login = source("app/login/page.tsx");
+  const catalog = source("packages/i18n/src/locales/en/auth.ts");
 
   assert.match(action, /redirect\("\/login\?reset=success"\)/);
-  assert.match(login, /resetSucceeded/);
+  assert.match(login, /includesValue\(params\.reset, "success"\)/);
   assert.match(
-    login,
+    catalog,
     /Your password has been updated\. Sign in with your new password\./,
   );
 });

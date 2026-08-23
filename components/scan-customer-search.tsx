@@ -8,15 +8,27 @@ import {
   SCAN_CUSTOMER_SEARCH_MIN_LENGTH,
 } from "@/lib/scan/customer-search";
 import type { AppLanguage } from "@/lib/i18n";
+import { ArrowUpRight, Search, UserRoundSearch, X } from "lucide-react";
 
 type ScanCustomerSearchProps = { businessId: string; language: AppLanguage };
-type SearchResult = { id: string; name: string; phone: string; customerCode: string; url: string };
+type SearchResult = {
+  id: string;
+  name: string;
+  phone: string;
+  customerCode: string;
+  url: string;
+};
 
-export default function ScanCustomerSearch({ businessId, language }: ScanCustomerSearchProps) {
+export default function ScanCustomerSearch({
+  businessId,
+  language,
+}: ScanCustomerSearchProps) {
   const copy = scanUiCopy(language);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [state, setState] = useState<"idle" | "loading" | "empty" | "error" | "results">("idle");
+  const [state, setState] = useState<
+    "idle" | "loading" | "empty" | "error" | "results"
+  >("idle");
   const requestSequenceRef = useRef(0);
   const activeQueryRef = useRef<string | null>(null);
   const queryIsTooShort = query.trim().length < SCAN_CUSTOMER_SEARCH_MIN_LENGTH;
@@ -39,11 +51,17 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
       activeQueryRef.current = normalizedQuery;
       setState("loading");
       try {
-        const params = new URLSearchParams({ businessId, query: normalizedQuery });
-        const response = await fetch(`/api/scan/customers?${params.toString()}`, {
-          signal: controller.signal,
-          cache: "no-store",
+        const params = new URLSearchParams({
+          businessId,
+          query: normalizedQuery,
         });
+        const response = await fetch(
+          `/api/scan/customers?${params.toString()}`,
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          },
+        );
         const body: unknown = await response.json().catch(() => null);
         if (sequence !== requestSequenceRef.current) return;
         if (!response.ok || !isSearchResponse(body)) {
@@ -55,13 +73,15 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
         setResults(body.results);
         setState(body.results.length ? "results" : "empty");
       } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
         if (sequence === requestSequenceRef.current) {
           setResults([]);
           setState("error");
         }
       } finally {
-        if (sequence === requestSequenceRef.current) activeQueryRef.current = null;
+        if (sequence === requestSequenceRef.current)
+          activeQueryRef.current = null;
       }
     }, 250);
 
@@ -80,29 +100,136 @@ export default function ScanCustomerSearch({ businessId, language }: ScanCustome
   }
 
   return (
-    <section aria-labelledby="scan-customer-search-heading" className="mt-5 border-t border-border pt-5">
-      <h2 id="scan-customer-search-heading" className="text-base font-bold text-foreground">{copy.customerSearchHeading}</h2>
-      <p className="mt-1 text-sm text-foreground-muted">{copy.customerSearchDescription}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <div className="min-w-0 flex-1 basis-48">
-          <label htmlFor="scanCustomerSearch" className="sr-only">{copy.customerSearchLabel}</label>
-          <input id="scanCustomerSearch" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.customerSearchPlaceholder} autoComplete="off" className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20" />
+    <section
+      aria-labelledby="scan-customer-search-heading"
+      className="mt-6 border-t border-border pt-6"
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex size-9 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+          <UserRoundSearch className="size-4" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-primary">
+            {copy.alternateAccess}
+          </p>
+          <h2
+            id="scan-customer-search-heading"
+            className="text-base font-bold text-foreground"
+          >
+            {copy.customerSearchHeading}
+          </h2>
         </div>
-        {query && <button type="button" onClick={clearSearch} className="min-h-11 shrink-0 rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle">{copy.clearCustomerSearch}</button>}
       </div>
-      <p className="mt-2 text-xs text-foreground-subtle">{copy.customerSearchMinimum}</p>
-      <div aria-live="polite" aria-busy={displayedState === "loading"} className="mt-4">
-        {displayedState === "loading" && <p role="status" className="text-sm text-foreground-muted">{copy.customerSearching}</p>}
-        {displayedState === "empty" && <p role="status" className="rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 py-4 text-sm text-foreground-muted">{copy.customerSearchEmpty}</p>}
-        {displayedState === "error" && <p role="alert" className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-sm text-danger">{copy.customerSearchError}</p>}
-        {displayedState === "results" && <ul className="space-y-2" aria-label={copy.customerSearchHeading}>
-          {displayedResults.map((customer) => <li key={customer.id}><Link href={customer.url} className="flex min-h-11 items-center justify-between gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 text-sm hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20" aria-label={`${copy.customerSearchOpen}: ${customer.name}`}><span className="min-w-0"><span className="block truncate font-semibold text-foreground" dir="auto">{customer.name}</span><span className="block truncate text-xs text-foreground-subtle" dir="ltr">{customer.phone} · {customer.customerCode}</span></span><span className="shrink-0 font-semibold text-primary">{copy.customerSearchOpen}</span></Link></li>)}
-        </ul>}
+      <p className="mt-1 text-sm text-foreground-muted">
+        {copy.customerSearchDescription}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <div className="relative min-w-0 flex-1 basis-48">
+          <label htmlFor="scanCustomerSearch" className="sr-only">
+            {copy.customerSearchLabel}
+          </label>
+          <Search
+            className="pointer-events-none absolute start-4 top-1/2 size-4 -translate-y-1/2 text-foreground-subtle"
+            aria-hidden="true"
+          />
+          <input
+            id="scanCustomerSearch"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={copy.customerSearchPlaceholder}
+            autoComplete="off"
+            className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white ps-11 pe-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
+          />
+        </div>
+        {query && (
+          <button
+            type="button"
+            onClick={clearSearch}
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
+          >
+            <X className="size-4" aria-hidden="true" />
+            {copy.clearCustomerSearch}
+          </button>
+        )}
+      </div>
+      <p className="mt-2 text-xs text-foreground-subtle">
+        {copy.customerSearchMinimum}
+      </p>
+      <div
+        aria-live="polite"
+        aria-busy={displayedState === "loading"}
+        className="mt-4"
+      >
+        {displayedState === "loading" && (
+          <p role="status" className="text-sm text-foreground-muted">
+            {copy.customerSearching}
+          </p>
+        )}
+        {displayedState === "empty" && (
+          <p
+            role="status"
+            className="rounded-[var(--lf-radius-input)] bg-surface-subtle px-4 py-4 text-sm text-foreground-muted"
+          >
+            {copy.customerSearchEmpty}
+          </p>
+        )}
+        {displayedState === "error" && (
+          <p
+            role="alert"
+            className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-4 text-sm text-danger"
+          >
+            {copy.customerSearchError}
+          </p>
+        )}
+        {displayedState === "results" && (
+          <ul className="space-y-2" aria-label={copy.customerSearchHeading}>
+            {displayedResults.map((customer) => (
+              <li key={customer.id}>
+                <Link
+                  href={customer.url}
+                  className="group flex min-h-11 items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-4 text-sm shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20"
+                  aria-label={`${copy.customerSearchOpen}: ${customer.name}`}
+                >
+                  <span className="min-w-0">
+                    <span
+                      className="block truncate font-semibold text-foreground"
+                      dir="auto"
+                    >
+                      {customer.name}
+                    </span>
+                    <span
+                      className="block truncate text-xs text-foreground-subtle"
+                      dir="ltr"
+                    >
+                      {customer.phone} · {customer.customerCode}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1 font-semibold text-primary">
+                    {copy.customerSearchOpen}
+                    <ArrowUpRight
+                      className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:rotate-[-90deg]"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );
 }
 
-function isSearchResponse(value: unknown): value is { ok: true; results: SearchResult[] } {
-  return typeof value === "object" && value !== null && "ok" in value && value.ok === true && "results" in value && Array.isArray(value.results);
+function isSearchResponse(
+  value: unknown,
+): value is { ok: true; results: SearchResult[] } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "ok" in value &&
+    value.ok === true &&
+    "results" in value &&
+    Array.isArray(value.results)
+  );
 }

@@ -60,6 +60,8 @@ function reversalError(reason: EarnReversalBlockReason) {
       return "reversal-void-invalid";
     case "INSUFFICIENT_BALANCE":
       return "reversal-insufficient-balance";
+    case "SUBSCRIPTION_RESTRICTED":
+      return "subscription-restricted";
   }
 }
 

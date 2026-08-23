@@ -35,12 +35,28 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+const configuredDevOrigin =
+  process.env.NODE_ENV === "development"
+    ? process.env.LOYALFLOW_DEV_ORIGIN?.trim()
+    : undefined;
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
 
-  allowedDevOrigins: [
-    "192.168.100.107",
-  ],
+  // Custom Card artwork is uploaded as one Front + Back Server Action pair.
+  // Application validation caps the pair at 4 MB total, leaving bounded
+  // multipart overhead below Vercel Functions' 4.5 MB request ceiling.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4250kb",
+    },
+  },
+
+  ...(configuredDevOrigin
+    ? {
+        allowedDevOrigins: [configuredDevOrigin],
+      }
+    : {}),
 
   async headers() {
     return [

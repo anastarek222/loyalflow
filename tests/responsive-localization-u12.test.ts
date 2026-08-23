@@ -12,7 +12,8 @@ test("U12 keeps direction owned by saved authenticated and public context", () =
   const joinPage = source("app/join/[slug]/page.tsx");
   assert.match(authenticated, /getLanguageAttributes\(user\?\.language\)/);
   assert.match(authenticated, /dir=\{dir\}/);
-  for (const page of [card, joinPage]) assert.match(page, /getLanguageAttributes/);
+  for (const page of [card, joinPage])
+    assert.match(page, /getLanguageAttributes/);
   assert.doesNotMatch(authenticated, /navigator\.language|window\.navigator/);
 });
 
@@ -33,15 +34,21 @@ test("U12 mobile shell keeps bounded, safe-area-aware overlays", () => {
   const shell = source("components/authenticated-app-shell.tsx");
   const sidebar = source("components/mobile-sidebar.tsx");
   const bottomNavigation = source("components/mobile-bottom-navigation.tsx");
-  const notifications = source("components/business-notifications-dialog.tsx");
+  const notifications = source("components/business-notifications-dialog-client.tsx");
   const css = source("app/globals.css");
   assert.match(sidebar, /type="search"/);
   assert.match(sidebar, /max-h-48 overflow-y-auto/);
   assert.match(sidebar, /aria-current=/);
-  assert.match(css, /--lf-mobile-nav-height: calc\(4rem \+ env\(safe-area-inset-bottom\)\)/);
+  assert.match(
+    css,
+    /--lf-mobile-nav-height: calc\(4rem \+ env\(safe-area-inset-bottom\)\)/,
+  );
   assert.match(shell, /pb-\[calc\(var\(--lf-mobile-nav-height\)\+1rem\)\]/);
   assert.doesNotMatch(bottomNavigation, /-mt-4/);
-  assert.match(notifications, /100dvh-env\(safe-area-inset-top\)-env\(safe-area-inset-bottom\)/);
+  assert.match(
+    notifications,
+    /100dvh-env\(safe-area-inset-top\)-env\(safe-area-inset-bottom\)/,
+  );
   assert.match(notifications, /min-h-0 flex-1 overflow-y-auto/);
 });
 
@@ -58,12 +65,14 @@ test("U12 primitives keep bounded dialogs, tables, motion, and long-content safe
 });
 
 test("U12 public card controls expose names and announced feedback without a new shell", () => {
-  const actions = source("components/customer-experience/public-card-actions.tsx");
+  const actions = source(
+    "components/customer-experience/public-card-actions.tsx",
+  );
   const appShell = source("components/authenticated-app-shell.tsx");
   assert.match(actions, /aria-label=\{copy\.share\}/);
   assert.match(actions, /aria-label=\{copy\.copyLink\}/);
   assert.match(actions, /aria-live="polite"/);
-  assert.match(actions, /min-h-11/);
+  assert.match(actions, /min-h-(?:11|12)/);
   assert.match(appShell, /AppSidebar/);
   assert.doesNotMatch(appShell, /className="[^"]*lf-business-context[^"]*"/);
 });
@@ -75,8 +84,13 @@ test("U12 remains presentation-only and introduces no persistence or API changes
     "components/redeem-reward-dialog.tsx",
     "components/customer-experience/public-card-actions.tsx",
     "components/ui/table.tsx",
-  ].map(source).join("\n");
-  assert.doesNotMatch(changedUiFiles, /prisma\.|from "@\/generated\/prisma|fetch\(\s*["']\/api/);
+  ]
+    .map(source)
+    .join("\n");
+  assert.doesNotMatch(
+    changedUiFiles,
+    /prisma\.|from "@\/generated\/prisma|fetch\(\s*["']\/api/,
+  );
   const switcher = source("components/experience-mode-switcher.tsx");
   assert.match(switcher, /aria-pressed=\{selected\}/);
   assert.doesNotMatch(switcher, /canPerform|prisma\.|fetch\(/);

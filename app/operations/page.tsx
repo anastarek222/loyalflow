@@ -8,12 +8,14 @@ import {
 } from "@/components/page-layout";
 import { Badge } from "@/components/ui/badge";
 import { derivePaymentState } from "@/lib/billing/subscription";
+import { projectPaymentStateToSubscriptionLifecycle } from "@/lib/billing/subscription-lifecycle-projection";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import {
   deriveOperationalSeverity,
   operationalStatusLabel,
 } from "@/lib/operations/platform-status";
 import prisma from "@/lib/prisma";
+import { readIntegrationRuntimeHealth } from "@/lib/server/integrations/runtime-health";
 import { getPublicReleaseMetadata } from "@/lib/server/release";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -35,7 +37,7 @@ export default async function OperationsPage() {
   if (!session?.user?.id) redirect("/login");
   if (session.user.role !== "SUPER_ADMIN") redirect("/dashboard");
 
-  const [currentUser, totalBusinesses, activeBusinesses, billingBusinesses, planGroups, loyaltyActions24h] =
+  const [currentUser, totalBusinesses, activeBusinesses, billingBusinesses, planGroups, loyaltyActions24h, integrationHealth] =
     await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id },
@@ -58,6 +60,7 @@ export default async function OperationsPage() {
       prisma.loyaltyTransaction.count({
         where: { createdAt: { gte: startOfLast24Hours() } },
       }),
+      readIntegrationRuntimeHealth(),
     ]);
 
   const language = normalizeLanguage(currentUser?.language);
@@ -75,6 +78,17 @@ export default async function OperationsPage() {
       nextPaymentDate: business.nextPaymentDate,
       gracePeriodDays: business.gracePeriodDays,
     }),
+  );
+  const subscriptionLifecycleCounts = paymentStates.reduce(
+    (counts, paymentState) => {
+      const lifecycle = projectPaymentStateToSubscriptionLifecycle(paymentState);
+      if (lifecycle === "TRIALING") counts.TRIALING += 1;
+      else if (lifecycle === "ACTIVE") counts.ACTIVE += 1;
+      else if (lifecycle === "PAST_DUE") counts.PAST_DUE += 1;
+      else if (lifecycle === "SUSPENDED") counts.SUSPENDED += 1;
+      return counts;
+    },
+    { TRIALING: 0, ACTIVE: 0, PAST_DUE: 0, SUSPENDED: 0 },
   );
 
   const overdueSubscriptions = paymentStates.filter(
@@ -206,6 +220,70 @@ export default async function OperationsPage() {
           </div>
         </SummaryPanel>
       </div>
+
+      <SummaryPanel
+        title={t("دورة حياة الاشتراكات التجريبية", "Beta subscription lifecycle")}
+        description={t(
+          "إسقاط للقراءة فقط من حالة الفوترة الحالية؛ لا يغيّر الخطط أو الصلاحيات أو المدفوعات.",
+          "A read-only projection from current billing state; it changes no plans, access, or payments.",
+        )}
+      >
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            [t("تجريبية", "Trialing"), subscriptionLifecycleCounts.TRIALING],
+            [t("نشطة", "Active"), subscriptionLifecycleCounts.ACTIVE],
+            [t("متأخرة", "Past due"), subscriptionLifecycleCounts.PAST_DUE],
+            [t("موقوفة", "Suspended"), subscriptionLifecycleCounts.SUSPENDED],
+          ].map(([label, count]) => (
+            <div
+              key={String(label)}
+              className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3"
+            >
+              <p className="text-xs font-semibold text-foreground-subtle">
+                {label}
+              </p>
+              <p className="mt-1 text-lg font-black text-foreground">
+                {number.format(Number(count))}
+              </p>
+            </div>
+          ))}
+        </div>
+      </SummaryPanel>
+
+      <SummaryPanel
+        title={t("صحة التكاملات", "Integration health")}
+        description={t(
+          "ملخص مجمّع وآمن لحالة مزامنة Google Sheets. لا تُعرض معرفات أو رسائل أخطاء أو أسرار.",
+          "A safe aggregate of Google Sheets sync state. No identifiers, error text, or secrets are exposed.",
+        )}
+      >
+        {integrationHealth ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              [t("قيد الانتظار", "Pending"), integrationHealth.statusCounts.PENDING],
+              [t("ناجحة", "Succeeded"), integrationHealth.statusCounts.SUCCEEDED],
+              [t("فشل قابل للمحاولة", "Retryable failure"), integrationHealth.failureCounts.retryable],
+              [t("فشل نهائي", "Terminal failure"), integrationHealth.failureCounts.terminal],
+            ].map(([label, count]) => (
+              <div
+                key={String(label)}
+                className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3"
+              >
+                <p className="text-xs font-semibold text-foreground-subtle">
+                  {label}
+                </p>
+                <p className="mt-1 text-lg font-black text-foreground">
+                  {number.format(Number(count))}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-foreground-subtle">
+            {t("الملخص غير متاح بأمان.", "The snapshot is not safely available.")}
+          </p>
+        )}
+      </SummaryPanel>
 
       <SummaryPanel
         title={t("إجراءات التشغيل", "Operational actions")}

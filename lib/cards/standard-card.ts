@@ -1,6 +1,7 @@
+import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
 import { loyaltyCurrency } from "@/lib/loyalty/presentation";
 
-export const STANDARD_CARD_ASPECT_RATIO = 85.6 / 53.98;
+export const STANDARD_CARD_ASPECT_RATIO = LOYALTY_CARD_ASPECT_RATIO;
 export const CUSTOM_CARD_SAFE_ZONE_VERSION = "ID1_V1";
 
 export const CARD_DESIGN_MODES = ["STANDARD", "CUSTOM"] as const;
@@ -12,6 +13,21 @@ export const STANDARD_CARD_ARTWORK_CATEGORIES = [
 
 export type StandardCardArtworkCategory = (typeof STANDARD_CARD_ARTWORK_CATEGORIES)[number];
 
+export const STANDARD_CARD_THEME_PRESETS = ["DEFAULT", "DARK"] as const;
+export type StandardCardThemePreset = (typeof STANDARD_CARD_THEME_PRESETS)[number];
+
+export const STANDARD_CARD_COLOR_PRESETS = [
+  { id: "GOLD", light: "#9A6A2F", dark: "#E6C27A" },
+  { id: "BLUE", light: "#1D4ED8", dark: "#93C5FD" },
+  { id: "EMERALD", light: "#047857", dark: "#6EE7B7" },
+  { id: "VIOLET", light: "#6D28D9", dark: "#C4B5FD" },
+  { id: "ROSE", light: "#BE123C", dark: "#FDA4AF" },
+  { id: "SLATE", light: "#475569", dark: "#CBD5E1" },
+] as const;
+
+export type StandardCardColorPreset = (typeof STANDARD_CARD_COLOR_PRESETS)[number]["id"];
+export const DEFAULT_STANDARD_CARD_COLOR_PRESET: StandardCardColorPreset = "GOLD";
+
 export function standardCardArtworkCategory(value: string | null | undefined): StandardCardArtworkCategory {
   const normalized = value?.trim().toUpperCase();
   return STANDARD_CARD_ARTWORK_CATEGORIES.includes(normalized as StandardCardArtworkCategory)
@@ -19,8 +35,41 @@ export function standardCardArtworkCategory(value: string | null | undefined): S
     : "OTHER";
 }
 
+export function standardCardThemePreset(value: string | null | undefined): StandardCardThemePreset {
+  const normalized = value?.trim().toUpperCase();
+  return STANDARD_CARD_THEME_PRESETS.includes(normalized as StandardCardThemePreset)
+    ? (normalized as StandardCardThemePreset)
+    : "DEFAULT";
+}
+
 export function standardCardTheme(themePreset: string | null | undefined) {
-  return themePreset === "DARK" ? "dark" : "light" as const;
+  return standardCardThemePreset(themePreset) === "DARK" ? "dark" : "light" as const;
+}
+
+export function standardCardColorPreset(value: string | null | undefined): StandardCardColorPreset {
+  const normalized = value?.trim().toUpperCase();
+  return STANDARD_CARD_COLOR_PRESETS.some((preset) => preset.id === normalized)
+    ? (normalized as StandardCardColorPreset)
+    : DEFAULT_STANDARD_CARD_COLOR_PRESET;
+}
+
+export function standardCardPresetColor(
+  preset: string | null | undefined,
+  themePreset: string | null | undefined,
+) {
+  const selected = standardCardColorPreset(preset);
+  const theme = standardCardThemePreset(themePreset);
+  const palette = STANDARD_CARD_COLOR_PRESETS.find((candidate) => candidate.id === selected)
+    ?? STANDARD_CARD_COLOR_PRESETS[0];
+  return theme === "DARK" ? palette.dark : palette.light;
+}
+
+export function standardCardPresetForColor(value: string | null | undefined): StandardCardColorPreset | null {
+  const normalized = value?.trim().toUpperCase();
+  if (!normalized || !/^#[0-9A-F]{6}$/.test(normalized)) return null;
+  return STANDARD_CARD_COLOR_PRESETS.find(
+    (preset) => preset.light === normalized || preset.dark === normalized,
+  )?.id ?? null;
 }
 
 export function cardDesignMode(value: string | null | undefined): CardDesignMode {
@@ -30,8 +79,8 @@ export function cardDesignMode(value: string | null | undefined): CardDesignMode
 export type LoyaltyCardMode = "VISITS" | "POINTS" | "SALES_AMOUNT";
 
 export const LOYALTY_CARD_PREVIEW_CUSTOMER = {
-  name: "Ahmed Mohamed Hassan",
-  id: "LF-001234",
+  name: "Sample Customer",
+  id: "PREVIEW-001",
 } as const;
 
 function safeWholeNumber(value: number) {
@@ -172,11 +221,10 @@ export function getLoyaltyCardMetrics(input: {
   };
 }
 
-export function getPreviewBalance(mode: LoyaltyCardMode, threshold: number) {
+export function getPreviewBalance(_mode: LoyaltyCardMode, threshold: number) {
   const target = Math.max(1, safeWholeNumber(threshold));
   if (target === 1) return 0;
-  const ratio = mode === "SALES_AMOUNT" ? 0.74 : mode === "POINTS" ? 0.85 : 0.8;
-  return Math.max(1, Math.min(target - 1, Math.round(target * ratio)));
+  return Math.max(1, Math.min(target - 1, Math.round(target * 0.5)));
 }
 
 export function getLoyaltyCardPreviewData(mode: LoyaltyCardMode, threshold: number) {

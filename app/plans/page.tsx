@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { Card } from "@/components/ui/card";
 import { ListPageTemplate, PageHeader } from "@/components/page-layout";
 import {
+  isLoyalFlowPlan,
   loyalFlowPlans,
   planCatalog,
   type LoyalFlowPlan,
@@ -60,6 +61,11 @@ export default async function PlansPage({
   ]);
   const language = normalizeLanguage(currentUser?.language);
   const t = (ar: string, en: string) => language === "AR" ? ar : en;
+  const feedbackPlan =
+    params.plan && isLoyalFlowPlan(params.plan) ? params.plan : null;
+  const feedbackPlanName = feedbackPlan
+    ? planCatalog[feedbackPlan].name
+    : null;
 
   const businessCounts = new Map<LoyalFlowPlan, number>(
     usageByPlan.map((row) => [row.plan, row._count._all]),
@@ -76,7 +82,7 @@ export default async function PlansPage({
           primaryAction={
             <Link
               href="/business-owners"
-              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground"
+              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {t("الرجوع لملاك الأنشطة", "Back to business owners")}
             </Link>
@@ -85,13 +91,35 @@ export default async function PlansPage({
       }
     >
       {params.success ? (
-        <div className="mb-5 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success">
-          {t("تم تحديث حدود الخطة بنجاح.", "Plan limits updated successfully.")}
+        <div
+          role="status"
+          className="mb-5 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 py-3 text-sm font-semibold text-success"
+        >
+          {feedbackPlanName
+            ? t(
+                `تم تحديث حدود خطة ${feedbackPlanName} بنجاح.`,
+                `${feedbackPlanName} plan limits updated successfully.`,
+              )
+            : t(
+                "تم تحديث حدود الخطة بنجاح.",
+                "Plan limits updated successfully.",
+              )}
         </div>
       ) : null}
       {params.error ? (
-        <div className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger">
-          {t("تعذر تحديث الحدود. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.", "Plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.")}
+        <div
+          role="alert"
+          className="mb-5 rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger"
+        >
+          {feedbackPlanName
+            ? t(
+                `تعذر تحديث حدود خطة ${feedbackPlanName}. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.`,
+                `${feedbackPlanName} plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.`,
+              )
+            : t(
+                "تعذر تحديث الحدود. استخدم أرقامًا صحيحة من صفر فأعلى، أو اترك الخانة فارغة لعدم وجود حد.",
+                "Plan limits could not be updated. Use whole numbers of 0 or greater, or leave a field blank for unlimited.",
+              )}
         </div>
       ) : null}
 
@@ -133,7 +161,7 @@ export default async function PlansPage({
                       step="1"
                       defaultValue={limits[field.key] ?? ""}
                       placeholder={t("بدون حد", "Unlimited")}
-                      className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm text-foreground"
+                      className="mt-1 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm text-foreground outline-none transition focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
                     />
                   </label>
                 ))}
@@ -144,7 +172,7 @@ export default async function PlansPage({
 
                 <button
                   type="submit"
-                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover sm:col-span-2"
+                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:col-span-2"
                 >
                   {t("حفظ حدود", "Save")} {planCatalog[plan].name} {t("", "limits")}
                 </button>

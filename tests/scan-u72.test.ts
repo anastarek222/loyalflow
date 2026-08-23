@@ -23,16 +23,54 @@ const scanPage = source("app/businesses/[slug]/scan/page.tsx");
 test("U7.2 has localized search and camera recovery copy", () => {
   for (const language of ["AR", "EN"] as const) {
     const copy = scanUiCopy(language);
-    for (const key of ["customerSearchHeading", "customerSearchDescription", "customerSearchLabel", "customerSearchPlaceholder", "customerSearchMinimum", "customerSearching", "customerSearchEmpty", "customerSearchOpen", "clearCustomerSearch", "customerSearchError", "cameraUnavailable", "cameraPermissionDenied", "scannerInitializationFailed", "retryCamera"] as const) assert.ok(copy[key]);
+    for (const key of [
+      "customerSearchHeading",
+      "customerSearchDescription",
+      "customerSearchLabel",
+      "customerSearchPlaceholder",
+      "customerSearchMinimum",
+      "customerSearching",
+      "customerSearchEmpty",
+      "customerSearchOpen",
+      "clearCustomerSearch",
+      "customerSearchError",
+      "cameraUnavailable",
+      "cameraPermissionDenied",
+      "scannerInitializationFailed",
+      "retryCamera",
+    ] as const)
+      assert.ok(copy[key]);
   }
 });
 
 test("U7.2 search validates bounded input and supports name, phone, and customer-code terms", () => {
   assert.equal(SCAN_CUSTOMER_SEARCH_LIMIT, 8);
-  assert.equal(scanCustomerSearchSchema.safeParse({ businessId: "business-123", query: "a" }).success, false);
-  assert.equal(scanCustomerSearchSchema.safeParse({ businessId: "business-123", query: "a".repeat(SCAN_CUSTOMER_SEARCH_MAX_LENGTH + 1) }).success, false);
-  assert.equal(scanCustomerSearchSchema.safeParse({ businessId: "business-123", query: "Ada" }).success, true);
-  assert.deepEqual(getScanCustomerSearchTerms(" +20 100 123 4567 "), { text: "+20 100 123 4567", phone: "+201001234567", customerCode: "+20 100 123 4567" });
+  assert.equal(
+    scanCustomerSearchSchema.safeParse({
+      businessId: "business-123",
+      query: "a",
+    }).success,
+    false,
+  );
+  assert.equal(
+    scanCustomerSearchSchema.safeParse({
+      businessId: "business-123",
+      query: "a".repeat(SCAN_CUSTOMER_SEARCH_MAX_LENGTH + 1),
+    }).success,
+    false,
+  );
+  assert.equal(
+    scanCustomerSearchSchema.safeParse({
+      businessId: "business-123",
+      query: "Ada",
+    }).success,
+    true,
+  );
+  assert.deepEqual(getScanCustomerSearchTerms(" +20 100 123 4567 "), {
+    text: "+20 100 123 4567",
+    phone: "+201001234567",
+    customerCode: "+20 100 123 4567",
+  });
   assert.equal(SCAN_CUSTOMER_SEARCH_MIN_LENGTH, 2);
   assert.equal(maskCustomerPhone("+201001234567"), "•••••••••4567");
 });
@@ -40,7 +78,10 @@ test("U7.2 search validates bounded input and supports name, phone, and customer
 test("U7.2 search API keeps the Scan auth, tenant, active-record, rate-limit, and no-store boundaries", () => {
   assert.match(route, /await auth\(\)/);
   assert.match(route, /status: 401/);
-  assert.match(route, /canPerform\(session\.user, parsed\.data\.businessId, "LOYALTY_EARN"\)/);
+  assert.match(
+    route,
+    /canPerform\(session\.user, parsed\.data\.businessId, "LOYALTY_EARN"\)/,
+  );
   assert.match(route, /businessId: business\.id/);
   assert.match(route, /isActive: true/);
   assert.match(route, /rateLimit\(/);
@@ -55,12 +96,18 @@ test("U7.2 search API keeps the Scan auth, tenant, active-record, rate-limit, an
 });
 
 test("U7.2 returns only server-generated Scan customer URLs", () => {
-  assert.match(route, /url: `\/businesses\/\$\{business\.slug\}\/scan\/customer\/\$\{customer\.id\}`/);
+  assert.match(
+    route,
+    /url: `\/businesses\/\$\{business\.slug\}\/scan\/customer\/\$\{customer\.id\}`/,
+  );
   assert.doesNotMatch(route, /resultUrl|url: url\.searchParams/);
 });
 
 test("U7.2 search UI blocks short input and protects stale and duplicate requests", () => {
-  assert.match(search, /normalizedQuery\.length < SCAN_CUSTOMER_SEARCH_MIN_LENGTH/);
+  assert.match(
+    search,
+    /normalizedQuery\.length < SCAN_CUSTOMER_SEARCH_MIN_LENGTH/,
+  );
   assert.match(search, /activeQueryRef\.current === normalizedQuery/);
   assert.match(search, /sequence !== requestSequenceRef\.current/);
   assert.match(search, /controller\.abort\(\)/);
@@ -70,8 +117,12 @@ test("U7.2 search UI blocks short input and protects stale and duplicate request
 });
 
 test("U7.2 ignores ordinary per-frame decode misses without classifying them as a camera failure", () => {
-  assert.match(scanner, /const onDecodeMiss = \(\) => \{[\s\S]*?Per-frame decode misses are expected/);
-  const cameraErrorClassifier = scanner.match(/function getCameraError\([\s\S]*?\n\}/)?.[0] ?? "";
+  assert.match(
+    scanner,
+    /const onDecodeMiss = \(\) => \{[\s\S]*?Per-frame decode misses are expected/,
+  );
+  const cameraErrorClassifier =
+    scanner.match(/function getCameraError\([\s\S]*?\n\}/)?.[0] ?? "";
   assert.doesNotMatch(cameraErrorClassifier, /notfound/i);
 });
 
@@ -94,15 +145,27 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
 
 test("U7.2 retains the camera that actually started when track settings omit a device ID", () => {
   assert.match(scanner, /let startedCameraId: string \| null = null;/);
-  assert.match(scanner, /startedCameraId = preferred\?\.id \?\? availableCameras\[0\]\.id;/);
+  assert.match(
+    scanner,
+    /startedCameraId = preferred\?\.id \?\? availableCameras\[0\]\.id;/,
+  );
   assert.match(scanner, /startedCameraId = fallback\.id;/);
-  assert.match(scanner, /startedCameraId \?\? preferred\?\.id \?\? availableCameras\[0\]\?\.id \?\? null/);
+  assert.match(
+    scanner,
+    /startedCameraId \?\? preferred\?\.id \?\? availableCameras\[0\]\?\.id \?\? null/,
+  );
 });
 
 test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   const scannerStyles = source("app/globals.css");
-  assert.match(scanner, /lf-qr-reader min-h-64 w-full max-w-full overflow-hidden/);
-  assert.match(scanner, /qrbox: \(viewfinderWidth: number, viewfinderHeight: number\)/);
+  assert.match(
+    scanner,
+    /lf-qr-reader min-h-64 w-full max-w-full overflow-hidden/,
+  );
+  assert.match(
+    scanner,
+    /qrbox: \(viewfinderWidth: number, viewfinderHeight: number\)/,
+  );
   assert.match(scanner, /flex flex-wrap gap-2/);
   assert.match(scanner, /min-h-11 flex-1 basis-36/);
   assert.match(search, /flex flex-wrap gap-2/);
@@ -110,7 +173,7 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   assert.match(search, /block truncate text-xs text-foreground-subtle/);
   assert.match(scannerStyles, /#loyalflow-qr-reader :where\(video, canvas\)/);
   assert.match(scannerStyles, /max-width: 100% !important/);
-  assert.match(scanPage, /className="min-h-full py-4 sm:py-8"/);
+  assert.match(scanPage, /className="min-h-full[^"]*sm:py-10"/);
   assert.match(scanPage, /min-h-11 self-start/);
 });
 
