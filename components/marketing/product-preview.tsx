@@ -7,6 +7,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 
 type ProductPreviewProps = {
@@ -119,7 +120,9 @@ export function ProductPreview({ locale, labels }: ProductPreviewProps) {
           <p className="text-xs font-semibold text-indigo-100">
             {labels.reward}
           </p>
-          <p className="mt-1 text-lg font-black">Free signature drink</p>
+          <p className="mt-1 text-lg font-black">
+            {translate(locale, "marketing.previewRewardName")}
+          </p>
           <div className="mt-5 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs text-indigo-100">Ahmed Mohamed</p>
