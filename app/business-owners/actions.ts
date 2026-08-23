@@ -166,17 +166,32 @@ export async function setBusinessPlatformStatusAction(
 
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { id: true },
+    select: { id: true, isActive: true },
   });
 
   if (!business) redirect("/business-owners?error=not-found");
 
-  await prisma.business.update({
-    where: { id: business.id },
-    data: {
-      isActive,
-      ...(isActive ? {} : { paymentStatus: "SUSPENDED" as const }),
-    },
+  const shouldRevokeTenantSessions = business.isActive && !isActive;
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.business.update({
+      where: { id: business.id },
+      data: {
+        isActive,
+        ...(isActive ? {} : { paymentStatus: "SUSPENDED" as const }),
+      },
+    });
+
+    if (shouldRevokeTenantSessions) {
+      await transaction.user.updateMany({
+        where: { businessId: business.id },
+        data: {
+          authVersion: {
+            increment: 1,
+          },
+        },
+      });
+    }
   });
 
   refreshPlatform();
