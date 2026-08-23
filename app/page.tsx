@@ -199,7 +199,7 @@ export default async function HomePage() {
       </section>
 
       <section
-        aria-label={locale === "ar" ? "مزايا أساسية" : "Core product qualities"}
+        aria-label={copy("marketing.trustSectionLabel")}
         className="border-b border-border bg-white"
       >
         <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-px bg-border sm:grid-cols-4">
