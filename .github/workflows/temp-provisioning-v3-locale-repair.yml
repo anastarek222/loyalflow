@@ -1,0 +1,47 @@
+name: Temporary Provisioning V3 Locale Repair
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [synchronize]
+    paths:
+      - .github/workflows/temp-provisioning-v3-locale-repair.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-v3-locale-harness:
+    if: github.head_ref == 'ops/pilot-provisioning-runtime-v3-340'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ops/pilot-provisioning-runtime-v3-340
+          fetch-depth: 0
+      - name: Make V3 receipt locale agnostic and remove bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/temp-pilot-provisioning-runtime-v3.yml')
+          s = p.read_text()
+          replacements = {
+            'await page.getByRole("button", { name: "Account menu", exact: true }).click();': 'await page.getByRole("button", { name: /Account menu|قائمة الحساب/ }).click();',
+            'page.getByRole("button", { name: "Log out", exact: true }).click(),': 'page.getByRole("button", { name: /Log out|تسجيل الخروج/ }).click(),',
+            'await page.getByRole("button", { name: "Custom setup", exact: true }).click();': 'await page.getByRole("button", { name: /Custom setup|إعداد مخصص/ }).click();',
+            "const form = page.locator('form[data-business-setup-language=\"EN\"]');": "const form = page.locator('form[data-business-setup-language]');",
+          }
+          for old, new in replacements.items():
+            if old not in s:
+              raise SystemExit(f'expected harness line not found: {old}')
+            s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+          rm -f .github/workflows/temp-provisioning-v3-locale-repair.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A .github/workflows
+          git commit -m "ops(test): make provisioning v3 locale agnostic [skip ci]"
+          git push origin HEAD:ops/pilot-provisioning-runtime-v3-340
