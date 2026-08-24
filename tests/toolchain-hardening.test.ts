@@ -25,9 +25,10 @@ test("pnpm workspace overrides the audited PostCSS and Undici versions", () => {
 
 test("lockfile resolves the hardened PostCSS and Undici releases", () => {
   const lockfile = source("pnpm-lock.yaml");
+  const resolvedGraph = lockfile.slice(lockfile.indexOf("\npackages:\n"));
 
-  assert.doesNotMatch(lockfile, /postcss@8\.5\.22/);
-  assert.doesNotMatch(lockfile, /undici@7\.28\.0/);
-  assert.match(lockfile, /postcss@8\.5\.23/);
-  assert.match(lockfile, /undici@7\.29\.0/);
+  assert.doesNotMatch(resolvedGraph, /postcss@8\.5\.22/);
+  assert.doesNotMatch(resolvedGraph, /undici@7\.28\.0/);
+  assert.match(resolvedGraph, /postcss@8\.5\.23/);
+  assert.match(resolvedGraph, /undici@7\.29\.0/);
 });
