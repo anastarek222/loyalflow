@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
@@ -22,6 +24,9 @@ const loginSchema = z.object({
   password: z.string().min(10),
   mfaCode: z.string().trim().max(64).optional().default(""),
 });
+
+const DUMMY_PASSWORD_HASH =
+  "$2b$12$8hnfl17deN358tffaOeFB.4xqYantMxhitSnC6icKfoQKvjIEbUoW";
 
 export const {
   handlers,
@@ -63,17 +68,33 @@ export const {
         }
 
         const email = parsed.data.email.toLowerCase();
+        const accountKey = createHash("sha256")
+          .update(email)
+          .digest("hex");
+        const accountLimit = await distributedRateLimit(
+          `credentials-login-account:${accountKey}`,
+          { limit: 10, windowMs: 15 * 60 * 1000 },
+        );
+        if (!accountLimit.allowed) {
+          recordLoginDenial("authorize", "rate_limited");
+          return null;
+        }
+
         const user = await prisma.user.findUnique({
           where: { email },
           include: { business: { select: { isActive: true } } },
         });
+
+        const passwordMatches = await compare(
+          parsed.data.password,
+          user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+        );
 
         if (!user || !user.isActive || (user.business && !user.business.isActive)) {
           recordLoginDenial("authorize", "account_unavailable");
           return null;
         }
 
-        const passwordMatches = await compare(parsed.data.password, user.passwordHash);
         if (!passwordMatches) {
           recordLoginDenial("authorize", "password_mismatch");
           return null;
