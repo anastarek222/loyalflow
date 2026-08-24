@@ -9,7 +9,10 @@ import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
 import prisma from "@/lib/prisma";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import { createPublicMembershipCommand } from "@/lib/server/business/public-membership-command";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -63,10 +66,13 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
 
   const requestHeaders = await headers();
   const clientAddress = getClientAddress(requestHeaders);
-  const limit = rateLimit(`public-join:${business.id}:${clientAddress}`, {
-    limit: 5,
-    windowMs: 15 * 60 * 1000,
-  });
+  const limit = await distributedRateLimit(
+    `public-join:${business.id}:${clientAddress}`,
+    {
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    },
+  );
 
   if (!limit.allowed) {
     redirect(

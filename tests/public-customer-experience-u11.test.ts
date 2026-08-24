@@ -78,7 +78,7 @@ test("U11 manifest, enrollment and responsive foundations stay safe", () => {
   assert.match(manifest, /start_url:\s*\n\s*`\/card\/\$\{token\}`/);
   assert.match(manifest, /no-store, max-age=0/);
   assert.doesNotMatch(manifest, /process\.env/);
-  assert.match(join, /rateLimit\(/);
+  assert.match(join, /distributedRateLimit\(/);
   assert.match(join, /parseCustomerRegistration/);
   assert.match(join, /if \(existingCustomer\)/);
   assert.doesNotMatch(join, /existingCustomer\.publicToken/);
