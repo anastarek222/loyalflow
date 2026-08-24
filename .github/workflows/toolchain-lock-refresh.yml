@@ -1,0 +1,54 @@
+name: Toolchain Lock Refresh
+
+on:
+  push:
+    branches:
+      - fix/toolchain-hardening-340
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lockfile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+
+      - name: Refresh lockfile from hardened workspace policy
+        run: pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts
+
+      - name: Verify audited versions were replaced
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -q 'postcss@8.5.22' pnpm-lock.yaml
+          ! grep -q 'undici@7.28.0' pnpm-lock.yaml
+          grep -q 'postcss@8.5.23' pnpm-lock.yaml
+          grep -q 'undici@7.29.0' pnpm-lock.yaml
+
+      - name: Commit regenerated lockfile and remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/toolchain-lock-refresh.yml
+          git add pnpm-lock.yaml
+          git diff --cached --check
+          git commit -m 'chore(toolchain): refresh pnpm lockfile'
+          git push origin HEAD:fix/toolchain-hardening-340
