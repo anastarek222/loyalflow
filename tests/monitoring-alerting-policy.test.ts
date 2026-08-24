@@ -47,5 +47,5 @@ test("incident and release runbooks reference the monitoring policy", () => {
 
   assert.match(incident, /F19_MONITORING_ALERTING_POLICY\.md/);
   assert.match(release, /F19_MONITORING_ALERTING_POLICY\.md/);
-  assert.match(release, /external alert delivery/i);
+  assert.match(release, /external\s+alert\s+delivery/i);
 });
