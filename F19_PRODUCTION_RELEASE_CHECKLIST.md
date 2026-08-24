@@ -78,7 +78,19 @@ pnpm run verify:operations
 
 Then verify authentication and one disposable tenant workflow.
 
-## 7. Rollback trigger
+## 7. Monitoring authority
+
+Use `F19_MONITORING_ALERTING_POLICY.md` as the monitoring source of truth for
+the release. Before Pilot/Production monitoring is certified, confirm that the
+canonical Production URL is the monitored target and that **external alert
+delivery** has an Owner-approved provider/destination with a controlled test
+alert receipt.
+
+A release is not operationally certified while a Critical or unresolved High
+monitoring condition is active. Do not commit alert-provider credentials or
+notification secrets to the repository.
+
+## 8. Rollback trigger
 
 Rollback the application deployment immediately if any of these fail:
 
@@ -96,6 +108,7 @@ Do not rewrite or delete applied migration history as an application rollback.
 
 - `F19_INCIDENT_RESPONSE_RUNBOOK.md`
 - `F19_BACKUP_RECOVERY_CHECKLIST.md`
+- `F19_MONITORING_ALERTING_POLICY.md`
 
 Use application rollback for release regressions. Database recovery is a
 separate, explicitly verified operation.

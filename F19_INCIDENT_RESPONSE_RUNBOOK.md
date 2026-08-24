@@ -53,6 +53,17 @@ pnpm run verify:production-db
 
 Do not paste secrets or raw connection strings into incident notes.
 
+## Monitoring and alerting
+
+`F19_MONITORING_ALERTING_POLICY.md` defines the liveness/readiness thresholds,
+launch-critical correctness signals, escalation levels, and the requirements
+for external alert delivery. Use the alert's environment and exact deployed Git
+SHA to distinguish the active release from stale Preview deployments before
+starting remediation.
+
+An alert is evidence to investigate, not permission to bypass database or
+tenant safety guards.
+
 ## Application rollback
 
 Rollback the application deployment first when the regression is tied to a new
