@@ -3,7 +3,7 @@ name: Temporary Pilot Provisioning Runtime Receipt V3
 on:
   pull_request:
     branches: [staging]
-    types: [opened]
+    types: [opened, synchronize]
     paths:
       - .github/workflows/temp-pilot-provisioning-runtime-v3.yml
 
@@ -151,7 +151,7 @@ jobs:
             if (totpSecret) {
               await expect(page.getByTestId("login-mfa-step")).toBeVisible();
               await page.locator("#mfaCode").fill(generateTotpCode(totpSecret));
-              await page.getByRole("button", { name: "Verify", exact: true }).press("Enter");
+              await page.locator('button[type="submit"]').click();
             }
             await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
           }
