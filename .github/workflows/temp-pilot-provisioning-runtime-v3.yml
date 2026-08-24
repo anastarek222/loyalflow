@@ -1,0 +1,321 @@
+name: Temporary Pilot Provisioning Runtime Receipt V3
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened]
+    paths:
+      - .github/workflows/temp-pilot-provisioning-runtime-v3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  provisioning-runtime-v3:
+    if: github.head_ref == 'ops/pilot-provisioning-runtime-v3-340'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: "true"
+      NODE_ENV: test
+      LOYALFLOW_ENVIRONMENT: test
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+    steps:
+      - name: Checkout temporary V3 branch
+        uses: actions/checkout@v4
+        with:
+          ref: ops/pilot-provisioning-runtime-v3-340
+          fetch-depth: 0
+
+      - name: Verify exact Staging base and bounded diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="e7857bd8282a1fd41db3d6b9f55a94c0e74a0fc0"
+          git fetch origin staging --quiet
+          test "$(git merge-base HEAD origin/staging)" = "$expected"
+          changed="$(git diff --name-only "$expected"...HEAD | grep -v '^\.ops/' | sort)"
+          test "$changed" = '.github/workflows/temp-pilot-provisioning-runtime-v3.yml'
+          echo "PROVISIONING_V3_SOURCE_GATE=exact-staging"
+
+      - name: Generate single-run ephemeral DB handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          key="$RUNNER_TEMP/pilot-provisioning-v3.pem"
+          pub="$RUNNER_TEMP/pilot-provisioning-v3.pub.pem"
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out "$key" >/dev/null 2>&1
+          openssl pkey -in "$key" -pubout -out "$pub" >/dev/null 2>&1
+          mkdir -p .ops
+          cp "$pub" .ops/pilot-provisioning-v3-public.pem
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f .ops/pilot-provisioning-v3-public.pem
+          git commit -m "ops(test): publish provisioning v3 ephemeral key [skip ci]"
+          git push origin HEAD:ops/pilot-provisioning-runtime-v3-340
+          echo "PROVISIONING_V3_HANDOFF_KEY=published"
+
+      - name: Wait for encrypted isolated DB handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          for attempt in $(seq 1 120); do
+            git fetch origin ops/pilot-provisioning-runtime-v3-340 --quiet
+            if git cat-file -e origin/ops/pilot-provisioning-runtime-v3-340:.ops/pilot-provisioning-v3-handoff.hex 2>/dev/null; then
+              git show origin/ops/pilot-provisioning-runtime-v3-340:.ops/pilot-provisioning-v3-handoff.hex > "$RUNNER_TEMP/handoff.hex"
+              found=1
+              break
+            fi
+            sleep 5
+          done
+          test "$found" = "1"
+          tr -d '[:space:]' < "$RUNNER_TEMP/handoff.hex" | xxd -r -p > "$RUNNER_TEMP/handoff.bin"
+          test "$(wc -c < "$RUNNER_TEMP/handoff.bin")" -eq 512
+          openssl pkeyutl -decrypt \
+            -inkey "$RUNNER_TEMP/pilot-provisioning-v3.pem" \
+            -in "$RUNNER_TEMP/handoff.bin" \
+            -pkeyopt rsa_padding_mode:oaep \
+            -pkeyopt rsa_oaep_md:sha256 \
+            -out "$RUNNER_TEMP/handoff.json"
+          node <<'NODE'
+          const fs = require('node:fs');
+          const p = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + '/handoff.json', 'utf8'));
+          if (p.release !== 'e7857bd8282a1fd41db3d6b9f55a94c0e74a0fc0') throw new Error('Staging release handoff mismatch');
+          if (p.branchId !== 'br-spring-cherry-auywr0vg') throw new Error('Disposable Neon branch handoff mismatch');
+          if (typeof p.databaseUrl !== 'string' || !p.databaseUrl.startsWith('postgresql://')) throw new Error('Invalid database URL handoff');
+          const u = new URL(p.databaseUrl);
+          if (!u.pathname.endsWith('/loyalflow_test')) throw new Error('Refusing non-loyalflow_test database handoff');
+          console.log(`::add-mask::${p.databaseUrl}`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `DATABASE_URL<<LFDBEOF\n${p.databaseUrl}\nLFDBEOF\n`);
+          NODE
+          rm -f "$RUNNER_TEMP/handoff.hex" "$RUNNER_TEMP/handoff.bin" "$RUNNER_TEMP/handoff.json"
+          echo "PROVISIONING_V3_DB_HANDOFF=valid"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate and migrate isolated loyalflow_test
+        run: |
+          pnpm run db:validate
+          pnpm run db:migrate:deploy
+          pnpm run db:migrate:status
+
+      - name: Generate disposable runtime credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture_password="$(openssl rand -hex 18)"
+          auth_secret="$(openssl rand -hex 32)"
+          echo "::add-mask::$fixture_password"
+          echo "::add-mask::$auth_secret"
+          echo "UAT_FIXTURE_PASSWORD=$fixture_password" >> "$GITHUB_ENV"
+          echo "AUTH_SECRET=$auth_secret" >> "$GITHUB_ENV"
+          echo "RUNTIME_CREDENTIALS=generated-masked"
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Create runner-only MFA-aware provisioning receipt
+        shell: bash
+        run: |
+          cat > tests/browser/temp-pilot-provisioning-runtime-v3.spec.ts <<'SPEC'
+          import { expect, test, type Page } from "@playwright/test";
+          import { PrismaPg } from "@prisma/adapter-pg";
+          import { PrismaClient } from "../../generated/prisma/client";
+          import { generateTotpCode } from "../../lib/auth/super-admin-mfa";
+          import { beginSuperAdminMfaEnrollment, enableSuperAdminMfa } from "../../lib/auth/super-admin-mfa-runtime";
+          import { cleanupBrowserUat, prepareBrowserUat, uatEmail, type BrowserUatFixture } from "./fixtures";
+
+          let fixture: BrowserUatFixture;
+          let manifestPath = "";
+          let superAdminTotpSecret = "";
+          const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
+
+          async function signIn(page: Page, email: string, totpSecret?: string) {
+            await page.goto("/login");
+            await page.getByLabel("Email address").fill(email);
+            await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+            await page.getByRole("button", { name: "Sign in" }).press("Enter");
+            if (totpSecret) {
+              await expect(page.getByTestId("login-mfa-step")).toBeVisible();
+              await page.locator("#mfaCode").fill(generateTotpCode(totpSecret));
+              await page.getByRole("button", { name: "Verify", exact: true }).press("Enter");
+            }
+            await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+          }
+
+          async function signOut(page: Page) {
+            await page.getByRole("button", { name: "Account menu", exact: true }).click();
+            await Promise.all([
+              page.waitForURL(/\/login$/),
+              page.getByRole("button", { name: "Log out", exact: true }).click(),
+            ]);
+          }
+
+          test.describe.serial("Pilot provisioning runtime receipt V3", () => {
+            test.beforeAll(async ({ baseURL }) => {
+              const prepared = await prepareBrowserUat(baseURL!);
+              fixture = prepared.fixture;
+              manifestPath = prepared.manifestPath;
+              const email = uatEmail("superadmin", fixture.runId);
+              const superAdmin = await prisma.user.findUnique({ where: { email } });
+              if (!superAdmin) throw new Error("Synthetic Super Admin fixture missing");
+              const enrollment = await beginSuperAdminMfaEnrollment({ userId: superAdmin.id, email });
+              const enabled = await enableSuperAdminMfa({
+                enrollmentToken: enrollment.enrollmentToken,
+                code: generateTotpCode(enrollment.secret),
+              });
+              if (!enabled) throw new Error("Synthetic Super Admin MFA enablement failed");
+              superAdminTotpSecret = enrollment.secret;
+              console.log("SYNTHETIC_SUPER_ADMIN_MFA=enabled-official-runtime");
+            });
+
+            test.afterAll(async () => {
+              try {
+                if (fixture && manifestPath) await cleanupBrowserUat(fixture.runId, manifestPath);
+              } finally {
+                superAdminTotpSecret = "";
+                await prisma.$disconnect();
+              }
+            });
+
+            test("Super Admin MFA login creates Business + verified Owner and Owner signs in @desktop", async ({ page }) => {
+              test.setTimeout(180_000);
+              const ownerEmail = `lf-pilot-runtime-owner-${fixture.runId}@example.test`;
+              const businessName = `Pilot runtime business ${fixture.runId}`;
+
+              await signIn(page, uatEmail("superadmin", fixture.runId), superAdminTotpSecret);
+              console.log("PROVISIONING_V3_SUPER_ADMIN_MFA_LOGIN=pass");
+              await page.goto("/businesses/new");
+              await page.getByRole("button", { name: "Custom setup", exact: true }).click();
+
+              const fields: Record<string, string> = {
+                name: businessName,
+                contactPhone: "",
+                currency: "EGP",
+                timezone: "Africa/Cairo",
+                industry: "Retail",
+                website: "",
+                email: "",
+                country: "Egypt",
+                city: "Cairo",
+                taxNumber: "",
+                employeeCount: "1",
+                ownerFirstName: "Pilot",
+                ownerLastName: "Owner",
+                ownerEmail,
+                ownerPhone: "",
+                ownerPassword: process.env.UAT_FIXTURE_PASSWORD!,
+                logoUrl: "",
+                loyaltyMode: "VISITS",
+                unitName: "Visit",
+                rewardName: "Pilot Reward",
+                rewardThreshold: "5",
+                earnAmount: "1",
+                primaryColor: "#111827",
+                secondaryColor: "#FFFFFF",
+                themePreset: "DEFAULT",
+                cardStyle: "CLASSIC",
+                fontFamily: "INTER",
+                standardCardArtworkEnabled: "on",
+                standardCardArtworkCategory: "OTHER",
+                cardDesignMode: "STANDARD",
+                customCardArtworkEnabled: "false",
+                customCardFrontArtworkUrl: "",
+                customCardBackArtworkUrl: "",
+                customCardSafeZoneVersion: "ID1_V1",
+                plan: "FREE",
+                billingInterval: "MONTHLY",
+                billingCustomDays: "",
+                subscriptionStartDate: "",
+                nextPaymentDate: "",
+                lastPaymentDate: "",
+                subscriptionAmount: "",
+                billingCurrency: "EGP",
+                paymentStatus: "TRIAL",
+                gracePeriodDays: "3",
+                paymentMethod: "",
+                billingNotes: "",
+                adminNotes: "",
+              };
+
+              const form = page.locator('form[data-business-setup-language="EN"]');
+              await form.evaluate((node, values) => {
+                const form = node as HTMLFormElement;
+                const supplied = values as Record<string, string>;
+                for (const element of Array.from(form.elements)) {
+                  const control = element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+                  if (control.name && Object.prototype.hasOwnProperty.call(supplied, control.name)) control.disabled = true;
+                }
+                for (const [name, value] of Object.entries(supplied)) {
+                  const input = document.createElement("input");
+                  input.type = "hidden";
+                  input.name = name;
+                  input.value = value;
+                  form.appendChild(input);
+                }
+                form.requestSubmit();
+              }, fields);
+
+              await page.waitForURL(/\/businesses\/[^/]+\/users\?created=business&sheetSync=pending$/, { timeout: 60_000 });
+              const slug = new URL(page.url()).pathname.split("/")[2]!;
+
+              const business = await prisma.business.findUnique({ where: { slug } });
+              expect(business?.name).toBe(businessName);
+              expect(business?.country).toBe("Egypt");
+              expect(business?.currency).toBe("EGP");
+              expect(business?.timezone).toBe("Africa/Cairo");
+              expect(business?.loyaltyMode).toBe("VISITS");
+
+              const owner = await prisma.user.findUnique({ where: { email: ownerEmail } });
+              expect(owner?.role).toBe("OWNER");
+              expect(owner?.businessId).toBe(business?.id);
+              expect(owner?.isActive).toBe(true);
+              expect(owner?.onboardingStatus).not.toBe("PENDING");
+              const verified = await prisma.$queryRaw<Array<{ count: bigint }>>`
+                SELECT COUNT(*)::bigint AS count FROM "EmailVerificationState" WHERE "userId" = ${owner!.id} AND "verifiedAt" IS NOT NULL
+              `;
+              expect(Number(verified[0]?.count ?? 0n)).toBe(1);
+              console.log("PROVISIONING_V3_BUSINESS_OWNER_PERSISTENCE=pass");
+
+              await signOut(page);
+              await signIn(page, ownerEmail);
+              const response = await page.goto(`/businesses/${slug}`);
+              expect(response?.status()).toBe(200);
+              await expect(page).toHaveURL(new RegExp(`/businesses/${slug}$`));
+              console.log("PROVISIONING_V3_OWNER_LOGIN_AND_ACCESS=pass");
+              console.log("PROVISIONING_RUNTIME_CHAIN=super-admin-mfa-business-verified-owner-owner-login-pass");
+            });
+          });
+          SPEC
+
+      - name: Run isolated browser/runtime provisioning chain V3
+        env:
+          BROWSER_UAT_PORT: "3100"
+        run: pnpm exec playwright test tests/browser/temp-pilot-provisioning-runtime-v3.spec.ts --project=desktop-chromium
+
+      - name: Emit provisioning V3 receipt
+        run: |
+          echo "PILOT_PROVISIONING_RUNTIME_V3_OUTCOME=pass"
+          echo "PILOT_PROVISIONING_RUNTIME_V3_STAGING_SHA=e7857bd8282a1fd41db3d6b9f55a94c0e74a0fc0"
+          echo "PILOT_PROVISIONING_RUNTIME_V3_NEON_BRANCH=br-spring-cherry-auywr0vg"
+
+      - name: Remove runner-local private material
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/pilot-provisioning-v3.pem" "$RUNNER_TEMP/pilot-provisioning-v3.pub.pem" "$RUNNER_TEMP/handoff.hex" "$RUNNER_TEMP/handoff.bin" "$RUNNER_TEMP/handoff.json"
+          rm -f tests/browser/temp-pilot-provisioning-runtime-v3.spec.ts
+          echo "RUNNER_PRIVATE_MATERIAL_CLEANUP=done"
