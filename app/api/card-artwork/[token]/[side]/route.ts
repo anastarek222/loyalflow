@@ -5,7 +5,10 @@ import {
   type CustomCardSide,
 } from "@/lib/cards/custom-card-storage";
 import prisma from "@/lib/prisma";
-import { getClientAddress, rateLimit } from "@/lib/utils/rate-limiter";
+import {
+  distributedRateLimit,
+  getClientAddress,
+} from "@/lib/utils/rate-limiter";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -16,7 +19,7 @@ export async function GET(
   if (!isPublicCardToken(token) || !["front", "back"].includes(side)) {
     return new NextResponse(null, { status: 404 });
   }
-  const limit = rateLimit(
+  const limit = await distributedRateLimit(
     `public-card-artwork:${getClientAddress(request.headers)}:${token}`,
     { limit: 120, windowMs: 60_000 },
   );
