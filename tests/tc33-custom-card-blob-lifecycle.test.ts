@@ -66,7 +66,7 @@ test("TC3.3 private artwork routes derive access from trusted state", () => {
   assert.match(publicArtwork, /where: \{ publicToken: token \}/);
   assert.match(publicArtwork, /customer\.business\.cardDesignMode !== "CUSTOM"/);
   assert.match(publicArtwork, /customCardArtworkEnabled/);
-  assert.match(publicArtwork, /rateLimit\(/);
+  assert.match(publicArtwork, /distributedRateLimit\(/);
   assert.doesNotMatch(publicArtwork, /tenantId|businessId.*searchParams/);
 });
 
