@@ -157,10 +157,10 @@ jobs:
           }
 
           async function signOut(page: Page) {
-            await page.getByRole("button", { name: "Account menu", exact: true }).click();
+            await page.getByRole("button", { name: /Account menu|قائمة الحساب/ }).click();
             await Promise.all([
               page.waitForURL(/\/login$/),
-              page.getByRole("button", { name: "Log out", exact: true }).click(),
+              page.getByRole("button", { name: /Log out|تسجيل الخروج/ }).click(),
             ]);
           }
 
@@ -199,7 +199,7 @@ jobs:
               await signIn(page, uatEmail("superadmin", fixture.runId), superAdminTotpSecret);
               console.log("PROVISIONING_V3_SUPER_ADMIN_MFA_LOGIN=pass");
               await page.goto("/businesses/new");
-              await page.getByRole("button", { name: "Custom setup", exact: true }).click();
+              await page.getByRole("button", { name: /Custom setup|إعداد مخصص/ }).click();
 
               const fields: Record<string, string> = {
                 name: businessName,
@@ -251,7 +251,7 @@ jobs:
                 adminNotes: "",
               };
 
-              const form = page.locator('form[data-business-setup-language="EN"]');
+              const form = page.locator('form[data-business-setup-language]');
               await form.evaluate((node, values) => {
                 const form = node as HTMLFormElement;
                 const supplied = values as Record<string, string>;
