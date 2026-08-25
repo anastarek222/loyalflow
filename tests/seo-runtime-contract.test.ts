@@ -73,7 +73,9 @@ test("Preview deployments emit an X-Robots-Tag noindex defense", () => {
   assert.equal(getPublicIndexingHeader(undefined), null);
 
   const nextConfigSource = readFileSync("next.config.ts", "utf8");
-  assert.match(nextConfigSource, /getPublicIndexingHeader\(process\.env\.VERCEL_ENV\)/);
+  assert.match(nextConfigSource, /process\.env\.VERCEL_ENV === "preview"/);
+  assert.match(nextConfigSource, /key: "X-Robots-Tag"/);
+  assert.match(nextConfigSource, /value: "noindex, nofollow"/);
 });
 
 test("marketing routes apply the centralized SEO policy after local defaults", () => {
