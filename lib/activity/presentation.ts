@@ -43,6 +43,94 @@ export function getActivityMetadataNumber(metadata: unknown, key: string) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+export function localizeStoredActivityDescription(
+  value: string,
+  language: AppLanguage,
+) {
+  if (language === "AR") {
+    return value
+      .replace(/^Created customer /, "تم إنشاء العميل ")
+      .replace(/^Customer (.+) joined via self-registration$/, "انضم العميل $1 عبر التسجيل الذاتي")
+      .replace(/^Updated customer information for /, "تم تحديث بيانات العميل ")
+      .replace(/^Reactivated customer account$/, "تم إعادة تفعيل حساب العميل")
+      .replace(/^Deactivated customer account$/, "تم إيقاف حساب العميل")
+      .replace(/^Reactivated customer via bulk operation$/, "تمت إعادة تفعيل العميل عبر عملية جماعية")
+      .replace(/^Deactivated customer via bulk operation$/, "تم إيقاف العميل عبر عملية جماعية")
+      .replace(/^Added customer tag: (.+)$/, "تمت إضافة وسم العميل: $1")
+      .replace(/^Removed customer tag: (.+)$/, "تمت إزالة وسم العميل: $1")
+      .replace(/^Added customer tag via bulk operation: (.+)$/, "تمت إضافة وسم العميل عبر عملية جماعية: $1")
+      .replace(/^Removed customer tag via bulk operation: (.+)$/, "تمت إزالة وسم العميل عبر عملية جماعية: $1")
+      .replace(/^Added a customer note$/, "تمت إضافة ملاحظة للعميل")
+      .replace(/^Updated the customer note$/, "تم تعديل ملاحظة العميل")
+      .replace(/^Added (\d+) loyalty credit$/, "تمت إضافة $1 إلى رصيد الولاء")
+      .replace(/^Redeemed (.+) for (\d+)$/, "تم استبدال $1 مقابل $2")
+      .replace(/^Unlocked (.+) until (.+)$/, "تم فتح $1 حتى $2")
+      .replace(/^Reward (.+) expired$/, "انتهت صلاحية $1")
+      .replace(/^Blocked redemption of (.+) because it expired$/, "تم رفض استبدال $1 لانتهاء الصلاحية")
+      .replace(/^Recorded a new customer referral$/, "تم تسجيل إحالة عميل جديد")
+      .replace(/^Adjusted balance by ([+-]?\d+)\. Reason: (.+)$/, "تم تعديل الرصيد بمقدار $1. السبب: $2")
+      .replace(/^Updated business settings$/, "تم تحديث إعدادات النشاط")
+      .replace(/^Updated business profile$/, "تم تحديث الملف التعريفي للنشاط")
+      .replace(/^Updated loyalty program rules$/, "تم تحديث قواعد برنامج الولاء")
+      .replace(/^Updated customer message templates$/, "تم تحديث قوالب رسائل العملاء")
+      .replace(/^Updated operating settings$/, "تم تحديث إعدادات التشغيل")
+      .replace(/^Updated loyalty card design$/, "تم تحديث تصميم بطاقة الولاء")
+      .replace(/^Published a new loyalty card design version \((.+)\)$/, "تم نشر نسخة جديدة من تصميم بطاقة الولاء ($1)")
+      .replace(/^Updated digital card contact details and terms$/, "تم تحديث بيانات التواصل وشروط الكارت الرقمي")
+      .replace(/^Enabled data export for the business owner$/, "تم السماح لمالك النشاط بتصدير البيانات")
+      .replace(/^Disabled data export for the business owner$/, "تم إيقاف صلاحية تصدير البيانات عن مالك النشاط")
+      .replace(/^Created owner account for (.+)$/, "تم إنشاء حساب مالك لـ $1")
+      .replace(/^Created staff account for (.+)$/, "تم إنشاء حساب موظف لـ $1")
+      .replace(/^Reactivated account (.+)$/, "تم إعادة تفعيل الحساب $1")
+      .replace(/^Deactivated account (.+)$/, "تم إيقاف الحساب $1")
+      .replace(/^Changed password for (.+)$/, "تم تغيير كلمة المرور للحساب $1")
+      .replace(/^Created reward (.+)$/, "تم إنشاء المكافأة $1")
+      .replace(/^Updated reward (.+)$/, "تم تحديث المكافأة $1")
+      .replace(/^Activated reward (.+)$/, "تم تفعيل المكافأة $1")
+      .replace(/^Deactivated reward (.+)$/, "تم إيقاف المكافأة $1")
+      .replace(/^Created offer (.+)$/, "تم إنشاء العرض $1")
+      .replace(/^Updated offer (.+)$/, "تم تحديث العرض $1")
+      .replace(/^Activated offer (.+)$/, "تم تفعيل العرض $1")
+      .replace(/^Deactivated offer (.+)$/, "تم إيقاف العرض $1");
+  }
+
+  return value
+    .replace(/^تم إنشاء العميل (.+)$/, "Created customer $1")
+    .replace(/^انضم العميل (.+) عبر التسجيل الذاتي$/, "Customer $1 joined via self-registration")
+    .replace(/^تم تحديث بيانات العميل (.+)$/, "Updated customer information for $1")
+    .replace(/^تم إعادة تفعيل حساب العميل$/, "Reactivated customer account")
+    .replace(/^تم إيقاف حساب العميل$/, "Deactivated customer account")
+    .replace(/^تمت إعادة تفعيل العميل عبر عملية جماعية$/, "Reactivated customer via bulk operation")
+    .replace(/^تم إيقاف العميل عبر عملية جماعية$/, "Deactivated customer via bulk operation")
+    .replace(/^تمت إضافة وسم العميل: (.+)$/, "Added customer tag: $1")
+    .replace(/^تمت إزالة وسم العميل: (.+)$/, "Removed customer tag: $1")
+    .replace(/^تمت إضافة وسم العميل عبر عملية جماعية: (.+)$/, "Added customer tag via bulk operation: $1")
+    .replace(/^تمت إزالة وسم العميل عبر عملية جماعية: (.+)$/, "Removed customer tag via bulk operation: $1")
+    .replace(/^تمت إضافة ملاحظة للعميل$/, "Added a customer note")
+    .replace(/^تم تعديل ملاحظة العميل$/, "Updated the customer note")
+    .replace(/^تم فتح (.+) حتى (.+)$/, "Unlocked $1 until $2")
+    .replace(/^انتهت صلاحية (.+)$/, "Reward $1 expired")
+    .replace(/^تم رفض استبدال (.+) لانتهاء الصلاحية$/, "Blocked redemption of $1 because it expired")
+    .replace(/^تم تسجيل إحالة عميل جديد$/, "Recorded a new customer referral")
+    .replace(/^تم تحديث الملف التعريفي للنشاط$/, "Updated business profile")
+    .replace(/^تم تحديث قواعد برنامج الولاء$/, "Updated loyalty program rules")
+    .replace(/^تم تحديث قوالب رسائل العملاء$/, "Updated customer message templates")
+    .replace(/^تم تحديث إعدادات التشغيل$/, "Updated operating settings")
+    .replace(/^تم تحديث تصميم بطاقة الولاء$/, "Updated loyalty card design")
+    .replace(/^تم نشر نسخة جديدة من تصميم بطاقة الولاء \((.+)\)$/, "Published a new loyalty card design version ($1)")
+    .replace(/^تم تحديث بيانات التواصل وشروط الكارت الرقمي$/, "Updated digital card contact details and terms")
+    .replace(/^تم السماح لمالك النشاط بتصدير البيانات$/, "Enabled data export for the business owner")
+    .replace(/^تم إيقاف صلاحية تصدير البيانات عن مالك النشاط$/, "Disabled data export for the business owner")
+    .replace(/^تم إنشاء المكافأة (.+)$/, "Created reward $1")
+    .replace(/^تم تحديث المكافأة (.+)$/, "Updated reward $1")
+    .replace(/^تم تفعيل المكافأة (.+)$/, "Activated reward $1")
+    .replace(/^تم إيقاف المكافأة (.+)$/, "Deactivated reward $1")
+    .replace(/^تم إنشاء العرض (.+)$/, "Created offer $1")
+    .replace(/^تم تحديث العرض (.+)$/, "Updated offer $1")
+    .replace(/^تم تفعيل العرض (.+)$/, "Activated offer $1")
+    .replace(/^تم إيقاف العرض (.+)$/, "Deactivated offer $1");
+}
+
 function getRoleLabel(role: string | undefined, language: AppLanguage) {
   const labels: Record<UserRole, Record<AppLanguage, string>> = {
     OWNER: { AR: "مالك", EN: "Owner" },
@@ -66,12 +154,16 @@ export function getActivityDescription(
   }>,
   language: AppLanguage,
 ) {
+  const fallbackDescription = localizeStoredActivityDescription(
+    activity.description,
+    language,
+  );
   const version = getActivityMetadataString(
     activity.metadata,
     "presentationVersion",
   );
   if (version !== STRUCTURED_ACTIVITY_PRESENTATION_VERSION) {
-    return activity.description;
+    return fallbackDescription;
   }
 
   const kind = getActivityMetadataString(activity.metadata, "presentationKind");
@@ -79,7 +171,7 @@ export function getActivityDescription(
 
   if (kind === "BRANCH_AUDIT") {
     const branchName = getActivityMetadataString(activity.metadata, "branchName");
-    if (!branchName) return activity.description;
+    if (!branchName) return fallbackDescription;
     const assignedUserEmail = getActivityMetadataString(
       activity.metadata,
       "assignedUserEmail",
@@ -111,7 +203,7 @@ export function getActivityDescription(
       activity.metadata,
       "targetUserEmail",
     );
-    if (!targetUserEmail) return activity.description;
+    if (!targetUserEmail) return fallbackDescription;
     const targetUserRole = getActivityMetadataString(
       activity.metadata,
       "targetUserRole",
@@ -151,7 +243,7 @@ export function getActivityDescription(
       );
       const unitName = getActivityMetadataString(activity.metadata, "unitName");
       if (amount === undefined || !loyaltyMode || !unitName) {
-        return activity.description;
+        return fallbackDescription;
       }
       const saleAmount = getActivityMetadataNumber(activity.metadata, "saleAmount");
       const displayedAmount = saleAmount ?? amount;
@@ -167,7 +259,7 @@ export function getActivityDescription(
     if (financialType === "REWARD_REDEEMED") {
       const rewardName = getActivityMetadataString(activity.metadata, "rewardName");
       const cost = getActivityMetadataNumber(activity.metadata, "cost");
-      if (!rewardName || cost === undefined) return activity.description;
+      if (!rewardName || cost === undefined) return fallbackDescription;
       return language === "AR"
         ? `تم استبدال ${rewardName} مقابل ${cost}`
         : `Redeemed ${rewardName} for ${cost}`;
@@ -179,7 +271,7 @@ export function getActivityDescription(
         "signedAmount",
       );
       const reason = getActivityMetadataString(activity.metadata, "reason");
-      if (signedAmount === undefined || !reason) return activity.description;
+      if (signedAmount === undefined || !reason) return fallbackDescription;
       const displayedAmount = `${signedAmount > 0 ? "+" : ""}${signedAmount}`;
       return language === "AR"
         ? `تم تعديل الرصيد بمقدار ${displayedAmount}. السبب: ${reason}`
@@ -187,5 +279,5 @@ export function getActivityDescription(
     }
   }
 
-  return activity.description;
+  return fallbackDescription;
 }
