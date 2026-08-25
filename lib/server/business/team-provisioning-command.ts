@@ -11,6 +11,7 @@ import {
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { createBusinessNotification } from "@/lib/notifications";
 import prisma from "@/lib/prisma";
+import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 
 export type ProvisionBusinessUserCommandInput = Readonly<{
   businessId: string;
@@ -59,6 +60,8 @@ export async function provisionBusinessUserCommand(
   const normalizedEmail = input.email.trim().toLowerCase();
 
   return prisma.$transaction(async (transaction) => {
+    await lockBusinessCapacity(transaction, input.businessId);
+
     if (
       !(await canBusinessPerformSubscriptionOperation(
         transaction,
