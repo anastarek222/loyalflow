@@ -46,20 +46,25 @@ export default function NotificationReadButton({ slug, notificationKey, language
 
   if (status === "read") {
     return (
-      <span className="shrink-0 rounded-[var(--lf-radius-input)] bg-success-subtle px-4 py-2 text-xs font-black text-success">
+      <span role="status" className="shrink-0 rounded-[var(--lf-radius-input)] bg-success-subtle px-4 py-2 text-xs font-black text-success">
         {t.read}
       </span>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={markAsRead}
-      disabled={isPending}
-      className="shrink-0 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-2 text-xs font-black text-primary transition hover:border-primary/30 hover:bg-primary-subtle disabled:cursor-wait disabled:opacity-60"
+    <span
+      role={status === "error" ? "alert" : undefined}
+      className="inline-flex shrink-0"
     >
-      {isPending ? t.saving : status === "error" ? t.retry : t.markRead}
-    </button>
+      <button
+        type="button"
+        onClick={markAsRead}
+        disabled={isPending}
+        className="shrink-0 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-2 text-xs font-black text-primary transition hover:border-primary/30 hover:bg-primary-subtle disabled:cursor-wait disabled:opacity-60"
+      >
+        {isPending ? t.saving : status === "error" ? t.retry : t.markRead}
+      </button>
+    </span>
   );
 }
