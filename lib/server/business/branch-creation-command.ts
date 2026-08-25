@@ -5,6 +5,7 @@ import { normalizeBranchInput } from "@/lib/branches/management";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
+import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 
 export type CreateBranchCommandInput = Readonly<{
   businessId: string;
@@ -36,6 +37,8 @@ export async function createBranchCommand(
   const activityContext = await getActivityRequestContext();
 
   return prisma.$transaction(async (transaction) => {
+    await lockBusinessCapacity(transaction, input.businessId);
+
     if (
       !(await canBusinessPerformSubscriptionOperation(
         transaction,
