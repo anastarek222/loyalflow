@@ -11,6 +11,7 @@ import {
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { formatMoneyMinor } from "@/lib/billing/subscription";
 import { getGlobalDashboardMode } from "@/lib/dashboard/overview";
+import { resolveRoleAwareEntry } from "@/lib/dashboard/role-aware-entry";
 import { getSuperAdminBillingSummary } from "@/lib/dashboard/super-admin-billing-summary";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -519,6 +520,13 @@ export default async function DashboardPage() {
     primaryBusiness.isActive &&
     canPerform(user, primaryBusiness.id, "LOYALTY_EARN"),
   );
+  const roleAwareEntry = resolveRoleAwareEntry({
+    role: user.role,
+    business: primaryBusiness,
+    canScan,
+  });
+
+  if (roleAwareEntry) redirect(roleAwareEntry);
 
   return (
     <ListPageTemplate
