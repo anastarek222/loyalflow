@@ -7,6 +7,7 @@ import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscript
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
+import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 import { normalizeRewardInput } from "@/lib/rewards/catalog";
 
 export type RewardWriteActor = Readonly<{
@@ -44,6 +45,8 @@ export async function createRewardCommand(input: {
   const activityContext = await getActivityRequestContext();
 
   return prisma.$transaction(async (transaction) => {
+    await lockBusinessCapacity(transaction, input.businessId);
+
     if (
       !(await canBusinessPerformSubscriptionOperation(
         transaction,
