@@ -3,6 +3,7 @@
 import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/custom-card-publish-action";
 import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/program/custom-card-upload-action";
 import { ConfirmedSubmitButton } from "@/components/confirmed-submit-button";
+import { CustomCardExperienceStatus } from "@/components/custom-card-experience-status";
 import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 import { normalizeLanguage } from "@/lib/i18n";
@@ -45,6 +46,8 @@ export async function CustomCardArtworkManager({
           {t("للمشرف العام فقط", "Super Admin only")}
         </span>
       </div>
+
+      <CustomCardExperienceStatus isArabic={language === "AR"} />
 
       {!storageConfigured ? (
         <p className="mt-4 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-sm font-bold">
