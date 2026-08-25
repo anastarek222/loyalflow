@@ -28,6 +28,13 @@ const securityHeaders = [
   },
 ];
 
+if (process.env.VERCEL_ENV === "preview") {
+  securityHeaders.push({
+    key: "X-Robots-Tag",
+    value: "noindex, nofollow",
+  });
+}
+
 if (process.env.NODE_ENV === "production") {
   securityHeaders.push({
     key: "Strict-Transport-Security",

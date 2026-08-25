@@ -20,7 +20,8 @@ test("public social metadata reuses approved page copy without inventing artwork
   assert.match(helper, /siteName:\s*platformBrand\.name/);
   assert.match(helper, /title,/);
   assert.match(helper, /description,/);
-  assert.match(helper, /url:\s*path/);
+  assert.match(helper, /publicSiteUrl/);
+  assert.match(helper, /url:\s*publicSiteUrl\(path\)/);
   assert.match(helper, /card:\s*"summary"/);
   assert.doesNotMatch(helper, /images\s*:/);
 });

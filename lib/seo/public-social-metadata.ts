@@ -1,25 +1,36 @@
 import type { Metadata } from "next";
 
 import { platformBrand } from "@/lib/platform-brand";
+import {
+  buildPublicPagePolicy,
+  type PublicMarketingPath,
+} from "@/lib/seo/public-page-metadata";
+import { publicSiteUrl } from "@/lib/urls/public-site-url";
 
 type PublicSocialMetadataInput = Readonly<{
   title: string;
   description: string;
-  path: "/" | "/get-started";
+  path: PublicMarketingPath;
+  vercelEnvironment?: string;
 }>;
 
 export function buildPublicSocialMetadata({
   title,
   description,
   path,
-}: PublicSocialMetadataInput): Pick<Metadata, "openGraph" | "twitter"> {
+  vercelEnvironment = process.env.VERCEL_ENV,
+}: PublicSocialMetadataInput): Pick<
+  Metadata,
+  "alternates" | "robots" | "openGraph" | "twitter"
+> {
   return {
+    ...buildPublicPagePolicy(path, vercelEnvironment),
     openGraph: {
       type: "website",
       siteName: platformBrand.name,
       title,
       description,
-      url: path,
+      url: publicSiteUrl(path),
     },
     twitter: {
       card: "summary",
