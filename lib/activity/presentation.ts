@@ -58,6 +58,73 @@ function getRoleLabel(role: string | undefined, language: AppLanguage) {
       : "user";
 }
 
+function localizeLegacyActivityDescription(
+  activity: Readonly<{
+    type: ActivityType;
+    description: string;
+  }>,
+  language: AppLanguage,
+) {
+  if (language !== "EN") return activity.description;
+
+  const value = activity.description;
+
+  switch (activity.type) {
+    case "CUSTOMER_CREATED": {
+      const direct = /^تم إنشاء العميل (.+)$/.exec(value);
+      if (direct) return `Created customer ${direct[1]}`;
+      const selfService = /^انضم العميل (.+) عبر التسجيل الذاتي$/.exec(value);
+      return selfService
+        ? `Customer ${selfService[1]} joined through self-registration`
+        : value;
+    }
+    case "CUSTOMER_UPDATED": {
+      const match = /^تم تحديث بيانات العميل (.+)$/.exec(value);
+      return match ? `Updated customer information for ${match[1]}` : value;
+    }
+    case "CUSTOMER_REACTIVATED":
+      if (value === "تم إعادة تفعيل حساب العميل") return "Reactivated customer account";
+      if (value === "تمت إعادة تفعيل العميل عبر عملية جماعية") {
+        return "Reactivated customer through a bulk action";
+      }
+      return value;
+    case "CUSTOMER_DEACTIVATED":
+      if (value === "تم تعطيل حساب العميل") return "Deactivated customer account";
+      if (value === "تم تعطيل العميل عبر عملية جماعية") {
+        return "Deactivated customer through a bulk action";
+      }
+      return value;
+    case "CUSTOMER_TAG_ASSIGNED": {
+      const direct = /^تمت إضافة وسم العميل: (.+)$/.exec(value);
+      if (direct) return `Added customer tag: ${direct[1]}`;
+      const bulk = /^تمت إضافة وسم العميل عبر عملية جماعية: (.+)$/.exec(value);
+      return bulk ? `Added customer tag through a bulk action: ${bulk[1]}` : value;
+    }
+    case "CUSTOMER_TAG_REMOVED": {
+      const direct = /^تمت إزالة وسم العميل: (.+)$/.exec(value);
+      if (direct) return `Removed customer tag: ${direct[1]}`;
+      const bulk = /^تمت إزالة وسم العميل عبر عملية جماعية: (.+)$/.exec(value);
+      return bulk
+        ? `Removed customer tag through a bulk action: ${bulk[1]}`
+        : value;
+    }
+    case "CUSTOMER_NOTE_CREATED":
+      return value === "تمت إضافة ملاحظة داخلية للعميل"
+        ? "Added an internal customer note"
+        : value;
+    case "CUSTOMER_NOTE_UPDATED":
+      return value === "تم تعديل ملاحظة داخلية للعميل"
+        ? "Updated an internal customer note"
+        : value;
+    case "REFERRAL_RECORDED": {
+      const match = /^تم تسجيل إحالة جديدة للعميل (.+)$/.exec(value);
+      return match ? `Recorded a new referral for customer ${match[1]}` : value;
+    }
+    default:
+      return value;
+  }
+}
+
 export function getActivityDescription(
   activity: Readonly<{
     type: ActivityType;
@@ -71,7 +138,7 @@ export function getActivityDescription(
     "presentationVersion",
   );
   if (version !== STRUCTURED_ACTIVITY_PRESENTATION_VERSION) {
-    return activity.description;
+    return localizeLegacyActivityDescription(activity, language);
   }
 
   const kind = getActivityMetadataString(activity.metadata, "presentationKind");
