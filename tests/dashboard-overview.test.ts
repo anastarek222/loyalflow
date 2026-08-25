@@ -33,7 +33,7 @@ test("U5 exposes Scan as the primary dashboard operation only with loyalty permi
 });
 
 test("U5 daily KPI presentation never presents visits or points as currency revenue", () => {
-  const kpiArea = businessDashboard.slice(businessDashboard.indexOf('aria-label="Daily key performance indicators"'), businessDashboard.indexOf("canViewReports ? <section"));
+  const kpiArea = businessDashboard.slice(businessDashboard.indexOf("aria-label={dictionary.dailyKpis}"), businessDashboard.indexOf("canViewReports ? <section"));
   assert.match(kpiArea, /totalCustomers/);
   assert.match(kpiArea, /todayActivity/);
   assert.match(kpiArea, /todayRedemptions/);
