@@ -8,6 +8,7 @@ import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
 import prisma from "@/lib/prisma";
+import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 
 export type OfferWriteActor = Readonly<{
   id: string;
@@ -44,6 +45,8 @@ export async function createOfferCommand(input: {
   const activityContext = await getActivityRequestContext();
 
   return prisma.$transaction(async (transaction) => {
+    await lockBusinessCapacity(transaction, input.businessId);
+
     if (
       !(await canBusinessPerformSubscriptionOperation(
         transaction,
