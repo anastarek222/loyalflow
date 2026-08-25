@@ -182,12 +182,12 @@ export default function BusinessNotificationsDialogClient({
                   {t.unread}: {visibleUnreadCount}
                 </span>
                 {status === "success" && (
-                  <span className="rounded-full bg-success-subtle px-4 py-1.5 text-sm font-black text-success">
+                  <span role="status" className="rounded-full bg-success-subtle px-4 py-1.5 text-sm font-black text-success">
                     {t.saved}
                   </span>
                 )}
                 {status === "error" && (
-                  <span className="rounded-full bg-danger-subtle px-4 py-1.5 text-sm font-black text-danger">
+                  <span role="alert" className="rounded-full bg-danger-subtle px-4 py-1.5 text-sm font-black text-danger">
                     {t.saveFailed}
                   </span>
                 )}
