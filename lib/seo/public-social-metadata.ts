@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { platformBrand } from "@/lib/platform-brand";
+import { publicSiteUrl } from "@/lib/urls/public-site-url";
 
 type PublicSocialMetadataInput = Readonly<{
   title: string;
@@ -19,7 +20,7 @@ export function buildPublicSocialMetadata({
       siteName: platformBrand.name,
       title,
       description,
-      url: path,
+      url: publicSiteUrl(path),
     },
     twitter: {
       card: "summary",
