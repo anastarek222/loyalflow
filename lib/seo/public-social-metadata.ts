@@ -11,18 +11,20 @@ type PublicSocialMetadataInput = Readonly<{
   title: string;
   description: string;
   path: PublicMarketingPath;
+  vercelEnvironment?: string;
 }>;
 
 export function buildPublicSocialMetadata({
   title,
   description,
   path,
+  vercelEnvironment = process.env.VERCEL_ENV,
 }: PublicSocialMetadataInput): Pick<
   Metadata,
   "alternates" | "robots" | "openGraph" | "twitter"
 > {
   return {
-    ...buildPublicPagePolicy(path),
+    ...buildPublicPagePolicy(path, vercelEnvironment),
     openGraph: {
       type: "website",
       siteName: platformBrand.name,
