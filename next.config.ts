@@ -1,7 +1,5 @@
 import type { NextConfig } from "next";
 
-import { getPublicIndexingHeader } from "./lib/seo/public-page-metadata";
-
 const securityHeaders = [
   {
     key: "X-Content-Type-Options",
@@ -30,9 +28,11 @@ const securityHeaders = [
   },
 ];
 
-const publicIndexingHeader = getPublicIndexingHeader(process.env.VERCEL_ENV);
-if (publicIndexingHeader) {
-  securityHeaders.push(publicIndexingHeader);
+if (process.env.VERCEL_ENV === "preview") {
+  securityHeaders.push({
+    key: "X-Robots-Tag",
+    value: "noindex, nofollow",
+  });
 }
 
 if (process.env.NODE_ENV === "production") {
