@@ -1,3 +1,8 @@
+import {
+  AuthEmailDeliveryError,
+  createAuthEmailIdempotencyKey,
+  sendResendAuthEmail,
+} from "@/lib/auth/resend-email-delivery";
 import { getCanonicalPublicAppUrl } from "@/lib/public-app-url";
 
 export class PasswordResetEmailError extends Error {
@@ -19,25 +24,12 @@ export async function sendPasswordResetEmail(input: {
   email: string;
   token: string;
 }) {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.PASSWORD_RESET_FROM_EMAIL?.trim();
-
-  if (!apiKey || !from) {
-    throw new PasswordResetEmailError("NOT_CONFIGURED");
-  }
-
   const resetLink =
     `${getConfiguredAppUrl()}/reset-password?token=${encodeURIComponent(input.token)}`;
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [input.email],
+  try {
+    await sendResendAuthEmail({
+      to: input.email,
       subject: "Reset your LoyalFlow password",
       text:
         `A password reset was requested for your LoyalFlow account.\n\n` +
@@ -47,10 +39,17 @@ export async function sendPasswordResetEmail(input: {
         `<p>A password reset was requested for your LoyalFlow account.</p>` +
         `<p><a href="${resetLink}">Reset your password</a></p>` +
         `<p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
-    }),
-  });
+      idempotencyKey: createAuthEmailIdempotencyKey({
+        purpose: "password-reset",
+        email: input.email,
+        token: input.token,
+      }),
+    });
+  } catch (error) {
+    if (error instanceof AuthEmailDeliveryError) {
+      throw new PasswordResetEmailError(error.reason);
+    }
 
-  if (!response.ok) {
-    throw new PasswordResetEmailError("DELIVERY_FAILED");
+    throw error;
   }
 }
