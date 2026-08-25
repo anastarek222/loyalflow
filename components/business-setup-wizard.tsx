@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
@@ -433,6 +433,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
   const copy = getCopy(language);
   const localizedLabels = labels[language];
   const formRef = useRef<HTMLFormElement>(null);
+  const stepButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const submissionLockRef = useRef(false);
   const [submissionStarted, setSubmissionStarted] = useState(false);
   const [step, setStep] = useState(0);
@@ -477,6 +478,13 @@ export default function BusinessSetupWizard({ action, language }: Props) {
     rewardName: copy.defaultReward,
     rewardThreshold: 5,
   });
+
+  useEffect(() => {
+    stepButtonRefs.current[step]?.scrollIntoView({
+      block: "nearest",
+      inline: "center",
+    });
+  }, [step]);
 
   function fullPhone(local: string) {
     const normalized = local.replace(/[^\d]/g, "").replace(/^0+/, "");
@@ -591,16 +599,26 @@ export default function BusinessSetupWizard({ action, language }: Props) {
       className="mt-6 space-y-5"
     >
       <div className="mb-6">
-        <div className="flex items-center justify-between gap-2 overflow-x-auto">
+        <div className="mb-3 flex items-center justify-between gap-3 sm:hidden">
+          <p className="text-sm font-black text-primary">{copy.steps[step]}</p>
+          <span className="lf-type-numeric shrink-0 text-xs font-bold text-foreground-muted">
+            {step + 1}/{copy.steps.length}
+          </span>
+        </div>
+        <div className="flex scroll-px-4 items-center gap-5 overflow-x-auto pb-2 sm:justify-between sm:gap-2 sm:pb-0">
           {copy.steps.map((item, index) => (
             <button
               key={item}
+              ref={(element) => {
+                stepButtonRefs.current[index] = element;
+              }}
               type="button"
               disabled={index > step}
+              aria-current={index === step ? "step" : undefined}
               onClick={() => {
                 if (index < step) editStep(index);
               }}
-              className={`whitespace-nowrap text-xs font-bold ${
+              className={`shrink-0 scroll-mx-4 whitespace-nowrap text-xs font-bold ${
                 index === step
                   ? "text-primary"
                   : index < step
