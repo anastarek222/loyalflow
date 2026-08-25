@@ -16,11 +16,12 @@ test("public verification normalizes invalid, expired, and replayed tokens", () 
   assert.match(action, /\/login\?verification=success/);
 });
 
-test("verification email uses existing Resend configuration and a 24-hour link", () => {
+test("verification email uses shared Resend delivery and a 24-hour link", () => {
   const email = source("lib/auth/email-verification-email.ts");
 
-  assert.match(email, /process\.env\.RESEND_API_KEY/);
-  assert.match(email, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(email, /sendResendAuthEmail/);
+  assert.match(email, /createAuthEmailIdempotencyKey/);
+  assert.match(email, /purpose:\s*"email-verification"/);
   assert.match(email, /\/verify-email\?token=/);
   assert.match(email, /expires in 24 hours/i);
   assert.doesNotMatch(email, /tokenHash/);
@@ -28,11 +29,15 @@ test("verification email uses existing Resend configuration and a 24-hour link",
 
 test("verification delivery configuration is server-only and fails closed", () => {
   const email = source("lib/auth/email-verification-email.ts");
+  const transport = source("lib/auth/resend-email-delivery.ts");
   const env = source(".env.example");
 
-  assert.match(email, /EmailVerificationEmailError\("NOT_CONFIGURED"\)/);
-  assert.match(email, /if\s*\(!response\.ok\)/);
-  assert.match(email, /EmailVerificationEmailError\("DELIVERY_FAILED"\)/);
+  assert.match(transport, /process\.env\.RESEND_API_KEY/);
+  assert.match(transport, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(transport, /AuthEmailDeliveryError\("NOT_CONFIGURED"\)/);
+  assert.match(transport, /AuthEmailDeliveryError\("DELIVERY_FAILED"\)/);
+  assert.match(email, /AuthEmailDeliveryError/);
+  assert.match(email, /EmailVerificationEmailError\(error\.reason\)/);
   assert.match(env, /RESEND_API_KEY=""/);
   assert.match(env, /PASSWORD_RESET_FROM_EMAIL=""/);
   assert.doesNotMatch(env, /re_[A-Za-z0-9]{10,}/);
