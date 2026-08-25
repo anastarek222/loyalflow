@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
 
-import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import { publicSiteUrl } from "@/lib/urls/public-site-url";
 
-type PublicMarketingPath = "/" | "/get-started";
-
-type PublicPageMetadataInput = Readonly<{
-  title: string;
-  description: string;
-  path: PublicMarketingPath;
-  vercelEnvironment?: string;
-}>;
+export type PublicMarketingPath = "/" | "/get-started";
 
 export function getPublicIndexingHeader(vercelEnvironment?: string) {
   if (vercelEnvironment !== "preview") {
@@ -23,18 +15,14 @@ export function getPublicIndexingHeader(vercelEnvironment?: string) {
   } as const;
 }
 
-export function buildPublicPageMetadata({
-  title,
-  description,
-  path,
+export function buildPublicPagePolicy(
+  path: PublicMarketingPath,
   vercelEnvironment = process.env.VERCEL_ENV,
-}: PublicPageMetadataInput): Metadata {
+): Pick<Metadata, "alternates" | "robots"> {
   const canonicalUrl = publicSiteUrl(path);
   const indexable = vercelEnvironment === "production";
 
   return {
-    title,
-    description,
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -47,10 +35,5 @@ export function buildPublicPageMetadata({
       index: indexable,
       follow: indexable,
     },
-    ...buildPublicSocialMetadata({
-      title,
-      description,
-      path,
-    }),
   };
 }
