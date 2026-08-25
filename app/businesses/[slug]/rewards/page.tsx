@@ -202,10 +202,10 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                 defaultValue="GIFT"
                 className="mt-2 min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               >
-                <option value="GIFT">Gift</option>
-                <option value="PROMO_CODE">Promo code</option>
-                <option value="DISCOUNT">Discount</option>
-                <option value="CUSTOM">Custom</option>
+                <option value="GIFT">{rewardType("GIFT", language)}</option>
+                <option value="PROMO_CODE">{rewardType("PROMO_CODE", language)}</option>
+                <option value="DISCOUNT">{rewardType("DISCOUNT", language)}</option>
+                <option value="CUSTOM">{rewardType("CUSTOM", language)}</option>
               </select>
             </label>
             <Field
@@ -415,10 +415,10 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                             defaultValue={reward.type}
                             className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3"
                           >
-                            <option value="GIFT">Gift</option>
-                            <option value="PROMO_CODE">Promo code</option>
-                            <option value="DISCOUNT">Discount</option>
-                            <option value="CUSTOM">Custom</option>
+                            <option value="GIFT">{rewardType("GIFT", language)}</option>
+                            <option value="PROMO_CODE">{rewardType("PROMO_CODE", language)}</option>
+                            <option value="DISCOUNT">{rewardType("DISCOUNT", language)}</option>
+                            <option value="CUSTOM">{rewardType("CUSTOM", language)}</option>
                           </select>
                         </label>
                         <Field
