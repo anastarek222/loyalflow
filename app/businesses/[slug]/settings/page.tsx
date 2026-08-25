@@ -125,6 +125,14 @@ export default async function BusinessSettingsPage({
   const language = normalizeLanguage(currentUser?.language);
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
+  const planName = language === "AR"
+    ? {
+        FREE: "مجانية",
+        STARTER: "أساسية",
+        PRO: "احترافية",
+        BUSINESS: "أعمال",
+      }[business.plan]
+    : planCatalog[business.plan].name;
   const googleSheetsConfiguration = getGoogleSheetsConfiguration();
   const googleSheetsStatus = !googleSheetsConfiguration.configured
     ? t("غير مهيأ", "Not configured")
@@ -192,7 +200,7 @@ export default async function BusinessSettingsPage({
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-bold">
               <span className="rounded-full border border-border bg-surface px-3 py-2 text-foreground-muted">
-                {planCatalog[business.plan].name}
+                {planName}
               </span>
               <span className="rounded-full border border-border bg-surface px-3 py-2 text-foreground-muted">
                 {googleSheetsStatus}
@@ -234,7 +242,7 @@ export default async function BusinessSettingsPage({
                 {t("الخطة الحالية", "Current plan")}
               </p>
               <h2 className="mt-1 text-xl font-black text-foreground">
-                {planCatalog[business.plan].name}
+                {planName}
               </h2>
               <p className="mt-1 text-sm text-foreground-muted">
                 {t(
