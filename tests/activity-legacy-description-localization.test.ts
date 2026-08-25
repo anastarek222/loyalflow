@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  getActivityDescription,
-  STRUCTURED_ACTIVITY_PRESENTATION_VERSION,
-} from "@/lib/activity/presentation";
+import { STRUCTURED_ACTIVITY_PRESENTATION_VERSION } from "@/lib/activity/business-activity";
+import { getActivityDescription } from "@/lib/activity/presentation";
 
 type ActivityDescriptionInput = Parameters<typeof getActivityDescription>[0];
 type ActivityType = ActivityDescriptionInput["type"];
