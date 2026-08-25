@@ -4,10 +4,8 @@ import test from "node:test";
 
 import robots from "../app/robots";
 import sitemap from "../app/sitemap";
-import {
-  buildPublicPageMetadata,
-  getPublicIndexingHeader,
-} from "../lib/seo/public-page-metadata";
+import { getPublicIndexingHeader } from "../lib/seo/public-page-metadata";
+import { buildPublicSocialMetadata } from "../lib/seo/public-social-metadata";
 import { buildPublicWebsiteStructuredData } from "../lib/seo/public-website-structured-data";
 import {
   PUBLIC_SITE_URL,
@@ -33,13 +31,14 @@ test("public canonical authority is isolated from preview/app origins", () => {
 });
 
 test("public page metadata uses absolute canonical, hreflang and Open Graph URLs", () => {
-  const metadata = buildPublicPageMetadata({
+  const metadata = buildPublicSocialMetadata({
     title: "LoyalFlow",
     description: "Public marketing page",
     path: "/get-started",
     vercelEnvironment: "production",
   });
   const absoluteUrl = publicSiteUrl("/get-started");
+  const openGraph = metadata.openGraph as { url?: string | URL } | null | undefined;
 
   assert.equal(String(metadata.alternates?.canonical), absoluteUrl);
   assert.deepEqual(metadata.alternates?.languages, {
@@ -47,22 +46,21 @@ test("public page metadata uses absolute canonical, hreflang and Open Graph URLs
     ar: absoluteUrl,
     "x-default": absoluteUrl,
   });
-  assert.equal(String(metadata.openGraph?.url), absoluteUrl);
-  assert.equal(metadata.robots && "index" in metadata.robots ? metadata.robots.index : undefined, true);
-  assert.equal(metadata.robots && "follow" in metadata.robots ? metadata.robots.follow : undefined, true);
+  assert.equal(String(openGraph?.url), absoluteUrl);
+  assert.deepEqual(metadata.robots, { index: true, follow: true });
+  assert.equal(JSON.stringify(metadata.twitter).includes('"/get-started"'), false);
 });
 
 test("public marketing pages fail closed to noindex outside Vercel Production", () => {
   for (const vercelEnvironment of ["preview", "development", undefined]) {
-    const metadata = buildPublicPageMetadata({
+    const metadata = buildPublicSocialMetadata({
       title: "LoyalFlow",
       description: "Public marketing page",
       path: "/",
       vercelEnvironment,
     });
 
-    assert.equal(metadata.robots && "index" in metadata.robots ? metadata.robots.index : undefined, false);
-    assert.equal(metadata.robots && "follow" in metadata.robots ? metadata.robots.follow : undefined, false);
+    assert.deepEqual(metadata.robots, { index: false, follow: false });
   }
 });
 
@@ -76,6 +74,17 @@ test("Preview deployments emit an X-Robots-Tag noindex defense", () => {
 
   const nextConfigSource = readFileSync("next.config.ts", "utf8");
   assert.match(nextConfigSource, /getPublicIndexingHeader\(process\.env\.VERCEL_ENV\)/);
+});
+
+test("marketing routes apply the centralized SEO policy after local defaults", () => {
+  for (const pagePath of ["app/page.tsx", "app/get-started/page.tsx"]) {
+    const source = readFileSync(pagePath, "utf8");
+    const localRobotsOffset = source.indexOf("robots: { index: true, follow: true }");
+    const policyOffset = source.indexOf("...buildPublicSocialMetadata");
+
+    assert.notEqual(localRobotsOffset, -1);
+    assert.ok(policyOffset > localRobotsOffset);
+  }
 });
 
 test("robots and sitemap advertise only the canonical public-site authority", () => {
