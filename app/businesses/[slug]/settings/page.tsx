@@ -440,7 +440,10 @@ export default async function BusinessSettingsPage({
                       "Send the latest customers, balances, and rewards to the business sheet.",
                     )}
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">
+                  <p
+                    id="google-sheets-status"
+                    className="mt-2 text-sm font-semibold text-foreground"
+                  >
                     {t("الحالة: ", "Status: ")}
                     {googleSheetsStatus}
                     {business.googleSheetsLastSyncedAt
@@ -455,11 +458,15 @@ export default async function BusinessSettingsPage({
                 <form action={syncGoogleSheet}>
                   <button
                     type="submit"
-                    className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2 sm:w-auto"
+                    disabled={!googleSheetsConfiguration.configured}
+                    aria-describedby="google-sheets-status"
+                    className="w-full rounded-[var(--lf-radius-input)] bg-success px-6 py-4 font-semibold text-[var(--lf-inverse)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:opacity-50 sm:w-auto"
                   >
-                    {business.googleSheetsSyncState === "FAILED"
-                      ? t("إعادة محاولة المزامنة", "Retry sync")
-                      : t("مزامنة Google Sheets", "Sync Google Sheets")}
+                    {!googleSheetsConfiguration.configured
+                      ? t("التكامل غير مهيأ", "Integration not configured")
+                      : business.googleSheetsSyncState === "FAILED"
+                        ? t("إعادة محاولة المزامنة", "Retry sync")
+                        : t("مزامنة Google Sheets", "Sync Google Sheets")}
                   </button>
                 </form>
               </section>
