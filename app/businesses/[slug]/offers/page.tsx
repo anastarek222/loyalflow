@@ -68,7 +68,11 @@ function getEligibilityLabel(
 ) {
   if (value === "VIP") return language === "AR" ? "عملاء VIP" : "VIP customers";
   if (value === "SEGMENT") {
-    return language === "AR" ? `شريحة: ${segment}` : `Segment: ${segment}`;
+    const knownSegment = customerSegments.find((candidate) => candidate === segment);
+    const segmentLabel = knownSegment
+      ? getCustomerSegmentLabel(knownSegment, language)
+      : segment;
+    return language === "AR" ? `شريحة: ${segmentLabel}` : `Segment: ${segmentLabel}`;
   }
   return language === "AR" ? "كل العملاء النشطين" : "All active customers";
 }
