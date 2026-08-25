@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-import { resolveRoleAwareEntry } from "../lib/dashboard/role-aware-entry.ts";
+import { resolveRoleAwareEntry } from "../lib/dashboard/role-aware-entry";
 
 const activeBusiness = { slug: "xtv", isActive: true };
 
