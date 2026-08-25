@@ -3,6 +3,7 @@ import Link from "next/link";
 import NotificationReadButton from "@/components/notification-read-button";
 import { getAuthenticatedAppLanguage } from "@/lib/auth/current-app-language";
 import { getLanguageLocale, type AppLanguage } from "@/lib/i18n";
+import { getBusinessNotificationPresentation } from "@/lib/notification-presentation";
 
 type CustomerSummary = { id: string; firstName: string; lastName: string | null; customerCode: string };
 type RewardReadyCustomer = CustomerSummary & { balance: number; updatedAt: Date; lifetimeRedeemed: number; notificationKey: string; isUnread: boolean };
@@ -106,7 +107,10 @@ export default async function BusinessNotificationsContent(props: Props) {
       <section data-notification-section="true" data-has-unread={recentNotifications.some((notification) => notification.isUnread) ? "true" : "false"} className="rounded-[var(--lf-radius-card)] border border-border bg-white p-4 shadow-sm lg:col-span-2">
         <div className="flex items-center justify-between gap-4"><div><p className="text-sm font-bold text-primary">🔔 {t.notifications}</p><h3 className="mt-1 text-xl font-black text-foreground">{t.latest}</h3></div><span className="rounded-full bg-surface-subtle px-4 py-1 text-xs font-black text-foreground-muted">{recentNotifications.length}</span></div>
         {recentNotifications.length === 0 ? <p className="mt-4 rounded-[var(--lf-radius-input)] border border-dashed border-border bg-surface-subtle p-6 text-center text-sm font-semibold text-foreground-subtle">{t.noNotifications}</p> : (
-          <div className="mt-4 space-y-4">{recentNotifications.map((notification) => <article key={notification.id} data-notification-item="true" data-notification-unread={notification.isUnread ? "true" : "false"} className="flex flex-col gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p className="font-black text-foreground">{notification.title}</p>{notification.isUnread && <span className="rounded-full bg-danger px-2 py-1 text-[11px] font-black text-[var(--lf-inverse)]">{t.new}</span>}</div><p className="text-sm leading-6 text-foreground-muted">{notification.message}</p><p className="mt-1 text-xs text-foreground-subtle">{dateFormatter.format(notification.createdAt)}</p></div>{notification.isUnread && <NotificationReadButton slug={slug} notificationKey={notification.notificationKey} language={language} />}</article>)}</div>
+          <div className="mt-4 space-y-4">{recentNotifications.map((notification) => {
+            const presentation = getBusinessNotificationPresentation(notification, language);
+            return <article key={notification.id} data-notification-item="true" data-notification-unread={notification.isUnread ? "true" : "false"} className="flex flex-col gap-4 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4 sm:flex-row sm:items-center"><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><p dir="auto" className="font-black text-foreground">{presentation.title}</p>{notification.isUnread && <span className="rounded-full bg-danger px-2 py-1 text-[11px] font-black text-[var(--lf-inverse)]">{t.new}</span>}</div><p dir="auto" className="text-sm leading-6 text-foreground-muted">{presentation.message}</p><p className="mt-1 text-xs text-foreground-subtle">{dateFormatter.format(notification.createdAt)}</p></div>{notification.isUnread && <NotificationReadButton slug={slug} notificationKey={notification.notificationKey} language={language} />}</article>;
+          })}</div>
         )}
       </section>
 
