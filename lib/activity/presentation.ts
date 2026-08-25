@@ -89,8 +89,13 @@ function localizeLegacyActivityDescription(
       }
       return value;
     case "CUSTOMER_DEACTIVATED":
-      if (value === "تم تعطيل حساب العميل") return "Deactivated customer account";
-      if (value === "تم تعطيل العميل عبر عملية جماعية") {
+      if (value === "تم إيقاف حساب العميل" || value === "تم تعطيل حساب العميل") {
+        return "Deactivated customer account";
+      }
+      if (
+        value === "تم إيقاف العميل عبر عملية جماعية" ||
+        value === "تم تعطيل العميل عبر عملية جماعية"
+      ) {
         return "Deactivated customer through a bulk action";
       }
       return value;
@@ -117,8 +122,68 @@ function localizeLegacyActivityDescription(
         ? "Updated an internal customer note"
         : value;
     case "REFERRAL_RECORDED": {
+      if (value === "تم تسجيل إحالة عميل جديد") return "Recorded a new customer referral";
       const match = /^تم تسجيل إحالة جديدة للعميل (.+)$/.exec(value);
       return match ? `Recorded a new referral for customer ${match[1]}` : value;
+    }
+    case "REWARD_UNLOCKED": {
+      const match = /^تم فتح (.+) حتى (.+)$/.exec(value);
+      return match ? `Unlocked ${match[1]} until ${match[2]}` : value;
+    }
+    case "REWARD_EXPIRED": {
+      const match = /^انتهت صلاحية (.+)$/.exec(value);
+      return match ? `Expired ${match[1]}` : value;
+    }
+    case "REWARD_REDEMPTION_BLOCKED": {
+      const match = /^تم رفض استبدال (.+) لانتهاء الصلاحية$/.exec(value);
+      return match ? `Blocked redemption of ${match[1]} because it expired` : value;
+    }
+    case "REWARD_CREATED": {
+      const match = /^تم إنشاء المكافأة (.+)$/.exec(value);
+      return match ? `Created reward ${match[1]}` : value;
+    }
+    case "REWARD_UPDATED": {
+      const match = /^تم تحديث المكافأة (.+)$/.exec(value);
+      return match ? `Updated reward ${match[1]}` : value;
+    }
+    case "REWARD_STATUS_CHANGED": {
+      const activated = /^تم تفعيل المكافأة (.+)$/.exec(value);
+      if (activated) return `Activated reward ${activated[1]}`;
+      const deactivated = /^تم إيقاف المكافأة (.+)$/.exec(value);
+      return deactivated ? `Deactivated reward ${deactivated[1]}` : value;
+    }
+    case "OFFER_CREATED": {
+      const match = /^تم إنشاء العرض (.+)$/.exec(value);
+      return match ? `Created offer ${match[1]}` : value;
+    }
+    case "OFFER_UPDATED": {
+      const match = /^تم تحديث العرض (.+)$/.exec(value);
+      return match ? `Updated offer ${match[1]}` : value;
+    }
+    case "OFFER_STATUS_CHANGED": {
+      const activated = /^تم تفعيل العرض (.+)$/.exec(value);
+      if (activated) return `Activated offer ${activated[1]}`;
+      const deactivated = /^تم إيقاف العرض (.+)$/.exec(value);
+      return deactivated ? `Deactivated offer ${deactivated[1]}` : value;
+    }
+    case "BUSINESS_SETTINGS_UPDATED": {
+      const exactDescriptions: Record<string, string> = {
+        "تم تحديث إعدادات النشاط": "Updated business settings",
+        "تم تحديث الملف التعريفي للنشاط": "Updated business profile",
+        "تم تحديث قواعد برنامج الولاء": "Updated loyalty program rules",
+        "تم تحديث قوالب رسائل العملاء": "Updated customer message templates",
+        "تم تحديث إعدادات التشغيل": "Updated operations settings",
+        "تم تحديث تصميم بطاقة الولاء": "Updated loyalty card design",
+        "تم تحديث بيانات التواصل وشروط الكارت": "Updated digital card contact details and terms",
+        "تم تحديث بيانات التواصل وشروط الكارت الرقمي": "Updated digital card contact details and terms",
+        "تم السماح لمالك النشاط بتصدير البيانات": "Allowed the business owner to export data",
+        "تم إيقاف صلاحية تصدير البيانات عن مالك النشاط": "Revoked the business owner's data export permission",
+      };
+      if (value in exactDescriptions) return exactDescriptions[value];
+      const published = /^تم نشر نسخة جديدة من تصميم بطاقة الولاء \((.+)\)$/.exec(value);
+      return published
+        ? `Published a new loyalty card design version (${published[1]})`
+        : value;
     }
     default:
       return value;
