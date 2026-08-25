@@ -11,6 +11,10 @@ import {
   STANDARD_CARD_QR_CONTENT_ZONE,
   STANDARD_CARD_QR_ZONE,
 } from "@/lib/cards/card-rendering-contract";
+import {
+  standardCardDetailFontSize,
+  standardCardValueFontSize,
+} from "@/lib/cards/standard-card-text";
 import { formatWebsiteForCard } from "@/lib/urls/business-url";
 
 export type StandardLoyaltyCardProps = {
@@ -47,13 +51,6 @@ function boundedText(value: string, maximum: number) {
   return normalized.length <= maximum
     ? normalized
     : `${normalized.slice(0, maximum - 1).trimEnd()}…`;
-}
-
-function valueFontSize(value: string) {
-  if (value.length <= 10) return 48;
-  if (value.length <= 15) return 40;
-  if (value.length <= 20) return 32;
-  return 27;
 }
 
 function wrappedText(
@@ -625,7 +622,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x="452"
           y="337"
           fill={foreground}
-          fontSize={valueFontSize(metrics.currentText)}
+          fontSize={standardCardValueFontSize(metrics.currentText)}
           fontWeight="900"
           direction="ltr"
           style={{ unicodeBidi: "isolate" }}
@@ -656,7 +653,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x="452"
           y="410"
           fill={foreground}
-          fontSize="15"
+          fontSize={standardCardDetailFontSize(metrics.ratioText, 15, 11)}
           fontWeight="750"
           direction="ltr"
           style={{ unicodeBidi: "isolate" }}
@@ -667,7 +664,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x="452"
           y="445"
           fill={metrics.rewardReady ? "#22C55E" : muted}
-          fontSize="13"
+          fontSize={standardCardDetailFontSize(metrics.remainingText, 13, 10)}
           fontWeight="800"
           direction={dir}
           style={{ unicodeBidi: "plaintext" }}
@@ -752,7 +749,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x={backTextX}
           y="357"
           fill={foreground}
-          fontSize="28"
+          fontSize={standardCardValueFontSize(metrics.currentText, 28)}
           fontWeight="900"
           textAnchor={backTextAnchor}
         >
@@ -782,7 +779,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x={backTextX}
           y="421"
           fill={foreground}
-          fontSize="15"
+          fontSize={standardCardDetailFontSize(metrics.ratioText, 15, 11)}
           fontWeight="750"
           textAnchor={backTextAnchor}
         >
@@ -792,7 +789,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x={backTextX}
           y="450"
           fill={metrics.rewardReady ? "#22C55E" : muted}
-          fontSize="13"
+          fontSize={standardCardDetailFontSize(metrics.remainingText, 13, 10)}
           fontWeight="800"
           textAnchor={backTextAnchor}
         >
