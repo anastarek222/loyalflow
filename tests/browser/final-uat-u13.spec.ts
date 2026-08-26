@@ -67,7 +67,10 @@ function scanOperationTerminalUrl(customerId: string) {
 
 function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) {
   const label = language === "AR" ? "الرصيد الحالي" : "Current balance";
-  return page.getByRole("region", { name: label, exact: true }).getByText(`${balance} Points`, { exact: true });
+  const formattedBalance = new Intl.NumberFormat(
+    language === "AR" ? "ar-EG" : "en-US",
+  ).format(balance);
+  return page.getByRole("region", { name: label, exact: true }).getByText(`${formattedBalance} Points`, { exact: true });
 }
 
 async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin") {
