@@ -6,8 +6,10 @@ import test from "node:test";
 const source = (file: string) => readFileSync(join(process.cwd(), file), "utf8");
 
 test("Pilot Custom Card receipt covers safe failure and the bounded publish journey", () => {
-  const browser = source("tests/browser/pre-final-admin-security.spec.ts");
+  const browser = source("tests/browser/pilot-custom-card.spec.ts");
 
+  assert.match(browser, /login-mfa-step/);
+  assert.match(browser, /generateTotpCode\(UAT_SUPER_ADMIN_MFA_SECRET\)/);
   assert.match(browser, /cardDesign=invalid/);
   assert.match(browser, /Create Front \+ Back draft/);
   assert.match(browser, /cardDesign=draft&customVersion=/);
@@ -16,6 +18,7 @@ test("Pilot Custom Card receipt covers safe failure and the bounded publish jour
   assert.match(browser, /canCleanUploadedBlobArtwork/);
   assert.match(browser, /custom-card-front/);
   assert.match(browser, /custom-card-back/);
+  assert.match(browser, /expectedReactDevelopmentCspNoise/);
 });
 
 test("Custom Card changes conditionally trigger only the intended desktop and mobile browser receipts", () => {
@@ -23,14 +26,14 @@ test("Custom Card changes conditionally trigger only the intended desktop and mo
 
   assert.match(workflow, /echo "custom-card=true"/);
   assert.match(workflow, /steps\.browser-smoke\.outputs\.custom-card/);
-  assert.match(workflow, /pre-final-admin-security\.spec\.ts/);
+  assert.match(workflow, /pilot-custom-card\.spec\.ts/);
   assert.match(
     workflow,
-    /--project=desktop-chromium --grep "super admin Custom Card rejects invalid geometry"/,
+    /pilot-custom-card\.spec\.ts --config=playwright\.config\.ts --project=desktop-chromium/,
   );
   assert.match(
     workflow,
-    /--project=mobile-chromium --grep "public card keeps the canonical front\/back flip surface"/,
+    /pilot-custom-card\.spec\.ts --config=playwright\.config\.ts --project=mobile-chromium/,
   );
   assert.match(workflow, /components\/\(custom-card\|loyalty-card\|standard-card-setup\)/);
 });
