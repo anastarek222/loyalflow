@@ -601,11 +601,12 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         <text
           data-emphasis="low"
           x={rtl ? 355 : 42}
-          y="430"
+          y="426"
           fill={muted}
-          fontSize="8"
-          fontWeight="600"
-          letterSpacing={rtl ? "0" : "2"}
+          fontSize="7"
+          fontWeight="700"
+          letterSpacing={rtl ? "0" : "1.6"}
+          opacity="0.58"
           textAnchor={rtl ? "end" : "start"}
           direction={dir}
           style={{ unicodeBidi: "plaintext" }}
@@ -615,12 +616,12 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         <text
           data-emphasis="low"
           x={rtl ? 355 : 42}
-          y="450"
+          y="445"
           fill={muted}
-          fontSize="10"
-          fontWeight="500"
-          letterSpacing="1.5"
-          opacity="0.72"
+          fontSize="9"
+          fontWeight="600"
+          letterSpacing="1.2"
+          opacity="0.66"
           textAnchor={rtl ? "end" : "start"}
           direction="ltr"
         >

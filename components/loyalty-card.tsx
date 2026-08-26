@@ -52,7 +52,7 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
       data-testid={`custom-card-${side}`}
       data-card-aspect-ratio="1.586"
       data-safe-zone-version={props.customSafeZoneVersion || CUSTOM_CARD_SAFE_ZONE_VERSION}
-      className="relative w-full overflow-hidden rounded-[5.2cqw] border border-white/20 bg-slate-950 text-white shadow-[0_24px_55px_-28px_rgba(15,23,42,0.9)]"
+      className="relative w-full overflow-hidden rounded-[5.2%] border border-white/20 bg-slate-950 text-white shadow-[0_24px_55px_-28px_rgba(15,23,42,0.9)]"
       style={{ aspectRatio: String(STANDARD_CARD_ASPECT_RATIO), containerType: "inline-size" }}
     >
       {artworkUrl ? (
