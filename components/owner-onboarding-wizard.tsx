@@ -188,7 +188,7 @@ export function OwnerOnboardingWizard({
       noValidate
       data-owner-step={step + 1}
       data-owner-hydrated="false"
-      className="mx-auto min-w-0 max-w-6xl overflow-hidden rounded-3xl border border-border/80 bg-white shadow-[0_24px_60px_rgb(15_23_42/0.1)]"
+      className="mx-auto min-w-0 max-w-6xl overflow-clip rounded-3xl border border-border/80 bg-white shadow-[0_24px_60px_rgb(15_23_42/0.1)]"
     >
       <div className="grid min-w-0 lg:grid-cols-[17rem_minmax(0,1fr)]">
         <aside className="hidden border-e border-border bg-surface-subtle/70 p-6 lg:block">
@@ -231,7 +231,7 @@ export function OwnerOnboardingWizard({
           </div>
         </aside>
 
-        <div className="min-w-0 space-y-6 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-8 lg:p-10">
+        <div className="min-w-0 space-y-6 p-4 pb-28 sm:p-8 sm:pb-8 lg:p-10">
           <div
             className="lg:hidden"
             data-testid="owner-mobile-step-header"
@@ -655,7 +655,10 @@ export function OwnerOnboardingWizard({
             </p>
           </section>
 
-          <div className="grid min-w-0 grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between">
+          <div
+            data-testid="owner-mobile-action-bar"
+            className="sticky bottom-0 z-20 -mx-4 grid min-w-0 grid-cols-2 gap-3 border-t border-border/80 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgb(15_23_42/0.08)] backdrop-blur sm:static sm:mx-0 sm:flex sm:items-center sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+          >
             <button
               type="button"
               onClick={() => transitionToStep(step - 1)}

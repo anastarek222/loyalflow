@@ -375,7 +375,7 @@ function CreateBusinessSubmitButton({
     <button
       type="submit"
       disabled={submitting}
-      className="ms-auto rounded-[var(--lf-radius-md)] bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
+      className="min-h-12 w-full rounded-[var(--lf-radius-md)] bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70 sm:ms-auto sm:w-auto"
     >
       {submitting ? copy.creating : copy.create}
     </button>
@@ -602,7 +602,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
         submissionLockRef.current = true;
         setSubmissionStarted(true);
       }}
-      className="mt-6 space-y-5"
+      className="mt-6 space-y-5 pb-24 sm:pb-0"
     >
       <div className="mb-6">
         <div className="mb-3 flex items-center justify-between gap-3 sm:hidden">
@@ -1276,23 +1276,26 @@ export default function BusinessSetupWizard({ action, language }: Props) {
         </section>
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2">
+      <div
+        data-testid="business-setup-mobile-action-bar"
+        className="sticky bottom-0 z-20 -mx-5 grid grid-cols-2 items-center gap-3 border-t border-border/80 bg-surface/95 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgb(15_23_42/0.08)] backdrop-blur sm:static sm:mx-0 sm:flex sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+      >
         {step > 0 ? (
           <button
             type="button"
             onClick={goBack}
-            className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-5 py-3 font-semibold text-foreground-muted transition-colors hover:bg-surface-subtle"
+            className="min-h-12 w-full rounded-[var(--lf-radius-md)] border border-border bg-surface px-5 py-3 font-semibold text-foreground-muted transition-colors hover:bg-surface-subtle sm:w-auto"
           >
             {copy.back}
           </button>
         ) : (
-          <span />
+          <span className="hidden sm:block" />
         )}
         {step < copy.steps.length - 1 ? (
           <button
             type="button"
             onClick={goNext}
-            className="ms-auto rounded-[var(--lf-radius-md)] bg-foreground px-5 py-3 font-semibold text-[var(--lf-inverse)] transition-colors hover:bg-primary"
+            className={`${step === 0 ? "col-span-2" : ""} min-h-12 w-full rounded-[var(--lf-radius-md)] bg-foreground px-5 py-3 font-semibold text-[var(--lf-inverse)] transition-colors hover:bg-primary sm:col-span-1 sm:ms-auto sm:w-auto`}
           >
             {copy.next}
           </button>

@@ -82,8 +82,11 @@ test("mobile owner onboarding advances only after visible Step 1 validation", ()
   assert.match(copy, /of: "of"/);
   assert.match(wizard, /role="progressbar"/);
   assert.match(wizard, /className="hidden max-w-full gap-2 overflow-x-auto[^"]*sm:flex"/);
-  assert.match(wizard, /pb-\[max\(1rem,env\(safe-area-inset-bottom\)\)\]/);
-  assert.match(wizard, /grid min-w-0 grid-cols-2 gap-3 sm:flex/);
+  assert.match(wizard, /pb-28 sm:p-8 sm:pb-8 lg:p-10/);
+  assert.match(wizard, /data-testid="owner-mobile-action-bar"/);
+  assert.match(wizard, /sticky bottom-0/);
+  assert.match(wizard, /pb-\[max\(0\.75rem,env\(safe-area-inset-bottom\)\)\]/);
+  assert.match(wizard, /grid min-w-0 grid-cols-2 gap-3/);
   assert.match(wizard, /data-owner-step-panel="2"/);
   assert.match(wizard, /type="button"\s+onClick=\{goNext\}/);
   assert.match(wizard, /data-owner-next-checkpoint="OWNER_NEXT_CLICK"/);
