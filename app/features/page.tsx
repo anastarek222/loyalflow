@@ -20,8 +20,8 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingRequestLocale();
-  const title = translate(locale, "features.metaTitle");
-  const description = translate(locale, "features.metaDescription");
+  const title = translate(locale, "marketing.features.metaTitle");
+  const description = translate(locale, "marketing.features.metaDescription");
 
   return {
     title,
@@ -38,12 +38,12 @@ export default async function FeaturesPage() {
   const copy = (key: MessageKey) => translate(locale, key);
   const navigation = getPublicMarketingNavigation(locale);
   const features = [
-    [QrCode, "features.cardsTitle", "features.cardsBody"],
-    [ScanLine, "features.staffTitle", "features.staffBody"],
-    [Users, "features.customersTitle", "features.customersBody"],
-    [Sparkles, "features.rewardsTitle", "features.rewardsBody"],
-    [BarChart3, "features.reportingTitle", "features.reportingBody"],
-    [ShieldCheck, "features.controlTitle", "features.controlBody"],
+    [QrCode, "marketing.features.cardsTitle", "marketing.features.cardsBody"],
+    [ScanLine, "marketing.features.staffTitle", "marketing.features.staffBody"],
+    [Users, "marketing.features.customersTitle", "marketing.features.customersBody"],
+    [Sparkles, "marketing.features.rewardsTitle", "marketing.features.rewardsBody"],
+    [BarChart3, "marketing.features.reportingTitle", "marketing.features.reportingBody"],
+    [ShieldCheck, "marketing.features.controlTitle", "marketing.features.controlBody"],
   ] as const;
 
   return (
@@ -66,13 +66,13 @@ export default async function FeaturesPage() {
         <div className="mx-auto w-full max-w-7xl">
           <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-3.5 py-2 text-sm font-bold text-primary shadow-sm">
             <Languages size={17} aria-hidden="true" />
-            {copy("features.eyebrow")}
+            {copy("marketing.features.eyebrow")}
           </p>
           <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-            {copy("features.title")}
+            {copy("marketing.features.title")}
           </h1>
           <p className="mt-6 max-w-3xl text-lg leading-8 text-foreground-muted">
-            {copy("features.body")}
+            {copy("marketing.features.body")}
           </p>
         </div>
       </section>
@@ -100,10 +100,10 @@ export default async function FeaturesPage() {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 rounded-[1.5rem] bg-slate-950 px-6 py-10 text-white sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-12">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-black sm:text-3xl">
-              {copy("features.ctaTitle")}
+              {copy("marketing.features.ctaTitle")}
             </h2>
             <p className="mt-3 leading-7 text-slate-300">
-              {copy("features.ctaBody")}
+              {copy("marketing.features.ctaBody")}
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row">

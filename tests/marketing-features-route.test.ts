@@ -71,7 +71,7 @@ test("marketing mobile navigation is a solid viewport portal", () => {
 test("Features copy has matching Arabic and English keys", () => {
   const english = source("lib/i18n/locales/en/marketing.ts");
   const arabic = source("lib/i18n/locales/ar/marketing.ts");
-  const keys = [...english.matchAll(/"(features\.[^"]+)":/g)].map(
+  const keys = [...english.matchAll(/"(marketing\.features\.[^"]+)":/g)].map(
     ([, key]) => key,
   );
 

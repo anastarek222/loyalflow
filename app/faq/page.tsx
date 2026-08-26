@@ -9,8 +9,8 @@ import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingRequestLocale();
-  const title = translate(locale, "faq.metaTitle");
-  const description = translate(locale, "faq.metaDescription");
+  const title = translate(locale, "marketing.faq.metaTitle");
+  const description = translate(locale, "marketing.faq.metaDescription");
   return { title, description, alternates: { canonical: "/faq" }, robots: { index: true, follow: true }, ...buildPublicSocialMetadata({ title, description, path: "/faq" }) };
 }
 
@@ -22,18 +22,18 @@ export default async function FaqPage() {
     ["marketing.faqOneQuestion", "marketing.faqOneAnswer"],
     ["marketing.faqTwoQuestion", "marketing.faqTwoAnswer"],
     ["marketing.faqThreeQuestion", "marketing.faqThreeAnswer"],
-    ["faq.fourQuestion", "faq.fourAnswer"],
-    ["faq.fiveQuestion", "faq.fiveAnswer"],
-    ["faq.sixQuestion", "faq.sixAnswer"],
+    ["marketing.faq.fourQuestion", "marketing.faq.fourAnswer"],
+    ["marketing.faq.fiveQuestion", "marketing.faq.fiveAnswer"],
+    ["marketing.faq.sixQuestion", "marketing.faq.sixAnswer"],
   ] as const;
   return (
     <main lang={locale} dir={direction} className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground">
       <MarketingHeader locale={locale} brand={copy("common.brand")} signIn={copy("auth.signIn")} primaryCta={copy("marketing.primaryCta")} menuLabel={copy("marketing.menuOpen")} closeLabel={copy("marketing.menuClose")} navigation={getPublicMarketingNavigation(locale)} />
       <section className="border-b border-border bg-white px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <div className="mx-auto w-full max-w-5xl text-center">
-          <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">{copy("faq.pageEyebrow")}</p>
-          <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">{copy("faq.pageTitle")}</h1>
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-foreground-muted">{copy("faq.pageBody")}</p>
+          <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">{copy("marketing.faq.pageEyebrow")}</p>
+          <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">{copy("marketing.faq.pageTitle")}</h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-foreground-muted">{copy("marketing.faq.pageBody")}</p>
         </div>
       </section>
       <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24">

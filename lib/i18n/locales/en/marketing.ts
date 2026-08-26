@@ -103,88 +103,88 @@ export const marketingMessagesEn = {
   "marketing.footerAccess": "Access",
   "marketing.footerNote":
     "Bilingual loyalty operations for growing businesses.",
-  "features.metaTitle": "LoyalFlow Features | Digital loyalty operations",
-  "features.metaDescription":
+  "marketing.features.metaTitle": "LoyalFlow Features | Digital loyalty operations",
+  "marketing.features.metaDescription":
     "Explore LoyalFlow digital cards, QR scanning, rewards, customer tools, reporting, and role-aware business controls.",
-  "features.navHome": "Home",
-  "features.eyebrow": "Product features",
-  "features.title": "Everything your team needs to run loyalty clearly.",
-  "features.body":
+  "marketing.features.navHome": "Home",
+  "marketing.features.eyebrow": "Product features",
+  "marketing.features.title": "Everything your team needs to run loyalty clearly.",
+  "marketing.features.body":
     "From the first customer scan to rewards and reporting, LoyalFlow keeps daily loyalty work in one bilingual, mobile-ready workspace.",
-  "features.cardsTitle": "Branded digital cards",
-  "features.cardsBody":
+  "marketing.features.cardsTitle": "Branded digital cards",
+  "marketing.features.cardsBody":
     "Give every customer a QR-based card with live balance, reward progress, and your business identity.",
-  "features.staffTitle": "Fast staff scanning",
-  "features.staffBody":
+  "marketing.features.staffTitle": "Fast staff scanning",
+  "marketing.features.staffBody":
     "Take staff directly to the customer scanning flow so earning and redemption stay quick at the counter.",
-  "features.customersTitle": "Useful customer profiles",
-  "features.customersBody":
+  "marketing.features.customersTitle": "Useful customer profiles",
+  "marketing.features.customersBody":
     "Keep loyalty activity, balances, segments, and customer operations together without exposing internal details publicly.",
-  "features.rewardsTitle": "Rewards and offers",
-  "features.rewardsBody":
+  "marketing.features.rewardsTitle": "Rewards and offers",
+  "marketing.features.rewardsBody":
     "Configure loyalty rules, publish rewards and offers, and show customers clear progress toward what comes next.",
-  "features.reportingTitle": "Operational reporting",
-  "features.reportingBody":
+  "marketing.features.reportingTitle": "Operational reporting",
+  "marketing.features.reportingBody":
     "Follow customer activity, redemptions, repeat behaviour, and business performance from focused reports.",
-  "features.controlTitle": "Role-aware control",
-  "features.controlBody":
+  "marketing.features.controlTitle": "Role-aware control",
+  "marketing.features.controlBody":
     "Owners, managers, staff, and viewers receive the access and workspace appropriate to their responsibility.",
-  "features.ctaTitle": "Start with the setup path that fits your business.",
-  "features.ctaBody":
+  "marketing.features.ctaTitle": "Start with the setup path that fits your business.",
+  "marketing.features.ctaBody":
     "LoyalFlow is currently onboarding businesses through controlled setup and owner invitation flows.",
-  "pricing.metaTitle": "LoyalFlow Pricing | Plans for growing businesses",
-  "pricing.metaDescription":
+  "marketing.pricing.metaTitle": "LoyalFlow Pricing | Plans for growing businesses",
+  "marketing.pricing.metaDescription":
     "Compare LoyalFlow Free, Starter, Pro, and Business plans during the controlled beta.",
-  "pricing.eyebrow": "Plans and pricing",
-  "pricing.title": "Start free. Add capacity when your loyalty programme grows.",
-  "pricing.body":
+  "marketing.pricing.eyebrow": "Plans and pricing",
+  "marketing.pricing.title": "Start free. Add capacity when your loyalty programme grows.",
+  "marketing.pricing.body":
     "The Free plan is the starting point. Paid-plan pricing and activation are confirmed during the controlled beta setup; public checkout is not open yet.",
-  "pricing.freeLabel": "Free",
-  "pricing.betaLabel": "Beta pricing",
-  "pricing.confirmedAtSetup": "Confirmed during setup",
-  "pricing.customers": "customers",
-  "pricing.users": "team users",
-  "pricing.branches": "branches",
-  "pricing.offers": "offers",
-  "pricing.rewards": "rewards",
-  "pricing.unlimited": "Unlimited",
-  "pricing.cta": "Choose a setup path",
-  "pricing.noteTitle": "Controlled beta, with no surprise checkout.",
-  "pricing.noteBody":
+  "marketing.pricing.freeLabel": "Free",
+  "marketing.pricing.betaLabel": "Beta pricing",
+  "marketing.pricing.confirmedAtSetup": "Confirmed during setup",
+  "marketing.pricing.customers": "customers",
+  "marketing.pricing.users": "team users",
+  "marketing.pricing.branches": "branches",
+  "marketing.pricing.offers": "offers",
+  "marketing.pricing.rewards": "rewards",
+  "marketing.pricing.unlimited": "Unlimited",
+  "marketing.pricing.cta": "Choose a setup path",
+  "marketing.pricing.noteTitle": "Controlled beta, with no surprise checkout.",
+  "marketing.pricing.noteBody":
     "LoyalFlow currently creates workspaces through supported setup and owner invitations. Online subscription payment will be introduced only after the commercial plans are approved.",
-  "about.metaTitle": "About LoyalFlow | Clear loyalty operations",
-  "about.metaDescription":
+  "marketing.about.metaTitle": "About LoyalFlow | Clear loyalty operations",
+  "marketing.about.metaDescription":
     "Learn why LoyalFlow brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
-  "about.eyebrow": "About LoyalFlow",
-  "about.title": "Loyalty should feel simple for the customer and structured for the business.",
-  "about.body":
+  "marketing.about.eyebrow": "About LoyalFlow",
+  "marketing.about.title": "Loyalty should feel simple for the customer and structured for the business.",
+  "marketing.about.body":
     "LoyalFlow is built to replace disconnected cards, spreadsheets, and manual follow-up with one practical operating system for repeat business.",
-  "about.customerTitle": "Clear for customers",
-  "about.customerBody":
+  "marketing.about.customerTitle": "Clear for customers",
+  "marketing.about.customerBody":
     "A customer opens one branded digital card to see their balance, progress, rewards, and current offers.",
-  "about.teamTitle": "Fast for the team",
-  "about.teamBody":
+  "marketing.about.teamTitle": "Fast for the team",
+  "marketing.about.teamBody":
     "Staff reach the scanning flow quickly, while owners and managers retain the controls appropriate to their role.",
-  "about.businessTitle": "Useful for the business",
-  "about.businessBody":
+  "marketing.about.businessTitle": "Useful for the business",
+  "marketing.about.businessBody":
     "Customer activity, rewards, offers, reporting, and operational history stay connected inside one tenant-safe workspace.",
-  "about.ctaTitle": "Built for real daily operations, not a demo-only dashboard.",
-  "about.ctaBody":
+  "marketing.about.ctaTitle": "Built for real daily operations, not a demo-only dashboard.",
+  "marketing.about.ctaBody":
     "The current closed beta focuses on reliable onboarding, mobile staff workflows, customer cards, and evidence-backed product improvement.",
-  "faq.metaTitle": "LoyalFlow FAQ | Digital loyalty questions answered",
-  "faq.metaDescription":
+  "marketing.faq.metaTitle": "LoyalFlow FAQ | Digital loyalty questions answered",
+  "marketing.faq.metaDescription":
     "Answers about LoyalFlow digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",
-  "faq.pageEyebrow": "Frequently asked questions",
-  "faq.pageTitle": "Straight answers before your business gets started.",
-  "faq.pageBody":
+  "marketing.faq.pageEyebrow": "Frequently asked questions",
+  "marketing.faq.pageTitle": "Straight answers before your business gets started.",
+  "marketing.faq.pageBody":
     "These answers describe the product and the controlled beta as they work today.",
-  "faq.fourQuestion": "Can I join and pay online immediately?",
-  "faq.fourAnswer":
+  "marketing.faq.fourQuestion": "Can I join and pay online immediately?",
+  "marketing.faq.fourAnswer":
     "Not during the controlled beta. Workspaces are created through supported setup or an owner invitation, and public checkout remains off.",
-  "faq.fiveQuestion": "Can the loyalty card match my brand?",
-  "faq.fiveAnswer":
+  "marketing.faq.fiveQuestion": "Can the loyalty card match my brand?",
+  "marketing.faq.fiveAnswer":
     "Yes. Standard cards support brand colours and identity. A complete Front and Back custom artwork pair can also be managed through the controlled Custom Card flow.",
-  "faq.sixQuestion": "Will the product work well on a phone?",
-  "faq.sixAnswer":
+  "marketing.faq.sixQuestion": "Will the product work well on a phone?",
+  "marketing.faq.sixAnswer":
     "Yes. Customer cards, staff scanning, and the core owner workflows are designed for mobile use as well as desktop.",
 } as const;
