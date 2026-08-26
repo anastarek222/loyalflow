@@ -54,6 +54,11 @@ jobs:
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+            echo "owner-onboarding=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -110,7 +115,13 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
           AUTH_URL: http://127.0.0.1:3100
           AUTH_TRUST_HOST: "true"
-        run: pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
+          fi
 
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"
