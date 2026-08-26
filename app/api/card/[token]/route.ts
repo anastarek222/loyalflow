@@ -188,6 +188,7 @@ export async function GET(
         name: customer.business.name,
         logoUrl: customer.business.logoUrl,
         primaryColor: customer.business.primaryColor,
+        secondaryColor: customer.business.secondaryColor,
         themePreset: customer.business.themePreset,
         phone: customer.business.contactPhone,
         website: customer.business.website,

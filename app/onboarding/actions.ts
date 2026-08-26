@@ -48,6 +48,10 @@ const ownerDraftSchema = z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
       .default("#111827"),
+    secondaryColor: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/)
+      .default("#FFFFFF"),
     themePreset: z.enum(["DEFAULT", "DARK"]).default("DEFAULT"),
     logoUrl: z.string().trim().max(500).default(""),
     standardCardArtworkEnabled: z.coerce.boolean().default(true),
@@ -161,7 +165,7 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
           rewardThreshold: data.rewardThreshold,
           earnAmount: data.earnAmount,
           primaryColor: data.primaryColor,
-          secondaryColor: "#FFFFFF",
+          secondaryColor: data.secondaryColor,
           themePreset: data.themePreset,
           cardStyle: "CLASSIC",
           logoUrl: data.logoUrl || null,

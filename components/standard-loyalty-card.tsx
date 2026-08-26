@@ -22,6 +22,7 @@ export type StandardLoyaltyCardProps = {
   businessName: string;
   logoUrl?: string | null;
   primaryColor: string;
+  secondaryColor?: string | null;
   themePreset?: string | null;
   customerName: string;
   customerId: string;
@@ -151,10 +152,12 @@ function Artwork({
 function CardDefinitions({
   id,
   accent,
+  secondary,
   dark,
 }: {
   id: string;
   accent: string;
+  secondary: string;
   dark: boolean;
 }) {
   return (
@@ -166,7 +169,7 @@ function CardDefinitions({
       </linearGradient>
       <linearGradient id={`${id}-progress`} x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stopColor={accent} />
-        <stop offset="1" stopColor={dark ? "#8B8CF8" : "#60A5FA"} />
+        <stop offset="1" stopColor={secondary} />
       </linearGradient>
       <clipPath id={`${id}-card-clip`}>
         <rect
@@ -194,10 +197,12 @@ function CardDefinitions({
 function CardBackground({
   id,
   accent,
+  secondary,
   dark,
 }: {
   id: string;
   accent: string;
+  secondary: string;
   dark: boolean;
 }) {
   return (
@@ -214,6 +219,13 @@ function CardBackground({
         r="220"
         fill={accent}
         opacity={dark ? "0.06" : "0.08"}
+      />
+      <circle
+        cx="110"
+        cy="510"
+        r="210"
+        fill={secondary}
+        opacity={dark ? "0.07" : "0.1"}
       />
       <g
         fill="none"
@@ -400,6 +412,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const customerNameDirection = customerNameIsArabic ? "rtl" : "ltr";
   const dark = standardCardTheme(props.themePreset) === "dark";
   const accent = safeColor(props.primaryColor);
+  const secondary = safeColor(props.secondaryColor || "#FFFFFF");
   const category = standardCardArtworkCategory(props.artworkCategory);
   const foreground = dark ? "#F8FAFC" : "#111827";
   const muted = dark ? "#CBD5E1" : "#536074";
@@ -414,7 +427,9 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const contactText = [props.businessPhone, website, location]
     .filter(Boolean)
     .join("   ·   ");
-  const id = stableCardId(`${side}:${accent}:${dark}:${props.businessName}`);
+  const id = stableCardId(
+    `${side}:${accent}:${secondary}:${dark}:${props.businessName}`,
+  );
   const labels =
     language === "AR"
       ? {
@@ -444,8 +459,18 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   );
   const shared = (
     <>
-      <CardDefinitions id={id} accent={accent} dark={dark} />
-      <CardBackground id={id} accent={accent} dark={dark} />
+      <CardDefinitions
+        id={id}
+        accent={accent}
+        secondary={secondary}
+        dark={dark}
+      />
+      <CardBackground
+        id={id}
+        accent={accent}
+        secondary={secondary}
+        dark={dark}
+      />
     </>
   );
 
@@ -570,11 +595,12 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           opacity="0.8"
         />
         <text
+          data-emphasis="low"
           x={rtl ? 355 : 42}
           y="430"
-          fill={accent}
-          fontSize="13"
-          fontWeight="700"
+          fill={muted}
+          fontSize="8"
+          fontWeight="600"
           letterSpacing={rtl ? "0" : "2"}
           textAnchor={rtl ? "end" : "start"}
           direction={dir}
@@ -583,12 +609,14 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           {labels.id}
         </text>
         <text
+          data-emphasis="low"
           x={rtl ? 355 : 42}
-          y="469"
-          fill={foreground}
-          fontSize="25"
+          y="450"
+          fill={muted}
+          fontSize="10"
           fontWeight="500"
-          letterSpacing="2"
+          letterSpacing="1.5"
+          opacity="0.72"
           textAnchor={rtl ? "end" : "start"}
           direction="ltr"
         >

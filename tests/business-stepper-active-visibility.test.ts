@@ -34,3 +34,12 @@ test("Add Business shows the live card before mobile controls and updates it fro
   assert.match(wizard, /preview=\{\{ \.\.\.cardPreview, logoUrl: logoPreview \}\}/);
   assert.match(wizard, /onPreviewChange=\{\(next\) =>/);
 });
+
+test("Add Business keeps logo upload compact on phones", () => {
+  const wizard = read("components/business-setup-wizard.tsx");
+
+  assert.match(wizard, /data-testid="business-logo-upload"/);
+  assert.match(wizard, /size-20 shrink-0/);
+  assert.match(wizard, /min-w-0 flex-1/);
+  assert.doesNotMatch(wizard, /aspect-square max-w-44/);
+});

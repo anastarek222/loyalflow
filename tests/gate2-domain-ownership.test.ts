@@ -202,12 +202,17 @@ test("legacy fields have an explicit non-destructive classification", () => {
     LEGACY_BUSINESS_FIELD_CLASSIFICATION.pointsName,
     "DEPRECATED_READ_ONLY",
   );
+  assert.equal(
+    LEGACY_BUSINESS_FIELD_CLASSIFICATION.secondaryColor,
+    "ACTIVE_CANONICAL",
+  );
 });
 
 test("Owner and Super Admin card permissions remain isolated", () => {
   const submitted = {
     cardDesignMode: "STANDARD" as const,
     primaryColor: "#123456",
+    secondaryColor: "#ABCDEF",
     themePreset: "DARK" as const,
     standardCardArtworkEnabled: true,
     standardCardArtworkCategory: "CAFE" as const,

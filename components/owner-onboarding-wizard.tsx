@@ -630,6 +630,7 @@ export function OwnerOnboardingWizard({
                 language={locale === "ar" ? "AR" : "EN"}
                 initial={{
                   primaryColor: String(draft.primaryColor || "#111827"),
+                  secondaryColor: String(draft.secondaryColor || "#FFFFFF"),
                   themePreset: String(draft.themePreset || "DEFAULT"),
                   artworkEnabled: draft.standardCardArtworkEnabled !== false,
                   artworkCategory: String(
