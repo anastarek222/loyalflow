@@ -363,7 +363,8 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   assert.match(canonical, /radial-gradient/);
   assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
   assert.match(setup, /Managed from the Custom Card artwork panel above/);
-  assert.match(manager, /object-contain/);
+  assert.equal((manager.match(/<LoyaltyCard/g) ?? []).length, 2);
+  assert.match(canonical, /object-contain/);
 });
 
 test("custom artwork preserves owner branding and limits overlays to dynamic data", () => {

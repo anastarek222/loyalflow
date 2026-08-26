@@ -41,17 +41,18 @@ test("Stage 14 custom-card flow surfaces draft, publish and storage receipts", (
 
 test("Stage 14 custom-card feedback preserves preview and approval safeguards", () => {
   const manager = source("components/custom-card-artwork-manager.tsx");
+  const renderer = source("components/loyalty-card.tsx");
 
   assert.equal(
-    (manager.match(/aspect-\[1\.586\]/g) ?? []).length,
+    (manager.match(/<LoyaltyCard/g) ?? []).length,
     2,
-    "Front and Back previews must preserve the ID-1 aspect ratio",
+    "Front and Back drafts must use the customer-card renderer",
   );
-  assert.equal(
-    (manager.match(/object-contain/g) ?? []).length,
-    2,
-    "Front and Back previews must not crop uploaded artwork",
-  );
+  assert.match(manager, /side="front"/);
+  assert.match(manager, /side="back"/);
+  assert.match(manager, /runtime-accurate preview/);
+  assert.match(renderer, /data-card-aspect-ratio="1\.586"/);
+  assert.match(renderer, /object-contain/);
   assert.match(manager, /ConfirmedSubmitButton/);
   assert.match(manager, /name="customVersion"/);
   assert.match(
