@@ -10,6 +10,7 @@ import {
 import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 import { normalizeLanguage } from "@/lib/i18n";
+import prisma from "@/lib/prisma";
 
 type Props = {
   slug: string;
@@ -45,6 +46,18 @@ export async function CustomCardArtworkManager({
   const language = normalizeLanguage(requestContext?.user?.language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const selected = versions.find((version) => version.id === selectedVersion);
+  const businessTimezone = await prisma.business.findUnique({
+    where: { slug },
+    select: { timezone: true },
+  });
+  const savedVersionFormatter = new Intl.DateTimeFormat(
+    language === "AR" ? "ar-EG" : "en-GB",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: businessTimezone?.timezone || "UTC",
+    },
+  );
   const uploadCustomArtwork = uploadCustomCardDraftCommandAction.bind(null, slug);
   const publishCustomArtwork = publishCustomCardArtworkAction.bind(null, slug);
   const selectedArtwork = selected
@@ -189,25 +202,63 @@ export async function CustomCardArtworkManager({
       ) : null}
 
       {versions.length > 0 ? (
-        <details className="mt-5 rounded-xl border border-border bg-white p-4">
+        <details
+          className="mt-5 rounded-xl border border-border bg-white p-4"
+          data-testid="custom-card-retained-library"
+        >
           <summary className="cursor-pointer font-black">
             {t(
-              `الإصدارات المقترنة المحفوظة (${versions.length})`,
-              `Retained paired versions (${versions.length})`,
+              `مكتبة التصميمات المحفوظة (${versions.length})`,
+              `Saved Custom Card library (${versions.length})`,
             )}
           </summary>
-          <ul className="mt-3 space-y-2 text-sm">
-            {versions.map((version) => (
-              <li key={version.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-mono text-xs">{version.id}</span>
-                <a
-                  href={`/businesses/${encodeURIComponent(slug)}/program?cardDesign=draft&customVersion=${version.id}`}
-                  className="font-bold text-primary underline"
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-foreground-muted">
+            {t(
+              "كل زوج محفوظ يظل متاحًا لإعادة الاستخدام. يمكنك الاحتفاظ بالتصميم الأساسي وتصميمات موسمية ثم معاينة أي نسخة وإعادة نشرها لاحقًا. نشر نسخة يغيّر البطاقة النشطة فقط ولا يحذف النسخ المحفوظة الأخرى.",
+              "Every saved Front + Back pair remains reusable. Keep an evergreen design alongside seasonal alternatives, preview any saved version, and publish it again later. Publishing switches the active customer card without deleting the other retained versions.",
+            )}
+          </p>
+          <ul className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            {versions.map((version, index) => {
+              const previewing = selectedVersion === version.id;
+              return (
+                <li
+                  key={version.id}
+                  className="rounded-xl border border-border bg-surface-subtle p-3"
                 >
-                  {t("معاينة الزوج", "Preview pair")}
-                </a>
-              </li>
-            ))}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-black text-foreground">
+                        {t(
+                          `تصميم محفوظ ${versions.length - index}`,
+                          `Saved design ${versions.length - index}`,
+                        )}
+                      </p>
+                      <p className="mt-1 text-xs text-foreground-muted">
+                        {savedVersionFormatter.format(version.uploadedAt)}
+                      </p>
+                    </div>
+                    {previewing ? (
+                      <span className="shrink-0 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[11px] font-black text-primary">
+                        {t("تتم معاينته", "Previewing")}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p
+                    className="mt-2 truncate font-mono text-[10px] text-foreground-muted"
+                    title={version.id}
+                  >
+                    {version.id}
+                  </p>
+                  <a
+                    href={`/businesses/${encodeURIComponent(slug)}/program?cardDesign=draft&customVersion=${version.id}`}
+                    className="mt-3 inline-flex min-h-10 items-center rounded-lg font-bold text-primary underline"
+                  >
+                    {t("معاينة واختيار هذا التصميم", "Preview and select this design")}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </details>
       ) : null}
