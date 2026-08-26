@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import JoinSubmitButton from "@/components/join-submit-button";
+import { BusinessLogoImage } from "@/components/business-logo-image";
 import { joinBusinessAction } from "@/app/join/[slug]/actions";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
@@ -202,12 +203,10 @@ export default async function JoinBusinessPage({
 
           <div className="relative">
             {business.logoUrl ? (
-              // The logo may be a data URL configured by the business owner.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <BusinessLogoImage
                 src={business.logoUrl}
                 alt={business.name}
-                className="mb-4 size-12 rounded-[var(--lf-radius-input)] bg-white/95 object-contain p-1"
+                className="mb-4 size-12 rounded-[var(--lf-radius-input)] bg-white/95"
               />
             ) : null}
 

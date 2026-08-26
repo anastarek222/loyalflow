@@ -1,8 +1,8 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
+import { BusinessLogoImage } from "@/components/business-logo-image";
 import {
   CountrySelector,
   type CountrySelectorHandle,
@@ -549,10 +549,9 @@ export function OwnerOnboardingWizard({
             <div className="flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
               <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
                 {logoPreview ? (
-                  <img
+                  <BusinessLogoImage
                     src={logoPreview}
                     alt={copy.identity}
-                    className="size-full object-contain p-2"
                   />
                 ) : (
                   <span className="text-3xl font-black text-foreground-subtle">
@@ -585,10 +584,9 @@ export function OwnerOnboardingWizard({
             <div className="mt-4 flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
               <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
                 {logoPreview ? (
-                  <img
+                  <BusinessLogoImage
                     src={logoPreview}
                     alt={copy.identity}
-                    className="size-full object-contain p-2"
                   />
                 ) : (
                   <span className="text-3xl font-black text-foreground-subtle">
