@@ -10,10 +10,12 @@ const source = (relativePath: string) => fs.readFileSync(path.join(root, relativ
 
 test("T006 homepage routes the primary conversion CTA through one bounded path selector", () => {
   const homepage = source("app/page.tsx");
+  const header = source("components/marketing/marketing-header.tsx");
+  const footer = source("components/marketing/marketing-footer.tsx");
 
   assert.match(homepage, /href="\/get-started"/);
-  assert.match(homepage, /href="\/accept-owner-invitation"/);
-  assert.match(homepage, /href="\/login"/);
+  assert.match(footer, /href="\/accept-owner-invitation"/);
+  assert.match(header, /href="\/login"/);
 });
 
 test("T006 get-started page reuses canonical locale and direction behavior", () => {

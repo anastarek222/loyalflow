@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 
 import { publicSiteUrl } from "@/lib/urls/public-site-url";
 
-export type PublicMarketingPath = "/" | "/get-started";
+export type PublicMarketingPath =
+  | "/"
+  | "/get-started"
+  | "/features"
+  | "/pricing"
+  | "/about"
+  | "/faq";
 
 export function getPublicIndexingHeader(vercelEnvironment?: string) {
   if (vercelEnvironment !== "preview") {
