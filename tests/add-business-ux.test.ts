@@ -68,7 +68,8 @@ test("Standard Card has one business-logo source and keeps preview in normal lay
   assert.match(setup, /preview/);
   assert.match(setup, /standard-card-preview-container/);
   assert.match(setup, /overflow-hidden/);
-  assert.match(setup, /xl:sticky/);
+  assert.match(setup, /data-testid="standard-card-mobile-preview-shell"/);
+  assert.match(setup, /className="order-1 sticky top-2 z-20 min-w-0 self-start xl:order-2 xl:top-6"/);
   assert.match(setup, /Front/);
   assert.match(setup, /Back/);
 });

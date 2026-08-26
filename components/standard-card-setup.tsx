@@ -100,6 +100,7 @@ export function StandardCardSetup({
 }: Props) {
   const t = (ar: string, en: string) => translate(language, ar, en);
   const [side, setSide] = useState<"front" | "back">("front");
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const initialThemePreset = standardCardThemePreset(initial.themePreset);
   const initialPrimaryColor =
     initial.primaryColor ||
@@ -737,51 +738,72 @@ export function StandardCardSetup({
         )}
       </div>
 
-      <aside className="order-1 min-w-0 xl:order-2 xl:sticky xl:top-6 xl:self-start">
-        <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
+      <aside
+        className="order-1 sticky top-2 z-20 min-w-0 self-start xl:order-2 xl:top-6"
+        data-testid="standard-card-mobile-preview-shell"
+      >
+        <div className="rounded-2xl border border-border bg-surface p-4 shadow-lg xl:shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
               <h3 className="font-black">{t("معاينة البطاقة مباشرة", "Live Card Preview")}</h3>
               <p className="text-sm text-foreground-muted">
                 {t("نفس البطاقة التي سيراها العملاء.", "The same card customers will see.")}
               </p>
             </div>
-            <div
-              className="flex rounded-xl border border-border bg-surface-subtle p-1"
-              role="group"
-              aria-label={t("جانب البطاقة", "Card side")}
+            <button
+              type="button"
+              aria-expanded={mobilePreviewOpen}
+              aria-controls="standard-card-preview-body"
+              data-testid="standard-card-mobile-preview-toggle"
+              onClick={() => setMobilePreviewOpen((current) => !current)}
+              className="shrink-0 rounded-lg border border-border bg-surface-subtle px-3 py-2 text-xs font-bold xl:hidden"
             >
-              {(["front", "back"] as const).map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setSide(item)}
-                  aria-pressed={side === item}
-                  className={`rounded-lg px-4 py-2 text-sm font-bold ${side === item ? "bg-primary text-[var(--lf-primary-foreground)] shadow-sm" : "text-foreground-muted"}`}
-                >
-                  {item === "front" ? t("الوجه", "Front") : t("الظهر", "Back")}
-                </button>
-              ))}
-            </div>
+              {mobilePreviewOpen ? t("إخفاء", "Hide") : t("عرض", "Show")}
+            </button>
           </div>
           <div
-            className="mx-auto w-full max-w-[680px]"
-            data-testid="standard-card-preview-container"
+            id="standard-card-preview-body"
+            data-testid="standard-card-preview-body"
+            className={`${mobilePreviewOpen ? "block" : "hidden"} xl:block`}
           >
-            <LoyaltyCard
-              side={side}
-              {...values}
-              {...previewCustomer}
-              customSafeZoneVersion={CUSTOM_CARD_SAFE_ZONE_VERSION}
-              language={language}
-            />
+            <div className="mt-4 flex justify-end">
+              <div
+                className="flex rounded-xl border border-border bg-surface-subtle p-1"
+                role="group"
+                aria-label={t("جانب البطاقة", "Card side")}
+              >
+                {(["front", "back"] as const).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setSide(item)}
+                    aria-pressed={side === item}
+                    className={`rounded-lg px-4 py-2 text-sm font-bold ${side === item ? "bg-primary text-[var(--lf-primary-foreground)] shadow-sm" : "text-foreground-muted"}`}
+                  >
+                    {item === "front" ? t("الوجه", "Front") : t("الظهر", "Back")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div
+              className="mx-auto mt-4 w-full max-w-[680px]"
+              data-testid="standard-card-preview-container"
+            >
+              <LoyaltyCard
+                side={side}
+                {...values}
+                {...previewCustomer}
+                customSafeZoneVersion={CUSTOM_CARD_SAFE_ZONE_VERSION}
+                language={language}
+              />
+            </div>
+            <p className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground-muted">
+              {t(
+                "بيانات المعاينة توضيحية فقط. تتم تعبئة اسم العميل ومعرف الولاء ورمز QR والرصيد تلقائيًا.",
+                "Preview data is illustrative only. Customer name, loyalty ID, QR and balance are populated automatically.",
+              )}
+            </p>
           </div>
-          <p className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground-muted">
-            {t(
-              "بيانات المعاينة توضيحية فقط. تتم تعبئة اسم العميل ومعرف الولاء ورمز QR والرصيد تلقائيًا.",
-              "Preview data is illustrative only. Customer name, loyalty ID, QR and balance are populated automatically.",
-            )}
-          </p>
         </div>
       </aside>
     </section>

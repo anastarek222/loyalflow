@@ -24,9 +24,10 @@ test("Add Business shows the live card before mobile controls and updates it fro
   const setup = read("components/standard-card-setup.tsx");
 
   assert.match(setup, /className="order-2 space-y-5 xl:order-1"/);
+  assert.match(setup, /data-testid="standard-card-mobile-preview-shell"/);
   assert.match(
     setup,
-    /<aside className="order-1 min-w-0 xl:order-2 xl:sticky/,
+    /className="order-1 sticky top-2 z-20 min-w-0 self-start xl:order-2 xl:top-6"/,
   );
   assert.match(setup, /data-testid="standard-card-preview-container"/);
   assert.match(wizard, /onInput=\{\(event\) =>/);
