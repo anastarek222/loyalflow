@@ -366,17 +366,20 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   assert.match(manager, /object-contain/);
 });
 
-test("custom artwork keeps dynamic data readable over dark artwork", () => {
+test("custom artwork preserves owner branding and limits overlays to dynamic data", () => {
   const canonical = source("components/loyalty-card.tsx");
-  assert.match(canonical, /function readableAccentOnDark/);
   for (const zone of [
-    "custom-brand",
     "custom-member",
-    "custom-back-brand",
+    "custom-balance",
     "custom-reward",
+    "custom-score",
   ]) {
-    assert.match(canonical, new RegExp(`data-safe-zone="${zone}"[^>]*bg-black\\/60`));
+    assert.match(canonical, new RegExp(`data-safe-zone="${zone}"[\\s\\S]*?drop-shadow`));
   }
+  assert.doesNotMatch(canonical, /bg-gradient-to-r from-black\/75/);
+  assert.doesNotMatch(canonical, /data-safe-zone="custom-brand"/);
+  assert.doesNotMatch(canonical, /data-safe-zone="custom-back-brand"/);
+  assert.doesNotMatch(canonical, /LOYALFLOW ·|contactItems/);
 });
 
 test("public card is rendered from dynamic customer and business data", () => {
