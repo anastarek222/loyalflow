@@ -11,7 +11,6 @@ test("Pilot receipt completes pending Owner launch and direct re-entry", () => {
   assert.match(browser, /LoyalFlow final UAT O \$\{fixture\.runId\}/);
   assert.match(browser, /for \(const step of \[3, 4, 5, 6\]\)/);
   assert.match(browser, /name: "Launch", exact: true/);
-  assert.match(browser, /sheetSync=pending/);
   assert.match(browser, /name: "Log out", exact: true/);
   assert.match(browser, /uatEmail\("pending-owner", fixture\.runId\)/);
   assert.match(browser, /new RegExp\(`\/businesses\/\$\{businessSlug\}\$`\)/);

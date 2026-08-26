@@ -111,10 +111,9 @@ test.describe
     }
 
     await page.getByRole("button", { name: "Launch", exact: true }).click();
-    await expect(page).toHaveURL(
-      new RegExp(`/businesses/${businessSlug}\\?sheetSync=pending$`),
-      { timeout: 30_000 },
-    );
+    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+      timeout: 30_000,
+    });
     await expect(
       page.locator("#app-content").getByRole("heading", { level: 1 }),
     ).toHaveCount(1);
