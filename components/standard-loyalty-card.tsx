@@ -595,11 +595,12 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           opacity="0.8"
         />
         <text
+          data-emphasis="low"
           x={rtl ? 355 : 42}
           y="430"
-          fill={accent}
-          fontSize="13"
-          fontWeight="700"
+          fill={muted}
+          fontSize="8"
+          fontWeight="600"
           letterSpacing={rtl ? "0" : "2"}
           textAnchor={rtl ? "end" : "start"}
           direction={dir}
@@ -608,12 +609,14 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           {labels.id}
         </text>
         <text
+          data-emphasis="low"
           x={rtl ? 355 : 42}
-          y="469"
-          fill={foreground}
-          fontSize="25"
+          y="450"
+          fill={muted}
+          fontSize="10"
           fontWeight="500"
-          letterSpacing="2"
+          letterSpacing="1.5"
+          opacity="0.72"
           textAnchor={rtl ? "end" : "start"}
           direction="ltr"
         >
