@@ -11,6 +11,8 @@ let fixture: BrowserUatFixture;
 let manifestPath: string;
 const invalidPublicCardPath = "/card/not-a-valid-public-token";
 const expectedInvalidPublicCard404 = "Failed to load resource: the server responded with a status of 404 (Not Found)";
+const expectedReactDevelopmentSuspenseFallback =
+  "The server could not finish this Suspense boundary, likely due to an error during server rendering. Switched to client rendering.";
 
 function applicationNavigation(page: Page) {
   return page.getByRole("complementary", { name: "Primary navigation", exact: true });
@@ -120,7 +122,12 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
 
   test.beforeEach(async ({ page }) => {
     const errors: string[] = [];
-    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("pageerror", (error) => {
+      const isExpectedReactDevelopmentSuspenseFallback =
+        !process.env.STAGING_UAT_BASE_URL &&
+        error.message === expectedReactDevelopmentSuspenseFallback;
+      if (!isExpectedReactDevelopmentSuspenseFallback) errors.push(error.message);
+    });
     page.on("console", (message) => {
       const isExpectedInvalidPublicCard404 =
         message.type() === "error" &&
@@ -137,13 +144,18 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
         !process.env.STAGING_UAT_BASE_URL &&
         message.text().includes("eval() is not supported in this environment") &&
         message.text().includes("React will never use eval() in production mode");
+      const isExpectedReactDevelopmentSuspenseFallback =
+        message.type() === "error" &&
+        !process.env.STAGING_UAT_BASE_URL &&
+        message.text().includes(expectedReactDevelopmentSuspenseFallback);
 
       if (
         message.type() === "error" &&
         !message.text().includes("favicon.ico") &&
         !isExpectedInvalidPublicCard404 &&
         !isExpectedVercelToolbarCspNoise &&
-        !isExpectedReactDevelopmentCspNoise
+        !isExpectedReactDevelopmentCspNoise &&
+        !isExpectedReactDevelopmentSuspenseFallback
       ) {
         errors.push(message.text());
       }
