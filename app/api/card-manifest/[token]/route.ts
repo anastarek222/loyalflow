@@ -126,10 +126,28 @@ export async function GET(
 
     icons: [
       {
-        src: `/api/card-icon/${token}`,
+        src: `/api/card-icon/${token}?size=192&purpose=any`,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: `/api/card-icon/${token}?size=512&purpose=any`,
         sizes: "512x512",
         type: "image/png",
-        purpose: "any maskable",
+        purpose: "any",
+      },
+      {
+        src: `/api/card-icon/${token}?size=192&purpose=maskable`,
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "maskable",
+      },
+      {
+        src: `/api/card-icon/${token}?size=512&purpose=maskable`,
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   };

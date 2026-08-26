@@ -81,8 +81,8 @@ export async function generateMetadata({
     description,
     manifest: `/api/card-manifest/${token}`,
     icons: {
-      icon: `/api/card-icon/${token}`,
-      apple: `/api/card-icon/${token}`,
+      icon: `/api/card-icon/${token}?size=512&purpose=any`,
+      apple: `/api/card-icon/${token}?size=180&purpose=any`,
     },
     appleWebApp: {
       capable: true,
@@ -312,7 +312,7 @@ export default async function PublicCardPage({
             <img
               src={business.logoUrl}
               alt=""
-              className="size-11 shrink-0 rounded-2xl border border-white/80 bg-white object-contain p-1.5 shadow-sm"
+              className="size-11 shrink-0 rounded-2xl border border-white/80 bg-white object-cover shadow-sm"
             />
           ) : (
             <div
