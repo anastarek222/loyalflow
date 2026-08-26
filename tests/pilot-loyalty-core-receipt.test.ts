@@ -36,3 +36,23 @@ test("Pilot loyalty receipt runs conditionally for relevant product slices", () 
     /app\/businesses\/\\\[slug\\\]\/\(scan\|customers\|rewards\|offers/,
   );
 });
+
+test("Pilot mobile loyalty receipt keeps Staff and public Customer journeys", () => {
+  const browser = source("tests/browser/final-uat-u13.spec.ts");
+
+  assert.match(browser, /staff operates Scan in Arabic on mobile/);
+  assert.match(browser, /public enrollment and English\/Arabic public cards/);
+  assert.match(browser, /name: "Add to Home Screen", exact: true/);
+  assert.match(browser, /Private final UAT fixture note/);
+  assert.match(browser, /\/join\/\$\{fixture\.businessA\}/);
+  assert.match(browser, /\/card\/\$\{fixture\.activeCustomer\.publicToken\}/);
+});
+
+test("Pilot mobile loyalty receipt runs only for relevant mobile slices", () => {
+  const workflow = source(".github/workflows/staging-pr-validation.yml");
+
+  assert.match(workflow, /echo "loyalty-mobile=true"/);
+  assert.match(workflow, /steps\.browser-smoke\.outputs\.loyalty-mobile/);
+  assert.match(workflow, /--project=mobile-chromium/);
+  assert.match(workflow, /app\/\(join\|card\)\//);
+});
