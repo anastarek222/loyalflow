@@ -85,7 +85,7 @@ export function PublicLoyaltyCardViewer({
         <div
           role="status"
           data-testid="customer-reward-ready-notice"
-          className="lf-card-reveal mb-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-amber-50 px-4 py-4 shadow-sm"
+          className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-amber-50 px-4 py-4 shadow-sm"
         >
           <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
             <Gift className="size-5" aria-hidden="true" />
