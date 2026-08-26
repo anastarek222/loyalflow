@@ -67,6 +67,17 @@ git diff --check
 
 Pull requests targeting `staging` also run the repository Staging PR Validation workflow. Database/migration changes have an additional Migration Integrity workflow and remain separately gated.
 
+## Engineering handoff
+
+Before changing product behavior or operating a support case, use these current authorities:
+
+- `DEVELOPER_HANDOFF.md` — product and visual-development boundaries, including the final Custom Card contract.
+- `docs/architecture/AUTH_ROLE_AUTHORITY.md` — authentication, tenant, capability and role-aware entry authority.
+- `docs/operations/SUPPORT_RUNBOOK.md` — safe support triage, severity and escalation boundaries.
+- `docs/FRESH_DEVELOPER_REHEARSAL.md` — clean-runner bootstrap and validation acceptance.
+- `docs/CONSOLIDATED_UAT_RUNBOOK.md` — manual/non-production UAT authority.
+- `docs/PRODUCTION_DEPLOYMENT.md` and `docs/PRODUCTION_RELEASE_CHECKLIST.md` — Production release boundary.
+
 ## UI and Final Visual authority
 
 Application chrome uses semantic `--lf-*` design tokens from `app/globals.css`. Compatibility aliases are centralized in `app/loyalflow-theme-aliases.css`; they are not a second independent theme.
