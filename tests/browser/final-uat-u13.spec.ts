@@ -227,19 +227,19 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.goto(`/businesses/${fixture.businessA}/customers`);
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/users`);
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
     await page.evaluate(
       (url) => window.location.assign(url),
       `/businesses/${fixture.businessB}/customers`,
     );
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
 
     await logout(page);
     await login(page, "viewer-a");
     await page.goto(`/businesses/${fixture.businessA}/reports`);
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/scan`);
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
     await expect(applicationNavigation(page).getByRole("link", { name: "Team", exact: true })).toHaveCount(0);
   });
 
