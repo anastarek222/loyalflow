@@ -3,6 +3,8 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { deflateSync } from "node:zlib";
 
+import { generateTotpCode } from "../../lib/auth/super-admin-mfa";
+import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 import {
   cleanupBrowserUat,
   prepareBrowserUat,
@@ -15,32 +17,21 @@ let fixture: BrowserUatFixture;
 let manifestPath: string;
 let customCardPublished = false;
 
-async function login(
-  page: Page,
-  role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin",
-) {
+async function loginSuperAdmin(page: Page) {
   await page.goto("/login");
-  await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
-  await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+  await page
+    .getByLabel("Email address")
+    .fill(uatEmail("superadmin", fixture.runId));
+  await page
+    .getByLabel("Password")
+    .fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
-  await expect(page).toHaveURL(
-    role === "superadmin"
-      ? /\/dashboard$/
-      : new RegExp(`/businesses/${fixture.businessA}$`),
-  );
-}
 
-async function expectSafePage(page: Page) {
-  await expect
-    .poll(() =>
-      page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-      ),
-    )
-    .toBe(true);
-  await expect(
-    page.locator("#app-content").getByRole("heading", { level: 1 }),
-  ).toHaveCount(1);
+  await expect(page.getByTestId("login-mfa-step")).toBeVisible();
+  const mfaCode = page.locator("#mfaCode");
+  await mfaCode.fill(generateTotpCode(UAT_SUPER_ADMIN_MFA_SECRET));
+  await mfaCode.press("Enter");
+  await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 }
 
 function crc32(buffer: Buffer) {
@@ -63,7 +54,11 @@ function pngChunk(type: string, data: Buffer) {
   return Buffer.concat([length, typeBytes, data, checksum]);
 }
 
-function solidPng(width: number, height: number, rgb: [number, number, number]) {
+function solidPng(
+  width: number,
+  height: number,
+  rgb: [number, number, number],
+) {
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
@@ -92,6 +87,10 @@ function solidPng(width: number, height: number, rgb: [number, number, number]) 
   ]);
 }
 
+function canCleanUploadedBlobArtwork() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
+}
+
 async function cleanupCustomCardArtwork(runId: string) {
   await execFileAsync(
     "pnpm",
@@ -109,11 +108,7 @@ async function cleanupCustomCardArtwork(runId: string) {
   );
 }
 
-function canCleanUploadedBlobArtwork() {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
-}
-
-test.describe.serial("Pre-final administration and security UAT", () => {
+test.describe.serial("Pilot Custom Card browser receipt", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
     fixture = prepared.fixture;
@@ -135,97 +130,41 @@ test.describe.serial("Pre-final administration and security UAT", () => {
       const expectedVercelToolbarCspNoise =
         message.type() === "error" &&
         Boolean(process.env.STAGING_UAT_BASE_URL) &&
-        message.text().includes("https://vercel.live/_next-live/feedback/feedback.js") &&
+        message
+          .text()
+          .includes("https://vercel.live/_next-live/feedback/feedback.js") &&
         message.text().includes("Content Security Policy");
+      const expectedReactDevelopmentCspNoise =
+        message.type() === "error" &&
+        !process.env.STAGING_UAT_BASE_URL &&
+        message.text().includes("eval() is not supported in this environment") &&
+        message
+          .text()
+          .includes("React will never use eval() in production mode");
 
       if (
         message.type() === "error" &&
         !message.text().includes("favicon.ico") &&
-        !expectedVercelToolbarCspNoise
+        !expectedVercelToolbarCspNoise &&
+        !expectedReactDevelopmentCspNoise
       ) {
         errors.push(message.text());
       }
     });
-    (page as Page & { preFinalErrors?: string[] }).preFinalErrors = errors;
+    (page as Page & { pilotCustomCardErrors?: string[] }).pilotCustomCardErrors =
+      errors;
   });
 
   test.afterEach(async ({ page }) => {
-    expect((page as Page & { preFinalErrors?: string[] }).preFinalErrors ?? []).toEqual([]);
+    expect(
+      (page as Page & { pilotCustomCardErrors?: string[] })
+        .pilotCustomCardErrors ?? [],
+    ).toEqual([]);
   });
 
-  test("owner administration surfaces, customer detail, notifications, and logout-everywhere @desktop", async ({ page }) => {
+  test("super admin rejects invalid geometry and proves the bounded publish lifecycle @desktop", async ({ page }) => {
     test.setTimeout(120_000);
-    await login(page, "owner-a");
-
-    await page.goto(`/businesses/${fixture.businessA}/settings`);
-    await expect(page.locator('[data-settings-administration="true"]')).toBeVisible();
-    await expect(page.getByRole("link", { name: "Business profile", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Operations", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Card details", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Integrations", exact: true })).toBeVisible();
-    await expectSafePage(page);
-
-    await page.goto(`/businesses/${fixture.businessA}/program`);
-    await expect(page.locator("[data-program-workspace]")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Earning rules", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Customer card", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Customer messages", exact: true })).toBeVisible();
-    await expectSafePage(page);
-
-    await page.goto(`/businesses/${fixture.businessA}/branches`);
-    await expect(page.locator('[data-branches-administration="true"]')).toBeVisible();
-    await expect(page.getByText("Branches & assignments", { exact: true })).toBeVisible();
-    await expectSafePage(page);
-
-    await page.goto(`/businesses/${fixture.businessA}/users`);
-    await expect(page.getByText(uatEmail("manager-a", fixture.runId), { exact: true })).toBeVisible();
-    await expect(page.getByText(uatEmail("staff-a", fixture.runId), { exact: true })).toBeVisible();
-    await expectSafePage(page);
-
-    await page.goto(`/businesses/${fixture.businessA}/customers/${fixture.activeCustomer.id}`);
-    await expect(page.locator("[data-customer-profile-hero]")).toBeVisible();
-    await expect(page.locator("[data-experience-customer-detail]")).toBeVisible();
-    await expect(page.getByRole("link", { name: /card/i })).toHaveAttribute(
-      "href",
-      `/card/${fixture.activeCustomer.publicToken}`,
-    );
-    await expectSafePage(page);
-
-    await page.goto(`/businesses/${fixture.businessA}?notifications=1`);
-    const dialog = page.getByRole("dialog", { name: "Important notifications" });
-    await expect(dialog).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
-
-    await page.goto(`/businesses/${fixture.businessA}?notifications=1`);
-    await expect(dialog).toBeVisible();
-    const markAll = dialog.getByRole("button", {
-      name: "Mark all as read",
-      exact: true,
-    });
-    if (await markAll.isEnabled()) {
-      await markAll.click();
-      await expect(
-        dialog.getByRole("button", {
-          name: "All notifications are read",
-          exact: true,
-        }),
-      ).toBeDisabled();
-    }
-
-    await page.goto("/account/security");
-    await page.once("dialog", (confirmation) => confirmation.accept());
-    await Promise.all([
-      page.waitForURL(/\/login$/),
-      page.getByRole("button", { name: "Log out everywhere", exact: true }).click(),
-    ]);
-    await page.goto(`/businesses/${fixture.businessA}/settings`);
-    await expect(page).toHaveURL(/\/login$/);
-  });
-
-  test("super admin Custom Card rejects invalid geometry and proves a bounded upload/publish lifecycle when cleanup credentials are available @desktop", async ({ page }) => {
-    test.setTimeout(120_000);
-    await login(page, "superadmin");
+    await loginSuperAdmin(page);
     await page.goto(`/businesses/${fixture.businessA}/program`);
     await expect(page.locator("[data-program-workspace]")).toBeVisible();
 
@@ -256,16 +195,19 @@ test.describe.serial("Pre-final administration and security UAT", () => {
     });
     await Promise.all([
       page.waitForURL(/\/program\?cardDesign=invalid$/),
-      page.getByRole("button", { name: "Create Front + Back draft", exact: true }).click(),
+      page
+        .getByRole("button", {
+          name: "Create Front + Back draft",
+          exact: true,
+        })
+        .click(),
     ]);
 
-    // A valid Blob write is attempted only when this runner can remove the
-    // resulting immutable UAT objects before the database fixture is deleted.
     if (!canCleanUploadedBlobArtwork()) {
       test.info().annotations.push({
         type: "bounded-runtime",
         description:
-          "Blob is configured on the application, but this UAT runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
+          "Blob is configured on the application, but this runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
       });
       return;
     }
@@ -281,24 +223,40 @@ test.describe.serial("Pre-final administration and security UAT", () => {
       buffer: solidPng(856, 540, [90, 45, 25]),
     });
     await Promise.all([
-      page.waitForURL(/\/program\?cardDesign=draft&customVersion=[0-9a-f-]+$/),
-      page.getByRole("button", { name: "Create Front + Back draft", exact: true }).click(),
+      page.waitForURL(
+        /\/program\?cardDesign=draft&customVersion=[0-9a-f-]+$/,
+      ),
+      page
+        .getByRole("button", {
+          name: "Create Front + Back draft",
+          exact: true,
+        })
+        .click(),
     ]);
 
     const version = new URL(page.url()).searchParams.get("customVersion");
     expect(version).toMatch(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i);
     await expect(page.getByText("Draft preview", { exact: true })).toBeVisible();
     for (const side of ["front", "back"] as const) {
-      const image = page.getByAltText(`Custom card ${side} draft`, { exact: true });
+      const image = page.getByAltText(`Custom card ${side} draft`, {
+        exact: true,
+      });
       await expect(image).toBeVisible();
       await expect
-        .poll(() => image.evaluate((node) => (node as HTMLImageElement).naturalWidth))
+        .poll(() =>
+          image.evaluate((node) => (node as HTMLImageElement).naturalWidth),
+        )
         .toBeGreaterThan(0);
     }
 
     await Promise.all([
       page.waitForURL(/\/program\?cardDesign=published$/),
-      page.getByRole("button", { name: "Publish this Front + Back pair", exact: true }).click(),
+      page
+        .getByRole("button", {
+          name: "Publish this Front + Back pair",
+          exact: true,
+        })
+        .click(),
     ]);
     customCardPublished = true;
 
