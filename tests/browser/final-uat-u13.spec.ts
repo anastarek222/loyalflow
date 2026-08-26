@@ -21,6 +21,7 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
     ? {
         scannerStatus: "حالة ماسح QR",
         scannerInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
+        scannerStarting: "جارٍ تشغيل الكاميرا...",
         scannerReady: "الكاميرا جاهزة لمسح رمز QR.",
         searchLabel: "البحث عن عميل",
         openCustomer: "فتح العميل",
@@ -28,6 +29,7 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
     : {
         scannerStatus: "QR scanner status",
         scannerInstruction: "Point the camera at the customer QR code.",
+        scannerStarting: "Starting camera...",
         scannerReady: "Camera ready to scan a QR code.",
         searchLabel: "Find a customer",
         openCustomer: "Open customer",
@@ -37,7 +39,11 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
   // camera-to-search fallback control to activate.
   await expect(
     page.getByRole("status", { name: copy.scannerStatus, exact: true }),
-  ).toHaveText(new RegExp(`^(?:${copy.scannerInstruction}|${copy.scannerReady})$`));
+  ).toHaveText(
+    new RegExp(
+      `^(?:${copy.scannerInstruction}|${copy.scannerStarting}|${copy.scannerReady})$`,
+    ),
+  );
   await page.getByRole("textbox", { name: copy.searchLabel, exact: true }).fill(fixture.activeCustomer.customerCode);
 
   const customerResult = page.getByRole("link", {
