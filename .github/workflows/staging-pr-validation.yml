@@ -69,6 +69,11 @@ jobs:
           else
             echo "loyalty-mobile=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Eq '^(app/(api/(businesses/\[slug\]/custom-card-artwork|card-artwork)|businesses/\[slug\]/program/)|components/(custom-card|loyalty-card|standard-card-setup)|lib/(cards/custom-card|server/business/custom-card)|scripts/(cleanup-final-uat-card-artwork|prepare-final-uat-fixtures)\.ts$|tests/browser/(fixtures|pre-final-admin-security\.spec)\.ts$|tests/(custom-card|pre-final-slice-d-browser-readiness|pilot-custom-card-receipt).*\.test\.ts$|playwright\.config\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+            echo "custom-card=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "custom-card=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -137,6 +142,10 @@ jobs:
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-mobile }}" == "true" ]]; then
             pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium
+          fi
+          if [[ "${{ steps.browser-smoke.outputs.custom-card }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts --project=desktop-chromium
+            pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts --project=mobile-chromium
           fi
 
       - name: Check patch whitespace
