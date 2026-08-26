@@ -1,9 +1,6 @@
-"use client";
-
-import { useSearchParams } from "next/navigation";
-
 type Props = {
   isArabic: boolean;
+  status?: string;
 };
 
 type StatusCopy = {
@@ -30,9 +27,7 @@ const STATUS_COPY: Record<string, StatusCopy> = {
   },
 };
 
-export function CustomCardExperienceStatus({ isArabic }: Props) {
-  const searchParams = useSearchParams();
-  const status = searchParams.get("cardDesign");
+export function CustomCardExperienceStatus({ isArabic, status }: Props) {
   const copy = status ? STATUS_COPY[status] : undefined;
 
   if (!copy) return null;
@@ -43,7 +38,11 @@ export function CustomCardExperienceStatus({ isArabic }: Props) {
       : "mt-4 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-sm font-bold";
 
   return (
-    <p role="status" aria-live="polite" className={className}>
+    <p
+      role={copy.tone === "success" ? "status" : "alert"}
+      aria-live={copy.tone === "success" ? "polite" : undefined}
+      className={className}
+    >
       {isArabic ? copy.ar : copy.en}
     </p>
   );

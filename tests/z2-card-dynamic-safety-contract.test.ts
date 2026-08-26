@@ -18,6 +18,8 @@ const setupSource = readFileSync(
 test("Z2 bounds dynamic Standard Card text without mutating source data", () => {
   assert.match(standardRenderer, /boundedText\(props\.customerName, 30\)/);
   assert.match(standardRenderer, /boundedText\(props\.customerId, 24\)/);
+  assert.match(standardRenderer, /data-emphasis="low"/);
+  assert.match(standardRenderer, /fontSize="10"/);
   assert.match(standardRenderer, /boundedText\([\s\S]*?props\.rewardName[\s\S]*?,\s*32,\s*\)/);
   assert.doesNotMatch(standardRenderer, /props\.customerName\s*=/);
   assert.doesNotMatch(standardRenderer, /props\.customerId\s*=/);
@@ -37,6 +39,8 @@ test("Z2 keeps Custom Card overlays bounded and the QR system-owned", () => {
   assert.match(customRenderer, /data-safe-zone="custom-balance"/);
   assert.match(customRenderer, /data-safe-zone="custom-reward"/);
   assert.match(customRenderer, /props\.customerId\.slice\(0, 32\)/);
+  assert.match(customRenderer, /data-emphasis="low"/);
+  assert.match(customRenderer, /text-\[1\.25cqw\]/);
   assert.match(customRenderer, /props\.rewardName\.slice\(0, 32\)/);
   assert.match(customRenderer, /className="[^\"]*truncate[^\"]*"/);
 });

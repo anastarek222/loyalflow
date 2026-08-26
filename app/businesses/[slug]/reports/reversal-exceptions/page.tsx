@@ -203,7 +203,7 @@ export default async function ReversalExceptionsPage({
 
         {feedback && (
           <div
-            role="status"
+            role={feedback.tone === "success" ? "status" : "alert"}
             className={`mt-4 rounded-[var(--lf-radius-input)] border p-3 text-sm font-semibold ${
               feedback.tone === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"

@@ -11,6 +11,7 @@ import { normalizeLanguage } from "@/lib/i18n";
 type Props = {
   slug: string;
   selectedVersion?: string;
+  status?: string;
   versions: CustomCardArtworkVersion[];
   storageConfigured: boolean;
 };
@@ -18,6 +19,7 @@ type Props = {
 export async function CustomCardArtworkManager({
   slug,
   selectedVersion,
+  status,
   versions,
   storageConfigured,
 }: Props) {
@@ -47,7 +49,10 @@ export async function CustomCardArtworkManager({
         </span>
       </div>
 
-      <CustomCardExperienceStatus isArabic={language === "AR"} />
+      <CustomCardExperienceStatus
+        isArabic={language === "AR"}
+        status={status}
+      />
 
       {!storageConfigured ? (
         <p className="mt-4 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-sm font-bold">

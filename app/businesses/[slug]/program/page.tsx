@@ -298,6 +298,7 @@ export default async function LoyaltyProgramPage({
             <CustomCardArtworkManager
               slug={business.slug}
               selectedVersion={query.customVersion}
+              status={query.cardDesign}
               versions={customArtworkVersions}
               storageConfigured={customCardStorageConfigured()}
             />

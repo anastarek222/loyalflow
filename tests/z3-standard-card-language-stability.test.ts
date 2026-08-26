@@ -35,6 +35,7 @@ test("Z3 language changes never implicitly reset persisted customization state",
 
   assert.doesNotMatch(stateBlock, /language/);
   assert.match(stateBlock, /primaryColor: initialPrimaryColor/);
+  assert.match(stateBlock, /secondaryColor: initialSecondaryColor/);
   assert.match(stateBlock, /themePreset: initialThemePreset/);
   assert.match(stateBlock, /initial\.artworkEnabled \?\? true/);
   assert.match(stateBlock, /initial\.artworkCategory \|\| "OTHER"/);

@@ -1,13 +1,14 @@
 import { auth } from "@/auth";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { ProductPreview } from "@/components/marketing/product-preview";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
-import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import { buildPublicWebsiteStructuredData } from "@/lib/seo/public-website-structured-data";
+import { getPublicMarketingNavigation } from "@/lib/marketing/public-navigation";
+import { getMarketingRequestLocale } from "@/lib/marketing/request-locale";
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -29,13 +30,8 @@ import {
   Users,
 } from "lucide-react";
 
-async function getMarketingLocale() {
-  const cookieStore = await cookies();
-  return resolveRequestLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
-}
-
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getMarketingLocale();
+  const locale = await getMarketingRequestLocale();
   const title = translate(locale, "marketing.metaTitle");
   const description = translate(locale, "marketing.metaDescription");
 
@@ -56,7 +52,7 @@ export default async function HomePage() {
   const session = await auth();
   if (session?.user) redirect("/dashboard");
 
-  const locale = await getMarketingLocale();
+  const locale = await getMarketingRequestLocale();
   const direction = getLocaleDirection(locale);
   const copy = (key: MessageKey) => translate(locale, key);
   const websiteStructuredData = buildPublicWebsiteStructuredData({
@@ -64,12 +60,7 @@ export default async function HomePage() {
     locale,
   });
 
-  const navigation = [
-    { href: "#product", label: copy("marketing.navProduct") },
-    { href: "#industries", label: copy("marketing.navIndustries") },
-    { href: "#security", label: copy("marketing.navSecurity") },
-    { href: "#faq", label: copy("marketing.navFaq") },
-  ];
+  const navigation = getPublicMarketingNavigation(locale);
 
   const trustItems = [
     [Languages, "marketing.trustArabic"],
@@ -167,7 +158,7 @@ export default async function HomePage() {
                 <ArrowUpRight size={18} aria-hidden="true" />
               </Link>
               <Link
-                href="#how-it-works"
+                href="/features"
                 className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border-strong bg-white/80 px-5 py-3 font-bold text-foreground shadow-sm backdrop-blur-lg transition-[background-color,border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-white active:translate-y-0"
               >
                 {copy("marketing.secondaryCta")}
@@ -439,36 +430,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-border bg-white px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-lg font-black text-foreground"
-            >
-              <Sparkles size={19} className="text-primary" aria-hidden="true" />
-              {copy("common.brand")}
-            </Link>
-            <p className="mt-3 max-w-md text-sm leading-6 text-foreground-subtle">
-              {copy("marketing.footerNote")}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-foreground-muted">
-            <Link href="#product" className="hover:text-primary">
-              {copy("marketing.footerProduct")}
-            </Link>
-            <Link href="/login" className="hover:text-primary">
-              {copy("marketing.footerAccess")}
-            </Link>
-            <Link
-              href="/accept-owner-invitation"
-              className="hover:text-primary"
-            >
-              {copy("marketing.invitationCta")}
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter locale={locale} />
     </main>
   );
 }

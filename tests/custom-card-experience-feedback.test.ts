@@ -20,16 +20,23 @@ test("Stage 14 custom-card flow surfaces draft, publish and storage receipts", (
   assert.match(uploadAction, /cardDesign=storage-unavailable/);
   assert.match(publishAction, /cardDesign=published/);
 
-  assert.match(status, /useSearchParams\(\)/);
-  assert.match(status, /searchParams\.get\("cardDesign"\)/);
+  assert.doesNotMatch(status, /"use client"|useSearchParams/);
+  assert.match(status, /status\?: string/);
   assert.match(status, /Front \+ Back draft created/);
   assert.match(status, /Front \+ Back pair published successfully/);
   assert.match(status, /Custom Card storage is currently unavailable/);
-  assert.match(status, /role="status"/);
-  assert.match(status, /aria-live="polite"/);
+  assert.match(status, /role=\{copy\.tone === "success" \? "status" : "alert"\}/);
+  assert.match(
+    status,
+    /aria-live=\{copy\.tone === "success" \? "polite" : undefined\}/,
+  );
 
   assert.match(manager, /CustomCardExperienceStatus/);
   assert.match(manager, /isArabic=\{language === "AR"\}/);
+  assert.match(manager, /status=\{status\}/);
+
+  const page = source("app/businesses/[slug]/program/page.tsx");
+  assert.match(page, /status=\{query\.cardDesign\}/);
 });
 
 test("Stage 14 custom-card feedback preserves preview and approval safeguards", () => {
