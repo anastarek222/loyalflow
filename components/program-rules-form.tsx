@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
+import { STANDARD_CARD_UNIT_LABEL_MAX_LENGTH } from "@/lib/cards/standard-card-text";
 import { getLoyaltyEconomicRuleChanges } from "@/lib/loyalty/program-change-safety";
 import {
   fallbackRewardHelp,
@@ -127,7 +128,12 @@ export function ProgramRulesForm({
       business.loyaltyProgramName ?? "",
       80,
     ],
-    ["unitName", t("اسم الوحدة", "Unit name"), business.unitName, 30],
+    [
+      "unitName",
+      t("اسم الوحدة", "Unit name"),
+      business.unitName,
+      STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
+    ],
     [
       "earnAmount",
       t("قيمة الإضافة", "Earn amount"),
