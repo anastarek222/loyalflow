@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, RotateCcw } from "lucide-react";
+import { CreditCard, Gift, RotateCcw } from "lucide-react";
 
 import { LoyaltyCard, type LoyaltyCardProps } from "@/components/loyalty-card";
 
@@ -22,6 +22,8 @@ export function PublicLoyaltyCardViewer({
           front: "الوجه الأمامي",
           back: "الوجه الخلفي",
           flip: "اقلب الكارت",
+          rewardReadyTitle: "مكافأتك جاهزة للاستلام",
+          rewardReadyBody: "وصلت للهدف. اعرض هذا الكارت للموظف لاستلام مكافأتك.",
         }
       : {
           title: "Digital loyalty card",
@@ -29,9 +31,14 @@ export function PublicLoyaltyCardViewer({
           front: "Front",
           back: "Back",
           flip: "Flip card",
+          rewardReadyTitle: "Your reward is ready",
+          rewardReadyBody: "You reached the target. Show this card to staff to redeem your reward.",
         };
 
   const nextSide = side === "front" ? "back" : "front";
+  const rewardReady =
+    Math.max(0, Math.trunc(cardProps.balance)) >=
+    Math.max(1, Math.trunc(cardProps.rewardThreshold));
 
   return (
     <section
@@ -73,6 +80,27 @@ export function PublicLoyaltyCardViewer({
           ))}
         </div>
       </div>
+
+      {rewardReady ? (
+        <div
+          role="status"
+          data-testid="customer-reward-ready-notice"
+          className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-amber-50 px-4 py-4 shadow-sm"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+            <Gift className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-black text-emerald-900">{copy.rewardReadyTitle}</p>
+            <p className="mt-1 text-sm leading-6 text-emerald-800">
+              {copy.rewardReadyBody}
+            </p>
+            <p dir="auto" className="mt-2 text-sm font-black text-slate-950">
+              {cardProps.rewardName}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mx-auto w-full max-w-[680px]">
         <LoyaltyCard {...cardProps} language={language} side={side} />
