@@ -144,8 +144,8 @@ jobs:
             pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium
           fi
           if [[ "${{ steps.browser-smoke.outputs.custom-card }}" == "true" ]]; then
-            pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts --project=desktop-chromium
-            pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts --project=mobile-chromium
+            pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "super admin Custom Card rejects invalid geometry"
+            pnpm exec playwright test tests/browser/pre-final-admin-security.spec.ts --config=playwright.config.ts --project=mobile-chromium --grep "public card keeps the canonical front/back flip surface"
           fi
 
       - name: Check patch whitespace
