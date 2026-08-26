@@ -170,9 +170,7 @@ test.describe
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
 
     await page.goto("/businesses/new");
-    await page
-      .getByRole("button", { name: "Custom setup", exact: true })
-      .click();
+    await page.getByRole("button", { name: /^Custom setup/ }).click();
     await page.getByPlaceholder("Business name").fill(businessName);
     await page.getByRole("button", { name: "Next", exact: true }).click();
 

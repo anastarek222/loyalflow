@@ -12,7 +12,7 @@ test("Pilot receipt provisions a Business and sign-in-ready Owner through the Su
   assert.match(browser, /uatEmail\("superadmin", fixture\.runId\)/);
   assert.match(browser, /generateTotpCode\(UAT_SUPER_ADMIN_MFA_SECRET\)/);
   assert.match(fixtures, /INSERT INTO "SuperAdminMfa"/);
-  assert.match(browser, /name: "Custom setup", exact: true/);
+  assert.match(browser, /name: \/\^Custom setup\//);
   assert.match(browser, /LoyalFlow final UAT SA \$\{fixture\.runId\}/);
   assert.match(browser, /uatEmail\("provisioned-owner", fixture\.runId\)/);
   assert.match(browser, /name: "Create business", exact: true/);
