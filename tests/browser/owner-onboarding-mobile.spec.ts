@@ -161,7 +161,7 @@ test.describe
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page.getByTestId("login-mfa-step")).toBeVisible();
     await page
-      .getByLabel("Authenticator or recovery code")
+      .locator("#mfaCode")
       .fill(generateTotpCode(UAT_SUPER_ADMIN_MFA_SECRET));
     await page
       .getByTestId("login-mfa-step")
