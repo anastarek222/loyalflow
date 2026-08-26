@@ -15,6 +15,7 @@ import {
   standardCardDetailFontSize,
   standardCardValueFontSize,
 } from "@/lib/cards/standard-card-text";
+import { BUSINESS_LOGO_SVG_ASPECT_RATIO } from "@/lib/branding/logo-presentation";
 import { formatWebsiteForCard } from "@/lib/urls/business-url";
 
 export type StandardLoyaltyCardProps = {
@@ -282,11 +283,11 @@ function Brand({
       {logoUrl ? (
         <image
           href={logoUrl}
-          x="47"
-          y="40"
-          width="54"
-          height="54"
-          preserveAspectRatio="xMidYMid meet"
+          x="42"
+          y="35"
+          width="64"
+          height="64"
+          preserveAspectRatio={BUSINESS_LOGO_SVG_ASPECT_RATIO}
           clipPath={`url(#${id}-logo-clip)`}
         />
       ) : (
@@ -327,12 +328,14 @@ function Brand({
 }
 
 function BackBrand({
+  id,
   businessName,
   logoUrl,
   accent,
   muted,
   rtl,
 }: {
+  id: string;
   businessName: string;
   logoUrl?: string | null;
   accent: string;
@@ -357,11 +360,12 @@ function BackBrand({
       {logoUrl ? (
         <image
           href={logoUrl}
-          x={logoX + 5}
-          y="40"
-          width="54"
-          height="54"
-          preserveAspectRatio="xMidYMid meet"
+          x={logoX}
+          y="35"
+          width="64"
+          height="64"
+          preserveAspectRatio={BUSINESS_LOGO_SVG_ASPECT_RATIO}
+          clipPath={`url(#${id}-logo-clip)`}
         />
       ) : (
         <text
@@ -719,6 +723,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
     <>
       {shared}
       <BackBrand
+        id={id}
         businessName={props.businessName}
         logoUrl={props.logoUrl}
         accent={accent}
