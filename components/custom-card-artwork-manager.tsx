@@ -87,8 +87,8 @@ export async function CustomCardArtworkManager({
           </div>
           <p className="text-xs text-foreground-muted">
             {t(
-              "PNG أو JPEG أو WebP. الحد الأقصى 4 ميجابايت إجمالًا للواجهة الأمامية + الخلفية. يجب أن يكون الجانبان بنفس أبعاد البكسل تمامًا وبنسبة ID-1 القياسية (حوالي 1.586:1). لا ينشئ LoyalFlow أيًا من الجانبين تلقائيًا في الوضع المخصص.",
-              "PNG, JPEG or WebP. Maximum 4 MB total across Front + Back. Both sides must have exactly the same pixel dimensions and the standard ID-1 ratio (about 1.586:1). LoyalFlow never generates either side in Custom mode.",
+              "PNG أو JPEG أو WebP. الحد الأقصى 4 ميجابايت إجمالًا للواجهة الأمامية + الخلفية. يجب أن يكون الجانبان بنفس أبعاد البكسل تمامًا وبنسبة ID-1 القياسية (حوالي 1.586:1). لا ينشئ LoyalFlow أيًا من الجانبين تلقائيًا في الوضع المخصص. اترك مساحة رمز QR أعلى يمين الواجهة، ومساحة اسم العميل والرصيد أسفل الواجهة، ومساحة المكافأة والنتيجة أسفل الخلفية. التصميم المرفوع مسؤول عن كل عناصر البراند الأخرى.",
+              "PNG, JPEG or WebP. Maximum 4 MB total across Front + Back. Both sides must have exactly the same pixel dimensions and the standard ID-1 ratio (about 1.586:1). LoyalFlow never generates either side in Custom mode. Keep the upper-right QR zone, lower-front customer name and balance zones, and lower-back reward and score zones clear. Uploaded artwork owns every other brand element.",
             )}
           </p>
           <button

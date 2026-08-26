@@ -22,9 +22,16 @@ test("customer-provided card values keep bidi-safe rendering", () => {
   const card = source("components/loyalty-card.tsx");
   const standard = source("components/standard-loyalty-card.tsx");
 
-  assert.match(card, /dir="auto" title=\{props\.businessName\}/);
-  assert.match(card, /dir="auto" title=\{props\.customerName\}/);
-  assert.match(card, /dir="ltr"\s+data-emphasis="low"/);
+  assert.match(
+    card,
+    /data-safe-zone="custom-member"[\s\S]*?dir="auto"[\s\S]*?title=\{props\.customerName\}/,
+  );
+  assert.match(
+    card,
+    /data-safe-zone="custom-reward"[\s\S]*?dir="auto"[\s\S]*?title=\{props\.rewardName\}/,
+  );
+  assert.doesNotMatch(card, /data-safe-zone="custom-brand"/);
+  assert.doesNotMatch(card, /data-emphasis="low"/);
 
   assert.match(standard, /customerNameIsArabic/);
   assert.match(standard, /customerNameDirection/);
