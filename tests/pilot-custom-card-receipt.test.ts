@@ -34,3 +34,12 @@ test("Custom Card changes conditionally trigger only the intended desktop and mo
   );
   assert.match(workflow, /components\/\(custom-card\|loyalty-card\|standard-card-setup\)/);
 });
+
+test("workflow-only changes keep browser validation at the baseline smoke scope", () => {
+  const workflow = source(".github/workflows/staging-pr-validation.yml");
+  const workflowPathMatches = workflow.match(
+    /\\\.github\/workflows\/staging-pr-validation\\\.yml\$/g,
+  );
+
+  assert.equal(workflowPathMatches?.length, 1);
+});
