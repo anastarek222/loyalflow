@@ -44,12 +44,13 @@ test("public page language switch preserves authored offer and reward text", () 
   assert.match(page, /defaultLanguage=\{language\}/);
 });
 
-test("public card localization slice does not pull Standard Card theme transport into the page", () => {
+test("public card localization keeps theme transport server-side", () => {
   const page = source("app/card/[token]/page.tsx");
 
   assert.doesNotMatch(
     page,
     /fetch\s*\(\s*[`"'][\s\S]*?\/api\/card\/\$\{[^}]+\}\/theme/,
   );
-  assert.doesNotMatch(page, /secondaryColor/);
+  assert.match(page, /secondaryColor:\s*theme\.secondaryColor/);
+  assert.match(page, /secondaryColor=\{card\.business\.secondaryColor\}/);
 });

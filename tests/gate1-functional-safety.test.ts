@@ -14,6 +14,7 @@ const source = (file: string) =>
 const standardSubmission = {
   cardDesignMode: "STANDARD" as const,
   primaryColor: "#123456",
+  secondaryColor: "#ABCDEF",
   themePreset: "DARK" as const,
   standardCardArtworkEnabled: true,
   standardCardArtworkCategory: "CAFE" as const,
@@ -119,6 +120,7 @@ test("Owner onboarding has one canonical writer for card brand fields", () => {
   assert.equal(wizard.match(/name="logoFile"/g)?.length, 1);
   assert.equal(wizard.match(/name="logoUrl"/g)?.length, 1);
   assert.equal(wizard.match(/name="primaryColor"/g)?.length ?? 0, 0);
+  assert.equal(wizard.match(/name="secondaryColor"/g)?.length ?? 0, 0);
   assert.equal(wizard.match(/name="themePreset"/g)?.length ?? 0, 0);
   assert.match(wizard, /copy\.identityHint/);
   assert.match(
@@ -126,6 +128,7 @@ test("Owner onboarding has one canonical writer for card brand fields", () => {
     /Logo and card branding are configured once in Loyalty Card/,
   );
   assert.match(setup, /name="primaryColor"/);
+  assert.match(setup, /name="secondaryColor"/);
   assert.match(setup, /name="themePreset"/);
   assert.doesNotMatch(
     setup,

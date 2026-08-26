@@ -29,6 +29,7 @@ export const BUSINESS_DOMAIN_FIELDS = {
     "logoUrl",
     "cardDesignMode",
     "primaryColor",
+    "secondaryColor",
     "themePreset",
     "standardCardArtworkEnabled",
     "standardCardArtworkCategory",
@@ -62,7 +63,7 @@ export type LegacyFieldStatus =
 export const LEGACY_BUSINESS_FIELD_CLASSIFICATION = {
   pointsName: "DEPRECATED_READ_ONLY",
   membershipName: "ACTIVE_COMPATIBILITY",
-  secondaryColor: "ACTIVE_COMPATIBILITY",
+  secondaryColor: "ACTIVE_CANONICAL",
   themePreset: "ACTIVE_CANONICAL",
   cardStyle: "DEPRECATED_READ_ONLY",
   fontFamily: "ACTIVE_COMPATIBILITY",
