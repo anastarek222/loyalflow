@@ -1,4 +1,4 @@
-export const STANDARD_CARD_UNIT_LABEL_MAX_LENGTH = 20;
+export const STANDARD_CARD_UNIT_LABEL_MAX_LENGTH = 18;
 
 const graphemeSegmenter = new Intl.Segmenter(undefined, {
   granularity: "grapheme",
