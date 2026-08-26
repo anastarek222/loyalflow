@@ -86,9 +86,18 @@ Business Owner managed and intentionally constrained. Current controls are appro
 
 ### Custom Card
 
-Provider/Super Admin artwork authority. Front artwork is required for Custom mode; Back artwork may be supplied or safely generated. Dynamic customer/loyalty data remains system-overlaid in protected zones.
+Provider/Super Admin artwork authority and plan-gated. A Custom Card draft is one immutable **Front + Back pair uploaded together**. Both sides are required; LoyalFlow never generates, reconstructs, or substitutes missing artwork.
 
-Do not add freeform QR movement, arbitrary safe-zone movement, drag/drop card geometry, or Owner-managed Custom Card artwork as visual polish.
+- Accepted artwork: PNG / JPEG / WebP.
+- Front and Back must have the exact same pixel dimensions and use the standard ID-1 card aspect ratio; `856 × 540` is the recommended base size.
+- Artwork owns business branding, business contact/location copy, background and decorative treatment. Do not duplicate those elements with system branding or business-profile overlays.
+- System-owned protected dynamic overlays remain fixed: Front = QR, customer name and the active loyalty balance/value; Back = reward plus score/progress.
+- Draft preview must use the canonical runtime card renderer. Publishing is a separate explicit confirmed action.
+- Complete immutable pairs remain retained for later preview/reselection; publishing switches the active pair without deleting retained versions. Exactly one pair is published for customers at a time.
+- Do not invent a hard retained-version cap or a persistent naming scheme unless Product Owner authority explicitly adds one.
+- Standard and Custom cards must preserve the same physical aspect ratio, silhouette/corner treatment and Front/Back flip behavior; artwork is the intended visual difference.
+
+Do not add freeform QR movement, arbitrary safe-zone movement, drag/drop card geometry, Owner-managed Custom Card artwork, or any system-generated Custom Card artwork as visual polish.
 
 ## Required development workflow
 
