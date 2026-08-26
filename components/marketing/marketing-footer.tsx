@@ -43,6 +43,12 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
           <Link href="/contact" className="hover:text-primary">
             {copy("marketing.navContact")}
           </Link>
+          <Link href="/privacy" className="hover:text-primary">
+            {copy("marketing.navPrivacy")}
+          </Link>
+          <Link href="/terms" className="hover:text-primary">
+            {copy("marketing.navTerms")}
+          </Link>
           <Link href="/login" className="hover:text-primary">
             {copy("marketing.footerAccess")}
           </Link>

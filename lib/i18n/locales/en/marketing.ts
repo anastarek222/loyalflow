@@ -35,6 +35,8 @@ export const marketingMessagesEn = {
   "marketing.navSecurity": "Security",
   "marketing.navFaq": "FAQ",
   "marketing.navContact": "Contact",
+  "marketing.navPrivacy": "Privacy",
+  "marketing.navTerms": "Terms",
   "marketing.primaryNavLabel": "Primary navigation",
   "marketing.mobileNavLabel": "Mobile navigation",
   "marketing.menuOpen": "Open navigation menu",
@@ -227,4 +229,62 @@ export const marketingMessagesEn = {
   "marketing.contact.noticeTitle": "Current beta support process",
   "marketing.contact.noticeBody":
     "Your approved setup or invitation path remains the source of truth while public email, phone, and WhatsApp channels are finalized.",
+  "marketing.legal.draftTitle": "Legal publication approval is pending",
+  "marketing.legal.draftBody":
+    "This factual beta baseline is available for review, but it is not the final public legal authority. Search indexing remains disabled until the legal identity, jurisdiction, contact, effective date, and publication approval are configured.",
+  "marketing.legal.entityLabel": "Service operator",
+  "marketing.legal.countryLabel": "Country / jurisdiction",
+  "marketing.legal.contactLabel": "Legal and privacy contact",
+  "marketing.legal.effectiveLabel": "Effective date",
+  "marketing.privacy.metaTitle": "LoyalFlow Privacy | Data handling baseline",
+  "marketing.privacy.metaDescription":
+    "Review the LoyalFlow controlled-beta privacy baseline for business accounts, customer loyalty records, service providers, cookies, retention, and data choices.",
+  "marketing.privacy.eyebrow": "Privacy",
+  "marketing.privacy.title": "How LoyalFlow handles information.",
+  "marketing.privacy.introduction":
+    "This page describes the product's current controlled-beta data practices. Final legal identity and jurisdiction details must be approved before public publication.",
+  "marketing.privacy.dataTitle": "Information processed",
+  "marketing.privacy.dataBody":
+    "LoyalFlow processes account and business information needed to operate a workspace, including user identity, roles, business settings, branches, programme rules, and configuration. Customer loyalty records may include name, phone number, membership details, balances, visits, rewards, offers, referrals, and activity history. Technical security and operational records may also be processed to protect access and diagnose service issues.",
+  "marketing.privacy.useTitle": "Why information is used",
+  "marketing.privacy.useBody":
+    "Information is used to provide the requested loyalty service, authenticate users, enforce role and tenant boundaries, operate cards and rewards, maintain activity evidence, deliver configured account emails, support users, protect the service, and improve reliability. LoyalFlow does not currently claim an activated marketing-analytics or advertising-tracking provider.",
+  "marketing.privacy.sharingTitle": "Service providers and access",
+  "marketing.privacy.sharingBody":
+    "Access is limited according to the user's role and business workspace. Infrastructure, database, cache, hosting, storage, and configured email providers may process the minimum information required to deliver their service. A final subprocessor disclosure will be published only after the production provider set and legal identity are approved.",
+  "marketing.privacy.cookiesTitle": "Cookies and local device storage",
+  "marketing.privacy.cookiesBody":
+    "The current product uses necessary session and security mechanisms, a bounded language preference, and limited presentation preferences. Customer-card features may store limited device state, such as dismissed new-item notices or install guidance, to avoid repeated prompts. A marketing cookie banner will be added only if the final analytics or advertising tooling requires one.",
+  "marketing.privacy.retentionTitle": "Retention and deletion",
+  "marketing.privacy.retentionBody":
+    "Records are retained while needed to operate the workspace, preserve authorised activity history, meet security needs, or satisfy applicable obligations. Business deletion and scoped customer export exist. Individual customer records currently support editing and deactivation/reactivation; a final erasure or anonymisation policy remains an owner and legal decision before public launch.",
+  "marketing.privacy.choicesTitle": "Questions and data requests",
+  "marketing.privacy.choicesBody":
+    "Customers should first contact the business whose loyalty programme they joined because that business controls its customer relationship and programme rules. Business users can use the published LoyalFlow support path for account or workspace requests. The final legal and privacy email will appear here only after it is verified and approved.",
+  "marketing.terms.metaTitle":
+    "LoyalFlow Terms | Controlled-beta service baseline",
+  "marketing.terms.metaDescription":
+    "Review the LoyalFlow controlled-beta service baseline covering access, accounts, loyalty programmes, acceptable use, manual billing, and availability.",
+  "marketing.terms.eyebrow": "Terms",
+  "marketing.terms.title": "Clear rules for using LoyalFlow.",
+  "marketing.terms.introduction":
+    "These terms describe the current controlled-beta product model. Final operator identity, jurisdiction, commercial terms, and publication approval remain required before public launch.",
+  "marketing.terms.accessTitle": "Controlled-beta access",
+  "marketing.terms.accessBody":
+    "LoyalFlow currently creates business workspaces through supported setup or owner invitation. Public self-service checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
+  "marketing.terms.accountsTitle": "Account responsibility",
+  "marketing.terms.accountsBody":
+    "Users must provide accurate information, keep credentials and recovery material secure, use only their authorised role, and promptly report suspected compromise. Business owners are responsible for the users, branches, programme configuration, and customer-facing information they approve inside their workspace.",
+  "marketing.terms.loyaltyTitle": "Loyalty programmes and rewards",
+  "marketing.terms.loyaltyBody":
+    "Each participating business defines and fulfils its own loyalty rules, points, visits, rewards, offers, expiry conditions, and customer communications. LoyalFlow supplies operating tools and records; it does not independently promise or fund a business's customer reward.",
+  "marketing.terms.useTitle": "Acceptable use",
+  "marketing.terms.useBody":
+    "Users must not attempt unauthorised access, cross-business data access, abuse public links or rate limits, upload unlawful or harmful material, interfere with service operation, or use LoyalFlow to violate applicable law or another person's rights.",
+  "marketing.terms.billingTitle": "Plans and billing",
+  "marketing.terms.billingBody":
+    "Plan limits and a provider-neutral subscription foundation exist, but public payment checkout, automated subscription purchase, and payment webhooks are not active. Any paid beta arrangement must be confirmed through the approved manual or assisted commercial process. Refund and cancellation terms require approval before paid public launch.",
+  "marketing.terms.availabilityTitle": "Service changes and availability",
+  "marketing.terms.availabilityBody":
+    "The beta service may change as reliability, security, and product evidence improve. Scheduled or unexpected interruptions may occur. Final warranties, liability limits, termination rights, governing law, dispute terms, and notice rules must be approved with the legal identity before these terms become the final public agreement.",
 } as const;

@@ -9,7 +9,9 @@ export type PublicMarketingPath =
   | "/pricing"
   | "/about"
   | "/faq"
-  | "/contact";
+  | "/contact"
+  | "/privacy"
+  | "/terms";
 
 export function getPublicIndexingHeader(vercelEnvironment?: string) {
   if (vercelEnvironment !== "preview") {
