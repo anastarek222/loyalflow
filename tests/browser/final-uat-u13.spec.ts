@@ -323,11 +323,15 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(page).toHaveURL(/\/card\/[^/?#]+\?welcome=1$/, {
       timeout: 20_000,
     });
+    const englishCardActions = page.getByRole("region", {
+      name: "Share card",
+      exact: true,
+    });
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Share card", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Add to Home Screen", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Add to Home Screen", exact: true }).click();
+    await expect(englishCardActions.getByRole("button", { name: "Share card", exact: true })).toBeVisible();
+    await expect(englishCardActions.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
+    await expect(englishCardActions.getByRole("button", { name: "Add to Home Screen", exact: true })).toBeVisible();
+    await englishCardActions.getByRole("button", { name: "Add to Home Screen", exact: true }).click();
     const installHelp = page.getByRole("dialog", { name: "Add card to Home Screen", exact: true });
     await expect(installHelp).toBeVisible();
     await installHelp.getByRole("button", { name: "Close", exact: true }).click();
@@ -339,7 +343,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(
       page.getByRole("img", { name: /loyalty card front/i }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
+    await expect(englishCardActions.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
     await assertViewportSafety(page);
 
@@ -349,7 +353,11 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(
       page.getByRole("img", { name: /loyalty card front/i }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "نسخ الرابط", exact: true })).toBeVisible();
+    const arabicCardActions = page.getByRole("region", {
+      name: "مشاركة الكارت",
+      exact: true,
+    });
+    await expect(arabicCardActions.getByRole("button", { name: "نسخ الرابط", exact: true })).toBeVisible();
     await assertViewportSafety(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
