@@ -59,6 +59,11 @@ jobs:
           else
             echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|customers|rewards|offers|campaigns|recovery|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|reward|offer|public-card)|lib/(loyalty|rewards|offers|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+            echo "loyalty-core=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "loyalty-core=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -121,6 +126,9 @@ jobs:
           pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
           if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
             pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
+          fi
+          if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
           fi
 
       - name: Check patch whitespace
