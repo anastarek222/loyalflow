@@ -228,7 +228,10 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/users`);
     await expect(page).toHaveURL(/\/dashboard$/);
-    await page.goto(`/businesses/${fixture.businessB}/customers`);
+    await page.evaluate(
+      (url) => window.location.assign(url),
+      `/businesses/${fixture.businessB}/customers`,
+    );
     await expect(page).toHaveURL(/\/dashboard$/);
 
     await logout(page);
