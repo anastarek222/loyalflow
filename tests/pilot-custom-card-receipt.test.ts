@@ -18,13 +18,19 @@ test("Pilot Custom Card receipt covers safe failure and the bounded publish jour
   assert.match(browser, /custom-card-back/);
 });
 
-test("Custom Card changes conditionally trigger desktop and mobile browser receipts", () => {
+test("Custom Card changes conditionally trigger only the intended desktop and mobile browser receipts", () => {
   const workflow = source(".github/workflows/staging-pr-validation.yml");
 
   assert.match(workflow, /echo "custom-card=true"/);
   assert.match(workflow, /steps\.browser-smoke\.outputs\.custom-card/);
   assert.match(workflow, /pre-final-admin-security\.spec\.ts/);
-  assert.match(workflow, /--project=desktop-chromium/);
-  assert.match(workflow, /--project=mobile-chromium/);
+  assert.match(
+    workflow,
+    /--project=desktop-chromium --grep "super admin Custom Card rejects invalid geometry"/,
+  );
+  assert.match(
+    workflow,
+    /--project=mobile-chromium --grep "public card keeps the canonical front\/back flip surface"/,
+  );
   assert.match(workflow, /components\/\(custom-card\|loyalty-card\|standard-card-setup\)/);
 });
