@@ -61,6 +61,7 @@ test("wizard unit-name inputs share the canonical Standard Card HTML limit", () 
     source("components/owner-onboarding-wizard.tsx"),
     source("components/business-setup-wizard.tsx"),
   ]) {
+    assert.equal((wizard.match(/name="unitName"/g) ?? []).length, 1);
     assert.match(
       wizard,
       /import \{ STANDARD_CARD_UNIT_LABEL_MAX_LENGTH \} from "@\/lib\/cards\/standard-card-text"/,
