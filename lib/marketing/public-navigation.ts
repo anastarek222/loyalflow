@@ -8,5 +8,6 @@ export function getPublicMarketingNavigation(locale: SupportedLocale) {
     { href: "/pricing", label: translate(locale, "marketing.navPricing") },
     { href: "/about", label: translate(locale, "marketing.navAbout") },
     { href: "/faq", label: translate(locale, "marketing.navFaq") },
+    { href: "/contact", label: translate(locale, "marketing.navContact") },
   ] as const;
 }

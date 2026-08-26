@@ -16,7 +16,8 @@ import {
 test("public canonical authority is isolated from preview/app origins", () => {
   assert.equal(
     resolvePublicSiteUrl({
-      NEXT_PUBLIC_SITE_URL: "https://www.loyalflow.example/ignored/path?x=1#hash",
+      NEXT_PUBLIC_SITE_URL:
+        "https://www.loyalflow.example/ignored/path?x=1#hash",
       NEXT_PUBLIC_APP_URL: "https://preview-123.vercel.app",
     }),
     "https://www.loyalflow.example",
@@ -38,7 +39,8 @@ test("public page metadata uses absolute canonical, hreflang and Open Graph URLs
     vercelEnvironment: "production",
   });
   const absoluteUrl = publicSiteUrl("/get-started");
-  const openGraph = metadata.openGraph as { url?: string | URL } | null | undefined;
+  const openGraph = metadata.openGraph as
+    { url?: string | URL } | null | undefined;
 
   assert.equal(String(metadata.alternates?.canonical), absoluteUrl);
   assert.deepEqual(metadata.alternates?.languages, {
@@ -48,7 +50,10 @@ test("public page metadata uses absolute canonical, hreflang and Open Graph URLs
   });
   assert.equal(String(openGraph?.url), absoluteUrl);
   assert.deepEqual(metadata.robots, { index: true, follow: true });
-  assert.equal(JSON.stringify(metadata.twitter).includes('"/get-started"'), false);
+  assert.equal(
+    JSON.stringify(metadata.twitter).includes('"/get-started"'),
+    false,
+  );
 });
 
 test("public marketing pages fail closed to noindex outside Vercel Production", () => {
@@ -81,7 +86,9 @@ test("Preview deployments emit an X-Robots-Tag noindex defense", () => {
 test("marketing routes apply the centralized SEO policy after local defaults", () => {
   for (const pagePath of ["app/page.tsx", "app/get-started/page.tsx"]) {
     const source = readFileSync(pagePath, "utf8");
-    const localRobotsOffset = source.indexOf("robots: { index: true, follow: true }");
+    const localRobotsOffset = source.indexOf(
+      "robots: { index: true, follow: true }",
+    );
     const policyOffset = source.indexOf("...buildPublicSocialMetadata");
 
     assert.notEqual(localRobotsOffset, -1);
@@ -103,6 +110,7 @@ test("robots and sitemap advertise only the canonical public-site authority", ()
       publicSiteUrl("/pricing"),
       publicSiteUrl("/about"),
       publicSiteUrl("/faq"),
+      publicSiteUrl("/contact"),
     ],
   );
 });

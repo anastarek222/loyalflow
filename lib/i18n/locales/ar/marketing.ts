@@ -33,6 +33,7 @@ export const marketingMessagesAr = {
   "marketing.navIndustries": "الأنشطة",
   "marketing.navSecurity": "الأمان",
   "marketing.navFaq": "الأسئلة الشائعة",
+  "marketing.navContact": "تواصل معنا",
   "marketing.primaryNavLabel": "التنقل الرئيسي",
   "marketing.mobileNavLabel": "تنقل الهاتف",
   "marketing.menuOpen": "فتح قائمة التنقل",
@@ -86,8 +87,7 @@ export const marketingMessagesAr = {
   "marketing.faqOneQuestion": "هل يحتاج العملاء إلى تثبيت تطبيق؟",
   "marketing.faqOneAnswer":
     "لا. يمكن للعميل فتح بطاقة الولاء الرقمية من رابط آمن أو رمز QR في المتصفح.",
-  "marketing.faqTwoQuestion":
-    "هل يستطيع الموظف الوصول إلى كل إعدادات النشاط؟",
+  "marketing.faqTwoQuestion": "هل يستطيع الموظف الوصول إلى كل إعدادات النشاط؟",
   "marketing.faqTwoAnswer":
     "لا. يستخدم LoyalFlow صلاحيات حسب الدور، ليشاهد المالك والمدير والموظف والمشاهد الأدوات المناسبة لعملهم.",
   "marketing.faqThreeQuestion": "هل يدعم LoyalFlow اللغة العربية؟",
@@ -167,7 +167,8 @@ export const marketingMessagesAr = {
   "marketing.about.ctaTitle": "مصمم للتشغيل اليومي الحقيقي، وليس للعرض فقط.",
   "marketing.about.ctaBody":
     "تركز المرحلة التجريبية المغلقة حاليًا على إعداد موثوق ومسارات هاتف سهلة للموظفين وبطاقات العملاء وتطوير مبني على الاستخدام الحقيقي.",
-  "marketing.faq.metaTitle": "أسئلة LoyalFlow الشائعة | إجابات عن الولاء الرقمي",
+  "marketing.faq.metaTitle":
+    "أسئلة LoyalFlow الشائعة | إجابات عن الولاء الرقمي",
   "marketing.faq.metaDescription":
     "إجابات عن بطاقات LoyalFlow الرقمية واستخدام الهاتف وصلاحيات الموظفين ودعم العربية والبطاقات المخصصة والإعداد التجريبي.",
   "marketing.faq.pageEyebrow": "الأسئلة الشائعة",
@@ -183,4 +184,27 @@ export const marketingMessagesAr = {
   "marketing.faq.sixQuestion": "هل يعمل المنتج بشكل جيد على الهاتف؟",
   "marketing.faq.sixAnswer":
     "نعم. بطاقات العملاء ومسح الموظفين والمسارات الأساسية للمالك مصممة للهاتف وكذلك لسطح المكتب.",
+  "marketing.contact.metaTitle":
+    "تواصل مع LoyalFlow | إعداد النشاط والدخول للحساب",
+  "marketing.contact.metaDescription":
+    "اختر المسار الصحيح لإعداد نشاط جديد أو الدخول إلى حساب قائم أو قبول دعوة مالك خلال المرحلة التجريبية المنضبطة.",
+  "marketing.contact.eyebrow": "التواصل والوصول",
+  "marketing.contact.title": "وصل للمسار الصحيح في LoyalFlow بدون خطوات زائدة.",
+  "marketing.contact.body":
+    "خلال المرحلة التجريبية المنضبطة، يتبع الإعداد والدعم المسار الآمن المناسب لكل نوع حساب. اختر ما تحتاجه بالأسفل.",
+  "marketing.contact.setupTitle": "إعداد نشاط جديد",
+  "marketing.contact.setupBody":
+    "اطّلع على خيارات الإعداد الحالية لمساحة عمل جديدة على LoyalFlow.",
+  "marketing.contact.setupCta": "عرض خيارات الإعداد",
+  "marketing.contact.accountTitle": "الدخول إلى حساب قائم",
+  "marketing.contact.accountBody":
+    "يمكن للمالك والمدير والموظف والمشاهد الدخول من هنا باستخدام بيانات حساب مفعّل.",
+  "marketing.contact.accountCta": "تسجيل الدخول",
+  "marketing.contact.invitationTitle": "قبول دعوة المالك",
+  "marketing.contact.invitationBody":
+    "استخدم مسار الدعوة الآمن إذا وصلك رابط إعداد حساب المالك.",
+  "marketing.contact.invitationCta": "قبول الدعوة",
+  "marketing.contact.noticeTitle": "نظام الدعم الحالي في المرحلة التجريبية",
+  "marketing.contact.noticeBody":
+    "يظل مسار الإعداد أو الدعوة المعتمد هو المرجع الأساسي حتى اعتماد قنوات البريد والهاتف وواتساب العامة.",
 } as const;
