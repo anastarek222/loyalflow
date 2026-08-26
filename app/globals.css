@@ -350,13 +350,12 @@ form {
 
 /* Layering remains content < mobile nav (30) < sidebar (50) < dialogs (100). */
 .lf-nav-sidebar {
-  background: rgb(255 255 255 / 0.82);
+  background: var(--lf-surface);
   border-color: var(--lf-border);
-  box-shadow: 12px 0 40px rgb(15 23 42 / 0.035);
-  backdrop-filter: blur(20px);
+  box-shadow: 12px 0 40px rgb(15 23 42 / 0.16);
 }
 [dir="rtl"] .lf-nav-sidebar {
-  box-shadow: -12px 0 40px rgb(15 23 42 / 0.035);
+  box-shadow: -12px 0 40px rgb(15 23 42 / 0.16);
 }
 .lf-brand-mark {
   background: linear-gradient(145deg, #6366f1 0%, #4338ca 58%, #312e81 100%);
