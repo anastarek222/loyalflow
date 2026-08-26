@@ -69,7 +69,7 @@ test("documented tenant capability matrix remains aligned with source authority"
     for (const capability of capabilities) {
       assert.equal(
         canPerform({ role, businessId: ownBusiness }, ownBusiness, capability),
-        expected[role].includes(capability as never),
+        expected[role].some((allowed) => allowed === capability),
         `${role} ${capability}`,
       );
       assert.equal(
@@ -133,12 +133,19 @@ test("fresh developer rehearsal is backed by the clean Staging PR runner", () =>
   ];
 
   for (const requirement of workflowRequirements) {
-    assert.match(stagingWorkflow, new RegExp(requirement.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    const escaped = requirement.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    assert.match(stagingWorkflow, new RegExp(escaped));
   }
 
   assert.match(freshDeveloperRehearsal, /pnpm install --frozen-lockfile/);
   assert.match(freshDeveloperRehearsal, /exact-head Staging PR Validation/);
-  assert.match(freshDeveloperRehearsal, /Manual product UAT and Production runtime acceptance remain separate/);
+  assert.match(
+    freshDeveloperRehearsal,
+    /Manual product UAT and Production runtime acceptance remain separate/,
+  );
   assert.match(freshDeveloperRehearsal, /docs\/operations\/SUPPORT_RUNBOOK\.md/);
-  assert.match(freshDeveloperRehearsal, /docs\/architecture\/AUTH_ROLE_AUTHORITY\.md/);
+  assert.match(
+    freshDeveloperRehearsal,
+    /docs\/architecture\/AUTH_ROLE_AUTHORITY\.md/,
+  );
 });
