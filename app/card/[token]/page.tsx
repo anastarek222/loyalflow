@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Metadata } from "next";
 import Link from "next/link";
 import CopyLinkButton from "@/components/copy-link-button";
@@ -20,8 +21,10 @@ import { BadgeCheck, Gift, Sparkles, Users } from "lucide-react";
 
 import SalesProgressPanel from "@/components/sales-progress-panel";
 import { PublicCardActions } from "@/components/customer-experience/public-card-actions";
+import { CustomerNewHighlights } from "@/components/customer-experience/customer-new-highlights";
 import { PublicLoyaltyCardViewer } from "@/components/customer-experience/public-loyalty-card-viewer";
 import { PublicPageShell } from "@/components/customer-experience/public-page-shell";
+import { getRecentCustomerHighlights } from "@/lib/customer-experience/highlights";
 
 // A publish changes the Business artwork pointers. Public cards must read those
 // pointers on the next request instead of retaining a stale rendered page.
@@ -119,6 +122,7 @@ export default async function PublicCardPage({
               type: true,
               code: true,
               description: true,
+              createdAt: true,
             },
           },
           offers: {
@@ -201,6 +205,24 @@ export default async function PublicCardPage({
           code: business.rewardCode,
           description: business.rewardDescription,
         };
+  const recentHighlights = getRecentCustomerHighlights({
+    offers: publicOffers,
+    rewards: business.rewards,
+  }).map((highlight) => ({
+    key: createHash("sha256")
+      .update(
+        `${highlight.kind}:${highlight.sourceId}:${highlight.publishedAt.toISOString()}`,
+      )
+      .digest("base64url")
+      .slice(0, 16),
+    kind: highlight.kind,
+    title: highlight.title,
+    description: highlight.description,
+  }));
+  const highlightScope = createHash("sha256")
+    .update(`${business.id}:${customer.id}`)
+    .digest("base64url")
+    .slice(0, 16);
 
   const baseUrl = await getRequestBaseUrl();
   const cardUrl = `${baseUrl}/card/${customer.publicToken}`;
@@ -382,6 +404,12 @@ export default async function PublicCardPage({
           </section>
         ) : null}
 
+        <CustomerNewHighlights
+          scope={highlightScope}
+          items={recentHighlights}
+          language={language}
+        />
+
         <PublicLoyaltyCardViewer
           businessName={card.business.name}
           logoUrl={card.business.logoUrl}
@@ -448,7 +476,10 @@ export default async function PublicCardPage({
                     {offer.name}
                   </p>
                   {offer.description ? (
-                    <p dir="auto" className="mt-1 text-sm leading-6 text-slate-600">
+                    <p
+                      dir="auto"
+                      className="mt-1 text-sm leading-6 text-slate-600"
+                    >
                       {offer.description}
                     </p>
                   ) : null}
