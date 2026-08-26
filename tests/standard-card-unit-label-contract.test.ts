@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 
 import { loyaltyProgramSchema } from "@/lib/business/domain-validation";
@@ -9,6 +11,8 @@ import {
   standardCardValueFontSize,
 } from "@/lib/cards/standard-card-text";
 import { getLoyaltyCardMetrics } from "@/lib/cards/standard-card";
+
+const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 test("Standard Card unit labels use one 18-grapheme input and display contract", () => {
   assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 18);
@@ -50,6 +54,27 @@ test("new loyalty rules reject unit labels that would need display truncation", 
     }).success,
     false,
   );
+});
+
+test("wizard unit-name inputs share the canonical Standard Card HTML limit", () => {
+  for (const wizard of [
+    source("components/owner-onboarding-wizard.tsx"),
+    source("components/business-setup-wizard.tsx"),
+  ]) {
+    assert.equal((wizard.match(/name="unitName"/g) ?? []).length, 1);
+    assert.match(
+      wizard,
+      /import \{ STANDARD_CARD_UNIT_LABEL_MAX_LENGTH \} from "@\/lib\/cards\/standard-card-text"/,
+    );
+    assert.match(
+      wizard,
+      /name="unitName"[\s\S]{0,240}?maxLength=\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/,
+    );
+    assert.doesNotMatch(
+      wizard,
+      /name="unitName"[\s\S]{0,240}?maxLength=\{30\}/,
+    );
+  }
 });
 
 test("long supported units stay semantic and use adaptive type instead of abbreviations", () => {

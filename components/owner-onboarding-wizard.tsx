@@ -8,6 +8,7 @@ import {
   type CountrySelectorHandle,
 } from "@/components/onboarding/country-selector";
 import { StandardCardSetup } from "@/components/standard-card-setup";
+import { STANDARD_CARD_UNIT_LABEL_MAX_LENGTH } from "@/lib/cards/standard-card-text";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import {
   createOwnerOnboardingCardPreviewState,
@@ -482,7 +483,7 @@ export function OwnerOnboardingWizard({
                 aria-invalid={Boolean(fieldErrors.unitName)}
                 defaultValue={String(draft.unitName || "Visit")}
                 onChange={updateCardPreview}
-                maxLength={30}
+                maxLength={STANDARD_CARD_UNIT_LABEL_MAX_LENGTH}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               />
             </label>
