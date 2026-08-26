@@ -1,9 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/custom-card-publish-action";
 import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/program/custom-card-upload-action";
 import { ConfirmedSubmitButton } from "@/components/confirmed-submit-button";
 import { CustomCardExperienceStatus } from "@/components/custom-card-experience-status";
+import {
+  LoyaltyCard,
+  type LoyaltyCardProps,
+} from "@/components/loyalty-card";
 import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 import { normalizeLanguage } from "@/lib/i18n";
@@ -14,6 +16,20 @@ type Props = {
   status?: string;
   versions: CustomCardArtworkVersion[];
   storageConfigured: boolean;
+  preview: Pick<
+    LoyaltyCardProps,
+    | "businessName"
+    | "primaryColor"
+    | "secondaryColor"
+    | "customerName"
+    | "customerId"
+    | "balance"
+    | "loyaltyMode"
+    | "unitName"
+    | "currency"
+    | "rewardName"
+    | "rewardThreshold"
+  >;
 };
 
 export async function CustomCardArtworkManager({
@@ -22,6 +38,7 @@ export async function CustomCardArtworkManager({
   status,
   versions,
   storageConfigured,
+  preview,
 }: Props) {
   const requestContext = await getAuthenticatedRequestContext();
   const language = normalizeLanguage(requestContext?.user?.language);
@@ -29,6 +46,15 @@ export async function CustomCardArtworkManager({
   const selected = versions.find((version) => version.id === selectedVersion);
   const uploadCustomArtwork = uploadCustomCardDraftCommandAction.bind(null, slug);
   const publishCustomArtwork = publishCustomCardArtworkAction.bind(null, slug);
+  const selectedArtwork = selected
+    ? {
+        ...preview,
+        designMode: "CUSTOM",
+        customDesignEnabled: true,
+        customFrontArtworkUrl: `/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/front`,
+        customBackArtworkUrl: `/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/back`,
+      }
+    : null;
 
   return (
     <section className="mb-5 rounded-2xl border border-primary/20 bg-primary/5 p-5">
@@ -100,7 +126,7 @@ export async function CustomCardArtworkManager({
         </form>
       )}
 
-      {selected ? (
+      {selected && selectedArtwork ? (
         <div className="mt-6 rounded-2xl border border-border bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -130,29 +156,22 @@ export async function CustomCardArtworkManager({
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-foreground-muted">
                 {t("الأمامية", "front")}
               </p>
-              <img
-                src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/front`}
-                alt={t(
-                  "معاينة مسودة الواجهة الأمامية للبطاقة المخصصة",
-                  "Custom card front draft",
-                )}
-                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
-              />
+              <LoyaltyCard {...selectedArtwork} side="front" />
             </div>
             <div>
               <p className="mb-2 text-xs font-black uppercase tracking-wide text-foreground-muted">
                 {t("الخلفية", "back")}
               </p>
-              <img
-                src={`/api/businesses/${encodeURIComponent(slug)}/custom-card-artwork/${selected.id}/back`}
-                alt={t(
-                  "معاينة مسودة الواجهة الخلفية للبطاقة المخصصة",
-                  "Custom card back draft",
-                )}
-                className="aspect-[1.586] w-full rounded-xl border border-border bg-slate-950 object-contain"
-              />
+              <LoyaltyCard {...selectedArtwork} side="back" />
             </div>
           </div>
+
+          <p className="mt-3 text-xs text-foreground-muted">
+            {t(
+              "هذه معاينة فعلية لنفس عارض بطاقة العميل، وتشمل أماكن رمز QR واسم العميل والرصيد والمكافأة والنتيجة قبل النشر.",
+              "This is a runtime-accurate preview from the customer-card renderer, including the QR, customer name, balance, reward and score zones before publishing.",
+            )}
+          </p>
 
           <p className="mt-4 rounded-xl border border-border bg-surface-subtle p-3 text-xs text-foreground-muted">
             {t(

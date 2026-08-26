@@ -10,6 +10,7 @@ import {
   isManagedCustomCardArtworkUrl,
   listCustomCardArtworkVersions,
 } from "@/lib/cards/custom-card-storage";
+import { getLoyaltyCardPreviewData } from "@/lib/cards/standard-card";
 import { normalizeLanguage } from "@/lib/i18n";
 import { loyaltyProgrammeSummary } from "@/lib/loyalty/presentation";
 import { canManageBusiness } from "@/lib/permissions";
@@ -85,6 +86,10 @@ export default async function LoyaltyProgramPage({
     earnAmount: business.earnAmount,
     rewardThreshold: business.rewardThreshold,
   });
+  const cardPreviewCustomer = getLoyaltyCardPreviewData(
+    business.loyaltyMode,
+    business.rewardThreshold,
+  );
   const updateProgramRules = updateProgramRulesAction.bind(null, business.slug);
   const updateCardDesign = updateBusinessCardDesignCommandAction.bind(
     null,
@@ -301,6 +306,19 @@ export default async function LoyaltyProgramPage({
               status={query.cardDesign}
               versions={customArtworkVersions}
               storageConfigured={customCardStorageConfigured()}
+              preview={{
+                businessName: business.name,
+                primaryColor: business.primaryColor,
+                secondaryColor: business.secondaryColor,
+                customerName: cardPreviewCustomer.customerName,
+                customerId: cardPreviewCustomer.customerId,
+                balance: cardPreviewCustomer.balance,
+                loyaltyMode: business.loyaltyMode,
+                unitName: business.unitName,
+                currency: business.currency,
+                rewardName: business.rewardName,
+                rewardThreshold: business.rewardThreshold,
+              }}
             />
           ) : null}
           <form action={updateCardDesign}>
@@ -355,6 +373,7 @@ export default async function LoyaltyProgramPage({
                 businessName: business.name,
                 logoUrl: business.logoUrl ?? "",
                 primaryColor: business.primaryColor,
+                secondaryColor: business.secondaryColor,
                 themePreset: business.themePreset,
                 artworkEnabled: business.standardCardArtworkEnabled,
                 artworkCategory: business.standardCardArtworkCategory,
