@@ -4,6 +4,7 @@ import {
   sendResendAuthEmail,
 } from "@/lib/auth/resend-email-delivery";
 import { getCanonicalPublicAppUrl } from "@/lib/public-app-url";
+import { platformBrand } from "@/lib/platform-brand";
 
 export class PasswordResetEmailError extends Error {
   constructor(
@@ -30,13 +31,13 @@ export async function sendPasswordResetEmail(input: {
   try {
     await sendResendAuthEmail({
       to: input.email,
-      subject: "Reset your LoyalFlow password",
+      subject: `Reset your ${platformBrand.name} password`,
       text:
-        `A password reset was requested for your LoyalFlow account.\n\n` +
+        `A password reset was requested for your ${platformBrand.name} account.\n\n` +
         `Reset your password: ${resetLink}\n\n` +
         `This link expires in 30 minutes. If you did not request this, you can ignore this email.`,
       html:
-        `<p>A password reset was requested for your LoyalFlow account.</p>` +
+        `<p>A password reset was requested for your ${platformBrand.name} account.</p>` +
         `<p><a href="${resetLink}">Reset your password</a></p>` +
         `<p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
       idempotencyKey: createAuthEmailIdempotencyKey({
