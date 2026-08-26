@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import test from "node:test";
+
+const source = (file: string) => readFileSync(join(process.cwd(), file), "utf8");
+
+test("Pilot Custom Card receipt covers safe failure and the bounded publish journey", () => {
+  const browser = source("tests/browser/pre-final-admin-security.spec.ts");
+
+  assert.match(browser, /cardDesign=invalid/);
+  assert.match(browser, /Create Front \+ Back draft/);
+  assert.match(browser, /cardDesign=draft&customVersion=/);
+  assert.match(browser, /Publish this Front \+ Back pair/);
+  assert.match(browser, /cardDesign=published/);
+  assert.match(browser, /canCleanUploadedBlobArtwork/);
+  assert.match(browser, /custom-card-front/);
+  assert.match(browser, /custom-card-back/);
+});
+
+test("Custom Card changes conditionally trigger desktop and mobile browser receipts", () => {
+  const workflow = source(".github/workflows/staging-pr-validation.yml");
+
+  assert.match(workflow, /echo "custom-card=true"/);
+  assert.match(workflow, /steps\.browser-smoke\.outputs\.custom-card/);
+  assert.match(workflow, /pre-final-admin-security\.spec\.ts/);
+  assert.match(workflow, /--project=desktop-chromium/);
+  assert.match(workflow, /--project=mobile-chromium/);
+  assert.match(workflow, /components\/\(custom-card\|loyalty-card\|standard-card-setup\)/);
+});
