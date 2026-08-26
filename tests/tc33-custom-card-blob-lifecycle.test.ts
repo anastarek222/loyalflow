@@ -50,7 +50,8 @@ test("TC3.3 Program manager uploads, previews and confirms one Front + Back pair
   assert.match(manager, /Draft preview/);
   assert.match(manager, /Publish this Front \+ Back pair/);
   assert.match(manager, /ConfirmedSubmitButton/);
-  assert.match(manager, /Retained paired versions/);
+  assert.match(manager, /data-testid="custom-card-retained-library"/);
+  assert.match(manager, /Every saved Front \+ Back pair remains reusable/);
   assert.match(
     manager,
     /currently published customer card does not change[\s\S]*?publishing is confirmed/i,
