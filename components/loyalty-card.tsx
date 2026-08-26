@@ -16,6 +16,7 @@ export type LoyaltyCardProps = StandardLoyaltyCardProps & {
   customFrontArtworkUrl?: string | null;
   customBackArtworkUrl?: string | null;
   customSafeZoneVersion?: string | null;
+  showSafeZones?: boolean;
 };
 
 // The loyalty card is a product object, not a localized dashboard surface.
@@ -42,6 +43,9 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const labels = language === "AR"
     ? { qr: "رمز QR الخاص بالعميل" }
     : { qr: "Customer loyalty QR code" };
+  const guideOutline = props.showSafeZones
+    ? "outline outline-[0.45cqw] outline-offset-[0.8cqw] outline-sky-400"
+    : "";
 
   return (
     <article
@@ -58,7 +62,10 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
       )}
       {side === "front" ? (
         <div className="relative h-full">
-          <div data-safe-zone="custom-qr" className="absolute right-[6.8cqw] top-[6.8cqw]">
+          <div
+            data-safe-zone="custom-qr"
+            className={`absolute right-[6.8cqw] top-[6.8cqw] ${guideOutline}`}
+          >
             <div className="size-[18cqw] overflow-hidden rounded-[2cqw] bg-white p-[0.7cqw] shadow-xl">
               <CustomQr src={props.qrCode} label={labels.qr} />
             </div>
@@ -67,7 +74,7 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             data-safe-zone="custom-member"
             dir="auto"
             title={props.customerName}
-            className="absolute bottom-[7cqw] left-[6.8cqw] max-w-[50%] truncate text-[4.2cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            className={`absolute bottom-[7cqw] left-[6.8cqw] max-w-[50%] truncate text-[4.2cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[7cqw] w-[50%] ${guideOutline}` : ""}`}
           >
             {props.customerName}
           </p>
@@ -76,7 +83,7 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             dir="auto"
             aria-label={metrics.semanticCurrentText}
             title={metrics.semanticCurrentText}
-            className="absolute bottom-[7cqw] right-[6.8cqw] max-w-[32%] truncate text-right text-[3.7cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            className={`absolute bottom-[7cqw] right-[6.8cqw] max-w-[32%] truncate text-right text-[3.7cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[7cqw] w-[32%] ${guideOutline}` : ""}`}
           >
             {metrics.currentText}
           </p>
@@ -87,7 +94,7 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             data-safe-zone="custom-reward"
             dir="auto"
             title={props.rewardName}
-            className="absolute bottom-[7cqw] left-[6.8cqw] line-clamp-2 max-w-[50%] break-words text-[4.2cqw] font-black leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            className={`absolute bottom-[7cqw] left-[6.8cqw] line-clamp-2 max-w-[50%] break-words text-[4.2cqw] font-black leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[11cqw] w-[50%] ${guideOutline}` : ""}`}
           >
             {props.rewardName.slice(0, 32)}
           </p>
@@ -96,7 +103,7 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             dir="auto"
             aria-label={metrics.semanticRatioText}
             title={metrics.semanticRatioText}
-            className="absolute bottom-[7cqw] right-[6.8cqw] max-w-[32%] truncate text-right text-[3.4cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            className={`absolute bottom-[7cqw] right-[6.8cqw] max-w-[32%] truncate text-right text-[3.4cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[7cqw] w-[32%] ${guideOutline}` : ""}`}
           >
             {metrics.ratioText}
           </p>
@@ -129,9 +136,10 @@ export function LoyaltyCard(props: LoyaltyCardProps) {
   const useCustom =
     cardDesignMode(cardProps.designMode) === "CUSTOM" &&
     cardProps.customDesignEnabled === true &&
-    Boolean(
-      cardProps.customFrontArtworkUrl && cardProps.customBackArtworkUrl,
-    );
+    (cardProps.showSafeZones === true ||
+      Boolean(
+        cardProps.customFrontArtworkUrl && cardProps.customBackArtworkUrl,
+      ));
 
   return (
     <div
