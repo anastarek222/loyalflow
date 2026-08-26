@@ -2,6 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useMemo, useState } from "react";
+import { BusinessLogoImage } from "@/components/business-logo-image";
 import { LoyaltyCard } from "@/components/loyalty-card";
 import {
   CUSTOM_CARD_SAFE_ZONE_VERSION,
@@ -451,7 +452,7 @@ export function StandardCardSetup({
               <div className="mt-2 flex items-center gap-3 rounded-xl border border-border bg-surface-subtle p-3">
                 <div className="flex size-10 items-center justify-center overflow-hidden rounded-lg border border-border bg-white font-black">
                   {values.logoUrl ? (
-                    <img src={values.logoUrl} alt="" className="size-full object-contain" />
+                    <BusinessLogoImage src={values.logoUrl} alt="" />
                   ) : (
                     values.businessName.slice(0, 1)
                   )}
