@@ -2,6 +2,7 @@ import { publishCustomCardArtworkAction } from "@/app/businesses/[slug]/program/
 import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/program/custom-card-upload-action";
 import { ConfirmedSubmitButton } from "@/components/confirmed-submit-button";
 import { CustomCardExperienceStatus } from "@/components/custom-card-experience-status";
+import { CustomCardSafeZoneGuide } from "@/components/custom-card-safe-zone-guide";
 import {
   LoyaltyCard,
   type LoyaltyCardProps,
@@ -78,6 +79,11 @@ export async function CustomCardArtworkManager({
       <CustomCardExperienceStatus
         isArabic={language === "AR"}
         status={status}
+      />
+
+      <CustomCardSafeZoneGuide
+        isArabic={language === "AR"}
+        preview={preview}
       />
 
       {!storageConfigured ? (

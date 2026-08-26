@@ -41,7 +41,8 @@ test("Z2 keeps Custom Card overlays bounded and the QR system-owned", () => {
   assert.match(customRenderer, /data-safe-zone="custom-score"/);
   assert.doesNotMatch(customRenderer, /props\.customerId/);
   assert.match(customRenderer, /props\.rewardName\.slice\(0, 32\)/);
-  assert.match(customRenderer, /className="[^\"]*truncate[^\"]*"/);
+  assert.match(customRenderer, /max-w-\[50%\] truncate/);
+  assert.match(customRenderer, /max-w-\[32%\] truncate/);
 });
 
 test("Z2 preview uses the same LoyaltyCard renderer as runtime card presentation", () => {
