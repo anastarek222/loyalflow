@@ -64,6 +64,11 @@ jobs:
           else
             echo "loyalty-core=false" >> "$GITHUB_OUTPUT"
           fi
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|public-card)|lib/(loyalty|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|playwright\.config\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+            echo "loyalty-mobile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "loyalty-mobile=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -129,6 +134,9 @@ jobs:
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
             pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          fi
+          if [[ "${{ steps.browser-smoke.outputs.loyalty-mobile }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium
           fi
 
       - name: Check patch whitespace

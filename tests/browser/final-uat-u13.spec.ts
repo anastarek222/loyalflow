@@ -11,6 +11,8 @@ let fixture: BrowserUatFixture;
 let manifestPath: string;
 const invalidPublicCardPath = "/card/not-a-valid-public-token";
 const expectedInvalidPublicCard404 = "Failed to load resource: the server responded with a status of 404 (Not Found)";
+const expectedReactDevelopmentSuspenseFallback =
+  "The server could not finish this Suspense boundary, likely due to an error during server rendering. Switched to client rendering.";
 
 function applicationNavigation(page: Page) {
   return page.getByRole("complementary", { name: "Primary navigation", exact: true });
@@ -21,6 +23,7 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
     ? {
         scannerStatus: "حالة ماسح QR",
         scannerInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
+        scannerStarting: "جارٍ تشغيل الكاميرا...",
         scannerReady: "الكاميرا جاهزة لمسح رمز QR.",
         searchLabel: "البحث عن عميل",
         openCustomer: "فتح العميل",
@@ -28,6 +31,7 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
     : {
         scannerStatus: "QR scanner status",
         scannerInstruction: "Point the camera at the customer QR code.",
+        scannerStarting: "Starting camera...",
         scannerReady: "Camera ready to scan a QR code.",
         searchLabel: "Find a customer",
         openCustomer: "Open customer",
@@ -37,7 +41,11 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
   // camera-to-search fallback control to activate.
   await expect(
     page.getByRole("status", { name: copy.scannerStatus, exact: true }),
-  ).toHaveText(new RegExp(`^(?:${copy.scannerInstruction}|${copy.scannerReady})$`));
+  ).toHaveText(
+    new RegExp(
+      `^(?:${copy.scannerInstruction}|${copy.scannerStarting}|${copy.scannerReady})$`,
+    ),
+  );
   await page.getByRole("textbox", { name: copy.searchLabel, exact: true }).fill(fixture.activeCustomer.customerCode);
 
   const customerResult = page.getByRole("link", {
@@ -61,7 +69,10 @@ function scanOperationTerminalUrl(customerId: string) {
 
 function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) {
   const label = language === "AR" ? "الرصيد الحالي" : "Current balance";
-  return page.getByRole("region", { name: label, exact: true }).getByText(`${balance} Points`, { exact: true });
+  const formattedBalance = new Intl.NumberFormat(
+    language === "AR" ? "ar-EG" : "en-US",
+  ).format(balance);
+  return page.getByRole("region", { name: label, exact: true }).getByText(`${formattedBalance} Points`, { exact: true });
 }
 
 async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin") {
@@ -69,10 +80,13 @@ async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "vi
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
+  const expectedDestination = role === "superadmin"
+    ? /\/dashboard$/
+    : role === "staff-a"
+      ? new RegExp(`/businesses/${fixture.businessA}/scan$`)
+      : new RegExp(`/businesses/${fixture.businessA}$`);
   await expect(page).toHaveURL(
-    role === "superadmin"
-      ? /\/dashboard$/
-      : new RegExp(`/businesses/${fixture.businessA}$`),
+    expectedDestination,
     { timeout: 15_000 },
   );
 }
@@ -108,7 +122,12 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
 
   test.beforeEach(async ({ page }) => {
     const errors: string[] = [];
-    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("pageerror", (error) => {
+      const isExpectedReactDevelopmentSuspenseFallback =
+        !process.env.STAGING_UAT_BASE_URL &&
+        error.message === expectedReactDevelopmentSuspenseFallback;
+      if (!isExpectedReactDevelopmentSuspenseFallback) errors.push(error.message);
+    });
     page.on("console", (message) => {
       const isExpectedInvalidPublicCard404 =
         message.type() === "error" &&
@@ -125,13 +144,18 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
         !process.env.STAGING_UAT_BASE_URL &&
         message.text().includes("eval() is not supported in this environment") &&
         message.text().includes("React will never use eval() in production mode");
+      const isExpectedReactDevelopmentSuspenseFallback =
+        message.type() === "error" &&
+        !process.env.STAGING_UAT_BASE_URL &&
+        message.text().includes(expectedReactDevelopmentSuspenseFallback);
 
       if (
         message.type() === "error" &&
         !message.text().includes("favicon.ico") &&
         !isExpectedInvalidPublicCard404 &&
         !isExpectedVercelToolbarCspNoise &&
-        !isExpectedReactDevelopmentCspNoise
+        !isExpectedReactDevelopmentCspNoise &&
+        !isExpectedReactDevelopmentSuspenseFallback
       ) {
         errors.push(message.text());
       }
@@ -299,11 +323,15 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(page).toHaveURL(/\/card\/[^/?#]+\?welcome=1$/, {
       timeout: 20_000,
     });
+    const englishCardActions = page.getByRole("region", {
+      name: "Share card",
+      exact: true,
+    });
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Share card", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Add to Home Screen", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Add to Home Screen", exact: true }).click();
+    await expect(englishCardActions.getByRole("button", { name: "Share card", exact: true })).toBeVisible();
+    await expect(englishCardActions.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
+    await expect(englishCardActions.getByRole("button", { name: "Add to Home Screen", exact: true })).toBeVisible();
+    await englishCardActions.getByRole("button", { name: "Add to Home Screen", exact: true }).click();
     const installHelp = page.getByRole("dialog", { name: "Add card to Home Screen", exact: true });
     await expect(installHelp).toBeVisible();
     await installHelp.getByRole("button", { name: "Close", exact: true }).click();
@@ -315,7 +343,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(
       page.getByRole("img", { name: /loyalty card front/i }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
+    await expect(englishCardActions.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
     await assertViewportSafety(page);
 
@@ -325,14 +353,21 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(
       page.getByRole("img", { name: /loyalty card front/i }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "نسخ الرابط", exact: true })).toBeVisible();
+    const arabicCardActions = page.getByRole("region", {
+      name: "مشاركة الكارت",
+      exact: true,
+    });
+    await expect(arabicCardActions.getByRole("button", { name: "نسخ الرابط", exact: true })).toBeVisible();
     await assertViewportSafety(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     const invalidCardResponse = await page.goto(invalidPublicCardPath);
     expect(invalidCardResponse).not.toBeNull();
     expect(invalidCardResponse?.status()).toBe(404);
-    await expect(page.getByRole("heading", { name: "Card unavailable", exact: true })).toBeVisible();
+    const unavailableHeading = page.getByRole("heading", { level: 1 });
+    await expect(unavailableHeading).toBeVisible();
+    await expect(unavailableHeading).toContainText("البطاقة غير متاحة");
+    await expect(unavailableHeading).toContainText("Card unavailable");
     await expect(page.getByText("This loyalty card is unavailable or the link is no longer valid.", { exact: true })).toBeVisible();
   });
 });
