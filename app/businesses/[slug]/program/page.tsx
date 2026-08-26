@@ -298,6 +298,7 @@ export default async function LoyaltyProgramPage({
             <CustomCardArtworkManager
               slug={business.slug}
               selectedVersion={query.customVersion}
+              status={query.cardDesign}
               versions={customArtworkVersions}
               storageConfigured={customCardStorageConfigured()}
             />
@@ -354,7 +355,6 @@ export default async function LoyaltyProgramPage({
                 businessName: business.name,
                 logoUrl: business.logoUrl ?? "",
                 primaryColor: business.primaryColor,
-                secondaryColor: business.secondaryColor,
                 themePreset: business.themePreset,
                 artworkEnabled: business.standardCardArtworkEnabled,
                 artworkCategory: business.standardCardArtworkCategory,
