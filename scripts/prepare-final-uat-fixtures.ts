@@ -69,6 +69,7 @@ function uatBusinessUserEmails(run: string) {
     "owner-sales",
     "inactive-owner",
     "pending-owner",
+    "provisioned-owner",
   ].map((role) => `lf-uat-final-${role}-${run}@example.test`));
 }
 

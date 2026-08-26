@@ -136,4 +136,75 @@ test.describe
     });
     await expect(page).not.toHaveURL(/\/onboarding$/);
   });
+
+  test("Super Admin provisions a complete Business and its Owner can enter directly", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    test.skip(
+      Boolean(process.env.STAGING_UAT_MANIFEST_PATH?.trim()),
+      "Business provisioning requires the disposable PR database.",
+    );
+
+    const businessName = `LoyalFlow final UAT SA ${fixture.runId}`;
+    const businessSlug = `loyalflow-final-uat-sa-${fixture.runId}`;
+    const ownerEmail = uatEmail("provisioned-owner", fixture.runId);
+
+    await page.goto("/login");
+    await page
+      .getByLabel("Email address")
+      .fill(uatEmail("superadmin", fixture.runId));
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
+
+    await page.goto("/businesses/new");
+    await page
+      .getByRole("button", { name: "Custom setup", exact: true })
+      .click();
+    await page.getByPlaceholder("Business name").fill(businessName);
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+
+    await page.getByPlaceholder("First name").fill("Provisioned");
+    await page.getByPlaceholder("Owner email").fill(ownerEmail);
+    await page
+      .getByPlaceholder(/Password — minimum/)
+      .fill(process.env.UAT_FIXTURE_PASSWORD!);
+
+    for (let expectedStep = 2; expectedStep <= 5; expectedStep += 1) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+      await expect(
+        page.getByRole("button", {
+          name: new RegExp(`^${expectedStep + 1}\\.`),
+        }),
+      ).toHaveAttribute("aria-current", "step");
+    }
+
+    await page
+      .getByRole("button", { name: "Create business", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${businessSlug}/users(?:\\?.*)?$`),
+      { timeout: 30_000 },
+    );
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
+
+    await page
+      .getByRole("button", { name: "Account menu", exact: true })
+      .click();
+    await Promise.all([
+      page.waitForURL(/\/login$/),
+      page.getByRole("button", { name: "Log out", exact: true }).click(),
+    ]);
+
+    await page.getByLabel("Email address").fill(ownerEmail);
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+      timeout: 20_000,
+    });
+    await expect(page).not.toHaveURL(/\/onboarding$/);
+  });
 });
