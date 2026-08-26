@@ -75,10 +75,13 @@ async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "vi
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
+  const expectedDestination = role === "superadmin"
+    ? /\/dashboard$/
+    : role === "staff-a"
+      ? new RegExp(`/businesses/${fixture.businessA}/scan$`)
+      : new RegExp(`/businesses/${fixture.businessA}$`);
   await expect(page).toHaveURL(
-    role === "superadmin"
-      ? /\/dashboard$/
-      : new RegExp(`/businesses/${fixture.businessA}$`),
+    expectedDestination,
     { timeout: 15_000 },
   );
 }
