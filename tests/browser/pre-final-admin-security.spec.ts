@@ -23,7 +23,11 @@ async function login(
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(
+    role === "superadmin"
+      ? /\/dashboard$/
+      : new RegExp(`/businesses/${fixture.businessA}$`),
+  );
 }
 
 async function expectSafePage(page: Page) {
@@ -252,7 +256,7 @@ test.describe.serial("Pre-final administration and security UAT", () => {
     });
     await Promise.all([
       page.waitForURL(/\/program\?cardDesign=invalid$/),
-      page.getByRole("button", { name: "Upload new draft version", exact: true }).click(),
+      page.getByRole("button", { name: "Create Front + Back draft", exact: true }).click(),
     ]);
 
     // A valid Blob write is attempted only when this runner can remove the
@@ -278,7 +282,7 @@ test.describe.serial("Pre-final administration and security UAT", () => {
     });
     await Promise.all([
       page.waitForURL(/\/program\?cardDesign=draft&customVersion=[0-9a-f-]+$/),
-      page.getByRole("button", { name: "Upload new draft version", exact: true }).click(),
+      page.getByRole("button", { name: "Create Front + Back draft", exact: true }).click(),
     ]);
 
     const version = new URL(page.url()).searchParams.get("customVersion");
@@ -294,7 +298,7 @@ test.describe.serial("Pre-final administration and security UAT", () => {
 
     await Promise.all([
       page.waitForURL(/\/program\?cardDesign=published$/),
-      page.getByRole("button", { name: "Publish this version", exact: true }).click(),
+      page.getByRole("button", { name: "Publish this Front + Back pair", exact: true }).click(),
     ]);
     customCardPublished = true;
 
