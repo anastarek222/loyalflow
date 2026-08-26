@@ -145,9 +145,11 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByLabel("Email address").fill("nobody@example.test");
     await page.getByLabel("Password").fill("invalid-password");
     await page.getByRole("button", { name: "Sign in" }).press("Enter");
-    await expect(page.getByRole("alert")).toContainText(
-      /(?:The sign-in details or security code are incorrect|بيانات تسجيل الدخول أو رمز الأمان غير صحيحة)/,
-    );
+    await expect(
+      page.getByText(
+        /^(?:The sign-in details or security code are incorrect\.|بيانات تسجيل الدخول أو رمز الأمان غير صحيحة\.)$/,
+      ),
+    ).toBeVisible();
 
     await login(page, "owner-a");
     await expect(page.locator("[data-app-language='EN']")).toHaveAttribute("dir", "ltr");
