@@ -96,7 +96,14 @@ test("robots and sitemap advertise only the canonical public-site authority", ()
 
   assert.deepEqual(
     sitemap().map((entry) => entry.url),
-    [publicSiteUrl("/"), publicSiteUrl("/get-started")],
+    [
+      publicSiteUrl("/"),
+      publicSiteUrl("/get-started"),
+      publicSiteUrl("/features"),
+      publicSiteUrl("/pricing"),
+      publicSiteUrl("/about"),
+      publicSiteUrl("/faq"),
+    ],
   );
 });
 

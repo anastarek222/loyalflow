@@ -6,7 +6,7 @@ import { join } from "node:path";
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 
-test("Standard Card setup accepts one arbitrary primary HEX colour", () => {
+test("Standard Card setup accepts independent primary and secondary HEX colours", () => {
   const setup = source("components/standard-card-setup.tsx");
 
   assert.match(setup, /const HEX_COLOR = \/\^#\[0-9a-fA-F\]\{6\}\$\//);
@@ -14,7 +14,9 @@ test("Standard Card setup accepts one arbitrary primary HEX colour", () => {
   assert.match(setup, /"HEX code"/);
   assert.match(setup, /setColorPreset\(null\)/);
   assert.match(setup, /name="primaryColor"/);
-  assert.doesNotMatch(setup, /secondaryColor/);
+  assert.match(setup, /name="secondaryColor"/);
+  assert.match(setup, /secondaryDraft/);
+  assert.match(setup, /updateSecondaryColor/);
 });
 
 test("custom primary colour survives Light and Dark theme switching", () => {
@@ -37,5 +39,13 @@ test("Standard Card setup cannot reactivate the superseded optional Custom Back 
   assert.match(setup, /complete published Front \+ Back pair/);
   assert.doesNotMatch(setup, /Back artwork is optional/);
   assert.doesNotMatch(setup, /Safe LoyalFlow-generated Back/);
-  assert.doesNotMatch(setup, /secondaryColor/);
+});
+
+test("Standard Card renderer uses the secondary colour without changing fixed geometry", () => {
+  const card = source("components/standard-loyalty-card.tsx");
+
+  assert.match(card, /secondaryColor\?: string \| null/);
+  assert.match(card, /stopColor=\{secondary\}/);
+  assert.match(card, /fill=\{secondary\}/);
+  assert.match(card, /STANDARD_CARD_QR_ZONE/);
 });

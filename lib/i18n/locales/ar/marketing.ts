@@ -25,7 +25,11 @@ export const marketingMessagesAr = {
   "marketing.workflowTwo": "ادعُ فريقك وابدأ تشغيل عمليات العملاء.",
   "marketing.workflowThree":
     "تابع النتائج وحسّن الاحتفاظ بالعملاء عبر التقارير والحملات.",
-  "marketing.navProduct": "المنتج",
+  "marketing.navHome": "الرئيسية",
+  "marketing.navFeatures": "المميزات",
+  "marketing.navPricing": "الأسعار",
+  "marketing.navAbout": "من نحن",
+  "marketing.navProduct": "المميزات",
   "marketing.navIndustries": "الأنشطة",
   "marketing.navSecurity": "الأمان",
   "marketing.navFaq": "الأسئلة الشائعة",
@@ -95,4 +99,88 @@ export const marketingMessagesAr = {
   "marketing.footerProduct": "المنتج",
   "marketing.footerAccess": "الوصول",
   "marketing.footerNote": "تشغيل ولاء ثنائي اللغة للشركات المتنامية.",
+  "marketing.features.metaTitle": "مميزات LoyalFlow | تشغيل الولاء الرقمي",
+  "marketing.features.metaDescription":
+    "اكتشف البطاقات الرقمية والمسح برمز QR والمكافآت وأدوات العملاء والتقارير والصلاحيات حسب الدور في LoyalFlow.",
+  "marketing.features.navHome": "الرئيسية",
+  "marketing.features.eyebrow": "مميزات المنتج",
+  "marketing.features.title": "كل ما يحتاجه فريقك لتشغيل الولاء بوضوح.",
+  "marketing.features.body":
+    "من أول مسح لبطاقة العميل حتى المكافآت والتقارير، يجمع LoyalFlow العمل اليومي في مساحة ثنائية اللغة ومهيأة للهاتف.",
+  "marketing.features.cardsTitle": "بطاقات رقمية بهوية نشاطك",
+  "marketing.features.cardsBody":
+    "امنح كل عميل بطاقة برمز QR تعرض الرصيد وتقدم المكافأة وهوية نشاطك بشكل مباشر.",
+  "marketing.features.staffTitle": "مسح سريع للموظفين",
+  "marketing.features.staffBody":
+    "ينتقل الموظف مباشرة إلى مسار مسح العميل لتظل الإضافة والاستخدام سريعين عند نقطة الخدمة.",
+  "marketing.features.customersTitle": "ملفات عملاء مفيدة",
+  "marketing.features.customersBody":
+    "اجمع نشاط الولاء والأرصدة والشرائح وعمليات العملاء بدون إظهار التفاصيل الداخلية للعامة.",
+  "marketing.features.rewardsTitle": "المكافآت والعروض",
+  "marketing.features.rewardsBody":
+    "اضبط قواعد الولاء وانشر المكافآت والعروض واعرض للعميل تقدمه بوضوح نحو المكافأة التالية.",
+  "marketing.features.reportingTitle": "تقارير تشغيلية",
+  "marketing.features.reportingBody":
+    "تابع نشاط العملاء وعمليات الاستخدام وسلوك العودة وأداء النشاط من تقارير مركزة.",
+  "marketing.features.controlTitle": "تحكم حسب الدور",
+  "marketing.features.controlBody":
+    "يحصل المالك والمدير والموظف والمشاهد على الصلاحيات ومساحة العمل المناسبة لمسؤوليته.",
+  "marketing.features.ctaTitle": "ابدأ بمسار الإعداد المناسب لنشاطك.",
+  "marketing.features.ctaBody":
+    "يضم LoyalFlow الأنشطة حاليًا من خلال إعداد منضبط أو دعوة موجهة لمالك النشاط.",
+  "marketing.pricing.metaTitle": "أسعار LoyalFlow | خطط للأنشطة المتنامية",
+  "marketing.pricing.metaDescription":
+    "قارن خطط LoyalFlow المجانية وStarter وPro وBusiness خلال المرحلة التجريبية المنضبطة.",
+  "marketing.pricing.eyebrow": "الخطط والأسعار",
+  "marketing.pricing.title": "ابدأ مجانًا، وزد السعة عندما ينمو برنامج الولاء.",
+  "marketing.pricing.body":
+    "الخطة المجانية هي نقطة البداية. يتم تأكيد سعر وتفعيل الخطط المدفوعة أثناء الإعداد في المرحلة التجريبية؛ الدفع العام عبر الموقع غير مفتوح حاليًا.",
+  "marketing.pricing.freeLabel": "مجاني",
+  "marketing.pricing.betaLabel": "سعر المرحلة التجريبية",
+  "marketing.pricing.confirmedAtSetup": "يُؤكد أثناء الإعداد",
+  "marketing.pricing.customers": "عميل",
+  "marketing.pricing.users": "مستخدم للفريق",
+  "marketing.pricing.branches": "فرع",
+  "marketing.pricing.offers": "عرض",
+  "marketing.pricing.rewards": "مكافأة",
+  "marketing.pricing.unlimited": "بدون حد",
+  "marketing.pricing.cta": "اختر مسار الإعداد",
+  "marketing.pricing.noteTitle": "مرحلة تجريبية منضبطة بدون دفع مفاجئ.",
+  "marketing.pricing.noteBody":
+    "ينشئ LoyalFlow مساحات العمل حاليًا من خلال الإعداد المدعوم ودعوات المالك. لن يبدأ دفع الاشتراك عبر الموقع قبل اعتماد الخطط التجارية.",
+  "marketing.about.metaTitle": "عن LoyalFlow | تشغيل ولاء واضح",
+  "marketing.about.metaDescription":
+    "تعرّف على سبب جمع LoyalFlow للبطاقات الرقمية ونشاط العملاء والمكافآت وصلاحيات الفريق والتقارير في مساحة واضحة واحدة.",
+  "marketing.about.eyebrow": "عن LoyalFlow",
+  "marketing.about.title": "يجب أن يكون الولاء بسيطًا للعميل ومنظمًا للنشاط.",
+  "marketing.about.body":
+    "صُمم LoyalFlow ليستبدل البطاقات والأوراق والجداول والمتابعة اليدوية المنفصلة بنظام عملي واحد لتنمية عودة العملاء.",
+  "marketing.about.customerTitle": "واضح للعميل",
+  "marketing.about.customerBody":
+    "يفتح العميل بطاقة رقمية واحدة بهوية النشاط ليشاهد الرصيد والتقدم والمكافآت والعروض الحالية.",
+  "marketing.about.teamTitle": "سريع للفريق",
+  "marketing.about.teamBody":
+    "يصل الموظف بسرعة إلى مسار المسح، بينما يحتفظ المالك والمدير بالتحكم المناسب لدورهما.",
+  "marketing.about.businessTitle": "مفيد للنشاط",
+  "marketing.about.businessBody":
+    "يبقى نشاط العملاء والمكافآت والعروض والتقارير والسجل التشغيلي مترابطًا داخل مساحة آمنة ومعزولة.",
+  "marketing.about.ctaTitle": "مصمم للتشغيل اليومي الحقيقي، وليس للعرض فقط.",
+  "marketing.about.ctaBody":
+    "تركز المرحلة التجريبية المغلقة حاليًا على إعداد موثوق ومسارات هاتف سهلة للموظفين وبطاقات العملاء وتطوير مبني على الاستخدام الحقيقي.",
+  "marketing.faq.metaTitle": "أسئلة LoyalFlow الشائعة | إجابات عن الولاء الرقمي",
+  "marketing.faq.metaDescription":
+    "إجابات عن بطاقات LoyalFlow الرقمية واستخدام الهاتف وصلاحيات الموظفين ودعم العربية والبطاقات المخصصة والإعداد التجريبي.",
+  "marketing.faq.pageEyebrow": "الأسئلة الشائعة",
+  "marketing.faq.pageTitle": "إجابات واضحة قبل أن يبدأ نشاطك.",
+  "marketing.faq.pageBody":
+    "تصف هذه الإجابات المنتج والمرحلة التجريبية المنضبطة كما يعملان حاليًا.",
+  "marketing.faq.fourQuestion": "هل أستطيع الاشتراك والدفع عبر الموقع فورًا؟",
+  "marketing.faq.fourAnswer":
+    "ليس خلال المرحلة التجريبية الحالية. يتم إنشاء مساحة العمل من خلال إعداد مدعوم أو دعوة للمالك، والدفع العام ما زال مغلقًا.",
+  "marketing.faq.fiveQuestion": "هل يمكن أن تطابق بطاقة الولاء هوية نشاطي؟",
+  "marketing.faq.fiveAnswer":
+    "نعم. تدعم البطاقة القياسية ألوان وهوية النشاط، ويمكن أيضًا إدارة تصميم مخصص كامل للوجه والظهر من خلال مسار البطاقة المخصصة المنضبط.",
+  "marketing.faq.sixQuestion": "هل يعمل المنتج بشكل جيد على الهاتف؟",
+  "marketing.faq.sixAnswer":
+    "نعم. بطاقات العملاء ومسح الموظفين والمسارات الأساسية للمالك مصممة للهاتف وكذلك لسطح المكتب.",
 } as const;

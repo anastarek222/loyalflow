@@ -1510,6 +1510,7 @@ export default async function CustomerDetailsPage({
               businessName={business.name}
               logoUrl={business.logoUrl}
               primaryColor={cardTheme.primaryColor}
+              secondaryColor={business.secondaryColor}
               themePreset={business.themePreset}
               customerName={customerName}
               customerId={customer.customerCode}

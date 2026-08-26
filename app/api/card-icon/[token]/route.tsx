@@ -28,10 +28,14 @@ export const GET = async (
     });
   }
 
-  const requestedSize = new URL(request.url).searchParams.get("size");
-  const iconSize = requestedSize === "192" ? 192 : 512;
+  const requestUrl = new URL(request.url);
+  const requestedSize = requestUrl.searchParams.get("size");
+  const iconSize =
+    requestedSize === "180" ? 180 : requestedSize === "192" ? 192 : 512;
+  const maskable = requestUrl.searchParams.get("purpose") === "maskable";
   const scale = iconSize / 512;
   const scaled = (value: number) => Math.round(value * scale);
+  const logoFrameSize = maskable ? scaled(390) : iconSize;
   const customer = await prisma.customer.findUnique({
     where: {
       publicToken: cardToken,
@@ -66,7 +70,7 @@ export const GET = async (
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: `${scaled(42)}px`,
+          padding: "0",
           color: '#ffffff',
           background: `linear-gradient(145deg, ${primaryColor} 0%, #020617 100%)`,
           boxShadow: '0 24px 70px rgba(0,0,0,0.35)',
@@ -74,27 +78,27 @@ export const GET = async (
       >
         <div
           style={{
-            width: `${scaled(390)}px`,
-            height: `${scaled(390)}px`,
+            width: `${logoFrameSize}px`,
+            height: `${logoFrameSize}px`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
-            borderRadius: `${scaled(78)}px`,
-            backgroundColor: '#000000',
-            boxShadow: '0 24px 70px rgba(0,0,0,0.35)',
+            borderRadius: maskable ? `${scaled(78)}px` : "0",
+            backgroundColor: logoDataUrl ? '#ffffff' : '#000000',
+            boxShadow: maskable ? '0 24px 70px rgba(0,0,0,0.35)' : 'none',
           }}
         >
           {logoDataUrl ? (
             <img
               src={logoDataUrl}
               alt=""
-              width={scaled(390)}
-              height={scaled(390)}
+              width={logoFrameSize}
+              height={logoFrameSize}
               style={{
-                width: `${scaled(390)}px`,
-                height: `${scaled(390)}px`,
-                objectFit: 'contain',
+                width: `${logoFrameSize}px`,
+                height: `${logoFrameSize}px`,
+                objectFit: maskable ? 'contain' : 'cover',
               }}
             />
           ) : (

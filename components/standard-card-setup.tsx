@@ -24,6 +24,7 @@ export type CardPreview = Partial<{
   businessName: string;
   logoUrl: string;
   primaryColor: string;
+  secondaryColor: string;
   themePreset: string;
   artworkEnabled: boolean;
   artworkCategory: string;
@@ -114,8 +115,13 @@ export function StandardCardSetup({
   const [primaryDraft, setPrimaryDraft] = useState(
     initialPrimaryColor.toUpperCase(),
   );
+  const initialSecondaryColor = initial.secondaryColor || "#FFFFFF";
+  const [secondaryDraft, setSecondaryDraft] = useState(
+    initialSecondaryColor.toUpperCase(),
+  );
   const [card, setCard] = useState({
     primaryColor: initialPrimaryColor,
+    secondaryColor: initialSecondaryColor,
     themePreset: initialThemePreset,
     artworkEnabled: initial.artworkEnabled ?? true,
     artworkCategory: initial.artworkCategory || "OTHER",
@@ -183,6 +189,23 @@ export function StandardCardSetup({
   const commitPrimaryDraft = () => {
     if (!updateCustomColor(primaryDraft)) {
       setPrimaryDraft(card.primaryColor.toUpperCase());
+    }
+  };
+
+  const updateSecondaryColor = (value: string) => {
+    const secondaryColor = value.toUpperCase();
+    if (!HEX_COLOR.test(secondaryColor)) return false;
+
+    const next = { ...card, secondaryColor };
+    setSecondaryDraft(secondaryColor);
+    setCard(next);
+    onPreviewChange?.(next);
+    return true;
+  };
+
+  const commitSecondaryDraft = () => {
+    if (!updateSecondaryColor(secondaryDraft)) {
+      setSecondaryDraft(card.secondaryColor.toUpperCase());
     }
   };
 
@@ -312,6 +335,7 @@ export function StandardCardSetup({
               {t("التصميم المخصص", "Custom artwork")}
             </legend>
             <input type="hidden" name="primaryColor" value={values.primaryColor} />
+            <input type="hidden" name="secondaryColor" value={values.secondaryColor} />
             <input type="hidden" name="themePreset" value={values.themePreset} />
             <input
               type="hidden"
@@ -445,7 +469,7 @@ export function StandardCardSetup({
 
             <div>
               <p className="text-sm font-bold">
-                {t("لون العلامة التجارية", "Brand colour")}
+                {t("ألوان العلامة التجارية", "Brand colours")}
               </p>
               <input type="hidden" name="primaryColor" value={values.primaryColor} />
               <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
@@ -479,7 +503,10 @@ export function StandardCardSetup({
                   );
                 })}
               </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+              <p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
+                {t("اللون الأساسي", "Primary colour")}
+              </p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
                 <label className="text-xs font-bold text-foreground-muted">
                   {t("اختيار لون", "Colour picker")}
                   <input
@@ -511,10 +538,52 @@ export function StandardCardSetup({
                   />
                 </label>
               </div>
+              <input
+                type="hidden"
+                name="secondaryColor"
+                value={values.secondaryColor}
+              />
+              <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
+                {t("اللون الثانوي", "Secondary colour")}
+              </p>
+              <div className="mt-2 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
+                <label className="text-xs font-bold text-foreground-muted">
+                  {t("اختيار لون", "Colour picker")}
+                  <input
+                    type="color"
+                    value={values.secondaryColor}
+                    onChange={(event) =>
+                      updateSecondaryColor(event.target.value)
+                    }
+                    className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-white p-1"
+                  />
+                </label>
+                <label className="text-xs font-bold text-foreground-muted">
+                  {t("كود HEX", "HEX code")}
+                  <input
+                    type="text"
+                    value={secondaryDraft}
+                    maxLength={7}
+                    spellCheck={false}
+                    onChange={(event) =>
+                      setSecondaryDraft(event.target.value.toUpperCase())
+                    }
+                    onBlur={commitSecondaryDraft}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        commitSecondaryDraft();
+                      }
+                    }}
+                    aria-invalid={!HEX_COLOR.test(secondaryDraft)}
+                    className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-white px-3 font-mono text-sm uppercase"
+                  />
+                </label>
+              </div>
               <p className="mt-2 text-xs text-foreground-muted">
                 {t(
-                  "الألوان الجاهزة اختصارات فقط. يمكنك اختيار أي لون أو إدخال أي كود HEX، ويظل اللون المخصص ثابتًا عند التبديل بين الفاتح والداكن.",
-                  "Presets are shortcuts only. Pick any colour or enter any HEX value; a custom colour stays unchanged when switching Light/Dark.",
+                  "الألوان الجاهزة اختصارات للون الأساسي فقط. يمكنك إدخال كود HEX مستقل لكل لون، وتظهر النتيجة فورًا في المعاينة.",
+                  "Presets are shortcuts for the primary colour only. Enter an independent HEX value for each colour and see the result immediately.",
                 )}
               </p>
             </div>

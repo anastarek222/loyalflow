@@ -14,6 +14,7 @@ import {
   getLoyaltyCardPreviewData,
   getPreviewBalance,
   compactLoyaltyUnit,
+  STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
   standardCardArtworkCategory,
   standardCardTheme,
 } from "@/lib/cards/standard-card";
@@ -126,9 +127,12 @@ test("unit, target and reward remain distinct in English and Arabic", () => {
     rewardThreshold: 5,
     language: "EN",
   });
-  assert.equal(recommendations.currentText, "4 RECS");
-  assert.equal(recommendations.ratioText, "4 / 5 RECS");
-  assert.equal(recommendations.remainingText, "1 REC TO NEXT REWARD");
+  assert.equal(recommendations.currentText, "4 RECOMMENDATIONS");
+  assert.equal(recommendations.ratioText, "4 / 5 RECOMMENDATIONS");
+  assert.equal(
+    recommendations.remainingText,
+    "1 RECOMMENDATION TO NEXT REWARD",
+  );
 
   const arabic = getLoyaltyCardMetrics({
     balance: 4,
@@ -171,17 +175,22 @@ test("category motifs are controlled SVG artwork rather than owner supplied artw
 test("long customer and business names are constrained within the card", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /boundedText/);
-  assert.match(card, /valueFontSize/);
+  assert.match(card, /standardCardValueFontSize/);
 });
 
-test("long units retain semantic meaning while using bounded display labels", () => {
+test("standard-card units preserve professional labels within a bounded display contract", () => {
+  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 18);
   assert.equal(compactLoyaltyUnit("POINT"), "POINT");
   assert.equal(compactLoyaltyUnit("POINTS"), "POINTS");
-  assert.equal(compactLoyaltyUnit("RECOMMENDATION"), "RECS");
-  assert.equal(compactLoyaltyUnit("RECOMMENDATION", 1), "REC");
-  assert.equal(compactLoyaltyUnit("RECOMMENDATIONS"), "RECS");
+  assert.equal(compactLoyaltyUnit("RECOMMENDATION"), "RECOMMENDATION");
+  assert.equal(compactLoyaltyUnit("RECOMMENDATION", 1), "RECOMMENDATION");
+  assert.equal(compactLoyaltyUnit("RECOMMENDATIONS"), "RECOMMENDATIONS");
   assert.equal(compactLoyaltyUnit("PURCHASE"), "PURCHASE");
-  assert.equal(compactLoyaltyUnit("MEMBERSHIP CREDIT"), "CREDITS");
+  assert.equal(compactLoyaltyUnit("MEMBERSHIP CREDIT"), "MEMBERSHIP CREDIT");
+  assert.equal(
+    compactLoyaltyUnit("CUSTOMER RECOMMENDATION", 4),
+    "CUSTOMER RECOMMEN…",
+  );
 
   const metrics = getLoyaltyCardMetrics({
     balance: 850,
@@ -190,8 +199,8 @@ test("long units retain semantic meaning while using bounded display labels", ()
     rewardThreshold: 1000,
     language: "EN",
   });
-  assert.equal(metrics.currentText, "850 RECS");
-  assert.equal(metrics.ratioText, "850 / 1,000 RECS");
+  assert.equal(metrics.currentText, "850 RECOMMENDATIONS");
+  assert.equal(metrics.ratioText, "850 / 1,000 RECOMMENDATIONS");
   assert.equal(metrics.semanticCurrentText, "850 RECOMMENDATIONS");
 });
 
@@ -253,8 +262,9 @@ test("Back safely renders long and Arabic reward states with intentional RTL", (
     rewardThreshold: 5,
   }));
   assert.match(longBack, /Free 12 months subscription/);
-  assert.match(longBack, /4 \/ 5 RECS/);
-  assert.match(longBack, /1 REC TO NEXT REWARD/);
+  assert.match(longBack, /4 \/ 5 RECOMMENDATIONS/);
+  assert.match(longBack, /1 RECOMMENDATION TO NEXT REWARD/);
+  assert.match(longBack, /font-size="19"[^>]*>4 RECOMMENDATIONS</);
   assert.match(longBack, /<tspan/);
 
   const arabicBack = renderToStaticMarkup(React.createElement(StandardLoyaltyCard, {

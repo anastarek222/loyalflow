@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
@@ -54,6 +54,7 @@ type ReviewData = {
   rewardThreshold: string;
   earnAmount: string;
   primaryColor: string;
+  secondaryColor: string;
   themePreset: string;
   logoPreview: string;
   standardCardArtworkEnabled: boolean;
@@ -229,6 +230,7 @@ function getCopy(language: Language) {
         earn: "قيمة الكسب",
         theme: "السمة",
         primary: "اللون الأساسي",
+        secondary: "اللون الثانوي",
         logo: "الشعار",
         configured: "مضبوط",
         notSet: "غير مضبوط",
@@ -337,6 +339,7 @@ function getCopy(language: Language) {
         earn: "Earn amount",
         theme: "Theme",
         primary: "Primary",
+        secondary: "Secondary",
         logo: "Logo",
         configured: "Configured",
         notSet: "Not set",
@@ -418,6 +421,7 @@ function getReviewData(formData: FormData, logoPreview: string): ReviewData {
     rewardThreshold: getValue(formData, "rewardThreshold"),
     earnAmount: getValue(formData, "earnAmount"),
     primaryColor: getValue(formData, "primaryColor"),
+    secondaryColor: getValue(formData, "secondaryColor"),
     themePreset: getValue(formData, "themePreset"),
     logoPreview,
     standardCardArtworkEnabled:
@@ -433,6 +437,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
   const copy = getCopy(language);
   const localizedLabels = labels[language];
   const formRef = useRef<HTMLFormElement>(null);
+  const stepButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const submissionLockRef = useRef(false);
   const [submissionStarted, setSubmissionStarted] = useState(false);
   const [step, setStep] = useState(0);
@@ -458,6 +463,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
     rewardName: string;
     rewardThreshold: number;
     primaryColor?: string;
+    secondaryColor?: string;
     themePreset?: string;
     artworkEnabled?: boolean;
     artworkCategory?: string;
@@ -477,6 +483,13 @@ export default function BusinessSetupWizard({ action, language }: Props) {
     rewardName: copy.defaultReward,
     rewardThreshold: 5,
   });
+
+  useEffect(() => {
+    stepButtonRefs.current[step]?.scrollIntoView({
+      block: "nearest",
+      inline: "center",
+    });
+  }, [step]);
 
   function fullPhone(local: string) {
     const normalized = local.replace(/[^\d]/g, "").replace(/^0+/, "");
@@ -591,16 +604,26 @@ export default function BusinessSetupWizard({ action, language }: Props) {
       className="mt-6 space-y-5"
     >
       <div className="mb-6">
-        <div className="flex items-center justify-between gap-2 overflow-x-auto">
+        <div className="mb-3 flex items-center justify-between gap-3 sm:hidden">
+          <p className="text-sm font-black text-primary">{copy.steps[step]}</p>
+          <span className="lf-type-numeric shrink-0 text-xs font-bold text-foreground-muted">
+            {step + 1}/{copy.steps.length}
+          </span>
+        </div>
+        <div className="flex scroll-px-4 items-center gap-5 overflow-x-auto pb-2 sm:justify-between sm:gap-2 sm:pb-0">
           {copy.steps.map((item, index) => (
             <button
               key={item}
+              ref={(element) => {
+                stepButtonRefs.current[index] = element;
+              }}
               type="button"
               disabled={index > step}
+              aria-current={index === step ? "step" : undefined}
               onClick={() => {
                 if (index < step) editStep(index);
               }}
-              className={`whitespace-nowrap text-xs font-bold ${
+              className={`shrink-0 scroll-mx-4 whitespace-nowrap text-xs font-bold ${
                 index === step
                   ? "text-primary"
                   : index < step
@@ -1061,63 +1084,70 @@ export default function BusinessSetupWizard({ action, language }: Props) {
               {copy.cardDescription}
             </p>
           </div>
-          <div className="rounded-[var(--lf-radius-lg)] border border-border bg-surface p-5">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-foreground-subtle">
-              {copy.businessLogo}
-            </p>
-            <div className="mt-4 flex aspect-square max-w-44 items-center justify-center overflow-hidden rounded-[var(--lf-radius-lg)] border border-border bg-surface-subtle">
-              {logoPreview ? (
-                <img
-                  src={logoPreview}
-                  alt={copy.logoAlt}
-                  className="size-full object-contain p-3"
+          <div
+            data-testid="business-logo-upload"
+            className="rounded-[var(--lf-radius-lg)] border border-border bg-surface p-4 sm:p-5"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lf-radius-md)] border border-border bg-surface-subtle sm:size-24">
+                {logoPreview ? (
+                  <img
+                    src={logoPreview}
+                    alt={copy.logoAlt}
+                    className="size-full object-contain p-2"
+                  />
+                ) : (
+                  <span className="text-3xl font-black text-foreground-subtle">
+                    {cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-foreground-subtle">
+                  {copy.businessLogo}
+                </p>
+                <label htmlFor="logoFile" className={`mt-2 ${labelClass}`}>
+                  {logoPreview ? copy.changeLogo : copy.uploadLogo}{" "}
+                  <span className="font-normal text-foreground-subtle">
+                    ({copy.optional})
+                  </span>
+                </label>
+                <input
+                  id="logoFile"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (
+                      file.size > 500 * 1024 ||
+                      !["image/png", "image/jpeg", "image/webp"].includes(file.type)
+                    ) {
+                      setValidationError(copy.logoError);
+                      event.target.value = "";
+                      setLogoPreview("");
+                      return;
+                    }
+                    setValidationError("");
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const preview =
+                        typeof reader.result === "string" ? reader.result : "";
+                      setLogoPreview(preview);
+                      setCardPreview((current) => ({ ...current, logoUrl: preview }));
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                  className="mt-2 w-full min-w-0 rounded-[var(--lf-radius-md)] border border-border bg-surface px-3 py-2 text-sm text-foreground file:me-3 file:rounded-[var(--lf-radius-sm)] file:border-0 file:bg-foreground file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[var(--lf-inverse)]"
                 />
-              ) : (
-                <span className="text-5xl font-black text-foreground-subtle">
-                  {cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}
-                </span>
-              )}
+                <p className="mt-1 text-xs text-foreground-subtle">{copy.logoHint}</p>
+              </div>
             </div>
-            <label htmlFor="logoFile" className={`mt-5 ${labelClass}`}>
-              {logoPreview ? copy.changeLogo : copy.uploadLogo}{" "}
-              <span className="font-normal text-foreground-subtle">
-                ({copy.optional})
-              </span>
-            </label>
-            <input
-              id="logoFile"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                if (
-                  file.size > 500 * 1024 ||
-                  !["image/png", "image/jpeg", "image/webp"].includes(file.type)
-                ) {
-                  setValidationError(copy.logoError);
-                  event.target.value = "";
-                  setLogoPreview("");
-                  return;
-                }
-                setValidationError("");
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const preview =
-                    typeof reader.result === "string" ? reader.result : "";
-                  setLogoPreview(preview);
-                  setCardPreview((current) => ({ ...current, logoUrl: preview }));
-                };
-                reader.readAsDataURL(file);
-              }}
-              className="mt-2 w-full rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-3 text-foreground file:me-4 file:rounded-[var(--lf-radius-sm)] file:border-0 file:bg-foreground file:px-4 file:py-2 file:font-semibold file:text-[var(--lf-inverse)]"
-            />
             <input
               type="hidden"
               name="logoDataUrl"
               value={logoPreview.startsWith("data:image/") ? logoPreview : ""}
             />
-            <p className="mt-1 text-xs text-foreground-subtle">{copy.logoHint}</p>
           </div>
 
           <StandardCardSetup
@@ -1125,6 +1155,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
             allowCustom
             initial={{
               primaryColor: "#B98A4B",
+              secondaryColor: "#FFFFFF",
               themePreset: "DEFAULT",
               artworkEnabled: true,
               artworkCategory: "OTHER",
@@ -1138,7 +1169,6 @@ export default function BusinessSetupWizard({ action, language }: Props) {
 
           <input type="hidden" name="logoUrl" value="" />
           <input type="hidden" name="cardStyle" value="CLASSIC" />
-          <input type="hidden" name="secondaryColor" value="#FFFFFF" />
           <input type="hidden" name="fontFamily" value="INTER" />
         </section>
       </div>
@@ -1219,6 +1249,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
                 rows={[
                   [copy.theme, localizedLabels.theme[reviewData.themePreset as keyof typeof localizedLabels.theme] ?? reviewData.themePreset],
                   [copy.primary, reviewData.primaryColor],
+                  [copy.secondary, reviewData.secondaryColor],
                   [copy.logo, reviewData.logoPreview ? copy.configured : copy.notSet],
                   [copy.design, reviewData.cardDesignMode === "CUSTOM" ? copy.customCard : copy.standardCard],
                   [copy.artwork, reviewData.standardCardArtworkEnabled ? reviewData.standardCardArtworkCategory : copy.disabled],

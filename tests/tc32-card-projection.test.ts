@@ -22,6 +22,7 @@ test("TC3.2 uses canonical unitName and normalizes one public-card projection", 
     business: {
       name: " Demo Cafe ",
       primaryColor: "#123456",
+      secondaryColor: "#ABCDEF",
       themePreset: "DARK",
       city: " Cairo ",
       country: " Egypt ",
@@ -38,6 +39,7 @@ test("TC3.2 uses canonical unitName and normalizes one public-card projection", 
   assert.equal(projection.program.reward.cost, 50);
   assert.equal(projection.membership.balance, 42);
   assert.equal(projection.business.location, "Cairo, Egypt");
+  assert.equal(projection.business.secondaryColor, "#ABCDEF");
   assert.equal(projection.design.standardArtwork.category, "CAFE");
 });
 
@@ -50,7 +52,11 @@ test("TC3.2 fails closed from incomplete custom artwork and unsafe colors", () =
       defaultLanguage: "AR",
       reward: { name: "Reward", cost: 0 },
     },
-    business: { name: "Business", primaryColor: "not-a-color" },
+    business: {
+      name: "Business",
+      primaryColor: "not-a-color",
+      secondaryColor: "also-not-a-color",
+    },
     design: {
       mode: "CUSTOM",
       standardArtworkEnabled: true,
@@ -63,6 +69,7 @@ test("TC3.2 fails closed from incomplete custom artwork and unsafe colors", () =
   assert.equal(projection.membership.balance, 0);
   assert.equal(projection.program.reward.cost, 1);
   assert.equal(projection.business.primaryColor, "#2563eb");
+  assert.equal(projection.business.secondaryColor, "#FFFFFF");
   assert.equal(projection.design.customArtwork.enabled, false);
   assert.equal(safePublicCardColor("#abcdef"), "#abcdef");
 });

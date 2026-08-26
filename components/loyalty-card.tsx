@@ -105,8 +105,14 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
           >
             <p className="text-[1.5cqw] font-bold tracking-[0.18em]" style={{ color: accent }}>{labels.member}</p>
             <p dir="auto" title={props.customerName} className="mt-[1cqw] max-w-[62%] truncate text-[4.2cqw] font-black">{props.customerName}</p>
-            <p className="mt-[2cqw] text-[1.5cqw] font-bold tracking-[0.18em]" style={{ color: accent }}>{labels.id}</p>
-            <p dir="ltr" className="mt-[0.7cqw] truncate text-[2.8cqw] font-semibold tracking-[0.12em]">{props.customerId.slice(0, 32)}</p>
+            <p
+              dir="ltr"
+              data-emphasis="low"
+              aria-label={`${labels.id}: ${props.customerId}`}
+              className="mt-[1.5cqw] truncate text-[1.25cqw] font-medium tracking-[0.1em] text-white/55"
+            >
+              {props.customerId.slice(0, 32)}
+            </p>
           </div>
           <section data-safe-zone="custom-balance" className="col-span-2 mt-[3cqw] flex items-end justify-between gap-[4cqw] rounded-[2.5cqw] border border-white/20 bg-black/35 px-[3.5cqw] py-[2.7cqw] backdrop-blur-sm">
             <div className="min-w-0">

@@ -24,7 +24,7 @@ test("customer-provided card values keep bidi-safe rendering", () => {
 
   assert.match(card, /dir="auto" title=\{props\.businessName\}/);
   assert.match(card, /dir="auto" title=\{props\.customerName\}/);
-  assert.match(card, /dir="ltr" className="mt-\[0\.7cqw\]/);
+  assert.match(card, /dir="ltr"\s+data-emphasis="low"/);
 
   assert.match(standard, /customerNameIsArabic/);
   assert.match(standard, /customerNameDirection/);

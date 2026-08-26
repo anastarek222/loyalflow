@@ -31,6 +31,7 @@ export type PublicCardProjection = {
     name: string;
     logoUrl: string | null;
     primaryColor: string;
+    secondaryColor: string;
     themePreset: string;
     phone: string | null;
     website: string | null;

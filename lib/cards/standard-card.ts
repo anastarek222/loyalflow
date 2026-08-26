@@ -1,5 +1,8 @@
 import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
+import { boundedStandardCardUnitLabel } from "@/lib/cards/standard-card-text";
 import { loyaltyCurrency } from "@/lib/loyalty/presentation";
+
+export { STANDARD_CARD_UNIT_LABEL_MAX_LENGTH } from "@/lib/cards/standard-card-text";
 
 export const STANDARD_CARD_ASPECT_RATIO = LOYALTY_CARD_ASPECT_RATIO;
 export const CUSTOM_CARD_SAFE_ZONE_VERSION = "ID1_V1";
@@ -115,39 +118,26 @@ function formatArabicUnitValue(value: number, unit: string, locale: string) {
 function compactUnitForms(value: string | null | undefined) {
   const full = (value || "PTS").trim().replace(/\s+/g, " ");
   const upper = full.toUpperCase();
-  if (/^RECOMMENDATIONS?$/.test(upper)) return { singular: "REC", plural: "RECS" };
-  if (/^MEMBERSHIP CREDITS?$/.test(upper)) return { singular: "CREDIT", plural: "CREDITS" };
-
   const knownSingular = upper
     .replace(/IES$/, "Y")
     .replace(/(CH|SH|X|Z)ES$/, "$1")
     .replace(/S$/, "");
-  if (knownSingular.length <= 8) {
-    const plural = knownSingular.endsWith("S")
-      ? knownSingular
-      : knownSingular.endsWith("Y")
-        ? `${knownSingular.slice(0, -1)}IES`
-        : `${knownSingular}S`;
-    return { singular: knownSingular, plural: plural.slice(0, 10) };
-  }
+  const plural = knownSingular.endsWith("S")
+    ? knownSingular
+    : knownSingular.endsWith("Y")
+      ? `${knownSingular.slice(0, -1)}IES`
+      : `${knownSingular}S`;
 
-  const words = upper.split(" ");
-  if (words.length > 1) {
-    const lastWord = words.at(-1) ?? upper;
-    const compact = lastWord.replace(/S$/, "").slice(0, 8);
-    return { singular: compact, plural: `${compact}S`.slice(0, 9) };
-  }
-  const compact = upper.replace(/S$/, "").slice(0, 7);
-  return { singular: compact, plural: `${compact}S`.slice(0, 8) };
+  return {
+    singular: boundedStandardCardUnitLabel(knownSingular),
+    plural: boundedStandardCardUnitLabel(plural),
+  };
 }
 
 export function compactLoyaltyUnit(value: string | null | undefined, quantity?: number) {
   const forms = compactUnitForms(value);
   if (quantity === undefined) {
     const upper = (value || "PTS").trim().toUpperCase();
-    if (/^RECOMMENDATIONS?$/.test(upper) || /^MEMBERSHIP CREDITS?$/.test(upper)) {
-      return forms.plural;
-    }
     return /S$/.test(upper) ? forms.plural : forms.singular;
   }
   return quantity === 1 ? forms.singular : forms.plural;

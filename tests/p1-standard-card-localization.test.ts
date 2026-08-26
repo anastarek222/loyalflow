@@ -21,7 +21,8 @@ test("P1 Standard Card visible controls and categories carry canonical Arabic an
   for (const pair of [
     ["تصميم البطاقة", "Card design"],
     ["إعدادات البطاقة القياسية", "Standard Card settings"],
-    ["لون العلامة التجارية", "Brand colour"],
+    ["اللون الأساسي", "Primary colour"],
+    ["اللون الثانوي", "Secondary colour"],
     ["فئة النشاط المعتمدة", "Approved business category"],
     ["معاينة البطاقة مباشرة", "Live Card Preview"],
     ["الوجه", "Front"],
