@@ -10,6 +10,7 @@ import {
 import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
 import type { CustomCardArtworkVersion } from "@/lib/cards/custom-card-storage";
 import { normalizeLanguage } from "@/lib/i18n";
+import prisma from "@/lib/prisma";
 
 type Props = {
   slug: string;
@@ -45,12 +46,16 @@ export async function CustomCardArtworkManager({
   const language = normalizeLanguage(requestContext?.user?.language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const selected = versions.find((version) => version.id === selectedVersion);
+  const businessTimezone = await prisma.business.findUnique({
+    where: { slug },
+    select: { timezone: true },
+  });
   const savedVersionFormatter = new Intl.DateTimeFormat(
     language === "AR" ? "ar-EG" : "en-GB",
     {
       dateStyle: "medium",
       timeStyle: "short",
-      timeZone: "Africa/Cairo",
+      timeZone: businessTimezone?.timezone || "UTC",
     },
   );
   const uploadCustomArtwork = uploadCustomCardDraftCommandAction.bind(null, slug);
