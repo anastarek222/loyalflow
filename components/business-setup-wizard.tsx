@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { BusinessLogoImage } from "@/components/business-logo-image";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { getBusinessSetupValidationIssue } from "@/lib/business/setup-validation";
 import { CountrySelector } from "@/components/onboarding/country-selector";
@@ -1091,10 +1092,9 @@ export default function BusinessSetupWizard({ action, language }: Props) {
             <div className="flex items-start gap-4">
               <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lf-radius-md)] border border-border bg-surface-subtle sm:size-24">
                 {logoPreview ? (
-                  <img
+                  <BusinessLogoImage
                     src={logoPreview}
                     alt={copy.logoAlt}
-                    className="size-full object-contain p-2"
                   />
                 ) : (
                   <span className="text-3xl font-black text-foreground-subtle">
