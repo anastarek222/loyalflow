@@ -35,8 +35,18 @@ test("marketing navigation uses independent routes without Home-page anchors", (
   const home = source("app/page.tsx");
   const features = source("app/features/page.tsx");
 
-  for (const route of ["/", "/features", "/pricing", "/about", "/faq"]) {
-    assert.match(navigation, new RegExp(`href: "${route.replace("/", "\\/")}"`));
+  for (const route of [
+    "/",
+    "/features",
+    "/pricing",
+    "/about",
+    "/faq",
+    "/contact",
+  ]) {
+    assert.match(
+      navigation,
+      new RegExp(`href: "${route.replace("/", "\\/")}"`),
+    );
   }
   assert.doesNotMatch(navigation, /href:\s*"#/);
   assert.doesNotMatch(navigation, /\/#/);
@@ -46,9 +56,9 @@ test("marketing navigation uses independent routes without Home-page anchors", (
   assert.doesNotMatch(home, /href="#how-it-works"/);
 });
 
-test("Pricing, About and FAQ are indexable bilingual public pages", () => {
+test("Pricing, About, FAQ and Contact are indexable bilingual public pages", () => {
   const sitemap = source("app/sitemap.ts");
-  for (const route of ["pricing", "about", "faq"]) {
+  for (const route of ["pricing", "about", "faq", "contact"]) {
     const page = source(`app/${route}/page.tsx`);
     assert.match(page, new RegExp(`canonical: "\\/${route}"`));
     assert.match(page, /getMarketingRequestLocale\(\)/);

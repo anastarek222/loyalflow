@@ -34,6 +34,7 @@ export const marketingMessagesEn = {
   "marketing.navIndustries": "Industries",
   "marketing.navSecurity": "Security",
   "marketing.navFaq": "FAQ",
+  "marketing.navContact": "Contact",
   "marketing.primaryNavLabel": "Primary navigation",
   "marketing.mobileNavLabel": "Mobile navigation",
   "marketing.menuOpen": "Open navigation menu",
@@ -103,12 +104,14 @@ export const marketingMessagesEn = {
   "marketing.footerAccess": "Access",
   "marketing.footerNote":
     "Bilingual loyalty operations for growing businesses.",
-  "marketing.features.metaTitle": "LoyalFlow Features | Digital loyalty operations",
+  "marketing.features.metaTitle":
+    "LoyalFlow Features | Digital loyalty operations",
   "marketing.features.metaDescription":
     "Explore LoyalFlow digital cards, QR scanning, rewards, customer tools, reporting, and role-aware business controls.",
   "marketing.features.navHome": "Home",
   "marketing.features.eyebrow": "Product features",
-  "marketing.features.title": "Everything your team needs to run loyalty clearly.",
+  "marketing.features.title":
+    "Everything your team needs to run loyalty clearly.",
   "marketing.features.body":
     "From the first customer scan to rewards and reporting, LoyalFlow keeps daily loyalty work in one bilingual, mobile-ready workspace.",
   "marketing.features.cardsTitle": "Branded digital cards",
@@ -129,14 +132,17 @@ export const marketingMessagesEn = {
   "marketing.features.controlTitle": "Role-aware control",
   "marketing.features.controlBody":
     "Owners, managers, staff, and viewers receive the access and workspace appropriate to their responsibility.",
-  "marketing.features.ctaTitle": "Start with the setup path that fits your business.",
+  "marketing.features.ctaTitle":
+    "Start with the setup path that fits your business.",
   "marketing.features.ctaBody":
     "LoyalFlow is currently onboarding businesses through controlled setup and owner invitation flows.",
-  "marketing.pricing.metaTitle": "LoyalFlow Pricing | Plans for growing businesses",
+  "marketing.pricing.metaTitle":
+    "LoyalFlow Pricing | Plans for growing businesses",
   "marketing.pricing.metaDescription":
     "Compare LoyalFlow Free, Starter, Pro, and Business plans during the controlled beta.",
   "marketing.pricing.eyebrow": "Plans and pricing",
-  "marketing.pricing.title": "Start free. Add capacity when your loyalty programme grows.",
+  "marketing.pricing.title":
+    "Start free. Add capacity when your loyalty programme grows.",
   "marketing.pricing.body":
     "The Free plan is the starting point. Paid-plan pricing and activation are confirmed during the controlled beta setup; public checkout is not open yet.",
   "marketing.pricing.freeLabel": "Free",
@@ -156,7 +162,8 @@ export const marketingMessagesEn = {
   "marketing.about.metaDescription":
     "Learn why LoyalFlow brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
   "marketing.about.eyebrow": "About LoyalFlow",
-  "marketing.about.title": "Loyalty should feel simple for the customer and structured for the business.",
+  "marketing.about.title":
+    "Loyalty should feel simple for the customer and structured for the business.",
   "marketing.about.body":
     "LoyalFlow is built to replace disconnected cards, spreadsheets, and manual follow-up with one practical operating system for repeat business.",
   "marketing.about.customerTitle": "Clear for customers",
@@ -168,14 +175,17 @@ export const marketingMessagesEn = {
   "marketing.about.businessTitle": "Useful for the business",
   "marketing.about.businessBody":
     "Customer activity, rewards, offers, reporting, and operational history stay connected inside one tenant-safe workspace.",
-  "marketing.about.ctaTitle": "Built for real daily operations, not a demo-only dashboard.",
+  "marketing.about.ctaTitle":
+    "Built for real daily operations, not a demo-only dashboard.",
   "marketing.about.ctaBody":
     "The current closed beta focuses on reliable onboarding, mobile staff workflows, customer cards, and evidence-backed product improvement.",
-  "marketing.faq.metaTitle": "LoyalFlow FAQ | Digital loyalty questions answered",
+  "marketing.faq.metaTitle":
+    "LoyalFlow FAQ | Digital loyalty questions answered",
   "marketing.faq.metaDescription":
     "Answers about LoyalFlow digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",
   "marketing.faq.pageEyebrow": "Frequently asked questions",
-  "marketing.faq.pageTitle": "Straight answers before your business gets started.",
+  "marketing.faq.pageTitle":
+    "Straight answers before your business gets started.",
   "marketing.faq.pageBody":
     "These answers describe the product and the controlled beta as they work today.",
   "marketing.faq.fourQuestion": "Can I join and pay online immediately?",
@@ -187,4 +197,28 @@ export const marketingMessagesEn = {
   "marketing.faq.sixQuestion": "Will the product work well on a phone?",
   "marketing.faq.sixAnswer":
     "Yes. Customer cards, staff scanning, and the core owner workflows are designed for mobile use as well as desktop.",
+  "marketing.contact.metaTitle":
+    "Contact LoyalFlow | Business setup and account access",
+  "marketing.contact.metaDescription":
+    "Choose the right LoyalFlow path for a new business setup, an existing account, or an owner invitation during the controlled beta.",
+  "marketing.contact.eyebrow": "Contact and access",
+  "marketing.contact.title":
+    "Reach the right LoyalFlow path without the runaround.",
+  "marketing.contact.body":
+    "During the controlled beta, setup and support follow the secure path for each account type. Choose what you need below.",
+  "marketing.contact.setupTitle": "Set up a business",
+  "marketing.contact.setupBody":
+    "See the current onboarding options for a new LoyalFlow business workspace.",
+  "marketing.contact.setupCta": "View setup options",
+  "marketing.contact.accountTitle": "Access an existing account",
+  "marketing.contact.accountBody":
+    "Owners, managers, staff, and viewers with active credentials can sign in here.",
+  "marketing.contact.accountCta": "Sign in",
+  "marketing.contact.invitationTitle": "Accept an owner invitation",
+  "marketing.contact.invitationBody":
+    "Use the secure invitation flow if you received an owner setup link.",
+  "marketing.contact.invitationCta": "Accept invitation",
+  "marketing.contact.noticeTitle": "Current beta support process",
+  "marketing.contact.noticeBody":
+    "Your approved setup or invitation path remains the source of truth while public email, phone, and WhatsApp channels are finalized.",
 } as const;
