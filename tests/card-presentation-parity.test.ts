@@ -25,10 +25,10 @@ test("Customer ID stays on the Standard Card as quiet technical information", ()
   assert.match(standard, /\{boundedText\(props\.customerId, 24\)\}/);
   assert.match(
     standard,
-    /data-emphasis="low"[\s\S]*?fontSize="8"[\s\S]*?\{labels\.id\}/,
+    /data-emphasis="low"[\s\S]*?y="426"[\s\S]*?fontSize="7"[\s\S]*?opacity="0\.58"[\s\S]*?\{labels\.id\}/,
   );
   assert.match(
     standard,
-    /data-emphasis="low"[\s\S]*?fontSize="10"[\s\S]*?opacity="0\.72"[\s\S]*?\{boundedText\(props\.customerId, 24\)\}/,
+    /data-emphasis="low"[\s\S]*?y="445"[\s\S]*?fontSize="9"[\s\S]*?opacity="0\.66"[\s\S]*?\{boundedText\(props\.customerId, 24\)\}/,
   );
 });
