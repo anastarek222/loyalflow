@@ -13,6 +13,10 @@ test("Super Admin sees retained Custom Card pairs as a reusable library", () => 
   assert.match(manager, /evergreen design alongside seasonal alternatives/);
   assert.match(manager, /Preview and select this design/);
   assert.match(manager, /savedVersionFormatter\.format\(version\.uploadedAt\)/);
+  assert.match(manager, /prisma\.business\.findUnique/);
+  assert.match(manager, /select: \{ timezone: true \}/);
+  assert.match(manager, /timeZone: businessTimezone\?\.timezone \|\| "UTC"/);
+  assert.doesNotMatch(manager, /timeZone: "Africa\/Cairo"/);
 });
 
 test("publishing a retained pair switches pointers without deleting saved artwork", () => {
