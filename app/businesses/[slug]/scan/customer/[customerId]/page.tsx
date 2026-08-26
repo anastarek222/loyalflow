@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { auth } from "@/auth";
 import ScanActionButton from "@/components/scan-action-button";
+import ScanSuccessFeedback from "@/components/scan-success-feedback";
 import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
 import {
   PageContainer,
@@ -219,9 +220,9 @@ export default async function ScanCustomerPage({
         {successMessage ? (
           <Card
             role="status"
-            className="overflow-hidden border-success/25 bg-gradient-to-br from-success-subtle via-surface to-primary-subtle/40 p-6 sm:p-8"
+            className="lf-scan-success-reveal overflow-hidden border-success/25 bg-gradient-to-br from-success-subtle via-surface to-primary-subtle/40 p-6 sm:p-8"
           >
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-success text-white shadow-sm">
+            <span className="lf-scan-success-mark flex size-12 items-center justify-center rounded-2xl bg-success text-white shadow-sm">
               <CheckCircle2 className="size-6" aria-hidden="true" />
             </span>
             <p className="mt-4 lf-type-supporting font-semibold text-success">
@@ -245,6 +246,12 @@ export default async function ScanCustomerPage({
                 })}
               </p>
             </section>
+            <ScanSuccessFeedback
+              enableLabel={copy.enableSuccessFeedback}
+              disableLabel={copy.disableSuccessFeedback}
+              enabledAnnouncement={copy.successFeedbackEnabled}
+              disabledAnnouncement={copy.successFeedbackDisabled}
+            />
             <nav aria-label={copy.scan} className="mt-6 grid gap-4">
               <Link
                 href={`/businesses/${slug}/scan`}
