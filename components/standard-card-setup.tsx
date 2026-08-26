@@ -117,6 +117,11 @@ export function StandardCardSetup({
     initialPrimaryColor.toUpperCase(),
   );
   const initialSecondaryColor = initial.secondaryColor || "#FFFFFF";
+  const initialSecondaryColorPreset = standardCardPresetForColor(
+    initial.secondaryColor,
+  );
+  const [secondaryColorPreset, setSecondaryColorPreset] =
+    useState<StandardCardColorPreset | null>(initialSecondaryColorPreset);
   const [secondaryDraft, setSecondaryDraft] = useState(
     initialSecondaryColor.toUpperCase(),
   );
@@ -193,11 +198,24 @@ export function StandardCardSetup({
     }
   };
 
+  const updateSecondaryColorPreset = (preset: StandardCardColorPreset) => {
+    const secondaryColor = standardCardPresetColor(
+      preset,
+      card.themePreset,
+    ).toUpperCase();
+    const next = { ...card, secondaryColor };
+    setSecondaryColorPreset(preset);
+    setSecondaryDraft(secondaryColor);
+    setCard(next);
+    onPreviewChange?.(next);
+  };
+
   const updateSecondaryColor = (value: string) => {
     const secondaryColor = value.toUpperCase();
     if (!HEX_COLOR.test(secondaryColor)) return false;
 
     const next = { ...card, secondaryColor };
+    setSecondaryColorPreset(null);
     setSecondaryDraft(secondaryColor);
     setCard(next);
     onPreviewChange?.(next);
@@ -214,12 +232,17 @@ export function StandardCardSetup({
     const primaryColor = colorPreset
       ? standardCardPresetColor(colorPreset, theme).toUpperCase()
       : card.primaryColor;
+    const secondaryColor = secondaryColorPreset
+      ? standardCardPresetColor(secondaryColorPreset, theme).toUpperCase()
+      : card.secondaryColor;
     const next = {
       ...card,
       themePreset: theme,
       primaryColor,
+      secondaryColor,
     };
     setPrimaryDraft(primaryColor.toUpperCase());
+    setSecondaryDraft(secondaryColor.toUpperCase());
     setCard(next);
     onPreviewChange?.(next);
   };
@@ -473,7 +496,10 @@ export function StandardCardSetup({
                 {t("ألوان العلامة التجارية", "Brand colours")}
               </p>
               <input type="hidden" name="primaryColor" value={values.primaryColor} />
-              <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
+              <p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
+                {t("لوحة اللون الأساسي", "Primary palette")}
+              </p>
+              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6" data-testid="primary-color-palette">
                 {STANDARD_CARD_COLOR_PRESETS.map((preset) => {
                   const active = colorPreset === preset.id;
                   const swatch = standardCardPresetColor(
@@ -487,8 +513,8 @@ export function StandardCardSetup({
                       onClick={() => updateColorPreset(preset.id)}
                       aria-pressed={active}
                       aria-label={t(
-                        `اختيار لوحة ${colorPresetLabel(preset.id, language)}`,
-                        `Choose ${colorPresetLabel(preset.id, language)} palette`,
+                        `اختيار ${colorPresetLabel(preset.id, language)} كلون أساسي`,
+                        `Choose ${colorPresetLabel(preset.id, language)} as primary colour`,
                       )}
                       className={`rounded-xl border p-2 text-center text-[11px] font-bold ${active ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-surface-subtle"}`}
                     >
@@ -545,6 +571,40 @@ export function StandardCardSetup({
                 value={values.secondaryColor}
               />
               <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
+                {t("لوحة اللون الثانوي", "Secondary palette")}
+              </p>
+              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6" data-testid="secondary-color-palette">
+                {STANDARD_CARD_COLOR_PRESETS.map((preset) => {
+                  const active = secondaryColorPreset === preset.id;
+                  const swatch = standardCardPresetColor(
+                    preset.id,
+                    values.themePreset,
+                  );
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => updateSecondaryColorPreset(preset.id)}
+                      aria-pressed={active}
+                      aria-label={t(
+                        `اختيار ${colorPresetLabel(preset.id, language)} كلون ثانوي`,
+                        `Choose ${colorPresetLabel(preset.id, language)} as secondary colour`,
+                      )}
+                      className={`rounded-xl border p-2 text-center text-[11px] font-bold ${active ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border bg-surface-subtle"}`}
+                    >
+                      <span
+                        className="mx-auto block size-8 rounded-lg border border-black/10 shadow-sm"
+                        style={{ backgroundColor: swatch }}
+                        aria-hidden="true"
+                      />
+                      <span className="mt-1.5 block truncate">
+                        {colorPresetLabel(preset.id, language)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
                 {t("اللون الثانوي", "Secondary colour")}
               </p>
               <div className="mt-2 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
@@ -583,8 +643,8 @@ export function StandardCardSetup({
               </div>
               <p className="mt-2 text-xs text-foreground-muted">
                 {t(
-                  "الألوان الجاهزة اختصارات للون الأساسي فقط. يمكنك إدخال كود HEX مستقل لكل لون، وتظهر النتيجة فورًا في المعاينة.",
-                  "Presets are shortcuts for the primary colour only. Enter an independent HEX value for each colour and see the result immediately.",
+                  "يمكنك اختيار لوحة جاهزة مستقلة لكل لون أو إدخال كود HEX يدوي. القيم اليدوية لا تتغير عند تبديل السمة، وتظهر كل التغييرات فورًا في المعاينة.",
+                  "Choose an independent preset for each colour or enter a manual HEX value. Manual values stay fixed when the theme changes, and every change appears immediately in the preview.",
                 )}
               </p>
             </div>
