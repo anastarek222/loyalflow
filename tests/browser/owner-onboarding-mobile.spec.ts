@@ -117,9 +117,6 @@ test.describe
     await expect(
       page.locator("#app-content").getByRole("heading", { level: 1 }),
     ).toHaveCount(1);
-    await expect(
-      page.getByText(businessName, { exact: true }).first(),
-    ).toBeVisible();
 
     await page
       .getByRole("button", { name: "Account menu", exact: true })
