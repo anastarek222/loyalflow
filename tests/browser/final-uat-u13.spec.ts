@@ -364,7 +364,10 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     const invalidCardResponse = await page.goto(invalidPublicCardPath);
     expect(invalidCardResponse).not.toBeNull();
     expect(invalidCardResponse?.status()).toBe(404);
-    await expect(page.getByRole("heading", { name: "Card unavailable", exact: true })).toBeVisible();
+    const unavailableHeading = page.getByRole("heading", { level: 1 });
+    await expect(unavailableHeading).toBeVisible();
+    await expect(unavailableHeading).toContainText("البطاقة غير متاحة");
+    await expect(unavailableHeading).toContainText("Card unavailable");
     await expect(page.getByText("This loyalty card is unavailable or the link is no longer valid.", { exact: true })).toBeVisible();
   });
 });
