@@ -9,8 +9,10 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 
 import { PrismaClient } from "../generated/prisma/client";
+import { sealTotpSecret } from "../lib/auth/super-admin-mfa";
 import { logServerError } from "../lib/server/logging";
 import { assertDatabaseScriptEnvironment } from "../lib/server/database-script-guard";
+import { UAT_SUPER_ADMIN_MFA_SECRET } from "../tests/browser/fixture-mfa";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -436,6 +438,20 @@ async function prepareFixtures() {
   ]);
   const ownerA = createdUsers[0]!;
   const staffA = createdUsers[2]!;
+  const superAdmin = createdUsers[8]!;
+  const mfaRootSecret = process.env.AUTH_SECRET?.trim();
+  assert.ok(mfaRootSecret, "AUTH_SECRET is required for the browser UAT MFA fixture.");
+  await prisma.$executeRaw`
+    INSERT INTO "SuperAdminMfa" (
+      "userId", "secretCiphertext", "enabledAt", "createdAt", "updatedAt"
+    ) VALUES (
+      ${superAdmin.id},
+      ${sealTotpSecret(UAT_SUPER_ADMIN_MFA_SECRET, mfaRootSecret)},
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    )
+  `;
 
   const [branchOne, branchTwo] = await Promise.all([
     prisma.branch.create({ data: { businessId: businessA.id, name: "Final UAT A Branch One", address: "Fixture only" } }),

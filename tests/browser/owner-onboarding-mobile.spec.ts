@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+import { generateTotpCode } from "@/lib/auth/super-admin-mfa";
+
 import {
   cleanupBrowserUat,
   prepareBrowserUat,
   type BrowserUatFixture,
   uatEmail,
 } from "./fixtures";
+import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 
 let fixture: BrowserUatFixture;
 let manifestPath: string;
@@ -156,6 +159,14 @@ test.describe
       .fill(uatEmail("superadmin", fixture.runId));
     await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.getByTestId("login-mfa-step")).toBeVisible();
+    await page
+      .getByLabel("Authenticator or recovery code")
+      .fill(generateTotpCode(UAT_SUPER_ADMIN_MFA_SECRET));
+    await page
+      .getByTestId("login-mfa-step")
+      .locator('button[type="submit"]')
+      .click();
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
 
     await page.goto("/businesses/new");
