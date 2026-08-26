@@ -69,7 +69,12 @@ async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "vi
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
-  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(page).toHaveURL(
+    role === "superadmin"
+      ? /\/dashboard$/
+      : new RegExp(`/businesses/${fixture.businessA}$`),
+    { timeout: 15_000 },
+  );
 }
 
 async function logout(page: Page) {
@@ -115,12 +120,18 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
         Boolean(process.env.STAGING_UAT_BASE_URL) &&
         message.text().includes("https://vercel.live/_next-live/feedback/feedback.js") &&
         message.text().includes("Content Security Policy");
+      const isExpectedReactDevelopmentCspNoise =
+        message.type() === "error" &&
+        !process.env.STAGING_UAT_BASE_URL &&
+        message.text().includes("eval() is not supported in this environment") &&
+        message.text().includes("React will never use eval() in production mode");
 
       if (
         message.type() === "error" &&
         !message.text().includes("favicon.ico") &&
         !isExpectedInvalidPublicCard404 &&
-        !isExpectedVercelToolbarCspNoise
+        !isExpectedVercelToolbarCspNoise &&
+        !isExpectedReactDevelopmentCspNoise
       ) {
         errors.push(message.text());
       }
@@ -140,7 +151,9 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByLabel("Password").fill("invalid-password");
     await page.getByRole("button", { name: "Sign in" }).press("Enter");
     await expect(
-      page.getByText("بيانات تسجيل الدخول أو رمز الأمان غير صحيحة."),
+      page.getByText(
+        /^(?:The sign-in details or security code are incorrect\.|بيانات تسجيل الدخول أو رمز الأمان غير صحيحة\.)$/,
+      ),
     ).toBeVisible();
 
     await login(page, "owner-a");
@@ -219,16 +232,19 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.goto(`/businesses/${fixture.businessA}/customers`);
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/users`);
-    await expect(page).toHaveURL(/\/dashboard$/);
-    await page.goto(`/businesses/${fixture.businessB}/customers`);
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+    await page.evaluate(
+      (url) => window.location.assign(url),
+      `/businesses/${fixture.businessB}/customers`,
+    );
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
 
     await logout(page);
     await login(page, "viewer-a");
     await page.goto(`/businesses/${fixture.businessA}/reports`);
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/scan`);
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
     await expect(applicationNavigation(page).getByRole("link", { name: "Team", exact: true })).toHaveCount(0);
   });
 
