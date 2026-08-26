@@ -14,6 +14,7 @@ import {
 } from "@/lib/app-shell-navigation";
 import { icons } from "@/components/shell-icons";
 import type { ExperienceMode } from "@/lib/experience-mode";
+import { platformBrand } from "@/lib/platform-brand";
 
 type Props = {
   open: boolean;
@@ -61,7 +62,7 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
     <button type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="fixed inset-0 z-[80] cursor-default bg-foreground/60 lg:hidden" />
     <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className="lf-nav-sidebar fixed inset-y-0 start-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e bg-surface shadow-[var(--lf-shadow-overlay)] lg:hidden">
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <div><p className="font-black text-foreground">LoyalFlow</p><p className="text-xs text-foreground-subtle">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p></div>
+        <div><p className="font-black text-foreground">{platformBrand.name}</p><p className="text-xs text-foreground-subtle">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p></div>
         <button ref={closeRef} type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] text-foreground-muted hover:bg-surface-subtle"><X aria-hidden="true" /></button>
       </header>
       {business && businesses.length > 1 && <section aria-labelledby="mobile-business-switcher-title" className="shrink-0 border-b border-border px-4 py-3">

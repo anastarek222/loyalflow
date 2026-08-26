@@ -28,6 +28,7 @@ import {
   type ShellUser,
 } from "@/lib/app-shell-navigation";
 import type { ExperienceMode } from "@/lib/experience-mode";
+import { platformBrand } from "@/lib/platform-brand";
 
 type Props = {
   language: "AR" | "EN";
@@ -93,11 +94,11 @@ export default function AppSidebar({
           className="flex items-center gap-3 rounded-[var(--lf-radius-input)] px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
         >
           <span className="lf-brand-mark flex size-10 items-center justify-center rounded-[var(--lf-radius-md)] text-lg font-black text-primary-foreground shadow-sm">
-            L
+            {platformBrand.iconMark}
           </span>
           <span>
             <span className="block text-base font-black tracking-[-0.02em] text-foreground">
-              LoyalFlow
+              {platformBrand.name}
             </span>
             <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-subtle">
               {platformWorkspace
@@ -189,7 +190,7 @@ export default function AppSidebar({
         ))}
       </nav>
       <div className="mx-5 border-t border-border/80 py-4 text-[11px] font-semibold text-foreground-subtle">
-        LoyalFlow ·{" "}
+        {platformBrand.name} ·{" "}
         {platformWorkspace
           ? language === "AR"
             ? "إدارة منصة محمية"

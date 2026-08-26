@@ -4,6 +4,7 @@ import {
   sendResendAuthEmail,
 } from "@/lib/auth/resend-email-delivery";
 import { getCanonicalPublicAppUrl } from "@/lib/public-app-url";
+import { platformBrand } from "@/lib/platform-brand";
 
 export class OwnerInvitationEmailError extends Error {
   constructor(public readonly reason: "NOT_CONFIGURED" | "DELIVERY_FAILED") {
@@ -22,13 +23,13 @@ export async function sendOwnerInvitationEmail(input: {
   try {
     await sendResendAuthEmail({
       to: input.email,
-      subject: "You’re invited to LoyalFlow",
+      subject: `You’re invited to ${platformBrand.name}`,
       text:
-        `You have been invited to create your LoyalFlow owner account.\n\n` +
+        `You have been invited to create your ${platformBrand.name} owner account.\n\n` +
         `Accept invitation: ${invitationLink}\n\n` +
         `This link expires in 24 hours.`,
       html:
-        `<p>You have been invited to create your LoyalFlow owner account.</p>` +
+        `<p>You have been invited to create your ${platformBrand.name} owner account.</p>` +
         `<p><a href="${invitationLink}">Accept invitation</a></p>` +
         `<p>This link expires in 24 hours.</p>`,
       idempotencyKey: createAuthEmailIdempotencyKey({
