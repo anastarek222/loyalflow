@@ -16,7 +16,8 @@ test("Contact provides truthful beta access paths without invented channels", ()
   assert.match(page, /href: "\/accept-owner-invitation"/);
   assert.match(page, /<MarketingHeader/);
   assert.match(page, /<MarketingFooter locale=\{locale\} \/>/);
-  assert.doesNotMatch(page, /mailto:|wa\.me|<form/i);
+  assert.match(page, /getPublicSupportChannels\(\)/);
+  assert.doesNotMatch(page, /<form/i);
 });
 
 test("Contact is discoverable from navigation, footer, and sitemap", () => {

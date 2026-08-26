@@ -4,8 +4,17 @@ import { translate, type MessageKey } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { getPublicMarketingNavigation } from "@/lib/marketing/public-navigation";
 import { getMarketingRequestLocale } from "@/lib/marketing/request-locale";
+import { getPublicSupportChannels } from "@/lib/marketing/public-support-channels";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
-import { ArrowUpRight, Building2, KeyRound, MailCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  Building2,
+  KeyRound,
+  Mail,
+  MailCheck,
+  MessageCircle,
+  Phone,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -27,6 +36,21 @@ export default async function ContactPage() {
   const locale = await getMarketingRequestLocale();
   const direction = getLocaleDirection(locale);
   const copy = (key: MessageKey) => translate(locale, key);
+  const supportChannels = getPublicSupportChannels();
+  const supportPresentation = {
+    email: {
+      icon: Mail,
+      label: "marketing.contact.emailLabel",
+    },
+    whatsapp: {
+      icon: MessageCircle,
+      label: "marketing.contact.whatsappLabel",
+    },
+    phone: {
+      icon: Phone,
+      label: "marketing.contact.phoneLabel",
+    },
+  } as const;
   const paths = [
     {
       href: "/get-started",
@@ -106,14 +130,59 @@ export default async function ContactPage() {
           ))}
         </div>
 
-        <aside className="mx-auto mt-6 w-full max-w-6xl rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary/5 px-5 py-6 sm:px-8">
-          <h2 className="font-black">
-            {copy("marketing.contact.noticeTitle")}
-          </h2>
-          <p className="mt-2 max-w-4xl text-sm leading-7 text-foreground-muted">
-            {copy("marketing.contact.noticeBody")}
-          </p>
-        </aside>
+        {supportChannels.length > 0 ? (
+          <section
+            className="mx-auto mt-10 w-full max-w-6xl"
+            aria-labelledby="support-channels-title"
+          >
+            <h2 id="support-channels-title" className="text-2xl font-black">
+              {copy("marketing.contact.supportTitle")}
+            </h2>
+            <p className="mt-2 text-sm leading-7 text-foreground-muted">
+              {copy("marketing.contact.supportBody")}
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {supportChannels.map((channel) => {
+                const presentation = supportPresentation[channel.kind];
+                const Icon = presentation.icon;
+                const external = channel.kind === "whatsapp";
+
+                return (
+                  <a
+                    key={channel.kind}
+                    href={channel.href}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noreferrer" : undefined}
+                    className="flex min-h-20 items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-5 py-4 shadow-sm transition hover:border-primary/40 hover:text-primary"
+                  >
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Icon size={21} aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-black">
+                        {copy(presentation.label)}
+                      </span>
+                      <span className="mt-1 block truncate text-sm text-foreground-muted">
+                        {channel.displayValue}
+                      </span>
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        {supportChannels.length === 0 ? (
+          <aside className="mx-auto mt-6 w-full max-w-6xl rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary/5 px-5 py-6 sm:px-8">
+            <h2 className="font-black">
+              {copy("marketing.contact.noticeTitle")}
+            </h2>
+            <p className="mt-2 max-w-4xl text-sm leading-7 text-foreground-muted">
+              {copy("marketing.contact.noticeBody")}
+            </p>
+          </aside>
+        ) : null}
       </section>
 
       <MarketingFooter locale={locale} />

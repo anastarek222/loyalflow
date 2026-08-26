@@ -204,6 +204,12 @@ export const marketingMessagesAr = {
   "marketing.contact.invitationBody":
     "استخدم مسار الدعوة الآمن إذا وصلك رابط إعداد حساب المالك.",
   "marketing.contact.invitationCta": "قبول الدعوة",
+  "marketing.contact.supportTitle": "قنوات الدعم المباشر",
+  "marketing.contact.supportBody":
+    "استخدم أي قناة منشورة بالأسفل للمساعدة في الإعداد والحساب.",
+  "marketing.contact.emailLabel": "الدعم عبر البريد",
+  "marketing.contact.whatsappLabel": "واتساب",
+  "marketing.contact.phoneLabel": "الهاتف",
   "marketing.contact.noticeTitle": "نظام الدعم الحالي في المرحلة التجريبية",
   "marketing.contact.noticeBody":
     "يظل مسار الإعداد أو الدعوة المعتمد هو المرجع الأساسي حتى اعتماد قنوات البريد والهاتف وواتساب العامة.",
