@@ -218,6 +218,12 @@ export const marketingMessagesEn = {
   "marketing.contact.invitationBody":
     "Use the secure invitation flow if you received an owner setup link.",
   "marketing.contact.invitationCta": "Accept invitation",
+  "marketing.contact.supportTitle": "Direct support channels",
+  "marketing.contact.supportBody":
+    "Use any published channel below for setup and account support.",
+  "marketing.contact.emailLabel": "Email support",
+  "marketing.contact.whatsappLabel": "WhatsApp",
+  "marketing.contact.phoneLabel": "Phone",
   "marketing.contact.noticeTitle": "Current beta support process",
   "marketing.contact.noticeBody":
     "Your approved setup or invitation path remains the source of truth while public email, phone, and WhatsApp channels are finalized.",
