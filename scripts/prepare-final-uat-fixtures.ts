@@ -68,7 +68,15 @@ function uatBusinessUserEmails(run: string) {
     "owner-b",
     "owner-sales",
     "inactive-owner",
+    "pending-owner",
   ].map((role) => `lf-uat-final-${role}-${run}@example.test`));
+}
+
+function ownerOnboardingBusiness(run: string) {
+  return {
+    name: `${BUSINESS_NAME_PREFIX}O ${run}`,
+    slug: `loyalflow-final-uat-o-${run}`,
+  } as const;
 }
 
 function assertSafeRunId(value: string) {
@@ -150,13 +158,18 @@ async function cleanup(run: string) {
 
   const businesses = await prisma.business.findMany({
     where: {
-      slug: {
-        startsWith: PREFIX,
-        endsWith: `-${run}`,
-      },
       name: {
         startsWith: BUSINESS_NAME_PREFIX,
       },
+      OR: [
+        {
+          slug: {
+            startsWith: PREFIX,
+            endsWith: `-${run}`,
+          },
+        },
+        { slug: ownerOnboardingBusiness(run).slug },
+      ],
     },
     select: { id: true },
   });

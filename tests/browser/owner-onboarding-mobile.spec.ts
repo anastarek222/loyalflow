@@ -10,7 +10,8 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
-test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () => {
+test.describe
+  .serial("Owner onboarding mobile transition @owner-onboarding", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
     fixture = prepared.fixture;
@@ -23,9 +24,10 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     }
   });
 
-  test("valid Step 1 visibly advances and closes the country selector", async ({
+  test("pending Owner completes setup, launches, and re-enters the one Business directly", async ({
     page,
   }) => {
+    test.setTimeout(120_000);
     const diagnostics: string[] = [];
     page.on("console", (message) => {
       if (message.type() === "debug") diagnostics.push(message.text());
@@ -35,9 +37,7 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     await page
       .getByLabel("Email address")
       .fill(uatEmail("pending-owner", fixture.runId));
-    await page
-      .getByLabel("Password")
-      .fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
 
@@ -52,9 +52,9 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     await country.fill("EG");
-    await expect(page.locator('input[type="hidden"][name="country"]')).toHaveValue(
-      "Egypt",
-    );
+    await expect(
+      page.locator('input[type="hidden"][name="country"]'),
+    ).toHaveValue("Egypt");
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     await page.getByPlaceholder("Business name").fill("");
@@ -64,7 +64,9 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     ).toBeVisible();
     await expect(form).toHaveAttribute("data-owner-step", "1");
 
-    await page.getByPlaceholder("Business name").fill("Mobile Safari Studio");
+    const businessName = `LoyalFlow final UAT O ${fixture.runId}`;
+    const businessSlug = `loyalflow-final-uat-o-${fixture.runId}`;
+    await page.getByPlaceholder("Business name").fill(businessName);
     await country.click();
     await expect(page.getByRole("listbox")).toBeVisible();
     await page.getByRole("button", { name: "Next", exact: true }).click();
@@ -97,5 +99,41 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     ]) {
       expect(diagnostics).toContain(checkpoint);
     }
+
+    // Remote exact-SHA UAT reuses one prepared manifest across Chromium and
+    // WebKit. Keep that shared runtime check mutation-free; the disposable PR
+    // database executes and cleans the complete launch receipt below.
+    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;
+
+    for (const step of [3, 4, 5, 6]) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+      await expect(form).toHaveAttribute("data-owner-step", String(step));
+    }
+
+    await page.getByRole("button", { name: "Launch", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+      timeout: 30_000,
+    });
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
+
+    await page
+      .getByRole("button", { name: "Account menu", exact: true })
+      .click();
+    await Promise.all([
+      page.waitForURL(/\/login$/),
+      page.getByRole("button", { name: "Log out", exact: true }).click(),
+    ]);
+
+    await page
+      .getByLabel("Email address")
+      .fill(uatEmail("pending-owner", fixture.runId));
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+      timeout: 20_000,
+    });
+    await expect(page).not.toHaveURL(/\/onboarding$/);
   });
 });
