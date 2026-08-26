@@ -36,6 +36,7 @@ type PublicCardProjectionInput = {
     name: string;
     logoUrl?: string | null;
     primaryColor: string;
+    secondaryColor?: string | null;
     themePreset?: string | null;
     phone?: string | null;
     website?: string | null;
@@ -55,8 +56,11 @@ type PublicCardProjectionInput = {
   };
 };
 
-export function safePublicCardColor(value: string | null | undefined) {
-  return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#2563eb";
+export function safePublicCardColor(
+  value: string | null | undefined,
+  fallback = "#2563eb",
+) {
+  return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
 }
 
 function optionalText(value: string | null | undefined) {
@@ -97,6 +101,10 @@ export function buildPublicCardProjection(
       name: input.business.name.trim(),
       logoUrl: optionalText(input.business.logoUrl),
       primaryColor: safePublicCardColor(input.business.primaryColor),
+      secondaryColor: safePublicCardColor(
+        input.business.secondaryColor,
+        "#FFFFFF",
+      ),
       themePreset: input.business.themePreset === "DARK" ? "DARK" : "DEFAULT",
       phone: optionalText(input.business.phone),
       website: optionalText(input.business.website),

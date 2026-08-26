@@ -268,6 +268,7 @@ export default async function PublicCardPage({
       name: business.name,
       logoUrl: business.logoUrl,
       primaryColor: theme.primaryColor,
+      secondaryColor: theme.secondaryColor,
       themePreset: business.themePreset,
       phone: business.contactPhone,
       website: business.website,
@@ -385,6 +386,7 @@ export default async function PublicCardPage({
           businessName={card.business.name}
           logoUrl={card.business.logoUrl}
           primaryColor={card.business.primaryColor}
+          secondaryColor={card.business.secondaryColor}
           themePreset={card.business.themePreset}
           customerName={card.membership.customerName}
           customerId={card.membership.customerId}

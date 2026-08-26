@@ -20,6 +20,7 @@ const programPage = source("app/businesses/[slug]/program/page.tsx");
 test("TC5 Card design input contract preserves the existing bounded design vocabulary", () => {
   assert.match(input, /cardDesignMode: z\.enum\(\["STANDARD", "CUSTOM"\]\)/);
   assert.match(input, /primaryColor: z\.string\(\)\.regex/);
+  assert.match(input, /secondaryColor: z\.string\(\)\.regex/);
   assert.match(input, /themePreset: z\.enum\(\["DEFAULT", "DARK"\]\)/);
   for (const category of [
     "BARBER",

@@ -54,6 +54,7 @@ type ReviewData = {
   rewardThreshold: string;
   earnAmount: string;
   primaryColor: string;
+  secondaryColor: string;
   themePreset: string;
   logoPreview: string;
   standardCardArtworkEnabled: boolean;
@@ -229,6 +230,7 @@ function getCopy(language: Language) {
         earn: "قيمة الكسب",
         theme: "السمة",
         primary: "اللون الأساسي",
+        secondary: "اللون الثانوي",
         logo: "الشعار",
         configured: "مضبوط",
         notSet: "غير مضبوط",
@@ -337,6 +339,7 @@ function getCopy(language: Language) {
         earn: "Earn amount",
         theme: "Theme",
         primary: "Primary",
+        secondary: "Secondary",
         logo: "Logo",
         configured: "Configured",
         notSet: "Not set",
@@ -418,6 +421,7 @@ function getReviewData(formData: FormData, logoPreview: string): ReviewData {
     rewardThreshold: getValue(formData, "rewardThreshold"),
     earnAmount: getValue(formData, "earnAmount"),
     primaryColor: getValue(formData, "primaryColor"),
+    secondaryColor: getValue(formData, "secondaryColor"),
     themePreset: getValue(formData, "themePreset"),
     logoPreview,
     standardCardArtworkEnabled:
@@ -458,6 +462,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
     rewardName: string;
     rewardThreshold: number;
     primaryColor?: string;
+    secondaryColor?: string;
     themePreset?: string;
     artworkEnabled?: boolean;
     artworkCategory?: string;
@@ -1125,6 +1130,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
             allowCustom
             initial={{
               primaryColor: "#B98A4B",
+              secondaryColor: "#FFFFFF",
               themePreset: "DEFAULT",
               artworkEnabled: true,
               artworkCategory: "OTHER",
@@ -1138,7 +1144,6 @@ export default function BusinessSetupWizard({ action, language }: Props) {
 
           <input type="hidden" name="logoUrl" value="" />
           <input type="hidden" name="cardStyle" value="CLASSIC" />
-          <input type="hidden" name="secondaryColor" value="#FFFFFF" />
           <input type="hidden" name="fontFamily" value="INTER" />
         </section>
       </div>
@@ -1219,6 +1224,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
                 rows={[
                   [copy.theme, localizedLabels.theme[reviewData.themePreset as keyof typeof localizedLabels.theme] ?? reviewData.themePreset],
                   [copy.primary, reviewData.primaryColor],
+                  [copy.secondary, reviewData.secondaryColor],
                   [copy.logo, reviewData.logoPreview ? copy.configured : copy.notSet],
                   [copy.design, reviewData.cardDesignMode === "CUSTOM" ? copy.customCard : copy.standardCard],
                   [copy.artwork, reviewData.standardCardArtworkEnabled ? reviewData.standardCardArtworkCategory : copy.disabled],
