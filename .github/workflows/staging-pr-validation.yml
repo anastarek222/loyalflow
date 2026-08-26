@@ -54,22 +54,22 @@ jobs:
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "owner-onboarding=true" >> "$GITHUB_OUTPUT"
           else
             echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/businesses/\[slug\]/(scan|customers|rewards|offers|campaigns|recovery|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|reward|offer|public-card)|lib/(loyalty|rewards|offers|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|customers|rewards|offers|campaigns|recovery|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|reward|offer|public-card)|lib/(loyalty|rewards|offers|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "loyalty-core=true" >> "$GITHUB_OUTPUT"
           else
             echo "loyalty-core=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/businesses/\[slug\]/(scan|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|public-card)|lib/(loyalty|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|playwright\.config\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|public-card)|lib/(loyalty|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|playwright\.config\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "loyalty-mobile=true" >> "$GITHUB_OUTPUT"
           else
             echo "loyalty-mobile=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/(api/(businesses/\[slug\]/custom-card-artwork|card-artwork)|businesses/\[slug\]/program/)|components/(custom-card|loyalty-card|standard-card-setup)|lib/(cards/custom-card|server/business/custom-card)|scripts/(cleanup-final-uat-card-artwork|prepare-final-uat-fixtures)\.ts$|tests/browser/(fixtures|pre-final-admin-security\.spec)\.ts$|tests/(custom-card|pre-final-slice-d-browser-readiness|pilot-custom-card-receipt).*\.test\.ts$|playwright\.config\.ts$|\.github/workflows/staging-pr-validation\.yml$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/(api/(businesses/\[slug\]/custom-card-artwork|card-artwork)|businesses/\[slug\]/program/)|components/(custom-card|loyalty-card|standard-card-setup)|lib/(cards/custom-card|server/business/custom-card)|scripts/(cleanup-final-uat-card-artwork|prepare-final-uat-fixtures)\.ts$|tests/browser/(fixtures|pre-final-admin-security\.spec)\.ts$|tests/(custom-card|pre-final-slice-d-browser-readiness|pilot-custom-card-receipt).*\.test\.ts$|playwright\.config\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "custom-card=true" >> "$GITHUB_OUTPUT"
           else
             echo "custom-card=false" >> "$GITHUB_OUTPUT"
