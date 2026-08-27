@@ -194,7 +194,7 @@ test("Business logo upload shares one policy and preserves full-frame presentati
   assert.match(wizard, /BusinessLogoCropField/);
   assert.match(cropField, /BUSINESS_LOGO_ACCEPT/);
   assert.match(cropField, /BUSINESS_LOGO_MAX_BYTES/);
-  assert.match(cropField, /isBusinessLogoMimeType/);
+  assert.match(cropField, /isBusinessLogoUploadAllowed/);
   assert.doesNotMatch(cropField, /file\.size > 500 \* 1024/);
   assert.doesNotMatch(cropField, /\["image\/png", "image\/jpeg", "image\/webp"\]\.includes/);
 
