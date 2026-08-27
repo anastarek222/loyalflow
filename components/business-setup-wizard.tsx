@@ -1132,7 +1132,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
               artworkCategory: "OTHER",
               designMode: "STANDARD",
             }}
-            preview={{ ...cardPreview, logoUrl: logoPreview }}
+            preview={cardPreview}
             onPreviewChange={(next) =>
               setCardPreview((current) => ({ ...current, ...next }))
             }

@@ -54,6 +54,11 @@ test("Add Business cannot review or submit an unconfirmed logo crop", () => {
   assert.match(wizard, /logoCropPending/);
   assert.match(wizard, /step === 4 && logoCropPending/);
   assert.match(wizard, /onPendingChange=\{setLogoCropPending\}/);
+  assert.match(wizard, /preview=\{cardPreview\}/);
+  assert.doesNotMatch(
+    wizard,
+    /preview=\{\{ \.\.\.cardPreview, logoUrl: logoPreview \}\}/,
+  );
   assert.doesNotMatch(wizard, /new FileReader\(\)/);
 
   assert.match(action, /formData\.get\("logoCropConfirmed"\)/);
