@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,123 +18,16 @@ jobs:
           fetch-depth: 0
 
       - name: Apply bounded Add Business logo patch
-        shell: bash
+        env:
+          PATCH_SCRIPT_B64: ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQoKcGF0aCA9IFBhdGgoImNvbXBvbmVudHMvYnVzaW5lc3Mtc2V0dXAtd2l6YXJkLnRzeCIpCnRleHQgPSBwYXRoLnJlYWRfdGV4dCgpCgpkZWYgcmVwbGFjZV9vbmNlKG9sZDogc3RyLCBuZXc6IHN0ciwgbGFiZWw6IHN0cik6CiAgICBnbG9iYWwgdGV4dAogICAgY291bnQgPSB0ZXh0LmNvdW50KG9sZCkKICAgIGlmIGNvdW50ICE9IDE6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdChmIntsYWJlbH06IGV4cGVjdGVkIDEgbWF0Y2gsIGZvdW5kIHtjb3VudH0iKQogICAgdGV4dCA9IHRleHQucmVwbGFjZShvbGQsIG5ldywgMSkKCnJlcGxhY2Vfb25jZSgKICAgICdpbXBvcnQgeyBCdXNpbmVzc0xvZ29JbWFnZSB9IGZyb20gIkAvY29tcG9uZW50cy9idXNpbmVzcy1sb2dvLWltYWdlIjtcbicsCiAgICAnaW1wb3J0IHsgQnVzaW5lc3NMb2dvSW1hZ2UgfSBmcm9tICJAL2NvbXBvbmVudHMvYnVzaW5lc3MtbG9nby1pbWFnZSI7XG4nCiAgICAnaW1wb3J0IHsgQnVzaW5lc3NMb2dvQ3JvcEZpZWxkIH0gZnJvbSAiQC9jb21wb25lbnRzL2J1c2luZXNzLWxvZ28tY3JvcC1maWVsZCI7XG4nLAogICAgImxvZ28gY3JvcCBpbXBvcnQiLAopCgpyZXBsYWNlX29uY2UoCiAgICAnICBjb25zdCBbbG9nb1ByZXZpZXcsIHNldExvZ29QcmV2aWV3XSA9IHVzZVN0YXRlKCIiKTtcbicsCiAgICAnICBjb25zdCBbbG9nb1ByZXZpZXcsIHNldExvZ29QcmV2aWV3XSA9IHVzZVN0YXRlKCIiKTtcbicKICAgICcgIGNvbnN0IFtsb2dvQ3JvcFBlbmRpbmcsIHNldExvZ29Dcm9wUGVuZGluZ10gPSB1c2VTdGF0ZShmYWxzZSk7XG4nLAogICAgImxvZ28gcGVuZGluZyBzdGF0ZSIsCikKCnJlcGxhY2Vfb25jZSgKICAgICcgIGZ1bmN0aW9uIGdvTmV4dCgpIHtcbicKICAgICcgICAgaWYgKCFmb3JtUmVmLmN1cnJlbnQgfHwgc3RlcCA+IDQpIHJldHVybjtcbicsCiAgICAnICBmdW5jdGlvbiBnb05leHQoKSB7XG4nCiAgICAnICAgIGlmICghZm9ybVJlZi5jdXJyZW50IHx8IHN0ZXAgPiA0KSByZXR1cm47XG4nCiAgICAnICAgIGlmIChzdGVwID09PSA0ICYmIGxvZ29Dcm9wUGVuZGluZykge1xuJwogICAgJyAgICAgIHNldFZhbGlkYXRpb25FcnJvcihcbicKICAgICcgICAgICAgIGxhbmd1YWdlID09PSAiQVIiXG4nCiAgICAnICAgICAgICAgID8gItij2YPYryDZgti1INin2YTYtNi52KfYsSDZgtio2YQg2KfZhNin2YbYqtmC2KfZhCDYpdmE2Ykg2KfZhNmF2LHYp9is2LnYqS4iXG4nCiAgICAnICAgICAgICAgIDogIkNvbmZpcm0gdGhlIGxvZ28gY3JvcCBiZWZvcmUgY29udGludWluZyB0byByZXZpZXcuIixcbicKICAgICcgICAgICApO1xuJwogICAgJyAgICAgIHJldHVybjtcbicKICAgICcgICAgfVxuJywKICAgICJyZXZpZXcgY3JvcCBnYXRlIiwKKQoKc3VibWl0X25lZWRsZSA9ICgKICAgICcgICAgICAgIGlmIChzdWJtaXNzaW9uTG9ja1JlZi5jdXJyZW50KSB7XG4nCiAgICAnICAgICAgICAgIGV2ZW50LnByZXZlbnREZWZhdWx0KCk7XG4nCiAgICAnICAgICAgICAgIHJldHVybjtcbicKICAgICcgICAgICAgIH1cbicKICAgICcgICAgICAgIGNvbnN0IGRhdGEgPSBuZXcgRm9ybURhdGEoZXZlbnQuY3VycmVudFRhcmdldCk7XG4nCikKc3VibWl0X3JlcGxhY2VtZW50ID0gKAogICAgJyAgICAgICAgaWYgKHN1Ym1pc3Npb25Mb2NrUmVmLmN1cnJlbnQpIHtcbicKICAgICcgICAgICAgICAgZXZlbnQucHJldmVudERlZmF1bHQoKTtcbicKICAgICcgICAgICAgICAgcmV0dXJuO1xuJwogICAgJyAgICAgICAgfVxuJwogICAgJyAgICAgICAgaWYgKGxvZ29Dcm9wUGVuZGluZykge1xuJwogICAgJyAgICAgICAgICBldmVudC5wcmV2ZW50RGVmYXVsdCgpO1xuJwogICAgJyAgICAgICAgICBzZXRWYWxpZGF0aW9uRXJyb3IoXG4nCiAgICAnICAgICAgICAgICAgbGFuZ3VhZ2UgPT09ICJBUiJcbicKICAgICcgICAgICAgICAgICAgID8gItij2YPYryDZgti1INin2YTYtNi52KfYsSDZgtio2YQg2KXZhti02KfYoSDYp9mE2YbYtNin2LcuIlxuJwogICAgJyAgICAgICAgICAgICAgOiAiQ29uZmlybSB0aGUgbG9nbyBjcm9wIGJlZm9yZSBjcmVhdGluZyB0aGUgYnVzaW5lc3MuIixcbicKICAgICcgICAgICAgICAgKTtcbicKICAgICcgICAgICAgICAgc2V0U3RlcCg0KTtcbicKICAgICcgICAgICAgICAgcmV0dXJuO1xuJwogICAgJyAgICAgICAgfVxuJwogICAgJyAgICAgICAgY29uc3QgZGF0YSA9IG5ldyBGb3JtRGF0YShldmVudC5jdXJyZW50VGFyZ2V0KTtcbicKKQpyZXBsYWNlX29uY2Uoc3VibWl0X25lZWRsZSwgc3VibWl0X3JlcGxhY2VtZW50LCAic3VibWl0IGNyb3AgZ2F0ZSIpCgpwYXR0ZXJuID0gcmUuY29tcGlsZSgKICAgIHInICAgICAgICAgIDxkaXZcbicKICAgIHInICAgICAgICAgICAgZGF0YS10ZXN0aWQ9ImJ1c2luZXNzLWxvZ28tdXBsb2FkIicKICAgIHInLio/JwogICAgcicgICAgICAgICAgPC9kaXY+XG5cbicKICAgIHInKD89ICAgICAgICAgIDxTdGFuZGFyZENhcmRTZXR1cCknLAogICAgcmUuUywKKQpyZXBsYWNlbWVudCA9ICcnJyAgICAgICAgICA8QnVzaW5lc3NMb2dvQ3JvcEZpZWxkCiAgICAgICAgICAgIGxhbmd1YWdlPXtsYW5ndWFnZX0KICAgICAgICAgICAgdmFsdWU9e2xvZ29QcmV2aWV3fQogICAgICAgICAgICBhbHQ9e2NvcHkubG9nb0FsdH0KICAgICAgICAgICAgb25DaGFuZ2U9eyhuZXh0TG9nbykgPT4gewogICAgICAgICAgICAgIHNldExvZ29QcmV2aWV3KG5leHRMb2dvKTsKICAgICAgICAgICAgICBzZXRDYXJkUHJldmlldygoY3VycmVudCkgPT4gKHsgLi4uY3VycmVudCwgbG9nb1VybDogbmV4dExvZ28gfSkpOwogICAgICAgICAgICB9fQogICAgICAgICAgICBvblBlbmRpbmdDaGFuZ2U9e3NldExvZ29Dcm9wUGVuZGluZ30KICAgICAgICAgICAgb25FcnJvcj17c2V0VmFsaWRhdGlvbkVycm9yfQogICAgICAgICAgLz4KCicnJwp0ZXh0LCBjb3VudCA9IHBhdHRlcm4uc3VihihyZXBsYWNlbWVudCwgdGV4dCwgY291bnQ9MSkKaWYgY291bnQgIT0gMToKICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJsb2dvIHVwbG9hZCBibG9jazogZXhwZWN0ZWQgMSBtYXRjaCwgZm91bmQge2NvdW50fSIpCgpmb3IgdG9rZW4gaW4gWwogICAgIkJ1c2luZXNzTG9nb0Nyb3BGaWVsZCIsCiAgICAibG9nb0Nyb3BQZW5kaW5nIiwKICAgICJzdGVwID09PSA0ICYmIGxvZ29Dcm9wUGVuZGluZyIsCiAgICAib25QZW5kaW5nQ2hhbmdlPXtzZXRMb2dvQ3JvcFBlbmRpbmd9IiwKXToKICAgIGlmIHRva2VuIG5vdCBpbiB0ZXh0OgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJtaXNzaW5nIHJlcXVpcmVkIHRva2VuOiB7dG9rZW59IikKCmlmICJuZXcgRmlsZVJlYWRlcigpIiBpbiB0ZXh0OgogICAgcmFpc2UgU3lzdGVtRXhpdCgibGVnYWN5IGRpcmVjdCBGaWxlUmVhZGVyIGxvZ28gZmxvdyBzdGlsbCBwcmVzZW50IikKCnBhdGgud3JpdGVfdGV4dCh0ZXh0KQo=
         run: |
-          python <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path("components/business-setup-wizard.tsx")
-          text = path.read_text()
-
-          def replace_once(old: str, new: str, label: str):
-              global text
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{label}: expected 1 match, found {count}")
-              text = text.replace(old, new, 1)
-
-          replace_once(
-              'import { BusinessLogoImage } from "@/components/business-logo-image";\n',
-              'import { BusinessLogoImage } from "@/components/business-logo-image";\n'
-              'import { BusinessLogoCropField } from "@/components/business-logo-crop-field";\n',
-              "logo crop import",
-          )
-
-          replace_once(
-              '  const [logoPreview, setLogoPreview] = useState("");\n',
-              '  const [logoPreview, setLogoPreview] = useState("");\n'
-              '  const [logoCropPending, setLogoCropPending] = useState(false);\n',
-              "logo pending state",
-          )
-
-          replace_once(
-              '  function goNext() {\n'
-              '    if (!formRef.current || step > 4) return;\n',
-              '  function goNext() {\n'
-              '    if (!formRef.current || step > 4) return;\n'
-              '    if (step === 4 && logoCropPending) {\n'
-              '      setValidationError(\n'
-              '        language === "AR"\n'
-              '          ? "أكد قص الشعار قبل الانتقال إلى المراجعة."\n'
-              '          : "Confirm the logo crop before continuing to review.",\n'
-              '      );\n'
-              '      return;\n'
-              '    }\n',
-              "review crop gate",
-          )
-
-          submit_needle = (
-              '        if (submissionLockRef.current) {\n'
-              '          event.preventDefault();\n'
-              '          return;\n'
-              '        }\n'
-              '        const data = new FormData(event.currentTarget);\n'
-          )
-          submit_replacement = (
-              '        if (submissionLockRef.current) {\n'
-              '          event.preventDefault();\n'
-              '          return;\n'
-              '        }\n'
-              '        if (logoCropPending) {\n'
-              '          event.preventDefault();\n'
-              '          setValidationError(\n'
-              '            language === "AR"\n'
-              '              ? "أكد قص الشعار قبل إنشاء النشاط."\n'
-              '              : "Confirm the logo crop before creating the business.",\n'
-              '          );\n'
-              '          setStep(4);\n'
-              '          return;\n'
-              '        }\n'
-              '        const data = new FormData(event.currentTarget);\n'
-          )
-          replace_once(submit_needle, submit_replacement, "submit crop gate")
-
-          pattern = re.compile(
-              r'          <div\n'
-              r'            data-testid="business-logo-upload"'
-              r'.*?'
-              r'          </div>\n\n'
-              r'(?=          <StandardCardSetup)',
-              re.S,
-          )
-          replacement = '''          <BusinessLogoCropField
-            language={language}
-            value={logoPreview}
-            alt={copy.logoAlt}
-            onChange={(nextLogo) => {
-              setLogoPreview(nextLogo);
-              setCardPreview((current) => ({ ...current, logoUrl: nextLogo }));
-            }}
-            onPendingChange={setLogoCropPending}
-            onError={setValidationError}
-          />
-
-'''
-          text, count = pattern.subn(replacement, text, count=1)
-          if count != 1:
-              raise SystemExit(f"logo upload block: expected 1 match, found {count}")
-
-          required = [
-              "BusinessLogoCropField",
-              "logoCropPending",
-              "step === 4 && logoCropPending",
-              "onPendingChange={setLogoCropPending}",
-          ]
-          for token in required:
-              if token not in text:
-                  raise SystemExit(f"missing required token: {token}")
-          if "new FileReader()" in text:
-              raise SystemExit("legacy direct FileReader logo flow still present")
-
-          path.write_text(text)
-          PY
+          printf '%s' "$PATCH_SCRIPT_B64" | base64 --decode > /tmp/apply-logo-crop.py
+          python /tmp/apply-logo-crop.py
 
       - name: Validate patch whitespace
         run: git diff --check
 
       - name: Commit bounded patch and remove helper workflow
-        shell: bash
         run: |
           rm .github/workflows/apply-business-logo-crop-contract.yml
           git config user.name "github-actions[bot]"
