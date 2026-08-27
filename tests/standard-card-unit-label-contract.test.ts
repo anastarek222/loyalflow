@@ -56,13 +56,14 @@ test("new loyalty rules reject unit labels that would need display truncation", 
   );
 });
 
-test("wizard unit-name inputs share the canonical Standard Card HTML limit", () => {
+test("wizard unit-name inputs share the canonical Standard Card grapheme limit", () => {
   const sharedInput = source("components/unit-label-input.tsx");
   assert.match(
     sharedInput,
-    /STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,[\s\S]*standardCardGraphemeLength,[\s\S]*from "@\/lib\/cards\/standard-card-text"/,
+    /STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,[\s\S]*standardCardGraphemeLength,[\s\S]*truncateStandardCardUnitLabel,[\s\S]*from "@\/lib\/cards\/standard-card-text"/,
   );
-  assert.match(sharedInput, /maxLength=\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/);
+  assert.match(sharedInput, /truncateStandardCardUnitLabel\(event\.currentTarget\.value\)/);
+  assert.doesNotMatch(sharedInput, /maxLength=/);
   assert.match(sharedInput, /\{count\}\/\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/);
 
   for (const wizard of [
