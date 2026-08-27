@@ -53,7 +53,7 @@ test("TC5 bounded Card design action re-establishes auth tenant and lifecycle au
   assert.match(action, /BUSINESS_LOGO_MAX_BYTES/);
   assert.match(
     action,
-    /imageFileToDataUrl\(logoFile, BUSINESS_LOGO_MAX_BYTES\)/,
+    /imageFileToDataUrl\(\s*logoFile,\s*BUSINESS_LOGO_MAX_BYTES\s*,?\s*\)/,
   );
 });
 
