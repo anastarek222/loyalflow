@@ -17,28 +17,13 @@ jobs:
           ref: fix/business-logo-fit-crop-confirmation
           fetch-depth: 0
 
-      - name: Align pending preview and formatting
+      - name: Align pending preview contract
         run: |
           python - <<'PY'
           from pathlib import Path
 
           wizard_path = Path('components/business-setup-wizard.tsx')
           wizard = wizard_path.read_text()
-
-          old_warning = '''          setValidationError(
-          language === "AR"
-            ? copy.validation
-              : "Confirm the square logo preview before creating the business.",
-          );'''
-          new_warning = '''          setValidationError(
-            language === "AR"
-              ? copy.validation
-              : "Confirm the square logo preview before creating the business.",
-          );'''
-          if wizard.count(old_warning) != 1:
-              raise SystemExit('expected exactly one submit warning formatting block')
-          wizard = wizard.replace(old_warning, new_warning, 1)
-
           old_preview = '            preview={{ ...cardPreview, logoUrl: logoPreview }}'
           new_preview = '            preview={cardPreview}'
           if wizard.count(old_preview) != 1:
@@ -48,22 +33,26 @@ jobs:
 
           test_path = Path('tests/business-logo-crop-fit.test.ts')
           test = test_path.read_text()
-          needle = '  assert.match(wizard, /onPendingChange=\\{setLogoCropPending\\}/);\n'
+          anchor = '  assert.match(wizard, /onPendingChange=\\{setLogoCropPending\\}/);\n'
           addition = (
-              needle
+              anchor
               + '  assert.match(wizard, /preview=\\{cardPreview\\}/);\n'
-              + '  assert.doesNotMatch(wizard, /preview=\\{\\{ \\.\\.\\.cardPreview, logoUrl: logoPreview \\}\\}/);\n'
+              + '  assert.doesNotMatch(\n'
+              + '    wizard,\n'
+              + '    /preview=\\{\\{ \\.\\.\\.cardPreview, logoUrl: logoPreview \\}\\}/,\n'
+              + '  );\n'
           )
-          if test.count(needle) != 1:
-              raise SystemExit('expected one pending-change assertion')
-          test = test.replace(needle, addition, 1)
+          if 'assert.match(wizard, /preview=\\{cardPreview\\}/);' not in test:
+              if test.count(anchor) != 1:
+                  raise SystemExit('expected exactly one pending-change assertion')
+              test = test.replace(anchor, addition, 1)
           test_path.write_text(test)
           PY
 
       - name: Validate bounded refinement
         run: |
-          ! grep -q 'preventDfault' components/business-setup-wizard.tsx
           grep -q 'preview={cardPreview}' components/business-setup-wizard.tsx
+          ! grep -q 'preview={{ ...cardPreview, logoUrl: logoPreview }}' components/business-setup-wizard.tsx
           git diff --check
 
       - name: Commit refinement and remove helper
