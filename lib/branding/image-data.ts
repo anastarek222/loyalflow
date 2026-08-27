@@ -1,14 +1,11 @@
-const imageMimeTypes = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-] as const;
-
-type ImageMimeType = (typeof imageMimeTypes)[number];
+import {
+  isSupportedImageMimeType,
+  type SupportedImageMimeType,
+} from "@/lib/branding/image-policy";
 
 function matchesImageSignature(
   bytes: Buffer,
-  mimeType: ImageMimeType
+  mimeType: SupportedImageMimeType
 ) {
   if (mimeType === "image/png") {
     return bytes.length >= 8 && bytes.subarray(0, 8).equals(
@@ -24,10 +21,6 @@ function matchesImageSignature(
   return bytes.length >= 12 &&
     bytes.subarray(0, 4).equals(Buffer.from("RIFF")) &&
     bytes.subarray(8, 12).equals(Buffer.from("WEBP"));
-}
-
-function isImageMimeType(value: string): value is ImageMimeType {
-  return imageMimeTypes.includes(value as ImageMimeType);
 }
 
 /** Allows only remote image URLs that browser-rendered branding already supports. */
@@ -49,7 +42,7 @@ export async function imageFileToDataUrl(
   if (
     file.size <= 0 ||
     file.size > maximumBytes ||
-    !isImageMimeType(file.type)
+    !isSupportedImageMimeType(file.type)
   ) {
     return null;
   }
@@ -76,7 +69,7 @@ export function getSafeImageDataUrl(
 
   const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
 
-  if (!match || !isImageMimeType(match[1])) return null;
+  if (!match || !isSupportedImageMimeType(match[1])) return null;
 
   const bytes = Buffer.from(match[2], "base64");
 
