@@ -1,3 +1,5 @@
+import { OWNER_PUBLIC_IDENTITY } from "@/lib/marketing/owner-public-identity";
+
 type PublicSupportEnvironment = Readonly<{
   NEXT_PUBLIC_SUPPORT_EMAIL?: string;
   NEXT_PUBLIC_SUPPORT_WHATSAPP?: string;
@@ -30,9 +32,11 @@ export function getPublicSupportChannels(
   environment?: PublicSupportEnvironment,
 ): PublicSupportChannel[] {
   const source = environment ?? {
-    NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL,
+    NEXT_PUBLIC_SUPPORT_EMAIL:
+      process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? OWNER_PUBLIC_IDENTITY.support.email,
     NEXT_PUBLIC_SUPPORT_WHATSAPP: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP,
-    NEXT_PUBLIC_SUPPORT_PHONE: process.env.NEXT_PUBLIC_SUPPORT_PHONE,
+    NEXT_PUBLIC_SUPPORT_PHONE:
+      process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? OWNER_PUBLIC_IDENTITY.support.phone,
   };
   const channels: PublicSupportChannel[] = [];
   const email = normalizeEmail(source.NEXT_PUBLIC_SUPPORT_EMAIL);

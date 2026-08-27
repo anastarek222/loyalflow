@@ -1,3 +1,5 @@
+import { OWNER_PUBLIC_IDENTITY } from "@/lib/marketing/owner-public-identity";
+
 export const PUBLIC_SOCIAL_KINDS = [
   "instagram",
   "facebook",
@@ -70,9 +72,15 @@ export function getPublicSocialLinks(
   environment?: PublicSocialEnvironment,
 ): PublicSocialLink[] {
   const source = environment ?? {
-    NEXT_PUBLIC_SOCIAL_INSTAGRAM: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM,
-    NEXT_PUBLIC_SOCIAL_FACEBOOK: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK,
-    NEXT_PUBLIC_SOCIAL_LINKEDIN: process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN,
+    NEXT_PUBLIC_SOCIAL_INSTAGRAM:
+      process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM ??
+      OWNER_PUBLIC_IDENTITY.social.instagram,
+    NEXT_PUBLIC_SOCIAL_FACEBOOK:
+      process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK ??
+      OWNER_PUBLIC_IDENTITY.social.facebook,
+    NEXT_PUBLIC_SOCIAL_LINKEDIN:
+      process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN ??
+      OWNER_PUBLIC_IDENTITY.social.linkedin,
     NEXT_PUBLIC_SOCIAL_TIKTOK: process.env.NEXT_PUBLIC_SOCIAL_TIKTOK,
     NEXT_PUBLIC_SOCIAL_YOUTUBE: process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE,
   };
