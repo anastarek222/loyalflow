@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   diagnose:
-    name: Diagnose U13 desktop scenarios
+    name: Diagnose manager/viewer boundaries
     runs-on: ubuntu-latest
     timeout-minutes: 40
     services:
@@ -72,9 +72,9 @@ jobs:
       - name: Install Chromium for browser smoke
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run U13 desktop owner flow
-        run: pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "authentication, owner navigation"
+      - name: Run manager boundary
+        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "manager boundary"
 
-      - name: Run U13 desktop role boundaries
+      - name: Run viewer boundary
         if: success() || failure()
-        run: pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "manager and viewer"
+        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "viewer boundary"
