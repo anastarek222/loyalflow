@@ -100,6 +100,10 @@ export async function createBusinessAction(formData: FormData) {
   logServerEvent("BUSINESS_CREATE_ACTION_ENTERED", { creationAttemptId });
 
   const submittedLogoDataUrl = String(formData.get("logoDataUrl") ?? "");
+  const logoCropConfirmed = String(formData.get("logoCropConfirmed") ?? "");
+  if (submittedLogoDataUrl && logoCropConfirmed !== "true") {
+    redirect("/businesses?error=invalid");
+  }
   const uploadedLogoDataUrl = getSafeImageDataUrl(
     submittedLogoDataUrl,
     BUSINESS_LOGO_MAX_BYTES,

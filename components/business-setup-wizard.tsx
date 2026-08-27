@@ -4,13 +4,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { BusinessLogoImage } from "@/components/business-logo-image";
+import { BusinessLogoCropField } from "@/components/business-logo-crop-field";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
-import {
-  BUSINESS_LOGO_ACCEPT,
-  BUSINESS_LOGO_MAX_BYTES,
-  isBusinessLogoMimeType,
-} from "@/lib/branding/image-policy";
 import { getBusinessSetupValidationIssue } from "@/lib/business/setup-validation";
 import { CountrySelector } from "@/components/onboarding/country-selector";
 import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
@@ -451,6 +446,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
   const [validationError, setValidationError] = useState("");
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
+  const [logoCropPending, setLogoCropPending] = useState(false);
   const [country, setCountry] = useState("Egypt");
   const [currency, setCurrency] = useState("EGP");
   const [timezone, setTimezone] = useState("Africa/Cairo");
@@ -519,6 +515,14 @@ export default function BusinessSetupWizard({ action, language }: Props) {
 
   function goNext() {
     if (!formRef.current || step > 4) return;
+    if (step === 4 && logoCropPending) {
+      setValidationError(
+        language === "AR"
+          ? "أكد معاينة الشعار المربع قبل المتابعة إلى المراجعة."
+          : "Confirm the square logo preview before continuing to review.",
+      );
+      return;
+    }
     const formData = new FormData(formRef.current);
     const issue = getBusinessSetupValidationIssue(formData, step as SetupStep);
     if (issue) {
@@ -595,6 +599,16 @@ export default function BusinessSetupWizard({ action, language }: Props) {
       onSubmit={(event) => {
         if (submissionLockRef.current) {
           event.preventDefault();
+          return;
+        }
+        if (logoCropPending) {
+          event.preventDfault();
+          setValidationError(
+            language === "AR"
+              ? "أكد معاينة الشعار المرعع قبل الانشاء النشاط."
+              : "Confirm the square logo preview before creating the business.",
+          );
+          setStep(4);
           return;
         }
         const data = new FormData(event.currentTarget);
@@ -1091,70 +1105,21 @@ export default function BusinessSetupWizard({ action, language }: Props) {
               {copy.cardDescription}
             </p>
           </div>
-          <div
-            data-testid="business-logo-upload"
-            className="rounded-[var(--lf-radius-lg)] border border-border bg-surface p-4 sm:p-5"
-          >
-            <div className="flex items-start gap-4">
-              <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-[var(--lf-radius-md)] border border-border bg-surface-subtle sm:size-24">
-                {logoPreview ? (
-                  <BusinessLogoImage
-                    src={logoPreview}
-                    alt={copy.logoAlt}
-                  />
-                ) : (
-                  <span className="text-3xl font-black text-foreground-subtle">
-                    {cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-foreground-subtle">
-                  {copy.businessLogo}
-                </p>
-                <label htmlFor="logoFile" className={`mt-2 ${labelClass}`}>
-                  {logoPreview ? copy.changeLogo : copy.uploadLogo}{" "}
-                  <span className="font-normal text-foreground-subtle">
-                    ({copy.optional})
-                  </span>
-                </label>
-                <input
-                  id="logoFile"
-                  type="file"
-                  accept={BUSINESS_LOGO_ACCEPT}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (!file) return;
-                    if (
-                      file.size > BUSINESS_LOGO_MAX_BYTES ||
-                      !isBusinessLogoMimeType(file.type)
-                    ) {
-                      setValidationError(copy.logoError);
-                      event.target.value = "";
-                      setLogoPreview("");
-                      return;
-                    }
-                    setValidationError("");
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      const preview =
-                        typeof reader.result === "string" ? reader.result : "";
-                      setLogoPreview(preview);
-                      setCardPreview((current) => ({ ...current, logoUrl: preview }));
-                    };
-                    reader.readAsDataURL(file);
-                  }}
-                  className="mt-2 w-full min-w-0 rounded-[var(--lf-radius-md)] border border-border bg-surface px-3 py-2 text-sm text-foreground file:me-3 file:rounded-[var(--lf-radius-sm)] file:border-0 file:bg-foreground file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[var(--lf-inverse)]"
-                />
-                <p className="mt-1 text-xs text-foreground-subtle">{copy.logoHint}</p>
-              </div>
-            </div>
-            <input
-              type="hidden"
-              name="logoDataUrl"
-              value={logoPreview.startsWith("data:image/") ? logoPreview : ""}
-            />
-          </div>
+          <BusinessLogoCropField
+            language={language}
+            value={logoPreview}
+            alt={copy.logoAlt}
+            fallbackText={cardPreview.businessName}
+            onChange={(nextLogo) => {
+              setLogoPreview(nextLogo);
+              setCardPreview((current) => ({ ...current, logoUrl: nextLogo }));
+            }}
+            onPreviewChange={(nextLogo) =>
+              setCardPreview((current) => ({ ...current, logoUrl: nextLogo }))
+            }
+            onPendingChange={setLogoCropPending}
+            onError={setValidationError}
+          />
 
           <StandardCardSetup
             language={language}
