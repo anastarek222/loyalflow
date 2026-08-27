@@ -1,0 +1,145 @@
+name: Apply Business Logo Crop Contract
+
+on:
+  push:
+    branches:
+      - fix/business-logo-crop-contract
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/business-logo-crop-contract
+          fetch-depth: 0
+
+      - name: Apply bounded Add Business logo patch
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("components/business-setup-wizard.tsx")
+          text = path.read_text()
+
+          def replace_once(old: str, new: str, label: str):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected 1 match, found {count}")
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              'import { BusinessLogoImage } from "@/components/business-logo-image";\n',
+              'import { BusinessLogoImage } from "@/components/business-logo-image";\n'
+              'import { BusinessLogoCropField } from "@/components/business-logo-crop-field";\n',
+              "logo crop import",
+          )
+
+          replace_once(
+              '  const [logoPreview, setLogoPreview] = useState("");\n',
+              '  const [logoPreview, setLogoPreview] = useState("");\n'
+              '  const [logoCropPending, setLogoCropPending] = useState(false);\n',
+              "logo pending state",
+          )
+
+          replace_once(
+              '  function goNext() {\n'
+              '    if (!formRef.current || step > 4) return;\n',
+              '  function goNext() {\n'
+              '    if (!formRef.current || step > 4) return;\n'
+              '    if (step === 4 && logoCropPending) {\n'
+              '      setValidationError(\n'
+              '        language === "AR"\n'
+              '          ? "أكد قص الشعار قبل الانتقال إلى المراجعة."\n'
+              '          : "Confirm the logo crop before continuing to review.",\n'
+              '      );\n'
+              '      return;\n'
+              '    }\n',
+              "review crop gate",
+          )
+
+          submit_needle = (
+              '        if (submissionLockRef.current) {\n'
+              '          event.preventDefault();\n'
+              '          return;\n'
+              '        }\n'
+              '        const data = new FormData(event.currentTarget);\n'
+          )
+          submit_replacement = (
+              '        if (submissionLockRef.current) {\n'
+              '          event.preventDefault();\n'
+              '          return;\n'
+              '        }\n'
+              '        if (logoCropPending) {\n'
+              '          event.preventDefault();\n'
+              '          setValidationError(\n'
+              '            language === "AR"\n'
+              '              ? "أكد قص الشعار قبل إنشاء النشاط."\n'
+              '              : "Confirm the logo crop before creating the business.",\n'
+              '          );\n'
+              '          setStep(4);\n'
+              '          return;\n'
+              '        }\n'
+              '        const data = new FormData(event.currentTarget);\n'
+          )
+          replace_once(submit_needle, submit_replacement, "submit crop gate")
+
+          pattern = re.compile(
+              r'          <div\n'
+              r'            data-testid="business-logo-upload"'
+              r'.*?'
+              r'          </div>\n\n'
+              r'(?=          <StandardCardSetup)',
+              re.S,
+          )
+          replacement = '''          <BusinessLogoCropField
+            language={language}
+            value={logoPreview}
+            alt={copy.logoAlt}
+            onChange={(nextLogo) => {
+              setLogoPreview(nextLogo);
+              setCardPreview((current) => ({ ...current, logoUrl: nextLogo }));
+            }}
+            onPendingChange={setLogoCropPending}
+            onError={setValidationError}
+          />
+
+'''
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f"logo upload block: expected 1 match, found {count}")
+
+          required = [
+              "BusinessLogoCropField",
+              "logoCropPending",
+              "step === 4 && logoCropPending",
+              "onPendingChange={setLogoCropPending}",
+          ]
+          for token in required:
+              if token not in text:
+                  raise SystemExit(f"missing required token: {token}")
+          if "new FileReader()" in text:
+              raise SystemExit("legacy direct FileReader logo flow still present")
+
+          path.write_text(text)
+          PY
+
+      - name: Validate patch whitespace
+        run: git diff --check
+
+      - name: Commit bounded patch and remove helper workflow
+        shell: bash
+        run: |
+          rm .github/workflows/apply-business-logo-crop-contract.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/business-setup-wizard.tsx .github/workflows/apply-business-logo-crop-contract.yml
+          git commit -m "fix: require confirmed square business logo crop"
+          git push origin HEAD:fix/business-logo-crop-contract
