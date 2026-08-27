@@ -1,0 +1,71 @@
+name: Business Logo Policy Authority Patch
+
+on:
+  push:
+    branches:
+      - fix/business-logo-policy-authority
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply bounded logo authority patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          policy = Path('lib/branding/business-logo-policy.ts')
+          policy.write_text('''export const BUSINESS_LOGO_MAX_BYTES = 500 * 1024;\n\nexport const BUSINESS_LOGO_ACCEPTED_MIME_TYPES = [\n  "image/png",\n  "image/jpeg",\n  "image/webp",\n] as const;\n\nexport const BUSINESS_LOGO_ACCEPT_ATTRIBUTE =\n  BUSINESS_LOGO_ACCEPTED_MIME_TYPES.join(",");\n\nexport function isSupportedBusinessLogoMimeType(value: string) {\n  return (BUSINESS_LOGO_ACCEPTED_MIME_TYPES as readonly string[]).includes(value);\n}\n''', encoding='utf-8')
+
+          wizard_path = Path('components/business-setup-wizard.tsx')
+          wizard = wizard_path.read_text(encoding='utf-8')
+          import_anchor = 'import { BusinessLogoImage } from "@/components/business-logo-image";\n'
+          import_block = '''import { BusinessLogoImage } from "@/components/business-logo-image";\nimport {\n  BUSINESS_LOGO_ACCEPT_ATTRIBUTE,\n  BUSINESS_LOGO_MAX_BYTES,\n  isSupportedBusinessLogoMimeType,\n} from "@/lib/branding/business-logo-policy";\n'''
+          assert wizard.count(import_anchor) == 1
+          wizard = wizard.replace(import_anchor, import_block, 1)
+          assert wizard.count('accept="image/png,image/jpeg,image/webp"') == 1
+          wizard = wizard.replace(
+              'accept="image/png,image/jpeg,image/webp"',
+              'accept={BUSINESS_LOGO_ACCEPT_ATTRIBUTE}',
+              1,
+          )
+          old_validation = '''file.size > 500 * 1024 ||\n                      !["image/png", "image/jpeg", "image/webp"].includes(file.type)'''
+          new_validation = '''file.size > BUSINESS_LOGO_MAX_BYTES ||\n                      !isSupportedBusinessLogoMimeType(file.type)'''
+          assert wizard.count(old_validation) == 1
+          wizard = wizard.replace(old_validation, new_validation, 1)
+          wizard_path.write_text(wizard, encoding='utf-8')
+
+          actions_path = Path('app/businesses/actions.ts')
+          actions = actions_path.read_text(encoding='utf-8')
+          actions_anchor = 'import { getSafeImageDataUrl } from "@/lib/branding/image-data";\n'
+          actions_import = '''import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/business-logo-policy";\nimport { getSafeImageDataUrl } from "@/lib/branding/image-data";\n'''
+          assert actions.count(actions_anchor) == 1
+          actions = actions.replace(actions_anchor, actions_import, 1)
+          literal = 'getSafeImageDataUrl(submittedLogoDataUrl, 500 * 1024)'
+          assert actions.count(literal) == 1
+          actions = actions.replace(
+              literal,
+              'getSafeImageDataUrl(submittedLogoDataUrl, BUSINESS_LOGO_MAX_BYTES)',
+              1,
+          )
+          actions_path.write_text(actions, encoding='utf-8')
+
+          test_path = Path('tests/business-logo-policy.test.ts')
+          test_path.write_text('''import assert from "node:assert/strict";\nimport { readFileSync } from "node:fs";\nimport { join } from "node:path";\nimport test from "node:test";\n\nimport {\n  BUSINESS_LOGO_ACCEPTED_MIME_TYPES,\n  BUSINESS_LOGO_ACCEPT_ATTRIBUTE,\n  BUSINESS_LOGO_MAX_BYTES,\n  isSupportedBusinessLogoMimeType,\n} from "../lib/branding/business-logo-policy";\n\nconst source = (file: string) => readFileSync(join(process.cwd(), file), "utf8");\n\ntest("Business logo upload policy has one bounded authority", () => {\n  assert.equal(BUSINESS_LOGO_MAX_BYTES, 500 * 1024);\n  assert.deepEqual(BUSINESS_LOGO_ACCEPTED_MIME_TYPES, [\n    "image/png",\n    "image/jpeg",\n    "image/webp",\n  ]);\n  assert.equal(BUSINESS_LOGO_ACCEPT_ATTRIBUTE, "image/png,image/jpeg,image/webp");\n  assert.equal(isSupportedBusinessLogoMimeType("image/png"), true);\n  assert.equal(isSupportedBusinessLogoMimeType("image/svg+xml"), false);\n  assert.equal(isSupportedBusinessLogoMimeType("image/gif"), false);\n});\n\ntest("Business Setup and server creation consume the shared logo policy", () => {\n  const wizard = source("components/business-setup-wizard.tsx");\n  const actions = source("app/businesses/actions.ts");\n\n  assert.match(wizard, /BUSINESS_LOGO_ACCEPT_ATTRIBUTE/);\n  assert.match(wizard, /file\\.size > BUSINESS_LOGO_MAX_BYTES/);\n  assert.match(wizard, /!isSupportedBusinessLogoMimeType\\(file\\.type\\)/);\n  assert.doesNotMatch(wizard, /file\\.size > 500 \\* 1024/);\n\n  assert.match(\n    actions,\n    /getSafeImageDataUrl\\(submittedLogoDataUrl, BUSINESS_LOGO_MAX_BYTES\\)/,\n  );\n  assert.doesNotMatch(\n    actions,\n    /getSafeImageDataUrl\\(submittedLogoDataUrl, 500 \\* 1024\\)/,\n  );\n});\n\ntest("Canonical Business logo presentation remains the #412 full-frame contract", () => {\n  const renderer = source("components/business-logo-image.tsx");\n\n  assert.match(renderer, /Canonical full-frame square presentation/);\n  assert.match(renderer, /size-full object-cover object-center/);\n  assert.doesNotMatch(renderer, /object-contain/);\n});\n''', encoding='utf-8')
+
+          Path('.github/workflows/business-logo-policy-authority-patch.yml').unlink()
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: centralize business logo upload policy"
+          git push origin HEAD:fix/business-logo-policy-authority
