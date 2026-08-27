@@ -110,7 +110,7 @@ test("Custom Setup uses the native form action and keeps File objects out of the
   assert.match(wizard, /action=\{action\}/);
   assert.doesNotMatch(wizard, /startSubmitting|useTransition/);
   assert.match(wizard, /const data = new FormData\(event\.currentTarget\)/);
-  assert.match(wizard, /name="logoDataUrl"/);
+  assert.match(wizard, /BusinessLogoCropField/);
   assert.doesNotMatch(wizard, /name="logoFile"/);
   assert.match(wizard, /useFormStatus/);
   assert.match(wizard, /submissionLockRef/);
@@ -187,14 +187,16 @@ test("Business logo upload shares one policy and preserves full-frame presentati
   ]);
 
   const wizard = read("components/business-setup-wizard.tsx");
+  const cropField = read("components/business-logo-crop-field.tsx");
   const action = read("app/businesses/actions.ts");
   const imageData = read("lib/branding/image-data.ts");
 
-  assert.match(wizard, /BUSINESS_LOGO_ACCEPT/);
-  assert.match(wizard, /BUSINESS_LOGO_MAX_BYTES/);
-  assert.match(wizard, /isBusinessLogoMimeType/);
-  assert.doesNotMatch(wizard, /file\.size > 500 \* 1024/);
-  assert.doesNotMatch(wizard, /\["image\/png", "image\/jpeg", "image\/webp"\]\.includes/);
+  assert.match(wizard, /BusinessLogoCropField/);
+  assert.match(cropField, /BUSINESS_LOGO_ACCEPT/);
+  assert.match(cropField, /BUSINESS_LOGO_MAX_BYTES/);
+  assert.match(cropField, /isBusinessLogoUploadAllowed/);
+  assert.doesNotMatch(cropField, /file\.size > 500 \* 1024/);
+  assert.doesNotMatch(cropField, /\["image\/png", "image\/jpeg", "image\/webp"\]\.includes/);
 
   assert.match(action, /getSafeImageDataUrl\(\s*submittedLogoDataUrl,\s*BUSINESS_LOGO_MAX_BYTES/);
   assert.doesNotMatch(action, /getSafeImageDataUrl\(submittedLogoDataUrl, 500 \* 1024\)/);

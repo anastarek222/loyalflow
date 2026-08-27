@@ -32,15 +32,18 @@ test("Add Business shows the live card before mobile controls and updates it fro
   assert.match(setup, /data-testid="standard-card-preview-container"/);
   assert.match(wizard, /onInput=\{\(event\) =>/);
   assert.match(wizard, /setCardPreview\(\(current\) =>/);
-  assert.match(wizard, /preview=\{\{ \.\.\.cardPreview, logoUrl: logoPreview \}\}/);
+  assert.match(wizard, /preview=\{cardPreview\}/);
+  assert.match(wizard, /<BusinessLogoCropField/);
   assert.match(wizard, /onPreviewChange=\{\(next\) =>/);
 });
 
-test("Add Business keeps logo upload compact on phones", () => {
+test("Add Business keeps delegated logo upload compact on phones", () => {
   const wizard = read("components/business-setup-wizard.tsx");
+  const cropField = read("components/business-logo-crop-field.tsx");
 
-  assert.match(wizard, /data-testid="business-logo-upload"/);
-  assert.match(wizard, /size-20 shrink-0/);
-  assert.match(wizard, /min-w-0 flex-1/);
-  assert.doesNotMatch(wizard, /aspect-square max-w-44/);
+  assert.match(wizard, /<BusinessLogoCropField/);
+  assert.match(cropField, /data-testid="business-logo-upload"/);
+  assert.match(cropField, /size-20 shrink-0/);
+  assert.match(cropField, /min-w-0 flex-1/);
+  assert.doesNotMatch(cropField, /aspect-square max-w-44/);
 });

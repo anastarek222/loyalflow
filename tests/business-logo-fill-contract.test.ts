@@ -8,16 +8,19 @@ const source = (file: string) =>
 
 test("Business logo uses one full-frame HTML presentation across setup and enrollment", () => {
   const logo = source("components/business-logo-image.tsx");
-  const consumers = [
+  const setup = source("components/business-setup-wizard.tsx");
+  const cropField = source("components/business-logo-crop-field.tsx");
+  const directConsumers = [
     source("app/join/[slug]/page.tsx"),
-    source("components/business-setup-wizard.tsx"),
     source("components/owner-onboarding-wizard.tsx"),
     source("components/standard-card-setup.tsx"),
+    cropField,
   ];
 
   assert.match(logo, /size-full object-cover object-center/);
   assert.doesNotMatch(logo, /object-contain|\bp-[0-9]/);
-  for (const consumer of consumers) {
+  assert.match(setup, /BusinessLogoCropField/);
+  for (const consumer of directConsumers) {
     assert.match(consumer, /BusinessLogoImage/);
   }
 });
