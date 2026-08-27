@@ -26,7 +26,11 @@ export function PlatformBrandIdentity({
 }: PlatformBrandIdentityProps) {
   return (
     <>
-      <span className={cn("shrink-0", markClassName)} aria-hidden="true">
+      <span
+        className={cn("shrink-0", markClassName)}
+        aria-hidden="true"
+        data-platform-brand-mark={platformBrand.assets.mark ? "asset" : fallback}
+      >
         {platformBrand.assets.mark ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -47,9 +51,15 @@ export function PlatformBrandIdentity({
             src={platformBrand.assets.wordmark}
             alt={platformBrand.name}
             className={cn("block max-w-full object-contain", wordmarkClassName)}
+            data-platform-brand-wordmark="asset"
           />
         ) : (
-          <span className={textClassName}>{fallbackText}</span>
+          <span
+            className={textClassName}
+            data-platform-brand-wordmark="fallback"
+          >
+            {fallbackText}
+          </span>
         )
       ) : null}
     </>
