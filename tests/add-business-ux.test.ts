@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import {
+  BUSINESS_LOGO_MAX_BYTES,
+  BUSINESS_LOGO_MIME_TYPES,
+} from "@/lib/branding/image-policy";
 import { businessCreationSchema } from "@/lib/business/creation-input";
 
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
@@ -172,4 +176,36 @@ test("Custom Card creation requires a published Front + Back pair", () => {
       "Custom Card requires approved Front + Back artwork.",
     );
   }
+});
+
+test("Business logo upload shares one policy and preserves full-frame presentation", () => {
+  assert.equal(BUSINESS_LOGO_MAX_BYTES, 500 * 1024);
+  assert.deepEqual([...BUSINESS_LOGO_MIME_TYPES], [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+  ]);
+
+  const wizard = read("components/business-setup-wizard.tsx");
+  const action = read("app/businesses/actions.ts");
+  const imageData = read("lib/branding/image-data.ts");
+
+  assert.match(wizard, /BUSINESS_LOGO_ACCEPT/);
+  assert.match(wizard, /BUSINESS_LOGO_MAX_BYTES/);
+  assert.match(wizard, /isBusinessLogoMimeType/);
+  assert.doesNotMatch(wizard, /file\.size > 500 \* 1024/);
+  assert.doesNotMatch(wizard, /\["image\/png", "image\/jpeg", "image\/webp"\]\.includes/);
+
+  assert.match(action, /getSafeImageDataUrl\(\s*submittedLogoDataUrl,\s*BUSINESS_LOGO_MAX_BYTES/);
+  assert.doesNotMatch(action, /getSafeImageDataUrl\(submittedLogoDataUrl, 500 \* 1024\)/);
+  assert.match(imageData, /isSupportedImageMimeType/);
+
+  assert.match(
+    read("components/business-logo-image.tsx"),
+    /size-full object-cover object-center/,
+  );
+  assert.match(
+    read("lib/branding/logo-presentation.ts"),
+    /BUSINESS_LOGO_SVG_ASPECT_RATIO = "xMidYMid slice"/,
+  );
 });
