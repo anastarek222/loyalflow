@@ -3,12 +3,40 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
+import { OWNER_PUBLIC_IDENTITY } from "../lib/marketing/owner-public-identity";
 import { getPublicSocialLinks } from "../lib/marketing/public-social-links";
 
 const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 test("public social profiles stay hidden until explicitly configured", () => {
   assert.deepEqual(getPublicSocialLinks({}), []);
+});
+
+test("approved Owner social identity resolves to public profile links", () => {
+  assert.deepEqual(
+    getPublicSocialLinks({
+      NEXT_PUBLIC_SOCIAL_INSTAGRAM: OWNER_PUBLIC_IDENTITY.social.instagram,
+      NEXT_PUBLIC_SOCIAL_FACEBOOK: OWNER_PUBLIC_IDENTITY.social.facebook,
+      NEXT_PUBLIC_SOCIAL_LINKEDIN: OWNER_PUBLIC_IDENTITY.social.linkedin,
+    }),
+    [
+      {
+        kind: "instagram",
+        label: "Instagram",
+        href: "https://www.instagram.com/loyalty.programme/",
+      },
+      {
+        kind: "facebook",
+        label: "Facebook",
+        href: "https://facebook.com/Loyalty.Programe",
+      },
+      {
+        kind: "linkedin",
+        label: "LinkedIn",
+        href: "https://www.linkedin.com/in/loyalty-programme-47590b431",
+      },
+    ],
+  );
 });
 
 test("public social profiles accept only matching HTTPS provider URLs", () => {
@@ -65,12 +93,16 @@ test("invalid, mismatched, or provider-home social URLs fail closed", () => {
 
 test("Marketing footer renders only the validated social authority", () => {
   const footer = source("components/marketing/marketing-footer.tsx");
+  const authority = source("lib/marketing/public-social-links.ts");
   const env = source(".env.example");
 
   assert.match(footer, /getPublicSocialLinks\(\)/);
   assert.match(footer, /data-testid="marketing-social-links"/);
   assert.match(footer, /socialLinks\.length > 0/);
   assert.doesNotMatch(footer, /https:\/\/(?:www\.)?(?:instagram|facebook|linkedin|tiktok|youtube)\.com\//);
+  assert.match(authority, /OWNER_PUBLIC_IDENTITY\.social\.instagram/);
+  assert.match(authority, /OWNER_PUBLIC_IDENTITY\.social\.facebook/);
+  assert.match(authority, /OWNER_PUBLIC_IDENTITY\.social\.linkedin/);
 
   for (const key of [
     "NEXT_PUBLIC_SOCIAL_INSTAGRAM",
