@@ -602,10 +602,10 @@ export default function BusinessSetupWizard({ action, language }: Props) {
           return;
         }
         if (logoCropPending) {
-          event.preventDfault();
+          event.preventDefault();
           setValidationError(
-            language === "AR"
-              ? "أكد معاينة الشعار المرعع قبل الانشاء النشاط."
+          language === "AR"
+            ? copy.validation
               : "Confirm the square logo preview before creating the business.",
           );
           setStep(4);
