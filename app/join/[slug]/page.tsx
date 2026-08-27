@@ -83,8 +83,10 @@ export default async function JoinBusinessPage({
     notFound();
   }
 
-  const theme =
-    getCustomerExperienceTheme(business);
+  const theme = getCustomerExperienceTheme(business);
+  const headerForegroundColor = business.coverImageUrl
+    ? "#FFFFFF"
+    : theme.primaryForegroundColor;
 
   const joinBusiness = joinBusinessAction.bind(null, business.slug);
   const referralCandidate = canApplyPublicReferral(business.plan)
@@ -183,7 +185,10 @@ export default async function JoinBusinessPage({
       <section
         className={`w-full max-w-lg overflow-hidden border bg-white shadow-sm ${theme.cardClass} ${theme.borderClass}`}
       >
-        <div className="relative overflow-hidden px-5 py-6 text-white sm:px-7 sm:py-7">
+        <div
+          className="relative overflow-hidden px-5 py-6 sm:px-7 sm:py-7"
+          style={{ color: headerForegroundColor }}
+        >
           {business.coverImageUrl ? (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -210,7 +215,7 @@ export default async function JoinBusinessPage({
               />
             ) : null}
 
-            <p className="text-sm font-semibold text-white/80">
+            <p className="text-sm font-semibold opacity-80">
               {programName}
             </p>
 
@@ -218,7 +223,7 @@ export default async function JoinBusinessPage({
               {copy.join} {business.name}
             </h1>
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/85">
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold opacity-[0.85]">
               {business.industry ? (
                 <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
                   {business.industry}
@@ -234,7 +239,7 @@ export default async function JoinBusinessPage({
               ) : null}
             </div>
 
-            <p className="mt-3 leading-7 text-white/90">
+            <p className="mt-3 leading-7 opacity-90">
               {message}
             </p>
           </div>
@@ -254,7 +259,7 @@ export default async function JoinBusinessPage({
             className="mb-5 rounded-[var(--lf-radius-input)] px-4 py-3 text-sm leading-6"
             style={{
               backgroundColor: `${theme.secondaryColor}CC`,
-              color: theme.primaryColor,
+              color: theme.secondaryForegroundColor,
             }}
           >
             {copy.reward} {rewardTarget} {copy.rewardSuffix} {business.rewardName}.
@@ -341,6 +346,7 @@ export default async function JoinBusinessPage({
               label={copy.createCard}
               pendingLabel={copy.creatingCard}
               primaryColor={theme.primaryColor}
+              foregroundColor={theme.primaryForegroundColor}
             />
           </form>
 
