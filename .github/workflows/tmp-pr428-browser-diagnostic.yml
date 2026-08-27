@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   diagnose:
-    name: Diagnose browser suites
+    name: Diagnose U13 desktop scenarios
     runs-on: ubuntu-latest
     timeout-minutes: 40
     services:
@@ -72,13 +72,9 @@ jobs:
       - name: Install Chromium for browser smoke
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run PR browser smoke
-        run: pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+      - name: Run U13 desktop owner flow
+        run: pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "authentication, owner navigation"
 
-      - name: Run U13 desktop browser smoke
+      - name: Run U13 desktop role boundaries
         if: success() || failure()
-        run: pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
-
-      - name: Run U13 mobile browser smoke
-        if: success() || failure()
-        run: pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium
+        run: pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "manager and viewer"
