@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 import AppSidebar from "@/components/app-sidebar";
 import AppTopbar from "@/components/app-topbar";
+import { AuthenticatedSupportLink } from "@/components/authenticated-support-link";
 import MobileBottomNavigation from "@/components/mobile-bottom-navigation";
 import {
   businessSlugFromPathname,
@@ -68,6 +69,7 @@ export default function AuthenticatedAppShell({
           {children}
         </main>
       </div>
+      <AuthenticatedSupportLink language={language} />
       <MobileBottomNavigation
         language={language}
         experienceMode={experienceMode}
