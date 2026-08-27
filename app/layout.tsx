@@ -26,6 +26,12 @@ export const metadata: Metadata = {
   },
   description: platformBrand.metadataDescription,
   applicationName: platformBrand.name,
+  openGraph: platformBrand.assets.socialPreview
+    ? { images: [platformBrand.assets.socialPreview] }
+    : undefined,
+  twitter: platformBrand.assets.socialPreview
+    ? { card: "summary_large_image", images: [platformBrand.assets.socialPreview] }
+    : undefined,
   robots: {
     index: false,
     follow: false,

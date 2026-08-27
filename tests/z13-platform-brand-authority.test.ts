@@ -13,6 +13,11 @@ test("Z13 central platform brand authority preserves the current public identity
     name: "LoyalFlow",
     shortName: "LoyalFlow",
     iconMark: "LF",
+    assets: {
+      mark: null,
+      wordmark: null,
+      socialPreview: null,
+    },
     iconGradientStart: "#020617",
     iconGradientEnd: "#2563eb",
     metadataDescription: "Secure loyalty card and rewards management system.",

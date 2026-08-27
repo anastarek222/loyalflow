@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import {
   buildShellNavigation,
   isNavigationItemActive,
@@ -93,9 +94,12 @@ export default function AppSidebar({
           href="/dashboard"
           className="flex items-center gap-3 rounded-[var(--lf-radius-input)] px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
         >
-          <span className="lf-brand-mark flex size-10 items-center justify-center rounded-[var(--lf-radius-md)] text-lg font-black text-primary-foreground shadow-sm">
-            {platformBrand.iconMark}
-          </span>
+          <PlatformBrandIdentity
+            fallback="letters"
+            markClassName="lf-brand-mark flex size-10 items-center justify-center rounded-[var(--lf-radius-md)] text-lg font-black text-primary-foreground shadow-sm"
+            markImageClassName="p-1"
+            showWordmark={false}
+          />
           <span>
             <span className="block text-base font-black tracking-[-0.02em] text-foreground">
               {platformBrand.name}
