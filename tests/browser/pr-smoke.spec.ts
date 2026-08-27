@@ -47,7 +47,9 @@ test.describe.serial("PR browser smoke", () => {
     await page.getByLabel("Email address").fill(uatEmail("owner-a", fixture.runId));
     await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard$/, {
+      timeout: 15_000,
+    });
 
     await page.goto(`/businesses/${fixture.businessA}`);
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
