@@ -12,6 +12,12 @@ export function standardCardGraphemeLength(value: string) {
   return standardCardGraphemes(value).length;
 }
 
+export function truncateStandardCardUnitLabel(value: string) {
+  return standardCardGraphemes(value)
+    .slice(0, STANDARD_CARD_UNIT_LABEL_MAX_LENGTH)
+    .join("");
+}
+
 export function boundedStandardCardUnitLabel(value: string) {
   const graphemes = standardCardGraphemes(value);
   if (graphemes.length <= STANDARD_CARD_UNIT_LABEL_MAX_LENGTH) return value;
