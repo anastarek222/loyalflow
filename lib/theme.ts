@@ -26,6 +26,7 @@ export type BusinessTheme = {
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 const DEFAULT_PRIMARY_COLOR = "#111827";
 const DEFAULT_SECONDARY_COLOR = "#FFFFFF";
+const PUBLIC_REWARD_SURFACE_OPACITY = 0.8;
 
 function normalizeCustomerColor(
   value: string | null | undefined,
@@ -35,6 +36,17 @@ function normalizeCustomerColor(
   return candidate && HEX_COLOR.test(candidate)
     ? candidate.toUpperCase()
     : fallback;
+}
+
+function blendColorOverWhite(color: string, opacity: number) {
+  const channels = [1, 3, 5].map((start) => {
+    const channel = Number.parseInt(color.slice(start, start + 2), 16);
+    return Math.round(channel * opacity + 255 * (1 - opacity));
+  });
+
+  return `#${channels
+    .map((channel) => channel.toString(16).padStart(2, "0"))
+    .join("")}`.toUpperCase();
 }
 
 function relativeLuminance(color: string) {
@@ -70,6 +82,10 @@ export function getCustomerExperienceTheme(
   const secondaryColor = normalizeCustomerColor(
     business.secondaryColor,
     DEFAULT_SECONDARY_COLOR,
+  );
+  const renderedSecondarySurface = blendColorOverWhite(
+    secondaryColor,
+    PUBLIC_REWARD_SURFACE_OPACITY,
   );
 
   const presets = {
@@ -137,7 +153,7 @@ export function getCustomerExperienceTheme(
     primaryColor,
     primaryForegroundColor: readableForegroundColor(primaryColor),
     secondaryColor,
-    secondaryForegroundColor: readableForegroundColor(secondaryColor),
+    secondaryForegroundColor: readableForegroundColor(renderedSecondarySurface),
     backgroundColor: preset.backgroundColor,
     buttonStyle: preset.buttonStyle,
     cardStyle: business.cardStyle,
