@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import {
   cleanupBrowserUat,
@@ -9,6 +9,25 @@ import {
 
 let fixture: BrowserUatFixture;
 let manifestPath: string;
+
+async function signIn(page: Page, role: "manager-a" | "viewer-a") {
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
+  await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
+    timeout: 15_000,
+  });
+}
+
+async function signOut(page: Page) {
+  await page.getByRole("button", { name: "Account menu", exact: true }).click();
+  await Promise.all([
+    page.waitForURL(/\/login$/),
+    page.getByRole("button", { name: "Log out", exact: true }).click(),
+  ]);
+  await expect(page.getByLabel("Email address")).toBeVisible();
+}
 
 test.describe.serial("PR browser smoke", () => {
   test.beforeAll(async ({ baseURL }) => {
@@ -60,5 +79,26 @@ test.describe.serial("PR browser smoke", () => {
 
     await page.goto(`/businesses/${fixture.businessA}`);
     await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("account switching refreshes the role-aware shell @desktop @pr-smoke", async ({ page }) => {
+    await signIn(page, "manager-a");
+    await page.goto(`/businesses/${fixture.businessA}/customers`);
+    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await signOut(page);
+
+    await signIn(page, "viewer-a");
+    await page.goto(`/businesses/${fixture.businessA}/reports`);
+    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await page.goto(`/businesses/${fixture.businessA}/scan`);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+
+    const navigation = page.getByRole("complementary", {
+      name: "Primary navigation",
+      exact: true,
+    });
+    await expect(
+      navigation.getByRole("link", { name: "Team", exact: true }),
+    ).toHaveCount(0);
   });
 });
