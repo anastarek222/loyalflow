@@ -57,7 +57,7 @@ function normalizeSocialUrl(kind: PublicSocialKind, value?: string) {
     const policy = socialPolicy[kind];
     if (url.protocol !== "https:") return null;
     if (url.username || url.password) return null;
-    if (!policy.hosts.includes(url.hostname as never)) return null;
+    if (!(policy.hosts as readonly string[]).includes(url.hostname)) return null;
     if (url.pathname === "/" && !url.search) return null;
     url.hash = "";
     return url.toString();
