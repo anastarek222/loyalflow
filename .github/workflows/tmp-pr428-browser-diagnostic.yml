@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   diagnose:
-    name: Diagnose manager/viewer boundaries
+    name: Diagnose manager-to-viewer transition
     runs-on: ubuntu-latest
     timeout-minutes: 40
     services:
@@ -72,9 +72,17 @@ jobs:
       - name: Install Chromium for browser smoke
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run manager boundary
-        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "manager boundary"
+      - name: Manager to Viewer login transition
+        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "transition login"
 
-      - name: Run viewer boundary
+      - name: Viewer reports after Manager
         if: success() || failure()
-        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "viewer boundary"
+        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "transition reports"
+
+      - name: Viewer scan denial after Manager
+        if: success() || failure()
+        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "transition scan"
+
+      - name: Viewer Team nav after Manager
+        if: success() || failure()
+        run: pnpm exec playwright test tests/browser/tmp-pr428-role-boundaries.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep "transition team nav"
