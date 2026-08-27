@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
@@ -48,7 +49,15 @@ export default async function AcceptOwnerInvitationPage({
   return (
     <main lang={locale} dir={direction} className="min-h-screen bg-surface-subtle px-4 py-12">
       <section className="mx-auto w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <div className="mb-6 flex justify-end">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <Link href="/" className="inline-flex min-h-11 items-center">
+            <PlatformBrandIdentity
+              fallback="letters"
+              markClassName="hidden"
+              wordmarkClassName="h-5 max-w-32"
+              textClassName="font-black text-foreground"
+            />
+          </Link>
           <LanguageSwitcher locale={locale} />
         </div>
         <h1 className="text-2xl font-bold text-foreground">{translate(locale, "ownerInvite.title")}</h1>

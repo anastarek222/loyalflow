@@ -1,11 +1,12 @@
 import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { OwnerOnboardingWizard } from "@/components/owner-onboarding-wizard";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import prisma from "@/lib/prisma";
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -65,12 +66,13 @@ export default async function OwnerOnboardingPage() {
             href="/"
             className="inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-foreground"
           >
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)]">
-              <Sparkles size={18} aria-hidden="true" />
-            </span>
-            <span className="text-lg sm:text-xl">
-              {translate(locale, "common.brand")}
-            </span>
+            <PlatformBrandIdentity
+              fallback="sparkles"
+              markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)]"
+              markImageClassName="p-1"
+              wordmarkClassName="h-6 max-w-40"
+              textClassName="text-lg font-black tracking-tight sm:text-xl"
+            />
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden items-center gap-2 text-xs font-bold text-foreground-subtle sm:inline-flex">
