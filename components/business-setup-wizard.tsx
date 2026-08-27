@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { BusinessLogoImage } from "@/components/business-logo-image";
+import {
+  BUSINESS_LOGO_ACCEPT_ATTRIBUTE,
+  BUSINESS_LOGO_MAX_BYTES,
+  isSupportedBusinessLogoMimeType,
+} from "@/lib/branding/business-logo-policy";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { getBusinessSetupValidationIssue } from "@/lib/business/setup-validation";
 import { CountrySelector } from "@/components/onboarding/country-selector";
@@ -1116,13 +1121,13 @@ export default function BusinessSetupWizard({ action, language }: Props) {
                 <input
                   id="logoFile"
                   type="file"
-                  accept="image/png,image/jpeg,image/webp"
+                  accept={BUSINESS_LOGO_ACCEPT_ATTRIBUTE}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
                     if (!file) return;
                     if (
-                      file.size > 500 * 1024 ||
-                      !["image/png", "image/jpeg", "image/webp"].includes(file.type)
+                      file.size > BUSINESS_LOGO_MAX_BYTES ||
+                      !isSupportedBusinessLogoMimeType(file.type)
                     ) {
                       setValidationError(copy.logoError);
                       event.target.value = "";

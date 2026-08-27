@@ -6,6 +6,7 @@ import {
   OwnerInvitationEmailError,
   sendOwnerInvitationEmail,
 } from "@/lib/auth/owner-invitation-email";
+import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/business-logo-policy";
 import { getSafeImageDataUrl } from "@/lib/branding/image-data";
 import { businessCreationSchema, ownerInvitationSchema } from "@/lib/business/creation-input";
 import { parseDateOnly, parseMoneyToMinor } from "@/lib/billing/subscription";
@@ -99,7 +100,7 @@ export async function createBusinessAction(formData: FormData) {
   logServerEvent("BUSINESS_CREATE_ACTION_ENTERED", { creationAttemptId });
 
   const submittedLogoDataUrl = String(formData.get("logoDataUrl") ?? "");
-  const uploadedLogoDataUrl = getSafeImageDataUrl(submittedLogoDataUrl, 500 * 1024);
+  const uploadedLogoDataUrl = getSafeImageDataUrl(submittedLogoDataUrl, BUSINESS_LOGO_MAX_BYTES);
 
   if (submittedLogoDataUrl && !uploadedLogoDataUrl) {
     redirect("/businesses?error=invalid");
