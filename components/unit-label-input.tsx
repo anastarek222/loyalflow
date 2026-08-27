@@ -10,6 +10,7 @@ import {
 import {
   STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
   standardCardGraphemeLength,
+  truncateStandardCardUnitLabel,
 } from "@/lib/cards/standard-card-text";
 
 type Props = Omit<
@@ -37,7 +38,11 @@ export function UnitLabelInput({
   );
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    setCount(standardCardGraphemeLength(event.currentTarget.value));
+    const boundedValue = truncateStandardCardUnitLabel(event.currentTarget.value);
+    if (boundedValue !== event.currentTarget.value) {
+      event.currentTarget.value = boundedValue;
+    }
+    setCount(standardCardGraphemeLength(boundedValue));
     onChange?.(event);
   }
 
@@ -47,7 +52,6 @@ export function UnitLabelInput({
         {...props}
         value={value}
         defaultValue={defaultValue}
-        maxLength={STANDARD_CARD_UNIT_LABEL_MAX_LENGTH}
         aria-describedby={
           describedBy ? `${describedBy} ${counterId}` : counterId
         }
