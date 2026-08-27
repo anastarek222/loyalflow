@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Check, Copy, Download, Share2, X } from "lucide-react";
 import { getPublicExperienceCopy } from "@/lib/customer-experience/public-copy";
 
@@ -228,6 +229,17 @@ export function PublicCardActions({
           </div>
         </div>
       ) : null}
+      <div className="mt-3 border-t border-slate-200/80 px-2 pt-3 text-center">
+        <Link
+          href="/features"
+          data-testid="customer-loyalflow-attribution"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg px-2 text-xs font-semibold text-slate-500 transition hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        >
+          {language === "AR"
+            ? "مدعوم من LoyalFlow · هل تريد برنامج ولاء لنشاطك؟"
+            : "Powered by LoyalFlow · Want loyalty for your business?"}
+        </Link>
+      </div>
     </section>
   );
 }
