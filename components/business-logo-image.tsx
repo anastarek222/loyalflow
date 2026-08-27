@@ -6,7 +6,7 @@ type BusinessLogoImageProps = {
   className?: string;
 };
 
-/** Canonical full-frame square presentation for uploaded Business logos. */
+/** Canonical Business logo presentation: show the full uploaded logo without cropping. */
 export function BusinessLogoImage({
   src,
   alt,
@@ -16,7 +16,7 @@ export function BusinessLogoImage({
     <img
       src={src}
       alt={alt}
-      className={`size-full object-cover object-center ${className}`}
+      className={`size-full object-contain object-center ${className}`}
     />
   );
 }
