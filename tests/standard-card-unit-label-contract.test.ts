@@ -57,19 +57,24 @@ test("new loyalty rules reject unit labels that would need display truncation", 
 });
 
 test("wizard unit-name inputs share the canonical Standard Card HTML limit", () => {
+  const sharedInput = source("components/unit-label-input.tsx");
+  assert.match(
+    sharedInput,
+    /STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,[\s\S]*standardCardGraphemeLength,[\s\S]*from "@\/lib\/cards\/standard-card-text"/,
+  );
+  assert.match(sharedInput, /maxLength=\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/);
+  assert.match(sharedInput, /\{count\}\/\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/);
+
   for (const wizard of [
     source("components/owner-onboarding-wizard.tsx"),
     source("components/business-setup-wizard.tsx"),
+    source("components/program-rules-form.tsx"),
   ]) {
-    assert.equal((wizard.match(/name="unitName"/g) ?? []).length, 1);
     assert.match(
       wizard,
-      /import \{ STANDARD_CARD_UNIT_LABEL_MAX_LENGTH \} from "@\/lib\/cards\/standard-card-text"/,
+      /import \{ UnitLabelInput \} from "@\/components\/unit-label-input"/,
     );
-    assert.match(
-      wizard,
-      /name="unitName"[\s\S]{0,240}?maxLength=\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/,
-    );
+    assert.match(wizard, /<UnitLabelInput/);
     assert.doesNotMatch(
       wizard,
       /name="unitName"[\s\S]{0,240}?maxLength=\{30\}/,
