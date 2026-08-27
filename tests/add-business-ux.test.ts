@@ -180,7 +180,7 @@ test("Custom Card creation requires a published Front + Back pair", () => {
 
 test("Business logo upload shares one policy and preserves full-frame presentation", () => {
   assert.equal(BUSINESS_LOGO_MAX_BYTES, 500 * 1024);
-  assert.deepEqual(BUSINESS_LOGO_MIME_TYPES, [
+  assert.deepEqual([...BUSINESS_LOGO_MIME_TYPES], [
     "image/png",
     "image/jpeg",
     "image/webp",
