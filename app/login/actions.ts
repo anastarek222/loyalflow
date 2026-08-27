@@ -12,6 +12,7 @@ import {
 } from "@/lib/utils/rate-limiter";
 import { compare } from "bcryptjs";
 import { AuthError } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { z } from "zod";
 
@@ -105,6 +106,10 @@ export async function loginAction(
   formData.set("redirectTo", "/dashboard");
 
   try {
+    // Authentication changes the authority behind shared App Router layouts.
+    // Purge cached shell segments before establishing the new session so the
+    // destination is rendered with this user's role and tenant context.
+    revalidatePath("/", "layout");
     await signIn("credentials", formData);
   } catch (error) {
     if (isLoginDatabaseUnavailableError(error)) {
