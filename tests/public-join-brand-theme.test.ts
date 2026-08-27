@@ -38,7 +38,7 @@ test("Public Join theme preserves valid Business colours and safely falls back i
   assert.equal(shortHex.secondaryColor, "#FFFFFF");
 });
 
-test("Public Join derives readable black or white foregrounds for light and dark brand colours", () => {
+test("Public Join derives readable black or white foregrounds for rendered brand surfaces", () => {
   const dark = getCustomerExperienceTheme({
     ...base,
     primaryColor: "#000000",
@@ -54,6 +54,17 @@ test("Public Join derives readable black or white foregrounds for light and dark
   });
   assert.equal(light.primaryForegroundColor, "#000000");
   assert.equal(light.secondaryForegroundColor, "#000000");
+
+  const translucentMidtone = getCustomerExperienceTheme({
+    ...base,
+    primaryColor: "#111827",
+    secondaryColor: "#555555",
+  });
+  assert.equal(
+    translucentMidtone.secondaryForegroundColor,
+    "#000000",
+    "Reward contrast must use the rendered 80% secondary surface over white, not the raw secondary colour.",
+  );
 });
 
 test("Public Join applies derived contrast to the brand header, reward surface and CTA", () => {
@@ -63,6 +74,7 @@ test("Public Join applies derived contrast to the brand header, reward surface a
   assert.equal((page.match(/getCustomerExperienceTheme\(business\)/g) ?? []).length, 1);
   assert.match(page, /const headerForegroundColor = business\.coverImageUrl[\s\S]*?#FFFFFF[\s\S]*?theme\.primaryForegroundColor/);
   assert.match(page, /style=\{\{ color: headerForegroundColor \}\}/);
+  assert.match(page, /backgroundColor: `\$\{theme\.secondaryColor\}CC`/);
   assert.match(page, /color: theme\.secondaryForegroundColor/);
   assert.match(page, /foregroundColor=\{theme\.primaryForegroundColor\}/);
   assert.doesNotMatch(page, /relative overflow-hidden px-5 py-6 text-white/);
