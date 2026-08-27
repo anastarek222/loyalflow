@@ -5,22 +5,22 @@ import {
   type PublicSocialKind,
 } from "@/lib/marketing/public-social-links";
 import {
-  Facebook,
-  Instagram,
-  Linkedin,
+  Briefcase,
+  Camera,
+  MessageCircle,
   Music2,
+  Play,
   Sparkles,
-  Youtube,
 } from "lucide-react";
 import Link from "next/link";
 
 const socialIcons = {
-  instagram: Instagram,
-  facebook: Facebook,
-  linkedin: Linkedin,
+  instagram: Camera,
+  facebook: MessageCircle,
+  linkedin: Briefcase,
   tiktok: Music2,
-  youtube: Youtube,
-} satisfies Record<PublicSocialKind, typeof Instagram>;
+  youtube: Play,
+} satisfies Record<PublicSocialKind, typeof Camera>;
 
 export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
   const copy = (key: Parameters<typeof translate>[1]) => translate(locale, key);
