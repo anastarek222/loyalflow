@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
@@ -43,7 +44,12 @@ export default async function GetStartedPage() {
       >
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
           <Link href="/" className="text-xl font-black tracking-tight">
-            {translate(locale, "common.brand")}
+            <PlatformBrandIdentity
+              fallback="letters"
+              fallbackText={translate(locale, "common.brand")}
+              markClassName="hidden"
+              wordmarkClassName="h-7 w-auto max-w-40"
+            />
           </Link>
           <LanguageSwitcher locale={locale} />
         </header>

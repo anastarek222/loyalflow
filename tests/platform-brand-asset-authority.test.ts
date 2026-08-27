@@ -27,16 +27,24 @@ test("shared brand identity renderer owns mark and wordmark fallbacks", () => {
   assert.match(identity, /fallbackText = platformBrand\.name/);
 });
 
-test("marketing and authenticated shell consume the shared brand identity", () => {
-  const header = source("components/marketing/marketing-header.tsx");
-  const footer = source("components/marketing/marketing-footer.tsx");
-  const sidebar = source("components/app-sidebar.tsx");
+test("brand-bearing public, auth, onboarding, and shell surfaces consume the shared identity", () => {
+  const paths = [
+    "components/marketing/marketing-header.tsx",
+    "components/marketing/marketing-footer.tsx",
+    "components/app-sidebar.tsx",
+    "app/login/page.tsx",
+    "app/onboarding/page.tsx",
+    "app/get-started/page.tsx",
+  ];
 
-  assert.match(header, /<PlatformBrandIdentity/);
-  assert.match(footer, /<PlatformBrandIdentity/);
-  assert.match(sidebar, /<PlatformBrandIdentity/);
-  assert.doesNotMatch(header, /<Sparkles/);
-  assert.doesNotMatch(footer, /<Sparkles/);
+  for (const path of paths) {
+    assert.match(source(path), /<PlatformBrandIdentity/);
+  }
+
+  assert.doesNotMatch(source("components/marketing/marketing-header.tsx"), /<Sparkles/);
+  assert.doesNotMatch(source("components/marketing/marketing-footer.tsx"), /<Sparkles/);
+  assert.doesNotMatch(source("app/login/page.tsx"), /<Sparkles/);
+  assert.doesNotMatch(source("app/onboarding/page.tsx"), /<Sparkles/);
 });
 
 test("social preview remains fail-closed until a final asset exists", () => {
@@ -45,4 +53,13 @@ test("social preview remains fail-closed until a final asset exists", () => {
   assert.match(layout, /openGraph: platformBrand\.assets\.socialPreview/);
   assert.match(layout, /twitter: platformBrand\.assets\.socialPreview/);
   assert.match(layout, /: undefined/);
+});
+
+test("generated app icons consume the central platform brand fallback authority", () => {
+  for (const path of ["app/icon.tsx", "app/apple-icon.tsx"]) {
+    const icon = source(path);
+    assert.match(icon, /platformBrand\.iconGradientStart/);
+    assert.match(icon, /platformBrand\.iconGradientEnd/);
+    assert.match(icon, /platformBrand\.iconMark/);
+  }
 });

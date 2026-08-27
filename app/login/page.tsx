@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CheckCircle2,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -11,6 +10,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { getPasswordChangeCopy } from "@/lib/auth/password-change-copy";
 import { normalizeLanguage } from "@/lib/i18n";
 import { translate } from "@/lib/i18n/catalog";
@@ -77,10 +77,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             href="/"
             className="inline-flex w-fit items-center gap-3 text-xl font-black tracking-tight"
           >
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-white shadow-[0_10px_24px_rgb(79_70_229/0.24)]">
-              <Sparkles size={19} aria-hidden="true" />
-            </span>
-            {translate(locale, "common.brand")}
+            <PlatformBrandIdentity
+              fallback="sparkles"
+              fallbackText={translate(locale, "common.brand")}
+              markClassName="flex size-10 items-center justify-center rounded-xl bg-primary text-[19px] text-white shadow-[0_10px_24px_rgb(79_70_229/0.24)]"
+              markImageClassName="p-1"
+              wordmarkClassName="h-7 w-auto max-w-44"
+            />
           </Link>
 
           <div className="max-w-xl py-12">
@@ -133,10 +136,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
             <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_10px_24px_rgb(79_70_229/0.24)]">
-                <Sparkles size={21} aria-hidden="true" />
-              </div>
-              <p className="font-black">{translate(locale, "common.brand")}</p>
+              <PlatformBrandIdentity
+                fallback="sparkles"
+                fallbackText={translate(locale, "common.brand")}
+                markClassName="mb-5 flex size-12 items-center justify-center rounded-2xl bg-primary text-[21px] text-white shadow-[0_10px_24px_rgb(79_70_229/0.24)]"
+                markImageClassName="p-1"
+                wordmarkClassName="h-7 w-auto max-w-40"
+                textClassName="font-black"
+              />
             </div>
 
             <p className="text-xs font-black uppercase tracking-[0.14em] text-primary">
