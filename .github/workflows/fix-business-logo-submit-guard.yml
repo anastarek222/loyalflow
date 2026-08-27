@@ -1,0 +1,66 @@
+name: Fix Business Logo Submit Guard
+
+on:
+  push:
+    branches:
+      - fix/business-logo-fit-crop-confirmation
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/business-logo-fit-crop-confirmation
+          fetch-depth: 0
+
+      - name: Fix submit guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('components/business-setup-wizard.tsx')
+          text = path.read_text()
+
+          if text.count('event.preventDfault();') != 1:
+              raise SystemExit('expected exactly one preventDfault typo')
+          text = text.replace('event.preventDfault();', 'event.preventDefault();', 1)
+
+          pattern = re.compile(
+              r'(if \(logoCropPending\) \{\n\s+event\.preventDefault\(\);\n\s+setValidationError\(\n)'
+              r'\s+language === "AR"\n\s+\? .*?\n'
+              r'(\s+: "Confirm the square logo preview before creating the business\.",\n\s+\);\n\s+setStep\(4\);)',
+              re.S,
+          )
+          replacement = (
+              r'\1'
+              '          language === "AR"\n'
+              '            ? copy.validation\n'
+              r'\2'
+          )
+          text, count = pattern.subn(replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'expected one submit warning block, found {count}')
+
+          path.write_text(text)
+          PY
+
+      - name: Validate source guard
+        run: |
+          grep -q 'event.preventDefault();' components/business-setup-wizard.tsx
+          ! grep -q 'preventDfault' components/business-setup-wizard.tsx
+          grep -q '? copy.validation' components/business-setup-wizard.tsx
+          git diff --check
+
+      - name: Commit fix and remove helper
+        run: |
+          rm .github/workflows/fix-business-logo-submit-guard.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/business-setup-wizard.tsx .github/workflows/fix-business-logo-submit-guard.yml
+          git commit -m "fix: correct Business logo submit confirmation guard"
+          git push origin HEAD:fix/business-logo-fit-crop-confirmation
