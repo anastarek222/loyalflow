@@ -11,6 +11,7 @@ import {
   imageFileToDataUrl,
   isValidRemoteImageUrl,
 } from "@/lib/branding/image-data";
+import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
@@ -73,7 +74,7 @@ const ownerDraftSchema = z
     if (
       data.logoUrl &&
       !isValidRemoteImageUrl(data.logoUrl) &&
-      !getSafeImageDataUrl(data.logoUrl, 500 * 1024)
+      !getSafeImageDataUrl(data.logoUrl, BUSINESS_LOGO_MAX_BYTES)
     )
       context.addIssue({
         code: "custom",
@@ -102,7 +103,7 @@ async function draftFrom(formData: FormData) {
   const logoFile = formData.get("logoFile");
 
   if (logoFile instanceof File && logoFile.size > 0) {
-    const uploadedLogo = await imageFileToDataUrl(logoFile, 500 * 1024);
+    const uploadedLogo = await imageFileToDataUrl(logoFile, BUSINESS_LOGO_MAX_BYTES);
     if (!uploadedLogo)
       return ownerDraftSchema.safeParse({
         ...input,

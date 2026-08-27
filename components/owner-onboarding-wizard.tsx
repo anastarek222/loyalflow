@@ -4,6 +4,11 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import { BusinessLogoImage } from "@/components/business-logo-image";
 import {
+  BUSINESS_LOGO_ACCEPT,
+  BUSINESS_LOGO_MAX_BYTES,
+  isBusinessLogoMimeType,
+} from "@/lib/branding/image-policy";
+import {
   CountrySelector,
   type CountrySelectorHandle,
 } from "@/components/onboarding/country-selector";
@@ -600,10 +605,14 @@ export function OwnerOnboardingWizard({
                 <input
                   name="logoFile"
                   type="file"
-                  accept="image/png,image/jpeg,image/webp"
+                  accept={BUSINESS_LOGO_ACCEPT}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
-                    if (!file || file.size > 500 * 1024) {
+                    if (
+                      !file ||
+                      file.size > BUSINESS_LOGO_MAX_BYTES ||
+                      !isBusinessLogoMimeType(file.type)
+                    ) {
                       if (file) setNotice(copy.logoError);
                       event.target.value = "";
                       return;

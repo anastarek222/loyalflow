@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { parseCardDesignFormData } from "@/lib/cards/card-design-input";
 import { getAuthorizedCardDesignUpdate } from "@/lib/cards/card-design-permissions";
 import { imageFileToDataUrl } from "@/lib/branding/image-data";
+import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -43,7 +44,10 @@ export async function updateBusinessCardDesignCommandAction(
   const logoFile = formData.get("logoFile");
   let uploadedLogoDataUrl: string | null = null;
   if (logoFile instanceof File && logoFile.size > 0) {
-    uploadedLogoDataUrl = await imageFileToDataUrl(logoFile, 500 * 1024);
+    uploadedLogoDataUrl = await imageFileToDataUrl(
+      logoFile,
+      BUSINESS_LOGO_MAX_BYTES,
+    );
     if (!uploadedLogoDataUrl) {
       redirect(`/businesses/${slug}/program?cardDesign=invalid`);
     }

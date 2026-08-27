@@ -6,6 +6,10 @@ import { ProgramRulesForm } from "@/components/program-rules-form";
 import { StandardCardSetup } from "@/components/standard-card-setup";
 import { CustomCardArtworkManager } from "@/components/custom-card-artwork-manager";
 import {
+  BUSINESS_LOGO_ACCEPT,
+  BUSINESS_LOGO_MAX_KB,
+} from "@/lib/branding/image-policy";
+import {
   customCardStorageConfigured,
   isManagedCustomCardArtworkUrl,
   listCustomCardArtworkVersions,
@@ -340,9 +344,15 @@ export default async function LoyaltyProgramPage({
                     <input
                       name="logoFile"
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept={BUSINESS_LOGO_ACCEPT}
                       className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
                     />
+                    <span className="mt-1 block text-xs font-medium text-foreground-muted">
+                      {t(
+                        `PNG أو JPEG أو WebP — بحد أقصى ${BUSINESS_LOGO_MAX_KB}KB.`,
+                        `PNG, JPEG, or WebP — up to ${BUSINESS_LOGO_MAX_KB}KB.`,
+                      )}
+                    </span>
                   </label>
                   <label className="text-sm font-bold text-foreground">
                     {t("أو رابط الشعار", "Or logo URL")}
