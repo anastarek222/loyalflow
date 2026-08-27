@@ -1,0 +1,96 @@
+name: Business Logo Policy Coverage Patch
+
+on:
+  pull_request:
+    branches:
+      - staging
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'fix/business-logo-policy-coverage-340'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/business-logo-policy-coverage-340
+          fetch-depth: 0
+
+      - name: Apply bounded policy coverage patch
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected one match in {path}, found {count}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1))
+
+          # Owner onboarding UI consumes the same browser-safe logo policy as Add Business.
+          replace_once(
+              "components/owner-onboarding-wizard.tsx",
+              'import { BusinessLogoImage } from "@/components/business-logo-image";\n',
+              'import { BusinessLogoImage } from "@/components/business-logo-image";\nimport {\n  BUSINESS_LOGO_ACCEPT,\n  BUSINESS_LOGO_MAX_BYTES,\n  isBusinessLogoMimeType,\n} from "@/lib/branding/image-policy";\n',
+          )
+          replace_once(
+              "components/owner-onboarding-wizard.tsx",
+              '                  accept="image/png,image/jpeg,image/webp"\n',
+              '                  accept={BUSINESS_LOGO_ACCEPT}\n',
+          )
+          replace_once(
+              "components/owner-onboarding-wizard.tsx",
+              '                    if (!file || file.size > 500 * 1024) {\n',
+              '                    if (\n                      !file ||\n                      file.size > BUSINESS_LOGO_MAX_BYTES ||\n                      !isBusinessLogoMimeType(file.type)\n                    ) {\n',
+          )
+
+          # Owner onboarding server validation and serialization consume the same size authority.
+          replace_once(
+              "app/onboarding/actions.ts",
+              '} from "@/lib/branding/image-data";\n',
+              '} from "@/lib/branding/image-data";\nimport { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";\n',
+          )
+          p = Path("app/onboarding/actions.ts")
+          text = p.read_text()
+          count = text.count("500 * 1024")
+          if count != 2:
+              raise SystemExit(f"Expected two owner logo size literals, found {count}")
+          p.write_text(text.replace("500 * 1024", "BUSINESS_LOGO_MAX_BYTES"))
+
+          # Loyalty Program replacement upload exposes and consumes the same policy.
+          replace_once(
+              "app/businesses/[slug]/program/card-design-actions.ts",
+              'import { imageFileToDataUrl } from "@/lib/branding/image-data";\n',
+              'import { imageFileToDataUrl } from "@/lib/branding/image-data";\nimport { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";\n',
+          )
+          replace_once(
+              "app/businesses/[slug]/program/card-design-actions.ts",
+              '    uploadedLogoDataUrl = await imageFileToDataUrl(logoFile, 500 * 1024);\n',
+              '    uploadedLogoDataUrl = await imageFileToDataUrl(\n      logoFile,\n      BUSINESS_LOGO_MAX_BYTES,\n    );\n',
+          )
+          replace_once(
+              "app/businesses/[slug]/program/page.tsx",
+              'import { CustomCardArtworkManager } from "@/components/custom-card-artwork-manager";\n',
+              'import { CustomCardArtworkManager } from "@/components/custom-card-artwork-manager";\nimport {\n  BUSINESS_LOGO_ACCEPT,\n  BUSINESS_LOGO_MAX_KB,\n} from "@/lib/branding/image-policy";\n',
+          )
+          replace_once(
+              "app/businesses/[slug]/program/page.tsx",
+              '                      accept="image/png,image/jpeg,image/webp"\n                      className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"\n                    />\n',
+              '                      accept={BUSINESS_LOGO_ACCEPT}\n                      className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"\n                    />\n                    <span className="mt-1 block text-xs font-medium text-foreground-muted">\n                      {t(\n                        `PNG أو JPEG أو WebP — بحد أقصى ${BUSINESS_LOGO_MAX_KB}KB.`,\n                        `PNG, JPEG, or WebP — up to ${BUSINESS_LOGO_MAX_KB}KB.`,\n                      )}\n                    </span>\n',
+          )
+
+          Path("tests/business-logo-policy-coverage.test.ts").write_text('''import assert from "node:assert/strict";\nimport { readFileSync } from "node:fs";\nimport { join } from "node:path";\nimport test from "node:test";\n\nimport {\n  BUSINESS_LOGO_ACCEPT,\n  BUSINESS_LOGO_MAX_BYTES,\n  BUSINESS_LOGO_MAX_KB,\n} from "@/lib/branding/image-policy";\n\nconst source = (file: string) => readFileSync(join(process.cwd(), file), "utf8");\n\ntest("all active Business logo upload surfaces share the canonical policy", () => {\n  assert.equal(BUSINESS_LOGO_MAX_KB, 500);\n  assert.equal(BUSINESS_LOGO_MAX_BYTES, 500 * 1024);\n  assert.equal(BUSINESS_LOGO_ACCEPT, "image/png,image/jpeg,image/webp");\n\n  const ownerWizard = source("components/owner-onboarding-wizard.tsx");\n  assert.match(ownerWizard, /accept=\\{BUSINESS_LOGO_ACCEPT\\}/);\n  assert.match(ownerWizard, /file\\.size > BUSINESS_LOGO_MAX_BYTES/);\n  assert.match(ownerWizard, /!isBusinessLogoMimeType\\(file\\.type\\)/);\n  assert.doesNotMatch(ownerWizard, /file\\.size > 500 \\* 1024/);\n\n  const ownerAction = source("app/onboarding/actions.ts");\n  assert.match(ownerAction, /getSafeImageDataUrl\\(data\\.logoUrl, BUSINESS_LOGO_MAX_BYTES\\)/);\n  assert.match(ownerAction, /imageFileToDataUrl\\(logoFile, BUSINESS_LOGO_MAX_BYTES\\)/);\n  assert.doesNotMatch(ownerAction, /500 \\* 1024/);\n\n  const programPage = source("app/businesses/[slug]/program/page.tsx");\n  assert.match(programPage, /accept=\\{BUSINESS_LOGO_ACCEPT\\}/);\n  assert.match(programPage, /BUSINESS_LOGO_MAX_KB/);\n  assert.match(programPage, /up to \\${BUSINESS_LOGO_MAX_KB}KB/);\n\n  const programAction = source("app/businesses/[slug]/program/card-design-actions.ts");\n  assert.match(programAction, /imageFileToDataUrl\\(\\s*logoFile,\\s*BUSINESS_LOGO_MAX_BYTES/);\n  assert.doesNotMatch(programAction, /500 \\* 1024/);\n});\n\ntest("Business logo presentation stays on the accepted full-frame contract", () => {\n  const renderer = source("components/business-logo-image.tsx");\n  assert.match(renderer, /size-full object-cover object-center/);\n  assert.doesNotMatch(renderer, /object-contain/);\n});\n''')
+          PY
+
+          rm .github/workflows/business-logo-policy-coverage-patch.yml
+          git config user.name "loyalflow-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: extend business logo policy coverage"
+          git push origin HEAD:fix/business-logo-policy-coverage-340
