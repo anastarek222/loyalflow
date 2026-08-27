@@ -1,3 +1,4 @@
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import {
@@ -10,7 +11,6 @@ import {
   MessageCircle,
   Music2,
   Play,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -34,8 +34,12 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             href="/"
             className="inline-flex items-center gap-2 text-lg font-black text-foreground"
           >
-            <Sparkles size={19} className="text-primary" aria-hidden="true" />
-            {copy("common.brand")}
+            <PlatformBrandIdentity
+              fallback="sparkles"
+              fallbackText={copy("common.brand")}
+              markClassName="flex size-6 items-center justify-center text-[19px] text-primary"
+              wordmarkClassName="h-7 w-auto max-w-40"
+            />
           </Link>
           <p className="mt-3 max-w-md text-sm leading-6 text-foreground-subtle">
             {copy("marketing.footerNote")}

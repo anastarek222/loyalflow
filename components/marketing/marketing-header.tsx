@@ -1,11 +1,12 @@
 "use client";
 
-import { Menu, Sparkles, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -97,10 +98,14 @@ export function MarketingHeader({
           href="/"
           className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-foreground"
         >
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)] transition-transform duration-200 group-hover:-translate-y-0.5">
-            <Sparkles size={18} aria-hidden="true" />
-          </span>
-          <span className="text-lg sm:text-xl">{brand}</span>
+          <PlatformBrandIdentity
+            fallback="sparkles"
+            fallbackText={brand}
+            markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)] transition-transform duration-200 group-hover:-translate-y-0.5"
+            markImageClassName="p-1"
+            wordmarkClassName="h-7 w-auto max-w-40"
+            textClassName="text-lg sm:text-xl"
+          />
         </Link>
 
         <nav
@@ -174,10 +179,13 @@ export function MarketingHeader({
                     onClick={() => setIsOpen(false)}
                     className="inline-flex min-h-11 items-center gap-2 font-black"
                   >
-                    <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white">
-                      <Sparkles size={18} aria-hidden="true" />
-                    </span>
-                    {brand}
+                    <PlatformBrandIdentity
+                      fallback="sparkles"
+                      fallbackText={brand}
+                      markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
+                      markImageClassName="p-1"
+                      wordmarkClassName="h-7 w-auto max-w-36"
+                    />
                   </Link>
                   <button
                     ref={closeButtonRef}

@@ -2,6 +2,13 @@ export const platformBrand = {
   name: "LoyalFlow",
   shortName: "LoyalFlow",
   iconMark: "LF",
+  // Final Owner-supplied identity assets plug in here. Null deliberately keeps
+  // the existing product fallbacks visible instead of inventing placeholders.
+  assets: {
+    mark: null as string | null,
+    wordmark: null as string | null,
+    socialPreview: null as string | null,
+  },
   iconGradientStart: "#020617",
   iconGradientEnd: "#2563eb",
   metadataDescription: "Secure loyalty card and rewards management system.",
