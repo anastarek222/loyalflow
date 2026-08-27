@@ -1,0 +1,56 @@
+name: Standard Card Contrast Warning Patch
+
+on:
+  push:
+    branches:
+      - fix/standard-card-contrast-warning
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply bounded contrast patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          helper = Path('lib/cards/standard-card-contrast.ts')
+          helper.write_text('''import { standardCardTheme } from "@/lib/cards/standard-card";\n\nconst HEX_COLOR = /^#[0-9a-fA-F]{6}$/;\n\nexport const STANDARD_CARD_TEXT_CONTRAST_TARGET = 4.5;\n\nexport const STANDARD_CARD_THEME_REFERENCE_SURFACES = {\n  light: "#F8FAFC",\n  dark: "#07101C",\n} as const;\n\nfunction relativeLuminance(value: string) {\n  if (!HEX_COLOR.test(value)) return null;\n  const channels = [1, 3, 5].map((offset) =>\n    Number.parseInt(value.slice(offset, offset + 2), 16) / 255,\n  );\n  const linear = channels.map((channel) =>\n    channel <= 0.04045\n      ? channel / 12.92\n      : ((channel + 0.055) / 1.055) ** 2.4,\n  );\n  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];\n}\n\nexport function colorContrastRatio(foreground: string, background: string) {\n  const foregroundLuminance = relativeLuminance(foreground);\n  const backgroundLuminance = relativeLuminance(background);\n  if (foregroundLuminance === null || backgroundLuminance === null) return 0;\n  const lighter = Math.max(foregroundLuminance, backgroundLuminance);\n  const darker = Math.min(foregroundLuminance, backgroundLuminance);\n  return (lighter + 0.05) / (darker + 0.05);\n}\n\nexport function getStandardCardPrimaryContrast(\n  primaryColor: string | null | undefined,\n  themePreset: string | null | undefined,\n) {\n  const theme = standardCardTheme(themePreset);\n  const background = STANDARD_CARD_THEME_REFERENCE_SURFACES[theme];\n  const ratio = colorContrastRatio(primaryColor || "", background);\n  return {\n    background,\n    ratio,\n    target: STANDARD_CARD_TEXT_CONTRAST_TARGET,\n    passes: ratio >= STANDARD_CARD_TEXT_CONTRAST_TARGET,\n  };\n}\n''', encoding='utf-8')
+
+          setup_path = Path('components/standard-card-setup.tsx')
+          setup = setup_path.read_text(encoding='utf-8')
+          import_anchor = '} from "@/lib/cards/standard-card";\n'
+          import_replacement = '''} from "@/lib/cards/standard-card";\nimport { getStandardCardPrimaryContrast } from "@/lib/cards/standard-card-contrast";\n'''
+          assert setup.count(import_anchor) == 1
+          setup = setup.replace(import_anchor, import_replacement, 1)
+
+          return_anchor = '''\n  return (\n    <section\n      className="grid min-w-0 gap-8 xl:grid-cols-[minmax(18rem,0.82fr)_minmax(32rem,1.18fr)]"\n'''
+          return_replacement = '''\n  const primaryContrast = getStandardCardPrimaryContrast(\n    values.primaryColor,\n    values.themePreset,\n  );\n  const showPrimaryContrastWarning =\n    colorPreset === null && !primaryContrast.passes;\n\n  return (\n    <section\n      className="grid min-w-0 gap-8 xl:grid-cols-[minmax(18rem,0.82fr)_minmax(32rem,1.18fr)]"\n'''
+          assert setup.count(return_anchor) == 1
+          setup = setup.replace(return_anchor, return_replacement, 1)
+
+          note_anchor = '''              <p className="mt-2 text-xs text-foreground-muted">\n                {t(\n                  "يمكنك اختيار لوحة جاهزة مستقلة لكل لون أو إدخال كود HEX يدوي. القيم اليدوية لا تتغير عند تبديل السمة، وتظهر كل التغييرات فورًا في المعاينة.",\n                  "Choose an independent preset for each colour or enter a manual HEX value. Manual values stay fixed when the theme changes, and every change appears immediately in the preview.",\n                )}\n              </p>\n'''
+          note_replacement = note_anchor + '''              {showPrimaryContrastWarning ? (\n                <p\n                  role="status"\n                  aria-live="polite"\n                  data-testid="primary-color-contrast-warning"\n                  className="mt-3 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-xs font-semibold text-warning"\n                >\n                  {t(\n                    `تنبيه التباين: اللون الأساسي اليدوي يحقق ${primaryContrast.ratio.toFixed(1)}:1 مع خلفية السمة الحالية. استهدف 4.5:1 على الأقل لقراءة النص الصغير بوضوح.`,\n                    `Contrast warning: the manual primary colour is ${primaryContrast.ratio.toFixed(1)}:1 against the current theme surface. Aim for at least 4.5:1 for readable small text.`,\n                  )}\n                </p>\n              ) : null}\n'''
+          assert setup.count(note_anchor) == 1
+          setup = setup.replace(note_anchor, note_replacement, 1)
+          setup_path.write_text(setup, encoding='utf-8')
+
+          test_path = Path('tests/standard-card-contrast-warning.test.ts')
+          test_path.write_text('''import assert from "node:assert/strict";\nimport { readFileSync } from "node:fs";\nimport { join } from "node:path";\nimport test from "node:test";\n\nimport {\n  STANDARD_CARD_TEXT_CONTRAST_TARGET,\n  colorContrastRatio,\n  getStandardCardPrimaryContrast,\n} from "@/lib/cards/standard-card-contrast";\n\nconst source = (file: string) => readFileSync(join(process.cwd(), file), "utf8");\n\ntest("Standard Card contrast authority follows WCAG small-text target", () => {\n  assert.equal(STANDARD_CARD_TEXT_CONTRAST_TARGET, 4.5);\n  assert.ok(colorContrastRatio("#111827", "#F8FAFC") > 10);\n  assert.equal(colorContrastRatio("invalid", "#F8FAFC"), 0);\n\n  const lowLight = getStandardCardPrimaryContrast("#F8FAFC", "DEFAULT");\n  assert.equal(lowLight.background, "#F8FAFC");\n  assert.equal(lowLight.passes, false);\n\n  const readableLight = getStandardCardPrimaryContrast("#1D4ED8", "DEFAULT");\n  assert.equal(readableLight.passes, true);\n\n  const readableDark = getStandardCardPrimaryContrast("#E6C27A", "DARK");\n  assert.equal(readableDark.background, "#07101C");\n  assert.equal(readableDark.passes, true);\n});\n\ntest("Standard Card editor warns only for low-contrast manual primary colours", () => {\n  const setup = source("components/standard-card-setup.tsx");\n\n  assert.match(setup, /getStandardCardPrimaryContrast/);\n  assert.match(setup, /colorPreset === null && !primaryContrast\\.passes/);\n  assert.match(setup, /data-testid="primary-color-contrast-warning"/);\n  assert.match(setup, /role="status"/);\n  assert.match(setup, /Aim for at least 4\\.5:1/);\n  assert.doesNotMatch(setup, /disabled=\\{showPrimaryContrastWarning\\}/);\n});\n''', encoding='utf-8')
+
+          Path('.github/workflows/standard-card-contrast-warning-patch.yml').unlink()
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: warn on low Standard Card colour contrast"
+          git push origin HEAD:fix/standard-card-contrast-warning
