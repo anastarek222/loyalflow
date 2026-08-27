@@ -23,7 +23,7 @@ test("shared brand identity renderer owns mark and wordmark fallbacks", () => {
   assert.match(identity, /platformBrand\.assets\.mark/);
   assert.match(identity, /platformBrand\.assets\.wordmark/);
   assert.match(identity, /fallback === "sparkles"/);
-  assert.match(identity, /platformBrand\.iconMark/);
+  assert.match(identity, /fallbackMarkText = platformBrand\.iconMark/);
   assert.match(identity, /fallbackText = platformBrand\.name/);
 });
 
@@ -33,6 +33,8 @@ test("brand-bearing public, auth, onboarding, and shell surfaces consume the sha
     "components/marketing/marketing-footer.tsx",
     "components/app-sidebar.tsx",
     "app/login/page.tsx",
+    "app/forgot-password/page.tsx",
+    "app/reset-password/page.tsx",
     "app/onboarding/page.tsx",
     "app/get-started/page.tsx",
   ];
@@ -45,6 +47,8 @@ test("brand-bearing public, auth, onboarding, and shell surfaces consume the sha
   assert.doesNotMatch(source("components/marketing/marketing-footer.tsx"), /<Sparkles/);
   assert.doesNotMatch(source("app/login/page.tsx"), /<Sparkles/);
   assert.doesNotMatch(source("app/onboarding/page.tsx"), /<Sparkles/);
+  assert.doesNotMatch(source("app/forgot-password/page.tsx"), />\s*L\s*</);
+  assert.doesNotMatch(source("app/reset-password/page.tsx"), />\s*L\s*</);
 });
 
 test("social preview remains fail-closed until a final asset exists", () => {

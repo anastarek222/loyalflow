@@ -7,6 +7,7 @@ type BrandMarkFallback = "sparkles" | "letters";
 
 type PlatformBrandIdentityProps = {
   fallback?: BrandMarkFallback;
+  fallbackMarkText?: string;
   fallbackText?: string;
   markClassName?: string;
   markImageClassName?: string;
@@ -17,6 +18,7 @@ type PlatformBrandIdentityProps = {
 
 export function PlatformBrandIdentity({
   fallback = "letters",
+  fallbackMarkText = platformBrand.iconMark,
   fallbackText = platformBrand.name,
   markClassName,
   markImageClassName,
@@ -41,7 +43,7 @@ export function PlatformBrandIdentity({
         ) : fallback === "sparkles" ? (
           <Sparkles className="size-[1em]" />
         ) : (
-          platformBrand.iconMark
+          fallbackMarkText
         )}
       </span>
       {showWordmark ? (
