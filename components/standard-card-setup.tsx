@@ -20,6 +20,7 @@ import {
   type StandardCardColorPreset,
   type StandardCardThemePreset,
 } from "@/lib/cards/standard-card";
+import { getStandardCardPrimaryContrast } from "@/lib/cards/standard-card-contrast";
 
 export type CardPreview = Partial<{
   businessName: string;
@@ -264,6 +265,13 @@ export function StandardCardSetup({
     rewardThreshold: values.rewardThreshold,
     language,
   });
+
+  const primaryContrast = getStandardCardPrimaryContrast(
+    values.primaryColor,
+    values.themePreset,
+  );
+  const showPrimaryContrastWarning =
+    colorPreset === null && !primaryContrast.passes;
 
   return (
     <section
@@ -648,6 +656,19 @@ export function StandardCardSetup({
                   "Choose an independent preset for each colour or enter a manual HEX value. Manual values stay fixed when the theme changes, and every change appears immediately in the preview.",
                 )}
               </p>
+              {showPrimaryContrastWarning ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  data-testid="primary-color-contrast-warning"
+                  className="mt-3 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-xs font-semibold text-warning"
+                >
+                  {t(
+                    `تنبيه التباين: اللون الأساسي اليدوي يحقق ${primaryContrast.ratio.toFixed(1)}:1 مع خلفية السمة الحالية. استهدف 4.5:1 على الأقل لقراءة النص الصغير بوضوح.`,
+                    `Contrast warning: the manual primary colour is ${primaryContrast.ratio.toFixed(1)}:1 against the current theme surface. Aim for at least 4.5:1 for readable small text.`,
+                  )}
+                </p>
+              ) : null}
             </div>
 
             <div>
