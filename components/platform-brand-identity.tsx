@@ -7,6 +7,7 @@ type BrandMarkFallback = "sparkles" | "letters";
 
 type PlatformBrandIdentityProps = {
   fallback?: BrandMarkFallback;
+  fallbackText?: string;
   markClassName?: string;
   markImageClassName?: string;
   wordmarkClassName?: string;
@@ -16,6 +17,7 @@ type PlatformBrandIdentityProps = {
 
 export function PlatformBrandIdentity({
   fallback = "letters",
+  fallbackText = platformBrand.name,
   markClassName,
   markImageClassName,
   wordmarkClassName,
@@ -47,7 +49,7 @@ export function PlatformBrandIdentity({
             className={cn("block max-w-full object-contain", wordmarkClassName)}
           />
         ) : (
-          <span className={textClassName}>{platformBrand.name}</span>
+          <span className={textClassName}>{fallbackText}</span>
         )
       ) : null}
     </>
