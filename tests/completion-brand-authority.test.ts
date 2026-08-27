@@ -13,14 +13,14 @@ test("desktop and mobile application shells consume the central platform brand",
   ]) {
     const shell = source(path);
     assert.match(shell, /import \{ platformBrand \} from "@\/lib\/platform-brand"/);
+    assert.match(
+      shell,
+      /import \{ PlatformBrandIdentity \} from "@\/components\/platform-brand-identity"/,
+    );
+    assert.match(shell, /<PlatformBrandIdentity/);
     assert.match(shell, /platformBrand\.name/);
     assert.doesNotMatch(shell, />LoyalFlow</);
   }
-
-  assert.match(
-    source("components/app-sidebar.tsx"),
-    /platformBrand\.iconMark/,
-  );
 });
 
 test("transactional auth emails consume the same central brand name", () => {
