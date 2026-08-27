@@ -10,7 +10,7 @@ import { getBusinessSetupValidationIssue } from "@/lib/business/setup-validation
 import { CountrySelector } from "@/components/onboarding/country-selector";
 import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
 import { StandardCardSetup } from "@/components/standard-card-setup";
-import { STANDARD_CARD_UNIT_LABEL_MAX_LENGTH } from "@/lib/cards/standard-card-text";
+import { UnitLabelInput } from "@/components/unit-label-input";
 
 type Language = "AR" | "EN";
 
@@ -1053,11 +1053,10 @@ export default function BusinessSetupWizard({ action, language }: Props) {
               </option>
             ))}
           </select>
-          <input
+          <UnitLabelInput
             name="unitName"
             required
             defaultValue={copy.defaultUnit}
-            maxLength={STANDARD_CARD_UNIT_LABEL_MAX_LENGTH}
             placeholder={copy.unitName}
             className={fieldClass}
           />
