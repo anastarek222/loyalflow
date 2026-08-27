@@ -50,7 +50,11 @@ test("TC5 bounded Card design action re-establishes auth tenant and lifecycle au
   assert.match(action, /"OPERATE"/);
   assert.match(action, /parseCardDesignFormData\(formData\)/);
   assert.match(action, /getAuthorizedCardDesignUpdate/);
-  assert.match(action, /imageFileToDataUrl\(logoFile, 500 \* 1024\)/);
+  assert.match(action, /BUSINESS_LOGO_MAX_BYTES/);
+  assert.match(
+    action,
+    /imageFileToDataUrl\(logoFile, BUSINESS_LOGO_MAX_BYTES\)/,
+  );
 });
 
 test("TC5 bounded Card design action delegates persistence instead of owning a transaction", () => {
