@@ -1,0 +1,357 @@
+name: Temporary public join theme safety patch
+
+on:
+  push:
+    branches:
+      - fix/public-join-brand-theme-safety
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/public-join-brand-theme-safety
+
+      - name: Apply bounded Public Join theme safety patch
+        shell: bash
+        run: |
+          cat > lib/theme.ts <<'EOF'
+          type BusinessThemeSource = {
+            primaryColor?: string | null;
+            secondaryColor?: string | null;
+            themePreset: string;
+            cardStyle: string;
+            fontFamily: string;
+          };
+
+          export type BusinessTheme = {
+            primaryColor: string;
+            primaryForegroundColor: string;
+            secondaryColor: string;
+            secondaryForegroundColor: string;
+            backgroundColor: string;
+            cardStyle: string;
+            fontFamily: string;
+            buttonStyle: string;
+            themePreset: string;
+
+            cardClass: string;
+            buttonClass: string;
+            textClass: string;
+            borderClass: string;
+          };
+
+          const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+          const DEFAULT_PRIMARY_COLOR = "#111827";
+          const DEFAULT_SECONDARY_COLOR = "#FFFFFF";
+
+          function normalizeCustomerColor(
+            value: string | null | undefined,
+            fallback: string,
+          ) {
+            const candidate = value?.trim();
+            return candidate && HEX_COLOR.test(candidate)
+              ? candidate.toUpperCase()
+              : fallback;
+          }
+
+          function relativeLuminance(color: string) {
+            const channels = [1, 3, 5].map((start) => {
+              const value = Number.parseInt(color.slice(start, start + 2), 16) / 255;
+              return value <= 0.04045
+                ? value / 12.92
+                : ((value + 0.055) / 1.055) ** 2.4;
+            });
+
+            return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+          }
+
+          function readableForegroundColor(backgroundColor: string) {
+            const luminance = relativeLuminance(backgroundColor);
+            const whiteContrast = 1.05 / (luminance + 0.05);
+            const blackContrast = (luminance + 0.05) / 0.05;
+            return whiteContrast >= blackContrast ? "#FFFFFF" : "#000000";
+          }
+
+          /**
+           * Resolves branding for public, customer-facing surfaces only.
+           * Authenticated LoyalFlow pages must use global design tokens; the legacy
+           * `getBusinessTheme` alias below exists only until those callers are removed.
+           */
+          export function getCustomerExperienceTheme(
+            business: BusinessThemeSource,
+          ): BusinessTheme {
+            const primaryColor = normalizeCustomerColor(
+              business.primaryColor,
+              DEFAULT_PRIMARY_COLOR,
+            );
+            const secondaryColor = normalizeCustomerColor(
+              business.secondaryColor,
+              DEFAULT_SECONDARY_COLOR,
+            );
+
+            const presets = {
+              DEFAULT: {
+                backgroundColor: "#f8fafc",
+                buttonStyle: "SOLID",
+              },
+
+              MINIMAL: {
+                backgroundColor: "#ffffff",
+                buttonStyle: "OUTLINE",
+              },
+
+              LUXURY: {
+                backgroundColor: "#0f172a",
+                buttonStyle: "SOLID",
+              },
+
+              DARK: {
+                backgroundColor: "#020617",
+                buttonStyle: "SOLID",
+              },
+
+              MODERN: {
+                backgroundColor: "#f1f5f9",
+                buttonStyle: "ROUNDED",
+              },
+
+              GRADIENT: {
+                backgroundColor: "#eef2ff",
+                buttonStyle: "GRADIENT",
+              },
+            };
+
+            const preset =
+              presets[business.themePreset as keyof typeof presets] ?? presets.DEFAULT;
+
+            const cardStyles = {
+              CLASSIC: {
+                cardClass: "rounded-3xl shadow-sm",
+                borderClass: "border-slate-200",
+              },
+              COMPACT: {
+                cardClass: "rounded-xl shadow-sm",
+                borderClass: "border-slate-200",
+              },
+              PREMIUM: {
+                cardClass: "rounded-[32px] shadow-xl",
+                borderClass: "border-white/20",
+              },
+            };
+
+            const card =
+              cardStyles[business.cardStyle as keyof typeof cardStyles] ??
+              cardStyles.CLASSIC;
+
+            const buttonStyles = {
+              SOLID: "rounded-xl font-bold",
+              OUTLINE: "rounded-xl border font-bold",
+              ROUNDED: "rounded-full font-bold",
+              GRADIENT: "rounded-xl font-bold bg-gradient-to-r",
+            };
+
+            return {
+              primaryColor,
+              primaryForegroundColor: readableForegroundColor(primaryColor),
+              secondaryColor,
+              secondaryForegroundColor: readableForegroundColor(secondaryColor),
+              backgroundColor: preset.backgroundColor,
+              buttonStyle: preset.buttonStyle,
+              cardStyle: business.cardStyle,
+              fontFamily: business.fontFamily,
+              themePreset: business.themePreset,
+              cardClass: card.cardClass,
+              borderClass: card.borderClass,
+              buttonClass:
+                buttonStyles[preset.buttonStyle as keyof typeof buttonStyles] ??
+                buttonStyles.SOLID,
+              textClass:
+                business.themePreset === "DARK" || business.themePreset === "LUXURY"
+                  ? "text-white"
+                  : "text-slate-950",
+            };
+          }
+
+          /**
+           * @deprecated Authenticated app pages must not introduce new calls to this
+           * compatibility alias. Use global LoyalFlow tokens internally and
+           * `getCustomerExperienceTheme` only on public customer routes.
+           */
+          export const getBusinessTheme = getCustomerExperienceTheme;
+          EOF
+
+          cat > components/join-submit-button.tsx <<'EOF'
+          "use client";
+
+          import { useFormStatus } from "react-dom";
+
+          type JoinSubmitButtonProps = {
+            label: string;
+            pendingLabel: string;
+            primaryColor: string;
+            foregroundColor: string;
+          };
+
+          export default function JoinSubmitButton({
+            label,
+            pendingLabel,
+            primaryColor,
+            foregroundColor,
+          }: JoinSubmitButtonProps) {
+            const { pending } = useFormStatus();
+
+            return (
+              <button
+                type="submit"
+                disabled={pending}
+                aria-disabled={pending}
+                className="w-full rounded-[var(--lf-radius-input)] px-6 py-4.5 font-black transition hover:brightness-95 focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-70"
+                style={{ backgroundColor: primaryColor, color: foregroundColor }}
+              >
+                {pending ? pendingLabel : label}
+              </button>
+            );
+          }
+          EOF
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/join/[slug]/page.tsx")
+          source = path.read_text(encoding="utf-8")
+
+          replacements = [
+              (
+                  '  const theme =\n    getCustomerExperienceTheme(business);\n',
+                  '  const theme = getCustomerExperienceTheme(business);\n  const headerForegroundColor = business.coverImageUrl\n    ? "#FFFFFF"\n    : theme.primaryForegroundColor;\n',
+              ),
+              (
+                  '        <div className="relative overflow-hidden px-5 py-6 text-white sm:px-7 sm:py-7">',
+                  '        <div\n          className="relative overflow-hidden px-5 py-6 sm:px-7 sm:py-7"\n          style={{ color: headerForegroundColor }}\n        >',
+              ),
+              (
+                  '            <p className="text-sm font-semibold text-white/80">',
+                  '            <p className="text-sm font-semibold opacity-80">',
+              ),
+              (
+                  '            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-white/85">',
+                  '            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold opacity-[0.85]">',
+              ),
+              (
+                  '            <p className="mt-3 leading-7 text-white/90">',
+                  '            <p className="mt-3 leading-7 opacity-90">',
+              ),
+              (
+                  '              color: theme.primaryColor,',
+                  '              color: theme.secondaryForegroundColor,',
+              ),
+              (
+                  '              primaryColor={theme.primaryColor}\n            />',
+                  '              primaryColor={theme.primaryColor}\n              foregroundColor={theme.primaryForegroundColor}\n            />',
+              ),
+          ]
+
+          for old, new in replacements:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f"expected exactly one bounded Join match, found {count}: {old[:80]!r}")
+              source = source.replace(old, new, 1)
+
+          path.write_text(source, encoding="utf-8")
+          PY
+
+          cat > tests/public-join-brand-theme.test.ts <<'EOF'
+          import assert from "node:assert/strict";
+          import { readFileSync } from "node:fs";
+          import { join } from "node:path";
+          import test from "node:test";
+
+          import { getCustomerExperienceTheme } from "@/lib/theme";
+
+          const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
+          const base = {
+            themePreset: "DEFAULT",
+            cardStyle: "CLASSIC",
+            fontFamily: "Inter",
+          };
+
+          test("Public Join theme preserves valid Business colours and safely falls back invalid or missing colours", () => {
+            const valid = getCustomerExperienceTheme({
+              ...base,
+              primaryColor: "#12ab34",
+              secondaryColor: "#eeddcc",
+            });
+            assert.equal(valid.primaryColor, "#12AB34");
+            assert.equal(valid.secondaryColor, "#EEDDCC");
+
+            const fallback = getCustomerExperienceTheme({
+              ...base,
+              primaryColor: "not-a-colour",
+              secondaryColor: null,
+            });
+            assert.equal(fallback.primaryColor, "#111827");
+            assert.equal(fallback.secondaryColor, "#FFFFFF");
+
+            const shortHex = getCustomerExperienceTheme({
+              ...base,
+              primaryColor: "#fff",
+              secondaryColor: "",
+            });
+            assert.equal(shortHex.primaryColor, "#111827");
+            assert.equal(shortHex.secondaryColor, "#FFFFFF");
+          });
+
+          test("Public Join derives readable black or white foregrounds for light and dark brand colours", () => {
+            const dark = getCustomerExperienceTheme({
+              ...base,
+              primaryColor: "#000000",
+              secondaryColor: "#111111",
+            });
+            assert.equal(dark.primaryForegroundColor, "#FFFFFF");
+            assert.equal(dark.secondaryForegroundColor, "#FFFFFF");
+
+            const light = getCustomerExperienceTheme({
+              ...base,
+              primaryColor: "#FFFFFF",
+              secondaryColor: "#FDE047",
+            });
+            assert.equal(light.primaryForegroundColor, "#000000");
+            assert.equal(light.secondaryForegroundColor, "#000000");
+          });
+
+          test("Public Join applies derived contrast to the brand header, reward surface and CTA", () => {
+            const page = source("app/join/[slug]/page.tsx");
+            const button = source("components/join-submit-button.tsx");
+
+            assert.equal((page.match(/getCustomerExperienceTheme\(business\)/g) ?? []).length, 1);
+            assert.match(page, /const headerForegroundColor = business\.coverImageUrl[\s\S]*?#FFFFFF[\s\S]*?theme\.primaryForegroundColor/);
+            assert.match(page, /style=\{\{ color: headerForegroundColor \}\}/);
+            assert.match(page, /color: theme\.secondaryForegroundColor/);
+            assert.match(page, /foregroundColor=\{theme\.primaryForegroundColor\}/);
+            assert.doesNotMatch(page, /relative overflow-hidden px-5 py-6 text-white/);
+
+            assert.match(button, /foregroundColor: string/);
+            assert.match(button, /style=\{\{ backgroundColor: primaryColor, color: foregroundColor \}\}/);
+            assert.doesNotMatch(button, /\btext-white\b/);
+          });
+          EOF
+
+          rm .github/workflows/tmp-public-join-theme-safety.yml
+
+      - name: Verify bounded diff
+        run: git diff --check
+
+      - name: Commit bounded patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/theme.ts components/join-submit-button.tsx app/join/[slug]/page.tsx tests/public-join-brand-theme.test.ts .github/workflows/tmp-public-join-theme-safety.yml
+          git commit -m "fix: harden public join brand theme"
+          git push origin HEAD:fix/public-join-brand-theme-safety
