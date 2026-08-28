@@ -149,7 +149,8 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
   assert.match(scanner, /void initializeScanner\(undefined, scannerModule\);/);
   assert.doesNotMatch(scanner, /setRestartAttempt/);
   assert.match(scanner, /processingRef\.current \|\| !value\.trim\(\)/);
-  assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
+  assert.match(scanner, /facingMode: "environment"/);
+  assert.doesNotMatch(scanner, /facingMode: \{ ideal:/);
 });
 
 test("U7.2 prepares the inline iPhone preview without a duplicate readiness timeout", () => {
@@ -199,7 +200,7 @@ test("U7.2 starts iPhone cameras from an explicit user gesture and exposes safe 
 test("U7.2 starts the rear camera without a throwaway permission stream and retains a selected device ID", () => {
   assert.match(
     scanner,
-    /requestedCameraId \?\? \{[\s\S]*?facingMode: \{ ideal: "environment" \}/,
+    /requestedCameraId \?\? \{[\s\S]*?facingMode: "environment"/,
   );
   assert.match(
     scanner,
