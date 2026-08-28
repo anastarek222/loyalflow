@@ -27,8 +27,23 @@ async function signIn(
   });
 }
 
+async function openAccountMenu(page: Page) {
+  const trigger = page.getByRole("button", {
+    name: "Account menu",
+    exact: true,
+  });
+
+  await expect(async () => {
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "true", {
+      timeout: 1_000,
+    });
+  }).toPass({ timeout: 30_000 });
+  await expect(page.getByLabel("Account", { exact: true })).toBeVisible();
+}
+
 async function signOut(page: Page) {
-  await page.getByRole("button", { name: "Account menu", exact: true }).click();
+  await openAccountMenu(page);
   await Promise.all([
     page.waitForURL(/\/login$/),
     page.getByRole("button", { name: "Log out", exact: true }).click(),
@@ -71,12 +86,7 @@ test.describe.serial("PR browser smoke", () => {
     await navigation.getByRole("link", { name: "Home", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
 
-    await page.getByRole("button", { name: "Account menu", exact: true }).click();
-    await Promise.all([
-      page.waitForURL(/\/login$/),
-      page.getByRole("button", { name: "Log out", exact: true }).click(),
-    ]);
-    await expect(page.getByLabel("Email address")).toBeVisible();
+    await signOut(page);
 
     await page.goto(`/businesses/${fixture.businessA}`);
     await expect(page).toHaveURL(/\/login$/);
