@@ -32,27 +32,32 @@ export function LoyaltyAmountDisplay({
       data-loyalty-amount-display
     >
       {parts.currencyFirst ? (
-        <span
-          className={cn(
-            "shrink-0 [hyphens:none] [overflow-wrap:normal] [word-break:normal]",
-            unitClassName,
-          )}
-        >
-          {parts.unit}
-        </span>
+        <>
+          <span
+            className={cn(
+              "shrink-0 [hyphens:none] [overflow-wrap:normal] [word-break:normal]",
+              unitClassName,
+            )}
+          >
+            {parts.unit}
+          </span>{" "}
+        </>
       ) : null}
       <span className={cn("shrink-0 lf-type-numeric", amountClassName)}>
         {parts.amount}
       </span>
       {!parts.currencyFirst ? (
-        <span
-          className={cn(
-            "max-w-full text-[0.48em] leading-tight [hyphens:none] [overflow-wrap:normal] [word-break:normal]",
-            unitClassName,
-          )}
-        >
-          {parts.unit}
-        </span>
+        <>
+          {" "}
+          <span
+            className={cn(
+              "max-w-full text-[0.48em] leading-tight [hyphens:none] [overflow-wrap:normal] [word-break:normal]",
+              unitClassName,
+            )}
+          >
+            {parts.unit}
+          </span>
+        </>
       ) : null}
     </span>
   );
