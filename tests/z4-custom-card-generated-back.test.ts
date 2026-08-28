@@ -17,7 +17,7 @@ test("Z4 validates Custom Card as one required Front + Back pair", () => {
   assert.match(uploadCommand, /back: unknown/);
   assert.match(
     uploadCommand,
-    /validateCustomCardArtworkPair\(input\.front, input\.back\)/,
+    /validateCustomCardUploadPair\(/,
   );
   assert.doesNotMatch(uploadCommand, /validateSingleCustomCardArtwork/);
 });

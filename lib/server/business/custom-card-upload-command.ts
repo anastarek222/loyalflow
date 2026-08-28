@@ -4,9 +4,11 @@ import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscript
 import {
   customCardStorageConfigured,
   uploadCustomCardArtwork,
-  validateCustomCardArtwork,
-  validateCustomCardArtworkPair,
 } from "@/lib/cards/custom-card-storage";
+import {
+  type CustomCardUploadValidationReason,
+  validateCustomCardUploadPair,
+} from "@/lib/cards/custom-card-upload-validation";
 import prisma from "@/lib/prisma";
 
 export type CustomCardUploadCommandResult =
@@ -20,7 +22,7 @@ export type CustomCardUploadCommandResult =
       ok: false;
       reason:
         | "STORAGE_UNAVAILABLE"
-        | "INVALID_UPLOAD"
+        | CustomCardUploadValidationReason
         | "SUBSCRIPTION_RESTRICTED";
     }>;
 
@@ -42,16 +44,11 @@ export async function uploadCustomCardDraftCommand(input: {
     return { ok: false, reason: "STORAGE_UNAVAILABLE" };
   }
 
-  if (
-    !validateCustomCardArtwork(input.front) ||
-    !validateCustomCardArtwork(input.back)
-  ) {
-    return { ok: false, reason: "INVALID_UPLOAD" };
-  }
-
-  if (!(await validateCustomCardArtworkPair(input.front, input.back))) {
-    return { ok: false, reason: "INVALID_UPLOAD" };
-  }
+  const validation = await validateCustomCardUploadPair(
+    input.front,
+    input.back,
+  );
+  if (!validation.ok) return validation;
 
   if (
     !(await canBusinessPerformSubscriptionOperation(
@@ -67,8 +64,8 @@ export async function uploadCustomCardDraftCommand(input: {
   const uploaded = await uploadCustomCardArtwork({
     businessId: input.businessId,
     version,
-    front: input.front,
-    back: input.back,
+    front: validation.front,
+    back: validation.back,
   });
 
   return {

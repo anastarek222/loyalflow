@@ -10,6 +10,7 @@ const [
   uploadCommandSource,
   backCommandSource,
   storageSource,
+  uploadValidationSource,
 ] = await Promise.all([
   readFile("next.config.ts", "utf8"),
   readFile("components/custom-card-artwork-manager.tsx", "utf8"),
@@ -27,12 +28,13 @@ const [
     "utf8",
   ),
   readFile("lib/cards/custom-card-storage.ts", "utf8"),
+  readFile("lib/cards/custom-card-upload-validation.ts", "utf8"),
 ]);
 
 test("paired custom card Server Action stays below the hosting request ceiling", () => {
   assert.match(nextConfigSource, /bodySizeLimit:\s*["']4250kb["']/);
   assert.match(
-    storageSource,
+    uploadValidationSource,
     /CUSTOM_CARD_MAX_PAIR_BYTES\s*=\s*4\s*\*\s*1024\s*\*\s*1024/,
   );
   assert.match(managerSource, /Maximum 4 MB total across Front \+ Back/);
@@ -58,7 +60,7 @@ test("custom card manager sends Front and Back through one paired action", () =>
 test("paired upload command validates both sides before immutable storage", () => {
   assert.match(
     uploadCommandSource,
-    /validateCustomCardArtworkPair\(input\.front, input\.back\)/,
+    /validateCustomCardUploadPair\(/,
   );
   assert.match(uploadCommandSource, /const version = randomUUID\(\)/);
   assert.match(uploadCommandSource, /uploadCustomCardArtwork/);

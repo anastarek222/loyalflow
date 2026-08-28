@@ -4,18 +4,20 @@ import { get, list, put, type ListBlobResultBlob } from "@vercel/blob";
 import {
   CUSTOM_CARD_GEOMETRY_ERROR,
   validateCustomCardArtworkGeometry,
-  validateCustomCardArtworkGeometryPair,
 } from "@/lib/cards/custom-card-geometry";
+import {
+  CUSTOM_CARD_MAX_FILE_BYTES,
+  validateCustomCardArtworkFile,
+  validateCustomCardUploadPair,
+} from "@/lib/cards/custom-card-upload-validation";
 
 export { CUSTOM_CARD_GEOMETRY_ERROR } from "@/lib/cards/custom-card-geometry";
 
-export const CUSTOM_CARD_MAX_FILE_BYTES = 4 * 1024 * 1024;
-export const CUSTOM_CARD_MAX_PAIR_BYTES = 4 * 1024 * 1024;
-export const CUSTOM_CARD_ALLOWED_TYPES = [
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-] as const;
+export {
+  CUSTOM_CARD_ALLOWED_TYPES,
+  CUSTOM_CARD_MAX_FILE_BYTES,
+  CUSTOM_CARD_MAX_PAIR_BYTES,
+} from "@/lib/cards/custom-card-upload-validation";
 
 export type CustomCardSide = "front" | "back";
 
@@ -37,20 +39,11 @@ export function isCustomCardVersion(value: string) {
 }
 
 export function validateCustomCardArtwork(file: unknown): file is File {
-  return (
-    file instanceof File &&
-    file.size > 0 &&
-    file.size <= CUSTOM_CARD_MAX_FILE_BYTES &&
-    CUSTOM_CARD_ALLOWED_TYPES.includes(
-      file.type as (typeof CUSTOM_CARD_ALLOWED_TYPES)[number],
-    )
-  );
+  return validateCustomCardArtworkFile(file);
 }
 
 export async function validateCustomCardArtworkPair(front: unknown, back: unknown) {
-  if (!validateCustomCardArtwork(front) || !validateCustomCardArtwork(back)) return false;
-  if (front.size + back.size > CUSTOM_CARD_MAX_PAIR_BYTES) return false;
-  return validateCustomCardArtworkGeometryPair(front, back);
+  return (await validateCustomCardUploadPair(front, back)).ok;
 }
 
 export async function validateSingleCustomCardArtwork(file: unknown) {

@@ -25,6 +25,9 @@ test("Stage 14 custom-card flow surfaces draft, publish and storage receipts", (
   assert.match(status, /Front \+ Back draft created/);
   assert.match(status, /Front \+ Back pair published successfully/);
   assert.match(status, /Custom Card storage is currently unavailable/);
+  assert.match(status, /combined Front \+ Back size is larger than 4 MB/);
+  assert.match(status, /Pixel dimensions do not match/);
+  assert.match(status, /wrong aspect ratio/);
   assert.match(status, /role=\{copy\.tone === "success" \? "status" : "alert"\}/);
   assert.match(
     status,
@@ -34,6 +37,8 @@ test("Stage 14 custom-card flow surfaces draft, publish and storage receipts", (
   assert.match(manager, /CustomCardExperienceStatus/);
   assert.match(manager, /isArabic=\{language === "AR"\}/);
   assert.match(manager, /status=\{status\}/);
+  assert.match(manager, /Artwork requirements/);
+  assert.match(manager, /<details/);
 
   const page = source("app/businesses/[slug]/program/page.tsx");
   assert.match(page, /status=\{query\.cardDesign\}/);
