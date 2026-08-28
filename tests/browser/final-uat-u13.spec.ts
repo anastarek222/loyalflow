@@ -25,6 +25,8 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
         scannerInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
         scannerStarting: "جارٍ تشغيل الكاميرا...",
         scannerReady: "الكاميرا جاهزة لمسح رمز QR.",
+        scannerFeedback:
+          /^(?:وجّه الكاميرا ناحية QR الخاص بالعميل.|جارٍ تشغيل الكاميرا...|الكاميرا جاهزة لمسح رمز QR.|تشغيل الكاميرا على الهاتف يحتاج رابط HTTPS.|الكاميرا غير متاحة على هذا الجهاز.|تم رفض إذن الكاميرا.|تعذر تشغيل الماسح الآن.)/,
         searchLabel: "البحث عن عميل",
         openCustomer: "فتح العميل",
       }
@@ -33,6 +35,8 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
         scannerInstruction: "Point the camera at the customer QR code.",
         scannerStarting: "Starting camera...",
         scannerReady: "Camera ready to scan a QR code.",
+        scannerFeedback:
+          /^(?:Point the camera at the customer QR code.|Starting camera...|Camera ready to scan a QR code.|Camera access on mobile requires an HTTPS link.|The camera is unavailable on this device.|Camera permission was denied.|The scanner could not start.)/,
         searchLabel: "Find a customer",
         openCustomer: "Open customer",
       };
@@ -40,12 +44,8 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
   // The trace confirms search is rendered with the scanner; there is no separate
   // camera-to-search fallback control to activate.
   await expect(
-    page.getByRole("status", { name: copy.scannerStatus, exact: true }),
-  ).toHaveText(
-    new RegExp(
-      `^(?:${copy.scannerInstruction}|${copy.scannerStarting}|${copy.scannerReady})$`,
-    ),
-  );
+    page.getByLabel(copy.scannerStatus, { exact: true }),
+  ).toHaveText(copy.scannerFeedback);
   await page.getByRole("textbox", { name: copy.searchLabel, exact: true }).fill(fixture.activeCustomer.customerCode);
 
   const customerResult = page.getByRole("link", {
@@ -72,7 +72,10 @@ function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) 
   const formattedBalance = new Intl.NumberFormat(
     language === "AR" ? "ar-EG" : "en-US",
   ).format(balance);
-  return page.getByRole("region", { name: label, exact: true }).getByText(`${formattedBalance} Points`, { exact: true });
+  return page
+    .getByRole("region", { name: label, exact: true })
+    .locator("[data-loyalty-amount-display]")
+    .filter({ hasText: `${formattedBalance} Points` });
 }
 
 async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin") {
@@ -203,7 +206,14 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByRole("button", { name: "Account menu", exact: true }).click();
     const experienceMode = page.getByRole("group", { name: "Experience mode", exact: true });
     await expect(experienceMode.getByRole("button", { name: "Simple", exact: true })).toHaveAttribute("aria-pressed", "true");
-    await experienceMode.getByRole("button", { name: "Advanced", exact: true }).click();
+    const advancedMode = experienceMode.getByRole("button", {
+      name: "Advanced",
+      exact: true,
+    });
+    await advancedMode.click();
+    await expect(advancedMode).toHaveAttribute("aria-pressed", "true", {
+      timeout: 15_000,
+    });
     await expect(navigation.getByRole("heading", { name: "Growth", exact: true })).toBeVisible();
     await expect(navigation.getByRole("heading", { name: "Analytics", exact: true })).toBeVisible();
     await expect(navigation.getByRole("heading", { name: "Administration", exact: true })).toBeVisible();

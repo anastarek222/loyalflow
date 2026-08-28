@@ -478,7 +478,7 @@ function ProgramSummary({ label, value }: { label: string; value: string }) {
       </p>
       <p
         dir="auto"
-        className="mt-1 truncate text-sm font-black text-white sm:text-base"
+        className="mt-1 text-balance text-xs font-black leading-tight text-white [hyphens:none] [overflow-wrap:normal] [word-break:normal] sm:text-sm lg:text-base"
       >
         {value}
       </p>

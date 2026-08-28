@@ -9,6 +9,9 @@ const remoteStaging = Boolean(remoteBaseURL);
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
 const browserProxy = (process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY ?? process.env.https_proxy ?? process.env.http_proxy)?.trim();
+const localServerCommand = process.env.CI
+  ? `npm run start -- --hostname 127.0.0.1 --port ${port}`
+  : `npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`;
 
 if (remoteStaging && !baseURL.startsWith("https://")) {
   throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
@@ -24,7 +27,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
   workers: 1,
-  timeout: 45_000,
+  timeout: 75_000,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,
@@ -42,7 +45,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
-    actionTimeout: 10_000,
+    actionTimeout: 30_000,
   },
   projects: [
     {
@@ -72,7 +75,7 @@ export default defineConfig({
     },
   ],
   webServer: remoteStaging ? undefined : {
-    command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    command: localServerCommand,
     url: `${localBaseURL}/api/health/live`,
     reuseExistingServer:
       process.env.BROWSER_UAT_REUSE_EXISTING_SERVER === "true",

@@ -256,7 +256,8 @@ export default async function JoinBusinessPage({
           ) : null}
 
           <div
-            className="mb-5 rounded-[var(--lf-radius-input)] px-4 py-3 text-sm leading-6"
+            dir="auto"
+            className="mb-5 rounded-[var(--lf-radius-input)] px-4 py-3 text-sm leading-6 [hyphens:none] [overflow-wrap:normal] [word-break:normal]"
             style={{
               backgroundColor: `${theme.secondaryColor}CC`,
               color: theme.secondaryForegroundColor,

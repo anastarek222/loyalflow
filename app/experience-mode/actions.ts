@@ -5,6 +5,7 @@ import {
   getExperienceModeCookieName,
   isExperienceMode,
 } from "@/lib/experience-mode";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -23,4 +24,5 @@ export async function updateExperienceModeAction(formData: FormData): Promise<vo
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
+  revalidatePath("/", "layout");
 }

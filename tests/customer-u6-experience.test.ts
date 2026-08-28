@@ -51,16 +51,16 @@ test("U6 keeps advanced management and mutations unavailable to staff and viewer
   assert.match(detail, /canRedeemLoyalty/);
 });
 
-test("U6 customer detail distinguishes visits, points, and sales amount loyalty in both languages", () => {
+test("U6 keeps engine mode labels while customer operations use shared loyalty presentation", () => {
   assert.equal(getLoyaltyModeLabel("AR", "VISITS"), "زيارات");
   assert.equal(getLoyaltyModeLabel("AR", "POINTS"), "نقاط");
   assert.equal(getLoyaltyModeLabel("AR", "SALES_AMOUNT"), "قيمة المبيعات");
   assert.equal(getLoyaltyModeLabel("EN", "VISITS"), "Visits");
   assert.equal(getLoyaltyModeLabel("EN", "POINTS"), "Points");
   assert.equal(getLoyaltyModeLabel("EN", "SALES_AMOUNT"), "Sales amount");
-  assert.match(detail, /loyaltyModeLabel/);
-  assert.match(detail, /copy\.addVisit/);
-  assert.match(detail, /copy\.recordSale/);
+  assert.match(detail, /loyaltyBalanceLabel/);
+  assert.match(detail, /loyaltyEarnLabel/);
+  assert.doesNotMatch(detail, /copy\.pointsBalance|copy\.addPoints/);
   assert.match(detail, /LoyaltySubmitButton/);
   assert.match(detail, /RedeemRewardDialog/);
 });

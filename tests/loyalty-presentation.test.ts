@@ -4,7 +4,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 import { getRetentionPresentation, calculateRetentionScore } from "@/lib/customers/retention-score";
-import { earnActionLabel, formatLoyaltyAmount, formatLoyaltyNumber, operationalUnitLabel } from "@/lib/loyalty/presentation";
+import { balanceLabel, earnActionLabel, formatLoyaltyAmount, formatLoyaltyNumber, loyaltyAmountParts, operationalUnitLabel } from "@/lib/loyalty/presentation";
 
 const root = process.cwd();
 const source = (file: string) => readFileSync(join(root, file), "utf8");
@@ -18,6 +18,40 @@ test("canonical visit presentation describes configured credit in Arabic and Eng
 test("points retain a configured operational label", () => {
   assert.equal(operationalUnitLabel({ loyaltyMode: "POINTS", language: "EN", unitName: "Stars" }), "Stars");
   assert.equal(formatLoyaltyAmount({ loyaltyMode: "POINTS", language: "AR", unitName: "نقطة", amount: 12 }), "١٢ نقطة");
+});
+
+test("configured English units share one singular and plural presentation authority", () => {
+  const input = { loyaltyMode: "POINTS", language: "EN", unitName: "Recommendations" } as const;
+  assert.equal(formatLoyaltyAmount({ ...input, amount: 1 }), "1 Recommendation");
+  assert.equal(formatLoyaltyAmount({ ...input, amount: 3 }), "3 Recommendations");
+  assert.equal(
+    formatLoyaltyAmount({ ...input, unitName: "VIP Visits", amount: 1 }),
+    "1 VIP Visit",
+  );
+  assert.deepEqual(loyaltyAmountParts({ ...input, amount: 1 }), {
+    amount: "1",
+    unit: "Recommendation",
+    currencyFirst: false,
+  });
+  assert.equal(balanceLabel(input), "Loyalty balance");
+  assert.equal(earnActionLabel({ ...input, earnAmount: 1 }), "Add 1 Recommendation");
+});
+
+test("long loyalty units render as indivisible responsive labels", () => {
+  const display = source("components/loyalty-amount-display.tsx");
+  const customer = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
+  const programme = source("app/businesses/[slug]/program/page.tsx");
+  const join = source("app/join/[slug]/page.tsx");
+
+  assert.match(display, /data-loyalty-amount-display/);
+  assert.match(display, /overflow-wrap:normal/);
+  assert.match(display, /word-break:normal/);
+  assert.match(customer, /loyaltyBalanceLabel/);
+  assert.match(customer, /loyaltyEarnLabel/);
+  assert.doesNotMatch(customer, /copy\.pointsBalance|copy\.addPoints/);
+  assert.doesNotMatch(programme, /className="mt-1 truncate/);
+  assert.match(programme, /overflow-wrap:normal/);
+  assert.match(join, /overflow-wrap:normal/);
 });
 
 test("sales presentation uses whole-number business currency instead of unitName", () => {
