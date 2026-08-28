@@ -286,11 +286,16 @@ export function StandardCardSetup({
           </legend>
           {customReadOnly ? (
             <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
-              <p className="font-black">{t("بطاقة مخصصة", "Custom Card")}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-black">{t("بطاقة مخصصة", "Custom Card")}</p>
+                <span className="rounded-full bg-primary-subtle px-2.5 py-1 text-[0.68rem] font-bold text-primary">
+                  {t("بإدارة مدير النظام", "Managed by Super Admin")}
+                </span>
+              </div>
               <p className="mt-1 text-sm text-foreground-muted">
                 {t(
-                  "يدير مدير نظام LoyalFlow هذا التصميم. الرسومات وإعدادات مناطق الأمان المحمية للقراءة فقط لدى مالك النشاط.",
-                  "This design is managed by LoyalFlow Super Admin. Its artwork and protected safe-zone configuration are read-only for Business Owners.",
+                  "الرسومات ومناطق الأمان للقراءة فقط لدى مالك النشاط.",
+                  "Artwork and protected safe zones are read-only for Business Owners.",
                 )}
               </p>
             </div>
@@ -330,10 +335,10 @@ export function StandardCardSetup({
                     className="sr-only"
                   />
                   <span className="block font-black">
-                    {t(
-                      "بطاقة مخصصة — بإدارة مدير النظام",
-                      "Custom Card — Super Admin managed",
-                    )}
+                    {t("بطاقة مخصصة", "Custom Card")}
+                  </span>
+                  <span className="mt-1 block text-[0.68rem] font-bold uppercase tracking-[0.08em] text-primary">
+                    {t("بإدارة مدير النظام", "Managed by Super Admin")}
                   </span>
                   <span className="mt-1 block text-xs text-foreground-muted">
                     {t(
