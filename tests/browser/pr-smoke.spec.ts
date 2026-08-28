@@ -10,6 +10,10 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
+// Webpack compiles each critical route on first use in disposable CI. Keep the
+// broader suite bounded while allowing this cold-start smoke file to finish.
+test.setTimeout(180_000);
+
 async function signIn(
   page: Page,
   role: "owner-a" | "manager-a" | "viewer-a",
