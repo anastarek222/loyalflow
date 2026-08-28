@@ -129,7 +129,8 @@ test("U7.2 ignores ordinary per-frame decode misses without classifying them as 
 test("U7.2 catches scanner import and render failures, retries after cleanup, and retains resolve concurrency protection", () => {
   assert.match(scanner, /await import\("html5-qrcode"\)/);
   assert.match(scanner, /new Html5Qrcode\(/);
-  assert.match(scanner, /Html5Qrcode\.getCameras\(\)/);
+  assert.doesNotMatch(scanner, /Html5Qrcode\.getCameras\(\)/);
+  assert.match(scanner, /navigator\.mediaDevices\.enumerateDevices\(\)/);
   assert.match(scanner, /scanner\.start\(/);
   assert.match(scanner, /await scanner\.stop\(\)/);
   assert.match(scanner, /catch \(error\)/);
@@ -138,18 +139,26 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
   assert.match(scanner, /initializationPromiseRef\.current/);
   assert.match(scanner, /stoppingPromiseRef\.current/);
   assert.match(scanner, /await stopScanner\(\)/);
-  assert.match(scanner, /setRestartAttempt/);
+  assert.match(
+    scanner,
+    /async function restartScanner\(\)[\s\S]*?await initializeScanner\(\);/,
+  );
+  assert.doesNotMatch(scanner, /setRestartAttempt/);
   assert.match(scanner, /processingRef\.current \|\| !value\.trim\(\)/);
   assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
 });
 
 test("U7.2 waits for a playable inline camera preview before reporting ready", () => {
-  assert.match(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS = 4_000/);
+  assert.match(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS = 10_000/);
   assert.match(scanner, /reader\.querySelector<HTMLVideoElement>\("video"\)/);
+  assert.match(scanner, /new MutationObserver\(prepareVideos\)/);
   assert.match(scanner, /video\.playsInline = true/);
   assert.match(scanner, /video\.setAttribute\("playsinline", ""\)/);
   assert.match(scanner, /void video\.play\(\)\.catch/);
-  assert.match(scanner, /video\.readyState >= HTMLMediaElement\.HAVE_CURRENT_DATA/);
+  assert.match(
+    scanner,
+    /video\.readyState >= HTMLMediaElement\.HAVE_CURRENT_DATA/,
+  );
   assert.match(scanner, /video\.videoWidth > 0/);
   assert.match(scanner, /video\.videoHeight > 0/);
   assert.match(scanner, /previewReadyAbortRef\.current\?\.abort\(\)/);
@@ -164,17 +173,18 @@ test("U7.2 waits for a playable inline camera preview before reporting ready", (
   );
 });
 
-test("U7.2 retains the camera that actually started when track settings omit a device ID", () => {
-  assert.match(scanner, /let startedCameraId: string \| null = null;/);
+test("U7.2 starts the rear camera without a throwaway permission stream and retains a selected device ID", () => {
   assert.match(
     scanner,
-    /startedCameraId = preferred\?\.id \?\? availableCameras\[0\]\.id;/,
+    /requestedCameraId \?\? \{[\s\S]*?facingMode: \{ ideal: "environment" \}/,
   );
-  assert.match(scanner, /startedCameraId = fallback\.id;/);
   assert.match(
     scanner,
-    /startedCameraId \?\? preferred\?\.id \?\? availableCameras\[0\]\?\.id \?\? null/,
+    /scanner\.getRunningTrackSettings\(\)\.deviceId \|\| runningCameraId/,
   );
+  assert.match(scanner, /availableCameras\[0\]\?\.id \?\? null/);
+  assert.doesNotMatch(scanner, /getUserMedia\(/);
+  assert.doesNotMatch(scanner, /aspectRatio: 1/);
 });
 
 test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
