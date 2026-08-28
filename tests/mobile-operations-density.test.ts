@@ -10,6 +10,7 @@ test("mobile Scan opens at the camera while desktop retains guidance", () => {
   const scan = source("app/businesses/[slug]/scan/page.tsx");
 
   assert.match(scan, /className="hidden gap-3 p-4 sm:flex/);
+  assert.match(scan, /<h1 className="sr-only sm:hidden">/);
   assert.match(scan, /mb-3 hidden items-start[\s\S]*sm:flex/);
   assert.match(scan, /<QrScanner businessId=\{business\.id\}/);
   assert.match(scan, /<ScanCustomerSearch businessId=\{business\.id\}/);
