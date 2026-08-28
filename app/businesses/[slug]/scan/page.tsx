@@ -75,6 +75,7 @@ export default async function ScanPage({ params }: ScanPageProps) {
         variant="narrow"
         className="space-y-2 px-3 sm:space-y-8 sm:px-6"
       >
+        <h1 className="sr-only sm:hidden">{copy.scanCustomerCard}</h1>
         <PageHeader
           eyebrow={copy.workspaceLabel}
           title={copy.scanCustomerCard}
