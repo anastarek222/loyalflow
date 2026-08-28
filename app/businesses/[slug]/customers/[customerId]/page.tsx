@@ -7,6 +7,8 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { getCampaignSuggestion } from "@/lib/campaigns/suggestions";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import {
+  balanceLabel,
+  earnActionLabel,
   formatLoyaltyAmount,
   operationalUnitLabel,
 } from "@/lib/loyalty/presentation";
@@ -24,6 +26,7 @@ import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import CopyLinkButton from "@/components/copy-link-button";
 import ActivityTimeline from "@/components/customer-profile/activity-timeline";
+import { LoyaltyAmountDisplay } from "@/components/loyalty-amount-display";
 import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
 import LoyaltySubmitButton from "@/components/loyalty-submit-button";
@@ -35,7 +38,7 @@ import {
 } from "@/lib/experience-mode";
 import prisma from "@/lib/prisma";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
-import { customerUiCopy, getLoyaltyModeLabel } from "@/lib/customers/ui-copy";
+import { customerUiCopy } from "@/lib/customers/ui-copy";
 import {
   buildWhatsAppUrl,
   DEFAULT_WHATSAPP_TEMPLATES,
@@ -357,7 +360,6 @@ export default async function CustomerDetailsPage({
     (rewardState) => rewardState.rewardAvailable,
   );
   const remaining = canonicalAvailability.remaining;
-  const loyaltyModeLabel = getLoyaltyModeLabel(language, business.loyaltyMode);
   const messageReward = canonicalAvailability.defaultReward;
   const cardTheme = getCustomerExperienceTheme(business);
 
@@ -419,6 +421,8 @@ export default async function CustomerDetailsPage({
     currency: business.currency,
     earnAmount: business.earnAmount,
   } as const;
+  const loyaltyBalanceLabel = balanceLabel(loyaltyPresentation);
+  const loyaltyEarnLabel = earnActionLabel(loyaltyPresentation);
   const formatBalance = (amount: number) =>
     formatLoyaltyAmount({
       loyaltyMode: business.loyaltyMode,
@@ -732,7 +736,7 @@ export default async function CustomerDetailsPage({
                 <div className="min-w-40">
                   <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
-                      {loyaltyModeLabel}
+                      {loyaltyBalanceLabel}
                     </p>
                     <p
                       dir={
@@ -740,7 +744,11 @@ export default async function CustomerDetailsPage({
                       }
                       className="mt-1 text-xl font-black text-white"
                     >
-                      {formatBalance(customer.balance)}
+                      <LoyaltyAmountDisplay
+                        {...loyaltyPresentation}
+                        amount={customer.balance}
+                        unitClassName="text-[0.62em]"
+                      />
                     </p>
                   </div>
                 </div>
@@ -761,7 +769,10 @@ export default async function CustomerDetailsPage({
                       className="text-4xl font-black text-foreground"
                     >
                       <span className="lf-type-numeric">
-                        {formatBalance(customer.balance)}
+                        <LoyaltyAmountDisplay
+                          {...loyaltyPresentation}
+                          amount={customer.balance}
+                        />
                       </span>
                     </p>
                     <p className="mt-1 text-sm text-foreground-muted">
@@ -1009,12 +1020,7 @@ export default async function CustomerDetailsPage({
               <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
                 <div>
                   <p className="text-sm text-foreground-subtle">
-                    {loyaltyModeLabel} ·{" "}
-                    {business.loyaltyMode === "SALES_AMOUNT"
-                      ? copy.eligibleSales
-                      : business.loyaltyMode === "VISITS"
-                        ? copy.visitsCount
-                        : copy.pointsBalance}
+                    {loyaltyBalanceLabel}
                   </p>
 
                   <p
@@ -1023,7 +1029,10 @@ export default async function CustomerDetailsPage({
                     }
                     className="mt-2 text-5xl font-bold text-foreground"
                   >
-                    {formatBalance(customer.balance)}
+                    <LoyaltyAmountDisplay
+                      {...loyaltyPresentation}
+                      amount={customer.balance}
+                    />
                   </p>
                 </div>
 
@@ -1224,11 +1233,7 @@ export default async function CustomerDetailsPage({
                         : "w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
                     }
                   >
-                    {business.loyaltyMode === "SALES_AMOUNT"
-                      ? copy.recordSale
-                      : business.loyaltyMode === "VISITS"
-                        ? copy.addVisit
-                        : copy.addPoints(business.earnAmount)}
+                    {loyaltyEarnLabel}
                   </LoyaltySubmitButton>
                 </form>
 

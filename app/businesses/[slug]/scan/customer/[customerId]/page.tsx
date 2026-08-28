@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { auth } from "@/auth";
 import ScanActionButton from "@/components/scan-action-button";
 import ScanSuccessFeedback from "@/components/scan-success-feedback";
+import { LoyaltyAmountDisplay } from "@/components/loyalty-amount-display";
 import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
 import {
   PageContainer,
@@ -240,10 +241,10 @@ export default async function ScanCustomerPage({
                 }
                 className="mt-1 lf-type-display lf-type-numeric text-foreground"
               >
-                {formatLoyaltyAmount({
-                  ...loyaltyPresentation,
-                  amount: customer.balance,
-                })}
+                <LoyaltyAmountDisplay
+                  {...loyaltyPresentation}
+                  amount={customer.balance}
+                />
               </p>
             </section>
             <ScanSuccessFeedback
@@ -322,10 +323,10 @@ export default async function ScanCustomerPage({
                   }
                   className="mt-2 lf-type-display lf-type-numeric font-black text-white"
                 >
-                  {formatLoyaltyAmount({
-                    ...loyaltyPresentation,
-                    amount: customer.balance,
-                  })}
+                  <LoyaltyAmountDisplay
+                    {...loyaltyPresentation}
+                    amount={customer.balance}
+                  />
                 </p>
               </div>
             </Card>

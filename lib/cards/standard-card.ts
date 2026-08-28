@@ -1,6 +1,9 @@
 import { LOYALTY_CARD_ASPECT_RATIO } from "@/lib/cards/card-rendering-contract";
 import { boundedStandardCardUnitLabel } from "@/lib/cards/standard-card-text";
-import { loyaltyCurrency } from "@/lib/loyalty/presentation";
+import {
+  loyaltyCurrency,
+  loyaltyUnitLabelForAmount,
+} from "@/lib/loyalty/presentation";
 
 export { STANDARD_CARD_UNIT_LABEL_MAX_LENGTH } from "@/lib/cards/standard-card-text";
 
@@ -118,19 +121,19 @@ function formatArabicUnitValue(value: number, unit: string, locale: string) {
 function compactUnitForms(value: string | null | undefined) {
   const full = (value || "PTS").trim().replace(/\s+/g, " ");
   const upper = full.toUpperCase();
-  const knownSingular = upper
-    .replace(/IES$/, "Y")
-    .replace(/(CH|SH|X|Z)ES$/, "$1")
-    .replace(/S$/, "");
-  const plural = knownSingular.endsWith("S")
-    ? knownSingular
-    : knownSingular.endsWith("Y")
-      ? `${knownSingular.slice(0, -1)}IES`
-      : `${knownSingular}S`;
+  const presentation = {
+    loyaltyMode: "POINTS" as const,
+    language: "EN" as const,
+    unitName: upper,
+  };
 
   return {
-    singular: boundedStandardCardUnitLabel(knownSingular),
-    plural: boundedStandardCardUnitLabel(plural),
+    singular: boundedStandardCardUnitLabel(
+      loyaltyUnitLabelForAmount({ ...presentation, amount: 1 }),
+    ),
+    plural: boundedStandardCardUnitLabel(
+      loyaltyUnitLabelForAmount({ ...presentation, amount: 2 }),
+    ),
   };
 }
 
