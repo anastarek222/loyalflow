@@ -86,7 +86,7 @@ export default function ActivityTimeline({
     <OperationalDisclosure
       title={labels.title}
       description={labels.description}
-      className="order-2 mt-6"
+      className="order-2 mt-3 sm:mt-6"
       contentClassName="p-0 sm:p-0"
     >
       <div data-customer-activity-timeline>
