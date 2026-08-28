@@ -63,14 +63,14 @@ export function ReportCharts({ language, unitName, trends }: Props) {
       data-report-charts="server-derived-buckets"
       className="grid min-w-0 gap-4 lg:grid-cols-2"
     >
-      <article className="min-w-0 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm">
+      <article className="min-w-0 rounded-[var(--lf-radius-input)] border border-border bg-surface p-3 sm:p-5">
         <ChartHeader
           icon={UsersRound}
           title={copy.customerGrowth}
           detail={`${copy.customers} · ${copy.historical}`}
         />
         <div
-          className="mt-5 h-72"
+          className="mt-3 h-52 sm:mt-5 sm:h-72"
           role="img"
           aria-label={`${copy.customerGrowth}: ${customerData
             .map((point) => `${point.date} ${point.customers}`)
@@ -100,14 +100,14 @@ export function ReportCharts({ language, unitName, trends }: Props) {
         </div>
       </article>
 
-      <article className="min-w-0 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm">
+      <article className="min-w-0 rounded-[var(--lf-radius-input)] border border-border bg-surface p-3 sm:p-5">
         <ChartHeader
           icon={TrendingUp}
           title={copy.loyaltyTrend}
           detail={`${unitName} · ${copy.historical}`}
         />
         <div
-          className="mt-5 h-72"
+          className="mt-3 h-52 sm:mt-5 sm:h-72"
           role="img"
           aria-label={`${copy.loyaltyTrend}: ${loyaltyData
             .map((point) => `${point.date} ${point.earned}/${point.redeemed}`)
