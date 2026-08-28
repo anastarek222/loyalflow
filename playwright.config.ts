@@ -72,7 +72,7 @@ export default defineConfig({
     },
   ],
   webServer: remoteStaging ? undefined : {
-    command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    command: `npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`,
     url: `${localBaseURL}/api/health/live`,
     reuseExistingServer:
       process.env.BROWSER_UAT_REUSE_EXISTING_SERVER === "true",
