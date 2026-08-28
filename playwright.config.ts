@@ -9,6 +9,10 @@ const remoteStaging = Boolean(remoteBaseURL);
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH?.trim();
 const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
 const browserProxy = (process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY ?? process.env.https_proxy ?? process.env.http_proxy)?.trim();
+const useProductionServer = Boolean(process.env.CI);
+const localServerCommand = useProductionServer
+  ? `npm run start -- --hostname 127.0.0.1 --port ${port}`
+  : `npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`;
 
 if (remoteStaging && !baseURL.startsWith("https://")) {
   throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
@@ -72,13 +76,14 @@ export default defineConfig({
     },
   ],
   webServer: remoteStaging ? undefined : {
-    command: `npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`,
+    command: localServerCommand,
     url: `${localBaseURL}/api/health/live`,
     reuseExistingServer:
       process.env.BROWSER_UAT_REUSE_EXISTING_SERVER === "true",
     timeout: 120_000,
     env: {
       ...process.env,
+      NODE_ENV: useProductionServer ? "production" : process.env.NODE_ENV,
       UAT_BASE_URL: baseURL,
       // Google Sheets is an optional production mirror. The documented empty
       // spreadsheet ID keeps it disabled for disposable browser UAT fixtures,
