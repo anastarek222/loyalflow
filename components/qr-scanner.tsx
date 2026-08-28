@@ -28,6 +28,9 @@ type QrScannerProps = { businessId: string; language: AppLanguage };
 type ScannerInstance = import("html5-qrcode").Html5Qrcode;
 type CameraError = "unavailable" | "permission" | "secure" | "initialization";
 
+const CAMERA_PREVIEW_READY_TIMEOUT_MS = 4_000;
+const CAMERA_PREVIEW_READY_POLL_MS = 50;
+
 function resolveErrorMessage(
   code: ScanResolveErrorCode,
   copy: ReturnType<typeof scanUiCopy>,
@@ -57,6 +60,50 @@ function getCameraError(error: unknown): CameraError {
   return "initialization";
 }
 
+function isCameraPreviewPlayable(video: HTMLVideoElement) {
+  return (
+    video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+    video.videoWidth > 0 &&
+    video.videoHeight > 0
+  );
+}
+
+function prepareCameraPreview(video: HTMLVideoElement) {
+  video.playsInline = true;
+  video.autoplay = true;
+  video.muted = true;
+  video.defaultMuted = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("autoplay", "");
+  video.setAttribute("muted", "");
+}
+
+async function waitForPlayableCameraPreview(
+  reader: HTMLElement,
+  signal: AbortSignal,
+) {
+  const deadline = Date.now() + CAMERA_PREVIEW_READY_TIMEOUT_MS;
+  let playbackVideo: HTMLVideoElement | null = null;
+
+  while (!signal.aborted && Date.now() < deadline) {
+    const video = reader.querySelector<HTMLVideoElement>("video");
+    if (video) {
+      prepareCameraPreview(video);
+      if (video !== playbackVideo) {
+        playbackVideo = video;
+        void video.play().catch(() => undefined);
+      }
+      if (isCameraPreviewPlayable(video)) return true;
+    }
+    await new Promise<void>((resolve) =>
+      window.setTimeout(resolve, CAMERA_PREVIEW_READY_POLL_MS),
+    );
+  }
+
+  if (signal.aborted) return false;
+  throw new Error("camera preview timeout");
+}
+
 export default function QrScanner({ businessId, language }: QrScannerProps) {
   const router = useRouter();
   const copy = scanUiCopy(language);
@@ -65,6 +112,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   const mountedRef = useRef(false);
   const initializationPromiseRef = useRef<Promise<void> | null>(null);
   const stoppingPromiseRef = useRef<Promise<void> | null>(null);
+  const previewReadyAbortRef = useRef<AbortController | null>(null);
   const switchingRef = useRef(false);
   const selectedCameraIdRef = useRef<string | null>(null);
   const [manualValue, setManualValue] = useState("");
@@ -84,6 +132,8 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   }, []);
 
   const stopScanner = useCallback(async () => {
+    previewReadyAbortRef.current?.abort();
+    previewReadyAbortRef.current = null;
     if (stoppingPromiseRef.current) return stoppingPromiseRef.current;
     const scanner = scannerRef.current;
     scannerRef.current = null;
@@ -246,6 +296,26 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
             await scanner.start(fallback.id, config, onDecoded, onDecodeMiss);
             startedCameraId = fallback.id;
           }
+
+          const previewReadyAbort = new AbortController();
+          previewReadyAbortRef.current = previewReadyAbort;
+          let previewReady = false;
+          try {
+            previewReady = await waitForPlayableCameraPreview(
+              reader,
+              previewReadyAbort.signal,
+            );
+          } finally {
+            if (previewReadyAbortRef.current === previewReadyAbort)
+              previewReadyAbortRef.current = null;
+          }
+          if (
+            !previewReady ||
+            !mountedRef.current ||
+            scannerRef.current !== scanner
+          )
+            return;
+
           let runningCameraId =
             startedCameraId ?? preferred?.id ?? availableCameras[0]?.id ?? null;
           try {
@@ -333,7 +403,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         <div
           id="loyalflow-qr-reader"
           data-selected-camera={selectedCameraId ?? undefined}
-          className="lf-qr-reader min-h-64 w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-white p-2 text-foreground sm:p-4"
+          className="lf-qr-reader min-h-56 w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-white p-2 text-foreground sm:min-h-64 sm:p-4"
         />
         <span
           className="pointer-events-none absolute start-5 top-5 size-8 rounded-ss-xl border-s-2 border-t-2 border-primary"
@@ -358,7 +428,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         aria-atomic="true"
         aria-busy={cameraBusy}
         aria-label={copy.scannerStatus}
-        className={`mt-4 flex items-center gap-3 rounded-xl border px-4 py-3.5 text-sm font-medium ${isError ? "border-danger/25 bg-danger-subtle text-danger" : "border-info/20 bg-info-subtle/70 text-info"}`}
+        className={`mt-3 flex items-center gap-2.5 rounded-xl border px-3 py-3 text-sm font-medium sm:mt-4 sm:gap-3 sm:px-4 sm:py-3.5 ${isError ? "border-danger/25 bg-danger-subtle text-danger" : "border-info/20 bg-info-subtle/70 text-info"}`}
       >
         {cameraBusy ? (
           <LoaderCircle
@@ -371,7 +441,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         <span>{status}</span>
       </div>
       {(cameras.length > 1 || (cameraError && cameraError !== "secure")) && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
           {cameras.length > 1 && (
             <button
               type="button"
@@ -398,7 +468,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
           )}
         </div>
       )}
-      <details className="mt-4 rounded-xl border border-border bg-surface-subtle/60">
+      <details className="mt-3 rounded-xl border border-border bg-surface-subtle/60 sm:mt-4">
         <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 text-sm font-semibold text-foreground-muted">
           <Keyboard className="size-4 text-primary" aria-hidden="true" />
           {copy.manualDivider}

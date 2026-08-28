@@ -70,16 +70,20 @@ export default async function ScanPage({ params }: ScanPageProps) {
   }
 
   return (
-    <main className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_32rem)] py-5 sm:py-10">
-      <PageContainer variant="narrow" className="px-4 sm:px-6">
+    <main className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_32rem)] py-3 sm:py-10">
+      <PageContainer
+        variant="narrow"
+        className="space-y-4 px-4 sm:space-y-8 sm:px-6"
+      >
         <PageHeader
           eyebrow={copy.workspaceLabel}
           title={copy.scanCustomerCard}
           description={copy.scanDescription}
+          className="gap-3 p-4 sm:gap-5 sm:p-6"
           secondaryActions={
             <Link
               href={`/businesses/${business.slug}`}
-              className="inline-flex min-h-11 self-start items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface/80 px-4 text-sm font-semibold text-foreground-muted shadow-sm transition hover:border-primary/25 hover:text-primary"
+              className="inline-flex min-h-10 self-start items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface/80 px-4 text-sm font-semibold text-foreground-muted shadow-sm transition hover:border-primary/25 hover:text-primary sm:min-h-11"
             >
               <ChevronLeft
                 className="size-4 rtl:rotate-180"
@@ -91,7 +95,7 @@ export default async function ScanPage({ params }: ScanPageProps) {
         />
 
         <Card className="overflow-hidden border-primary/15 bg-surface/95 p-0 shadow-[0_24px_80px_-36px_rgba(79,70,229,0.45)]">
-          <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-primary-subtle/80 to-surface px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-primary-subtle/80 to-surface px-4 py-3 sm:px-6 sm:py-4">
             {business.logoUrl ? (
               <img
                 src={business.logoUrl}
@@ -122,16 +126,16 @@ export default async function ScanPage({ params }: ScanPageProps) {
               <ScanLine className="size-5" aria-hidden="true" />
             </span>
           </div>
-          <div className="p-4 sm:p-7">
-            <div className="mb-5 flex items-start gap-3 rounded-2xl border border-primary/10 bg-primary-subtle/45 p-4">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+          <div className="p-3 sm:p-7">
+            <div className="mb-3 flex items-start gap-2.5 rounded-2xl border border-primary/10 bg-primary-subtle/45 p-3 sm:mb-5 sm:gap-3 sm:p-4">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm sm:size-10">
                 <Camera className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">
                 <h2 className="font-bold text-foreground">
                   {copy.cameraPanelTitle}
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-foreground-muted">
+                <p className="mt-0.5 text-sm leading-5 text-foreground-muted sm:mt-1 sm:leading-6">
                   {copy.cameraPanelDescription}
                 </p>
               </div>
