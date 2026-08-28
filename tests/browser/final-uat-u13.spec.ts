@@ -72,7 +72,10 @@ function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) 
   const formattedBalance = new Intl.NumberFormat(
     language === "AR" ? "ar-EG" : "en-US",
   ).format(balance);
-  return page.getByRole("region", { name: label, exact: true }).getByText(`${formattedBalance} Points`, { exact: true });
+  return page
+    .getByRole("region", { name: label, exact: true })
+    .locator("[data-loyalty-amount-display]")
+    .filter({ hasText: `${formattedBalance} Points` });
 }
 
 async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin") {
