@@ -30,6 +30,9 @@ const dictionary = {
     scannerInitializationFailed:
       "تعذر تشغيل الماسح الآن. حاول مرة أخرى أو استخدم البحث.",
     retryCamera: "إعادة تشغيل الكاميرا",
+    scanQrImage: "مسح QR بكاميرا الهاتف",
+    scanningQrImage: "جارٍ قراءة صورة QR...",
+    qrImageUnreadable: "لم يتم العثور على QR واضح في الصورة. حاول مرة أخرى.",
     switchCamera: "تبديل الكاميرا",
     startingCamera: "جارٍ تشغيل الكاميرا...",
     switchingCamera: "جارٍ تبديل الكاميرا...",
@@ -128,6 +131,9 @@ const dictionary = {
     scannerInitializationFailed:
       "The scanner could not start. Try again or use search.",
     retryCamera: "Restart camera",
+    scanQrImage: "Scan QR with phone camera",
+    scanningQrImage: "Reading QR image...",
+    qrImageUnreadable: "No clear QR code was found in that image. Try again.",
     switchCamera: "Switch camera",
     startingCamera: "Starting camera...",
     switchingCamera: "Switching camera...",
