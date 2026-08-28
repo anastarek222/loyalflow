@@ -29,6 +29,9 @@ const dictionary = {
       "تم رفض إذن الكاميرا. اسمح بالوصول إلى الكاميرا ثم أعد المحاولة.",
     scannerInitializationFailed:
       "تعذر تشغيل الماسح الآن. حاول مرة أخرى أو استخدم البحث.",
+    startCamera: "تشغيل الكاميرا",
+    tapToStartCamera: "اضغط تشغيل الكاميرا لبدء المسح.",
+    cameraErrorCodeLabel: "رمز الخطأ",
     retryCamera: "إعادة تشغيل الكاميرا",
     scanQrImage: "مسح QR بكاميرا الهاتف",
     scanningQrImage: "جارٍ قراءة صورة QR...",
@@ -130,6 +133,9 @@ const dictionary = {
       "Camera permission was denied. Allow camera access and try again.",
     scannerInitializationFailed:
       "The scanner could not start. Try again or use search.",
+    startCamera: "Start camera",
+    tapToStartCamera: "Tap Start camera to begin scanning.",
+    cameraErrorCodeLabel: "Error code",
     retryCamera: "Restart camera",
     scanQrImage: "Scan QR with phone camera",
     scanningQrImage: "Reading QR image...",

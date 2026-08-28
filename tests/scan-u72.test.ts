@@ -37,6 +37,9 @@ test("U7.2 has localized search and camera recovery copy", () => {
       "cameraUnavailable",
       "cameraPermissionDenied",
       "scannerInitializationFailed",
+      "startCamera",
+      "tapToStartCamera",
+      "cameraErrorCodeLabel",
       "retryCamera",
       "scanQrImage",
       "scanningQrImage",
@@ -142,10 +145,8 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
   assert.match(scanner, /initializationPromiseRef\.current/);
   assert.match(scanner, /stoppingPromiseRef\.current/);
   assert.match(scanner, /await stopScanner\(\)/);
-  assert.match(
-    scanner,
-    /async function restartScanner\(\)[\s\S]*?await initializeScanner\(\);/,
-  );
+  assert.match(scanner, /function startCamera\(\)/);
+  assert.match(scanner, /void initializeScanner\(undefined, scannerModule\);/);
   assert.doesNotMatch(scanner, /setRestartAttempt/);
   assert.match(scanner, /processingRef\.current \|\| !value\.trim\(\)/);
   assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
@@ -164,7 +165,7 @@ test("U7.2 prepares the inline iPhone preview without a duplicate readiness time
   assert.doesNotMatch(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS/);
   assert.match(
     scanner,
-    /if \(mountedRef\.current\) setStatus\(copy\.cameraReady\);/,
+    /if \(mountedRef\.current\) \{[\s\S]*?setStatus\(copy\.cameraReady\);/,
   );
   assert.ok(
     scanner.indexOf("await scanner.start") <
@@ -182,6 +183,17 @@ test("U7.2 offers an iPhone-native QR image fallback without uploading the image
   const imageHandler =
     scanner.match(/async function scanQrImage[\s\S]*?\n  \}/)?.[0] ?? "";
   assert.doesNotMatch(imageHandler, /FormData|fetch\(/);
+});
+
+test("U7.2 starts iPhone cameras from an explicit user gesture and exposes safe diagnostics", () => {
+  assert.match(scanner, /function requiresExplicitCameraStart\(\)/);
+  assert.match(scanner, /appleMobile \|\| touchMac/);
+  assert.match(scanner, /scannerModuleRef\.current = scannerModule/);
+  assert.match(scanner, /onClick=\{startCamera\}/);
+  assert.match(scanner, /copy\.tapToStartCamera/);
+  assert.match(scanner, /getCameraFailureCode\(error\)/);
+  assert.match(scanner, /CAMERA_START_FAILED/);
+  assert.match(scanner, /copy\.cameraErrorCodeLabel/);
 });
 
 test("U7.2 starts the rear camera without a throwaway permission stream and retains a selected device ID", () => {
@@ -202,12 +214,9 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   const scannerStyles = source("app/globals.css");
   assert.match(
     scanner,
-    /lf-qr-reader min-h-56 w-full max-w-full overflow-hidden[\s\S]*?sm:min-h-64/,
+    /lf-qr-reader w-full max-w-full overflow-hidden[\s\S]*?showCameraStart[\s\S]*?min-h-40[\s\S]*?min-h-56 sm:min-h-64/,
   );
-  assert.match(
-    scanner,
-    /qrbox: \(viewfinderWidth: number, viewfinderHeight: number\)/,
-  );
+  assert.doesNotMatch(scanner, /qrbox:/);
   assert.match(scanner, /flex flex-wrap gap-2/);
   assert.match(scanner, /min-h-11 flex-1 basis-36/);
   assert.match(search, /flex flex-wrap gap-2/);
