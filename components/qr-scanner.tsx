@@ -17,6 +17,7 @@ import {
 } from "@/lib/scan/resolve";
 import {
   Camera,
+  ChevronDown,
   Keyboard,
   LoaderCircle,
   RefreshCw,
@@ -468,10 +469,14 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
           )}
         </div>
       )}
-      <details className="mt-3 rounded-xl border border-border bg-surface-subtle/60 sm:mt-4">
+      <details className="group mt-3 rounded-xl border border-border bg-surface-subtle/60 sm:mt-4">
         <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 text-sm font-semibold text-foreground-muted">
           <Keyboard className="size-4 text-primary" aria-hidden="true" />
           {copy.manualDivider}
+          <ChevronDown
+            className="ms-auto size-4 shrink-0 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
         </summary>
         <form
           onSubmit={submitManualValue}

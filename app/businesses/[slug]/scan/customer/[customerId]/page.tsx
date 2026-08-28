@@ -30,6 +30,7 @@ import type { ScanOperationError } from "@/lib/loyalty/operation-origin";
 import {
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
   Gift,
   History,
   ScanLine,
@@ -457,6 +458,10 @@ export default async function ScanCustomerPage({
                 <span className="ms-auto rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-foreground-subtle">
                   {customer.transactions.length}
                 </span>
+                <ChevronDown
+                  className="size-4 shrink-0 text-foreground-subtle transition-transform group-open:rotate-180"
+                  aria-hidden="true"
+                />
               </summary>
               {customer.transactions.length ? (
                 <div className="space-y-3 border-t border-border p-4 sm:p-5">

@@ -41,11 +41,13 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
         openCustomer: "Open customer",
       };
 
-  // The trace confirms search is rendered with the scanner; there is no separate
-  // camera-to-search fallback control to activate.
   await expect(
     page.getByLabel(copy.scannerStatus, { exact: true }),
   ).toHaveText(copy.scannerFeedback);
+  await page
+    .getByTestId("scan-customer-search")
+    .locator("summary")
+    .click();
   await page.getByRole("textbox", { name: copy.searchLabel, exact: true }).fill(fixture.activeCustomer.customerCode);
 
   const customerResult = page.getByRole("link", {
