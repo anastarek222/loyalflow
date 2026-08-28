@@ -83,7 +83,6 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       ...process.env,
-      NODE_ENV: useProductionServer ? "production" : process.env.NODE_ENV,
       UAT_BASE_URL: baseURL,
       // Google Sheets is an optional production mirror. The documented empty
       // spreadsheet ID keeps it disabled for disposable browser UAT fixtures,
