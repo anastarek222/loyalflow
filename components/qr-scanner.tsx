@@ -16,14 +16,21 @@ import {
   ImageUp,
   Keyboard,
   LoaderCircle,
-  RefreshCw,
   SwitchCamera,
 } from "lucide-react";
 import type { AppLanguage } from "@/lib/i18n";
 
 type QrScannerProps = { businessId: string; language: AppLanguage };
 type ScannerInstance = import("html5-qrcode").Html5Qrcode;
+type ScannerModule = typeof import("html5-qrcode");
 type CameraError = "unavailable" | "permission" | "secure" | "initialization";
+type CameraFailureCode =
+  | "CAMERA_PERMISSION_DENIED"
+  | "CAMERA_NOT_FOUND"
+  | "CAMERA_BUSY"
+  | "CAMERA_CONSTRAINT_UNSUPPORTED"
+  | "CAMERA_PLAYBACK_BLOCKED"
+  | "CAMERA_START_FAILED";
 
 function resolveErrorMessage(
   code: ScanResolveErrorCode,
@@ -52,6 +59,29 @@ function getCameraError(error: unknown): CameraError {
   if (/secure|https/i.test(message)) return "secure";
   if (/notreadable|device|camera|media/i.test(message)) return "unavailable";
   return "initialization";
+}
+
+function getCameraFailureCode(error: unknown): CameraFailureCode {
+  const name = error instanceof Error ? error.name : "";
+  const message = error instanceof Error ? error.message : String(error);
+  const detail = `${name} ${message}`;
+  if (/notallowed|permission|denied|security/i.test(detail))
+    return "CAMERA_PERMISSION_DENIED";
+  if (/notfound|devicesnotfound|no camera/i.test(detail))
+    return "CAMERA_NOT_FOUND";
+  if (/notreadable|trackstarterror|busy|in use/i.test(detail))
+    return "CAMERA_BUSY";
+  if (/overconstrained|constraint/i.test(detail))
+    return "CAMERA_CONSTRAINT_UNSUPPORTED";
+  if (/abort|play|video/i.test(detail)) return "CAMERA_PLAYBACK_BLOCKED";
+  return "CAMERA_START_FAILED";
+}
+
+function requiresExplicitCameraStart() {
+  const appleMobile = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const touchMac =
+    navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  return appleMobile || touchMac;
 }
 
 function prepareCameraPreview(video: HTMLVideoElement) {
@@ -89,6 +119,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   const router = useRouter();
   const copy = scanUiCopy(language);
   const scannerRef = useRef<ScannerInstance | null>(null);
+  const scannerModuleRef = useRef<ScannerModule | null>(null);
   const processingRef = useRef(false);
   const mountedRef = useRef(false);
   const initializationPromiseRef = useRef<Promise<void> | null>(null);
@@ -103,7 +134,11 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
   const [isScanningImage, setIsScanningImage] = useState(false);
+  const [isScannerModuleReady, setIsScannerModuleReady] = useState(false);
+  const [awaitingCameraStart, setAwaitingCameraStart] = useState(false);
   const [cameraError, setCameraError] = useState<CameraError | null>(null);
+  const [cameraFailureCode, setCameraFailureCode] =
+    useState<CameraFailureCode | null>(null);
   const [cameras, setCameras] = useState<ScanCamera[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
 
@@ -134,8 +169,10 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   const showCameraError = useCallback(
     (error: unknown) => {
       const kind = getCameraError(error);
+      const failureCode = getCameraFailureCode(error);
       if (!mountedRef.current) return;
       setCameraError(kind);
+      setCameraFailureCode(failureCode);
       setIsError(true);
       setStatus(
         kind === "permission"
@@ -191,7 +228,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   );
 
   const initializeScanner = useCallback(
-    async (requestedCameraId?: string) => {
+    async (requestedCameraId?: string, preloadedModule?: ScannerModule) => {
       if (initializationPromiseRef.current)
         return initializationPromiseRef.current;
       const initialization = (async () => {
@@ -201,14 +238,21 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         }
         if (mountedRef.current) {
           setIsInitializing(true);
+          setAwaitingCameraStart(false);
           setCameraError(null);
+          setCameraFailureCode(null);
           setIsError(false);
           setStatus(copy.startingCamera);
         }
-        await stopScanner();
+        if (scannerRef.current || stoppingPromiseRef.current)
+          await stopScanner();
         try {
-          const { Html5Qrcode, Html5QrcodeSupportedFormats } =
-            await import("html5-qrcode");
+          const scannerModule =
+            preloadedModule ??
+            scannerModuleRef.current ??
+            (await import("html5-qrcode"));
+          scannerModuleRef.current = scannerModule;
+          const { Html5Qrcode, Html5QrcodeSupportedFormats } = scannerModule;
           const reader = document.getElementById("loyalflow-qr-reader");
           if (!reader || !mountedRef.current) return;
           const stopObservingPreview = observeCameraPreview(reader);
@@ -217,16 +261,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
             verbose: false,
           });
           scannerRef.current = scanner;
-          const config = {
-            fps: 10,
-            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-              const size = Math.max(
-                180,
-                Math.min(250, viewfinderWidth - 16, viewfinderHeight - 16),
-              );
-              return { width: size, height: size };
-            },
-          };
+          const config = { fps: 10 };
           const onDecoded = (decodedText: string) => {
             void resolveScannedValue(decodedText);
           };
@@ -262,7 +297,10 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
             runningCameraId = availableCameras[0]?.id ?? null;
           updateSelectedCamera(runningCameraId);
           if (mountedRef.current) setCameras(availableCameras);
-          if (mountedRef.current) setStatus(copy.cameraReady);
+          if (mountedRef.current) {
+            setCameraFailureCode(null);
+            setStatus(copy.cameraReady);
+          }
         } catch (error) {
           await stopScanner();
           showCameraError(error);
@@ -286,21 +324,40 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
 
   useEffect(() => {
     mountedRef.current = true;
-    void initializeScanner();
+    let cancelled = false;
+    void import("html5-qrcode")
+      .then((scannerModule) => {
+        if (cancelled || !mountedRef.current) return;
+        scannerModuleRef.current = scannerModule;
+        setIsScannerModuleReady(true);
+        if (requiresExplicitCameraStart()) {
+          setAwaitingCameraStart(true);
+          setStatus(copy.tapToStartCamera);
+          return;
+        }
+        void initializeScanner(undefined, scannerModule);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) showCameraError(error);
+      });
     return () => {
+      cancelled = true;
       mountedRef.current = false;
       void stopScanner();
     };
-  }, [initializeScanner, stopScanner]);
+  }, [copy.tapToStartCamera, initializeScanner, showCameraError, stopScanner]);
 
-  async function restartScanner() {
+  function startCamera() {
     if (isInitializing || switchingRef.current || isProcessing) return;
-    await stopScanner();
+    const scannerModule = scannerModuleRef.current;
+    if (!scannerModule) return;
     updateSelectedCamera(null);
+    setAwaitingCameraStart(false);
     setCameraError(null);
+    setCameraFailureCode(null);
     setIsError(false);
     setStatus(copy.startingCamera);
-    await initializeScanner();
+    void initializeScanner(undefined, scannerModule);
   }
 
   async function switchCamera() {
@@ -362,6 +419,8 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   }
   const cameraBusy =
     isInitializing || isSwitching || isProcessing || isScanningImage;
+  const showCameraStart =
+    awaitingCameraStart || Boolean(cameraError && cameraError !== "secure");
 
   return (
     <div className="min-w-0">
@@ -369,8 +428,29 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         <div
           id="loyalflow-qr-reader"
           data-selected-camera={selectedCameraId ?? undefined}
-          className="lf-qr-reader min-h-56 w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-white p-2 text-foreground sm:min-h-64 sm:p-4"
+          className={`lf-qr-reader w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-white p-2 text-foreground sm:p-4 ${showCameraStart ? "min-h-40" : "min-h-56 sm:min-h-64"}`}
         />
+        {showCameraStart && (
+          <div className="absolute inset-2 z-10 flex items-center justify-center rounded-xl bg-slate-950/5 p-5 sm:inset-3">
+            <button
+              type="button"
+              onClick={startCamera}
+              disabled={!isScannerModuleReady || cameraBusy}
+              aria-busy={isInitializing || !isScannerModuleReady}
+              className="flex min-h-12 w-full max-w-64 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-lg transition hover:bg-primary-hover disabled:cursor-wait disabled:bg-primary/60"
+            >
+              {isInitializing || !isScannerModuleReady ? (
+                <LoaderCircle
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Camera className="size-4" aria-hidden="true" />
+              )}
+              {cameraError ? copy.retryCamera : copy.startCamera}
+            </button>
+          </div>
+        )}
         <span
           className="pointer-events-none absolute start-5 top-5 size-8 rounded-ss-xl border-s-2 border-t-2 border-primary"
           aria-hidden="true"
@@ -404,7 +484,14 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
         ) : (
           <Camera className="size-4 shrink-0" aria-hidden="true" />
         )}
-        <span>{status}</span>
+        <span className="min-w-0">
+          <span>{status}</span>
+          {cameraFailureCode && (
+            <span className="mt-1 block font-mono text-xs" dir="ltr">
+              {copy.cameraErrorCodeLabel}: {cameraFailureCode}
+            </span>
+          )}
+        </span>
       </div>
       {(cameras.length > 1 || (cameraError && cameraError !== "secure")) && (
         <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
@@ -422,16 +509,6 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
           )}
           {cameraError && cameraError !== "secure" && (
             <>
-              <button
-                type="button"
-                onClick={() => void restartScanner()}
-                disabled={cameraBusy}
-                aria-busy={cameraBusy}
-                className="flex min-h-11 flex-1 basis-36 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted transition hover:border-primary/25 hover:text-primary disabled:cursor-not-allowed"
-              >
-                <RefreshCw className="size-4" aria-hidden="true" />
-                {copy.retryCamera}
-              </button>
               <input
                 ref={qrImageInputRef}
                 type="file"
