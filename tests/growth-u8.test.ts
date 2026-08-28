@@ -10,6 +10,7 @@ const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 const growthNav = source("components/growth/growth-navigation.tsx");
 const shell = source("components/growth/growth-shell.tsx");
+const experienceModeAction = source("app/experience-mode/actions.ts");
 const pages = ["rewards", "offers", "campaigns", "recovery"].map((area) => source(`app/businesses/[slug]/${area}/page.tsx`));
 
 test("U8 has one accessible Growth navigation with distinct slug-preserving routes", () => {
@@ -27,6 +28,7 @@ test("U8 experience mode remains presentation-only and keeps authorization autho
     assert.match(page, /resolveExperienceMode/);
   }
   assert.match(shell, /data-experience-growth/);
+  assert.match(experienceModeAction, /revalidatePath\("\/", "layout"\)/);
   assert.match(source("app/businesses/[slug]/rewards/actions.ts"), /canManageBusiness/);
   assert.match(source("app/businesses/[slug]/offers/actions.ts"), /canManageBusiness/);
   assert.match(source("app/businesses/[slug]/campaigns/page.tsx"), /canManageBusiness/);

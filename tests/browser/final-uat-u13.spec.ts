@@ -206,7 +206,14 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByRole("button", { name: "Account menu", exact: true }).click();
     const experienceMode = page.getByRole("group", { name: "Experience mode", exact: true });
     await expect(experienceMode.getByRole("button", { name: "Simple", exact: true })).toHaveAttribute("aria-pressed", "true");
-    await experienceMode.getByRole("button", { name: "Advanced", exact: true }).click();
+    const advancedMode = experienceMode.getByRole("button", {
+      name: "Advanced",
+      exact: true,
+    });
+    await advancedMode.click();
+    await expect(advancedMode).toHaveAttribute("aria-pressed", "true", {
+      timeout: 15_000,
+    });
     await expect(navigation.getByRole("heading", { name: "Growth", exact: true })).toBeVisible();
     await expect(navigation.getByRole("heading", { name: "Analytics", exact: true })).toBeVisible();
     await expect(navigation.getByRole("heading", { name: "Administration", exact: true })).toBeVisible();
