@@ -143,6 +143,27 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
   assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
 });
 
+test("U7.2 waits for a playable inline camera preview before reporting ready", () => {
+  assert.match(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS = 4_000/);
+  assert.match(scanner, /reader\.querySelector<HTMLVideoElement>\("video"\)/);
+  assert.match(scanner, /video\.playsInline = true/);
+  assert.match(scanner, /video\.setAttribute\("playsinline", ""\)/);
+  assert.match(scanner, /void video\.play\(\)\.catch/);
+  assert.match(scanner, /video\.readyState >= HTMLMediaElement\.HAVE_CURRENT_DATA/);
+  assert.match(scanner, /video\.videoWidth > 0/);
+  assert.match(scanner, /video\.videoHeight > 0/);
+  assert.match(scanner, /previewReadyAbortRef\.current\?\.abort\(\)/);
+  assert.match(scanner, /await waitForPlayableCameraPreview/);
+  assert.match(
+    scanner,
+    /if \(mountedRef\.current\) setStatus\(copy\.cameraReady\);/,
+  );
+  assert.ok(
+    scanner.indexOf("await waitForPlayableCameraPreview") <
+      scanner.indexOf("setStatus(copy.cameraReady)"),
+  );
+});
+
 test("U7.2 retains the camera that actually started when track settings omit a device ID", () => {
   assert.match(scanner, /let startedCameraId: string \| null = null;/);
   assert.match(
@@ -160,7 +181,7 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   const scannerStyles = source("app/globals.css");
   assert.match(
     scanner,
-    /lf-qr-reader min-h-64 w-full max-w-full overflow-hidden/,
+    /lf-qr-reader min-h-56 w-full max-w-full overflow-hidden[\s\S]*?sm:min-h-64/,
   );
   assert.match(
     scanner,
@@ -173,8 +194,10 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   assert.match(search, /block truncate text-xs text-foreground-subtle/);
   assert.match(scannerStyles, /#loyalflow-qr-reader :where\(video, canvas\)/);
   assert.match(scannerStyles, /max-width: 100% !important/);
-  assert.match(scanPage, /className="min-h-full[^"]*sm:py-10"/);
-  assert.match(scanPage, /min-h-11 self-start/);
+  assert.match(scanPage, /className="min-h-full[^"]*py-3[^"]*sm:py-10"/);
+  assert.match(scanPage, /className="space-y-4 px-4 sm:space-y-8 sm:px-6"/);
+  assert.match(scanPage, /className="gap-3 p-4 sm:gap-5 sm:p-6"/);
+  assert.match(scanPage, /min-h-10 self-start[\s\S]*?sm:min-h-11/);
 });
 
 test("U7.2 makes no Prisma schema or migration change", () => {
