@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { randomUUID } from "node:crypto";
 
 import { auth } from "@/auth";
@@ -26,6 +24,7 @@ import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import CopyLinkButton from "@/components/copy-link-button";
 import ActivityTimeline from "@/components/customer-profile/activity-timeline";
+import OperationalDisclosure from "@/components/customer-profile/operational-disclosure";
 import { LoyaltyAmountDisplay } from "@/components/loyalty-amount-display";
 import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
@@ -139,6 +138,7 @@ export default async function CustomerDetailsPage({
     business.id,
     "LOYALTY_ADJUST",
   );
+  const canViewActivity = canPerform(session.user, business.id, "REPORTS_VIEW");
   const canEarnLoyalty = canPerform(session.user, business.id, "LOYALTY_EARN");
   const canRedeemLoyalty = canPerform(
     session.user,
@@ -176,7 +176,7 @@ export default async function CustomerDetailsPage({
         orderBy: {
           createdAt: "desc",
         },
-        take: 20,
+        take: 10,
         include: {
           createdBy: {
             select: {
@@ -208,7 +208,7 @@ export default async function CustomerDetailsPage({
         orderBy: {
           createdAt: "desc",
         },
-        take: 20,
+        take: 10,
         include: {
           createdBy: {
             select: {
@@ -412,7 +412,7 @@ export default async function CustomerDetailsPage({
     customer.transactions,
     customer.activities,
     language,
-  );
+  ).slice(0, 10);
 
   const loyaltyPresentation = {
     loyaltyMode: business.loyaltyMode,
@@ -805,18 +805,17 @@ export default async function CustomerDetailsPage({
             ) : null}
 
             {canViewNotesTags ? (
-              <section
-                className={`order-3 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}
+              <OperationalDisclosure
+                title={copy.customerTags}
+                description={copy.tagsDescription}
+                defaultOpen={
+                  query.success === "tag-assigned" ||
+                  query.success === "tag-removed" ||
+                  query.error === "tag-invalid"
+                }
+                className={`order-3 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
               >
-                <h2 className="text-xl font-bold text-foreground">
-                  {copy.customerTags}
-                </h2>
-
-                <p className="mt-1 text-sm text-foreground-subtle">
-                  {copy.tagsDescription}
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                   {customer.tagAssignments.length === 0 ? (
                     <p className="text-sm text-foreground-subtle">
                       {copy.noTags}
@@ -901,23 +900,22 @@ export default async function CustomerDetailsPage({
                     </div>
                   </div>
                 ) : null}
-              </section>
+              </OperationalDisclosure>
             ) : null}
 
             {canViewNotesTags ? (
-              <section
-                className={`order-4 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}
+              <OperationalDisclosure
+                title={copy.notes}
+                description={copy.notesDescription}
+                defaultOpen={
+                  query.success === "note-created" ||
+                  query.success === "note-updated" ||
+                  query.error === "note-invalid"
+                }
+                className={`order-4 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
               >
-                <h2 className="text-xl font-bold text-foreground">
-                  {copy.notes}
-                </h2>
-
-                <p className="mt-1 text-sm text-foreground-subtle">
-                  {copy.notesDescription}
-                </p>
-
                 {canManageNotesTags ? (
-                  <form action={createNote} className="mt-6">
+                  <form action={createNote}>
                     <label htmlFor="newCustomerNote" className="sr-only">
                       {copy.newInternalNote}
                     </label>
@@ -1010,7 +1008,7 @@ export default async function CustomerDetailsPage({
                     })
                   )}
                 </div>
-              </section>
+              </OperationalDisclosure>
             ) : null}
 
             <section
@@ -1277,96 +1275,99 @@ export default async function CustomerDetailsPage({
             </section>
 
             {canManageCustomer && (
-              <section
-                className={`order-5 mt-6 rounded-[var(--lf-radius-card)] bg-white p-6 shadow-sm sm:p-8 ${isSimpleExperience ? "hidden" : ""}`}
-              >
-                <h2 className="text-xl font-bold text-foreground">
-                  {copy.manageCustomer}
-                </h2>
-
-                <p className="mt-1 text-sm text-foreground-subtle">
-                  {copy.manageDescription}
-                </p>
-
-                <form
-                  action={updateCustomer}
-                  className="mt-6 grid gap-4 sm:grid-cols-2"
+              <>
+                <OperationalDisclosure
+                  title={copy.manageCustomer}
+                  description={copy.manageDescription}
+                  defaultOpen={
+                    query.success === "updated" ||
+                    query.error === "invalid" ||
+                    query.error === "phone" ||
+                    query.error === "duplicate"
+                  }
+                  className={`order-5 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
                 >
-                  <div>
-                    <label
-                      htmlFor="editFirstName"
-                      className="mb-2 block text-sm font-medium text-foreground-muted"
-                    >
-                      {copy.firstName}
-                    </label>
-
-                    <input
-                      id="editFirstName"
-                      name="firstName"
-                      defaultValue={customer.firstName}
-                      required
-                      dir="auto"
-                      minLength={2}
-                      maxLength={50}
-                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="editLastName"
-                      className="mb-2 block text-sm font-medium text-foreground-muted"
-                    >
-                      {copy.lastName}
-                    </label>
-
-                    <input
-                      id="editLastName"
-                      name="lastName"
-                      defaultValue={customer.lastName ?? ""}
-                      maxLength={50}
-                      dir="auto"
-                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label
-                      htmlFor="editPhone"
-                      className="mb-2 block text-sm font-medium text-foreground-muted"
-                    >
-                      {copy.phone}
-                    </label>
-
-                    <input
-                      id="editPhone"
-                      name="phone"
-                      type="tel"
-                      defaultValue={customer.phone}
-                      dir="ltr"
-                      required
-                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle sm:col-span-2"
+                  <form
+                    action={updateCustomer}
+                    className="grid gap-4 sm:grid-cols-2"
                   >
-                    {copy.saveCustomer}
-                  </button>
-                </form>
+                    <div>
+                      <label
+                        htmlFor="editFirstName"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
+                      >
+                        {copy.firstName}
+                      </label>
+
+                      <input
+                        id="editFirstName"
+                        name="firstName"
+                        defaultValue={customer.firstName}
+                        required
+                        dir="auto"
+                        minLength={2}
+                        maxLength={50}
+                        className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="editLastName"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
+                      >
+                        {copy.lastName}
+                      </label>
+
+                      <input
+                        id="editLastName"
+                        name="lastName"
+                        defaultValue={customer.lastName ?? ""}
+                        maxLength={50}
+                        dir="auto"
+                        className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label
+                        htmlFor="editPhone"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
+                      >
+                        {copy.phone}
+                      </label>
+
+                      <input
+                        id="editPhone"
+                        name="phone"
+                        type="tel"
+                        defaultValue={customer.phone}
+                        dir="ltr"
+                        required
+                        className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle sm:col-span-2"
+                    >
+                      {copy.saveCustomer}
+                    </button>
+                  </form>
+                </OperationalDisclosure>
 
                 {canAdjustBalance ? (
-                  <div className="mt-8 border-t border-border pt-6">
-                    <h3 className="font-bold text-foreground">
-                      {copy.manualBalance}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-foreground-subtle">
-                      {copy.manualBalanceDescription}
-                    </p>
-
+                  <OperationalDisclosure
+                    title={copy.manualBalance}
+                    description={copy.manualBalanceDescription}
+                    defaultOpen={
+                      query.success === "adjusted" ||
+                      query.error === "adjustment-invalid" ||
+                      query.error === "adjustment-negative"
+                    }
+                    className={`order-6 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                  >
                     <p className="mt-4 text-sm font-semibold text-primary">
                       {copy.currentBalance(formatBalance(customer.balance), "")}
                     </p>
@@ -1450,21 +1451,20 @@ export default async function CustomerDetailsPage({
                         {copy.saveBalanceAdjustment}
                       </button>
                     </form>
-                  </div>
+                  </OperationalDisclosure>
                 ) : null}
 
-                <div className="mt-8 border-t border-border pt-6">
-                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                    <div>
-                      <h3 className="font-bold text-foreground">
-                        {copy.accountStatus}
-                      </h3>
-
-                      <p className="mt-1 text-sm text-foreground-subtle">
-                        {copy.inactiveAccountDescription}
-                      </p>
-                    </div>
-
+                <OperationalDisclosure
+                  title={copy.accountStatus}
+                  description={copy.inactiveAccountDescription}
+                  defaultOpen={
+                    query.success === "deactivated" ||
+                    query.success === "reactivated"
+                  }
+                  tone="danger"
+                  className={`order-7 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                >
+                  <div className="flex justify-end">
                     <form
                       action={
                         customer.isActive
@@ -1486,8 +1486,8 @@ export default async function CustomerDetailsPage({
                       </button>
                     </form>
                   </div>
-                </div>
-              </section>
+                </OperationalDisclosure>
+              </>
             )}
 
             <ActivityTimeline
@@ -1495,6 +1495,11 @@ export default async function CustomerDetailsPage({
               dateLocale={dateLocale}
               rewardThreshold={business.rewardThreshold}
               formatBalance={formatBalance}
+              viewAllHref={
+                canViewActivity
+                  ? `/businesses/${business.slug}/activity?customer=${customer.id}`
+                  : undefined
+              }
               labels={{
                 title: copy.timeline,
                 description: copy.timelineDescription,
@@ -1502,13 +1507,18 @@ export default async function CustomerDetailsPage({
                 requiresReview: copy.requiresReview,
                 by: copy.by,
                 balanceAfter: copy.balanceAfter,
+                viewAll: copy.viewAllActivity,
               }}
             />
           </div>
 
-          <aside
+          <OperationalDisclosure
             id="customer-card"
-            className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-4 shadow-lg shadow-slate-200/40 xl:sticky xl:top-24"
+            title={copy.cardAndSharing}
+            description={copy.cardAndSharingDescription}
+            defaultOpen={query.success === "referral-link"}
+            className="h-fit scroll-mt-6 shadow-lg shadow-slate-200/40 xl:sticky xl:top-24"
+            contentClassName="p-4 sm:p-4"
           >
             <LoyaltyCardPreview
               language={language}
@@ -1611,7 +1621,7 @@ export default async function CustomerDetailsPage({
                 </a>
               ) : null}
             </div>
-          </aside>
+          </OperationalDisclosure>
         </div>
       </div>
     </main>
