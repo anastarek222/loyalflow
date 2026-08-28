@@ -35,6 +35,7 @@ import { customerUiCopy } from "@/lib/customers/ui-copy";
 import {
   AlertTriangle,
   ArrowLeft,
+  ChevronDown,
   Download,
   ScanLine,
   Search,
@@ -63,6 +64,7 @@ type CustomersPageProps = {
     bulk?: string;
     selected?: string;
     changed?: string;
+    add?: string;
     page?: string;
   }>;
 };
@@ -403,6 +405,11 @@ export default async function CustomersPage({
     Boolean(segment) ||
     Boolean(selectedTagId) ||
     sort !== "newest";
+  const showAddCustomer =
+    query.add === "1" ||
+    ["invalid", "phone", "duplicate", "subscription-restricted"].includes(
+      query.error ?? "",
+    );
 
   const canExportData = canExportBusinessData(
     session.user,
@@ -459,7 +466,7 @@ export default async function CustomersPage({
                 </Link>
                 {canReviewDuplicates ? (
                   <a
-                    href="#add-customer"
+                    href={`/businesses/${business.slug}/customers?add=1#add-customer`}
                     className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
                   >
                     <UserPlus className="size-4" aria-hidden="true" />
@@ -541,7 +548,8 @@ export default async function CustomersPage({
         {isSimpleExperience && canReviewDuplicates ? (
           <details
             id="add-customer"
-            className="scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-surface shadow-sm"
+            open={showAddCustomer}
+            className="group scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-surface shadow-sm"
           >
             <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-bold text-foreground">
               <span className="flex items-center gap-3">
@@ -550,9 +558,10 @@ export default async function CustomersPage({
                 </span>
                 {copy.addCustomer}
               </span>
-              <span className="flex size-7 items-center justify-center rounded-full bg-primary-subtle text-sm font-semibold text-primary">
-                +
-              </span>
+              <ChevronDown
+                className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              />
             </summary>
             <div className="border-t border-border p-5">
               <p className="mb-4 text-sm text-foreground-subtle">
@@ -628,87 +637,95 @@ export default async function CustomersPage({
           className={`grid gap-6 lg:gap-8 ${canReviewDuplicates && !isSimpleExperience ? "lg:grid-cols-[minmax(18rem,22rem)_1fr]" : ""}`}
         >
           {canReviewDuplicates && !isSimpleExperience ? (
-            <section
+            <details
               id="add-customer"
-              className="h-fit scroll-mt-6 rounded-[var(--lf-radius-card)] border border-primary/15 bg-gradient-to-b from-primary-subtle/50 to-surface p-5 shadow-sm lg:sticky lg:top-6"
+              open={showAddCustomer}
+              className="group h-fit scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-gradient-to-b from-primary-subtle/50 to-surface shadow-sm lg:sticky lg:top-6"
             >
-              <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
-                <UserPlus className="size-5" aria-hidden="true" />
-              </span>
-              <h2 className="mt-4 text-xl font-bold text-foreground">
-                {copy.addCustomer}
-              </h2>
-
-              <p className="mt-1 text-sm text-foreground-subtle">
-                {copy.customerCodeHint}
-              </p>
-
-              <form action={createCustomer} className="mt-6 space-y-6">
-                <div>
-                  <label
-                    htmlFor="firstName"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
-                    {copy.firstName}
-                  </label>
-
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    required
-                    minLength={2}
-                    maxLength={50}
-                    placeholder={copy.firstNamePlaceholder}
-                    dir="auto"
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="lastName"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
-                    {copy.lastName}
-                  </label>
-
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    maxLength={50}
-                    placeholder={copy.lastNamePlaceholder}
-                    dir="auto"
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
-                    {copy.phone}
-                  </label>
-
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    required
-                    dir="ltr"
-                    placeholder="+201000000000"
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-white shadow-sm transition hover:bg-primary-hover"
-                >
+              <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-5 py-4 marker:content-none">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+                  <UserPlus className="size-5" aria-hidden="true" />
+                </span>
+                <h2 className="font-bold text-foreground">
                   {copy.addCustomer}
-                </button>
-              </form>
-            </section>
+                </h2>
+                <ChevronDown
+                  className="ms-auto size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <div className="border-t border-primary/10 p-5">
+                <p className="text-sm text-foreground-subtle">
+                  {copy.customerCodeHint}
+                </p>
+
+                <form action={createCustomer} className="mt-5 space-y-5">
+                  <div>
+                    <label
+                      htmlFor="firstName"
+                      className="mb-2 block text-sm font-medium text-foreground-muted"
+                    >
+                      {copy.firstName}
+                    </label>
+
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      required
+                      minLength={2}
+                      maxLength={50}
+                      placeholder={copy.firstNamePlaceholder}
+                      dir="auto"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="lastName"
+                      className="mb-2 block text-sm font-medium text-foreground-muted"
+                    >
+                      {copy.lastName}
+                    </label>
+
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      maxLength={50}
+                      placeholder={copy.lastNamePlaceholder}
+                      dir="auto"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="mb-2 block text-sm font-medium text-foreground-muted"
+                    >
+                      {copy.phone}
+                    </label>
+
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      required
+                      dir="ltr"
+                      placeholder="+201000000000"
+                      className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-white shadow-sm transition hover:bg-primary-hover"
+                  >
+                    {copy.addCustomer}
+                  </button>
+                </form>
+              </div>
+            </details>
           ) : null}
 
           <section>
