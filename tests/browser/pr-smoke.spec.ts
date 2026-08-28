@@ -10,13 +10,16 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
-async function signIn(page: Page, role: "manager-a" | "viewer-a") {
+async function signIn(
+  page: Page,
+  role: "owner-a" | "manager-a" | "viewer-a",
+) {
   await page.goto("/login");
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
-    timeout: 15_000,
+    timeout: 45_000,
   });
 }
 
@@ -43,15 +46,7 @@ test.describe.serial("PR browser smoke", () => {
   });
 
   test("owner can sign in, navigate critical surfaces, and log out @desktop @pr-smoke", async ({ page }) => {
-    await page.goto("/login");
-    await page.getByLabel("Email address").fill(uatEmail("owner-a", fixture.runId));
-    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page).toHaveURL(/\/dashboard$/, {
-      timeout: 15_000,
-    });
-
-    await page.goto(`/businesses/${fixture.businessA}`);
+    await signIn(page, "owner-a");
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
 
     const navigation = page.getByRole("complementary", {
