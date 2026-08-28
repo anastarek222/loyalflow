@@ -45,8 +45,9 @@ test("U6 keeps advanced management and mutations unavailable to staff and viewer
   );
   assert.match(
     list,
-    /canReviewDuplicates && !isSimpleExperience \? \(\s*<section[\s\S]{0,100}id="add-customer"/,
+    /canReviewDuplicates && !isSimpleExperience \? \(\s*<details[\s\S]{0,100}id="add-customer"/,
   );
+  assert.match(list, /open=\{showAddCustomer\}/);
   assert.match(detail, /canEarnLoyalty/);
   assert.match(detail, /canRedeemLoyalty/);
 });

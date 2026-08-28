@@ -40,6 +40,11 @@ test("T006 customers experience keeps tenant access and every existing capabilit
     customersPage,
     /data-experience-customers=\{isSimpleExperience \? "simple" : "advanced"\}/,
   );
+  assert.match(customersPage, /const showAddCustomer =/);
+  assert.match(customersPage, /query\.add === "1"/);
+  assert.match(customersPage, /open=\{showAddCustomer\}/);
+  assert.match(customersPage, /group-open:rotate-180/);
+  assert.match(customersPage, /customers\?add=1#add-customer/);
 });
 
 test("T006 scan workspace preserves camera resolution and server-generated customer search destinations", () => {
