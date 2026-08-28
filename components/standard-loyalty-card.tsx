@@ -12,6 +12,7 @@ import {
   STANDARD_CARD_QR_ZONE,
 } from "@/lib/cards/card-rendering-contract";
 import {
+  shouldStackStandardCardValue,
   standardCardDetailFontSize,
   standardCardValueFontSize,
 } from "@/lib/cards/standard-card-text";
@@ -421,6 +422,10 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const foreground = dark ? "#F8FAFC" : "#111827";
   const muted = dark ? "#CBD5E1" : "#536074";
   const metrics = getLoyaltyCardMetrics({ ...props, language });
+  const stackCurrentValue = shouldStackStandardCardValue(
+    metrics.currentAmountText,
+    metrics.currentUnitText,
+  );
   const rewardName = boundedText(
     props.rewardName ||
       (language === "AR" ? "مكافأة الولاء" : "Loyalty reward"),
@@ -628,7 +633,10 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           {boundedText(props.customerId, 24)}
         </text>
       </g>
-      <g data-safe-zone="loyalty-balance">
+      <g
+        data-safe-zone="loyalty-balance"
+        data-value-layout={stackCurrentValue ? "stacked" : "inline"}
+      >
         <rect
           x="430"
           y="238"
@@ -651,21 +659,55 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         >
           {labels.balance}
         </text>
-        <text
-          x="452"
-          y="337"
-          fill={foreground}
-          fontSize={standardCardValueFontSize(metrics.currentText)}
-          fontWeight="900"
-          direction="ltr"
-          style={{ unicodeBidi: "isolate" }}
-        >
-          {metrics.currentText}
-        </text>
+        {stackCurrentValue ? (
+          <>
+            <text
+              x="452"
+              y="320"
+              fill={foreground}
+              fontSize={standardCardValueFontSize(
+                metrics.currentAmountText,
+                42,
+              )}
+              fontWeight="900"
+              direction="ltr"
+              style={{ unicodeBidi: "isolate" }}
+            >
+              {metrics.currentAmountText}
+            </text>
+            <text
+              x="452"
+              y="349"
+              fill={foreground}
+              fontSize={standardCardDetailFontSize(
+                metrics.currentUnitText,
+                20,
+                13,
+              )}
+              fontWeight="850"
+              direction={dir}
+              style={{ unicodeBidi: "plaintext" }}
+            >
+              {metrics.currentUnitText}
+            </text>
+          </>
+        ) : (
+          <text
+            x="452"
+            y="337"
+            fill={foreground}
+            fontSize={standardCardValueFontSize(metrics.currentText)}
+            fontWeight="900"
+            direction="ltr"
+            style={{ unicodeBidi: "isolate" }}
+          >
+            {metrics.currentText}
+          </text>
+        )}
         <g data-safe-zone="progress">
           <rect
             x="452"
-            y="361"
+            y={stackCurrentValue ? 371 : 361}
             width="334"
             height="14"
             rx="7"
@@ -675,7 +717,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           />
           <rect
             x="452"
-            y="361"
+            y={stackCurrentValue ? 371 : 361}
             width={Math.min(334, progressWidth)}
             height="14"
             rx="7"
