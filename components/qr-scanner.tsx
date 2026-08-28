@@ -71,7 +71,7 @@ function getCameraFailureCode(error: unknown): CameraFailureCode {
     return "CAMERA_NOT_FOUND";
   if (/notreadable|trackstarterror|busy|in use/i.test(detail))
     return "CAMERA_BUSY";
-  if (/overconstrained|constraint/i.test(detail))
+  if (/overconstrained|constraint|facingMode.*exact/i.test(detail))
     return "CAMERA_CONSTRAINT_UNSUPPORTED";
   if (/abort|play|video/i.test(detail)) return "CAMERA_PLAYBACK_BLOCKED";
   return "CAMERA_START_FAILED";
@@ -271,7 +271,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
           try {
             await scanner.start(
               requestedCameraId ?? {
-                facingMode: { ideal: "environment" },
+                facingMode: "environment",
               },
               config,
               onDecoded,
