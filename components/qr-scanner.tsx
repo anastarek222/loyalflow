@@ -57,6 +57,21 @@ function getCameraError(error: unknown): CameraError {
   return "initialization";
 }
 
+async function ensureInlineCameraPlayback(reader: HTMLElement) {
+  const video = reader.querySelector("video");
+  if (!(video instanceof HTMLVideoElement)) return;
+
+  video.playsInline = true;
+  video.muted = true;
+  video.autoplay = true;
+  video.setAttribute("playsinline", "");
+  video.setAttribute("webkit-playsinline", "");
+  video.setAttribute("muted", "");
+  video.setAttribute("autoplay", "");
+
+  if (video.paused) await video.play().catch(() => undefined);
+}
+
 export default function QrScanner({ businessId, language }: QrScannerProps) {
   const router = useRouter();
   const copy = scanUiCopy(language);
@@ -246,6 +261,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
             await scanner.start(fallback.id, config, onDecoded, onDecodeMiss);
             startedCameraId = fallback.id;
           }
+          await ensureInlineCameraPlayback(reader);
           let runningCameraId =
             startedCameraId ?? preferred?.id ?? availableCameras[0]?.id ?? null;
           try {
