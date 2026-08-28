@@ -211,6 +211,15 @@ test("U7.2 starts the rear camera without a throwaway permission stream and reta
   assert.doesNotMatch(scanner, /aspectRatio: 1/);
 });
 
+test("U7.2 refreshes the camera list before switching devices", () => {
+  const switchHandler =
+    scanner.match(/async function switchCamera[\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.match(switchHandler, /await enumerateVideoCameras\(\)/);
+  assert.match(switchHandler, /nextCameraId\([\s\S]*?availableCameras/);
+  assert.match(switchHandler, /await stopScanner\(\)/);
+  assert.match(switchHandler, /await initializeScanner\(nextId\)/);
+});
+
 test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   const scannerStyles = source("app/globals.css");
   assert.match(
@@ -227,7 +236,10 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   assert.match(scannerStyles, /max-width: 100% !important/);
   assert.match(scanPage, /className="min-h-full[^"]*py-3[^"]*sm:py-10"/);
   assert.match(scanPage, /className="space-y-2 px-3 sm:space-y-8 sm:px-6"/);
-  assert.match(scanPage, /className="hidden gap-3 p-4 sm:flex sm:gap-5 sm:p-6"/);
+  assert.match(
+    scanPage,
+    /className="hidden gap-3 p-4 sm:flex sm:gap-5 sm:p-6"/,
+  );
   assert.match(scanPage, /mb-3 hidden items-start[\s\S]*sm:flex/);
   assert.match(scanPage, /min-h-10 self-start[\s\S]*?sm:min-h-11/);
 });
