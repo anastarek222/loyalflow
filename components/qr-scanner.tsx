@@ -362,7 +362,9 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
 
   async function switchCamera() {
     if (isInitializing || isSwitching || isProcessing) return;
-    const nextId = nextCameraId(cameras, selectedCameraIdRef.current);
+    const availableCameras = await enumerateVideoCameras().catch(() => cameras);
+    if (mountedRef.current) setCameras(availableCameras);
+    const nextId = nextCameraId(availableCameras, selectedCameraIdRef.current);
     if (!nextId) {
       setStatus(copy.noOtherCamera);
       return;
