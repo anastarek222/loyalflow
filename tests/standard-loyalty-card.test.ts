@@ -300,6 +300,43 @@ test("front reserves a large deterministic balance panel", () => {
   assert.match(card, /data-safe-zone="progress"/);
 });
 
+test("front stacks the amount above long units without changing loyalty semantics", () => {
+  const longUnitFront = renderToStaticMarkup(
+    React.createElement(StandardLoyaltyCard, {
+      businessName: "XTV",
+      primaryColor: "#4F46E5",
+      customerName: "Noor Sameh",
+      customerId: "XTV-EE840D",
+      balance: 104,
+      loyaltyMode: "POINTS",
+      unitName: "Recommendation",
+      rewardName: "Free Year",
+      rewardThreshold: 500,
+    }),
+  );
+  const salesFront = renderToStaticMarkup(
+    React.createElement(StandardLoyaltyCard, {
+      businessName: "XTV",
+      primaryColor: "#4F46E5",
+      customerName: "Noor Sameh",
+      customerId: "XTV-EE840D",
+      balance: 200000,
+      loyaltyMode: "SALES_AMOUNT",
+      unitName: "Sale",
+      currency: "EGP",
+      rewardName: "Free Year",
+      rewardThreshold: 500000,
+    }),
+  );
+
+  assert.match(longUnitFront, /data-value-layout="stacked"/);
+  assert.match(longUnitFront, />104<\/text>/);
+  assert.match(longUnitFront, />RECOMMENDATIONS<\/text>/);
+  assert.match(salesFront, /data-value-layout="stacked"/);
+  assert.match(salesFront, />200,000<\/text>/);
+  assert.match(salesFront, />EGP<\/text>/);
+});
+
 test("Back keeps artwork secondary and fills RTL progress deliberately from the right", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /data-visual-priority="secondary"/);
