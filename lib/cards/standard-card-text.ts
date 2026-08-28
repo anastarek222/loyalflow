@@ -35,6 +35,20 @@ export function standardCardValueFontSize(value: string, maximum = 48) {
   return Math.max(14, Math.round(maximum * 0.56));
 }
 
+export function shouldStackStandardCardValue(
+  amountText: string,
+  unitText: string,
+) {
+  const combinedLength = standardCardGraphemeLength(
+    `${amountText} ${unitText}`,
+  );
+  return (
+    combinedLength > 12 ||
+    standardCardGraphemeLength(amountText) >= 7 ||
+    standardCardGraphemeLength(unitText) > 10
+  );
+}
+
 export function standardCardDetailFontSize(
   value: string,
   maximum: number,
