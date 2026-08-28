@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const storage = readFileSync("lib/cards/custom-card-storage.ts", "utf8");
+const uploadValidation = readFileSync(
+  "lib/cards/custom-card-upload-validation.ts",
+  "utf8",
+);
 const actions = readFileSync(
   "app/businesses/[slug]/settings/actions.ts",
   "utf8",
@@ -21,11 +25,12 @@ const adminArtwork = readFileSync(
 );
 
 test("TC3.3 stores bounded custom artwork as immutable private Blob pairs", () => {
-  assert.match(storage, /CUSTOM_CARD_MAX_FILE_BYTES = 4 \* 1024 \* 1024/);
-  assert.match(storage, /CUSTOM_CARD_MAX_PAIR_BYTES = 4 \* 1024 \* 1024/);
-  assert.match(storage, /"image\/png"/);
-  assert.match(storage, /"image\/jpeg"/);
-  assert.match(storage, /"image\/webp"/);
+  assert.match(uploadValidation, /CUSTOM_CARD_MAX_FILE_BYTES = 4 \* 1024 \* 1024/);
+  assert.match(uploadValidation, /CUSTOM_CARD_MAX_PAIR_BYTES = 4 \* 1024 \* 1024/);
+  assert.match(uploadValidation, /"image\/png"/);
+  assert.match(uploadValidation, /"image\/jpeg"/);
+  assert.match(uploadValidation, /"image\/webp"/);
+  assert.match(storage, /CUSTOM_CARD_MAX_FILE_BYTES/);
   assert.match(storage, /access: "private"/);
   assert.match(storage, /addRandomSuffix: false/);
   assert.match(storage, /allowOverwrite: false/);

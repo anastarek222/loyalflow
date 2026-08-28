@@ -176,17 +176,17 @@ export default async function JoinBusinessPage({
     <main
       lang={lang}
       dir={dir}
-      className="flex min-h-screen items-center justify-center px-4 py-6 sm:px-6 sm:py-10"
+      className="flex min-h-screen items-start justify-center px-0 py-0 sm:items-center sm:px-6 sm:py-10"
       style={{
         backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
       <section
-        className={`w-full max-w-lg overflow-hidden border bg-white shadow-sm ${theme.cardClass} ${theme.borderClass}`}
+        className={`w-full max-w-lg overflow-hidden border-x-0 border-y bg-white shadow-sm sm:border ${theme.cardClass} ${theme.borderClass}`}
       >
         <div
-          className="relative overflow-hidden px-5 py-6 sm:px-7 sm:py-7"
+          className="relative overflow-hidden px-4 py-4 sm:px-7 sm:py-7"
           style={{ color: headerForegroundColor }}
         >
           {business.coverImageUrl ? (
@@ -211,7 +211,7 @@ export default async function JoinBusinessPage({
               <BusinessLogoImage
                 src={business.logoUrl}
                 alt={business.name}
-                className="mb-4 size-12 rounded-[var(--lf-radius-input)] bg-white/95"
+                className="mb-3 size-10 rounded-[var(--lf-radius-input)] bg-white/95 sm:mb-4 sm:size-12"
               />
             ) : null}
 
@@ -219,11 +219,11 @@ export default async function JoinBusinessPage({
               {programName}
             </p>
 
-            <h1 className="mt-1 text-2xl font-black sm:text-3xl">
+            <h1 className="mt-1 text-xl font-black sm:text-3xl">
               {copy.join} {business.name}
             </h1>
 
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold opacity-[0.85]">
+            <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold opacity-[0.85] sm:mt-3">
               {business.industry ? (
                 <span className="rounded-full bg-white/15 px-3 py-1 backdrop-blur-sm">
                   {business.industry}
@@ -239,16 +239,16 @@ export default async function JoinBusinessPage({
               ) : null}
             </div>
 
-            <p className="mt-3 leading-7 opacity-90">
+            <p className="mt-2 text-sm leading-6 opacity-90 sm:mt-3 sm:text-base sm:leading-7">
               {message}
             </p>
           </div>
         </div>
 
-        <div className="p-5 sm:p-7">
+        <div className="p-4 sm:p-7">
           {query.error && copy.errors[query.error as keyof typeof copy.errors] ? (
             <p
-              className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800"
+              className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800 sm:mb-6"
               role="alert"
             >
               {copy.errors[query.error as keyof typeof copy.errors]}
@@ -257,7 +257,7 @@ export default async function JoinBusinessPage({
 
           <div
             dir="auto"
-            className="mb-5 rounded-[var(--lf-radius-input)] px-4 py-3 text-sm leading-6 [hyphens:none] [overflow-wrap:normal] [word-break:normal]"
+            className="mb-4 rounded-[var(--lf-radius-input)] px-4 py-3 text-sm leading-6 [hyphens:none] [overflow-wrap:normal] [word-break:normal] sm:mb-5"
             style={{
               backgroundColor: `${theme.secondaryColor}CC`,
               color: theme.secondaryForegroundColor,
@@ -272,7 +272,7 @@ export default async function JoinBusinessPage({
             </div>
           ) : null}
 
-          <form action={joinBusiness} className="space-y-4">
+          <form action={joinBusiness} className="space-y-3 sm:space-y-4">
             {appliedReferralCode ? (
               <input type="hidden" name="ref" value={appliedReferralCode} />
             ) : null}

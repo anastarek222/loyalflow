@@ -8,6 +8,7 @@ import {
   validateCustomCardArtworkGeometry,
   validateCustomCardArtworkGeometryPair,
 } from "@/lib/cards/custom-card-geometry";
+import { validateCustomCardUploadPair } from "@/lib/cards/custom-card-upload-validation";
 
 const source = (file: string) =>
   fs.readFileSync(path.join(process.cwd(), file), "utf8");
@@ -100,6 +101,50 @@ test("rejects malformed image bytes instead of trusting MIME type", async () => 
   assert.equal(
     await validateCustomCardArtworkGeometryPair(malformed, malformed),
     false,
+  );
+});
+
+test("returns a specific upload failure for every rejected pair contract", async () => {
+  assert.deepEqual(await validateCustomCardUploadPair(null, png(856, 540)), {
+    ok: false,
+    reason: "MISSING_FRONT",
+  });
+  assert.deepEqual(await validateCustomCardUploadPair(png(856, 540), null), {
+    ok: false,
+    reason: "MISSING_BACK",
+  });
+  assert.deepEqual(
+    await validateCustomCardUploadPair(
+      new File(["front"], "front.svg", { type: "image/svg+xml" }),
+      png(856, 540),
+    ),
+    { ok: false, reason: "UNSUPPORTED_TYPE" },
+  );
+  assert.deepEqual(
+    await validateCustomCardUploadPair(
+      new File([new Uint8Array(2 * 1024 * 1024 + 1)], "front.png", {
+        type: "image/png",
+      }),
+      new File([new Uint8Array(2 * 1024 * 1024 + 1)], "back.png", {
+        type: "image/png",
+      }),
+    ),
+    { ok: false, reason: "PAIR_TOO_LARGE" },
+  );
+  assert.deepEqual(
+    await validateCustomCardUploadPair(
+      new File(["invalid"], "front.png", { type: "image/png" }),
+      png(856, 540),
+    ),
+    { ok: false, reason: "UNREADABLE_IMAGE" },
+  );
+  assert.deepEqual(
+    await validateCustomCardUploadPair(png(856, 540), png(1712, 1080)),
+    { ok: false, reason: "DIMENSIONS_MISMATCH" },
+  );
+  assert.deepEqual(
+    await validateCustomCardUploadPair(png(800, 600), png(800, 600)),
+    { ok: false, reason: "WRONG_ASPECT_RATIO" },
   );
 });
 

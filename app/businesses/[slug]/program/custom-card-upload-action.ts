@@ -7,6 +7,16 @@ import prisma from "@/lib/prisma";
 import { uploadCustomCardDraftCommand } from "@/lib/server/business/custom-card-upload-command";
 import { redirect } from "next/navigation";
 
+const uploadErrorState = {
+  MISSING_FRONT: "missing-front",
+  MISSING_BACK: "missing-back",
+  UNSUPPORTED_TYPE: "unsupported-type",
+  PAIR_TOO_LARGE: "pair-too-large",
+  UNREADABLE_IMAGE: "unreadable-image",
+  DIMENSIONS_MISMATCH: "dimensions-mismatch",
+  WRONG_ASPECT_RATIO: "wrong-aspect-ratio",
+} as const;
+
 export async function uploadCustomCardDraftCommandAction(
   slug: string,
   formData: FormData,
@@ -59,7 +69,10 @@ export async function uploadCustomCardDraftCommandAction(
         `/businesses/${business.slug}/program?cardDesign=storage-unavailable`,
       );
     }
-    redirect(`/businesses/${business.slug}/program?cardDesign=invalid`);
+    const errorState = uploadErrorState[result.reason];
+    redirect(
+      `/businesses/${business.slug}/program?cardDesign=${errorState}`,
+    );
   }
 
   redirect(

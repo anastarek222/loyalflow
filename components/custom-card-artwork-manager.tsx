@@ -79,8 +79,8 @@ export async function CustomCardArtworkManager({
           </p>
           <p className="mt-1 max-w-3xl text-sm text-foreground-muted">
             {t(
-              "ارفع الواجهة الأمامية والخلفية معًا. كل عملية رفع ناجحة تنشئ مسودة مقترنة ثابتة لا تتغير. يجب أن يستخدم الجانبان نسبة ID-1 القياسية ونفس أبعاد البكسل تمامًا. عاين الزوج هنا، ثم انشره بشكل صريح. البطاقة المنشورة للعملاء لا تتغير حتى يتم تأكيد النشر.",
-              "Upload the Front and Back together. Each successful upload creates one immutable paired draft. Both sides must use the standard ID-1 ratio and identical pixel dimensions. Preview the pair here, then publish it explicitly. The currently published customer card does not change until publishing is confirmed.",
+              "ارفع الواجهة الأمامية والخلفية معًا، ثم عاين الزوج وانشره بعد الموافقة.",
+              "Upload Front and Back together, then preview the pair and publish it after approval.",
             )}
           </p>
         </div>
@@ -94,10 +94,35 @@ export async function CustomCardArtworkManager({
         status={status}
       />
 
-      <CustomCardSafeZoneGuide
-        isArabic={language === "AR"}
-        preview={preview}
-      />
+      <details className="group mt-4 rounded-xl border border-border bg-white p-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-black marker:content-none">
+          <span>{t("متطلبات التصميم", "Artwork requirements")}</span>
+          <span
+            aria-hidden="true"
+            className="text-lg text-foreground-muted transition group-open:rotate-180"
+          >
+            ↓
+          </span>
+        </summary>
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-sm leading-6 text-foreground-muted">
+            {t(
+              "كل رفع ناجح ينشئ مسودة أمامية + خلفية ثابتة. يجب أن يكون الجانبان بنفس أبعاد البكسل وبنسبة ID-1 القياسية. لا تتغير بطاقة العميل الحالية حتى تنشر الزوج صراحةً.",
+              "Each successful upload creates an immutable Front + Back draft. Both sides need identical pixel dimensions and the standard ID-1 ratio. The currently published customer card does not change until publishing is confirmed.",
+            )}
+          </p>
+          <CustomCardSafeZoneGuide
+            isArabic={language === "AR"}
+            preview={preview}
+          />
+          <p className="mt-4 text-xs leading-5 text-foreground-muted">
+            {t(
+              "PNG أو JPEG أو WebP. الحد الأقصى 4 ميجابايت للواجهة الأمامية + الخلفية، بنسبة ID-1 حوالي 1.586:1. لا ينشئ LoyalFlow أيًا من الجانبين تلقائيًا في الوضع المخصص. اترك مناطق QR واسم العميل والرصيد والمكافأة والنتيجة خالية.",
+              "Use PNG, JPEG, or WebP. Maximum 4 MB total across Front + Back, at the ID-1 ratio of about 1.586:1. LoyalFlow never generates either side in Custom mode. Keep the QR, customer name, balance, reward, and score zones clear.",
+            )}
+          </p>
+        </div>
+      </details>
 
       {!storageConfigured ? (
         <p className="mt-4 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-sm font-bold">
@@ -132,8 +157,8 @@ export async function CustomCardArtworkManager({
           </div>
           <p className="text-xs text-foreground-muted">
             {t(
-              "PNG أو JPEG أو WebP. الحد الأقصى 4 ميجابايت إجمالًا للواجهة الأمامية + الخلفية. يجب أن يكون الجانبان بنفس أبعاد البكسل تمامًا وبنسبة ID-1 القياسية (حوالي 1.586:1). لا ينشئ LoyalFlow أيًا من الجانبين تلقائيًا في الوضع المخصص. اترك مساحة رمز QR أعلى يمين الواجهة، ومساحة اسم العميل والرصيد أسفل الواجهة، ومساحة المكافأة والنتيجة أسفل الخلفية. التصميم المرفوع مسؤول عن كل عناصر البراند الأخرى.",
-              "PNG, JPEG or WebP. Maximum 4 MB total across Front + Back. Both sides must have exactly the same pixel dimensions and the standard ID-1 ratio (about 1.586:1). LoyalFlow never generates either side in Custom mode. Keep the upper-right QR zone, lower-front customer name and balance zones, and lower-back reward and score zones clear. Uploaded artwork owns every other brand element.",
+              "PNG أو JPEG أو WebP · الملفان معًا بحد أقصى 4 ميجابايت · نفس أبعاد البكسل.",
+              "PNG, JPEG, or WebP · 4 MB combined · identical pixel dimensions.",
             )}
           </p>
           <button
