@@ -57,7 +57,8 @@ test("T006 scan workspace preserves camera resolution and server-generated custo
     /fetch\(\s*`\/api\/scan\/customers\?\$\{params\.toString\(\)\}`/,
   );
   assert.match(search, /href=\{customer\.url\}/);
-  assert.match(search, /<details className="group/);
+  assert.match(search, /<details[\s\S]{0,120}className="group/);
+  assert.match(search, /data-testid="scan-customer-search"/);
   assert.match(search, /group-open:rotate-180/);
   assert.doesNotMatch(search, /<details[^>]*\sopen(?:=|\s|>)/);
   assert.match(scanner, /<details className="group/);

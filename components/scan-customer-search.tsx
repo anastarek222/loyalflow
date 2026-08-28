@@ -106,7 +106,10 @@ export default function ScanCustomerSearch({
   }
 
   return (
-    <details className="group mt-3 rounded-xl border border-border bg-surface-subtle/60 sm:mt-4">
+    <details
+      data-testid="scan-customer-search"
+      className="group mt-3 rounded-xl border border-border bg-surface-subtle/60 sm:mt-4"
+    >
       <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 marker:content-none">
         <span className="flex size-9 items-center justify-center rounded-lg bg-primary-subtle text-primary">
           <UserRoundSearch className="size-4" aria-hidden="true" />
