@@ -226,8 +226,9 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   assert.match(scannerStyles, /#loyalflow-qr-reader :where\(video, canvas\)/);
   assert.match(scannerStyles, /max-width: 100% !important/);
   assert.match(scanPage, /className="min-h-full[^"]*py-3[^"]*sm:py-10"/);
-  assert.match(scanPage, /className="space-y-4 px-4 sm:space-y-8 sm:px-6"/);
-  assert.match(scanPage, /className="gap-3 p-4 sm:gap-5 sm:p-6"/);
+  assert.match(scanPage, /className="space-y-2 px-3 sm:space-y-8 sm:px-6"/);
+  assert.match(scanPage, /className="hidden gap-3 p-4 sm:flex sm:gap-5 sm:p-6"/);
+  assert.match(scanPage, /mb-3 hidden items-start[\s\S]*sm:flex/);
   assert.match(scanPage, /min-h-10 self-start[\s\S]*?sm:min-h-11/);
 });
 
