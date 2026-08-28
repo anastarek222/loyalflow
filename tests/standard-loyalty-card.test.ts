@@ -363,6 +363,12 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   assert.match(canonical, /radial-gradient/);
   assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
   assert.match(setup, /Managed from the Custom Card artwork panel above/);
+  assert.match(setup, /Managed by Super Admin/);
+  assert.match(
+    setup,
+    /Artwork and protected safe zones are read-only for Business Owners/,
+  );
+  assert.doesNotMatch(setup, /Custom Card — Super Admin managed/);
   assert.equal((manager.match(/<LoyaltyCard/g) ?? []).length, 2);
   assert.match(canonical, /object-contain/);
 });
