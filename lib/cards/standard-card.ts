@@ -14,13 +14,22 @@ export const CARD_DESIGN_MODES = ["STANDARD", "CUSTOM"] as const;
 export type CardDesignMode = (typeof CARD_DESIGN_MODES)[number];
 
 export const STANDARD_CARD_ARTWORK_CATEGORIES = [
-  "BARBER", "CAFE", "RESTAURANT", "FASHION", "BEAUTY", "GYM", "RETAIL", "OTHER",
+  "BARBER",
+  "CAFE",
+  "RESTAURANT",
+  "FASHION",
+  "BEAUTY",
+  "GYM",
+  "RETAIL",
+  "OTHER",
 ] as const;
 
-export type StandardCardArtworkCategory = (typeof STANDARD_CARD_ARTWORK_CATEGORIES)[number];
+export type StandardCardArtworkCategory =
+  (typeof STANDARD_CARD_ARTWORK_CATEGORIES)[number];
 
 export const STANDARD_CARD_THEME_PRESETS = ["DEFAULT", "DARK"] as const;
-export type StandardCardThemePreset = (typeof STANDARD_CARD_THEME_PRESETS)[number];
+export type StandardCardThemePreset =
+  (typeof STANDARD_CARD_THEME_PRESETS)[number];
 
 export const STANDARD_CARD_COLOR_PRESETS = [
   { id: "GOLD", light: "#9A6A2F", dark: "#E6C27A" },
@@ -31,28 +40,41 @@ export const STANDARD_CARD_COLOR_PRESETS = [
   { id: "SLATE", light: "#475569", dark: "#CBD5E1" },
 ] as const;
 
-export type StandardCardColorPreset = (typeof STANDARD_CARD_COLOR_PRESETS)[number]["id"];
+export type StandardCardColorPreset =
+  (typeof STANDARD_CARD_COLOR_PRESETS)[number]["id"];
 export const DEFAULT_STANDARD_CARD_COLOR_PRESET: StandardCardColorPreset = "GOLD";
 
-export function standardCardArtworkCategory(value: string | null | undefined): StandardCardArtworkCategory {
+export function standardCardArtworkCategory(
+  value: string | null | undefined,
+): StandardCardArtworkCategory {
   const normalized = value?.trim().toUpperCase();
-  return STANDARD_CARD_ARTWORK_CATEGORIES.includes(normalized as StandardCardArtworkCategory)
+  return STANDARD_CARD_ARTWORK_CATEGORIES.includes(
+    normalized as StandardCardArtworkCategory,
+  )
     ? (normalized as StandardCardArtworkCategory)
     : "OTHER";
 }
 
-export function standardCardThemePreset(value: string | null | undefined): StandardCardThemePreset {
+export function standardCardThemePreset(
+  value: string | null | undefined,
+): StandardCardThemePreset {
   const normalized = value?.trim().toUpperCase();
-  return STANDARD_CARD_THEME_PRESETS.includes(normalized as StandardCardThemePreset)
+  return STANDARD_CARD_THEME_PRESETS.includes(
+    normalized as StandardCardThemePreset,
+  )
     ? (normalized as StandardCardThemePreset)
     : "DEFAULT";
 }
 
 export function standardCardTheme(themePreset: string | null | undefined) {
-  return standardCardThemePreset(themePreset) === "DARK" ? "dark" : "light" as const;
+  return standardCardThemePreset(themePreset) === "DARK"
+    ? "dark"
+    : ("light" as const);
 }
 
-export function standardCardColorPreset(value: string | null | undefined): StandardCardColorPreset {
+export function standardCardColorPreset(
+  value: string | null | undefined,
+): StandardCardColorPreset {
   const normalized = value?.trim().toUpperCase();
   return STANDARD_CARD_COLOR_PRESETS.some((preset) => preset.id === normalized)
     ? (normalized as StandardCardColorPreset)
@@ -65,20 +87,28 @@ export function standardCardPresetColor(
 ) {
   const selected = standardCardColorPreset(preset);
   const theme = standardCardThemePreset(themePreset);
-  const palette = STANDARD_CARD_COLOR_PRESETS.find((candidate) => candidate.id === selected)
-    ?? STANDARD_CARD_COLOR_PRESETS[0];
+  const palette =
+    STANDARD_CARD_COLOR_PRESETS.find(
+      (candidate) => candidate.id === selected,
+    ) ?? STANDARD_CARD_COLOR_PRESETS[0];
   return theme === "DARK" ? palette.dark : palette.light;
 }
 
-export function standardCardPresetForColor(value: string | null | undefined): StandardCardColorPreset | null {
+export function standardCardPresetForColor(
+  value: string | null | undefined,
+): StandardCardColorPreset | null {
   const normalized = value?.trim().toUpperCase();
   if (!normalized || !/^#[0-9A-F]{6}$/.test(normalized)) return null;
-  return STANDARD_CARD_COLOR_PRESETS.find(
-    (preset) => preset.light === normalized || preset.dark === normalized,
-  )?.id ?? null;
+  return (
+    STANDARD_CARD_COLOR_PRESETS.find(
+      (preset) => preset.light === normalized || preset.dark === normalized,
+    )?.id ?? null
+  );
 }
 
-export function cardDesignMode(value: string | null | undefined): CardDesignMode {
+export function cardDesignMode(
+  value: string | null | undefined,
+): CardDesignMode {
   return value === "CUSTOM" ? "CUSTOM" : "STANDARD";
 }
 
@@ -94,7 +124,9 @@ function safeWholeNumber(value: number) {
 }
 
 function formatNumber(value: number, locale: string) {
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(
+    value,
+  );
 }
 
 function containsArabic(value: string) {
@@ -137,7 +169,10 @@ function compactUnitForms(value: string | null | undefined) {
   };
 }
 
-export function compactLoyaltyUnit(value: string | null | undefined, quantity?: number) {
+export function compactLoyaltyUnit(
+  value: string | null | undefined,
+  quantity?: number,
+) {
   const forms = compactUnitForms(value);
   if (quantity === undefined) {
     const upper = (value || "PTS").trim().toUpperCase();
@@ -165,20 +200,24 @@ export function getLoyaltyCardMetrics(input: {
     input.loyaltyMode === "VISITS"
       ? (input.unitName || (language === "AR" ? "زيارة" : "VISIT")).trim()
       : input.loyaltyMode === "POINTS"
-        ? language === "AR" ? "نقطة" : (input.unitName || "PTS").trim()
+        ? language === "AR"
+          ? "نقطة"
+          : (input.unitName || "PTS").trim()
         : currency;
   const unitFor = (value: number) =>
     language === "EN" && input.loyaltyMode === "POINTS"
       ? compactLoyaltyUnit(fullUnit, value)
       : language === "EN" && input.loyaltyMode === "VISITS"
-        ? value === 1 ? "VISIT" : "VISITS"
+        ? value === 1
+          ? "VISIT"
+          : "VISITS"
         : fullUnit;
   const formatValue = (value: number) =>
     input.loyaltyMode === "SALES_AMOUNT"
       ? `${currency} ${formatNumber(value, locale)}`
       : language === "AR" && containsArabic(fullUnit)
         ? formatArabicUnitValue(value, fullUnit, locale)
-      : `${formatNumber(value, locale)} ${unitFor(value)}`;
+        : `${formatNumber(value, locale)} ${unitFor(value)}`;
   const formatSemanticValue = (value: number) =>
     input.loyaltyMode === "SALES_AMOUNT"
       ? `${currency} ${formatNumber(value, locale)}`
@@ -190,22 +229,34 @@ export function getLoyaltyCardMetrics(input: {
     remaining,
     unit: unitFor(current),
     fullUnit,
+    currentAmountText: formatNumber(current, locale),
+    currentUnitText:
+      input.loyaltyMode === "SALES_AMOUNT"
+        ? currency
+        : language === "AR" && containsArabic(fullUnit)
+          ? arabicUnitLabel(current, fullUnit)
+          : unitFor(current),
     currentText: formatValue(current),
     targetText: formatValue(target),
-    ratioText: input.loyaltyMode === "SALES_AMOUNT"
-      ? `${formatValue(current)} / ${formatValue(target)}`
-      : language === "AR" && containsArabic(fullUnit)
-        ? `${formatNumber(current, locale)} / ${formatNumber(target, locale)} ${arabicUnitLabel(target, fullUnit)}`
-      : `${formatNumber(current, locale)} / ${formatNumber(target, locale)} ${unitFor(target)}`,
+    ratioText:
+      input.loyaltyMode === "SALES_AMOUNT"
+        ? `${formatValue(current)} / ${formatValue(target)}`
+        : language === "AR" && containsArabic(fullUnit)
+          ? `${formatNumber(current, locale)} / ${formatNumber(target, locale)} ${arabicUnitLabel(target, fullUnit)}`
+          : `${formatNumber(current, locale)} / ${formatNumber(target, locale)} ${unitFor(target)}`,
     remainingText: rewardReady
-      ? language === "AR" ? "المكافأة جاهزة" : "REWARD READY"
+      ? language === "AR"
+        ? "المكافأة جاهزة"
+        : "REWARD READY"
       : language === "AR"
         ? `${formatValue(remaining)} حتى المكافأة`
         : `${formatValue(remaining)} TO NEXT REWARD`,
     semanticCurrentText: formatSemanticValue(current),
     semanticRatioText: `${formatSemanticValue(current)} / ${formatSemanticValue(target)}`,
     semanticRemainingText: rewardReady
-      ? language === "AR" ? "المكافأة جاهزة" : "REWARD READY"
+      ? language === "AR"
+        ? "المكافأة جاهزة"
+        : "REWARD READY"
       : language === "AR"
         ? `${formatSemanticValue(remaining)} متبقي للمكافأة`
         : `${formatSemanticValue(remaining)} TO NEXT REWARD`,
@@ -220,7 +271,10 @@ export function getPreviewBalance(_mode: LoyaltyCardMode, threshold: number) {
   return Math.max(1, Math.min(target - 1, Math.round(target * 0.5)));
 }
 
-export function getLoyaltyCardPreviewData(mode: LoyaltyCardMode, threshold: number) {
+export function getLoyaltyCardPreviewData(
+  mode: LoyaltyCardMode,
+  threshold: number,
+) {
   return {
     customerName: LOYALTY_CARD_PREVIEW_CUSTOMER.name,
     customerId: LOYALTY_CARD_PREVIEW_CUSTOMER.id,

@@ -35,18 +35,18 @@ export default function OperationalDisclosure({
       )}
       data-operational-disclosure
     >
-      <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 marker:content-none sm:px-6">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 marker:content-none sm:min-h-16 sm:gap-4 sm:px-6 sm:py-4">
         <span className="min-w-0">
           <span
             className={cn(
-              "block text-base font-black sm:text-lg",
+              "block text-sm font-black sm:text-lg",
               tone === "danger" ? "text-danger" : "text-foreground",
             )}
           >
             {title}
           </span>
           {description ? (
-            <span className="mt-0.5 block text-xs leading-5 text-foreground-subtle sm:text-sm">
+            <span className="mt-0.5 hidden text-xs leading-5 text-foreground-subtle sm:block sm:text-sm">
               {description}
             </span>
           ) : null}
@@ -61,7 +61,7 @@ export default function OperationalDisclosure({
       </summary>
       <div
         className={cn(
-          "border-t border-border/70 px-5 py-5 sm:px-6 sm:py-6",
+          "border-t border-border/70 px-4 py-4 sm:px-6 sm:py-6",
           contentClassName,
         )}
       >

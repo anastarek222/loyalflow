@@ -488,7 +488,7 @@ export default async function CustomerDetailsPage({
 
   return (
     <main
-      className="min-h-screen bg-surface-subtle px-4 py-6 sm:px-8 sm:py-8"
+      className="min-h-screen bg-surface-subtle px-3 py-3 sm:px-8 sm:py-8"
       style={{
         backgroundImage:
           "radial-gradient(circle at top right, var(--lf-primary-soft), transparent 34rem)",
@@ -678,18 +678,18 @@ export default async function CustomerDetailsPage({
           </section>
         )}
 
-        <div className="mt-6 grid gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="mt-3 grid gap-3 sm:mt-6 sm:gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
           <div className="flex min-w-0 flex-col">
             <header
-              className="relative overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/20 bg-gradient-to-br from-primary via-indigo-600 to-violet-700 p-5 text-white shadow-lg shadow-primary/15 sm:p-7"
+              className="relative overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/20 bg-gradient-to-br from-primary via-indigo-600 to-violet-700 p-4 text-white shadow-lg shadow-primary/15 sm:p-7"
               data-customer-profile-hero
             >
               <div
                 aria-hidden="true"
                 className="absolute -end-16 -top-20 size-56 rounded-full border-[32px] border-white/5"
               />
-              <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start">
-                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-xl font-black text-white shadow-inner backdrop-blur-sm">
+              <div className="relative flex flex-wrap gap-3 sm:flex-nowrap sm:gap-5">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-lg font-black text-white shadow-inner backdrop-blur-sm sm:size-14 sm:rounded-2xl sm:text-xl">
                   {(customerName || "?").trim().charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -733,7 +733,7 @@ export default async function CustomerDetailsPage({
                     </div>
                   ) : null}
                 </div>
-                <div className="min-w-40">
+                <div className="w-full sm:min-w-40 sm:w-auto">
                   <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur-sm">
                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-white/60">
                       {loyaltyBalanceLabel}
@@ -754,6 +754,35 @@ export default async function CustomerDetailsPage({
                 </div>
               </div>
             </header>
+
+            <nav
+              aria-label={copy.cardAndSharing}
+              className="mt-3 grid grid-cols-2 gap-2 sm:hidden"
+              data-customer-quick-actions
+            >
+              <Link
+                href={`/card/${customer.publicToken}`}
+                target="_blank"
+                className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-foreground px-3 py-2 text-center text-sm font-bold text-white"
+              >
+                {copy.openCard}
+              </Link>
+              {canManageCustomer ? (
+                <a
+                  href="#customer-details"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
+                >
+                  {copy.manageCustomer}
+                </a>
+              ) : (
+                <a
+                  href="#daily-loyalty"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
+                >
+                  {copy.loyaltyAction}
+                </a>
+              )}
+            </nav>
 
             {isSimpleExperience ? (
               <section className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary-subtle/40 p-5 sm:p-6">
@@ -813,7 +842,7 @@ export default async function CustomerDetailsPage({
                   query.success === "tag-removed" ||
                   query.error === "tag-invalid"
                 }
-                className={`order-3 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                className={`order-3 mt-3 sm:mt-6 ${isSimpleExperience ? "hidden" : ""}`}
               >
                 <div className="flex flex-wrap gap-2">
                   {customer.tagAssignments.length === 0 ? (
@@ -912,7 +941,7 @@ export default async function CustomerDetailsPage({
                   query.success === "note-updated" ||
                   query.error === "note-invalid"
                 }
-                className={`order-4 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                className={`order-4 mt-3 sm:mt-6 ${isSimpleExperience ? "hidden" : ""}`}
               >
                 {canManageNotesTags ? (
                   <form action={createNote}>
@@ -1013,9 +1042,9 @@ export default async function CustomerDetailsPage({
 
             <section
               id="daily-loyalty"
-              className="order-1 mt-6 scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-5 shadow-sm sm:p-8"
+              className="order-1 mt-3 scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-4 shadow-sm sm:mt-6 sm:p-8"
             >
-              <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
+              <div className="flex items-center justify-between gap-3 sm:gap-6">
                 <div>
                   <p className="text-sm text-foreground-subtle">
                     {loyaltyBalanceLabel}
@@ -1025,7 +1054,7 @@ export default async function CustomerDetailsPage({
                     dir={
                       business.loyaltyMode === "SALES_AMOUNT" ? "ltr" : "auto"
                     }
-                    className="mt-2 text-5xl font-bold text-foreground"
+                    className="mt-1 text-3xl font-bold text-foreground sm:mt-2 sm:text-5xl"
                   >
                     <LoyaltyAmountDisplay
                       {...loyaltyPresentation}
@@ -1035,7 +1064,7 @@ export default async function CustomerDetailsPage({
                 </div>
 
                 <div
-                  className={`rounded-[var(--lf-radius-card)] px-6 py-4 ${
+                  className={`shrink-0 rounded-[var(--lf-radius-card)] px-3 py-2 sm:px-6 sm:py-4 ${
                     rewardAvailable
                       ? "bg-success-subtle text-success"
                       : "bg-surface-subtle text-foreground-muted"
@@ -1057,7 +1086,7 @@ export default async function CustomerDetailsPage({
                 </div>
               </div>
 
-              <section className="mt-8 grid gap-4 md:grid-cols-2">
+              <section className="mt-4 grid gap-3 sm:mt-8 sm:gap-4 md:grid-cols-2">
                 {rewardStates.map((rewardState) => (
                   <article
                     key={rewardState.reward.id ?? "legacy-reward"}
@@ -1277,6 +1306,7 @@ export default async function CustomerDetailsPage({
             {canManageCustomer && (
               <>
                 <OperationalDisclosure
+                  id="customer-details"
                   title={copy.manageCustomer}
                   description={copy.manageDescription}
                   defaultOpen={
@@ -1285,7 +1315,7 @@ export default async function CustomerDetailsPage({
                     query.error === "phone" ||
                     query.error === "duplicate"
                   }
-                  className={`order-5 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                  className={`order-5 mt-3 sm:mt-6 ${isSimpleExperience ? "hidden" : ""}`}
                 >
                   <form
                     action={updateCustomer}
@@ -1366,7 +1396,7 @@ export default async function CustomerDetailsPage({
                       query.error === "adjustment-invalid" ||
                       query.error === "adjustment-negative"
                     }
-                    className={`order-6 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                    className={`order-6 mt-3 sm:mt-6 ${isSimpleExperience ? "hidden" : ""}`}
                   >
                     <p className="mt-4 text-sm font-semibold text-primary">
                       {copy.currentBalance(formatBalance(customer.balance), "")}
@@ -1462,7 +1492,7 @@ export default async function CustomerDetailsPage({
                     query.success === "reactivated"
                   }
                   tone="danger"
-                  className={`order-7 mt-6 ${isSimpleExperience ? "hidden" : ""}`}
+                  className={`order-7 mt-3 sm:mt-6 ${isSimpleExperience ? "hidden" : ""}`}
                 >
                   <div className="flex justify-end">
                     <form
