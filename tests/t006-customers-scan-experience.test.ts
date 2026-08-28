@@ -57,6 +57,11 @@ test("T006 scan workspace preserves camera resolution and server-generated custo
     /fetch\(\s*`\/api\/scan\/customers\?\$\{params\.toString\(\)\}`/,
   );
   assert.match(search, /href=\{customer\.url\}/);
+  assert.match(search, /<details className="group/);
+  assert.match(search, /group-open:rotate-180/);
+  assert.doesNotMatch(search, /<details[^>]*\sopen(?:=|\s|>)/);
+  assert.match(scanner, /<details className="group/);
+  assert.match(scanner, /group-open:rotate-180/);
   assert.doesNotMatch(
     `${scanner}\n${search}`,
     /from "@\/lib\/prisma"|prisma\./,
@@ -93,6 +98,8 @@ test("T006 operational presentation keeps exact-once origin, permissions, and ca
     operationPage,
     /recordLoyaltyEarn|recordRewardRedemption|\$transaction/,
   );
+  assert.match(operationPage, /<details className="group/);
+  assert.match(operationPage, /group-open:rotate-180/);
 });
 
 test("T006 customers and Scan share the refreshed Indigo operational language", () => {

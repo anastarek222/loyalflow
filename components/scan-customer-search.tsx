@@ -8,7 +8,13 @@ import {
   SCAN_CUSTOMER_SEARCH_MIN_LENGTH,
 } from "@/lib/scan/customer-search";
 import type { AppLanguage } from "@/lib/i18n";
-import { ArrowUpRight, Search, UserRoundSearch, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronDown,
+  Search,
+  UserRoundSearch,
+  X,
+} from "lucide-react";
 
 type ScanCustomerSearchProps = { businessId: string; language: AppLanguage };
 type SearchResult = {
@@ -100,30 +106,29 @@ export default function ScanCustomerSearch({
   }
 
   return (
-    <section
-      aria-labelledby="scan-customer-search-heading"
-      className="mt-6 border-t border-border pt-6"
-    >
-      <div className="flex items-center gap-3">
+    <details className="group mt-3 rounded-xl border border-border bg-surface-subtle/60 sm:mt-4">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 marker:content-none">
         <span className="flex size-9 items-center justify-center rounded-lg bg-primary-subtle text-primary">
           <UserRoundSearch className="size-4" aria-hidden="true" />
         </span>
-        <div>
+        <div className="min-w-0">
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-primary">
             {copy.alternateAccess}
           </p>
-          <h2
-            id="scan-customer-search-heading"
-            className="text-base font-bold text-foreground"
-          >
+          <h2 className="truncate text-sm font-bold text-foreground">
             {copy.customerSearchHeading}
           </h2>
         </div>
-      </div>
-      <p className="mt-1 text-sm text-foreground-muted">
-        {copy.customerSearchDescription}
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
+        <ChevronDown
+          className="ms-auto size-4 shrink-0 text-foreground-subtle transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        />
+      </summary>
+      <div className="border-t border-border p-4">
+        <p className="text-sm text-foreground-muted">
+          {copy.customerSearchDescription}
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
         <div className="relative min-w-0 flex-1 basis-48">
           <label htmlFor="scanCustomerSearch" className="sr-only">
             {copy.customerSearchLabel}
@@ -151,15 +156,15 @@ export default function ScanCustomerSearch({
             {copy.clearCustomerSearch}
           </button>
         )}
-      </div>
-      <p className="mt-2 text-xs text-foreground-subtle">
-        {copy.customerSearchMinimum}
-      </p>
-      <div
-        aria-live="polite"
-        aria-busy={displayedState === "loading"}
-        className="mt-4"
-      >
+        </div>
+        <p className="mt-2 text-xs text-foreground-subtle">
+          {copy.customerSearchMinimum}
+        </p>
+        <div
+          aria-live="polite"
+          aria-busy={displayedState === "loading"}
+          className="mt-4"
+        >
         {displayedState === "loading" && (
           <p role="status" className="text-sm text-foreground-muted">
             {copy.customerSearching}
@@ -216,8 +221,9 @@ export default function ScanCustomerSearch({
             ))}
           </ul>
         )}
+        </div>
       </div>
-    </section>
+    </details>
   );
 }
 
