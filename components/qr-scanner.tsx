@@ -4,12 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { scanUiCopy } from "@/lib/scan/copy";
-import {
-  hasCameraLabels,
-  nextCameraId,
-  preferredCamera,
-  type ScanCamera,
-} from "@/lib/scan/camera-selection";
+import { nextCameraId, type ScanCamera } from "@/lib/scan/camera-selection";
 import {
   getScanResolveErrorCode,
   isScanResolveSuccessResponse,
@@ -29,7 +24,7 @@ type QrScannerProps = { businessId: string; language: AppLanguage };
 type ScannerInstance = import("html5-qrcode").Html5Qrcode;
 type CameraError = "unavailable" | "permission" | "secure" | "initialization";
 
-const CAMERA_PREVIEW_READY_TIMEOUT_MS = 4_000;
+const CAMERA_PREVIEW_READY_TIMEOUT_MS = 10_000;
 const CAMERA_PREVIEW_READY_POLL_MS = 50;
 
 function resolveErrorMessage(
@@ -79,6 +74,26 @@ function prepareCameraPreview(video: HTMLVideoElement) {
   video.setAttribute("muted", "");
 }
 
+function observeCameraPreview(reader: HTMLElement) {
+  const prepareVideos = () => {
+    reader
+      .querySelectorAll<HTMLVideoElement>("video")
+      .forEach(prepareCameraPreview);
+  };
+  prepareVideos();
+  const observer = new MutationObserver(prepareVideos);
+  observer.observe(reader, { childList: true, subtree: true });
+  return () => observer.disconnect();
+}
+
+async function enumerateVideoCameras(): Promise<ScanCamera[]> {
+  if (!navigator.mediaDevices?.enumerateDevices) return [];
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices
+    .filter((device) => device.kind === "videoinput")
+    .map(({ deviceId, label }) => ({ id: deviceId, label }));
+}
+
 async function waitForPlayableCameraPreview(
   reader: HTMLElement,
   signal: AbortSignal,
@@ -125,7 +140,6 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
   const [cameraError, setCameraError] = useState<CameraError | null>(null);
   const [cameras, setCameras] = useState<ScanCamera[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
-  const [restartAttempt, setRestartAttempt] = useState(0);
 
   const updateSelectedCamera = useCallback((cameraId: string | null) => {
     selectedCameraIdRef.current = cameraId;
@@ -233,18 +247,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
             await import("html5-qrcode");
           const reader = document.getElementById("loyalflow-qr-reader");
           if (!reader || !mountedRef.current) return;
-          const devices = await Html5Qrcode.getCameras();
-          const availableCameras = devices.map(({ id, label }) => ({
-            id,
-            label,
-          }));
-          if (!availableCameras.length) throw new Error("camera unavailable");
-          if (mountedRef.current) setCameras(availableCameras);
-          const preferred = requestedCameraId
-            ? availableCameras.find((camera) => camera.id === requestedCameraId)
-            : preferredCamera(availableCameras);
-          const shouldRequestEnvironment =
-            !requestedCameraId && !hasCameraLabels(availableCameras);
+          const stopObservingPreview = observeCameraPreview(reader);
           const scanner = new Html5Qrcode("loyalflow-qr-reader", {
             formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
             verbose: false,
@@ -259,7 +262,6 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
               );
               return { width: size, height: size };
             },
-            aspectRatio: 1,
           };
           const onDecoded = (decodedText: string) => {
             void resolveScannedValue(decodedText);
@@ -267,35 +269,17 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
           const onDecodeMiss = () => {
             // Per-frame decode misses are expected and must not become camera errors.
           };
-          let startedCameraId: string | null = null;
           try {
-            if (shouldRequestEnvironment) {
-              await scanner.start(
-                { facingMode: { ideal: "environment" } },
-                config,
-                onDecoded,
-                onDecodeMiss,
-              );
-            } else {
-              startedCameraId = preferred?.id ?? availableCameras[0].id;
-              await scanner.start(
-                startedCameraId,
-                config,
-                onDecoded,
-                onDecodeMiss,
-              );
-            }
-          } catch (preferredError) {
-            const fallback =
-              availableCameras.find((camera) => camera.id !== preferred?.id) ??
-              availableCameras[0];
-            if (
-              !fallback ||
-              (fallback.id === preferred?.id && !shouldRequestEnvironment)
-            )
-              throw preferredError;
-            await scanner.start(fallback.id, config, onDecoded, onDecodeMiss);
-            startedCameraId = fallback.id;
+            await scanner.start(
+              requestedCameraId ?? {
+                facingMode: { ideal: "environment" },
+              },
+              config,
+              onDecoded,
+              onDecodeMiss,
+            );
+          } finally {
+            stopObservingPreview();
           }
 
           const previewReadyAbort = new AbortController();
@@ -317,20 +301,20 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
           )
             return;
 
-          let runningCameraId =
-            startedCameraId ?? preferred?.id ?? availableCameras[0]?.id ?? null;
+          let runningCameraId = requestedCameraId ?? null;
           try {
             runningCameraId =
               scanner.getRunningTrackSettings().deviceId || runningCameraId;
           } catch {
             /* Keep the requested camera as the selected fallback. */
           }
+          const availableCameras = await enumerateVideoCameras().catch(
+            () => [] as ScanCamera[],
+          );
+          if (!runningCameraId)
+            runningCameraId = availableCameras[0]?.id ?? null;
           updateSelectedCamera(runningCameraId);
-          const refreshedDevices = await Html5Qrcode.getCameras();
-          if (mountedRef.current)
-            setCameras(
-              refreshedDevices.map(({ id, label }) => ({ id, label })),
-            );
+          if (mountedRef.current) setCameras(availableCameras);
           if (mountedRef.current) setStatus(copy.cameraReady);
         } catch (error) {
           await stopScanner();
@@ -360,7 +344,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
       mountedRef.current = false;
       void stopScanner();
     };
-  }, [initializeScanner, restartAttempt, stopScanner]);
+  }, [initializeScanner, stopScanner]);
 
   async function restartScanner() {
     if (isInitializing || switchingRef.current || isProcessing) return;
@@ -369,7 +353,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
     setCameraError(null);
     setIsError(false);
     setStatus(copy.startingCamera);
-    setRestartAttempt((attempt) => attempt + 1);
+    await initializeScanner();
   }
 
   async function switchCamera() {
