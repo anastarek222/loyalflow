@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ChevronDown,
+  ChevronRight,
   Download,
   ScanLine,
   Search,
@@ -430,22 +431,25 @@ export default async function CustomersPage({
 
   return (
     <main
-      className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_38rem)] px-4 py-6 sm:px-6 sm:py-10"
+      className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_38rem)] px-3 py-3 sm:px-6 sm:py-10"
       data-experience-mode={experienceMode}
       data-experience-customers={isSimpleExperience ? "simple" : "advanced"}
     >
       <ListPageTemplate
         container="wide"
-        className="space-y-6"
+        className="space-y-3 sm:space-y-6"
         header={
           <PageHeader
-            eyebrow={business.name}
+            eyebrow={<span className="hidden sm:inline">{business.name}</span>}
             title={copy.customers}
             description={
-              isSimpleExperience
-                ? copy.simpleDescription
-                : copy.advancedDescription(business.name)
+              <span className="hidden sm:inline">
+                {isSimpleExperience
+                  ? copy.simpleDescription
+                  : copy.advancedDescription(business.name)}
+              </span>
             }
+            className="gap-3 p-3 sm:gap-5 sm:p-6"
             status={
               <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-primary-subtle px-2.5 py-1 text-xs font-semibold text-primary">
                 <UsersRound className="size-3.5" aria-hidden="true" />
@@ -456,7 +460,7 @@ export default async function CustomersPage({
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   href={`/businesses/${business.slug}`}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 py-2 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
+                  className="hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 py-2 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle sm:inline-flex"
                 >
                   <ArrowLeft
                     className="size-4 rtl:rotate-180"
@@ -485,7 +489,7 @@ export default async function CustomersPage({
                 {canReviewDuplicates && (
                   <Link
                     href={`/businesses/${business.slug}/duplicates`}
-                    className={`inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-2 text-sm font-semibold text-warning hover:bg-warning-subtle ${isSimpleExperience ? "hidden" : ""}`}
+                    className={`hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-2 text-sm font-semibold text-warning hover:bg-warning-subtle sm:inline-flex ${isSimpleExperience ? "sm:hidden" : ""}`}
                   >
                     <AlertTriangle className="size-4" aria-hidden="true" />
                     {copy.reviewDuplicates}
@@ -494,7 +498,7 @@ export default async function CustomersPage({
                 {canExportData && (
                   <a
                     href={`/businesses/${business.slug}/customers/export`}
-                    className={`inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted shadow-sm hover:border-success/30 hover:bg-success-subtle ${isSimpleExperience ? "hidden" : ""}`}
+                    className={`hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted shadow-sm hover:border-success/30 hover:bg-success-subtle sm:inline-flex ${isSimpleExperience ? "sm:hidden" : ""}`}
                   >
                     <Download className="size-4" aria-hidden="true" />
                     {copy.exportCustomers}
@@ -551,7 +555,7 @@ export default async function CustomersPage({
             open={showAddCustomer}
             className="group scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-surface shadow-sm"
           >
-            <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-bold text-foreground">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 font-bold text-foreground sm:min-h-14 sm:gap-4 sm:px-5 sm:py-4">
               <span className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary-subtle text-primary">
                   <UserPlus className="size-4" aria-hidden="true" />
@@ -634,7 +638,7 @@ export default async function CustomersPage({
         ) : null}
 
         <div
-          className={`grid gap-6 lg:gap-8 ${canReviewDuplicates && !isSimpleExperience ? "lg:grid-cols-[minmax(18rem,22rem)_1fr]" : ""}`}
+          className={`grid gap-3 sm:gap-6 lg:gap-8 ${canReviewDuplicates && !isSimpleExperience ? "lg:grid-cols-[minmax(18rem,22rem)_1fr]" : ""}`}
         >
           {canReviewDuplicates && !isSimpleExperience ? (
             <details
@@ -642,7 +646,7 @@ export default async function CustomersPage({
               open={showAddCustomer}
               className="group h-fit scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-gradient-to-b from-primary-subtle/50 to-surface shadow-sm lg:sticky lg:top-6"
             >
-              <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 px-5 py-4 marker:content-none">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-3 py-2.5 marker:content-none sm:min-h-16 sm:px-5 sm:py-4">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
                   <UserPlus className="size-5" aria-hidden="true" />
                 </span>
@@ -747,10 +751,8 @@ export default async function CustomersPage({
                 language={language}
               />
             ) : null}
-            <form
-              className={`mb-5 rounded-[var(--lf-radius-card)] border border-border bg-surface/95 shadow-sm ${isSimpleExperience ? "p-4" : "p-4 sm:p-5"}`}
-            >
-              <div className="mb-4 flex items-center gap-3">
+            <form className="mb-3 rounded-[var(--lf-radius-card)] border border-border bg-surface/95 p-3 shadow-sm sm:mb-5 sm:p-5">
+              <div className="mb-3 flex items-center gap-3 sm:mb-4">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary-subtle text-primary">
                   {isSimpleExperience ? (
                     <Search className="size-4" aria-hidden="true" />
@@ -765,12 +767,9 @@ export default async function CustomersPage({
                   </p>
                 </div>
               </div>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_150px_150px_150px_190px_auto]">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:gap-4">
                 <div>
-                  <label
-                    htmlFor="q"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
+                  <label htmlFor="q" className="sr-only">
                     {copy.search}
                   </label>
 
@@ -779,111 +778,133 @@ export default async function CustomersPage({
                     name="q"
                     defaultValue={search}
                     placeholder={copy.searchPlaceholder}
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
+                    className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30 sm:px-4"
                   />
-                </div>
-
-                {!isSimpleExperience && canViewNotesTags ? (
-                  <div>
-                    <label
-                      htmlFor="tag"
-                      className="mb-2 block text-sm font-medium text-foreground-muted"
-                    >
-                      {copy.tag}
-                    </label>
-
-                    <select
-                      id="tag"
-                      name="tag"
-                      defaultValue={selectedTagId ?? ""}
-                      className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
-                    >
-                      <option value="">{copy.allTags}</option>
-                      {businessTags.map((tag) => (
-                        <option key={tag.id} value={tag.id}>
-                          {tag.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null}
-
-                <div className={isSimpleExperience ? "hidden" : undefined}>
-                  <label
-                    htmlFor="status"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
-                    {copy.status}
-                  </label>
-
-                  <select
-                    id="status"
-                    name="status"
-                    defaultValue={status}
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
-                  >
-                    <option value="all">{copy.allCustomers}</option>
-
-                    <option value="active">{copy.active}</option>
-
-                    <option value="inactive">{copy.inactive}</option>
-                  </select>
-                </div>
-
-                <div className={isSimpleExperience ? "hidden" : undefined}>
-                  <label
-                    htmlFor="segment"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
-                    {copy.segment}
-                  </label>
-
-                  <select
-                    id="segment"
-                    name="segment"
-                    defaultValue={segment ?? ""}
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
-                  >
-                    <option value="">{copy.allSegments}</option>
-                    {availableSegments.map((value) => (
-                      <option key={value} value={value}>
-                        {getCustomerSegmentLabel(value, language)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className={isSimpleExperience ? "hidden" : undefined}>
-                  <label
-                    htmlFor="sort"
-                    className="mb-2 block text-sm font-medium text-foreground-muted"
-                  >
-                    {copy.sort}
-                  </label>
-
-                  <select
-                    id="sort"
-                    name="sort"
-                    defaultValue={sort}
-                    className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
-                  >
-                    <option value="newest">{copy.newest}</option>
-
-                    <option value="oldest">{copy.oldest}</option>
-
-                    <option value="balance_high">{copy.balanceHigh}</option>
-
-                    <option value="balance_low">{copy.balanceLow}</option>
-                  </select>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full self-end rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-[var(--lf-primary-foreground)] shadow-sm transition hover:bg-primary-hover"
+                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 py-2.5 font-semibold text-[var(--lf-primary-foreground)] shadow-sm transition hover:bg-primary-hover sm:px-6"
                 >
                   {copy.apply}
                 </button>
               </div>
+
+              {!isSimpleExperience ? (
+                <details
+                  open={filtersActive || undefined}
+                  className="group mt-3 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle"
+                >
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-foreground-muted marker:content-none">
+                    <span className="flex items-center gap-2">
+                      <SlidersHorizontal
+                        className="size-4 text-primary"
+                        aria-hidden="true"
+                      />
+                      {copy.advancedOptions}
+                    </span>
+                    <ChevronDown
+                      className="size-4 text-primary transition-transform group-open:rotate-180"
+                      aria-hidden="true"
+                    />
+                  </summary>
+                  <div className="grid gap-3 border-t border-border p-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {canViewNotesTags ? (
+                      <div>
+                        <label
+                          htmlFor="tag"
+                          className="mb-2 block text-sm font-medium text-foreground-muted"
+                        >
+                          {copy.tag}
+                        </label>
+
+                        <select
+                          id="tag"
+                          name="tag"
+                          defaultValue={selectedTagId ?? ""}
+                          className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                        >
+                          <option value="">{copy.allTags}</option>
+                          {businessTags.map((tag) => (
+                            <option key={tag.id} value={tag.id}>
+                              {tag.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : null}
+
+                    <div>
+                      <label
+                        htmlFor="status"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
+                      >
+                        {copy.status}
+                      </label>
+
+                      <select
+                        id="status"
+                        name="status"
+                        defaultValue={status}
+                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                      >
+                        <option value="all">{copy.allCustomers}</option>
+
+                        <option value="active">{copy.active}</option>
+
+                        <option value="inactive">{copy.inactive}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="segment"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
+                      >
+                        {copy.segment}
+                      </label>
+
+                      <select
+                        id="segment"
+                        name="segment"
+                        defaultValue={segment ?? ""}
+                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                      >
+                        <option value="">{copy.allSegments}</option>
+                        {availableSegments.map((value) => (
+                          <option key={value} value={value}>
+                            {getCustomerSegmentLabel(value, language)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="sort"
+                        className="mb-2 block text-sm font-medium text-foreground-muted"
+                      >
+                        {copy.sort}
+                      </label>
+
+                      <select
+                        id="sort"
+                        name="sort"
+                        defaultValue={sort}
+                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                      >
+                        <option value="newest">{copy.newest}</option>
+
+                        <option value="oldest">{copy.oldest}</option>
+
+                        <option value="balance_high">{copy.balanceHigh}</option>
+
+                        <option value="balance_low">{copy.balanceLow}</option>
+                      </select>
+                    </div>
+                  </div>
+                </details>
+              ) : null}
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm text-foreground-subtle">
@@ -1122,7 +1143,7 @@ export default async function CustomersPage({
                   </div>
                 ) : null}
                 <div
-                  className={`space-y-4 ${isSimpleExperience ? "" : "lg:hidden"}`}
+                  className={`overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm ${isSimpleExperience ? "" : "lg:hidden"}`}
                   aria-label={copy.mobileCustomerList}
                 >
                   {customers.map((customer) => {
@@ -1143,127 +1164,63 @@ export default async function CustomersPage({
                     });
 
                     return (
-                      <article
+                      <Link
                         key={customer.id}
-                        className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md sm:p-5"
+                        href={`/businesses/${business.slug}/customers/${customer.id}`}
+                        className="group relative grid min-h-[4.75rem] grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-b border-border px-3 py-2.5 transition last:border-b-0 hover:bg-primary-subtle/35 sm:min-h-20 sm:px-4"
                       >
-                        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h2
-                                dir="auto"
-                                className="text-lg font-bold text-foreground"
-                              >
-                                {customer.firstName} {customer.lastName ?? ""}
-                              </h2>
-
-                              <span
-                                className={
-                                  customer.isActive
-                                    ? "rounded-full bg-success-subtle px-2.5 py-1 text-xs font-semibold text-success"
-                                    : "rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-foreground-muted"
-                                }
-                              >
-                                {customer.isActive
-                                  ? copy.active
-                                  : copy.inactive}
-                              </span>
-
-                              <span className="rounded-full bg-primary-subtle px-2.5 py-1 text-xs font-semibold text-primary">
-                                {getCustomerSegmentLabel(
-                                  customerSegment,
-                                  language,
-                                )}
-                              </span>
-
-                              {canViewNotesTags
-                                ? customer.tagAssignments.map((assignment) => (
-                                    <span
-                                      key={assignment.id}
-                                      className="rounded-full bg-info-subtle px-2.5 py-1 text-xs font-semibold text-info"
-                                    >
-                                      {assignment.tag.name}
-                                    </span>
-                                  ))
-                                : null}
-                            </div>
-
-                            <p
-                              dir="ltr"
-                              className="mt-1 text-sm text-foreground-subtle"
+                        <div className="min-w-0">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <h2
+                              dir="auto"
+                              className="truncate text-sm font-bold text-foreground sm:text-base"
                             >
-                              {customer.phone}
-                            </p>
-
-                            <p
-                              dir="ltr"
-                              className="mt-1 text-xs font-semibold text-primary"
-                            >
-                              {copy.code}: {customer.customerCode}
-                            </p>
+                              {customer.firstName} {customer.lastName ?? ""}
+                            </h2>
+                            <span
+                              className={`size-2 shrink-0 rounded-full ${customer.isActive ? "bg-success" : "bg-foreground-subtle"}`}
+                              title={
+                                customer.isActive ? copy.active : copy.inactive
+                              }
+                            />
                           </div>
-
-                          <div className="sm:text-right">
-                            <p className="text-2xl font-bold text-foreground">
-                              <span
-                                dir={
-                                  business.loyaltyMode === "SALES_AMOUNT"
-                                    ? "ltr"
-                                    : "auto"
-                                }
-                                className="lf-type-numeric"
-                              >
-                                {formatLoyaltyAmount({
-                                  loyaltyMode: business.loyaltyMode,
-                                  language,
-                                  unitName: business.unitName,
-                                  currency: business.currency,
-                                  amount: customer.balance,
-                                })}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-6 h-2 overflow-hidden rounded-full bg-surface-subtle">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${progress}%`,
-                              backgroundColor: "var(--lf-primary)",
-                            }}
-                          />
-                        </div>
-
-                        <p className="mt-2 text-xs text-foreground-subtle">
-                          <span dir="ltr" className="lf-type-numeric">
-                            {customer.balance} / {availability.targetCost}
-                          </span>{" "}
-                          {copy.toReachReward}
-                        </p>
-
-                        {availability.rewardReady ? (
-                          <p className="mt-2 text-xs font-semibold text-success">
-                            {copy.rewardReadyToRedeem}
+                          <p
+                            dir="ltr"
+                            className="mt-0.5 truncate text-xs text-foreground-subtle"
+                          >
+                            {customer.phone}
                           </p>
-                        ) : null}
-                        <p className="mt-2 text-xs text-foreground-subtle">
-                          {customer.transactions[0]
-                            ? copy.lastActivityDate(
-                                customer.transactions[0].createdAt.toLocaleDateString(
-                                  dateLocale,
-                                ),
-                              )
-                            : copy.noActivityYet}
-                        </p>
-
-                        <Link
-                          href={`/businesses/${business.slug}/customers/${customer.id}`}
-                          className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-5 text-sm font-semibold text-foreground transition hover:border-primary/30 hover:text-primary sm:w-auto"
+                          <p className="mt-1 truncate text-[11px] font-semibold text-primary">
+                            {getCustomerSegmentLabel(customerSegment, language)}
+                          </p>
+                        </div>
+                        <span
+                          dir={
+                            business.loyaltyMode === "SALES_AMOUNT"
+                              ? "ltr"
+                              : "auto"
+                          }
+                          className="max-w-32 text-end text-sm font-black leading-tight text-foreground"
                         >
-                          {copy.openCustomerProfile}
-                        </Link>
-                      </article>
+                          {formatLoyaltyAmount({
+                            loyaltyMode: business.loyaltyMode,
+                            language,
+                            unitName: business.unitName,
+                            currency: business.currency,
+                            amount: customer.balance,
+                          })}
+                        </span>
+                        <ChevronRight
+                          className="size-5 shrink-0 text-foreground-subtle transition group-hover:text-primary rtl:rotate-180"
+                          aria-hidden="true"
+                        />
+                        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-surface-subtle">
+                          <span
+                            className="block h-full bg-primary"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </span>
+                      </Link>
                     );
                   })}
                 </div>
