@@ -38,6 +38,9 @@ test("U7.2 has localized search and camera recovery copy", () => {
       "cameraPermissionDenied",
       "scannerInitializationFailed",
       "retryCamera",
+      "scanQrImage",
+      "scanningQrImage",
+      "qrImageUnreadable",
     ] as const)
       assert.ok(copy[key]);
   }
@@ -148,29 +151,37 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
   assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
 });
 
-test("U7.2 waits for a playable inline camera preview before reporting ready", () => {
-  assert.match(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS = 10_000/);
-  assert.match(scanner, /reader\.querySelector<HTMLVideoElement>\("video"\)/);
+test("U7.2 prepares the inline iPhone preview without a duplicate readiness timeout", () => {
+  assert.match(
+    scanner,
+    /reader[\s\S]*?\.querySelectorAll<HTMLVideoElement>\("video"\)/,
+  );
   assert.match(scanner, /new MutationObserver\(prepareVideos\)/);
   assert.match(scanner, /video\.playsInline = true/);
   assert.match(scanner, /video\.setAttribute\("playsinline", ""\)/);
-  assert.match(scanner, /void video\.play\(\)\.catch/);
-  assert.match(
-    scanner,
-    /video\.readyState >= HTMLMediaElement\.HAVE_CURRENT_DATA/,
-  );
-  assert.match(scanner, /video\.videoWidth > 0/);
-  assert.match(scanner, /video\.videoHeight > 0/);
-  assert.match(scanner, /previewReadyAbortRef\.current\?\.abort\(\)/);
-  assert.match(scanner, /await waitForPlayableCameraPreview/);
+  assert.match(scanner, /video\.setAttribute\("webkit-playsinline", ""\)/);
+  assert.doesNotMatch(scanner, /waitForPlayableCameraPreview/);
+  assert.doesNotMatch(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS/);
   assert.match(
     scanner,
     /if \(mountedRef\.current\) setStatus\(copy\.cameraReady\);/,
   );
   assert.ok(
-    scanner.indexOf("await waitForPlayableCameraPreview") <
+    scanner.indexOf("await scanner.start") <
       scanner.indexOf("setStatus(copy.cameraReady)"),
   );
+});
+
+test("U7.2 offers an iPhone-native QR image fallback without uploading the image", () => {
+  assert.match(scanner, /type="file"/);
+  assert.match(scanner, /accept="image\/\*"/);
+  assert.match(scanner, /capture="environment"/);
+  assert.match(scanner, /await scanner\.scanFile\(file, false\)/);
+  assert.match(scanner, /await resolveScannedValue\(decodedText\)/);
+  assert.match(scanner, /setStatus\(copy\.qrImageUnreadable\)/);
+  const imageHandler =
+    scanner.match(/async function scanQrImage[\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.doesNotMatch(imageHandler, /FormData|fetch\(/);
 });
 
 test("U7.2 starts the rear camera without a throwaway permission stream and retains a selected device ID", () => {
