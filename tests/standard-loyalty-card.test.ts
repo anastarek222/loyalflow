@@ -373,19 +373,23 @@ test("custom artwork capability stays reserved for super-admin architecture", ()
   const schema = source("prisma/schema.prisma");
   const owner = source("components/owner-onboarding-wizard.tsx");
   const settingsAction = source("app/businesses/[slug]/settings/actions.ts");
-  const canonical = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
   assert.deepEqual(CARD_DESIGN_MODES, ["STANDARD", "CUSTOM"]);
   assert.match(schema, /customCardArtworkEnabled\s+Boolean/);
   assert.doesNotMatch(owner, /customCardArtworkEnabled/);
   assert.match(settingsAction, /session\.user\.role !== "SUPER_ADMIN"/);
-  assert.match(canonical, /data-safe-zone-version/);
-  assert.match(canonical, /custom-qr|custom-member|custom-balance|custom-reward/);
+  assert.match(custom, /data-safe-zone-version/);
+  for (const zone of ["qr-code", "customer-information", "loyalty-balance", "reward"]) {
+    assert.match(custom, new RegExp(`data-safe-zone="${zone}"`));
+  }
+  assert.match(custom, /data-layout-authority="standard-card"/);
 });
 
 test("Custom UX delegates paired lifecycle uploads while preserving published URLs", () => {
   const setup = source("components/standard-card-setup.tsx");
   const manager = source("components/custom-card-artwork-manager.tsx");
-  const canonical = source("components/loyalty-card.tsx");
+  const authority = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
   assert.match(setup, /Front \+ Back pair upload, immutable drafts, preview and publish/);
   assert.match(manager, /Create Front \+ Back draft/);
   assert.match(manager, /Publish this Front \+ Back pair/);
@@ -394,10 +398,10 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   assert.doesNotMatch(setup, /type="url"|Custom front artwork URL|Custom back artwork URL/);
   assert.match(setup, /name="customCardFrontArtworkUrl"\s+type="hidden"/);
   assert.match(setup, /name="customCardBackArtworkUrl"\s+type="hidden"/);
-  assert.match(canonical, /props\.customFrontArtworkUrl/);
-  assert.match(canonical, /props\.customBackArtworkUrl/);
-  assert.match(canonical, /cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl/);
-  assert.match(canonical, /radial-gradient/);
+  assert.match(custom, /props\.customFrontArtworkUrl/);
+  assert.match(custom, /props\.customBackArtworkUrl/);
+  assert.match(authority, /cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl/);
+  assert.match(custom, /radial-gradient/);
   assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
   assert.match(setup, /Managed from the Custom Card artwork panel above/);
   assert.match(setup, /Managed by Super Admin/);
@@ -407,23 +411,26 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   );
   assert.doesNotMatch(setup, /Custom Card — Super Admin managed/);
   assert.equal((manager.match(/<LoyaltyCard/g) ?? []).length, 2);
-  assert.match(canonical, /object-contain/);
+  assert.match(custom, /object-contain/);
 });
 
 test("custom artwork preserves owner branding and limits overlays to dynamic data", () => {
-  const canonical = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
   for (const zone of [
-    "custom-member",
-    "custom-balance",
-    "custom-reward",
-    "custom-score",
+    "customer-information",
+    "loyalty-balance",
+    "reward",
+    "brand-artwork",
   ]) {
-    assert.match(canonical, new RegExp(`data-safe-zone="${zone}"[\\s\\S]*?drop-shadow`));
+    assert.match(custom, new RegExp(`data-safe-zone="${zone}"`));
   }
-  assert.doesNotMatch(canonical, /bg-gradient-to-r from-black\/75/);
-  assert.doesNotMatch(canonical, /data-safe-zone="custom-brand"/);
-  assert.doesNotMatch(canonical, /data-safe-zone="custom-back-brand"/);
-  assert.doesNotMatch(canonical, /LOYALFLOW ·|contactItems/);
+  assert.match(custom, /data-layout-authority="standard-card"/);
+  assert.match(custom, /object-contain/);
+  assert.doesNotMatch(custom, /data-safe-zone="brand-logo"/);
+  assert.doesNotMatch(custom, /data-safe-zone="contact-information"/);
+  assert.doesNotMatch(custom, /data-safe-zone="custom-brand"/);
+  assert.doesNotMatch(custom, /data-safe-zone="custom-back-brand"/);
+  assert.doesNotMatch(custom, /LOYALFLOW ·|contactItems/);
 });
 
 test("public card is rendered from dynamic customer and business data", () => {

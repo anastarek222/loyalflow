@@ -26,7 +26,7 @@ test("Custom Card exposes a bilingual pre-upload safe-zone guide", () => {
 
 test("Safe-zone guide reuses the canonical card geometry", () => {
   const guide = source("components/custom-card-safe-zone-guide.tsx");
-  const card = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
 
   assert.equal((guide.match(/<LoyaltyCard/g) ?? []).length, 2);
   assert.match(guide, /showSafeZones: true/);
@@ -35,22 +35,26 @@ test("Safe-zone guide reuses the canonical card geometry", () => {
   assert.doesNotMatch(guide, /aspect-\[|absolute|right-\[|left-\[/);
 
   for (const zone of [
-    "custom-qr",
-    "custom-member",
-    "custom-balance",
-    "custom-reward",
-    "custom-score",
+    "qr-code",
+    "customer-information",
+    "loyalty-balance",
+    "progress",
+    "reward",
+    "brand-artwork",
   ]) {
-    assert.match(card, new RegExp(`data-safe-zone="${zone}"`));
+    assert.match(custom, new RegExp(`data-safe-zone="${zone}"`));
   }
-  assert.match(card, /props\.showSafeZones/);
-  assert.match(card, /outline-sky-400/);
+  assert.match(custom, /function SafeZoneGuides/);
+  assert.match(custom, /props\.showSafeZones/);
+  assert.match(custom, /stroke: "#38BDF8"/);
+  assert.match(custom, /strokeDasharray/);
 });
 
 test("Safe-zone outlines cannot activate on normal customer cards", () => {
+  const custom = source("components/custom-loyalty-card.tsx");
   const card = source("components/loyalty-card.tsx");
 
-  assert.match(card, /showSafeZones\?: boolean/);
+  assert.match(custom, /showSafeZones\?: boolean/);
   assert.match(card, /cardProps\.showSafeZones === true/);
   assert.doesNotMatch(
     source("app/card/[token]/page.tsx"),

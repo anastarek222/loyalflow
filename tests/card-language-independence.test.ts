@@ -19,19 +19,22 @@ test("canonical loyalty card ignores dashboard locale for card rendering", () =>
 });
 
 test("customer-provided card values keep bidi-safe rendering", () => {
-  const card = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
   const standard = source("components/standard-loyalty-card.tsx");
 
+  assert.match(custom, /customerNameIsArabic/);
+  assert.match(custom, /customerNameDirection/);
+  assert.match(custom, /boundedText\(props\.customerName, 30\)/);
+  assert.match(custom, /direction=\{customerNameDirection\}/);
   assert.match(
-    card,
-    /data-safe-zone="custom-member"[\s\S]*?dir="auto"[\s\S]*?title=\{props\.customerName\}/,
+    custom,
+    /data-safe-zone="reward"[\s\S]*?direction=\{dir\}[\s\S]*?unicodeBidi: "plaintext"/,
   );
-  assert.match(
-    card,
-    /data-safe-zone="custom-reward"[\s\S]*?dir="auto"[\s\S]*?title=\{props\.rewardName\}/,
+  assert.match(custom, /data-emphasis="low"/);
+  assert.doesNotMatch(
+    custom,
+    /data-safe-zone="brand-logo"|data-safe-zone="contact-information"/,
   );
-  assert.doesNotMatch(card, /data-safe-zone="custom-brand"/);
-  assert.doesNotMatch(card, /data-emphasis="low"/);
 
   assert.match(standard, /customerNameIsArabic/);
   assert.match(standard, /customerNameDirection/);

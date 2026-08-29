@@ -35,14 +35,15 @@ test("owner customer details uses the canonical loyalty card renderer", () => {
 
 test("custom card requires the explicit Front + Back pair at runtime", () => {
   const card = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
 
   assert.match(
     card,
     /Boolean\(\s*cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl,?\s*\)/,
   );
   assert.match(
-    card,
-    /const artworkUrl = side === "front" \? props\.customFrontArtworkUrl : props\.customBackArtworkUrl/,
+    custom,
+    /const artworkUrl =\s*side === "front" \? props\.customFrontArtworkUrl : props\.customBackArtworkUrl/,
   );
-  assert.doesNotMatch(card, /customBackArtworkUrl\s*\|\|/);
+  assert.doesNotMatch(custom, /customBackArtworkUrl\s*\|\|/);
 });
