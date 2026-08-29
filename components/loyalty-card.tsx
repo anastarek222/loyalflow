@@ -78,6 +78,28 @@ function CustomQr({ src, label }: { src?: string | null; label: string }) {
   );
 }
 
+function GiftMark({ accent }: { accent: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+      className="size-[9cqw] shrink-0 drop-shadow-[0_2px_3px_rgba(0,0,0,0.75)]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ color: accent }}
+    >
+      <path d="M10 27h44v27H10z" />
+      <path d="M7 18h50v10H7z" />
+      <path d="M32 18v36" />
+      <path d="M32 18c-7 0-14-2-14-8 0-4 3-6 7-6 5 0 7 5 7 14Z" />
+      <path d="M32 18c7 0 14-2 14-8 0-4-3-6-7-6-5 0-7 5-7 14Z" />
+    </svg>
+  );
+}
+
 function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const side = props.side ?? "front";
   const language = props.language ?? CARD_PRESENTATION_LANGUAGE;
@@ -170,13 +192,16 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
             className={`absolute min-w-0 ${guideOutline}`}
             style={zoneStyle(CUSTOM_CARD_BACK_REWARD_ZONE)}
           >
-            <p
-              dir="auto"
-              title={props.rewardName}
-              className="line-clamp-2 max-w-full break-words pt-[2cqw] text-[4.2cqw] font-black leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
-            >
-              {props.rewardName.slice(0, 32)}
-            </p>
+            <div className="flex h-full min-w-0 items-center gap-[2.4cqw]">
+              <GiftMark accent={accent} />
+              <p
+                dir="auto"
+                title={props.rewardName}
+                className="line-clamp-2 min-w-0 flex-1 break-words text-[4.2cqw] font-black leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+              >
+                {props.rewardName.slice(0, 32)}
+              </p>
+            </div>
           </div>
 
           <div
