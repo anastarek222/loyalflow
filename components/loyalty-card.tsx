@@ -44,6 +44,10 @@ function zoneStyle(zone: LoyaltyCardZone): CSSProperties {
   };
 }
 
+function cardColor(value: string | null | undefined, fallback: string) {
+  return value && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback;
+}
+
 function CustomQr({ src, label }: { src?: string | null; label: string }) {
   if (src) {
     return (
@@ -89,6 +93,9 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const guideOutline = props.showSafeZones
     ? "outline outline-[0.45cqw] outline-offset-[-0.45cqw] outline-sky-400"
     : "";
+  const accent = cardColor(props.primaryColor, "#3B82F6");
+  const secondary = cardColor(props.secondaryColor, "#FFFFFF");
+  const progress = Math.max(0, Math.min(100, metrics.progress));
 
   return (
     <article
@@ -174,14 +181,26 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
 
           <div
             data-safe-zone="custom-score"
-            className={`absolute flex min-w-0 items-end ${guideOutline}`}
+            className={`absolute flex min-w-0 flex-col justify-center ${guideOutline}`}
             style={zoneStyle(CUSTOM_CARD_BACK_SCORE_ZONE)}
           >
+            <div
+              data-safe-zone="custom-progress"
+              className="h-[1.6cqw] w-full overflow-hidden rounded-full bg-black/35 ring-1 ring-white/35"
+            >
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${progress}%`,
+                  background: `linear-gradient(90deg, ${accent}, ${secondary})`,
+                }}
+              />
+            </div>
             <p
               dir="auto"
               aria-label={metrics.semanticRatioText}
               title={metrics.semanticRatioText}
-              className="w-full truncate pb-[3cqw] text-[3.4cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+              className="mt-[1.8cqw] w-full truncate text-[3.1cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
             >
               {metrics.ratioText}
             </p>
