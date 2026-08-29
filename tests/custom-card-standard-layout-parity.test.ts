@@ -147,5 +147,5 @@ test("custom back uses the exact Standard reward, score, progress and icon geome
     assertZoneParity(standard, custom, zone);
   }
 
-  assert.match(custom, />Free Reward<\/text>/);
+  assert.match(custom, />Free Reward<\/tspan>/);
 });
