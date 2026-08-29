@@ -1,10 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
+import type { CSSProperties } from "react";
 import {
   CUSTOM_CARD_SAFE_ZONE_VERSION,
   STANDARD_CARD_ASPECT_RATIO,
   cardDesignMode,
   getLoyaltyCardMetrics,
 } from "@/lib/cards/standard-card";
+import {
+  CUSTOM_CARD_BACK_REWARD_ZONE,
+  CUSTOM_CARD_BACK_SCORE_ZONE,
+  CUSTOM_CARD_FRONT_BALANCE_ZONE,
+  CUSTOM_CARD_FRONT_MEMBER_ZONE,
+  CUSTOM_CARD_FRONT_QR_CONTENT_ZONE,
+  CUSTOM_CARD_FRONT_QR_ZONE,
+  LOYALTY_CARD_CANVAS,
+  type LoyaltyCardZone,
+} from "@/lib/cards/card-rendering-contract";
 import {
   StandardLoyaltyCard,
   type StandardLoyaltyCardProps,
@@ -24,12 +35,40 @@ export type LoyaltyCardProps = StandardLoyaltyCardProps & {
 // change card geometry, labels, direction, QR placement, or reward layout.
 export const CARD_PRESENTATION_LANGUAGE = "EN" as const;
 
+function zoneStyle(zone: LoyaltyCardZone): CSSProperties {
+  return {
+    left: `${(zone.x / LOYALTY_CARD_CANVAS.width) * 100}%`,
+    top: `${(zone.y / LOYALTY_CARD_CANVAS.height) * 100}%`,
+    width: `${(zone.width / LOYALTY_CARD_CANVAS.width) * 100}%`,
+    height: `${(zone.height / LOYALTY_CARD_CANVAS.height) * 100}%`,
+  };
+}
+
 function CustomQr({ src, label }: { src?: string | null; label: string }) {
-  if (src) return <img src={src} alt={label} className="size-full bg-white object-contain" />;
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={label}
+        className="size-full bg-white object-contain"
+      />
+    );
+  }
+
   return (
-    <div className="grid size-full grid-cols-5 gap-[5%] bg-white p-[10%]" aria-label={label}>
+    <div
+      className="grid size-full grid-cols-5 gap-[5%] bg-white p-[10%]"
+      aria-label={label}
+    >
       {Array.from({ length: 25 }, (_, index) => (
-        <span key={index} className={index % 2 === 0 || [1, 5, 9, 13, 17, 21].includes(index) ? "bg-slate-950" : "bg-white"} />
+        <span
+          key={index}
+          className={
+            index % 2 === 0 || [1, 5, 9, 13, 17, 21].includes(index)
+              ? "bg-slate-950"
+              : "bg-white"
+          }
+        />
       ))}
     </div>
   );
@@ -39,74 +78,114 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
   const side = props.side ?? "front";
   const language = props.language ?? CARD_PRESENTATION_LANGUAGE;
   const metrics = getLoyaltyCardMetrics({ ...props, language });
-  const artworkUrl = side === "front" ? props.customFrontArtworkUrl : props.customBackArtworkUrl;
-  const labels = language === "AR"
-    ? { qr: "رمز QR الخاص بالعميل" }
-    : { qr: "Customer loyalty QR code" };
+  const artworkUrl =
+    side === "front"
+      ? props.customFrontArtworkUrl
+      : props.customBackArtworkUrl;
+  const labels =
+    language === "AR"
+      ? { qr: "رمز QR الخاص بالعميل" }
+      : { qr: "Customer loyalty QR code" };
   const guideOutline = props.showSafeZones
-    ? "outline outline-[0.45cqw] outline-offset-[0.8cqw] outline-sky-400"
+    ? "outline outline-[0.45cqw] outline-offset-[-0.45cqw] outline-sky-400"
     : "";
 
   return (
     <article
       data-testid={`custom-card-${side}`}
-      data-card-aspect-ratio="1.586"
-      data-safe-zone-version={props.customSafeZoneVersion || CUSTOM_CARD_SAFE_ZONE_VERSION}
-      className="relative w-full overflow-hidden rounded-[5.2%] border border-white/20 bg-slate-950 text-white shadow-[0_24px_55px_-28px_rgba(15,23,42,0.9)]"
-      style={{ aspectRatio: String(STANDARD_CARD_ASPECT_RATIO), containerType: "inline-size" }}
+      data-card-aspect-ratio={STANDARD_CARD_ASPECT_RATIO.toFixed(3)}
+      data-safe-zone-version={
+        props.customSafeZoneVersion || CUSTOM_CARD_SAFE_ZONE_VERSION
+      }
+      className="relative w-full overflow-hidden rounded-[5.2%] bg-slate-950 text-white shadow-[0_24px_55px_-28px_rgba(15,23,42,0.8)]"
+      style={{
+        aspectRatio: String(STANDARD_CARD_ASPECT_RATIO),
+        containerType: "inline-size",
+      }}
     >
       {artworkUrl ? (
-        <img src={artworkUrl} alt="" className="absolute inset-0 size-full bg-slate-950 object-contain" />
+        <img
+          src={artworkUrl}
+          alt=""
+          className="absolute inset-0 size-full bg-slate-950 object-cover"
+        />
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,#334155_0,transparent_36%),linear-gradient(135deg,#18181b,#020617)]" />
       )}
+
       {side === "front" ? (
-        <div className="relative h-full">
+        <div className="absolute inset-0">
           <div
             data-safe-zone="custom-qr"
-            className={`absolute right-[6.8cqw] top-[6.8cqw] ${guideOutline}`}
+            className={`absolute rounded-[10%] bg-white shadow-xl ${guideOutline}`}
+            style={zoneStyle(CUSTOM_CARD_FRONT_QR_ZONE)}
+          />
+          <div
+            className="absolute overflow-hidden bg-white"
+            style={zoneStyle(CUSTOM_CARD_FRONT_QR_CONTENT_ZONE)}
           >
-            <div className="size-[18cqw] overflow-hidden rounded-[2cqw] bg-white p-[0.7cqw] shadow-xl">
-              <CustomQr src={props.qrCode} label={labels.qr} />
-            </div>
+            <CustomQr src={props.qrCode} label={labels.qr} />
           </div>
-          <p
+
+          <div
             data-safe-zone="custom-member"
-            dir="auto"
-            title={props.customerName}
-            className={`absolute bottom-[7cqw] left-[6.8cqw] max-w-[50%] truncate text-[4.2cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[7cqw] w-[50%] ${guideOutline}` : ""}`}
+            className={`absolute flex min-w-0 items-end ${guideOutline}`}
+            style={zoneStyle(CUSTOM_CARD_FRONT_MEMBER_ZONE)}
           >
-            {props.customerName}
-          </p>
-          <p
+            <p
+              dir="auto"
+              title={props.customerName}
+              className="w-full truncate pb-[3cqw] text-[4.2cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            >
+              {props.customerName}
+            </p>
+          </div>
+
+          <div
             data-safe-zone="custom-balance"
-            dir="auto"
-            aria-label={metrics.semanticCurrentText}
-            title={metrics.semanticCurrentText}
-            className={`absolute bottom-[7cqw] right-[6.8cqw] max-w-[32%] truncate text-right text-[3.7cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[7cqw] w-[32%] ${guideOutline}` : ""}`}
+            className={`absolute flex min-w-0 items-end justify-end ${guideOutline}`}
+            style={zoneStyle(CUSTOM_CARD_FRONT_BALANCE_ZONE)}
           >
-            {metrics.currentText}
-          </p>
+            <p
+              dir="auto"
+              aria-label={metrics.semanticCurrentText}
+              title={metrics.semanticCurrentText}
+              className="w-full truncate pb-[3cqw] text-right text-[3.7cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            >
+              {metrics.currentText}
+            </p>
+          </div>
         </div>
       ) : (
-        <div className="relative h-full">
-          <p
+        <div className="absolute inset-0">
+          <div
             data-safe-zone="custom-reward"
-            dir="auto"
-            title={props.rewardName}
-            className={`absolute bottom-[7cqw] left-[6.8cqw] line-clamp-2 max-w-[50%] break-words text-[4.2cqw] font-black leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[11cqw] w-[50%] ${guideOutline}` : ""}`}
+            className={`absolute min-w-0 ${guideOutline}`}
+            style={zoneStyle(CUSTOM_CARD_BACK_REWARD_ZONE)}
           >
-            {props.rewardName.slice(0, 32)}
-          </p>
-          <p
+            <p
+              dir="auto"
+              title={props.rewardName}
+              className="line-clamp-2 max-w-full break-words pt-[2cqw] text-[4.2cqw] font-black leading-tight text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            >
+              {props.rewardName.slice(0, 32)}
+            </p>
+          </div>
+
+          <div
             data-safe-zone="custom-score"
-            dir="auto"
-            aria-label={metrics.semanticRatioText}
-            title={metrics.semanticRatioText}
-            className={`absolute bottom-[7cqw] right-[6.8cqw] max-w-[32%] truncate text-right text-[3.4cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)] ${props.showSafeZones ? `min-h-[7cqw] w-[32%] ${guideOutline}` : ""}`}
+            className={`absolute flex min-w-0 items-end ${guideOutline}`}
+            style={zoneStyle(CUSTOM_CARD_BACK_SCORE_ZONE)}
           >
-            {metrics.ratioText}
-          </p>
+            <p
+              dir="auto"
+              aria-label={metrics.semanticRatioText}
+              title={metrics.semanticRatioText}
+              className="w-full truncate pb-[3cqw] text-[3.4cqw] font-black text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
+            >
+              {metrics.ratioText}
+            </p>
+          </div>
         </div>
       )}
     </article>
@@ -122,9 +201,11 @@ function LoyaltyCardFace({
   useCustom: boolean;
   props: LoyaltyCardProps;
 }) {
-  return useCustom
-    ? <CustomLoyaltyCard {...props} side={side} />
-    : <StandardLoyaltyCard {...props} side={side} />;
+  return useCustom ? (
+    <CustomLoyaltyCard {...props} side={side} />
+  ) : (
+    <StandardLoyaltyCard {...props} side={side} />
+  );
 }
 
 export function LoyaltyCard(props: LoyaltyCardProps) {
@@ -150,7 +231,9 @@ export function LoyaltyCard(props: LoyaltyCardProps) {
     >
       <div
         className="grid transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none"
-        style={{ transform: side === "back" ? "rotateY(180deg)" : "rotateY(0deg)" }}
+        style={{
+          transform: side === "back" ? "rotateY(180deg)" : "rotateY(0deg)",
+        }}
       >
         <div
           className="[grid-area:1/1] [backface-visibility:hidden]"
