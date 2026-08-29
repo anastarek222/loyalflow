@@ -136,6 +136,9 @@ function CustomLoyaltyCard(props: LoyaltyCardProps) {
         <img
           src={artworkUrl}
           alt=""
+          loading="eager"
+          decoding="async"
+          fetchPriority={side === "front" ? "high" : "auto"}
           className="absolute inset-0 size-full bg-slate-950 object-cover"
         />
       ) : (
