@@ -1,3 +1,4 @@
+import { resolveTaneeAuthEmailSender } from "@/lib/auth/auth-email-sender";
 import { getCanonicalPublicAppUrl } from "@/lib/public-app-url";
 
 export class PasswordResetEmailError extends Error {
@@ -20,7 +21,9 @@ export async function sendPasswordResetEmail(input: {
   token: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.PASSWORD_RESET_FROM_EMAIL?.trim();
+  const from = resolveTaneeAuthEmailSender(
+    process.env.PASSWORD_RESET_FROM_EMAIL,
+  );
 
   if (!apiKey || !from) {
     throw new PasswordResetEmailError("NOT_CONFIGURED");
