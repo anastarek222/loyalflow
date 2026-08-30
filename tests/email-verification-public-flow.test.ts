@@ -16,11 +16,14 @@ test("public verification normalizes invalid, expired, and replayed tokens", () 
   assert.match(action, /\/login\?verification=success/);
 });
 
-test("verification email uses existing Resend configuration and a 24-hour link", () => {
+test("verification email uses Resend, the verified Tanee sender, and a 24-hour link", () => {
   const email = source("lib/auth/email-verification-email.ts");
+  const sender = source("lib/auth/auth-email-sender.ts");
 
   assert.match(email, /process\.env\.RESEND_API_KEY/);
-  assert.match(email, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(email, /resolveTaneeAuthEmailSender/);
+  assert.doesNotMatch(email, /PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(sender, /noreply@gettanee\.com/);
   assert.match(email, /\/verify-email\?token=/);
   assert.match(email, /expires in 24 hours/i);
   assert.doesNotMatch(email, /tokenHash/);
@@ -34,7 +37,7 @@ test("verification delivery configuration is server-only and fails closed", () =
   assert.match(email, /if\s*\(!response\.ok\)/);
   assert.match(email, /EmailVerificationEmailError\("DELIVERY_FAILED"\)/);
   assert.match(env, /RESEND_API_KEY=""/);
-  assert.match(env, /PASSWORD_RESET_FROM_EMAIL=""/);
+  assert.doesNotMatch(env, /PASSWORD_RESET_FROM_EMAIL/);
   assert.doesNotMatch(env, /re_[A-Za-z0-9]{10,}/);
 });
 
