@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { verifyEmailAction } from "@/app/verify-email/actions";
+
+export const metadata: Metadata = {
+  title: "Verify your email | Tanee",
+  applicationName: "Tanee",
+  robots: { index: false, follow: false },
+};
 
 type VerifyEmailPageProps = {
   searchParams: Promise<{

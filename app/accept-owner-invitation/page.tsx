@@ -31,6 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: translate(locale, "ownerInvite.metaTitle"),
     description: translate(locale, "ownerInvite.metaDescription"),
+    applicationName: "Tanee",
     robots: { index: false, follow: false },
   };
 }

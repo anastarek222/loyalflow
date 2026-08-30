@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { resetPasswordAction } from "./actions";
+
+export const metadata: Metadata = {
+  title: "Choose a new password | Tanee",
+  applicationName: "Tanee",
+  robots: { index: false, follow: false },
+};
 
 type Props = {
   searchParams: Promise<{
@@ -37,7 +44,7 @@ export default async function ResetPasswordPage({
       <section className="w-full max-w-md rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
         <div className="mb-7 text-center">
           <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary text-lg font-black text-white">
-            L
+            T
           </div>
           <h1 className="text-2xl font-black text-foreground">
             Choose a new password
