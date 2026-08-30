@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
+import { resolveTaneeAuthEmailSender } from "../lib/auth/auth-email-sender";
+
 const readSource = (relativePath: string) =>
   readFileSync(path.resolve(process.cwd(), relativePath), "utf8");
 
@@ -57,6 +59,29 @@ test("auth emails keep the expected public routes", () => {
     readSource("lib/auth/owner-invitation-email.ts"),
     /\/accept-owner-invitation\?token=/,
   );
+});
+
+test("auth email sender always presents Tanee while preserving configured address", () => {
+  assert.equal(
+    resolveTaneeAuthEmailSender("LoyalFlow <onboarding@resend.dev>"),
+    "Tanee <onboarding@resend.dev>",
+  );
+  assert.equal(
+    resolveTaneeAuthEmailSender("onboarding@resend.dev"),
+    "Tanee <onboarding@resend.dev>",
+  );
+  assert.equal(
+    resolveTaneeAuthEmailSender(" Tanee <noreply@gettanee.com> "),
+    "Tanee <noreply@gettanee.com>",
+  );
+  assert.equal(resolveTaneeAuthEmailSender(""), null);
+  assert.equal(resolveTaneeAuthEmailSender("not-an-email"), null);
+});
+
+test("all auth email flows use the shared Tanee sender authority", () => {
+  for (const file of authEmailFiles) {
+    assert.match(readSource(file), /resolveTaneeAuthEmailSender/);
+  }
 });
 
 test("auth flow UI metadata and owner invitation copy use Tanee branding", () => {
