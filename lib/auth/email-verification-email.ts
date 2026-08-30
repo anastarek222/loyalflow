@@ -30,12 +30,12 @@ export async function sendEmailVerificationEmail(input: {
     body: JSON.stringify({
       from,
       to: [input.email],
-      subject: "Verify your LoyalFlow email",
+      subject: "Verify your Tanee email",
       text:
-        `Verify your LoyalFlow email address:\n\n${verifyLink}\n\n` +
+        `Verify your Tanee email address:\n\n${verifyLink}\n\n` +
         `This link expires in 24 hours.`,
       html:
-        `<p>Verify your LoyalFlow email address.</p>` +
+        `<p>Verify your Tanee email address.</p>` +
         `<p><a href="${verifyLink}">Verify email</a></p>` +
         `<p>This link expires in 24 hours.</p>`,
     }),

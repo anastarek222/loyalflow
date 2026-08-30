@@ -30,13 +30,13 @@ export async function sendOwnerInvitationEmail(input: {
     body: JSON.stringify({
       from,
       to: [input.email],
-      subject: "You’re invited to LoyalFlow",
+      subject: "You’re invited to Tanee",
       text:
-        `You have been invited to create your LoyalFlow owner account.\n\n` +
+        `You have been invited to create your Tanee owner account.\n\n` +
         `Accept invitation: ${invitationLink}\n\n` +
         `This link expires in 24 hours.`,
       html:
-        `<p>You have been invited to create your LoyalFlow owner account.</p>` +
+        `<p>You have been invited to create your Tanee owner account.</p>` +
         `<p><a href="${invitationLink}">Accept invitation</a></p>` +
         `<p>This link expires in 24 hours.</p>`,
     }),
