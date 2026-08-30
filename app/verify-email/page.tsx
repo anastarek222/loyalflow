@@ -4,7 +4,7 @@ import Link from "next/link";
 import { verifyEmailAction } from "@/app/verify-email/actions";
 
 export const metadata: Metadata = {
-  title: "Verify your email | Tanee",
+  title: { absolute: "Verify your email | Tanee" },
   applicationName: "Tanee",
   robots: { index: false, follow: false },
 };

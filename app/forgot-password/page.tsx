@@ -4,7 +4,7 @@ import Link from "next/link";
 import { forgotPasswordAction } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Reset your password | Tanee",
+  title: { absolute: "Reset your password | Tanee" },
   applicationName: "Tanee",
   robots: { index: false, follow: false },
 };

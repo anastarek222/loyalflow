@@ -22,6 +22,14 @@ const authUiBrandingFiles = [
   "packages/i18n/src/locales/ar/owner-invite.ts",
 ];
 
+const authMetadataFiles = [
+  "app/forgot-password/page.tsx",
+  "app/reset-password/page.tsx",
+  "app/verify-email/page.tsx",
+  "app/verify-email/resend/page.tsx",
+  "app/accept-owner-invitation/page.tsx",
+];
+
 test("auth emails use Tanee branding without legacy LoyalFlow copy", () => {
   for (const file of authEmailFiles) {
     const source = readSource(file);
@@ -56,6 +64,12 @@ test("auth flow UI metadata and owner invitation copy use Tanee branding", () =>
     const source = readSource(file);
     assert.match(source, /Tanee/);
     assert.doesNotMatch(source, /LoyalFlow/);
+  }
+});
+
+test("auth flow metadata uses absolute titles so legacy global title templates cannot leak", () => {
+  for (const file of authMetadataFiles) {
+    assert.match(readSource(file), /title:\s*{\s*absolute:/);
   }
 });
 

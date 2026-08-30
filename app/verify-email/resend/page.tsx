@@ -4,7 +4,7 @@ import Link from "next/link";
 import { resendEmailVerificationAction } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Resend verification email | Tanee",
+  title: { absolute: "Resend verification email | Tanee" },
   applicationName: "Tanee",
   robots: { index: false, follow: false },
 };
