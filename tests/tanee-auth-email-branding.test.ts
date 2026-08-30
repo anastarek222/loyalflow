@@ -12,6 +12,16 @@ const authEmailFiles = [
   "lib/auth/owner-invitation-email.ts",
 ];
 
+const authUiBrandingFiles = [
+  "app/forgot-password/page.tsx",
+  "app/reset-password/page.tsx",
+  "app/verify-email/page.tsx",
+  "app/verify-email/resend/page.tsx",
+  "app/accept-owner-invitation/page.tsx",
+  "packages/i18n/src/locales/en/owner-invite.ts",
+  "packages/i18n/src/locales/ar/owner-invite.ts",
+];
+
 test("auth emails use Tanee branding without legacy LoyalFlow copy", () => {
   for (const file of authEmailFiles) {
     const source = readSource(file);
@@ -41,8 +51,21 @@ test("auth emails keep the expected public routes", () => {
   );
 });
 
-test("reset password page uses the Tanee mark", () => {
-  const source = readSource("app/reset-password/page.tsx");
-  assert.match(source, />\s*T\s*<\/div>/);
-  assert.doesNotMatch(source, />\s*L\s*<\/div>/);
+test("auth flow UI metadata and owner invitation copy use Tanee branding", () => {
+  for (const file of authUiBrandingFiles) {
+    const source = readSource(file);
+    assert.match(source, /Tanee/);
+    assert.doesNotMatch(source, /LoyalFlow/);
+  }
+});
+
+test("password reset pages use the Tanee mark", () => {
+  for (const file of [
+    "app/forgot-password/page.tsx",
+    "app/reset-password/page.tsx",
+  ]) {
+    const source = readSource(file);
+    assert.match(source, />\s*T\s*<\/div>/);
+    assert.doesNotMatch(source, />\s*L\s*<\/div>/);
+  }
 });
