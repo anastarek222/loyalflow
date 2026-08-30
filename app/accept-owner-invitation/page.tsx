@@ -29,8 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getInvitationLocale();
 
   return {
-    title: translate(locale, "ownerInvite.metaTitle"),
+    title: { absolute: translate(locale, "ownerInvite.metaTitle") },
     description: translate(locale, "ownerInvite.metaDescription"),
+    applicationName: "Tanee",
     robots: { index: false, follow: false },
   };
 }
