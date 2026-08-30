@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import { resolveTaneeAuthEmailSender } from "../lib/auth/auth-email-sender";
+import {
+  resolveTaneeAuthEmailSender,
+  TANEE_AUTH_EMAIL_ADDRESS,
+  TANEE_AUTH_EMAIL_SENDER,
+} from "../lib/auth/auth-email-sender";
 
 const readSource = (relativePath: string) =>
   readFileSync(path.resolve(process.cwd(), relativePath), "utf8");
@@ -61,21 +65,18 @@ test("auth emails keep the expected public routes", () => {
   );
 });
 
-test("auth email sender always presents Tanee while preserving configured address", () => {
-  assert.equal(
-    resolveTaneeAuthEmailSender("LoyalFlow <onboarding@resend.dev>"),
-    "Tanee <onboarding@resend.dev>",
-  );
-  assert.equal(
-    resolveTaneeAuthEmailSender("onboarding@resend.dev"),
-    "Tanee <onboarding@resend.dev>",
-  );
-  assert.equal(
-    resolveTaneeAuthEmailSender(" Tanee <noreply@gettanee.com> "),
-    "Tanee <noreply@gettanee.com>",
-  );
-  assert.equal(resolveTaneeAuthEmailSender(""), null);
-  assert.equal(resolveTaneeAuthEmailSender("not-an-email"), null);
+test("auth email sender is locked to the verified Tanee domain", () => {
+  assert.equal(TANEE_AUTH_EMAIL_ADDRESS, "noreply@gettanee.com");
+  assert.equal(TANEE_AUTH_EMAIL_SENDER, "Tanee <noreply@gettanee.com>");
+  assert.equal(resolveTaneeAuthEmailSender(), TANEE_AUTH_EMAIL_SENDER);
+});
+
+test("auth email flows no longer depend on the legacy sender environment variable", () => {
+  for (const file of authEmailFiles) {
+    const source = readSource(file);
+    assert.match(source, /resolveTaneeAuthEmailSender\(\)/);
+    assert.doesNotMatch(source, /PASSWORD_RESET_FROM_EMAIL/);
+  }
 });
 
 test("all auth email flows use the shared Tanee sender authority", () => {

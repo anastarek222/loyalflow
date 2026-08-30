@@ -13,11 +13,9 @@ export async function sendEmailVerificationEmail(input: {
   token: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = resolveTaneeAuthEmailSender(
-    process.env.PASSWORD_RESET_FROM_EMAIL,
-  );
+  const from = resolveTaneeAuthEmailSender();
 
-  if (!apiKey || !from) {
+  if (!apiKey) {
     throw new EmailVerificationEmailError("NOT_CONFIGURED");
   }
 
