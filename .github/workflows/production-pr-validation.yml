@@ -114,7 +114,25 @@ jobs:
           NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
           AUTH_URL: http://127.0.0.1:3100
           AUTH_TRUST_HOST: "true"
-        run: pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          UPSTASH_REDIS_REST_URL: http://127.0.0.1:3199
+          UPSTASH_REDIS_REST_TOKEN: browser-smoke-rate-limit-token
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci-rate-limit-server.mjs &
+          rate_limit_pid=$!
+          trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3199/health >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "20" ]]; then
+              echo "Disposable rate-limit server did not become ready." >&2
+              exit 1
+            fi
+            sleep 0.25
+          done
+          pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
 
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"
