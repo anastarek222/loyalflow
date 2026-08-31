@@ -1,10 +1,10 @@
+import { TANEE_AUTH_EMAIL_BRAND } from "@/lib/auth/auth-email-sender";
 import {
   AuthEmailDeliveryError,
   createAuthEmailIdempotencyKey,
   sendResendAuthEmail,
 } from "@/lib/auth/resend-email-delivery";
 import { getCanonicalPublicAppUrl } from "@/lib/public-app-url";
-import { platformBrand } from "@/lib/platform-brand";
 
 export class PasswordResetEmailError extends Error {
   constructor(
@@ -31,13 +31,13 @@ export async function sendPasswordResetEmail(input: {
   try {
     await sendResendAuthEmail({
       to: input.email,
-      subject: `Reset your ${platformBrand.name} password`,
+      subject: `Reset your ${TANEE_AUTH_EMAIL_BRAND} password`,
       text:
-        `A password reset was requested for your ${platformBrand.name} account.\n\n` +
+        `A password reset was requested for your ${TANEE_AUTH_EMAIL_BRAND} account.\n\n` +
         `Reset your password: ${resetLink}\n\n` +
         `This link expires in 30 minutes. If you did not request this, you can ignore this email.`,
       html:
-        `<p>A password reset was requested for your ${platformBrand.name} account.</p>` +
+        `<p>A password reset was requested for your ${TANEE_AUTH_EMAIL_BRAND} account.</p>` +
         `<p><a href="${resetLink}">Reset your password</a></p>` +
         `<p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>`,
       idempotencyKey: createAuthEmailIdempotencyKey({

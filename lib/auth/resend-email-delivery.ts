@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 
 import { z } from "zod";
 
+import { resolveTaneeAuthEmailSender } from "@/lib/auth/auth-email-sender";
+
 export const AUTH_EMAIL_MAX_ATTEMPTS = 3;
 const AUTH_EMAIL_BASE_RETRY_MS = 250;
 const AUTH_EMAIL_MAX_RETRY_MS = 2_000;
@@ -99,7 +101,7 @@ export async function sendResendAuthEmail(
     throw new AuthEmailDeliveryError("NOT_CONFIGURED");
   }
 
-  const from = parseAuthEmailSender(process.env.PASSWORD_RESET_FROM_EMAIL);
+  const from = parseAuthEmailSender(resolveTaneeAuthEmailSender());
   const fetchImpl = dependencies.fetchImpl ?? fetch;
   const sleep = dependencies.sleep ?? defaultSleep;
 
