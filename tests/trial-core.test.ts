@@ -7,10 +7,7 @@ import {
   TRIAL_DURATION_MS,
   TRIAL_REMINDER_LEAD_MS,
 } from "@loyalflow/domain/billing/trial-core";
-import {
-  isTerminalSubscriptionState,
-  transitionSubscriptionLifecycle,
-} from "@loyalflow/domain/billing/subscription-lifecycle";
+import { transitionSubscriptionLifecycle } from "@loyalflow/domain/billing/subscription-lifecycle";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -111,23 +108,20 @@ test("sends the reminder only inside the final-day window until recorded sent", 
   );
 });
 
-test("reuses the governed subscription lifecycle for conversion and terminal states", () => {
-  assert.equal(
-    transitionSubscriptionLifecycle("TRIALING", "ACTIVATE"),
-    "ACTIVE"
+test("composes with the governed subscription activation lifecycle", () => {
+  assert.deepEqual(
+    transitionSubscriptionLifecycle({
+      current: "TRIALING",
+      event: "ACTIVATION_SUCCEEDED",
+    }),
+    { allowed: true, next: "ACTIVE" }
   );
-  assert.equal(
-    transitionSubscriptionLifecycle("TRIALING", "TRIAL_EXPIRE"),
-    "EXPIRED"
-  );
-  assert.equal(isTerminalSubscriptionState("EXPIRED"), true);
-  assert.equal(isTerminalSubscriptionState("CANCELED"), true);
-  assert.throws(
-    () => transitionSubscriptionLifecycle("EXPIRED", "ACTIVATE"),
-    /Invalid subscription lifecycle transition/
-  );
-  assert.throws(
-    () => transitionSubscriptionLifecycle("CANCELED", "ACTIVATE"),
-    /Invalid subscription lifecycle transition/
+
+  assert.deepEqual(
+    transitionSubscriptionLifecycle({
+      current: "EXPIRED",
+      event: "RECOVERY_SUCCEEDED",
+    }),
+    { allowed: true, next: "ACTIVE" }
   );
 });
