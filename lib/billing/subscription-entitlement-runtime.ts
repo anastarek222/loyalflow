@@ -3,6 +3,7 @@ import {
   type SubscriptionOperationIntent,
 } from "@loyalflow/domain/billing/subscription-lifecycle";
 import type { Prisma } from "@/generated/prisma/client";
+import { resolveEffectiveSubscriptionLifecycleState } from "@/lib/billing/subscription-trial-runtime";
 
 type SubscriptionStateReader = Pick<Prisma.TransactionClient, "business">;
 
@@ -13,13 +14,20 @@ export async function canBusinessPerformSubscriptionOperation(
 ): Promise<boolean> {
   const business = await reader.business.findUnique({
     where: { id: businessId },
-    select: { subscriptionLifecycleState: true },
+    select: {
+      subscriptionLifecycleState: true,
+      trialEndsAt: true,
+    },
   });
 
-  return business
-    ? canPerformSubscriptionOperation(
-        business.subscriptionLifecycleState,
-        intent,
-      )
-    : false;
+  if (!business) {
+    return false;
+  }
+
+  const effectiveState = resolveEffectiveSubscriptionLifecycleState({
+    subscriptionLifecycleState: business.subscriptionLifecycleState,
+    trialEndsAt: business.trialEndsAt,
+  });
+
+  return canPerformSubscriptionOperation(effectiveState, intent);
 }

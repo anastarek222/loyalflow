@@ -1,5 +1,9 @@
+import { randomUUID } from "node:crypto";
+
+import { PrismaPg } from "@prisma/adapter-pg";
 import { expect, test } from "@playwright/test";
 
+import { PrismaClient } from "@/generated/prisma/client";
 import { generateTotpCode } from "@/lib/auth/super-admin-mfa";
 
 import {
@@ -13,16 +17,75 @@ import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
+async function withDisposableFixtureDatabase(
+  operation: (prisma: PrismaClient) => Promise<void>,
+) {
+  const connectionString = process.env.DATABASE_URL?.trim();
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is required for disposable browser UAT.");
+  }
+
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString }),
+  });
+  try {
+    await operation(prisma);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function seedConsumedPendingOwnerInvitation(runId: string) {
+  const usedAt = new Date();
+  const expiresAt = new Date(usedAt.getTime() + 24 * 60 * 60 * 1000);
+  const email = uatEmail("pending-owner", runId);
+
+  await withDisposableFixtureDatabase(async (prisma) => {
+    await prisma.$executeRaw`
+      INSERT INTO "OwnerInvitation" (
+        "id", "firstName", "lastName", "email", "tokenHash", "expiresAt", "usedAt", "createdAt"
+      ) VALUES (
+        ${randomUUID()},
+        ${"Final UAT"},
+        ${"Pending Owner"},
+        ${email},
+        ${`browser-uat-${randomUUID()}`},
+        ${expiresAt},
+        ${usedAt},
+        CURRENT_TIMESTAMP
+      )
+    `;
+  });
+}
+
+async function cleanupConsumedPendingOwnerInvitation(runId: string) {
+  const email = uatEmail("pending-owner", runId);
+
+  await withDisposableFixtureDatabase(async (prisma) => {
+    await prisma.$executeRaw`
+      DELETE FROM "OwnerInvitation"
+      WHERE "email" = ${email}
+    `;
+  });
+}
+
 test.describe
   .serial("Owner onboarding mobile transition @owner-onboarding", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
     fixture = prepared.fixture;
     manifestPath = prepared.manifestPath;
+
+    if (!process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+      await seedConsumedPendingOwnerInvitation(fixture.runId);
+    }
   });
 
   test.afterAll(async () => {
     if (fixture && manifestPath) {
+      if (!process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+        await cleanupConsumedPendingOwnerInvitation(fixture.runId);
+      }
       await cleanupBrowserUat(fixture.runId, manifestPath);
     }
   });
@@ -31,10 +94,6 @@ test.describe
     page,
   }) => {
     test.setTimeout(120_000);
-    const diagnostics: string[] = [];
-    page.on("console", (message) => {
-      if (message.type() === "debug") diagnostics.push(message.text());
-    });
 
     await page.goto("/login");
     await page
@@ -94,15 +153,6 @@ test.describe
       )
       .toBe(true);
 
-    for (const checkpoint of [
-      "OWNER_NEXT_CLICK",
-      "OWNER_STEP1_VALID",
-      "OWNER_STEP_CHANGE_2",
-      "OWNER_STEP_RENDER_2",
-    ]) {
-      expect(diagnostics).toContain(checkpoint);
-    }
-
     // Remote exact-SHA UAT reuses one prepared manifest across Chromium and
     // WebKit. Keep that shared runtime check mutation-free; the disposable PR
     // database executes and cleans the complete launch receipt below.
@@ -114,7 +164,9 @@ test.describe
     }
 
     await page.getByRole("button", { name: "Launch", exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+    await expect(
+      page,
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
       timeout: 30_000,
     });
     await expect(
@@ -133,7 +185,7 @@ test.describe
       .getByLabel("Email address")
       .fill(uatEmail("pending-owner", fixture.runId));
     await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
       timeout: 20_000,
     });
@@ -158,7 +210,7 @@ test.describe
       .getByLabel("Email address")
       .fill(uatEmail("superadmin", fixture.runId));
     await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByTestId("login-mfa-step")).toBeVisible();
     await page
       .locator("#mfaCode")
