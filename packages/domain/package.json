@@ -9,6 +9,7 @@
   },
   "exports": {
     "./billing/subscription-lifecycle": "./src/billing/subscription-lifecycle.ts",
+    "./billing/trial-core": "./src/billing/trial-core.ts",
     "./integrations/health": "./src/integrations/health.ts",
     "./loyalty/progress": "./src/loyalty/progress.ts",
     "./loyalty/reconciliation": "./src/loyalty/reconciliation.ts"
