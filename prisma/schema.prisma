@@ -52,6 +52,8 @@ model Business {
   subscriptionLifecycleVersion   Int                        @default(0)
   subscriptionLifecycleChangedAt DateTime                   @default(now())
   subscriptionCancelAtPeriodEnd  Boolean                    @default(false)
+  trialStartedAt                  DateTime?
+  trialEndsAt                     DateTime?
 
   plan                   SubscriptionPlan @default(FREE)
   planChangedAt          DateTime         @default(now())

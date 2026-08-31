@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { z } from "zod";
+import { createTrialWindow } from "@loyalflow/domain/billing/trial-core";
 import {
   createWithGeneratedSlug,
   optionalBusinessPhoneValue,
@@ -88,7 +89,13 @@ async function pendingOwner() {
   if (!session?.user?.id) redirect("/login");
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, onboardingStatus: true, businessId: true },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      onboardingStatus: true,
+      businessId: true,
+    },
   });
   if (!user || !canUsePendingOwnerOnboarding(user))
     redirect("/dashboard");
@@ -150,6 +157,20 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
   const data = parsed.data;
   const { business, integrationJobId } = await createWithGeneratedSlug(data.name, (slug) =>
     prisma.$transaction(async (tx) => {
+      const invitations = await tx.$queryRaw<Array<{ usedAt: Date }>>`
+        SELECT "usedAt"
+        FROM "OwnerInvitation"
+        WHERE "email" = ${user.email}
+          AND "usedAt" IS NOT NULL
+        LIMIT 1
+      `;
+      const invitation = invitations[0];
+
+      if (!invitation) {
+        throw new Error("Owner invitation acceptance is required before onboarding");
+      }
+
+      const trialWindow = createTrialWindow(invitation.usedAt);
       const created = await tx.business.create({
         data: {
           name: data.name,
@@ -172,6 +193,8 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
           logoUrl: data.logoUrl || null,
           standardCardArtworkEnabled: data.standardCardArtworkEnabled,
           standardCardArtworkCategory: data.standardCardArtworkCategory,
+          trialStartedAt: trialWindow.startedAt,
+          trialEndsAt: trialWindow.expiresAt,
         },
       });
       const ownerClaimed = await claimPendingOwnerCompletion(

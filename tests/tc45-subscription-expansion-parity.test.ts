@@ -16,8 +16,10 @@ const runtime = source("lib/billing/subscription-entitlement-runtime.ts");
 
 test("TC4.5 runtime reads persisted lifecycle state and fails closed", () => {
   assert.match(runtime, /subscriptionLifecycleState: true/);
-  assert.match(runtime, /canPerformSubscriptionOperation/);
-  assert.match(runtime, /: false;/);
+  assert.match(runtime, /trialEndsAt: true/);
+  assert.match(runtime, /resolveEffectiveSubscriptionLifecycleState/);
+  assert.match(runtime, /if \(!business\) \{[\s\S]*return false;/);
+  assert.match(runtime, /canPerformSubscriptionOperation\(effectiveState, intent\)/);
   assert.doesNotMatch(runtime, /stripe|checkout|webhook|fetch\(|process\.env/i);
 });
 
