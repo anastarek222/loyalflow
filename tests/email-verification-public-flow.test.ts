@@ -30,16 +30,19 @@ test("verification email uses shared Resend delivery and a 24-hour link", () => 
 test("verification delivery configuration is server-only and fails closed", () => {
   const email = source("lib/auth/email-verification-email.ts");
   const transport = source("lib/auth/resend-email-delivery.ts");
+  const sender = source("lib/auth/auth-email-sender.ts");
   const env = source(".env.example");
 
   assert.match(transport, /process\.env\.RESEND_API_KEY/);
-  assert.match(transport, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(transport, /resolveTaneeAuthEmailSender\(\)/);
+  assert.doesNotMatch(transport, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(sender, /noreply@gettanee\.com/);
   assert.match(transport, /AuthEmailDeliveryError\("NOT_CONFIGURED"\)/);
   assert.match(transport, /AuthEmailDeliveryError\("DELIVERY_FAILED"\)/);
   assert.match(email, /AuthEmailDeliveryError/);
   assert.match(email, /EmailVerificationEmailError\(error\.reason\)/);
   assert.match(env, /RESEND_API_KEY=""/);
-  assert.match(env, /PASSWORD_RESET_FROM_EMAIL=""/);
+  assert.doesNotMatch(env, /PASSWORD_RESET_FROM_EMAIL/);
   assert.doesNotMatch(env, /re_[A-Za-z0-9]{10,}/);
 });
 

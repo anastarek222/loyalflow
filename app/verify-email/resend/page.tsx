@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { resendEmailVerificationAction } from "./actions";
+
+export const metadata: Metadata = {
+  title: { absolute: "Resend verification email | Tanee" },
+  applicationName: "Tanee",
+  robots: { index: false, follow: false },
+};
 
 export default async function ResendEmailVerificationPage({
   searchParams,

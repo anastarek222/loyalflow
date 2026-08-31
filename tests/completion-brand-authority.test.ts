@@ -23,15 +23,19 @@ test("desktop and mobile application shells consume the central platform brand",
   }
 });
 
-test("transactional auth emails consume the same central brand name", () => {
+test("transactional auth emails consume the Tanee auth email brand authority", () => {
   for (const path of [
     "lib/auth/owner-invitation-email.ts",
     "lib/auth/password-reset-email.ts",
     "lib/auth/email-verification-email.ts",
   ]) {
     const email = source(path);
-    assert.match(email, /import \{ platformBrand \} from "@\/lib\/platform-brand"/);
-    assert.match(email, /platformBrand\.name/);
+    assert.match(
+      email,
+      /import \{ TANEE_AUTH_EMAIL_BRAND \} from "@\/lib\/auth\/auth-email-sender"/,
+    );
+    assert.match(email, /TANEE_AUTH_EMAIL_BRAND/);
+    assert.doesNotMatch(email, /platformBrand\.name/);
     assert.doesNotMatch(email, /["'`]LoyalFlow/);
     assert.match(email, /sendResendAuthEmail/);
     assert.match(email, /createAuthEmailIdempotencyKey/);
