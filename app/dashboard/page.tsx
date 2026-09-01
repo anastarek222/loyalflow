@@ -88,7 +88,7 @@ function adminCopy(language: "AR" | "EN") {
         eyebrow: "إدارة المنصة",
         title: "لوحة مدير النظام",
         description:
-          "صورة واضحة عن الأنشطة وملاكها والعملاء واستخدام LoyalFlow.",
+          "صورة واضحة عن الأنشطة وملاكها والعملاء واستخدام تاني.",
         businesses: "إجمالي الأنشطة",
         activeBusinesses: "أنشطة نشطة",
         owners: "ملاك الأنشطة",
@@ -118,7 +118,7 @@ function adminCopy(language: "AR" | "EN") {
         eyebrow: "Platform administration",
         title: "Super admin dashboard",
         description:
-          "A clear view of businesses, owners, customers, and LoyalFlow usage.",
+          "A clear view of businesses, owners, customers, and Tanee usage.",
         businesses: "Total businesses",
         activeBusinesses: "Active businesses",
         owners: "Business owners",

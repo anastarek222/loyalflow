@@ -1,18 +1,18 @@
 export const platformBrand = {
-  name: "LoyalFlow",
-  shortName: "LoyalFlow",
-  iconMark: "LF",
-  // Final Owner-supplied identity assets plug in here. Null deliberately keeps
-  // the existing product fallbacks visible instead of inventing placeholders.
+  name: "Tanee",
+  nameAr: "تاني",
+  shortName: "Tanee",
+  iconMark: "ee",
   assets: {
     mark: null as string | null,
-    wordmark: null as string | null,
+    wordmark: "/brand/tanee-wordmark-en.svg",
+    wordmarkAr: "/brand/tanee-wordmark-ar.svg",
     socialPreview: null as string | null,
   },
-  iconGradientStart: "#020617",
-  iconGradientEnd: "#2563eb",
-  metadataDescription: "Secure loyalty card and rewards management system.",
+  iconGradientStart: "#FF6652",
+  iconGradientEnd: "#A84724",
+  metadataDescription: "Tanee helps businesses run digital loyalty cards, customer rewards, and repeat-visit operations.",
   manifestDescriptionAr: "نظام رقمي لإدارة العملاء وبرامج الولاء والمكافآت.",
-  themeColor: "#0f172a",
-  backgroundColor: "#f1f5f9",
+  themeColor: "#A84724",
+  backgroundColor: "#FFF9F5",
 } as const;

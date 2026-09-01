@@ -25,7 +25,7 @@ test("T006 get-started page reuses canonical locale and direction behavior", () 
   assert.match(page, /resolveRequestLocale/);
   assert.match(page, /getLocaleDirection/);
   assert.match(page, /LanguageSwitcher locale=\{locale\}/);
-  assert.match(page, /<main lang=\{locale\} dir=\{direction\}/);
+  assert.match(page, /<main\s+lang=\{locale\}\s+dir=\{direction\}/);
 });
 
 test("T006 path selector exposes only supported existing-account and owner-invitation destinations", () => {

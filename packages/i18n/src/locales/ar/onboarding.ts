@@ -1,8 +1,8 @@
 export const onboardingMessagesAr = {
-  "onboarding.metaTitle": "إعداد المالك | LoyalFlow",
-  "onboarding.metaDescription": "أكمل إعداد المالك الخاص بك في LoyalFlow.",
+  "onboarding.metaTitle": "إعداد المالك | تاني",
+  "onboarding.metaDescription": "أكمل إعداد المالك الخاص بك في تاني.",
   "onboarding.eyebrow": "إعداد المالك",
-  "onboarding.title": "جهّز مساحة عمل LoyalFlow الخاصة بك",
+  "onboarding.title": "جهّز مساحة عمل تاني الخاصة بك",
   "onboarding.description":
     "أكمل بيانات النشاط وبرنامج الولاء والمكافآت والهوية والبطاقة قبل الإطلاق.",
   "onboarding.privateNote":

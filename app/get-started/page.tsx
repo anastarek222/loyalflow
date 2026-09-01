@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
@@ -36,14 +37,26 @@ export default async function GetStartedPage() {
   const direction = getLocaleDirection(locale);
 
   return (
-    <main lang={locale} dir={direction} className="min-h-screen bg-surface-subtle px-4 py-8 text-foreground sm:px-6">
+    <main
+      lang={locale}
+      dir={direction}
+      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] px-4 py-8 text-foreground [overflow-wrap:anywhere] sm:px-6"
+    >
       <div
         data-acquisition-mode={PUBLIC_ACQUISITION_MODE}
         className="mx-auto w-full max-w-5xl"
       >
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
-          <Link href="/" className="text-xl font-black tracking-tight">
-            {translate(locale, "common.brand")}
+          <Link href="/" className="inline-flex min-h-11 items-center">
+            <PlatformBrandIdentity
+              locale={locale}
+              fallback="sparkles"
+              fallbackText={translate(locale, "common.brand")}
+              markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
+              markImageClassName="p-1"
+              wordmarkClassName="h-7 w-auto max-w-40"
+              textClassName="text-xl"
+            />
           </Link>
           <LanguageSwitcher locale={locale} />
         </header>
@@ -60,22 +73,32 @@ export default async function GetStartedPage() {
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
-            <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 shadow-sm sm:p-8">
-              <h2 className="text-xl font-black">{translate(locale, "conversion.existingTitle")}</h2>
+            <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
+              <h2 className="text-xl font-black">
+                {translate(locale, "conversion.existingTitle")}
+              </h2>
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
                 {translate(locale, "conversion.existingBody")}
               </p>
-              <Link href="/login" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-semibold text-white hover:bg-primary-hover">
+              <Link
+                href="/login"
+                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-semibold text-white hover:bg-primary-hover"
+              >
                 {translate(locale, "conversion.existingCta")}
               </Link>
             </article>
 
-            <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 shadow-sm sm:p-8">
-              <h2 className="text-xl font-black">{translate(locale, "conversion.invitedTitle")}</h2>
+            <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
+              <h2 className="text-xl font-black">
+                {translate(locale, "conversion.invitedTitle")}
+              </h2>
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
                 {translate(locale, "conversion.invitedBody")}
               </p>
-              <Link href="/accept-owner-invitation" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-5 py-3 font-semibold text-foreground hover:bg-surface">
+              <Link
+                href="/accept-owner-invitation"
+                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-5 py-3 font-semibold text-foreground hover:bg-surface"
+              >
                 {translate(locale, "conversion.invitedCta")}
               </Link>
             </article>
@@ -85,7 +108,10 @@ export default async function GetStartedPage() {
             {translate(locale, "conversion.noSignup")}
           </div>
 
-          <Link href="/" className="mt-8 inline-flex text-sm font-semibold text-primary hover:underline">
+          <Link
+            href="/"
+            className="mt-8 inline-flex text-sm font-semibold text-primary hover:underline"
+          >
             {translate(locale, "conversion.backHome")}
           </Link>
         </section>

@@ -114,6 +114,20 @@ async function assertAuthenticatedViewportSafety(page: Page) {
   await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
 }
 
+async function resetDisposableRateLimits() {
+  if (process.env.STAGING_UAT_BASE_URL) return;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return;
+
+  const response = await fetch(`${url}/reset`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}` },
+  });
+  expect(response.ok).toBe(true);
+}
+
 test.describe.serial("U13 final Chromium browser UAT", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
@@ -126,6 +140,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
   });
 
   test.beforeEach(async ({ page }) => {
+    await resetDisposableRateLimits();
     const errors: string[] = [];
     page.on("pageerror", (error) => {
       const isExpectedReactDevelopmentSuspenseFallback =

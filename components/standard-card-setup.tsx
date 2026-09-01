@@ -315,8 +315,8 @@ export function StandardCardSetup({
                 <span className="block font-black">{t("قياسي", "Standard")}</span>
                 <span className="mt-1 block text-xs text-foreground-muted">
                   {t(
-                    "يصمم LoyalFlow هذه البطاقة ويديرها تلقائيًا.",
-                    "LoyalFlow automatically designs and manages this card.",
+                    "يصمم تاني هذه البطاقة ويديرها تلقائيًا.",
+                    "Tanee automatically designs and manages this card.",
                   )}
                 </span>
               </label>
@@ -342,8 +342,8 @@ export function StandardCardSetup({
                   </span>
                   <span className="mt-1 block text-xs text-foreground-muted">
                     {t(
-                      "لمدير النظام فقط. ارفع الوجه والظهر معًا كزوج واحد؛ LoyalFlow لا ينشئ أي جهة من البطاقة المخصصة.",
-                      "Super Admin only. Upload Front and Back together as one pair; LoyalFlow generates neither Custom Card side.",
+                      "لمدير النظام فقط. ارفع الوجه والظهر معًا كزوج واحد؛ تاني لا ينشئ أي جهة من البطاقة المخصصة.",
+                      "Super Admin only. Upload Front and Back together as one pair; Tanee generates neither Custom Card side.",
                     )}
                   </span>
                 </label>

@@ -16,8 +16,8 @@ import {
 } from "./actions";
 
 export const metadata: Metadata = {
-  title: "Owner onboarding | LoyalFlow",
-  description: "Complete the private LoyalFlow owner setup flow.",
+  title: "Owner onboarding | Tanee",
+  description: "Complete the private Tanee owner setup flow.",
   robots: { index: false, follow: false },
 };
 

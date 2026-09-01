@@ -114,7 +114,7 @@ export function buildGoogleWalletPassReady(
   );
   const memberName = safeText(
     [source.customer.firstName, source.customer.lastName].filter(Boolean).join(" "),
-    "LoyalFlow member",
+    "Tanee member",
     100
   );
   const firstOffer = source.publicOffers?.[0];
@@ -126,7 +126,7 @@ export function buildGoogleWalletPassReady(
     tenantBusinessId: source.business.id,
     membershipId: source.customer.id,
     display: {
-      businessName: safeText(source.business.name, "LoyalFlow", 100),
+      businessName: safeText(source.business.name, "Tanee", 100),
       logoUrl: safeLogoUrl(source.business.logoUrl),
       primaryColor: safeColor(source.business.primaryColor, "#2563eb"),
       secondaryColor: safeColor(source.business.secondaryColor, "#ffffff"),

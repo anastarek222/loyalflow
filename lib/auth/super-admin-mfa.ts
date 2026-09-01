@@ -64,7 +64,7 @@ export function createTotpUri(input: {
   email: string;
   issuer?: string;
 }) {
-  const issuer = input.issuer ?? "LoyalFlow";
+  const issuer = input.issuer ?? "Tanee";
   const label = `${issuer}:${input.email.trim().toLowerCase()}`;
   const params = new URLSearchParams({
     secret: input.secret,

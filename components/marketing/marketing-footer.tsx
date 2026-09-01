@@ -35,6 +35,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             className="inline-flex items-center gap-2 text-lg font-black text-foreground"
           >
             <PlatformBrandIdentity
+              locale={locale}
               fallback="sparkles"
               fallbackText={copy("common.brand")}
               markClassName="flex size-6 items-center justify-center text-[19px] text-primary"

@@ -28,6 +28,12 @@ const server = createServer((request, response) => {
     return;
   }
 
+  if (request.url === "/reset") {
+    buckets.clear();
+    json(response, 200, { status: "reset" });
+    return;
+  }
+
   let body = "";
   request.setEncoding("utf8");
   request.on("data", (chunk) => {

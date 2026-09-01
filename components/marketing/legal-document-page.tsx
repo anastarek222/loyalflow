@@ -43,7 +43,7 @@ export function LegalDocumentPage({
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
     >
       <MarketingHeader
         locale={locale}
@@ -116,7 +116,7 @@ export function LegalDocumentPage({
       </section>
 
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-        <div className="mx-auto w-full max-w-4xl divide-y divide-border rounded-[var(--lf-radius-card)] border border-border bg-white px-5 shadow-sm sm:px-8">
+        <div className="mx-auto w-full max-w-4xl divide-y divide-border rounded-[var(--lf-radius-card)] border border-border bg-white px-5 sm:px-8">
           {sections.map((section) => (
             <article key={section.title} className="py-7 sm:py-8">
               <h2 className="text-xl font-black">{copy(section.title)}</h2>

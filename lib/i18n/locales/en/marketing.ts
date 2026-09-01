@@ -1,13 +1,13 @@
 export const marketingMessagesEn = {
   "marketing.metaTitle":
-    "LoyalFlow | Loyalty operations for growing businesses",
+    "Tanee | Loyalty operations for growing businesses",
   "marketing.metaDescription":
     "Manage loyalty programs, rewards, customers, branches, teams, and reporting from one secure workspace.",
   "marketing.badge": "Loyalty operations, without the spreadsheet chaos",
   "marketing.heroTitle":
     "Run loyalty, rewards, customers, and staff from one workspace.",
   "marketing.heroBody":
-    "LoyalFlow gives growing businesses one secure place to manage loyalty programs, customer activity, rewards, branches, teams, and reporting.",
+    "Tanee gives growing businesses one secure place to manage loyalty programs, customer activity, rewards, branches, teams, and reporting.",
   "marketing.primaryCta": "Choose how to get started",
   "marketing.invitationCta": "Accept an owner invitation",
   "marketing.trustLine":
@@ -42,7 +42,7 @@ export const marketingMessagesEn = {
   "marketing.menuOpen": "Open navigation menu",
   "marketing.menuClose": "Close navigation menu",
   "marketing.secondaryCta": "See how it works",
-  "marketing.previewLabel": "LoyalFlow product preview",
+  "marketing.previewLabel": "Tanee product preview",
   "marketing.previewDashboard": "Owner overview",
   "marketing.previewActiveCustomers": "Active customers",
   "marketing.previewRepeatRate": "Repeat rate",
@@ -82,7 +82,7 @@ export const marketingMessagesEn = {
   "marketing.securityEyebrow": "Designed for trust",
   "marketing.securityTitle": "Simple for the team. Serious about control.",
   "marketing.securityBody":
-    "LoyalFlow separates every business workspace, keeps an activity trail, and shows sensitive loyalty actions clearly before they are confirmed.",
+    "Tanee separates every business workspace, keeps an activity trail, and shows sensitive loyalty actions clearly before they are confirmed.",
   "marketing.securityRoles": "Permissions follow each user’s real role.",
   "marketing.securityAudit":
     "Earn, redeem, adjustment, and reversal activity remains traceable.",
@@ -95,8 +95,8 @@ export const marketingMessagesEn = {
     "No. Customers can open their digital loyalty card from a secure link or QR code in their browser.",
   "marketing.faqTwoQuestion": "Can staff access all business settings?",
   "marketing.faqTwoAnswer":
-    "No. LoyalFlow uses role-aware permissions so owners, managers, staff, and viewers see the tools appropriate to their work.",
-  "marketing.faqThreeQuestion": "Does LoyalFlow support Arabic?",
+    "No. Tanee uses role-aware permissions so owners, managers, staff, and viewers see the tools appropriate to their work.",
+  "marketing.faqThreeQuestion": "Does Tanee support Arabic?",
   "marketing.faqThreeAnswer":
     "Yes. The product supports Arabic RTL and English LTR across the core owner, staff, and customer experiences.",
   "marketing.finalTitle": "Ready to make every return visit count?",
@@ -107,15 +107,15 @@ export const marketingMessagesEn = {
   "marketing.footerNote":
     "Bilingual loyalty operations for growing businesses.",
   "marketing.features.metaTitle":
-    "LoyalFlow Features | Digital loyalty operations",
+    "Tanee Features | Digital loyalty operations",
   "marketing.features.metaDescription":
-    "Explore LoyalFlow digital cards, QR scanning, rewards, customer tools, reporting, and role-aware business controls.",
+    "Explore Tanee digital cards, QR scanning, rewards, customer tools, reporting, and role-aware business controls.",
   "marketing.features.navHome": "Home",
   "marketing.features.eyebrow": "Product features",
   "marketing.features.title":
     "Everything your team needs to run loyalty clearly.",
   "marketing.features.body":
-    "From the first customer scan to rewards and reporting, LoyalFlow keeps daily loyalty work in one bilingual, mobile-ready workspace.",
+    "From the first customer scan to rewards and reporting, Tanee keeps daily loyalty work in one bilingual, mobile-ready workspace.",
   "marketing.features.cardsTitle": "Branded digital cards",
   "marketing.features.cardsBody":
     "Give every customer a QR-based card with live balance, reward progress, and your business identity.",
@@ -137,11 +137,11 @@ export const marketingMessagesEn = {
   "marketing.features.ctaTitle":
     "Start with the setup path that fits your business.",
   "marketing.features.ctaBody":
-    "LoyalFlow is currently onboarding businesses through controlled setup and owner invitation flows.",
+    "Tanee is currently onboarding businesses through controlled setup and owner invitation flows.",
   "marketing.pricing.metaTitle":
-    "LoyalFlow Pricing | Plans for growing businesses",
+    "Tanee Pricing | Plans for growing businesses",
   "marketing.pricing.metaDescription":
-    "Compare LoyalFlow Free, Starter, Pro, and Business plans during the controlled beta.",
+    "Compare Tanee Free, Starter, Pro, and Business plans during the controlled beta.",
   "marketing.pricing.eyebrow": "Plans and pricing",
   "marketing.pricing.title":
     "Start free. Add capacity when your loyalty programme grows.",
@@ -159,15 +159,15 @@ export const marketingMessagesEn = {
   "marketing.pricing.cta": "Choose a setup path",
   "marketing.pricing.noteTitle": "Controlled beta, with no surprise checkout.",
   "marketing.pricing.noteBody":
-    "LoyalFlow currently creates workspaces through supported setup and owner invitations. Online subscription payment will be introduced only after the commercial plans are approved.",
-  "marketing.about.metaTitle": "About LoyalFlow | Clear loyalty operations",
+    "Tanee currently creates workspaces through supported setup and owner invitations. Online subscription payment will be introduced only after the commercial plans are approved.",
+  "marketing.about.metaTitle": "About Tanee | Clear loyalty operations",
   "marketing.about.metaDescription":
-    "Learn why LoyalFlow brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
-  "marketing.about.eyebrow": "About LoyalFlow",
+    "Learn why Tanee brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
+  "marketing.about.eyebrow": "About Tanee",
   "marketing.about.title":
     "Loyalty should feel simple for the customer and structured for the business.",
   "marketing.about.body":
-    "LoyalFlow is built to replace disconnected cards, spreadsheets, and manual follow-up with one practical operating system for repeat business.",
+    "Tanee is built to replace disconnected cards, spreadsheets, and manual follow-up with one practical operating system for repeat business.",
   "marketing.about.customerTitle": "Clear for customers",
   "marketing.about.customerBody":
     "A customer opens one branded digital card to see their balance, progress, rewards, and current offers.",
@@ -182,9 +182,9 @@ export const marketingMessagesEn = {
   "marketing.about.ctaBody":
     "The current closed beta focuses on reliable onboarding, mobile staff workflows, customer cards, and evidence-backed product improvement.",
   "marketing.faq.metaTitle":
-    "LoyalFlow FAQ | Digital loyalty questions answered",
+    "Tanee FAQ | Digital loyalty questions answered",
   "marketing.faq.metaDescription":
-    "Answers about LoyalFlow digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",
+    "Answers about Tanee digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",
   "marketing.faq.pageEyebrow": "Frequently asked questions",
   "marketing.faq.pageTitle":
     "Straight answers before your business gets started.",
@@ -200,17 +200,17 @@ export const marketingMessagesEn = {
   "marketing.faq.sixAnswer":
     "Yes. Customer cards, staff scanning, and the core owner workflows are designed for mobile use as well as desktop.",
   "marketing.contact.metaTitle":
-    "Contact LoyalFlow | Business setup and account access",
+    "Contact Tanee | Business setup and account access",
   "marketing.contact.metaDescription":
-    "Choose the right LoyalFlow path for a new business setup, an existing account, or an owner invitation during the controlled beta.",
+    "Choose the right Tanee path for a new business setup, an existing account, or an owner invitation during the controlled beta.",
   "marketing.contact.eyebrow": "Contact and access",
   "marketing.contact.title":
-    "Reach the right LoyalFlow path without the runaround.",
+    "Reach the right Tanee path without the runaround.",
   "marketing.contact.body":
     "During the controlled beta, setup and support follow the secure path for each account type. Choose what you need below.",
   "marketing.contact.setupTitle": "Set up a business",
   "marketing.contact.setupBody":
-    "See the current onboarding options for a new LoyalFlow business workspace.",
+    "See the current onboarding options for a new Tanee business workspace.",
   "marketing.contact.setupCta": "View setup options",
   "marketing.contact.accountTitle": "Access an existing account",
   "marketing.contact.accountBody":
@@ -236,19 +236,19 @@ export const marketingMessagesEn = {
   "marketing.legal.countryLabel": "Country / jurisdiction",
   "marketing.legal.contactLabel": "Legal and privacy contact",
   "marketing.legal.effectiveLabel": "Effective date",
-  "marketing.privacy.metaTitle": "LoyalFlow Privacy | Data handling baseline",
+  "marketing.privacy.metaTitle": "Tanee Privacy | Data handling baseline",
   "marketing.privacy.metaDescription":
-    "Review the LoyalFlow controlled-beta privacy baseline for business accounts, customer loyalty records, service providers, cookies, retention, and data choices.",
+    "Review the Tanee controlled-beta privacy baseline for business accounts, customer loyalty records, service providers, cookies, retention, and data choices.",
   "marketing.privacy.eyebrow": "Privacy",
-  "marketing.privacy.title": "How LoyalFlow handles information.",
+  "marketing.privacy.title": "How Tanee handles information.",
   "marketing.privacy.introduction":
     "This page describes the product's current controlled-beta data practices. Final legal identity and jurisdiction details must be approved before public publication.",
   "marketing.privacy.dataTitle": "Information processed",
   "marketing.privacy.dataBody":
-    "LoyalFlow processes account and business information needed to operate a workspace, including user identity, roles, business settings, branches, programme rules, and configuration. Customer loyalty records may include name, phone number, membership details, balances, visits, rewards, offers, referrals, and activity history. Technical security and operational records may also be processed to protect access and diagnose service issues.",
+    "Tanee processes account and business information needed to operate a workspace, including user identity, roles, business settings, branches, programme rules, and configuration. Customer loyalty records may include name, phone number, membership details, balances, visits, rewards, offers, referrals, and activity history. Technical security and operational records may also be processed to protect access and diagnose service issues.",
   "marketing.privacy.useTitle": "Why information is used",
   "marketing.privacy.useBody":
-    "Information is used to provide the requested loyalty service, authenticate users, enforce role and tenant boundaries, operate cards and rewards, maintain activity evidence, deliver configured account emails, support users, protect the service, and improve reliability. LoyalFlow does not currently claim an activated marketing-analytics or advertising-tracking provider.",
+    "Information is used to provide the requested loyalty service, authenticate users, enforce role and tenant boundaries, operate cards and rewards, maintain activity evidence, deliver configured account emails, support users, protect the service, and improve reliability. Tanee does not currently claim an activated marketing-analytics or advertising-tracking provider.",
   "marketing.privacy.sharingTitle": "Service providers and access",
   "marketing.privacy.sharingBody":
     "Access is limited according to the user's role and business workspace. Infrastructure, database, cache, hosting, storage, and configured email providers may process the minimum information required to deliver their service. A final subprocessor disclosure will be published only after the production provider set and legal identity are approved.",
@@ -260,27 +260,27 @@ export const marketingMessagesEn = {
     "Records are retained while needed to operate the workspace, preserve authorised activity history, meet security needs, or satisfy applicable obligations. Business deletion and scoped customer export exist. Individual customer records currently support editing and deactivation/reactivation; a final erasure or anonymisation policy remains an owner and legal decision before public launch.",
   "marketing.privacy.choicesTitle": "Questions and data requests",
   "marketing.privacy.choicesBody":
-    "Customers should first contact the business whose loyalty programme they joined because that business controls its customer relationship and programme rules. Business users can use the published LoyalFlow support path for account or workspace requests. The final legal and privacy email will appear here only after it is verified and approved.",
+    "Customers should first contact the business whose loyalty programme they joined because that business controls its customer relationship and programme rules. Business users can use the published Tanee support path for account or workspace requests. The final legal and privacy email will appear here only after it is verified and approved.",
   "marketing.terms.metaTitle":
-    "LoyalFlow Terms | Controlled-beta service baseline",
+    "Tanee Terms | Controlled-beta service baseline",
   "marketing.terms.metaDescription":
-    "Review the LoyalFlow controlled-beta service baseline covering access, accounts, loyalty programmes, acceptable use, manual billing, and availability.",
+    "Review the Tanee controlled-beta service baseline covering access, accounts, loyalty programmes, acceptable use, manual billing, and availability.",
   "marketing.terms.eyebrow": "Terms",
-  "marketing.terms.title": "Clear rules for using LoyalFlow.",
+  "marketing.terms.title": "Clear rules for using Tanee.",
   "marketing.terms.introduction":
     "These terms describe the current controlled-beta product model. Final operator identity, jurisdiction, commercial terms, and publication approval remain required before public launch.",
   "marketing.terms.accessTitle": "Controlled-beta access",
   "marketing.terms.accessBody":
-    "LoyalFlow currently creates business workspaces through supported setup or owner invitation. Public self-service checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
+    "Tanee currently creates business workspaces through supported setup or owner invitation. Public self-service checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
   "marketing.terms.accountsTitle": "Account responsibility",
   "marketing.terms.accountsBody":
     "Users must provide accurate information, keep credentials and recovery material secure, use only their authorised role, and promptly report suspected compromise. Business owners are responsible for the users, branches, programme configuration, and customer-facing information they approve inside their workspace.",
   "marketing.terms.loyaltyTitle": "Loyalty programmes and rewards",
   "marketing.terms.loyaltyBody":
-    "Each participating business defines and fulfils its own loyalty rules, points, visits, rewards, offers, expiry conditions, and customer communications. LoyalFlow supplies operating tools and records; it does not independently promise or fund a business's customer reward.",
+    "Each participating business defines and fulfils its own loyalty rules, points, visits, rewards, offers, expiry conditions, and customer communications. Tanee supplies operating tools and records; it does not independently promise or fund a business's customer reward.",
   "marketing.terms.useTitle": "Acceptable use",
   "marketing.terms.useBody":
-    "Users must not attempt unauthorised access, cross-business data access, abuse public links or rate limits, upload unlawful or harmful material, interfere with service operation, or use LoyalFlow to violate applicable law or another person's rights.",
+    "Users must not attempt unauthorised access, cross-business data access, abuse public links or rate limits, upload unlawful or harmful material, interfere with service operation, or use Tanee to violate applicable law or another person's rights.",
   "marketing.terms.billingTitle": "Plans and billing",
   "marketing.terms.billingBody":
     "Plan limits and a provider-neutral subscription foundation exist, but public payment checkout, automated subscription purchase, and payment webhooks are not active. Any paid beta arrangement must be confirmed through the approved manual or assisted commercial process. Refund and cancellation terms require approval before paid public launch.",

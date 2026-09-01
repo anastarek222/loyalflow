@@ -8,22 +8,24 @@ function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("Z13 central platform brand authority preserves the current public identity", () => {
+test("Z13 central platform brand authority preserves the approved Tanee identity", () => {
   assert.deepEqual(platformBrand, {
-    name: "LoyalFlow",
-    shortName: "LoyalFlow",
-    iconMark: "LF",
+    name: "Tanee",
+    nameAr: "تاني",
+    shortName: "Tanee",
+    iconMark: "ee",
     assets: {
       mark: null,
-      wordmark: null,
+      wordmark: "/brand/tanee-wordmark-en.svg",
+      wordmarkAr: "/brand/tanee-wordmark-ar.svg",
       socialPreview: null,
     },
-    iconGradientStart: "#020617",
-    iconGradientEnd: "#2563eb",
-    metadataDescription: "Secure loyalty card and rewards management system.",
+    iconGradientStart: "#FF6652",
+    iconGradientEnd: "#A84724",
+    metadataDescription: "Tanee helps businesses run digital loyalty cards, customer rewards, and repeat-visit operations.",
     manifestDescriptionAr: "نظام رقمي لإدارة العملاء وبرامج الولاء والمكافآت.",
-    themeColor: "#0f172a",
-    backgroundColor: "#f1f5f9",
+    themeColor: "#A84724",
+    backgroundColor: "#FFF9F5",
   });
 });
 
