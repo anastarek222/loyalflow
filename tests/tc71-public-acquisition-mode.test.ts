@@ -12,8 +12,8 @@ import { translate } from "@/lib/i18n/catalog";
 const root = process.cwd();
 const source = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("TC7.1 fixes public acquisition to invitation-only Beta", () => {
-  assert.equal(PUBLIC_ACQUISITION_MODE, "BETA_INVITATION_ONLY");
+test("TC7.1 keeps public acquisition invitation-only without stale Beta state", () => {
+  assert.equal(PUBLIC_ACQUISITION_MODE, "INVITATION_ONLY");
   assert.equal(publicAcquisitionPolicy.selfServiceSignupEnabled, false);
   assert.equal(publicAcquisitionPolicy.paymentCheckoutEnabled, false);
   assert.equal(
@@ -31,9 +31,13 @@ test("TC7.1 permits only existing accounts and owner invitations", () => {
   assert.equal(isSupportedPublicAcquisitionPath(null), false);
 });
 
-test("TC7.1 publishes the Beta boundary in both locales", () => {
-  assert.match(translate("en", "conversion.noSignup"), /Beta.*invitation-only/i);
-  assert.match(translate("ar", "conversion.noSignup"), /التجريبية.*بالدعوة فقط/);
+test("TC7.1 publishes the invitation-only boundary in both locales without Beta wording", () => {
+  assert.match(translate("en", "conversion.noSignup"), /invitation-only/i);
+  assert.match(translate("ar", "conversion.noSignup"), /بالدعوة فقط/);
+  assert.doesNotMatch(translate("en", "conversion.body"), /Beta/i);
+  assert.doesNotMatch(translate("en", "conversion.noSignup"), /Beta/i);
+  assert.doesNotMatch(translate("ar", "conversion.body"), /Beta|تجريب/);
+  assert.doesNotMatch(translate("ar", "conversion.noSignup"), /Beta|تجريب/);
 });
 
 test("TC7.1 binds the public conversion page to the canonical mode", () => {
