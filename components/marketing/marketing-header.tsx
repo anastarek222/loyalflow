@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { TaneeLogo } from "@/components/marketing/tanee-logo";
 import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,6 @@ type MarketingHeaderProps = {
 
 export function MarketingHeader({
   locale,
-  brand,
   signIn,
   primaryCta,
   menuLabel,
@@ -32,7 +31,6 @@ export function MarketingHeader({
 }: MarketingHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
 
@@ -89,23 +87,13 @@ export function MarketingHeader({
       className={cn(
         "sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-200",
         isScrolled
-          ? "border-white/70 bg-white/92 shadow-[0_8px_30px_rgb(15_23_42/0.07)] backdrop-blur-xl"
-          : "border-transparent bg-white/68 backdrop-blur-lg",
+          ? "border-[#E6DED6] bg-[#FFF9F5]/95 shadow-[0_8px_30px_rgb(23_23_23/0.06)] backdrop-blur-xl"
+          : "border-transparent bg-[#FFF9F5]/88 backdrop-blur-lg",
       )}
     >
-      <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-foreground"
-        >
-          <PlatformBrandIdentity
-            fallback="sparkles"
-            fallbackText={brand}
-            markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)] transition-transform duration-200 group-hover:-translate-y-0.5"
-            markImageClassName="p-1"
-            wordmarkClassName="h-7 w-auto max-w-40"
-            textClassName="text-lg sm:text-xl"
-          />
+      <div className="mx-auto flex min-h-16 w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-12">
+        <Link href="/" className="inline-flex min-h-11 items-center">
+          <TaneeLogo locale={locale} className="h-8 sm:h-9" />
         </Link>
 
         <nav
@@ -116,7 +104,7 @@ export function MarketingHeader({
             <Link
               key={item.href}
               href={item.href}
-              className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground-muted transition-colors hover:bg-white/80 hover:text-foreground"
+              className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[#6F6862] transition hover:bg-white hover:text-[#171717]"
             >
               {item.label}
             </Link>
@@ -127,32 +115,27 @@ export function MarketingHeader({
           <LanguageSwitcher locale={locale} />
           <Link
             href="/login"
-            className="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-foreground transition-colors hover:bg-white"
+            className="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-[#171717] hover:bg-white"
           >
             {signIn}
           </Link>
           <Link
             href="/get-started"
-            className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgb(79_70_229/0.2)] transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_12px_26px_rgb(79_70_229/0.28)] active:translate-y-0"
+            className="inline-flex min-h-11 items-center rounded-xl bg-[#FF6652] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgb(255_102_82/0.22)] transition hover:-translate-y-0.5 hover:bg-[#f45d4b]"
           >
             {primaryCta}
           </Link>
         </div>
 
         <button
-          ref={menuButtonRef}
           type="button"
           aria-label={isOpen ? closeLabel : menuLabel}
           aria-expanded={isOpen}
           aria-controls="marketing-mobile-menu"
           onClick={() => setIsOpen((open) => !open)}
-          className="inline-flex size-11 items-center justify-center rounded-xl border border-border bg-white/80 text-foreground shadow-sm lg:hidden"
+          className="inline-flex size-11 items-center justify-center rounded-xl border border-[#E6DED6] bg-white text-[#171717] lg:hidden"
         >
-          {isOpen ? (
-            <X size={20} aria-hidden="true" />
-          ) : (
-            <Menu size={20} aria-hidden="true" />
-          )}
+          {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
@@ -163,7 +146,7 @@ export function MarketingHeader({
                 type="button"
                 aria-label={closeLabel}
                 onClick={() => setIsOpen(false)}
-                className="fixed inset-0 z-[80] cursor-default bg-slate-950/60 lg:hidden"
+                className="fixed inset-0 z-[80] bg-[#171717]/55 lg:hidden"
               />
               <aside
                 ref={drawerRef}
@@ -171,60 +154,47 @@ export function MarketingHeader({
                 role="dialog"
                 aria-modal="true"
                 aria-label={translate(locale, "marketing.mobileNavLabel")}
-                className="fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-s border-border bg-white shadow-[0_24px_70px_rgb(15_23_42/0.24)] lg:hidden"
+                className="fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-s border-[#E6DED6] bg-[#FFF9F5] shadow-[0_24px_70px_rgb(23_23_23/0.22)] lg:hidden"
               >
-                <div className="flex items-center justify-between border-b border-border px-5 py-4">
-                  <Link
-                    href="/"
-                    onClick={() => setIsOpen(false)}
-                    className="inline-flex min-h-11 items-center gap-2 font-black"
-                  >
-                    <PlatformBrandIdentity
-                      fallback="sparkles"
-                      fallbackText={brand}
-                      markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
-                      markImageClassName="p-1"
-                      wordmarkClassName="h-7 w-auto max-w-36"
-                    />
-                  </Link>
+                <div className="flex items-center justify-between border-b border-[#E6DED6] px-5 py-4">
+                  <TaneeLogo locale={locale} className="h-8" />
                   <button
                     ref={closeButtonRef}
                     type="button"
                     aria-label={closeLabel}
                     onClick={() => setIsOpen(false)}
-                    className="flex size-11 items-center justify-center rounded-xl border border-border bg-white text-foreground"
+                    className="flex size-11 items-center justify-center rounded-xl border border-[#E6DED6] bg-white"
                   >
-                    <X size={20} aria-hidden="true" />
+                    <X size={20} />
                   </button>
                 </div>
-                <nav
-                  aria-label={translate(locale, "marketing.mobileNavLabel")}
-                  className="min-h-0 flex-1 overflow-y-auto px-4 py-5"
-                >
+
+                <nav className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
                   {navigation.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className="flex min-h-12 items-center rounded-xl px-4 font-semibold text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                      className="flex min-h-12 items-center rounded-xl px-4 font-semibold text-[#6F6862] hover:bg-white hover:text-[#171717]"
                     >
                       {item.label}
                     </Link>
                   ))}
                 </nav>
-                <div className="grid gap-3 border-t border-border bg-surface-subtle p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+
+                <div className="grid gap-3 border-t border-[#E6DED6] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   <LanguageSwitcher locale={locale} />
                   <Link
                     href="/login"
                     onClick={() => setIsOpen(false)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-white px-4 text-sm font-semibold text-foreground"
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#E6DED6] bg-white px-4 text-sm font-semibold"
                   >
                     {signIn}
                   </Link>
                   <Link
                     href="/get-started"
                     onClick={() => setIsOpen(false)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-white"
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#FF6652] px-4 text-sm font-bold text-white"
                   >
                     {primaryCta}
                   </Link>
