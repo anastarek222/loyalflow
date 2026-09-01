@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = translate(locale, "conversion.metaDescription");
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: "/get-started" },
     robots: { index: true, follow: true },
