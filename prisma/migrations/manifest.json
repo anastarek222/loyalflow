@@ -1,7 +1,7 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "migrationCount": 50,
+  "migrationCount": 51,
   "migrations": [
     {
       "order": 1,
@@ -302,6 +302,12 @@
       "name": "20260901113000_add_automatic_customer_messaging",
       "path": "prisma/migrations/20260901113000_add_automatic_customer_messaging/migration.sql",
       "sha256": "e7f193836155409989fd20051add189cd24cd5ae9d847f0b1b65406477600584"
+    },
+    {
+      "order": 51,
+      "name": "20260901160000_add_business_whatsapp_credentials",
+      "path": "prisma/migrations/20260901160000_add_business_whatsapp_credentials/migration.sql",
+      "sha256": "a659f1b4d6ee030e0ac345094876f1d8e589b691539fdd1266ca8cdf06bb43fd"
     }
   ]
 }

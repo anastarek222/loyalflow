@@ -3,6 +3,8 @@ import {
   isCustomerMessagePayload,
   type CustomerMessageEvent,
 } from "@/lib/server/integrations/customer-messaging";
+import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 
 type WhatsAppDeliveryResult =
   | Readonly<{ status: "success" }>
@@ -126,8 +128,31 @@ export async function sendWhatsAppCustomerNotificationSafely(
   }
 
   const apiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim();
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  const businessCredential = await getBusinessWhatsAppCredential(
+    prisma,
+    businessId,
+  );
+  let phoneNumberId: string;
+  let accessToken: string;
+
+  if (businessCredential) {
+    phoneNumberId = businessCredential.phoneNumberId;
+    try {
+      accessToken = decryptBusinessWhatsAppAccessToken(
+        businessCredential.accessTokenCiphertext,
+      );
+    } catch {
+      return {
+        status: "failure",
+        reason: "WHATSAPP_BUSINESS_CREDENTIAL_INVALID",
+        retryable: false,
+      };
+    }
+  } else {
+    phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() ?? "";
+    accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim() ?? "";
+  }
+
   const { templateName, languageCode } = getTemplateConfig(
     payload.event,
     customer.business.cardDefaultLanguage,
