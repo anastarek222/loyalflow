@@ -10,7 +10,7 @@ export default function SuperAdminMfaSetupPage() {
           <p className="text-sm font-bold text-primary">Super Admin security</p>
           <h1 className="mt-2 text-2xl font-black text-foreground">Set up multi-factor authentication</h1>
           <p className="mt-3 text-sm leading-6 text-foreground-muted">
-            MFA is required for Super Admin access. Verify your account, add LoyalFlow to an authenticator app, and save the one-time recovery codes.
+            MFA is required for Super Admin access. Verify your account, add Tanee to an authenticator app, and save the one-time recovery codes.
           </p>
         </div>
 

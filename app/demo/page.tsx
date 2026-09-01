@@ -19,7 +19,7 @@ export default async function DemoPage() {
   const locale = await getMarketingRequestLocale();
   const direction = getLocaleDirection(locale);
   const navigation = getPublicMarketingNavigation(locale);
-  const title = locale === "ar" ? "عرض LoyalFlow" : "LoyalFlow demo";
+  const title = locale === "ar" ? "عرض تاني" : "Tanee demo";
 
   return (
     <main

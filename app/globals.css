@@ -13,26 +13,26 @@
 :root {
   color-scheme: light;
 
-  --lf-canvas: #f7f8fc;
+  --lf-canvas: #fff9f5;
   --lf-surface: #ffffff;
-  --lf-surface-subtle: #f1f5f9;
+  --lf-surface-subtle: #fff3ed;
   --lf-surface-raised: rgb(255 255 255 / 0.9);
-  --lf-marketing-canvas: #f7f8fc;
+  --lf-marketing-canvas: #fff9f5;
 
-  --lf-foreground: #0f172a;
-  --lf-foreground-muted: #475569;
-  --lf-foreground-subtle: #64748b;
+  --lf-foreground: #171717;
+  --lf-foreground-muted: #554c47;
+  --lf-foreground-subtle: #746963;
   --lf-inverse: #ffffff;
 
-  --lf-border: #e2e8f0;
-  --lf-border-strong: #cbd5e1;
-  --lf-divider: #e2e8f0;
+  --lf-border: #eadfd9;
+  --lf-border-strong: #d8c8c0;
+  --lf-divider: #eadfd9;
 
-  --lf-primary: #4f46e5;
-  --lf-primary-hover: #4338ca;
-  --lf-primary-active: #3730a3;
+  --lf-primary: #a84724;
+  --lf-primary-hover: #913b20;
+  --lf-primary-active: #742f1a;
   --lf-primary-foreground: #ffffff;
-  --lf-primary-soft: #eef2ff;
+  --lf-primary-soft: #fff0eb;
 
   --lf-success: #047857;
   --lf-success-subtle: #ecfdf5;
@@ -43,16 +43,16 @@
   --lf-info: #0369a1;
   --lf-info-subtle: #f0f9ff;
 
-  --lf-focus: #4f46e5;
-  --lf-selection: #e0e7ff;
+  --lf-focus: #a84724;
+  --lf-selection: #ffe0d6;
   --lf-disabled: #94a3b8;
 
-  --lf-chart-1: #4f46e5;
-  --lf-chart-2: #059669;
-  --lf-chart-3: #0284c7;
-  --lf-chart-4: #c2410c;
-  --lf-chart-5: #be123c;
-  --lf-chart-grid: #e2e8f0;
+  --lf-chart-1: #a84724;
+  --lf-chart-2: #d95543;
+  --lf-chart-3: #78e3c5;
+  --lf-chart-4: #ffb547;
+  --lf-chart-5: #6f8f83;
+  --lf-chart-grid: #eadfd9;
 
   --lf-font-sans: var(--font-sans), Inter, Arial, Helvetica, sans-serif;
   --lf-font-arabic:

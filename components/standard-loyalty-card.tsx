@@ -931,7 +931,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           letterSpacing={rtl ? "0" : "3"}
           textAnchor="middle"
         >
-          {labels.terms} · LOYALFLOW
+          {labels.terms} · TANEE
         </text>
       </g>
     </>

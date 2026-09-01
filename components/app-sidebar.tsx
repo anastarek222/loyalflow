@@ -95,6 +95,7 @@ export default function AppSidebar({
           className="flex items-center gap-3 rounded-[var(--lf-radius-input)] px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
         >
           <PlatformBrandIdentity
+            locale={language}
             fallback="letters"
             markClassName="lf-brand-mark flex size-10 items-center justify-center rounded-[var(--lf-radius-md)] text-lg font-black text-primary-foreground shadow-sm"
             markImageClassName="p-1"

@@ -13,6 +13,7 @@ type PlatformBrandIdentityProps = {
   wordmarkClassName?: string;
   textClassName?: string;
   showWordmark?: boolean;
+  locale?: "ar" | "en" | "AR" | "EN";
 };
 
 export function PlatformBrandIdentity({
@@ -23,7 +24,12 @@ export function PlatformBrandIdentity({
   wordmarkClassName,
   textClassName,
   showWordmark = true,
+  locale = "en",
 }: PlatformBrandIdentityProps) {
+  const wordmark = locale.toLowerCase() === "ar"
+    ? platformBrand.assets.wordmarkAr
+    : platformBrand.assets.wordmark;
+
   return (
     <>
       <span
@@ -45,10 +51,10 @@ export function PlatformBrandIdentity({
         )}
       </span>
       {showWordmark ? (
-        platformBrand.assets.wordmark ? (
+        wordmark ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={platformBrand.assets.wordmark}
+            src={wordmark}
             alt={platformBrand.name}
             className={cn("block max-w-full object-contain", wordmarkClassName)}
             data-platform-brand-wordmark="asset"

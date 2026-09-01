@@ -20,12 +20,12 @@ import {
   Dumbbell,
   Fingerprint,
   Languages,
+  MessageCircle,
   QrCode,
   ScanLine,
   Scissors,
   ShieldCheck,
   Shirt,
-  Sparkles,
   Store,
   Users,
 } from "lucide-react";
@@ -78,7 +78,11 @@ export default async function HomePage() {
   const features = [
     [ScanLine, "marketing.featureOneTitle", "marketing.featureOneBody"],
     [Users, "marketing.featureTwoTitle", "marketing.featureTwoBody"],
-    [Sparkles, "marketing.featureThreeTitle", "marketing.featureThreeBody"],
+    [
+      MessageCircle,
+      "marketing.featureThreeTitle",
+      "marketing.featureThreeBody",
+    ],
   ] as const;
 
   const industries = [
@@ -104,7 +108,7 @@ export default async function HomePage() {
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
     >
       <script
         type="application/ld+json"
@@ -122,27 +126,14 @@ export default async function HomePage() {
         navigation={navigation}
       />
 
-      <section className="relative isolate overflow-hidden border-b border-border/70">
-        <div
-          className="absolute inset-0 -z-20 bg-[linear-gradient(180deg,#ffffff_0%,#f7f8fc_74%,#eef2ff_100%)]"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -start-32 top-24 -z-10 size-80 rounded-full bg-indigo-200/45 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -end-40 top-4 -z-10 size-96 rounded-full bg-violet-200/35 blur-3xl"
-          aria-hidden="true"
-        />
-
-        <div className="mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.94fr_1.06fr] lg:px-8 lg:py-24">
+      <section className="border-b border-border bg-[var(--lf-marketing-canvas)]">
+        <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:min-h-[calc(100svh-4rem)] lg:grid-cols-[0.94fr_1.06fr] lg:px-8 lg:py-24">
           <div className="lf-marketing-reveal">
-            <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-white/80 px-3.5 py-2 text-sm font-bold text-primary shadow-sm backdrop-blur-lg">
+            <p className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/25 bg-[var(--lf-primary-soft)] px-3.5 py-2 text-sm font-bold text-primary">
               <BadgeCheck size={17} aria-hidden="true" />
               {copy("marketing.badge")}
             </p>
-            <h1 className="mt-6 max-w-3xl text-[clamp(2.4rem,7vw,4.5rem)] font-black leading-[1.02] tracking-[-0.045em] text-foreground">
+            <h1 className="mt-6 max-w-3xl text-[clamp(2.25rem,7vw,4.5rem)] font-black leading-[1.08] tracking-[-0.035em] text-foreground sm:leading-[1.04]">
               {copy("marketing.heroTitle")}
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-foreground-muted sm:text-lg sm:leading-9">
@@ -152,14 +143,14 @@ export default async function HomePage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/get-started"
-                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-[0_12px_28px_rgb(79_70_229/0.24)] transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_16px_34px_rgb(79_70_229/0.3)] active:translate-y-0"
+                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white transition-colors duration-150 hover:bg-primary-hover"
               >
                 {copy("marketing.primaryCta")}
                 <ArrowUpRight size={18} aria-hidden="true" />
               </Link>
               <Link
                 href="/features"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border-strong bg-white/80 px-5 py-3 font-bold text-foreground shadow-sm backdrop-blur-lg transition-[background-color,border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-white active:translate-y-0"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border-strong bg-white px-5 py-3 font-bold text-foreground transition-colors duration-150 hover:border-primary/40 hover:bg-[var(--lf-primary-soft)]"
               >
                 {copy("marketing.secondaryCta")}
               </Link>
@@ -227,7 +218,7 @@ export default async function HomePage() {
             {workflow.map(([Icon, key], index) => (
               <li
                 key={key}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-[var(--lf-shadow-raised)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_18px_38px_rgb(30_41_59/0.1)]"
+                className="group relative overflow-hidden rounded-2xl border border-border bg-white p-6 transition-colors duration-200 hover:border-primary/35"
               >
                 <div className="flex items-center justify-between gap-4">
                   <span className="flex size-12 items-center justify-center rounded-2xl bg-[var(--lf-primary-soft)] text-primary">
@@ -235,7 +226,7 @@ export default async function HomePage() {
                   </span>
                   <span
                     dir="ltr"
-                    className="text-4xl font-black text-slate-100"
+                    className="text-4xl font-black text-primary/10"
                   >
                     0{index + 1}
                   </span>
@@ -306,7 +297,7 @@ export default async function HomePage() {
             {industries.map(([Icon, titleKey, bodyKey]) => (
               <article
                 key={titleKey}
-                className="group rounded-2xl border border-border bg-white p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_16px_34px_rgb(30_41_59/0.08)]"
+                className="group rounded-2xl border border-border bg-white p-5 transition-colors duration-200 hover:border-primary/35"
               >
                 <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--lf-primary-soft)] text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                   <Icon size={21} aria-hidden="true" />
@@ -325,11 +316,11 @@ export default async function HomePage() {
 
       <section
         id="security"
-        className="scroll-mt-24 bg-slate-950 px-4 py-20 text-white sm:px-6 lg:px-8 lg:py-28"
+        className="scroll-mt-24 bg-foreground px-4 py-20 text-white sm:px-6 lg:px-8 lg:py-28"
       >
         <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-indigo-300">
+            <p className="text-sm font-black uppercase tracking-[0.16em] text-[var(--lf-amber)]">
               {copy("marketing.securityEyebrow")}
             </p>
             <h2 className="mt-4 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
@@ -339,8 +330,8 @@ export default async function HomePage() {
               {copy("marketing.securityBody")}
             </p>
           </div>
-          <div className="rounded-[1.35rem] border border-white/10 bg-white/[0.06] p-5 shadow-[0_24px_60px_rgb(0_0_0/0.2)] backdrop-blur-xl sm:p-7">
-            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-indigo-400/15 text-indigo-300">
+          <div className="rounded-[1.35rem] border border-white/15 bg-white/[0.07] p-5 sm:p-7">
+            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-white/10 text-[var(--lf-amber)]">
               <Fingerprint size={25} aria-hidden="true" />
             </div>
             <ul className="space-y-4">
@@ -399,30 +390,26 @@ export default async function HomePage() {
       </section>
 
       <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-[1.5rem] bg-[linear-gradient(135deg,#312e81,#4f46e5_58%,#7c3aed)] px-6 py-12 text-white shadow-[0_28px_70px_rgb(49_46_129/0.24)] sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-14 lg:py-14">
-          <div
-            className="absolute -end-16 -top-24 size-64 rounded-full border-[38px] border-white/[0.07]"
-            aria-hidden="true"
-          />
+        <div className="mx-auto w-full max-w-7xl rounded-[1.5rem] border border-primary/20 bg-primary px-6 py-12 text-white sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-14 lg:py-14">
           <div className="relative max-w-2xl">
             <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
               {copy("marketing.finalTitle")}
             </h2>
-            <p className="mt-4 text-base leading-8 text-indigo-100">
+            <p className="mt-4 text-base leading-8 text-white/85">
               {copy("marketing.finalBody")}
             </p>
           </div>
           <div className="relative mt-8 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0">
             <Link
               href="/get-started"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-indigo-700 shadow-lg transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-primary transition-colors duration-150 hover:bg-[var(--lf-primary-soft)]"
             >
               {copy("marketing.primaryCta")}
               <ArrowUpRight size={18} aria-hidden="true" />
             </Link>
             <Link
               href="/login"
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 font-bold text-white backdrop-blur-lg transition-colors hover:bg-white/15"
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/35 bg-transparent px-5 py-3 font-bold text-white transition-colors hover:bg-white/10"
             >
               {copy("auth.signIn")}
             </Link>

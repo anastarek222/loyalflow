@@ -27,7 +27,7 @@ test("public canonical authority is isolated from preview/app origins", () => {
     resolvePublicSiteUrl({
       NEXT_PUBLIC_APP_URL: "https://preview-123.vercel.app",
     }),
-    "https://loyalflow-gray.vercel.app",
+    "https://gettanee.com",
   );
 });
 

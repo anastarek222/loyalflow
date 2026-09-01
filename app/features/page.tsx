@@ -14,7 +14,7 @@ import {
   QrCode,
   ScanLine,
   ShieldCheck,
-  Sparkles,
+  Stamp,
   Users,
 } from "lucide-react";
 
@@ -40,17 +40,33 @@ export default async function FeaturesPage() {
   const features = [
     [QrCode, "marketing.features.cardsTitle", "marketing.features.cardsBody"],
     [ScanLine, "marketing.features.staffTitle", "marketing.features.staffBody"],
-    [Users, "marketing.features.customersTitle", "marketing.features.customersBody"],
-    [Sparkles, "marketing.features.rewardsTitle", "marketing.features.rewardsBody"],
-    [BarChart3, "marketing.features.reportingTitle", "marketing.features.reportingBody"],
-    [ShieldCheck, "marketing.features.controlTitle", "marketing.features.controlBody"],
+    [
+      Users,
+      "marketing.features.customersTitle",
+      "marketing.features.customersBody",
+    ],
+    [
+      Stamp,
+      "marketing.features.rewardsTitle",
+      "marketing.features.rewardsBody",
+    ],
+    [
+      BarChart3,
+      "marketing.features.reportingTitle",
+      "marketing.features.reportingBody",
+    ],
+    [
+      ShieldCheck,
+      "marketing.features.controlTitle",
+      "marketing.features.controlBody",
+    ],
   ] as const;
 
   return (
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
     >
       <MarketingHeader
         locale={locale}
@@ -62,9 +78,9 @@ export default async function FeaturesPage() {
         navigation={navigation}
       />
 
-      <section className="border-b border-border/70 bg-[radial-gradient(circle_at_75%_15%,#e0e7ff_0,transparent_34%),linear-gradient(180deg,#ffffff,#f7f8fc)] px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <section className="border-b border-border bg-white px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
         <div className="mx-auto w-full max-w-7xl">
-          <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-white/80 px-3.5 py-2 text-sm font-bold text-primary shadow-sm">
+          <p className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/25 bg-[var(--lf-primary-soft)] px-3.5 py-2 text-sm font-bold text-primary">
             <Languages size={17} aria-hidden="true" />
             {copy("marketing.features.eyebrow")}
           </p>
@@ -82,7 +98,7 @@ export default async function FeaturesPage() {
           {features.map(([Icon, titleKey, bodyKey]) => (
             <article
               key={titleKey}
-              className="rounded-[1.35rem] border border-border bg-white p-6 shadow-[0_18px_45px_rgb(15_23_42/0.06)] sm:p-7"
+              className="rounded-[1.35rem] border border-border bg-white p-6 transition-colors hover:border-primary/35 sm:p-7"
             >
               <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Icon size={22} aria-hidden="true" />
@@ -97,19 +113,19 @@ export default async function FeaturesPage() {
       </section>
 
       <section className="px-4 pb-20 sm:px-6 lg:px-8 lg:pb-28">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 rounded-[1.5rem] bg-slate-950 px-6 py-10 text-white sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-12">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-7 rounded-[1.5rem] bg-foreground px-6 py-10 text-white sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-12">
           <div className="max-w-2xl">
             <h2 className="text-2xl font-black sm:text-3xl">
               {copy("marketing.features.ctaTitle")}
             </h2>
-            <p className="mt-3 leading-7 text-slate-300">
+            <p className="mt-3 leading-7 text-white/75">
               {copy("marketing.features.ctaBody")}
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
             <Link
               href="/get-started"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-slate-950"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-foreground transition-colors hover:bg-[var(--lf-primary-soft)]"
             >
               {copy("marketing.primaryCta")}
               <ArrowUpRight size={18} aria-hidden="true" />

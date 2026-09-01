@@ -117,8 +117,8 @@ export async function CustomCardArtworkManager({
           />
           <p className="mt-4 text-xs leading-5 text-foreground-muted">
             {t(
-              "PNG أو JPEG أو WebP. الحد الأقصى 4 ميجابايت للواجهة الأمامية + الخلفية، بنسبة ID-1 حوالي 1.586:1. لا ينشئ LoyalFlow أيًا من الجانبين تلقائيًا في الوضع المخصص. اترك مناطق QR واسم العميل والرصيد والمكافأة والنتيجة خالية.",
-              "Use PNG, JPEG, or WebP. Maximum 4 MB total across Front + Back, at the ID-1 ratio of about 1.586:1. LoyalFlow never generates either side in Custom mode. Keep the QR, customer name, balance, reward, and score zones clear.",
+              "PNG أو JPEG أو WebP. الحد الأقصى 4 ميجابايت للواجهة الأمامية + الخلفية، بنسبة ID-1 حوالي 1.586:1. لا ينشئ تاني أيًا من الجانبين تلقائيًا في الوضع المخصص. اترك مناطق QR واسم العميل والرصيد والمكافأة والنتيجة خالية.",
+              "Use PNG, JPEG, or WebP. Maximum 4 MB total across Front + Back, at the ID-1 ratio of about 1.586:1. Tanee never generates either side in Custom mode. Keep the QR, customer name, balance, reward, and score zones clear.",
             )}
           </p>
         </div>

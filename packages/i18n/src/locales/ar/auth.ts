@@ -6,7 +6,7 @@ export const arabicAuthMessages = {
   "auth.email": "البريد الإلكتروني",
   "auth.password": "كلمة المرور",
   "auth.forgotPassword": "هل نسيت كلمة المرور؟",
-  "auth.secureWorkspace": "مساحة عمل LoyalFlow آمنة",
+  "auth.secureWorkspace": "مساحة عمل تاني آمنة",
   "auth.emailPlaceholder": "name@company.com",
   "auth.passwordPlaceholder": "أدخل كلمة المرور",
   "auth.signingIn": "جارٍ التحقق من الحساب…",
@@ -15,7 +15,7 @@ export const arabicAuthMessages = {
     "تسجيل الدخول غير متاح مؤقتًا. حاول مرة أخرى بعد قليل.",
   "auth.welcomeBack": "مرحبًا بعودتك",
   "auth.signInBody":
-    "استخدم نفس تسجيل الدخول لكل أدوار LoyalFlow، وسنوجّهك بأمان إلى مساحة العمل المناسبة.",
+    "استخدم نفس تسجيل الدخول لكل أدوار تاني، وسنوجّهك بأمان إلى مساحة العمل المناسبة.",
   "auth.backHome": "العودة إلى الصفحة الرئيسية",
   "auth.protectedAccess": "دخول محمي إلى مساحة العمل",
   "auth.workspaceReadyTitle": "مساحة الولاء الخاصة بك جاهزة عندما تكون جاهزًا.",
@@ -42,7 +42,7 @@ export const arabicAuthMessages = {
     "البريد وكلمة المرور صحيحان، لكن هذا الحساب ما زال يحتاج إلى تأكيد البريد الإلكتروني قبل فتح مساحة العمل.",
   "auth.verificationRequiredCta": "إرسال رابط تحقق جديد",
   "auth.noRoleSelection":
-    "لا تحتاج إلى اختيار دورك؛ يفتح LoyalFlow التجربة المناسبة بعد تسجيل الدخول الآمن.",
+    "لا تحتاج إلى اختيار دورك؛ يفتح تاني التجربة المناسبة بعد تسجيل الدخول الآمن.",
   "auth.passwordResetSuccess":
     "تم تحديث كلمة المرور. سجّل الدخول باستخدام كلمة المرور الجديدة.",
   "auth.verificationSuccess":

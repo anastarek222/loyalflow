@@ -18,7 +18,7 @@ test("Z4 upload UI requires Front and Back in the same draft", () => {
   assert.match(manager, /required[\s\S]*?name="customCardFrontFile"/);
   assert.match(manager, /required[\s\S]*?name="customCardBackFile"/);
   assert.match(manager, /Maximum 4 MB total across Front \+ Back/);
-  assert.match(manager, /LoyalFlow never generates either side in Custom\s+mode/);
+  assert.match(manager, /Tanee never generates either side in Custom\s+mode/);
   assert.match(manager, /1\.586:1/);
 
   assert.match(uploadAction, /customCardFrontFile/);

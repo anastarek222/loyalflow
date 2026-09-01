@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { resolvePublicSiteUrl } from "../lib/urls/public-site-url";
 
-const CURRENT_PRODUCTION_SITE = "https://loyalflow-gray.vercel.app";
+const CURRENT_PRODUCTION_SITE = "https://gettanee.com";
 
 test("public marketing origin keeps the current Production site as the fallback", () => {
   assert.equal(resolvePublicSiteUrl({}), CURRENT_PRODUCTION_SITE);

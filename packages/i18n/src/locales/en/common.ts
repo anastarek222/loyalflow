@@ -1,5 +1,5 @@
 export const englishCommonMessages = {
-  "common.brand": "LoyalFlow",
+  "common.brand": "Tanee",
   "common.continue": "Continue",
   "common.cancel": "Cancel",
   "common.save": "Save",

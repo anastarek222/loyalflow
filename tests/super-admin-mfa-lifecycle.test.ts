@@ -21,7 +21,7 @@ test("TOTP secrets are random and produce standards-shaped otpauth URIs", () => 
   assert.match(first, /^[A-Z2-7]+$/);
   assert.match(
     createTotpUri({ secret: first, email: "Admin@Example.com" }),
-    /^otpauth:\/\/totp\/LoyalFlow%3Aadmin%40example\.com\?/,
+    /^otpauth:\/\/totp\/Tanee%3Aadmin%40example\.com\?/,
   );
 });
 

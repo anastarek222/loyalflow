@@ -4,7 +4,7 @@ export const englishAuthMessages = {
   "auth.email": "Email address",
   "auth.password": "Password",
   "auth.forgotPassword": "Forgot password?",
-  "auth.secureWorkspace": "Secure LoyalFlow workspace",
+  "auth.secureWorkspace": "Secure Tanee workspace",
   "auth.emailPlaceholder": "name@company.com",
   "auth.passwordPlaceholder": "Enter your password",
   "auth.signingIn": "Checking account…",
@@ -13,7 +13,7 @@ export const englishAuthMessages = {
     "Sign-in is temporarily unavailable. Please try again shortly.",
   "auth.welcomeBack": "Welcome back",
   "auth.signInBody":
-    "Use the same sign-in for every LoyalFlow role. We will route you to the right workspace securely.",
+    "Use the same sign-in for every Tanee role. We will route you to the right workspace securely.",
   "auth.backHome": "Back to homepage",
   "auth.protectedAccess": "Protected workspace access",
   "auth.workspaceReadyTitle": "Your loyalty workspace is ready when you are.",
@@ -40,7 +40,7 @@ export const englishAuthMessages = {
     "Your email and password are correct, but this account still needs email verification before workspace access is allowed.",
   "auth.verificationRequiredCta": "Send a new verification link",
   "auth.noRoleSelection":
-    "No role selection is needed. LoyalFlow opens the correct experience after secure sign-in.",
+    "No role selection is needed. Tanee opens the correct experience after secure sign-in.",
   "auth.passwordResetSuccess":
     "Your password has been updated. Sign in with your new password.",
   "auth.verificationSuccess":

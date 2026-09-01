@@ -1,12 +1,12 @@
 export const conversionMessagesEn = {
-  "conversion.metaTitle": "Get started | LoyalFlow",
+  "conversion.metaTitle": "Get started | Tanee",
   "conversion.metaDescription":
-    "Choose the supported LoyalFlow path for an existing account or an owner invitation.",
+    "Choose the supported Tanee path for an existing account or an owner invitation.",
   "conversion.eyebrow": "Get started",
-  "conversion.title": "Choose the LoyalFlow path that matches your account.",
+  "conversion.title": "Choose the Tanee path that matches your account.",
   "conversion.body":
-    "LoyalFlow Beta currently supports existing workspace access and secure owner invitation acceptance. Choose the path that matches how your account was created.",
-  "conversion.existingTitle": "I already have a LoyalFlow account",
+    "Tanee Beta currently supports existing workspace access and secure owner invitation acceptance. Choose the path that matches how your account was created.",
+  "conversion.existingTitle": "I already have a Tanee account",
   "conversion.existingBody":
     "Sign in to your existing workspace. Pending owners are routed to their private setup flow automatically.",
   "conversion.existingCta": "Sign in",

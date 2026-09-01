@@ -73,7 +73,7 @@ export function SuperAdminMfaSetupForm() {
       ) : (
         <div className="space-y-5">
           <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
-            <h2 className="font-bold text-foreground">Add LoyalFlow to your authenticator</h2>
+            <h2 className="font-bold text-foreground">Add Tanee to your authenticator</h2>
             <p className="mt-2 text-sm text-foreground-muted">
               Enter this secret manually in your authenticator app, then use the current 6-digit code below.
             </p>

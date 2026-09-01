@@ -951,8 +951,8 @@ export default async function ReportsPage({
               amount: lifetimeTrackedSalesAmount,
             }),
             detail: t(
-              "محسوب فقط من عمليات البيع المسجلة في LoyalFlow",
-              "Calculated only from sales recorded in LoyalFlow",
+              "محسوب فقط من عمليات البيع المسجلة في تاني",
+              "Calculated only from sales recorded in Tanee",
             ),
             tone: "success",
           },
@@ -1866,8 +1866,8 @@ export default async function ReportsPage({
               </div>
               <p className="max-w-xl text-sm leading-6 text-surface/75">
                 {t(
-                  "تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.",
-                  "These metrics show only what LoyalFlow recorded. They do not attribute revenue or ROI to the programme unless it was explicitly recorded as a sale.",
+                  "تعرض هذه المؤشرات ما سجله تاني فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.",
+                  "These metrics show only what Tanee recorded. They do not attribute revenue or ROI to the programme unless it was explicitly recorded as a sale.",
                 )}
               </p>
             </div>
