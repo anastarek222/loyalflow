@@ -1,4 +1,5 @@
 {
+  "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm run db:migrate:deploy; fi && pnpm run build",
   "functions": {
     "app/api/queues/integration-jobs/route.ts": {
       "experimentalTriggers": [
