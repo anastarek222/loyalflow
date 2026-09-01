@@ -5,7 +5,7 @@ import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subsc
 
 import { parseCustomerRegistration } from "@/lib/customers/registration";
 import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
-import { syncBusinessToGoogleSheetSafely } from "@/lib/google-sheets-sync-safe";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import prisma from "@/lib/prisma";
 import { normalizeReferralCode } from "@/lib/referrals/code";
 import { createPublicMembershipCommand } from "@/lib/server/business/public-membership-command";
@@ -122,6 +122,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
       businessId: business.id,
       customer: parsed,
       referralCode,
+      whatsappOptIn: formData.get("whatsappOptIn") === "on",
     });
   } catch (error) {
     if (
@@ -168,7 +169,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     );
   }
 
-  await syncBusinessToGoogleSheetSafely(business.id);
+  scheduleIntegrationJobs(result.integrationJobIds);
 
   revalidatePath(`/businesses/${business.slug}`);
   revalidatePath(`/businesses/${business.slug}/customers`);

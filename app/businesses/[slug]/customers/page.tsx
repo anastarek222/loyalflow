@@ -86,6 +86,10 @@ export default async function CustomersPage({
   const query = await searchParams;
   const language = normalizeLanguage(authenticatedUser?.language);
   const copy = customerUiCopy(language);
+  const whatsappConsentCopy =
+    language === "AR"
+      ? "العميل وافق على استلام تحديثات برنامج الولاء والمكافآت تلقائيًا عبر واتساب."
+      : "The customer agreed to receive automatic loyalty and reward updates on WhatsApp.";
   const dateLocale = getLanguageLocale(language);
   const experienceMode = resolveExperienceMode(
     (await cookies()).get(getExperienceModeCookieName(session.user.id))?.value,
@@ -626,6 +630,14 @@ export default async function CustomersPage({
                     className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                   />
                 </div>
+                <label className="flex items-start gap-3 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm leading-6 text-foreground-muted sm:col-span-2">
+                  <input
+                    name="whatsappOptIn"
+                    type="checkbox"
+                    className="mt-1 size-4 shrink-0 accent-[var(--lf-primary)]"
+                  />
+                  <span>{whatsappConsentCopy}</span>
+                </label>
                 <button
                   type="submit"
                   className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 font-semibold text-white hover:bg-primary-hover sm:col-span-2"
@@ -720,6 +732,15 @@ export default async function CustomersPage({
                       className="w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-4 outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
                     />
                   </div>
+
+                  <label className="flex items-start gap-3 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm leading-6 text-foreground-muted">
+                    <input
+                      name="whatsappOptIn"
+                      type="checkbox"
+                      className="mt-1 size-4 shrink-0 accent-[var(--lf-primary)]"
+                    />
+                    <span>{whatsappConsentCopy}</span>
+                  </label>
 
                   <button
                     type="submit"
