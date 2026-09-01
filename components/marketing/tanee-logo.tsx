@@ -12,10 +12,10 @@ export function TaneeLogo({
   const isArabic = locale === "ar";
   return (
     <Image
-      src={isArabic ? "/brand/tanee-logo-ar.png" : "/brand/tanee-logo-en.png"}
+      src={isArabic ? "/brand/tanee-logo-ar.webp" : "/brand/tanee-logo-en.webp"}
       alt={isArabic ? "تاني" : "Tanee"}
-      width={isArabic ? 295 : 306}
-      height={isArabic ? 108 : 79}
+      width={isArabic ? 180 : 180}
+      height={isArabic ? 66 : 46}
       className={cn("h-9 w-auto object-contain", className)}
       priority
     />
