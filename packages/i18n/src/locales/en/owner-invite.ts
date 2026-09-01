@@ -1,6 +1,6 @@
 export const englishOwnerInviteMessages = {
-  "ownerInvite.metaTitle": "Accept owner invitation | Tanee Beta",
-  "ownerInvite.metaDescription": "Accept a secure Tanee Beta owner invitation.",
+  "ownerInvite.metaTitle": "Accept owner invitation | Tanee",
+  "ownerInvite.metaDescription": "Accept a secure Tanee owner invitation.",
   "ownerInvite.title": "Accept owner invitation",
   "ownerInvite.body":
     "Choose your Tanee password to activate your invited owner account.",
