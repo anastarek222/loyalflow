@@ -89,8 +89,8 @@ export function MarketingHeader({
       className={cn(
         "sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-200",
         isScrolled
-          ? "border-white/70 bg-white/92 shadow-[0_8px_30px_rgb(15_23_42/0.07)] backdrop-blur-xl"
-          : "border-transparent bg-white/68 backdrop-blur-lg",
+          ? "border-border bg-white shadow-[var(--lf-shadow-raised)]"
+          : "border-border/70 bg-[var(--lf-marketing-canvas)]",
       )}
     >
       <div className="mx-auto flex min-h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -99,9 +99,10 @@ export function MarketingHeader({
           className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-foreground"
         >
           <PlatformBrandIdentity
+            locale={locale}
             fallback="sparkles"
             fallbackText={brand}
-            markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)] transition-transform duration-200 group-hover:-translate-y-0.5"
+            markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
             markImageClassName="p-1"
             wordmarkClassName="h-7 w-auto max-w-40"
             textClassName="text-lg sm:text-xl"
@@ -116,7 +117,7 @@ export function MarketingHeader({
             <Link
               key={item.href}
               href={item.href}
-              className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground-muted transition-colors hover:bg-white/80 hover:text-foreground"
+              className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground-muted transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-foreground"
             >
               {item.label}
             </Link>
@@ -133,7 +134,7 @@ export function MarketingHeader({
           </Link>
           <Link
             href="/get-started"
-            className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-bold text-white shadow-[0_8px_20px_rgb(79_70_229/0.2)] transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_12px_26px_rgb(79_70_229/0.28)] active:translate-y-0"
+            className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-bold text-white transition-colors duration-150 hover:bg-primary-hover"
           >
             {primaryCta}
           </Link>
@@ -146,7 +147,7 @@ export function MarketingHeader({
           aria-expanded={isOpen}
           aria-controls="marketing-mobile-menu"
           onClick={() => setIsOpen((open) => !open)}
-          className="inline-flex size-11 items-center justify-center rounded-xl border border-border bg-white/80 text-foreground shadow-sm lg:hidden"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-white text-foreground lg:hidden"
         >
           {isOpen ? (
             <X size={20} aria-hidden="true" />
@@ -163,7 +164,7 @@ export function MarketingHeader({
                 type="button"
                 aria-label={closeLabel}
                 onClick={() => setIsOpen(false)}
-                className="fixed inset-0 z-[80] cursor-default bg-slate-950/60 lg:hidden"
+                className="fixed inset-0 z-[80] cursor-default bg-foreground/55 lg:hidden"
               />
               <aside
                 ref={drawerRef}
@@ -171,20 +172,21 @@ export function MarketingHeader({
                 role="dialog"
                 aria-modal="true"
                 aria-label={translate(locale, "marketing.mobileNavLabel")}
-                className="fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-s border-border bg-white shadow-[0_24px_70px_rgb(15_23_42/0.24)] lg:hidden"
+                className="fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-s border-border bg-white shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] lg:hidden"
               >
-                <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
                   <Link
                     href="/"
                     onClick={() => setIsOpen(false)}
                     className="inline-flex min-h-11 items-center gap-2 font-black"
                   >
                     <PlatformBrandIdentity
+                      locale={locale}
                       fallback="sparkles"
                       fallbackText={brand}
                       markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
                       markImageClassName="p-1"
-                      wordmarkClassName="h-7 w-auto max-w-36"
+                      wordmarkClassName="h-7 w-auto max-w-32"
                     />
                   </Link>
                   <button
@@ -199,14 +201,14 @@ export function MarketingHeader({
                 </div>
                 <nav
                   aria-label={translate(locale, "marketing.mobileNavLabel")}
-                  className="min-h-0 flex-1 overflow-y-auto px-4 py-5"
+                  className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-3 py-4"
                 >
                   {navigation.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className="flex min-h-12 items-center rounded-xl px-4 font-semibold text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                      className="flex min-h-12 items-center rounded-xl px-3 font-semibold leading-6 text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
                     >
                       {item.label}
                     </Link>

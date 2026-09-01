@@ -236,8 +236,8 @@ export function PublicCardActions({
           className="inline-flex min-h-10 items-center justify-center rounded-lg px-2 text-xs font-semibold text-slate-500 transition hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
         >
           {language === "AR"
-            ? "مدعوم من LoyalFlow · هل تريد برنامج ولاء لنشاطك؟"
-            : "Powered by LoyalFlow · Want loyalty for your business?"}
+            ? "مدعوم من تاني · هل تريد برنامج ولاء لنشاطك؟"
+            : "Powered by Tanee · Want loyalty for your business?"}
         </Link>
       </div>
     </section>

@@ -1,12 +1,12 @@
 export const conversionMessagesAr = {
-  "conversion.metaTitle": "ابدأ | LoyalFlow",
+  "conversion.metaTitle": "ابدأ | تاني",
   "conversion.metaDescription":
-    "اختر مسار LoyalFlow المدعوم لحساب موجود أو لدعوة مالك.",
+    "اختر مسار تاني المدعوم لحساب موجود أو لدعوة مالك.",
   "conversion.eyebrow": "ابدأ الآن",
-  "conversion.title": "اختر مسار LoyalFlow المناسب لحسابك.",
+  "conversion.title": "اختر مسار تاني المناسب لحسابك.",
   "conversion.body":
-    "يدعم LoyalFlow Beta حاليًا الدخول إلى مساحة عمل موجودة وقبول دعوة مالك آمنة. اختر المسار الذي يطابق طريقة إنشاء حسابك.",
-  "conversion.existingTitle": "لدي حساب LoyalFlow بالفعل",
+    "يدعم تاني Beta حاليًا الدخول إلى مساحة عمل موجودة وقبول دعوة مالك آمنة. اختر المسار الذي يطابق طريقة إنشاء حسابك.",
+  "conversion.existingTitle": "لدي حساب تاني بالفعل",
   "conversion.existingBody":
     "سجّل الدخول إلى مساحة العمل الحالية. يتم توجيه المالك المعلّق تلقائيًا إلى مسار الإعداد الخاص به.",
   "conversion.existingCta": "تسجيل الدخول",

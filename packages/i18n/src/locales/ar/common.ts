@@ -1,7 +1,7 @@
 import type { CommonMessageKey } from "../en/common";
 
 export const arabicCommonMessages = {
-  "common.brand": "LoyalFlow",
+  "common.brand": "تاني",
   "common.continue": "متابعة",
   "common.cancel": "إلغاء",
   "common.save": "حفظ",

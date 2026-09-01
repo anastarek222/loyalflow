@@ -79,7 +79,7 @@ export default async function ContactPage() {
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
     >
       <MarketingHeader
         locale={locale}
@@ -110,7 +110,7 @@ export default async function ContactPage() {
           {paths.map(({ href, icon: Icon, title, body, cta }) => (
             <article
               key={href}
-              className="flex min-h-72 flex-col rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:p-8"
+              className="flex min-h-72 flex-col rounded-[var(--lf-radius-card)] border border-border bg-white p-6 transition-colors hover:border-primary/35 sm:p-8"
             >
               <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <Icon size={23} aria-hidden="true" />
@@ -153,7 +153,7 @@ export default async function ContactPage() {
                     href={channel.href}
                     target={external ? "_blank" : undefined}
                     rel={external ? "noreferrer" : undefined}
-                    className="flex min-h-20 items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-5 py-4 shadow-sm transition hover:border-primary/40 hover:text-primary"
+                    className="flex min-h-20 min-w-0 items-center gap-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-5 py-4 transition-colors hover:border-primary/40 hover:text-primary"
                   >
                     <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                       <Icon size={21} aria-hidden="true" />
@@ -162,7 +162,7 @@ export default async function ContactPage() {
                       <span className="block text-sm font-black">
                         {copy(presentation.label)}
                       </span>
-                      <span className="mt-1 block truncate text-sm text-foreground-muted">
+                      <span className="mt-1 block break-all text-sm text-foreground-muted">
                         {channel.displayValue}
                       </span>
                     </span>

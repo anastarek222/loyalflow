@@ -44,8 +44,8 @@ export function CustomCardSafeZoneGuide({ isArabic, preview }: Props) {
       </summary>
       <p className="mt-2 text-sm leading-6 text-foreground-muted">
         {t(
-          "صمّم كل ما يخص البراند داخل صورة البطاقة، واترك المناطق المحددة بالأزرق خالية. LoyalFlow يضع فيها بيانات كل عميل تلقائيًا بنفس المواضع عند المعاينة والنشر.",
-          "Design every brand element inside the artwork and leave the blue outlined zones clear. LoyalFlow fills them with each customer’s live data in the same positions during preview and after publishing.",
+          "صمّم كل ما يخص البراند داخل صورة البطاقة، واترك المناطق المحددة بالأزرق خالية. تاني يضع فيها بيانات كل عميل تلقائيًا بنفس المواضع عند المعاينة والنشر.",
+          "Design every brand element inside the artwork and leave the blue outlined zones clear. Tanee fills them with each customer’s live data in the same positions during preview and after publishing.",
         )}
       </p>
 

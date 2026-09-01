@@ -291,7 +291,7 @@ export function getShellPageContext(
     return { title: text.plans, parent: platformParent };
   if (pathname === "/dashboard")
     return { title: text.overview, parent: undefined };
-  if (!business) return { title: "LoyalFlow", parent: undefined };
+  if (!business) return { title: "Tanee", parent: undefined };
 
   const suffix = pathname?.replace(`/businesses/${business.slug}`, "") || "";
   const title = suffix.startsWith("/customers/")

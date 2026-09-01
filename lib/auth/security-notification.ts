@@ -13,15 +13,15 @@ type SecurityNotificationCopy = {
 const EN_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
   PASSWORD_CHANGED: {
     title: "Password changed",
-    message: "Your LoyalFlow account password was changed.",
+    message: "Your Tanee account password was changed.",
   },
   PASSWORD_RESET: {
     title: "Password reset",
-    message: "Your LoyalFlow account password was reset using the recovery flow.",
+    message: "Your Tanee account password was reset using the recovery flow.",
   },
   SESSIONS_REVOKED: {
     title: "Sessions revoked",
-    message: "Your other LoyalFlow sessions were signed out.",
+    message: "Your other Tanee sessions were signed out.",
   },
   MFA_ENABLED: {
     title: "Multi-factor authentication enabled",
@@ -36,15 +36,15 @@ const EN_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
 const AR_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
   PASSWORD_CHANGED: {
     title: "تم تغيير كلمة المرور",
-    message: "تم تغيير كلمة مرور حساب LoyalFlow الخاص بك.",
+    message: "تم تغيير كلمة مرور حساب تاني الخاص بك.",
   },
   PASSWORD_RESET: {
     title: "تمت إعادة تعيين كلمة المرور",
-    message: "تمت إعادة تعيين كلمة مرور حساب LoyalFlow باستخدام مسار الاسترداد.",
+    message: "تمت إعادة تعيين كلمة مرور حساب تاني باستخدام مسار الاسترداد.",
   },
   SESSIONS_REVOKED: {
     title: "تم إنهاء الجلسات الأخرى",
-    message: "تم تسجيل خروج جلسات LoyalFlow الأخرى الخاصة بحسابك.",
+    message: "تم تسجيل خروج جلسات تاني الأخرى الخاصة بحسابك.",
   },
   MFA_ENABLED: {
     title: "تم تفعيل المصادقة متعددة العوامل",

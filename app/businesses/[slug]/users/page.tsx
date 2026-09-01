@@ -1004,8 +1004,8 @@ export default async function UsersPage({
 
                               <p className="mt-1 break-words text-sm text-slate-500">
                                 {t(
-                                  "الحساب الموقوف لا يمكنه الدخول إلى LoyalFlow.",
-                                  "An inactive account cannot sign in to LoyalFlow.",
+                                  "الحساب الموقوف لا يمكنه الدخول إلى تاني.",
+                                  "An inactive account cannot sign in to Tanee.",
                                 )}
                               </p>
                             </div>

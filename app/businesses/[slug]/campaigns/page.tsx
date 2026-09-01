@@ -191,8 +191,8 @@ export default async function CampaignsPage({
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-foreground-muted">
               {language === "AR"
-                ? "LoyalFlow يجهز محتوى مخصصًا لكل عميل، لكنه لا يحفظ حملة ولا يرسل رسالة ولا يعرض نتائج تسليم."
-                : "LoyalFlow prepares personalized copy for each customer, but it does not save a campaign, send messages, or report delivery results."}
+                ? "تاني يجهز محتوى مخصصًا لكل عميل، لكنه لا يحفظ حملة ولا يرسل رسالة ولا يعرض نتائج تسليم."
+                : "Tanee prepares personalized copy for each customer, but it does not save a campaign, send messages, or report delivery results."}
             </p>
           </div>
           <div className="border-t border-border bg-surface-subtle p-5 lg:border-s lg:border-t-0 lg:p-6">

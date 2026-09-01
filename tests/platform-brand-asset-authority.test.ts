@@ -7,14 +7,16 @@ import { platformBrand } from "../lib/platform-brand";
 const source = (path: string) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("platform brand assets default to safe fallbacks until final identity is supplied", () => {
+test("platform brand assets use the approved bilingual Tanee wordmarks", () => {
   assert.deepEqual(platformBrand.assets, {
     mark: null,
-    wordmark: null,
+    wordmark: "/brand/tanee-wordmark-en.svg",
+    wordmarkAr: "/brand/tanee-wordmark-ar.svg",
     socialPreview: null,
   });
-  assert.equal(platformBrand.iconMark, "LF");
-  assert.equal(platformBrand.name, "LoyalFlow");
+  assert.equal(platformBrand.iconMark, "ee");
+  assert.equal(platformBrand.name, "Tanee");
+  assert.equal(platformBrand.nameAr, "تاني");
 });
 
 test("shared brand identity renderer owns mark and wordmark fallbacks", () => {
@@ -22,6 +24,8 @@ test("shared brand identity renderer owns mark and wordmark fallbacks", () => {
 
   assert.match(identity, /platformBrand\.assets\.mark/);
   assert.match(identity, /platformBrand\.assets\.wordmark/);
+  assert.match(identity, /platformBrand\.assets\.wordmarkAr/);
+  assert.match(identity, /locale\.toLowerCase\(\) === "ar"/);
   assert.match(identity, /fallback === "sparkles"/);
   assert.match(identity, /platformBrand\.iconMark/);
   assert.match(identity, /fallbackText = platformBrand\.name/);

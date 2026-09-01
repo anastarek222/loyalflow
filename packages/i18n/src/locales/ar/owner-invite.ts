@@ -1,10 +1,10 @@
 import type { OwnerInviteMessageKey } from "../en/owner-invite";
 
 export const arabicOwnerInviteMessages = {
-  "ownerInvite.metaTitle": "قبول دعوة المالك | LoyalFlow Beta",
-  "ownerInvite.metaDescription": "اقبل دعوة مالك آمنة في LoyalFlow Beta.",
+  "ownerInvite.metaTitle": "قبول دعوة المالك | تاني Beta",
+  "ownerInvite.metaDescription": "اقبل دعوة مالك آمنة في تاني Beta.",
   "ownerInvite.title": "قبول دعوة المالك",
-  "ownerInvite.body": "اختر كلمة مرور LoyalFlow لتفعيل حساب المالك المدعو.",
+  "ownerInvite.body": "اختر كلمة مرور تاني لتفعيل حساب المالك المدعو.",
   "ownerInvite.invalid": "رابط الدعوة غير صالح أو انتهت صلاحيته.",
   "ownerInvite.backLogin": "العودة لتسجيل الدخول",
   "ownerInvite.passwordMismatch": "كلمتا المرور غير متطابقتين.",

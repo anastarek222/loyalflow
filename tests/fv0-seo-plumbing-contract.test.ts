@@ -45,5 +45,5 @@ test("public SEO routes stay limited to approved marketing surfaces", async () =
   assert.match(robots, /publicSiteUrl\("\/sitemap\.xml"\)/);
 
   assert.match(publicUrl, /DEFAULT_PUBLIC_SITE_URL/);
-  assert.match(publicUrl, /loyalflow-gray\.vercel\.app/);
+  assert.match(publicUrl, /gettanee\.com/);
 });

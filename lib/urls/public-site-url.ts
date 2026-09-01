@@ -1,4 +1,4 @@
-const DEFAULT_PUBLIC_SITE_URL = "https://loyalflow-gray.vercel.app";
+const DEFAULT_PUBLIC_SITE_URL = "https://gettanee.com";
 
 function normalizePublicSiteUrl(value: string) {
   const url = new URL(value);

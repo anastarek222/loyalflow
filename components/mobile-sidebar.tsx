@@ -66,6 +66,7 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
         <div>
           <div className="flex items-center">
             <PlatformBrandIdentity
+              locale={language}
               fallback="letters"
               fallbackText={platformBrand.name}
               markClassName="hidden"

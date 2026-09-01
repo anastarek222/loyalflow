@@ -4,7 +4,7 @@ const dictionary = {
   AR: {
     backToBusiness: "الرجوع إلى النشاط",
     scan: "مسح",
-    scanner: "ماسح LoyalFlow",
+    scanner: "ماسح تاني",
     workspaceLabel: "مساحة التشغيل اليومية",
     cameraPanelTitle: "امسح الكارت بالكاميرا",
     cameraPanelDescription: "ضع رمز QR داخل الإطار وسيتم فتح العميل تلقائيًا.",
@@ -107,7 +107,7 @@ const dictionary = {
   EN: {
     backToBusiness: "Back to business",
     scan: "Scan",
-    scanner: "LoyalFlow scanner",
+    scanner: "Tanee scanner",
     workspaceLabel: "Daily operations workspace",
     cameraPanelTitle: "Scan the card with your camera",
     cameraPanelDescription:
