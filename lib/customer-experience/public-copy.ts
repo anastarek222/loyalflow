@@ -12,11 +12,17 @@ export type PublicExperienceCopy = {
   install: string;
   installed: string;
   installHelpTitle: string;
-  iosInstallHelp: string;
+  installHelpIntro: string;
+  iosInstallSteps: readonly string[];
+  androidInstallSteps: readonly string[];
   otherInstallHelp: string;
   close: string;
   qrUnavailable: string;
   qrAlternative: string;
+  newForYou: string;
+  newOffer: string;
+  newReward: string;
+  dismissHighlight: string;
 };
 
 /** Public copy always follows the business-owned card language. */
@@ -30,14 +36,52 @@ export function getPublicExperienceCopy(value: unknown): PublicExperienceCopy {
     copyLink: ar ? "نسخ الرابط" : "Copy link",
     copied: ar ? "تم نسخ الرابط" : "Link copied",
     shareCancelled: ar ? "تم إلغاء المشاركة" : "Sharing was cancelled",
-    shareFailed: ar ? "تعذرت المشاركة. يمكنك نسخ الرابط بدلًا من ذلك." : "Unable to share. You can copy the link instead.",
+    shareFailed: ar
+      ? "تعذرت المشاركة. يمكنك نسخ الرابط بدلًا من ذلك."
+      : "Unable to share. You can copy the link instead.",
     install: ar ? "إضافة للشاشة الرئيسية" : "Add to Home Screen",
     installed: ar ? "الكارت مضاف بالفعل" : "Card already added",
-    installHelpTitle: ar ? "إضافة الكارت للشاشة الرئيسية" : "Add card to Home Screen",
-    iosInstallHelp: ar ? "في Safari، اضغط زر المشاركة ثم اختر «إضافة إلى الشاشة الرئيسية»." : "In Safari, tap Share, then choose “Add to Home Screen”.",
-    otherInstallHelp: ar ? "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» إذا كانت متاحة." : "Open your browser menu and choose “Install app” or “Add to Home Screen” when available.",
+    installHelpTitle: ar
+      ? "إضافة الكارت للشاشة الرئيسية"
+      : "Add card to Home Screen",
+    installHelpIntro: ar
+      ? "اتبع الخطوات المناسبة لجهازك، وستظهر البطاقة كأيقونة مستقلة."
+      : "Follow these steps and the card will appear as its own Home Screen icon.",
+    iosInstallSteps: ar
+      ? [
+          "افتح صفحة الكارت في Safari.",
+          "اضغط زر المشاركة في شريط Safari.",
+          "مرر لأسفل واختر «إضافة إلى الشاشة الرئيسية»، ثم اضغط «إضافة».",
+        ]
+      : [
+          "Open this card page in Safari.",
+          "Tap the Share button in Safari's toolbar.",
+          "Scroll down, choose “Add to Home Screen”, then tap “Add”.",
+        ],
+    androidInstallSteps: ar
+      ? [
+          "افتح صفحة الكارت في Chrome.",
+          "اضغط قائمة ⋮ أعلى المتصفح.",
+          "اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»، ثم أكد الإضافة.",
+        ]
+      : [
+          "Open this card page in Chrome.",
+          "Tap the ⋮ browser menu.",
+          "Choose “Install app” or “Add to Home screen”, then confirm.",
+        ],
+    otherInstallHelp: ar
+      ? "افتح قائمة المتصفح واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية» إذا كانت متاحة."
+      : "Open your browser menu and choose “Install app” or “Add to Home Screen” when available.",
     close: ar ? "إغلاق" : "Close",
-    qrUnavailable: ar ? "تعذر إنشاء رمز QR الآن." : "The QR code is unavailable right now.",
-    qrAlternative: ar ? "استخدم رابط الكارت للمسح أو المشاركة." : "Use the card link to open or share this card.",
+    qrUnavailable: ar
+      ? "تعذر إنشاء رمز QR الآن."
+      : "The QR code is unavailable right now.",
+    qrAlternative: ar
+      ? "استخدم رابط الكارت للمسح أو المشاركة."
+      : "Use the card link to open or share this card.",
+    newForYou: ar ? "جديد لك" : "New for you",
+    newOffer: ar ? "عرض جديد لك" : "New offer for you",
+    newReward: ar ? "مكافأة جديدة" : "New reward",
+    dismissHighlight: ar ? "إخفاء التنبيه" : "Dismiss update",
   };
 }

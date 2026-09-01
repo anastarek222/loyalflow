@@ -1,13 +1,19 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
+import { BusinessLogoImage } from "@/components/business-logo-image";
+import {
+  BUSINESS_LOGO_ACCEPT,
+  BUSINESS_LOGO_MAX_BYTES,
+  isBusinessLogoMimeType,
+} from "@/lib/branding/image-policy";
 import {
   CountrySelector,
   type CountrySelectorHandle,
 } from "@/components/onboarding/country-selector";
 import { StandardCardSetup } from "@/components/standard-card-setup";
+import { UnitLabelInput } from "@/components/unit-label-input";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import {
   createOwnerOnboardingCardPreviewState,
@@ -188,7 +194,7 @@ export function OwnerOnboardingWizard({
       noValidate
       data-owner-step={step + 1}
       data-owner-hydrated="false"
-      className="mx-auto min-w-0 max-w-6xl overflow-hidden rounded-3xl border border-border/80 bg-white shadow-[0_24px_60px_rgb(15_23_42/0.1)]"
+      className="mx-auto min-w-0 max-w-6xl overflow-clip rounded-3xl border border-border/80 bg-white shadow-[0_24px_60px_rgb(15_23_42/0.1)]"
     >
       <div className="grid min-w-0 lg:grid-cols-[17rem_minmax(0,1fr)]">
         <aside className="hidden border-e border-border bg-surface-subtle/70 p-6 lg:block">
@@ -231,7 +237,7 @@ export function OwnerOnboardingWizard({
           </div>
         </aside>
 
-        <div className="min-w-0 space-y-6 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-8 lg:p-10">
+        <div className="min-w-0 space-y-6 p-4 pb-28 sm:p-8 sm:pb-8 lg:p-10">
           <div
             className="lg:hidden"
             data-testid="owner-mobile-step-header"
@@ -476,13 +482,12 @@ export function OwnerOnboardingWizard({
             </label>
             <label className="block text-sm font-bold">
               {copy.loyaltyUnit}
-              <input
+              <UnitLabelInput
                 data-onboarding-field="unitName"
                 name="unitName"
                 aria-invalid={Boolean(fieldErrors.unitName)}
                 defaultValue={String(draft.unitName || "Visit")}
                 onChange={updateCardPreview}
-                maxLength={30}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               />
             </label>
@@ -549,10 +554,9 @@ export function OwnerOnboardingWizard({
             <div className="flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
               <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
                 {logoPreview ? (
-                  <img
+                  <BusinessLogoImage
                     src={logoPreview}
                     alt={copy.identity}
-                    className="size-full object-contain p-2"
                   />
                 ) : (
                   <span className="text-3xl font-black text-foreground-subtle">
@@ -585,10 +589,9 @@ export function OwnerOnboardingWizard({
             <div className="mt-4 flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
               <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
                 {logoPreview ? (
-                  <img
+                  <BusinessLogoImage
                     src={logoPreview}
                     alt={copy.identity}
-                    className="size-full object-contain p-2"
                   />
                 ) : (
                   <span className="text-3xl font-black text-foreground-subtle">
@@ -601,10 +604,14 @@ export function OwnerOnboardingWizard({
                 <input
                   name="logoFile"
                   type="file"
-                  accept="image/png,image/jpeg,image/webp"
+                  accept={BUSINESS_LOGO_ACCEPT}
                   onChange={(event) => {
                     const file = event.target.files?.[0];
-                    if (!file || file.size > 500 * 1024) {
+                    if (
+                      !file ||
+                      file.size > BUSINESS_LOGO_MAX_BYTES ||
+                      !isBusinessLogoMimeType(file.type)
+                    ) {
                       if (file) setNotice(copy.logoError);
                       event.target.value = "";
                       return;
@@ -630,6 +637,7 @@ export function OwnerOnboardingWizard({
                 language={locale === "ar" ? "AR" : "EN"}
                 initial={{
                   primaryColor: String(draft.primaryColor || "#111827"),
+                  secondaryColor: String(draft.secondaryColor || "#FFFFFF"),
                   themePreset: String(draft.themePreset || "DEFAULT"),
                   artworkEnabled: draft.standardCardArtworkEnabled !== false,
                   artworkCategory: String(
@@ -656,7 +664,10 @@ export function OwnerOnboardingWizard({
             </p>
           </section>
 
-          <div className="grid min-w-0 grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-between">
+          <div
+            data-testid="owner-mobile-action-bar"
+            className="sticky bottom-0 z-20 -mx-4 grid min-w-0 grid-cols-2 gap-3 border-t border-border/80 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgb(15_23_42/0.08)] backdrop-blur sm:static sm:mx-0 sm:flex sm:items-center sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+          >
             <button
               type="button"
               onClick={() => transitionToStep(step - 1)}

@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import {
+  STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
+  standardCardGraphemeLength,
+} from "@/lib/cards/standard-card-text";
+import {
   isSupportedCurrency,
   isValidBusinessPhone,
   isValidIanaTimezone,
@@ -51,7 +55,17 @@ export const businessIdentityFields = {
 
 export const loyaltyProgramFields = {
   loyaltyMode: z.enum(["VISITS", "POINTS", "SALES_AMOUNT"]),
-  unitName: z.string().trim().min(1).max(30),
+  unitName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(30)
+    .refine(
+      (value) =>
+        standardCardGraphemeLength(value) <=
+        STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
+      `Unit name must be ${STANDARD_CARD_UNIT_LABEL_MAX_LENGTH} characters or fewer.`,
+    ),
   earnAmount: z.coerce.number().int().min(1).max(1_000_000),
   rewardThreshold: z.coerce.number().int().min(1).max(1_000_000),
   rewardName: z.string().trim().min(2).max(100),

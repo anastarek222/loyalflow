@@ -6,10 +6,15 @@ import { ProgramRulesForm } from "@/components/program-rules-form";
 import { StandardCardSetup } from "@/components/standard-card-setup";
 import { CustomCardArtworkManager } from "@/components/custom-card-artwork-manager";
 import {
+  BUSINESS_LOGO_ACCEPT,
+  BUSINESS_LOGO_MAX_KB,
+} from "@/lib/branding/image-policy";
+import {
   customCardStorageConfigured,
   isManagedCustomCardArtworkUrl,
   listCustomCardArtworkVersions,
 } from "@/lib/cards/custom-card-storage";
+import { getLoyaltyCardPreviewData } from "@/lib/cards/standard-card";
 import { normalizeLanguage } from "@/lib/i18n";
 import { loyaltyProgrammeSummary } from "@/lib/loyalty/presentation";
 import { canManageBusiness } from "@/lib/permissions";
@@ -85,6 +90,10 @@ export default async function LoyaltyProgramPage({
     earnAmount: business.earnAmount,
     rewardThreshold: business.rewardThreshold,
   });
+  const cardPreviewCustomer = getLoyaltyCardPreviewData(
+    business.loyaltyMode,
+    business.rewardThreshold,
+  );
   const updateProgramRules = updateProgramRulesAction.bind(null, business.slug);
   const updateCardDesign = updateBusinessCardDesignCommandAction.bind(
     null,
@@ -298,8 +307,22 @@ export default async function LoyaltyProgramPage({
             <CustomCardArtworkManager
               slug={business.slug}
               selectedVersion={query.customVersion}
+              status={query.cardDesign}
               versions={customArtworkVersions}
               storageConfigured={customCardStorageConfigured()}
+              preview={{
+                businessName: business.name,
+                primaryColor: business.primaryColor,
+                secondaryColor: business.secondaryColor,
+                customerName: cardPreviewCustomer.customerName,
+                customerId: cardPreviewCustomer.customerId,
+                balance: cardPreviewCustomer.balance,
+                loyaltyMode: business.loyaltyMode,
+                unitName: business.unitName,
+                currency: business.currency,
+                rewardName: business.rewardName,
+                rewardThreshold: business.rewardThreshold,
+              }}
             />
           ) : null}
           <form action={updateCardDesign}>
@@ -321,9 +344,15 @@ export default async function LoyaltyProgramPage({
                     <input
                       name="logoFile"
                       type="file"
-                      accept="image/png,image/jpeg,image/webp"
+                      accept={BUSINESS_LOGO_ACCEPT}
                       className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
                     />
+                    <span className="mt-1 block text-xs font-medium text-foreground-muted">
+                      {t(
+                        `PNG أو JPEG أو WebP — بحد أقصى ${BUSINESS_LOGO_MAX_KB}KB.`,
+                        `PNG, JPEG, or WebP — up to ${BUSINESS_LOGO_MAX_KB}KB.`,
+                      )}
+                    </span>
                   </label>
                   <label className="text-sm font-bold text-foreground">
                     {t("أو رابط الشعار", "Or logo URL")}
@@ -354,6 +383,7 @@ export default async function LoyaltyProgramPage({
                 businessName: business.name,
                 logoUrl: business.logoUrl ?? "",
                 primaryColor: business.primaryColor,
+                secondaryColor: business.secondaryColor,
                 themePreset: business.themePreset,
                 artworkEnabled: business.standardCardArtworkEnabled,
                 artworkCategory: business.standardCardArtworkCategory,
@@ -448,7 +478,7 @@ function ProgramSummary({ label, value }: { label: string; value: string }) {
       </p>
       <p
         dir="auto"
-        className="mt-1 truncate text-sm font-black text-white sm:text-base"
+        className="mt-1 text-balance text-xs font-black leading-tight text-white [hyphens:none] [overflow-wrap:normal] [word-break:normal] sm:text-sm lg:text-base"
       >
         {value}
       </p>

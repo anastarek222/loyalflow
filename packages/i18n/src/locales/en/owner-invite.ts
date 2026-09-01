@@ -1,9 +1,9 @@
 export const englishOwnerInviteMessages = {
-  "ownerInvite.metaTitle": "Accept owner invitation | Tanee Beta",
-  "ownerInvite.metaDescription": "Accept a secure Tanee Beta owner invitation.",
+  "ownerInvite.metaTitle": "Accept owner invitation | LoyalFlow Beta",
+  "ownerInvite.metaDescription": "Accept a secure LoyalFlow Beta owner invitation.",
   "ownerInvite.title": "Accept owner invitation",
   "ownerInvite.body":
-    "Choose your Tanee password to activate your invited owner account.",
+    "Choose your LoyalFlow password to activate your invited owner account.",
   "ownerInvite.invalid": "This invitation link is invalid or has expired.",
   "ownerInvite.backLogin": "Back to login",
   "ownerInvite.passwordMismatch": "The passwords do not match.",

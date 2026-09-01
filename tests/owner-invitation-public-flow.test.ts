@@ -35,17 +35,21 @@ test("invalid, expired, replayed, or unavailable invitations share a generic pub
   assert.doesNotMatch(page, /email_unavailable/);
 });
 
-test("owner invitation delivery uses Resend, the verified Tanee sender, and a 24-hour link", () => {
+test("owner invitation delivery uses shared Resend delivery and a 24-hour link", () => {
   const delivery = source("lib/auth/owner-invitation-email.ts");
+  const transport = source("lib/auth/resend-email-delivery.ts");
   const sender = source("lib/auth/auth-email-sender.ts");
   const action = source("app/businesses/actions.ts");
 
-  assert.match(delivery, /RESEND_API_KEY/);
-  assert.match(delivery, /resolveTaneeAuthEmailSender/);
-  assert.doesNotMatch(delivery, /PASSWORD_RESET_FROM_EMAIL/);
-  assert.match(sender, /noreply@gettanee\.com/);
+  assert.match(delivery, /sendResendAuthEmail/);
+  assert.match(delivery, /createAuthEmailIdempotencyKey/);
+  assert.match(delivery, /purpose:\s*"owner-invitation"/);
   assert.match(delivery, /\/accept-owner-invitation\?token=/);
   assert.match(delivery, /expires in 24 hours/i);
+  assert.match(transport, /process\.env\.RESEND_API_KEY/);
+  assert.match(transport, /resolveTaneeAuthEmailSender\(\)/);
+  assert.doesNotMatch(transport, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(sender, /noreply@gettanee\.com/);
   assert.match(action, /sendOwnerInvitationEmail/);
   assert.match(action, /token:\s*invitation\.token/);
   assert.doesNotMatch(action, /token:\s*invitation\.tokenHash/);

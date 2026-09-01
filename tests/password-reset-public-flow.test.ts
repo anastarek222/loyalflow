@@ -63,29 +63,30 @@ test("forgot and reset pages keep reset tokens out of rendered prose", () => {
   assert.doesNotMatch(reset, /\{token\}/);
 });
 
-test("password reset email delivery uses the canonical app origin and verified Tanee sender", () => {
+test("password reset email delivery uses the canonical app origin and never logs the token", () => {
   const delivery = source("lib/auth/password-reset-email.ts");
-  const sender = source("lib/auth/auth-email-sender.ts");
 
   assert.match(delivery, /getConfiguredAppUrl/);
   assert.match(delivery, /\/reset-password\?token=/);
-  assert.match(delivery, /RESEND_API_KEY/);
-  assert.match(delivery, /resolveTaneeAuthEmailSender/);
-  assert.doesNotMatch(delivery, /PASSWORD_RESET_FROM_EMAIL/);
-  assert.match(sender, /noreply@gettanee\.com/);
+  assert.match(delivery, /sendResendAuthEmail/);
+  assert.match(delivery, /createAuthEmailIdempotencyKey/);
   assert.doesNotMatch(delivery, /console\.(log|info|debug)/);
 });
 
 test("password reset delivery configuration is server-only and fails closed", () => {
   const email = source("lib/auth/password-reset-email.ts");
+  const transport = source("lib/auth/resend-email-delivery.ts");
+  const sender = source("lib/auth/auth-email-sender.ts");
   const env = source(".env.example");
 
-  assert.match(email, /process\.env\.RESEND_API_KEY/);
-  assert.match(email, /resolveTaneeAuthEmailSender\(\)/);
-  assert.doesNotMatch(email, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
-  assert.match(email, /PasswordResetEmailError\("NOT_CONFIGURED"\)/);
-  assert.match(email, /if\s*\(!response\.ok\)/);
-  assert.match(email, /PasswordResetEmailError\("DELIVERY_FAILED"\)/);
+  assert.match(transport, /process\.env\.RESEND_API_KEY/);
+  assert.match(transport, /resolveTaneeAuthEmailSender\(\)/);
+  assert.doesNotMatch(transport, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);
+  assert.match(sender, /noreply@gettanee\.com/);
+  assert.match(transport, /AuthEmailDeliveryError\("NOT_CONFIGURED"\)/);
+  assert.match(transport, /AuthEmailDeliveryError\("DELIVERY_FAILED"\)/);
+  assert.match(email, /AuthEmailDeliveryError/);
+  assert.match(email, /PasswordResetEmailError\(error\.reason\)/);
 
   assert.match(env, /RESEND_API_KEY=""/);
   assert.doesNotMatch(env, /PASSWORD_RESET_FROM_EMAIL/);

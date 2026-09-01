@@ -1,4 +1,10 @@
+import { randomUUID } from "node:crypto";
+
+import { PrismaPg } from "@prisma/adapter-pg";
 import { expect, test } from "@playwright/test";
+
+import { PrismaClient } from "@/generated/prisma/client";
+import { generateTotpCode } from "@/lib/auth/super-admin-mfa";
 
 import {
   cleanupBrowserUat,
@@ -6,38 +12,94 @@ import {
   type BrowserUatFixture,
   uatEmail,
 } from "./fixtures";
+import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
-test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () => {
+async function withDisposableFixtureDatabase(
+  operation: (prisma: PrismaClient) => Promise<void>,
+) {
+  const connectionString = process.env.DATABASE_URL?.trim();
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is required for disposable browser UAT.");
+  }
+
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString }),
+  });
+  try {
+    await operation(prisma);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function seedConsumedPendingOwnerInvitation(runId: string) {
+  const usedAt = new Date();
+  const expiresAt = new Date(usedAt.getTime() + 24 * 60 * 60 * 1000);
+  const email = uatEmail("pending-owner", runId);
+
+  await withDisposableFixtureDatabase(async (prisma) => {
+    await prisma.$executeRaw`
+      INSERT INTO "OwnerInvitation" (
+        "id", "firstName", "lastName", "email", "tokenHash", "expiresAt", "usedAt", "createdAt"
+      ) VALUES (
+        ${randomUUID()},
+        ${"Final UAT"},
+        ${"Pending Owner"},
+        ${email},
+        ${`browser-uat-${randomUUID()}`},
+        ${expiresAt},
+        ${usedAt},
+        CURRENT_TIMESTAMP
+      )
+    `;
+  });
+}
+
+async function cleanupConsumedPendingOwnerInvitation(runId: string) {
+  const email = uatEmail("pending-owner", runId);
+
+  await withDisposableFixtureDatabase(async (prisma) => {
+    await prisma.$executeRaw`
+      DELETE FROM "OwnerInvitation"
+      WHERE "email" = ${email}
+    `;
+  });
+}
+
+test.describe
+  .serial("Owner onboarding mobile transition @owner-onboarding", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
     fixture = prepared.fixture;
     manifestPath = prepared.manifestPath;
+
+    if (!process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+      await seedConsumedPendingOwnerInvitation(fixture.runId);
+    }
   });
 
   test.afterAll(async () => {
     if (fixture && manifestPath) {
+      if (!process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+        await cleanupConsumedPendingOwnerInvitation(fixture.runId);
+      }
       await cleanupBrowserUat(fixture.runId, manifestPath);
     }
   });
 
-  test("valid Step 1 visibly advances and closes the country selector", async ({
+  test("pending Owner completes setup, launches, and re-enters the one Business directly", async ({
     page,
   }) => {
-    const diagnostics: string[] = [];
-    page.on("console", (message) => {
-      if (message.type() === "debug") diagnostics.push(message.text());
-    });
+    test.setTimeout(120_000);
 
     await page.goto("/login");
     await page
       .getByLabel("Email address")
       .fill(uatEmail("pending-owner", fixture.runId));
-    await page
-      .getByLabel("Password")
-      .fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
 
@@ -52,9 +114,9 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     await country.fill("EG");
-    await expect(page.locator('input[type="hidden"][name="country"]')).toHaveValue(
-      "Egypt",
-    );
+    await expect(
+      page.locator('input[type="hidden"][name="country"]'),
+    ).toHaveValue("Egypt");
     await expect(page.getByRole("listbox")).toHaveCount(0);
 
     await page.getByPlaceholder("Business name").fill("");
@@ -64,7 +126,9 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
     ).toBeVisible();
     await expect(form).toHaveAttribute("data-owner-step", "1");
 
-    await page.getByPlaceholder("Business name").fill("Mobile Safari Studio");
+    const businessName = `LoyalFlow final UAT O ${fixture.runId}`;
+    const businessSlug = `loyalflow-final-uat-o-${fixture.runId}`;
+    await page.getByPlaceholder("Business name").fill(businessName);
     await country.click();
     await expect(page.getByRole("listbox")).toBeVisible();
     await page.getByRole("button", { name: "Next", exact: true }).click();
@@ -89,13 +153,119 @@ test.describe.serial("Owner onboarding mobile transition @owner-onboarding", () 
       )
       .toBe(true);
 
-    for (const checkpoint of [
-      "OWNER_NEXT_CLICK",
-      "OWNER_STEP1_VALID",
-      "OWNER_STEP_CHANGE_2",
-      "OWNER_STEP_RENDER_2",
-    ]) {
-      expect(diagnostics).toContain(checkpoint);
+    // Remote exact-SHA UAT reuses one prepared manifest across Chromium and
+    // WebKit. Keep that shared runtime check mutation-free; the disposable PR
+    // database executes and cleans the complete launch receipt below.
+    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;
+
+    for (const step of [3, 4, 5, 6]) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+      await expect(form).toHaveAttribute("data-owner-step", String(step));
     }
+
+    await page.getByRole("button", { name: "Launch", exact: true }).click();
+    await expect(
+      page,
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
+      timeout: 30_000,
+    });
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
+
+    await page
+      .getByRole("button", { name: "Account menu", exact: true })
+      .click();
+    await Promise.all([
+      page.waitForURL(/\/login$/),
+      page.getByRole("button", { name: "Log out", exact: true }).click(),
+    ]);
+
+    await page
+      .getByLabel("Email address")
+      .fill(uatEmail("pending-owner", fixture.runId));
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+      timeout: 20_000,
+    });
+    await expect(page).not.toHaveURL(/\/onboarding$/);
+  });
+
+  test("Super Admin provisions a complete Business and its Owner can enter directly", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    test.skip(
+      Boolean(process.env.STAGING_UAT_MANIFEST_PATH?.trim()),
+      "Business provisioning requires the disposable PR database.",
+    );
+
+    const businessName = `LoyalFlow final UAT SA ${fixture.runId}`;
+    const businessSlug = `loyalflow-final-uat-sa-${fixture.runId}`;
+    const ownerEmail = uatEmail("provisioned-owner", fixture.runId);
+
+    await page.goto("/login");
+    await page
+      .getByLabel("Email address")
+      .fill(uatEmail("superadmin", fixture.runId));
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page.getByTestId("login-mfa-step")).toBeVisible();
+    await page
+      .locator("#mfaCode")
+      .fill(generateTotpCode(UAT_SUPER_ADMIN_MFA_SECRET));
+    await page
+      .getByTestId("login-mfa-step")
+      .locator('button[type="submit"]')
+      .click();
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
+
+    await page.goto("/businesses/new");
+    await page.getByRole("button", { name: /^Custom setup/ }).click();
+    await page.getByPlaceholder("Business name").fill(businessName);
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+
+    await page.getByPlaceholder("First name").fill("Provisioned");
+    await page.getByPlaceholder("Owner email").fill(ownerEmail);
+    await page
+      .getByPlaceholder(/Password — minimum/)
+      .fill(process.env.UAT_FIXTURE_PASSWORD!);
+
+    for (let expectedStep = 2; expectedStep <= 5; expectedStep += 1) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+      await expect(
+        page.getByRole("button", {
+          name: new RegExp(`^${expectedStep + 1}\\.`),
+        }),
+      ).toHaveAttribute("aria-current", "step");
+    }
+
+    await page
+      .getByRole("button", { name: "Create business", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${businessSlug}/users(?:\\?.*)?$`),
+      { timeout: 30_000 },
+    );
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
+
+    await page
+      .getByRole("button", { name: "Account menu", exact: true })
+      .click();
+    await Promise.all([
+      page.waitForURL(/\/login$/),
+      page.getByRole("button", { name: "Log out", exact: true }).click(),
+    ]);
+
+    await page.getByLabel("Email address").fill(ownerEmail);
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/businesses/${businessSlug}$`), {
+      timeout: 20_000,
+    });
+    await expect(page).not.toHaveURL(/\/onboarding$/);
   });
 });

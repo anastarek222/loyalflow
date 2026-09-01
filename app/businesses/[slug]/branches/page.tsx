@@ -121,19 +121,19 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
           </div>
         </header>
 
-        {query.success === "created" && <Notice tone="success">{t(language, "تم إنشاء الفرع بنجاح.", "Branch created successfully.")}</Notice>}
-        {query.success === "updated" && <Notice tone="success">{t(language, "تم تحديث بيانات الفرع.", "Branch details updated.")}</Notice>}
-        {query.success === "activated" && <Notice tone="success">{t(language, "تم تفعيل الفرع.", "Branch activated.")}</Notice>}
-        {query.success === "deactivated" && <Notice tone="warning">{t(language, "تم إيقاف الفرع. لن تقبل عمليات الولاء الجديدة عليه.", "Branch deactivated. New loyalty operations will not be accepted there.")}</Notice>}
-        {query.success === "assigned" && <Notice tone="success">{t(language, "تم إسناد الموظف إلى الفرع.", "Staff member assigned to the branch.")}</Notice>}
-        {query.success === "assignment-removed" && <Notice tone="success">{t(language, "تمت إزالة إسناد الموظف بأمان.", "Staff assignment removed safely.")}</Notice>}
-        {query.error === "invalid" && <Notice tone="error">{t(language, "راجع بيانات الفرع أو الاختيار المدخل.", "Review the branch data or selected value.")}</Notice>}
-        {query.error === "duplicate-name" && <Notice tone="error">{t(language, "يوجد فرع آخر بالاسم نفسه في هذا النشاط.", "Another branch with the same name already exists in this business.")}</Notice>}
-        {query.error === "duplicate-assignment" && <Notice tone="warning">{t(language, "هذا الموظف مسند إلى الفرع بالفعل.", "This staff member is already assigned to the branch.")}</Notice>}
-        {query.error === "ineligible-user" && <Notice tone="error">{t(language, "يمكن إسناد موظف نشط من نفس النشاط فقط.", "Only an active staff member from this business can be assigned.")}</Notice>}
-        {query.error === "not-found" && <Notice tone="error">{t(language, "الفرع أو الإسناد المطلوب غير موجود ضمن هذا النشاط.", "The requested branch or assignment was not found in this business.")}</Notice>}
+        {query.success === "created" && <Notice role="status" tone="success">{t(language, "تم إنشاء الفرع بنجاح.", "Branch created successfully.")}</Notice>}
+        {query.success === "updated" && <Notice role="status" tone="success">{t(language, "تم تحديث بيانات الفرع.", "Branch details updated.")}</Notice>}
+        {query.success === "activated" && <Notice role="status" tone="success">{t(language, "تم تفعيل الفرع.", "Branch activated.")}</Notice>}
+        {query.success === "deactivated" && <Notice role="status" tone="warning">{t(language, "تم إيقاف الفرع. لن تقبل عمليات الولاء الجديدة عليه.", "Branch deactivated. New loyalty operations will not be accepted there.")}</Notice>}
+        {query.success === "assigned" && <Notice role="status" tone="success">{t(language, "تم إسناد الموظف إلى الفرع.", "Staff member assigned to the branch.")}</Notice>}
+        {query.success === "assignment-removed" && <Notice role="status" tone="success">{t(language, "تمت إزالة إسناد الموظف بأمان.", "Staff assignment removed safely.")}</Notice>}
+        {query.error === "invalid" && <Notice role="alert" tone="error">{t(language, "راجع بيانات الفرع أو الاختيار المدخل.", "Review the branch data or selected value.")}</Notice>}
+        {query.error === "duplicate-name" && <Notice role="alert" tone="error">{t(language, "يوجد فرع آخر بالاسم نفسه في هذا النشاط.", "Another branch with the same name already exists in this business.")}</Notice>}
+        {query.error === "duplicate-assignment" && <Notice role="alert" tone="warning">{t(language, "هذا الموظف مسند إلى الفرع بالفعل.", "This staff member is already assigned to the branch.")}</Notice>}
+        {query.error === "ineligible-user" && <Notice role="alert" tone="error">{t(language, "يمكن إسناد موظف نشط من نفس النشاط فقط.", "Only an active staff member from this business can be assigned.")}</Notice>}
+        {query.error === "not-found" && <Notice role="alert" tone="error">{t(language, "الفرع أو الإسناد المطلوب غير موجود ضمن هذا النشاط.", "The requested branch or assignment was not found in this business.")}</Notice>}
         {query.error === "subscription-restricted" && (
-          <Notice tone="warning">
+          <Notice role="alert" tone="warning">
             {t(language, "لا تسمح حالة الاشتراك الحالية بإضافة فرع أو تغيير بياناته أو حالته أو إسنادات موظفيه. تظل الفروع والبيانات الحالية متاحة للقراءة.", "The current subscription state does not allow adding a branch or changing its details, status, or staff assignments. Existing branches and data remain readable.")}
           </Notice>
         )}
@@ -271,13 +271,13 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
   );
 }
 
-function Notice({ children, tone }: { children: ReactNode; tone: "success" | "warning" | "error" }) {
+function Notice({ children, tone, role }: { children: ReactNode; tone: "success" | "warning" | "error"; role: "status" | "alert" }) {
   const className = tone === "success"
     ? "border-emerald-200 bg-emerald-50 text-emerald-800"
     : tone === "warning"
       ? "border-amber-200 bg-amber-50 text-amber-800"
       : "border-red-200 bg-red-50 text-red-800";
-  return <div className={`mb-6 rounded-xl border px-4 py-3 ${className}`}>{children}</div>;
+  return <div role={role} className={`mb-6 rounded-xl border px-4 py-3 ${className}`}>{children}</div>;
 }
 
 function BranchMetric({ label, value }: { label: string; value: number }) {

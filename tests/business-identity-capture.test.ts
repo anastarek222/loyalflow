@@ -7,6 +7,7 @@ import {
   imageFileToDataUrl,
   isValidRemoteImageUrl,
 } from "@/lib/branding/image-data";
+import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import { businessCreationSchema } from "@/lib/business/creation-input";
 import {
   isValidOwnerPhone,
@@ -79,12 +80,16 @@ test("invalid owner phones are rejected after normalization", () => {
 test("business creation accepts safe logo URLs and a pre-serialized bounded logo", async () => {
   const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
   const logo = new File([png], "logo.png", { type: "image/png" });
-  const dataUrl = await imageFileToDataUrl(logo, 500 * 1024);
+  const dataUrl = await imageFileToDataUrl(logo, BUSINESS_LOGO_MAX_BYTES);
   const action = fs.readFileSync(path.join(root, "app/businesses/actions.ts"), "utf8");
 
   assert.equal(businessCreationSchema.safeParse(validBusinessInput()).success, true);
   assert.ok(dataUrl?.startsWith("data:image/png;base64,"));
-  assert.match(action, /getSafeImageDataUrl\(submittedLogoDataUrl, 500 \* 1024\)/);
+  assert.match(action, /import \{ BUSINESS_LOGO_MAX_BYTES \} from "@\/lib\/branding\/image-policy"/);
+  assert.match(
+    action,
+    /getSafeImageDataUrl\(\s*submittedLogoDataUrl,\s*BUSINESS_LOGO_MAX_BYTES,?\s*\)/,
+  );
   assert.doesNotMatch(action, /formData\.get\("logoFile"\)/);
   assert.match(action, /logoUrl: finalLogoUrl/);
 });
@@ -99,7 +104,7 @@ test("business creation rejects unsafe logo URLs and invalid uploads", async () 
     ).success,
     false,
   );
-  assert.equal(await imageFileToDataUrl(invalidLogo, 500 * 1024), null);
+  assert.equal(await imageFileToDataUrl(invalidLogo, BUSINESS_LOGO_MAX_BYTES), null);
 });
 
 test("existing onboarding fields and the isolated business-owner transaction remain intact", () => {

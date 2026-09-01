@@ -58,6 +58,138 @@ function getRoleLabel(role: string | undefined, language: AppLanguage) {
       : "user";
 }
 
+function localizeLegacyActivityDescription(
+  activity: Readonly<{
+    type: ActivityType;
+    description: string;
+  }>,
+  language: AppLanguage,
+) {
+  if (language !== "EN") return activity.description;
+
+  const value = activity.description;
+
+  switch (activity.type) {
+    case "CUSTOMER_CREATED": {
+      const direct = /^تم إنشاء العميل (.+)$/.exec(value);
+      if (direct) return `Created customer ${direct[1]}`;
+      const selfService = /^انضم العميل (.+) عبر التسجيل الذاتي$/.exec(value);
+      return selfService
+        ? `Customer ${selfService[1]} joined through self-registration`
+        : value;
+    }
+    case "CUSTOMER_UPDATED": {
+      const match = /^تم تحديث بيانات العميل (.+)$/.exec(value);
+      return match ? `Updated customer information for ${match[1]}` : value;
+    }
+    case "CUSTOMER_REACTIVATED":
+      if (value === "تم إعادة تفعيل حساب العميل") return "Reactivated customer account";
+      if (value === "تمت إعادة تفعيل العميل عبر عملية جماعية") {
+        return "Reactivated customer through a bulk action";
+      }
+      return value;
+    case "CUSTOMER_DEACTIVATED":
+      if (value === "تم إيقاف حساب العميل" || value === "تم تعطيل حساب العميل") {
+        return "Deactivated customer account";
+      }
+      if (
+        value === "تم إيقاف العميل عبر عملية جماعية" ||
+        value === "تم تعطيل العميل عبر عملية جماعية"
+      ) {
+        return "Deactivated customer through a bulk action";
+      }
+      return value;
+    case "CUSTOMER_TAG_ASSIGNED": {
+      const direct = /^تمت إضافة وسم العميل: (.+)$/.exec(value);
+      if (direct) return `Added customer tag: ${direct[1]}`;
+      const bulk = /^تمت إضافة وسم العميل عبر عملية جماعية: (.+)$/.exec(value);
+      return bulk ? `Added customer tag through a bulk action: ${bulk[1]}` : value;
+    }
+    case "CUSTOMER_TAG_REMOVED": {
+      const direct = /^تمت إزالة وسم العميل: (.+)$/.exec(value);
+      if (direct) return `Removed customer tag: ${direct[1]}`;
+      const bulk = /^تمت إزالة وسم العميل عبر عملية جماعية: (.+)$/.exec(value);
+      return bulk
+        ? `Removed customer tag through a bulk action: ${bulk[1]}`
+        : value;
+    }
+    case "CUSTOMER_NOTE_CREATED":
+      return value === "تمت إضافة ملاحظة داخلية للعميل"
+        ? "Added an internal customer note"
+        : value;
+    case "CUSTOMER_NOTE_UPDATED":
+      return value === "تم تعديل ملاحظة داخلية للعميل"
+        ? "Updated an internal customer note"
+        : value;
+    case "REFERRAL_RECORDED": {
+      if (value === "تم تسجيل إحالة عميل جديد") return "Recorded a new customer referral";
+      const match = /^تم تسجيل إحالة جديدة للعميل (.+)$/.exec(value);
+      return match ? `Recorded a new referral for customer ${match[1]}` : value;
+    }
+    case "REWARD_UNLOCKED": {
+      const match = /^تم فتح (.+) حتى (.+)$/.exec(value);
+      return match ? `Unlocked ${match[1]} until ${match[2]}` : value;
+    }
+    case "REWARD_EXPIRED": {
+      const match = /^انتهت صلاحية (.+)$/.exec(value);
+      return match ? `Expired ${match[1]}` : value;
+    }
+    case "REWARD_REDEMPTION_BLOCKED": {
+      const match = /^تم رفض استبدال (.+) لانتهاء الصلاحية$/.exec(value);
+      return match ? `Blocked redemption of ${match[1]} because it expired` : value;
+    }
+    case "REWARD_CREATED": {
+      const match = /^تم إنشاء المكافأة (.+)$/.exec(value);
+      return match ? `Created reward ${match[1]}` : value;
+    }
+    case "REWARD_UPDATED": {
+      const match = /^تم تحديث المكافأة (.+)$/.exec(value);
+      return match ? `Updated reward ${match[1]}` : value;
+    }
+    case "REWARD_STATUS_CHANGED": {
+      const activated = /^تم تفعيل المكافأة (.+)$/.exec(value);
+      if (activated) return `Activated reward ${activated[1]}`;
+      const deactivated = /^تم إيقاف المكافأة (.+)$/.exec(value);
+      return deactivated ? `Deactivated reward ${deactivated[1]}` : value;
+    }
+    case "OFFER_CREATED": {
+      const match = /^تم إنشاء العرض (.+)$/.exec(value);
+      return match ? `Created offer ${match[1]}` : value;
+    }
+    case "OFFER_UPDATED": {
+      const match = /^تم تحديث العرض (.+)$/.exec(value);
+      return match ? `Updated offer ${match[1]}` : value;
+    }
+    case "OFFER_STATUS_CHANGED": {
+      const activated = /^تم تفعيل العرض (.+)$/.exec(value);
+      if (activated) return `Activated offer ${activated[1]}`;
+      const deactivated = /^تم إيقاف العرض (.+)$/.exec(value);
+      return deactivated ? `Deactivated offer ${deactivated[1]}` : value;
+    }
+    case "BUSINESS_SETTINGS_UPDATED": {
+      const exactDescriptions: Record<string, string> = {
+        "تم تحديث إعدادات النشاط": "Updated business settings",
+        "تم تحديث الملف التعريفي للنشاط": "Updated business profile",
+        "تم تحديث قواعد برنامج الولاء": "Updated loyalty program rules",
+        "تم تحديث قوالب رسائل العملاء": "Updated customer message templates",
+        "تم تحديث إعدادات التشغيل": "Updated operations settings",
+        "تم تحديث تصميم بطاقة الولاء": "Updated loyalty card design",
+        "تم تحديث بيانات التواصل وشروط الكارت": "Updated digital card contact details and terms",
+        "تم تحديث بيانات التواصل وشروط الكارت الرقمي": "Updated digital card contact details and terms",
+        "تم السماح لمالك النشاط بتصدير البيانات": "Allowed the business owner to export data",
+        "تم إيقاف صلاحية تصدير البيانات عن مالك النشاط": "Revoked the business owner's data export permission",
+      };
+      if (value in exactDescriptions) return exactDescriptions[value];
+      const published = /^تم نشر نسخة جديدة من تصميم بطاقة الولاء \((.+)\)$/.exec(value);
+      return published
+        ? `Published a new loyalty card design version (${published[1]})`
+        : value;
+    }
+    default:
+      return value;
+  }
+}
+
 export function getActivityDescription(
   activity: Readonly<{
     type: ActivityType;
@@ -71,7 +203,7 @@ export function getActivityDescription(
     "presentationVersion",
   );
   if (version !== STRUCTURED_ACTIVITY_PRESENTATION_VERSION) {
-    return activity.description;
+    return localizeLegacyActivityDescription(activity, language);
   }
 
   const kind = getActivityMetadataString(activity.metadata, "presentationKind");

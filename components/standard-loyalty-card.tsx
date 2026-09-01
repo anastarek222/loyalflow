@@ -11,6 +11,12 @@ import {
   STANDARD_CARD_QR_CONTENT_ZONE,
   STANDARD_CARD_QR_ZONE,
 } from "@/lib/cards/card-rendering-contract";
+import {
+  shouldStackStandardCardValue,
+  standardCardDetailFontSize,
+  standardCardValueFontSize,
+} from "@/lib/cards/standard-card-text";
+import { BUSINESS_LOGO_SVG_ASPECT_RATIO } from "@/lib/branding/logo-presentation";
 import { formatWebsiteForCard } from "@/lib/urls/business-url";
 
 export type StandardLoyaltyCardProps = {
@@ -18,6 +24,7 @@ export type StandardLoyaltyCardProps = {
   businessName: string;
   logoUrl?: string | null;
   primaryColor: string;
+  secondaryColor?: string | null;
   themePreset?: string | null;
   customerName: string;
   customerId: string;
@@ -47,13 +54,6 @@ function boundedText(value: string, maximum: number) {
   return normalized.length <= maximum
     ? normalized
     : `${normalized.slice(0, maximum - 1).trimEnd()}…`;
-}
-
-function valueFontSize(value: string) {
-  if (value.length <= 10) return 48;
-  if (value.length <= 15) return 40;
-  if (value.length <= 20) return 32;
-  return 27;
 }
 
 function wrappedText(
@@ -154,10 +154,12 @@ function Artwork({
 function CardDefinitions({
   id,
   accent,
+  secondary,
   dark,
 }: {
   id: string;
   accent: string;
+  secondary: string;
   dark: boolean;
 }) {
   return (
@@ -169,7 +171,7 @@ function CardDefinitions({
       </linearGradient>
       <linearGradient id={`${id}-progress`} x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stopColor={accent} />
-        <stop offset="1" stopColor={dark ? "#8B8CF8" : "#60A5FA"} />
+        <stop offset="1" stopColor={secondary} />
       </linearGradient>
       <clipPath id={`${id}-card-clip`}>
         <rect
@@ -197,10 +199,12 @@ function CardDefinitions({
 function CardBackground({
   id,
   accent,
+  secondary,
   dark,
 }: {
   id: string;
   accent: string;
+  secondary: string;
   dark: boolean;
 }) {
   return (
@@ -217,6 +221,13 @@ function CardBackground({
         r="220"
         fill={accent}
         opacity={dark ? "0.06" : "0.08"}
+      />
+      <circle
+        cx="110"
+        cy="510"
+        r="210"
+        fill={secondary}
+        opacity={dark ? "0.07" : "0.1"}
       />
       <g
         fill="none"
@@ -273,11 +284,11 @@ function Brand({
       {logoUrl ? (
         <image
           href={logoUrl}
-          x="47"
-          y="40"
-          width="54"
-          height="54"
-          preserveAspectRatio="xMidYMid meet"
+          x="42"
+          y="35"
+          width="64"
+          height="64"
+          preserveAspectRatio={BUSINESS_LOGO_SVG_ASPECT_RATIO}
           clipPath={`url(#${id}-logo-clip)`}
         />
       ) : (
@@ -318,12 +329,14 @@ function Brand({
 }
 
 function BackBrand({
+  id,
   businessName,
   logoUrl,
   accent,
   muted,
   rtl,
 }: {
+  id: string;
   businessName: string;
   logoUrl?: string | null;
   accent: string;
@@ -348,11 +361,12 @@ function BackBrand({
       {logoUrl ? (
         <image
           href={logoUrl}
-          x={logoX + 5}
-          y="40"
-          width="54"
-          height="54"
-          preserveAspectRatio="xMidYMid meet"
+          x={logoX}
+          y="35"
+          width="64"
+          height="64"
+          preserveAspectRatio={BUSINESS_LOGO_SVG_ASPECT_RATIO}
+          clipPath={`url(#${id}-logo-clip)`}
         />
       ) : (
         <text
@@ -403,10 +417,15 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const customerNameDirection = customerNameIsArabic ? "rtl" : "ltr";
   const dark = standardCardTheme(props.themePreset) === "dark";
   const accent = safeColor(props.primaryColor);
+  const secondary = safeColor(props.secondaryColor || "#FFFFFF");
   const category = standardCardArtworkCategory(props.artworkCategory);
   const foreground = dark ? "#F8FAFC" : "#111827";
   const muted = dark ? "#CBD5E1" : "#536074";
   const metrics = getLoyaltyCardMetrics({ ...props, language });
+  const stackCurrentValue = shouldStackStandardCardValue(
+    metrics.currentAmountText,
+    metrics.currentUnitText,
+  );
   const rewardName = boundedText(
     props.rewardName ||
       (language === "AR" ? "مكافأة الولاء" : "Loyalty reward"),
@@ -417,7 +436,9 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const contactText = [props.businessPhone, website, location]
     .filter(Boolean)
     .join("   ·   ");
-  const id = stableCardId(`${side}:${accent}:${dark}:${props.businessName}`);
+  const id = stableCardId(
+    `${side}:${accent}:${secondary}:${dark}:${props.businessName}`,
+  );
   const labels =
     language === "AR"
       ? {
@@ -447,8 +468,18 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   );
   const shared = (
     <>
-      <CardDefinitions id={id} accent={accent} dark={dark} />
-      <CardBackground id={id} accent={accent} dark={dark} />
+      <CardDefinitions
+        id={id}
+        accent={accent}
+        secondary={secondary}
+        dark={dark}
+      />
+      <CardBackground
+        id={id}
+        accent={accent}
+        secondary={secondary}
+        dark={dark}
+      />
     </>
   );
 
@@ -573,12 +604,14 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           opacity="0.8"
         />
         <text
+          data-emphasis="low"
           x={rtl ? 355 : 42}
-          y="430"
-          fill={accent}
-          fontSize="13"
+          y="426"
+          fill={muted}
+          fontSize="7"
           fontWeight="700"
-          letterSpacing={rtl ? "0" : "2"}
+          letterSpacing={rtl ? "0" : "1.6"}
+          opacity="0.58"
           textAnchor={rtl ? "end" : "start"}
           direction={dir}
           style={{ unicodeBidi: "plaintext" }}
@@ -586,19 +619,24 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           {labels.id}
         </text>
         <text
+          data-emphasis="low"
           x={rtl ? 355 : 42}
-          y="469"
-          fill={foreground}
-          fontSize="25"
-          fontWeight="500"
-          letterSpacing="2"
+          y="445"
+          fill={muted}
+          fontSize="9"
+          fontWeight="600"
+          letterSpacing="1.2"
+          opacity="0.66"
           textAnchor={rtl ? "end" : "start"}
           direction="ltr"
         >
           {boundedText(props.customerId, 24)}
         </text>
       </g>
-      <g data-safe-zone="loyalty-balance">
+      <g
+        data-safe-zone="loyalty-balance"
+        data-value-layout={stackCurrentValue ? "stacked" : "inline"}
+      >
         <rect
           x="430"
           y="238"
@@ -621,21 +659,55 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
         >
           {labels.balance}
         </text>
-        <text
-          x="452"
-          y="337"
-          fill={foreground}
-          fontSize={valueFontSize(metrics.currentText)}
-          fontWeight="900"
-          direction="ltr"
-          style={{ unicodeBidi: "isolate" }}
-        >
-          {metrics.currentText}
-        </text>
+        {stackCurrentValue ? (
+          <>
+            <text
+              x="452"
+              y="320"
+              fill={foreground}
+              fontSize={standardCardValueFontSize(
+                metrics.currentAmountText,
+                42,
+              )}
+              fontWeight="900"
+              direction="ltr"
+              style={{ unicodeBidi: "isolate" }}
+            >
+              {metrics.currentAmountText}
+            </text>
+            <text
+              x="452"
+              y="349"
+              fill={foreground}
+              fontSize={standardCardDetailFontSize(
+                metrics.currentUnitText,
+                20,
+                13,
+              )}
+              fontWeight="850"
+              direction={dir}
+              style={{ unicodeBidi: "plaintext" }}
+            >
+              {metrics.currentUnitText}
+            </text>
+          </>
+        ) : (
+          <text
+            x="452"
+            y="337"
+            fill={foreground}
+            fontSize={standardCardValueFontSize(metrics.currentText)}
+            fontWeight="900"
+            direction="ltr"
+            style={{ unicodeBidi: "isolate" }}
+          >
+            {metrics.currentText}
+          </text>
+        )}
         <g data-safe-zone="progress">
           <rect
             x="452"
-            y="361"
+            y={stackCurrentValue ? 371 : 361}
             width="334"
             height="14"
             rx="7"
@@ -645,7 +717,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           />
           <rect
             x="452"
-            y="361"
+            y={stackCurrentValue ? 371 : 361}
             width={Math.min(334, progressWidth)}
             height="14"
             rx="7"
@@ -656,7 +728,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x="452"
           y="410"
           fill={foreground}
-          fontSize="15"
+          fontSize={standardCardDetailFontSize(metrics.ratioText, 15, 11)}
           fontWeight="750"
           direction="ltr"
           style={{ unicodeBidi: "isolate" }}
@@ -667,7 +739,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x="452"
           y="445"
           fill={metrics.rewardReady ? "#22C55E" : muted}
-          fontSize="13"
+          fontSize={standardCardDetailFontSize(metrics.remainingText, 13, 10)}
           fontWeight="800"
           direction={dir}
           style={{ unicodeBidi: "plaintext" }}
@@ -694,6 +766,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
     <>
       {shared}
       <BackBrand
+        id={id}
         businessName={props.businessName}
         logoUrl={props.logoUrl}
         accent={accent}
@@ -752,7 +825,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x={backTextX}
           y="357"
           fill={foreground}
-          fontSize="28"
+          fontSize={standardCardValueFontSize(metrics.currentText, 28)}
           fontWeight="900"
           textAnchor={backTextAnchor}
         >
@@ -782,7 +855,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x={backTextX}
           y="421"
           fill={foreground}
-          fontSize="15"
+          fontSize={standardCardDetailFontSize(metrics.ratioText, 15, 11)}
           fontWeight="750"
           textAnchor={backTextAnchor}
         >
@@ -792,7 +865,7 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
           x={backTextX}
           y="450"
           fill={metrics.rewardReady ? "#22C55E" : muted}
-          fontSize="13"
+          fontSize={standardCardDetailFontSize(metrics.remainingText, 13, 10)}
           fontWeight="800"
           textAnchor={backTextAnchor}
         >

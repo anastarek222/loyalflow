@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 
 import { auth } from "@/auth";
 import ScanActionButton from "@/components/scan-action-button";
+import ScanSuccessFeedback from "@/components/scan-success-feedback";
+import { LoyaltyAmountDisplay } from "@/components/loyalty-amount-display";
 import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
 import {
   PageContainer,
@@ -28,6 +30,7 @@ import type { ScanOperationError } from "@/lib/loyalty/operation-origin";
 import {
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
   Gift,
   History,
   ScanLine,
@@ -219,9 +222,9 @@ export default async function ScanCustomerPage({
         {successMessage ? (
           <Card
             role="status"
-            className="overflow-hidden border-success/25 bg-gradient-to-br from-success-subtle via-surface to-primary-subtle/40 p-6 sm:p-8"
+            className="lf-scan-success-reveal overflow-hidden border-success/25 bg-gradient-to-br from-success-subtle via-surface to-primary-subtle/40 p-6 sm:p-8"
           >
-            <span className="flex size-12 items-center justify-center rounded-2xl bg-success text-white shadow-sm">
+            <span className="lf-scan-success-mark flex size-12 items-center justify-center rounded-2xl bg-success text-white shadow-sm">
               <CheckCircle2 className="size-6" aria-hidden="true" />
             </span>
             <p className="mt-4 lf-type-supporting font-semibold text-success">
@@ -239,12 +242,18 @@ export default async function ScanCustomerPage({
                 }
                 className="mt-1 lf-type-display lf-type-numeric text-foreground"
               >
-                {formatLoyaltyAmount({
-                  ...loyaltyPresentation,
-                  amount: customer.balance,
-                })}
+                <LoyaltyAmountDisplay
+                  {...loyaltyPresentation}
+                  amount={customer.balance}
+                />
               </p>
             </section>
+            <ScanSuccessFeedback
+              enableLabel={copy.enableSuccessFeedback}
+              disableLabel={copy.disableSuccessFeedback}
+              enabledAnnouncement={copy.successFeedbackEnabled}
+              disabledAnnouncement={copy.successFeedbackDisabled}
+            />
             <nav aria-label={copy.scan} className="mt-6 grid gap-4">
               <Link
                 href={`/businesses/${slug}/scan`}
@@ -315,10 +324,10 @@ export default async function ScanCustomerPage({
                   }
                   className="mt-2 lf-type-display lf-type-numeric font-black text-white"
                 >
-                  {formatLoyaltyAmount({
-                    ...loyaltyPresentation,
-                    amount: customer.balance,
-                  })}
+                  <LoyaltyAmountDisplay
+                    {...loyaltyPresentation}
+                    amount={customer.balance}
+                  />
                 </p>
               </div>
             </Card>
@@ -449,6 +458,10 @@ export default async function ScanCustomerPage({
                 <span className="ms-auto rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-semibold text-foreground-subtle">
                   {customer.transactions.length}
                 </span>
+                <ChevronDown
+                  className="size-4 shrink-0 text-foreground-subtle transition-transform group-open:rotate-180"
+                  aria-hidden="true"
+                />
               </summary>
               {customer.transactions.length ? (
                 <div className="space-y-3 border-t border-border p-4 sm:p-5">

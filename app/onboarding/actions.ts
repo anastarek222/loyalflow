@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { z } from "zod";
+import { createTrialWindow } from "@loyalflow/domain/billing/trial-core";
 import {
   createWithGeneratedSlug,
   optionalBusinessPhoneValue,
@@ -11,6 +12,7 @@ import {
   imageFileToDataUrl,
   isValidRemoteImageUrl,
 } from "@/lib/branding/image-data";
+import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
@@ -48,6 +50,10 @@ const ownerDraftSchema = z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
       .default("#111827"),
+    secondaryColor: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/)
+      .default("#FFFFFF"),
     themePreset: z.enum(["DEFAULT", "DARK"]).default("DEFAULT"),
     logoUrl: z.string().trim().max(500).default(""),
     standardCardArtworkEnabled: z.coerce.boolean().default(true),
@@ -69,7 +75,7 @@ const ownerDraftSchema = z
     if (
       data.logoUrl &&
       !isValidRemoteImageUrl(data.logoUrl) &&
-      !getSafeImageDataUrl(data.logoUrl, 500 * 1024)
+      !getSafeImageDataUrl(data.logoUrl, BUSINESS_LOGO_MAX_BYTES)
     )
       context.addIssue({
         code: "custom",
@@ -83,7 +89,13 @@ async function pendingOwner() {
   if (!session?.user?.id) redirect("/login");
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, onboardingStatus: true, businessId: true },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      onboardingStatus: true,
+      businessId: true,
+    },
   });
   if (!user || !canUsePendingOwnerOnboarding(user))
     redirect("/dashboard");
@@ -98,7 +110,7 @@ async function draftFrom(formData: FormData) {
   const logoFile = formData.get("logoFile");
 
   if (logoFile instanceof File && logoFile.size > 0) {
-    const uploadedLogo = await imageFileToDataUrl(logoFile, 500 * 1024);
+    const uploadedLogo = await imageFileToDataUrl(logoFile, BUSINESS_LOGO_MAX_BYTES);
     if (!uploadedLogo)
       return ownerDraftSchema.safeParse({
         ...input,
@@ -145,6 +157,20 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
   const data = parsed.data;
   const { business, integrationJobId } = await createWithGeneratedSlug(data.name, (slug) =>
     prisma.$transaction(async (tx) => {
+      const invitations = await tx.$queryRaw<Array<{ usedAt: Date }>>`
+        SELECT "usedAt"
+        FROM "OwnerInvitation"
+        WHERE "email" = ${user.email}
+          AND "usedAt" IS NOT NULL
+        LIMIT 1
+      `;
+      const invitation = invitations[0];
+
+      if (!invitation) {
+        throw new Error("Owner invitation acceptance is required before onboarding");
+      }
+
+      const trialWindow = createTrialWindow(invitation.usedAt);
       const created = await tx.business.create({
         data: {
           name: data.name,
@@ -161,12 +187,14 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
           rewardThreshold: data.rewardThreshold,
           earnAmount: data.earnAmount,
           primaryColor: data.primaryColor,
-          secondaryColor: "#FFFFFF",
+          secondaryColor: data.secondaryColor,
           themePreset: data.themePreset,
           cardStyle: "CLASSIC",
           logoUrl: data.logoUrl || null,
           standardCardArtworkEnabled: data.standardCardArtworkEnabled,
           standardCardArtworkCategory: data.standardCardArtworkCategory,
+          trialStartedAt: trialWindow.startedAt,
+          trialEndsAt: trialWindow.expiresAt,
         },
       });
       const ownerClaimed = await claimPendingOwnerCompletion(

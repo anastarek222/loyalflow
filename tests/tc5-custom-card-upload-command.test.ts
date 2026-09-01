@@ -18,11 +18,7 @@ const programPage = source("app/businesses/[slug]/program/page.tsx");
 
 test("TC5 Custom Card upload command validates the required pair before entitlement and Blob upload", () => {
   const storage = command.indexOf("customCardStorageConfigured");
-  const frontValidation = command.indexOf("validateCustomCardArtwork(input.front)");
-  const backValidation = command.indexOf("validateCustomCardArtwork(input.back)");
-  const pairGeometry = command.indexOf(
-    "validateCustomCardArtworkPair(input.front, input.back)",
-  );
+  const pairValidation = command.indexOf("validateCustomCardUploadPair(");
   const entitlement = command.indexOf(
     "await canBusinessPerformSubscriptionOperation",
   );
@@ -31,9 +27,7 @@ test("TC5 Custom Card upload command validates the required pair before entitlem
 
   for (const position of [
     storage,
-    frontValidation,
-    backValidation,
-    pairGeometry,
+    pairValidation,
     entitlement,
     version,
     upload,
@@ -41,10 +35,8 @@ test("TC5 Custom Card upload command validates the required pair before entitlem
     assert.ok(position >= 0);
   }
 
-  assert.ok(storage < frontValidation);
-  assert.ok(frontValidation < pairGeometry);
-  assert.ok(backValidation < pairGeometry);
-  assert.ok(pairGeometry < entitlement);
+  assert.ok(storage < pairValidation);
+  assert.ok(pairValidation < entitlement);
   assert.ok(entitlement < version);
   assert.ok(version < upload);
   assert.match(command, /"EXPAND"/);
@@ -52,35 +44,32 @@ test("TC5 Custom Card upload command validates the required pair before entitlem
   assert.doesNotMatch(command, /validateSingleCustomCardArtwork/);
 });
 
-test("TC5 invalid Custom Card pair returns INVALID_UPLOAD before version creation or Blob write", () => {
-  const geometry = command.indexOf(
-    "validateCustomCardArtworkPair(input.front, input.back)",
-  );
-  const invalid = command.indexOf(
-    'return { ok: false, reason: "INVALID_UPLOAD" };',
-    geometry,
-  );
+test("TC5 invalid Custom Card pair returns the specific validation result before version creation or Blob write", () => {
+  const validation = command.indexOf("validateCustomCardUploadPair(");
+  const invalid = command.indexOf("if (!validation.ok) return validation;");
   const version = command.indexOf("randomUUID()");
   const upload = command.indexOf("uploadCustomCardArtwork({");
 
-  for (const position of [geometry, invalid, version, upload]) {
+  for (const position of [validation, invalid, version, upload]) {
     assert.ok(position >= 0);
   }
 
-  assert.ok(geometry < invalid);
+  assert.ok(validation < invalid);
   assert.ok(invalid < version);
   assert.ok(invalid < upload);
 });
 
-test("TC5 paired upload action maps controlled errors to existing Program states", () => {
+test("TC5 paired upload action maps controlled errors to specific Program states", () => {
   assert.match(action, /result\.reason === "STORAGE_UNAVAILABLE"/);
-  assert.ok(action.includes("cardDesign=invalid"));
-  assert.doesNotMatch(action, /cardDesign=invalid-upload/);
-  assert.match(programPage, /query\.cardDesign === "invalid"/);
-  assert.match(
-    programPage,
-    /t\("راجع إعدادات التصميم\.", "Check the card design settings\."\)/,
-  );
+  for (const state of [
+    "missing-front",
+    "missing-back",
+    "unsupported-type",
+    "pair-too-large",
+    "unreadable-image",
+    "dimensions-mismatch",
+    "wrong-aspect-ratio",
+  ]) assert.ok(action.includes(state));
 });
 
 test("TC5 Custom Card upload command preserves private Blob helper ownership", () => {
@@ -106,7 +95,9 @@ test("TC5 paired upload action carries both sides and keeps immutable draft redi
     "forbidden",
     "subscription-restricted",
     "storage-unavailable",
-    "cardDesign=invalid",
+    "missing-front",
+    "dimensions-mismatch",
+    "wrong-aspect-ratio",
     "cardDesign=draft&customVersion=",
   ]) {
     assert.ok(action.includes(state));

@@ -108,6 +108,7 @@ function copy(language: "AR" | "EN") {
           "امسح كود العميل أو افتح قائمة العملاء للبحث السريع.",
         findCustomer: "البحث عن عميل",
         today: "اليوم",
+        dailyKpis: "مؤشرات الأداء الرئيسية اليومية",
         advanced: "فتح الأدوات المتقدمة",
         scan: "مسح عميل",
         scanDescription: "افتح الكاميرا لإضافة ولاء أو استبدال مكافأة.",
@@ -172,6 +173,7 @@ function copy(language: "AR" | "EN") {
           "Scan the customer code or open Customers for a quick search.",
         findCustomer: "Find customer",
         today: "Today",
+        dailyKpis: "Daily key performance indicators",
         advanced: "Open advanced tools",
         scan: "Scan customer",
         scanDescription: "Open the camera to earn loyalty or redeem a reward.",
@@ -997,7 +999,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
               </Card>
             </section>
 
-            <section aria-label="Daily key performance indicators">
+            <section aria-label={dictionary.dailyKpis}>
               <StatGrid>
                 <StatCard
                   label={dictionary.totalCustomers}
@@ -1095,7 +1097,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                         href={`/businesses/${business.slug}/customers?segment=${segment}`}
                         className="flex min-h-11 items-center justify-between rounded-xl border border-border bg-white/70 px-4 text-sm font-semibold text-foreground-muted transition hover:border-primary/30 hover:bg-primary-subtle/50 hover:text-primary"
                       >
-                        <span>{getCustomerSegmentLabel(segment)}</span>
+                        <span>{getCustomerSegmentLabel(segment, language)}</span>
                         <span
                           dir="ltr"
                           className="lf-type-numeric rounded-lg bg-surface-subtle px-2 py-1"

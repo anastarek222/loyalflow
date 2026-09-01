@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 40
     services:
       postgres:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -53,6 +53,26 @@ jobs:
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
+            echo "owner-onboarding=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|customers|rewards|offers|campaigns|recovery|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|reward|offer|public-card)|lib/(loyalty|rewards|offers|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$)' /tmp/loyalflow-pr-files.txt; then
+            echo "loyalty-core=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "loyalty-core=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|public-card)|lib/(loyalty|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|playwright\.config\.ts$)' /tmp/loyalflow-pr-files.txt; then
+            echo "loyalty-mobile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "loyalty-mobile=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -Eq '^(app/(api/(businesses/\[slug\]/custom-card-artwork|card-artwork)|businesses/\[slug\]/program/)|components/(custom-card|loyalty-card|standard-card-setup)|lib/(cards/custom-card|server/business/custom-card)|scripts/(cleanup-final-uat-card-artwork|prepare-final-uat-fixtures)\.ts$|tests/browser/(fixtures|pre-final-admin-security\.spec|pilot-custom-card\.spec)\.ts$|tests/(custom-card|pre-final-slice-d-browser-readiness|pilot-custom-card-receipt).*\.test\.ts$|playwright\.config\.ts$)' /tmp/loyalflow-pr-files.txt; then
+            echo "custom-card=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "custom-card=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up pnpm
@@ -110,7 +130,38 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
           AUTH_URL: http://127.0.0.1:3100
           AUTH_TRUST_HOST: "true"
-        run: pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          UPSTASH_REDIS_REST_URL: http://127.0.0.1:3199
+          UPSTASH_REDIS_REST_TOKEN: browser-smoke-rate-limit-token
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci-rate-limit-server.mjs &
+          rate_limit_pid=$!
+          trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3199/health >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "20" ]]; then
+              echo "Disposable rate-limit server did not become ready." >&2
+              exit 1
+            fi
+            sleep 0.25
+          done
+          pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
+          fi
+          if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          fi
+          if [[ "${{ steps.browser-smoke.outputs.loyalty-mobile }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium
+          fi
+          if [[ "${{ steps.browser-smoke.outputs.custom-card }}" == "true" ]]; then
+            pnpm exec playwright test tests/browser/pilot-custom-card.spec.ts --config=playwright.config.ts --project=desktop-chromium
+            pnpm exec playwright test tests/browser/pilot-custom-card.spec.ts --config=playwright.config.ts --project=mobile-chromium
+          fi
 
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"

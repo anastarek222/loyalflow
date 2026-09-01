@@ -10,6 +10,7 @@ const storage = source("lib/cards/custom-card-storage.ts");
 const uploadCommand = source("lib/server/business/custom-card-upload-command.ts");
 const publishCommand = source("lib/server/business/custom-card-publish-command.ts");
 const renderer = source("components/loyalty-card.tsx");
+const customRenderer = source("components/custom-loyalty-card.tsx");
 
 test("Z4 validates Custom Card as one required Front + Back pair", () => {
   assert.match(storage, /validateCustomCardArtworkPair/);
@@ -17,7 +18,7 @@ test("Z4 validates Custom Card as one required Front + Back pair", () => {
   assert.match(uploadCommand, /back: unknown/);
   assert.match(
     uploadCommand,
-    /validateCustomCardArtworkPair\(input\.front, input\.back\)/,
+    /validateCustomCardUploadPair\(/,
   );
   assert.doesNotMatch(uploadCommand, /validateSingleCustomCardArtwork/);
 });
@@ -43,7 +44,7 @@ test("Z4 runtime Custom Card activates only when both artwork sides exist", () =
     /Boolean\(\s*cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl,?\s*\)/,
   );
   assert.match(
-    renderer,
-    /const artworkUrl = side === "front" \? props\.customFrontArtworkUrl : props\.customBackArtworkUrl/,
+    customRenderer,
+    /const artworkUrl =\s*side === "front" \? props\.customFrontArtworkUrl : props\.customBackArtworkUrl/,
   );
 });

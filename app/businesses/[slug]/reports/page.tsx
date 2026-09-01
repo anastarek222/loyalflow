@@ -45,6 +45,7 @@ import {
   Activity,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   Download,
   Filter,
   Gift,
@@ -881,7 +882,10 @@ export default async function ReportsPage({
     {
       label: t("العملاء الجدد", "New customers"),
       value: numberFormatter.format(newCustomers),
-      detail: t("تم تسجيلهم خلال الفترة المحددة", "Registered in the selected period"),
+      detail: t(
+        "تم تسجيلهم خلال الفترة المحددة",
+        "Registered in the selected period",
+      ),
       tone: "default",
     },
     {
@@ -893,7 +897,10 @@ export default async function ReportsPage({
     {
       label: t("العملاء غير النشطين", "Inactive customers"),
       value: numberFormatter.format(inactiveCustomers),
-      detail: t("حسب قاعدة عدم النشاط الحالية", "Based on the current inactivity rule"),
+      detail: t(
+        "حسب قاعدة عدم النشاط الحالية",
+        "Based on the current inactivity rule",
+      ),
       tone: "default",
     },
     {
@@ -995,7 +1002,10 @@ export default async function ReportsPage({
     ...(business.loyaltyMode === "VISITS"
       ? [
           {
-            label: t("متوسط الأيام بين الزيارات", "Average days between visits"),
+            label: t(
+              "متوسط الأيام بين الزيارات",
+              "Average days between visits",
+            ),
             value:
               averageDaysBetweenVisits === null
                 ? "—"
@@ -1062,19 +1072,28 @@ export default async function ReportsPage({
     {
       label: t("العملاء المستعادون", "Recovered customers"),
       value: numberFormatter.format(recoveredCustomers),
-      detail: t("حسابات أعيد تفعيلها خلال الفترة", "Accounts reactivated in the period"),
+      detail: t(
+        "حسابات أعيد تفعيلها خلال الفترة",
+        "Accounts reactivated in the period",
+      ),
       tone: "success",
     },
     {
       label: t("متوسط نشاط الولاء", "Average loyalty activity"),
       value: averageLoyaltyActivity.toFixed(1),
-      detail: t("عمليات إضافة لكل عميل نشط", "Earn actions per active customer"),
+      detail: t(
+        "عمليات إضافة لكل عميل نشط",
+        "Earn actions per active customer",
+      ),
       tone: "default",
     },
     {
       label: t("معدل استبدال المكافآت", "Reward redemption rate"),
       value: `${redemptionRate.toFixed(1)}%`,
-      detail: t("نسبة الاستبدالات إلى عمليات الإضافة", "Redemptions as a share of earn actions"),
+      detail: t(
+        "نسبة الاستبدالات إلى عمليات الإضافة",
+        "Redemptions as a share of earn actions",
+      ),
       tone: "default",
     },
   ];
@@ -1083,12 +1102,18 @@ export default async function ReportsPage({
     {
       label: t("عملاء عائدون", "Returning customers"),
       value: numberFormatter.format(returningCustomers),
-      detail: t("عمليتا إضافة أو أكثر خلال الفترة", "Two or more earn actions in the period"),
+      detail: t(
+        "عمليتا إضافة أو أكثر خلال الفترة",
+        "Two or more earn actions in the period",
+      ),
     },
     {
       label: t("عملاء مستعادون", "Recovered customers"),
       value: numberFormatter.format(recoveredCustomers),
-      detail: t("حسابات أعيد تفعيلها خلال الفترة", "Accounts reactivated in the period"),
+      detail: t(
+        "حسابات أعيد تفعيلها خلال الفترة",
+        "Accounts reactivated in the period",
+      ),
     },
     {
       label: t("حركات ولاء مسجلة", "Recorded loyalty operations"),
@@ -1101,12 +1126,18 @@ export default async function ReportsPage({
     {
       label: t("مكافآت مستبدلة", "Rewards redeemed"),
       value: numberFormatter.format(redeemed._count._all),
-      detail: t("استبدالات مسجلة خلال الفترة", "Redemptions recorded in the period"),
+      detail: t(
+        "استبدالات مسجلة خلال الفترة",
+        "Redemptions recorded in the period",
+      ),
     },
     {
       label: t("معدل تكرار العملاء", "Repeat customer rate"),
       value: `${repeatCustomerRate.toFixed(1)}%`,
-      detail: t("من العملاء ذوي نشاط الولاء", "Among customers with loyalty activity"),
+      detail: t(
+        "من العملاء ذوي نشاط الولاء",
+        "Among customers with loyalty activity",
+      ),
     },
     ...(business.loyaltyMode === "SALES_AMOUNT" && business.currency
       ? [
@@ -1154,7 +1185,7 @@ export default async function ReportsPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      className="min-h-screen px-3 py-3 sm:px-8 sm:py-8"
       dir={language === "AR" ? "rtl" : "ltr"}
       style={{
         backgroundColor: theme.backgroundColor,
@@ -1168,12 +1199,12 @@ export default async function ReportsPage({
       >
         <Link
           href={`/businesses/${business.slug}`}
-          className="inline-flex min-h-10 items-center text-sm font-semibold text-foreground-muted transition-colors hover:text-primary"
+          className="hidden min-h-10 items-center text-sm font-semibold text-foreground-muted transition-colors hover:text-primary sm:inline-flex"
         >
           {t("العودة إلى", "Back to")} {business.name}
         </Link>
 
-        <header className="relative mt-5 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7">
+        <header className="relative overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm sm:mt-5 sm:p-7">
           <div className="pointer-events-none absolute end-0 top-0 size-64 rounded-full bg-[radial-gradient(circle,var(--lf-primary-soft),transparent_68%)]" />
           <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
             <div className="max-w-2xl">
@@ -1181,20 +1212,23 @@ export default async function ReportsPage({
                 <LineChart className="size-4" aria-hidden="true" />
                 {copy.overview}
               </span>
-              <h1 className="mt-4 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+              <h1 className="mt-3 text-xl font-black tracking-tight text-foreground sm:mt-4 sm:text-3xl">
                 {t("التقارير والتحليلات", "Reports & analytics")}
               </h1>
-              <p className="mt-2 text-sm leading-6 text-foreground-muted">
+              <p className="mt-2 hidden text-sm leading-6 text-foreground-muted sm:block">
                 {t(
                   "اقرأ أداء برنامج الولاء من السجل الفعلي، مع فصل واضح بين الرصيد والمبيعات والاستبدالات.",
                   "Read loyalty performance from the actual ledger, with a clear separation between balances, sales, and redemptions.",
                 )}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:flex">
-              <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-4 py-3">
+            <div className="grid grid-cols-1 gap-2 sm:flex sm:gap-3">
+              <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-3 py-2.5 sm:px-4 sm:py-3">
                 <p className="flex items-center gap-2 text-xs font-semibold text-foreground-subtle">
-                  <CalendarDays className="size-4 text-primary" aria-hidden="true" />
+                  <CalendarDays
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
                   {t("الفترة", "Period")}
                 </p>
                 <p
@@ -1204,7 +1238,7 @@ export default async function ReportsPage({
                   {fromInput} → {toInput}
                 </p>
               </div>
-              <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-4 py-3">
+              <div className="hidden rounded-[var(--lf-radius-input)] border border-border bg-surface/90 px-4 py-3 sm:block">
                 <p className="text-xs font-semibold text-foreground-subtle">
                   {t("طريقة العرض", "View mode")}
                 </p>
@@ -1225,11 +1259,11 @@ export default async function ReportsPage({
 
         <section
           aria-label={t("إجراءات التقارير", "Report actions")}
-          className="mt-5 flex flex-wrap gap-2"
+          className="mt-3 flex flex-wrap gap-2 sm:mt-5"
         >
           <Link
             href={`/businesses/${business.slug}/reports/staff?${reportQuery}`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-bold text-foreground-muted transition-colors hover:border-primary/30 hover:text-primary"
+            className="hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-bold text-foreground-muted transition-colors hover:border-primary/30 hover:text-primary sm:inline-flex"
           >
             <Users className="size-4" aria-hidden="true" />
             {t("أداء الموظفين", "Staff performance")}
@@ -1256,20 +1290,19 @@ export default async function ReportsPage({
         </section>
 
         <details
-          className="group mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm"
-          open={!simple}
+          className="group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm sm:mt-5"
           data-report-filters="true"
         >
-          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 sm:px-6">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 sm:min-h-16 sm:px-6 sm:py-4">
             <span className="flex items-center gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                 <Filter className="size-5" aria-hidden="true" />
               </span>
-              <span>
+              <span className="min-w-0">
                 <span className="block text-sm font-black text-foreground">
                   {t("الفترة ونطاق التقرير", "Period & report scope")}
                 </span>
-                <span className="mt-0.5 block text-xs text-foreground-subtle">
+                <span className="mt-0.5 hidden text-xs text-foreground-subtle sm:block">
                   {t(
                     "غيّر التاريخ أو الشريحة أو الفرع أو الموظف عند الحاجة.",
                     "Change dates, segment, branch, or staff when needed.",
@@ -1277,13 +1310,14 @@ export default async function ReportsPage({
                 </span>
               </span>
             </span>
-            <span className="text-xs font-bold text-primary">
-              {t("تعديل", "Edit")}
-            </span>
+            <ChevronDown
+              className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
           </summary>
           <form
             method="get"
-            className="grid gap-4 border-t border-border p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3"
+            className="grid gap-4 border-t border-border p-4 sm:grid-cols-2 sm:p-6 xl:grid-cols-3"
           >
             <input name="period" type="hidden" value="custom" />
             <div>
@@ -1453,7 +1487,7 @@ export default async function ReportsPage({
         <section
           aria-label={copy.summary}
           data-report-summary="true"
-          className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+          className="mt-3 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3 xl:grid-cols-4"
         >
           {[
             {
@@ -1504,17 +1538,17 @@ export default async function ReportsPage({
             const content = (
               <>
                 <span
-                  className={`grid size-9 place-items-center rounded-xl ${toneClass}`}
+                  className={`grid size-8 place-items-center rounded-lg sm:size-9 sm:rounded-xl ${toneClass}`}
                 >
                   <Icon className="size-4" aria-hidden="true" />
                 </span>
-                <p className="mt-4 text-xs font-semibold text-foreground-subtle">
+                <p className="mt-3 text-xs font-semibold text-foreground-subtle sm:mt-4">
                   {metric.label}
                 </p>
-                <p className="lf-type-numeric mt-1 text-2xl font-black text-foreground">
+                <p className="lf-type-numeric mt-1 min-w-0 text-[clamp(1rem,4.7vw,1.5rem)] font-black leading-tight text-foreground sm:text-2xl">
                   {metric.value}
                 </p>
-                <p className="mt-2 text-xs leading-5 text-foreground-muted">
+                <p className="mt-1 hidden text-xs leading-5 text-foreground-muted sm:mt-2 sm:block">
                   {metric.detail}
                 </p>
               </>
@@ -1524,14 +1558,14 @@ export default async function ReportsPage({
               <Link
                 key={metric.label}
                 href={metric.href}
-                className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm transition-colors hover:bg-surface-subtle sm:p-5"
+                className="min-w-0 rounded-[var(--lf-radius-card)] border border-border bg-surface p-3 shadow-sm transition-colors hover:bg-surface-subtle sm:p-5"
               >
                 {content}
               </Link>
             ) : (
               <article
                 key={metric.label}
-                className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm sm:p-5"
+                className="min-w-0 rounded-[var(--lf-radius-card)] border border-border bg-surface p-3 shadow-sm sm:p-5"
               >
                 {content}
               </article>
@@ -1539,354 +1573,438 @@ export default async function ReportsPage({
           })}
         </section>
 
-        <section
+        <details
           aria-label={t("صافي عمليات الولاء", "Ledger gross and net summary")}
           data-ledger-summary="gross-reversal-net"
-          className="mt-5 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
+          className="group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm sm:mt-5"
         >
-          <div className="flex items-start gap-3">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
               <TrendingUp className="size-5" aria-hidden="true" />
             </span>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-bold uppercase tracking-[0.16em] text-primary">
                 {t("سلامة السجل", "Ledger integrity")}
-              </p>
-              <h2 className="mt-1 text-lg font-black text-foreground">
+              </span>
+              <span className="mt-1 block text-base font-black text-foreground sm:text-lg">
                 {t("الإجمالي والعكس والصافي", "Gross, reversals & net")}
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm leading-6 text-foreground-muted">
+              </span>
+              <span className="mt-1 hidden max-w-2xl text-sm leading-6 text-foreground-muted sm:block">
                 {t(
                   "الأرقام محسوبة من سجل الحركات للفترة والفلاتر الحالية بدون تعديل السجل التاريخي.",
                   "Calculated from the immutable ledger using the current period and filters.",
                 )}
+              </span>
+            </span>
+            <ChevronDown
+              className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+
+          <div className="border-t border-border p-4 sm:p-6">
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
+                  {t("الولاء المكتسب", "Earned loyalty")}
+                </p>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt>{t("الإجمالي", "Gross earned")}</dt>
+                    <dd className="font-semibold">
+                      {formatLoyaltyAmount({
+                        ...loyaltyPresentation,
+                        amount: ledgerSummary.grossEarned,
+                      })}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>{t("عمليات العكس", "Earn reversals")}</dt>
+                    <dd className="font-semibold">
+                      {formatLoyaltyAmount({
+                        ...loyaltyPresentation,
+                        amount: ledgerSummary.earnReversed,
+                      })}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 border-t border-border pt-2">
+                    <dt className="font-bold">{t("الصافي", "Net earned")}</dt>
+                    <dd className="font-bold">
+                      {formatLoyaltyAmount({
+                        ...loyaltyPresentation,
+                        amount: ledgerSummary.netEarned,
+                      })}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+
+              <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
+                  {t("الاستبدالات", "Redemptions")}
+                </p>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt>{t("إجمالي المستبدل", "Gross redeemed")}</dt>
+                    <dd className="font-semibold">
+                      {formatLoyaltyAmount({
+                        ...loyaltyPresentation,
+                        amount: ledgerSummary.grossRedeemed,
+                      })}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>{t("عكس الاستبدالات", "Redemption reversals")}</dt>
+                    <dd className="font-semibold">
+                      {formatLoyaltyAmount({
+                        ...loyaltyPresentation,
+                        amount: ledgerSummary.redemptionReversed,
+                      })}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 border-t border-border pt-2">
+                    <dt className="font-bold">
+                      {t("صافي المستبدل", "Net redeemed")}
+                    </dt>
+                    <dd className="font-bold">
+                      {formatLoyaltyAmount({
+                        ...loyaltyPresentation,
+                        amount: ledgerSummary.netRedeemed,
+                      })}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+
+              <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
+                  {t("المبيعات المسجلة", "Recorded sales")}
+                </p>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <dt>{t("إجمالي المبيعات", "Gross recorded sales")}</dt>
+                    <dd className="font-semibold">
+                      {formatLoyaltyAmount({
+                        ...salesPresentation,
+                        amount: ledgerSummary.grossRecordedSales,
+                      })}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>{t("المبيعات المرتجعة", "Refunded sales")}</dt>
+                    <dd className="font-semibold">
+                      {formatLoyaltyAmount({
+                        ...salesPresentation,
+                        amount: ledgerSummary.refundedSales,
+                      })}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 border-t border-border pt-2">
+                    <dt className="font-bold">
+                      {t("صافي المبيعات", "Net recorded sales")}
+                    </dt>
+                    <dd className="font-bold">
+                      {formatLoyaltyAmount({
+                        ...salesPresentation,
+                        amount: ledgerSummary.netRecordedSales,
+                      })}
+                    </dd>
+                  </div>
+                </dl>
+              </article>
+            </div>
+
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
+                {t("التعديلات اليدوية", "Manual adjustments")}: +
+                {formatLoyaltyAmount({
+                  ...loyaltyPresentation,
+                  amount: ledgerSummary.adjustmentAdds,
+                })}{" "}
+                / -
+                {formatLoyaltyAmount({
+                  ...loyaltyPresentation,
+                  amount: ledgerSummary.adjustmentSubtracts,
+                })}
+              </p>
+              <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
+                {t("عمليات عكس معلقة", "Unresolved reversals")}:{" "}
+                {numberFormatter.format(ledgerSummary.unresolvedExceptions)}
+              </p>
+              <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
+                {t("حركات عكس غير صالحة", "Invalid reversal rows")}:{" "}
+                {numberFormatter.format(ledgerSummary.invalidReversalCount)}
               </p>
             </div>
           </div>
-
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
-                {t("الولاء المكتسب", "Earned loyalty")}
-              </p>
-              <dl className="mt-3 space-y-2 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt>{t("الإجمالي", "Gross earned")}</dt>
-                  <dd className="font-semibold">
-                    {formatLoyaltyAmount({
-                      ...loyaltyPresentation,
-                      amount: ledgerSummary.grossEarned,
-                    })}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>{t("عمليات العكس", "Earn reversals")}</dt>
-                  <dd className="font-semibold">
-                    {formatLoyaltyAmount({
-                      ...loyaltyPresentation,
-                      amount: ledgerSummary.earnReversed,
-                    })}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-t border-border pt-2">
-                  <dt className="font-bold">{t("الصافي", "Net earned")}</dt>
-                  <dd className="font-bold">
-                    {formatLoyaltyAmount({
-                      ...loyaltyPresentation,
-                      amount: ledgerSummary.netEarned,
-                    })}
-                  </dd>
-                </div>
-              </dl>
-            </article>
-
-            <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
-                {t("الاستبدالات", "Redemptions")}
-              </p>
-              <dl className="mt-3 space-y-2 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt>{t("إجمالي المستبدل", "Gross redeemed")}</dt>
-                  <dd className="font-semibold">
-                    {formatLoyaltyAmount({
-                      ...loyaltyPresentation,
-                      amount: ledgerSummary.grossRedeemed,
-                    })}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>{t("عكس الاستبدالات", "Redemption reversals")}</dt>
-                  <dd className="font-semibold">
-                    {formatLoyaltyAmount({
-                      ...loyaltyPresentation,
-                      amount: ledgerSummary.redemptionReversed,
-                    })}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-t border-border pt-2">
-                  <dt className="font-bold">
-                    {t("صافي المستبدل", "Net redeemed")}
-                  </dt>
-                  <dd className="font-bold">
-                    {formatLoyaltyAmount({
-                      ...loyaltyPresentation,
-                      amount: ledgerSummary.netRedeemed,
-                    })}
-                  </dd>
-                </div>
-              </dl>
-            </article>
-
-            <article className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle/40 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">
-                {t("المبيعات المسجلة", "Recorded sales")}
-              </p>
-              <dl className="mt-3 space-y-2 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt>{t("إجمالي المبيعات", "Gross recorded sales")}</dt>
-                  <dd className="font-semibold">
-                    {formatLoyaltyAmount({
-                      ...salesPresentation,
-                      amount: ledgerSummary.grossRecordedSales,
-                    })}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt>{t("المبيعات المرتجعة", "Refunded sales")}</dt>
-                  <dd className="font-semibold">
-                    {formatLoyaltyAmount({
-                      ...salesPresentation,
-                      amount: ledgerSummary.refundedSales,
-                    })}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-t border-border pt-2">
-                  <dt className="font-bold">
-                    {t("صافي المبيعات", "Net recorded sales")}
-                  </dt>
-                  <dd className="font-bold">
-                    {formatLoyaltyAmount({
-                      ...salesPresentation,
-                      amount: ledgerSummary.netRecordedSales,
-                    })}
-                  </dd>
-                </div>
-              </dl>
-            </article>
-          </div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
-              {t("التعديلات اليدوية", "Manual adjustments")}: +
-              {formatLoyaltyAmount({
-                ...loyaltyPresentation,
-                amount: ledgerSummary.adjustmentAdds,
-              })}{" "}
-              / -
-              {formatLoyaltyAmount({
-                ...loyaltyPresentation,
-                amount: ledgerSummary.adjustmentSubtracts,
-              })}
-            </p>
-            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
-              {t("عمليات عكس معلقة", "Unresolved reversals")}: {numberFormatter.format(ledgerSummary.unresolvedExceptions)}
-            </p>
-            <p className="rounded-[var(--lf-radius-input)] bg-surface-subtle p-3 text-sm text-foreground-muted">
-              {t("حركات عكس غير صالحة", "Invalid reversal rows")}: {numberFormatter.format(ledgerSummary.invalidReversalCount)}
-            </p>
-          </div>
-        </section>
+        </details>
 
         {!simple && (
-          <section className="mt-6" data-report-trends="server-derived">
-            <div className="mb-4 flex items-start gap-3">
+          <details
+            className="group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm sm:mt-6"
+            data-report-trends="server-derived"
+          >
+            <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
                 <Activity className="size-5" aria-hidden="true" />
               </span>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-bold uppercase tracking-[0.16em] text-primary">
                   {copy.trends}
-                </p>
-                <h2 className="mt-1 text-xl font-black text-foreground">
+                </span>
+                <span className="mt-1 block text-base font-black text-foreground sm:text-xl">
                   {copy.historical}
-                </h2>
-                <p className="mt-1 text-sm text-foreground-muted">
+                </span>
+                <span className="mt-1 hidden text-sm text-foreground-muted sm:block">
                   {copy.dateRange}
-                </p>
-              </div>
+                </span>
+              </span>
+              <ChevronDown
+                className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              />
+            </summary>
+            <div className="border-t border-border p-3 sm:p-5">
+              <ReportCharts
+                language={language}
+                unitName={business.unitName}
+                trends={historicalTrends}
+              />
             </div>
-            <ReportCharts
-              language={language}
-              unitName={business.unitName}
-              trends={historicalTrends}
-            />
-          </section>
+          </details>
         )}
 
-        <section
-          className={`${simple ? "hidden " : ""}mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3`}
-          aria-label={t("مؤشرات التقرير المتقدمة", "Advanced report metrics")}
-          data-report-advanced-metrics="true"
+        <details
+          className={`${simple ? "hidden " : ""}group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm sm:mt-6`}
         >
-          {advancedMetrics.map((metric) => {
-            const valueClass =
-              metric.tone === "success"
-                ? "text-emerald-700"
-                : metric.tone === "warning"
-                  ? "text-amber-700"
-                  : metric.tone === "danger"
-                    ? "text-red-700"
-                    : metric.tone === "primary"
-                      ? "text-primary"
-                      : "text-foreground";
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+            <span className="font-black text-foreground">
+              {t("المؤشرات المتقدمة", "Advanced metrics")}
+            </span>
+            <ChevronDown
+              className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <section
+            className="grid gap-2 border-t border-border p-3 sm:grid-cols-2 sm:gap-3 sm:p-5 xl:grid-cols-3"
+            aria-label={t("مؤشرات التقرير المتقدمة", "Advanced report metrics")}
+            data-report-advanced-metrics="true"
+          >
+            {advancedMetrics.map((metric) => {
+              const valueClass =
+                metric.tone === "success"
+                  ? "text-emerald-700"
+                  : metric.tone === "warning"
+                    ? "text-amber-700"
+                    : metric.tone === "danger"
+                      ? "text-red-700"
+                      : metric.tone === "primary"
+                        ? "text-primary"
+                        : "text-foreground";
 
-            return (
-              <article
-                key={metric.label}
-                className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-4 shadow-sm sm:p-5"
-              >
-                <p className="text-sm font-semibold text-foreground-subtle">
-                  {metric.label}
-                </p>
-                <p className={`lf-type-numeric mt-2 text-3xl font-black ${valueClass}`}>
-                  {metric.value}
-                </p>
-                <p dir="auto" className="mt-2 text-xs leading-5 text-foreground-muted">
-                  {metric.detail}
-                </p>
-                {metric.label === t("المكافآت المستبدلة", "Rewards redeemed") &&
-                  rewardDistribution.length > 0 && (
-                    <ul className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-foreground-muted">
-                      {rewardDistribution.map((reward) => (
-                        <li key={reward.rewardName} dir="auto">
-                          {reward.rewardName}: {numberFormatter.format(reward._count._all)}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-              </article>
-            );
-          })}
-        </section>
+              return (
+                <article
+                  key={metric.label}
+                  className="min-w-0 rounded-[var(--lf-radius-input)] border border-border bg-surface p-3 sm:p-5"
+                >
+                  <p className="text-sm font-semibold text-foreground-subtle">
+                    {metric.label}
+                  </p>
+                  <p
+                    className={`lf-type-numeric mt-2 text-[clamp(1.2rem,6vw,1.875rem)] font-black leading-tight ${valueClass}`}
+                  >
+                    {metric.value}
+                  </p>
+                  <p
+                    dir="auto"
+                    className="mt-2 text-xs leading-5 text-foreground-muted"
+                  >
+                    {metric.detail}
+                  </p>
+                  {metric.label ===
+                    t("المكافآت المستبدلة", "Rewards redeemed") &&
+                    rewardDistribution.length > 0 && (
+                      <ul className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-foreground-muted">
+                        {rewardDistribution.map((reward) => (
+                          <li key={reward.rewardName} dir="auto">
+                            {reward.rewardName}:{" "}
+                            {numberFormatter.format(reward._count._all)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                </article>
+              );
+            })}
+          </section>
+        </details>
 
-        <section
-          className={`${simple ? "hidden " : ""}mt-6 rounded-[var(--lf-radius-card)] border border-border bg-foreground p-5 text-surface shadow-sm sm:p-7`}
+        <details
+          className={`${simple ? "hidden " : ""}group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-foreground text-surface shadow-sm sm:mt-6`}
           aria-label={t("أثر برنامج الولاء", "Loyalty programme impact")}
           data-report-impact="true"
         >
-          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-black text-emerald-300">
-                {t("أثر برنامج الولاء", "Loyalty programme impact")}
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 sm:px-7 sm:py-4">
+            <span className="font-black">
+              {t("أثر برنامج الولاء", "Loyalty programme impact")}
+            </span>
+            <ChevronDown
+              className="size-5 shrink-0 text-emerald-300 transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <div className="border-t border-surface/15 p-4 sm:p-7">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+              <div>
+                <p className="text-sm font-black text-emerald-300">
+                  {t("أثر برنامج الولاء", "Loyalty programme impact")}
+                </p>
+                <h2 className="mt-1 text-2xl font-black">
+                  {t("مؤشرات تشغيلية موثقة", "Documented operational signals")}
+                </h2>
+              </div>
+              <p className="max-w-xl text-sm leading-6 text-surface/75">
+                {t(
+                  "تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.",
+                  "These metrics show only what LoyalFlow recorded. They do not attribute revenue or ROI to the programme unless it was explicitly recorded as a sale.",
+                )}
               </p>
-              <h2 className="mt-1 text-2xl font-black">
-                {t("مؤشرات تشغيلية موثقة", "Documented operational signals")}
-              </h2>
             </div>
-            <p className="max-w-xl text-sm leading-6 text-surface/75">
-              {t(
-                "تعرض هذه المؤشرات ما سجله LoyalFlow فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.",
-                "These metrics show only what LoyalFlow recorded. They do not attribute revenue or ROI to the programme unless it was explicitly recorded as a sale.",
-              )}
-            </p>
-          </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {impactMetrics.map((metric) => (
+            <div className="mt-4 grid gap-3 sm:mt-6 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+              {impactMetrics.map((metric) => (
+                <article
+                  key={metric.label}
+                  className="rounded-[var(--lf-radius-input)] border border-surface/15 bg-surface/10 p-4"
+                >
+                  <p className="text-sm text-surface/70">{metric.label}</p>
+                  <p className="lf-type-numeric mt-2 text-3xl font-black text-surface">
+                    {metric.value}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-surface/70">
+                    {metric.detail}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </details>
+
+        <details
+          className={`${simple ? "hidden " : ""}group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm sm:mt-6`}
+        >
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+            <span className="font-black text-foreground">
+              {t("ترتيب العملاء", "Customer rankings")}
+            </span>
+            <ChevronDown
+              className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <section
+            className="grid gap-3 border-t border-border p-3 sm:p-5 lg:grid-cols-3"
+            aria-label={t("ترتيب العملاء", "Customer rankings")}
+          >
+            {rankings.map((ranking) => (
               <article
-                key={metric.label}
-                className="rounded-[var(--lf-radius-input)] border border-surface/15 bg-surface/10 p-4"
+                key={ranking.title}
+                className="rounded-[var(--lf-radius-input)] border border-border bg-surface p-4"
               >
-                <p className="text-sm text-surface/70">{metric.label}</p>
-                <p className="lf-type-numeric mt-2 text-3xl font-black text-surface">
-                  {metric.value}
+                <h2 className="text-lg font-black text-foreground">
+                  {ranking.title}
+                </h2>
+                <p className="mt-1 text-sm text-foreground-muted">
+                  {ranking.description}
                 </p>
-                <p className="mt-2 text-xs leading-5 text-surface/70">
-                  {metric.detail}
-                </p>
+
+                <div className="mt-5 space-y-3">
+                  {ranking.items.length === 0 ? (
+                    <p className="text-sm text-foreground-muted">
+                      {copy.noData}
+                    </p>
+                  ) : (
+                    ranking.items.map(({ customer, value }, index) => (
+                      <Link
+                        key={customer.id}
+                        href={`/businesses/${business.slug}/customers/${customer.id}`}
+                        className="flex min-h-12 items-center gap-3 rounded-[var(--lf-radius-input)] border border-border p-3 transition-colors hover:border-primary/30 hover:bg-surface-subtle"
+                      >
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
+                          {index + 1}
+                        </span>
+                        <span
+                          dir="auto"
+                          className="min-w-0 flex-1 truncate font-semibold text-foreground"
+                        >
+                          {getCustomerName(customer)}
+                        </span>
+                        <span
+                          dir="auto"
+                          className="text-sm font-bold text-primary"
+                        >
+                          {numberFormatter.format(value)} {ranking.suffix}
+                        </span>
+                      </Link>
+                    ))
+                  )}
+                </div>
               </article>
             ))}
-          </div>
-        </section>
+          </section>
+        </details>
 
-        <section
-          className={`${simple ? "hidden " : ""}mt-6 grid gap-4 lg:grid-cols-3`}
-          aria-label={t("ترتيب العملاء", "Customer rankings")}
+        <details
+          className={`${simple ? "hidden " : ""}group mt-3 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm sm:mt-6`}
         >
-          {rankings.map((ranking) => (
-            <article
-              key={ranking.title}
-              className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm"
-            >
-              <h2 className="text-lg font-black text-foreground">
-                {ranking.title}
-              </h2>
-              <p className="mt-1 text-sm text-foreground-muted">
-                {ranking.description}
-              </p>
-
-              <div className="mt-5 space-y-3">
-                {ranking.items.length === 0 ? (
-                  <p className="text-sm text-foreground-muted">{copy.noData}</p>
-                ) : (
-                  ranking.items.map(({ customer, value }, index) => (
-                    <Link
-                      key={customer.id}
-                      href={`/businesses/${business.slug}/customers/${customer.id}`}
-                      className="flex min-h-12 items-center gap-3 rounded-[var(--lf-radius-input)] border border-border p-3 transition-colors hover:border-primary/30 hover:bg-surface-subtle"
-                    >
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                        {index + 1}
-                      </span>
-                      <span dir="auto" className="min-w-0 flex-1 truncate font-semibold text-foreground">
-                        {getCustomerName(customer)}
-                      </span>
-                      <span dir="auto" className="text-sm font-bold text-primary">
-                        {numberFormatter.format(value)} {ranking.suffix}
-                      </span>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </article>
-          ))}
-        </section>
-
-        <section
-          className={`${simple ? "hidden " : ""}mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]`}
-          aria-label={t("نشاط العملاء الأخير", "Recent customer activity")}
-        >
-          <div className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
-            <div className="border-b border-border px-4 py-5 sm:px-6">
-              <h2 className="text-xl font-black text-foreground">
-                {t("أحدث الحركات", "Recent activity")}
-              </h2>
-              <p className="mt-1 text-sm text-foreground-muted">
+          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+            <span className="min-w-0">
+              <span className="block font-black text-foreground">
+                {t("أحدث الحركات والعملاء", "Recent activity & top customers")}
+              </span>
+              <span className="mt-0.5 hidden text-xs text-foreground-subtle sm:block">
                 {t(
                   "أحدث 50 عملية خلال الفترة المحددة.",
                   "Latest 50 operations in the selected period.",
                 )}
-              </p>
-            </div>
-
-            {recentTransactions.length === 0 ? (
-              <div className="p-10 text-center text-foreground-muted">
-                {t("لا توجد حركات خلال هذه الفترة.", "No activity in this period.")}
+              </span>
+            </span>
+            <ChevronDown
+              className="size-5 shrink-0 text-primary transition-transform group-open:rotate-180"
+              aria-hidden="true"
+            />
+          </summary>
+          <section
+            className="grid gap-4 border-t border-border p-3 sm:p-5 xl:grid-cols-[minmax(0,1fr)_360px]"
+            aria-label={t("نشاط العملاء الأخير", "Recent customer activity")}
+          >
+            <div className="overflow-hidden rounded-[var(--lf-radius-input)] border border-border bg-surface">
+              <div className="border-b border-border px-4 py-5 sm:px-6">
+                <h2 className="text-xl font-black text-foreground">
+                  {t("أحدث الحركات", "Recent activity")}
+                </h2>
+                <p className="mt-1 text-sm text-foreground-muted">
+                  {t(
+                    "أحدث 50 عملية خلال الفترة المحددة.",
+                    "Latest 50 operations in the selected period.",
+                  )}
+                </p>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-start text-sm">
-                  <thead className="bg-surface-subtle text-xs uppercase tracking-wide text-foreground-subtle">
-                    <tr>
-                      <th className="px-6 py-4">{t("العميل", "Customer")}</th>
-                      <th className="px-6 py-4">{t("النوع", "Type")}</th>
-                      <th className="px-6 py-4">{t("القيمة", "Value")}</th>
-                      <th className="px-6 py-4">{t("الرصيد", "Balance")}</th>
-                      <th className="px-6 py-4">{t("الموظف", "Staff")}</th>
-                      <th className="px-6 py-4">{t("التاريخ", "Date")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
+
+              {recentTransactions.length === 0 ? (
+                <div className="p-10 text-center text-foreground-muted">
+                  {t(
+                    "لا توجد حركات خلال هذه الفترة.",
+                    "No activity in this period.",
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="divide-y divide-border md:hidden"
+                    data-report-activity-mobile="cards"
+                  >
                     {recentTransactions.map((transaction) => {
                       const customerName = [
                         transaction.customer.firstName,
@@ -1894,7 +2012,6 @@ export default async function ReportsPage({
                       ]
                         .filter(Boolean)
                         .join(" ");
-
                       const employeeName = transaction.createdBy
                         ? [
                             transaction.createdBy.firstName,
@@ -1903,124 +2020,226 @@ export default async function ReportsPage({
                             .filter(Boolean)
                             .join(" ")
                         : t("النظام", "System");
+                      const typeLabel =
+                        transaction.type === "EARN"
+                          ? t("إضافة رصيد", "Earn balance")
+                          : transaction.type === "REDEEM"
+                            ? t("استبدال مكافأة", "Reward redemption")
+                            : t("تعديل رصيد", "Balance adjustment");
 
                       return (
-                        <tr
+                        <Link
                           key={transaction.id}
-                          className="transition-colors hover:bg-surface-subtle/60"
+                          href={`/businesses/${business.slug}/customers/${transaction.customer.id}`}
+                          className="block p-4 transition-colors hover:bg-surface-subtle"
                         >
-                          <td className="px-6 py-4">
-                            <Link
-                              href={`/businesses/${business.slug}/customers/${transaction.customer.id}`}
-                              className="font-semibold text-foreground transition-colors hover:text-primary"
-                            >
-                              {customerName}
-                            </Link>
-                            <p className="mt-1 text-xs text-foreground-subtle">
-                              {transaction.customer.customerCode}
-                            </p>
-                          </td>
-
-                          <td className="px-6 py-4">
-                            <span
-                              className={
-                                transaction.type === "EARN"
-                                  ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
-                                  : transaction.type === "REDEEM"
-                                    ? "rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
-                                    : "rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-foreground-muted"
-                              }
-                            >
-                              {transaction.type === "EARN"
-                                ? t("إضافة رصيد", "Earn balance")
-                                : transaction.type === "REDEEM"
-                                  ? t("استبدال مكافأة", "Reward redemption")
-                                  : t("تعديل رصيد", "Balance adjustment")}
+                          <span className="flex items-start justify-between gap-3">
+                            <span className="min-w-0">
+                              <span
+                                dir="auto"
+                                className="block truncate font-bold text-foreground"
+                              >
+                                {customerName}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-foreground-subtle">
+                                {transaction.customer.customerCode}
+                              </span>
                             </span>
-                          </td>
-
-                          <td
-                            className={`lf-type-numeric px-6 py-4 font-bold ${
-                              transaction.amount >= 0
-                                ? "text-emerald-700"
-                                : "text-amber-700"
-                            }`}
-                          >
-                            {transaction.amount > 0 ? "+" : ""}
-                            {numberFormatter.format(transaction.amount)}
-                          </td>
-                          <td className="lf-type-numeric px-6 py-4 font-semibold text-foreground">
-                            {numberFormatter.format(transaction.balanceAfter)}
-                          </td>
-                          <td dir="auto" className="px-6 py-4 text-foreground-muted">
-                            {employeeName}
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 text-foreground-muted">
-                            {dateTimeFormatter.format(transaction.createdAt)}
-                          </td>
-                        </tr>
+                            <span
+                              className={`lf-type-numeric shrink-0 font-black ${transaction.amount >= 0 ? "text-emerald-700" : "text-amber-700"}`}
+                            >
+                              {transaction.amount > 0 ? "+" : ""}
+                              {numberFormatter.format(transaction.amount)}
+                            </span>
+                          </span>
+                          <span className="mt-3 flex items-center justify-between gap-3 text-xs">
+                            <span className="rounded-full bg-surface-subtle px-2.5 py-1 font-semibold text-foreground-muted">
+                              {typeLabel}
+                            </span>
+                            <span className="lf-type-numeric text-foreground-muted">
+                              {t("الرصيد", "Balance")}{" "}
+                              {numberFormatter.format(transaction.balanceAfter)}
+                            </span>
+                          </span>
+                          <span className="mt-2 flex items-center justify-between gap-3 text-xs text-foreground-subtle">
+                            <span dir="auto" className="truncate">
+                              {employeeName}
+                            </span>
+                            <span className="shrink-0">
+                              {dateTimeFormatter.format(transaction.createdAt)}
+                            </span>
+                          </span>
+                        </Link>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+                  </div>
+                  <div
+                    className="hidden overflow-x-auto md:block"
+                    data-report-activity-desktop="table"
+                  >
+                    <table className="min-w-[760px] text-start text-sm">
+                      <thead className="bg-surface-subtle text-xs uppercase tracking-wide text-foreground-subtle">
+                        <tr>
+                          <th className="px-6 py-4">
+                            {t("العميل", "Customer")}
+                          </th>
+                          <th className="px-6 py-4">{t("النوع", "Type")}</th>
+                          <th className="px-6 py-4">{t("القيمة", "Value")}</th>
+                          <th className="px-6 py-4">
+                            {t("الرصيد", "Balance")}
+                          </th>
+                          <th className="px-6 py-4">{t("الموظف", "Staff")}</th>
+                          <th className="px-6 py-4">{t("التاريخ", "Date")}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {recentTransactions.map((transaction) => {
+                          const customerName = [
+                            transaction.customer.firstName,
+                            transaction.customer.lastName,
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
 
-          <aside className="h-fit rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
-            <h2 className="text-xl font-black text-foreground">
-              {t("أفضل العملاء", "Top customers")}
-            </h2>
-            <p className="mt-1 text-sm text-foreground-muted">
-              {t(
-                "الترتيب حسب إجمالي رصيد الولاء المكتسب.",
-                "Ranked by lifetime loyalty earned.",
-              )}
-            </p>
+                          const employeeName = transaction.createdBy
+                            ? [
+                                transaction.createdBy.firstName,
+                                transaction.createdBy.lastName,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")
+                            : t("النظام", "System");
 
-            <div className="mt-5 space-y-3">
-              {topCustomers.length === 0 ? (
-                <p className="text-sm text-foreground-muted">
-                  {t("لا يوجد عملاء حتى الآن.", "No customers yet.")}
-                </p>
-              ) : (
-                topCustomers.map((customer, index) => {
-                  const customerName = [customer.firstName, customer.lastName]
-                    .filter(Boolean)
-                    .join(" ");
+                          return (
+                            <tr
+                              key={transaction.id}
+                              className="transition-colors hover:bg-surface-subtle/60"
+                            >
+                              <td className="px-6 py-4">
+                                <Link
+                                  href={`/businesses/${business.slug}/customers/${transaction.customer.id}`}
+                                  className="font-semibold text-foreground transition-colors hover:text-primary"
+                                >
+                                  {customerName}
+                                </Link>
+                                <p className="mt-1 text-xs text-foreground-subtle">
+                                  {transaction.customer.customerCode}
+                                </p>
+                              </td>
 
-                  return (
-                    <Link
-                      key={customer.id}
-                      href={`/businesses/${business.slug}/customers/${customer.id}`}
-                      className="flex items-center gap-4 rounded-[var(--lf-radius-input)] border border-border p-3 transition-colors hover:border-primary/30 hover:bg-surface-subtle"
-                    >
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft font-bold text-primary">
-                        {index + 1}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p dir="auto" className="truncate font-semibold text-foreground">
-                          {customerName}
-                        </p>
-                        <p className="mt-1 text-xs text-foreground-subtle">
-                          {customer.customerCode}
-                        </p>
-                      </div>
-                      <div className="text-end">
-                        <p className="lf-type-numeric font-bold text-primary">
-                          {numberFormatter.format(customer.lifetimeEarned)}
-                        </p>
-                        <p className="lf-type-numeric text-xs text-foreground-subtle">
-                          {t("الرصيد", "Balance")} {numberFormatter.format(customer.balance)}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })
+                              <td className="px-6 py-4">
+                                <span
+                                  className={
+                                    transaction.type === "EARN"
+                                      ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+                                      : transaction.type === "REDEEM"
+                                        ? "rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+                                        : "rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-foreground-muted"
+                                  }
+                                >
+                                  {transaction.type === "EARN"
+                                    ? t("إضافة رصيد", "Earn balance")
+                                    : transaction.type === "REDEEM"
+                                      ? t("استبدال مكافأة", "Reward redemption")
+                                      : t("تعديل رصيد", "Balance adjustment")}
+                                </span>
+                              </td>
+
+                              <td
+                                className={`lf-type-numeric px-6 py-4 font-bold ${
+                                  transaction.amount >= 0
+                                    ? "text-emerald-700"
+                                    : "text-amber-700"
+                                }`}
+                              >
+                                {transaction.amount > 0 ? "+" : ""}
+                                {numberFormatter.format(transaction.amount)}
+                              </td>
+                              <td className="lf-type-numeric px-6 py-4 font-semibold text-foreground">
+                                {numberFormatter.format(
+                                  transaction.balanceAfter,
+                                )}
+                              </td>
+                              <td
+                                dir="auto"
+                                className="px-6 py-4 text-foreground-muted"
+                              >
+                                {employeeName}
+                              </td>
+                              <td className="whitespace-nowrap px-6 py-4 text-foreground-muted">
+                                {dateTimeFormatter.format(
+                                  transaction.createdAt,
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </div>
-          </aside>
-        </section>
+
+            <aside className="h-fit rounded-[var(--lf-radius-input)] border border-border bg-surface p-4 sm:p-6">
+              <h2 className="text-xl font-black text-foreground">
+                {t("أفضل العملاء", "Top customers")}
+              </h2>
+              <p className="mt-1 text-sm text-foreground-muted">
+                {t(
+                  "الترتيب حسب إجمالي رصيد الولاء المكتسب.",
+                  "Ranked by lifetime loyalty earned.",
+                )}
+              </p>
+
+              <div className="mt-5 space-y-3">
+                {topCustomers.length === 0 ? (
+                  <p className="text-sm text-foreground-muted">
+                    {t("لا يوجد عملاء حتى الآن.", "No customers yet.")}
+                  </p>
+                ) : (
+                  topCustomers.map((customer, index) => {
+                    const customerName = [customer.firstName, customer.lastName]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    return (
+                      <Link
+                        key={customer.id}
+                        href={`/businesses/${business.slug}/customers/${customer.id}`}
+                        className="flex items-center gap-4 rounded-[var(--lf-radius-input)] border border-border p-3 transition-colors hover:border-primary/30 hover:bg-surface-subtle"
+                      >
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft font-bold text-primary">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            dir="auto"
+                            className="truncate font-semibold text-foreground"
+                          >
+                            {customerName}
+                          </p>
+                          <p className="mt-1 text-xs text-foreground-subtle">
+                            {customer.customerCode}
+                          </p>
+                        </div>
+                        <div className="text-end">
+                          <p className="lf-type-numeric font-bold text-primary">
+                            {numberFormatter.format(customer.lifetimeEarned)}
+                          </p>
+                          <p className="lf-type-numeric text-xs text-foreground-subtle">
+                            {t("الرصيد", "Balance")}{" "}
+                            {numberFormatter.format(customer.balance)}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })
+                )}
+              </div>
+            </aside>
+          </section>
+        </details>
       </div>
     </main>
   );

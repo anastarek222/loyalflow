@@ -1,14 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { BusinessLogoCropField } from "@/components/business-logo-crop-field";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import { getBusinessSetupValidationIssue } from "@/lib/business/setup-validation";
 import { CountrySelector } from "@/components/onboarding/country-selector";
 import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
 import { StandardCardSetup } from "@/components/standard-card-setup";
+import { UnitLabelInput } from "@/components/unit-label-input";
 
 type Language = "AR" | "EN";
 
@@ -54,6 +56,7 @@ type ReviewData = {
   rewardThreshold: string;
   earnAmount: string;
   primaryColor: string;
+  secondaryColor: string;
   themePreset: string;
   logoPreview: string;
   standardCardArtworkEnabled: boolean;
@@ -229,6 +232,7 @@ function getCopy(language: Language) {
         earn: "قيمة الكسب",
         theme: "السمة",
         primary: "اللون الأساسي",
+        secondary: "اللون الثانوي",
         logo: "الشعار",
         configured: "مضبوط",
         notSet: "غير مضبوط",
@@ -337,6 +341,7 @@ function getCopy(language: Language) {
         earn: "Earn amount",
         theme: "Theme",
         primary: "Primary",
+        secondary: "Secondary",
         logo: "Logo",
         configured: "Configured",
         notSet: "Not set",
@@ -371,7 +376,7 @@ function CreateBusinessSubmitButton({
     <button
       type="submit"
       disabled={submitting}
-      className="ms-auto rounded-[var(--lf-radius-md)] bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70"
+      className="min-h-12 w-full rounded-[var(--lf-radius-md)] bg-primary px-5 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary-hover disabled:cursor-wait disabled:opacity-70 sm:ms-auto sm:w-auto"
     >
       {submitting ? copy.creating : copy.create}
     </button>
@@ -418,6 +423,7 @@ function getReviewData(formData: FormData, logoPreview: string): ReviewData {
     rewardThreshold: getValue(formData, "rewardThreshold"),
     earnAmount: getValue(formData, "earnAmount"),
     primaryColor: getValue(formData, "primaryColor"),
+    secondaryColor: getValue(formData, "secondaryColor"),
     themePreset: getValue(formData, "themePreset"),
     logoPreview,
     standardCardArtworkEnabled:
@@ -433,12 +439,14 @@ export default function BusinessSetupWizard({ action, language }: Props) {
   const copy = getCopy(language);
   const localizedLabels = labels[language];
   const formRef = useRef<HTMLFormElement>(null);
+  const stepButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const submissionLockRef = useRef(false);
   const [submissionStarted, setSubmissionStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [validationError, setValidationError] = useState("");
   const [reviewData, setReviewData] = useState<ReviewData | null>(null);
   const [logoPreview, setLogoPreview] = useState("");
+  const [logoCropPending, setLogoCropPending] = useState(false);
   const [country, setCountry] = useState("Egypt");
   const [currency, setCurrency] = useState("EGP");
   const [timezone, setTimezone] = useState("Africa/Cairo");
@@ -458,6 +466,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
     rewardName: string;
     rewardThreshold: number;
     primaryColor?: string;
+    secondaryColor?: string;
     themePreset?: string;
     artworkEnabled?: boolean;
     artworkCategory?: string;
@@ -477,6 +486,13 @@ export default function BusinessSetupWizard({ action, language }: Props) {
     rewardName: copy.defaultReward,
     rewardThreshold: 5,
   });
+
+  useEffect(() => {
+    stepButtonRefs.current[step]?.scrollIntoView({
+      block: "nearest",
+      inline: "center",
+    });
+  }, [step]);
 
   function fullPhone(local: string) {
     const normalized = local.replace(/[^\d]/g, "").replace(/^0+/, "");
@@ -499,6 +515,14 @@ export default function BusinessSetupWizard({ action, language }: Props) {
 
   function goNext() {
     if (!formRef.current || step > 4) return;
+    if (step === 4 && logoCropPending) {
+      setValidationError(
+        language === "AR"
+          ? "أكد معاينة الشعار المربع قبل المتابعة إلى المراجعة."
+          : "Confirm the square logo preview before continuing to review.",
+      );
+      return;
+    }
     const formData = new FormData(formRef.current);
     const issue = getBusinessSetupValidationIssue(formData, step as SetupStep);
     if (issue) {
@@ -577,6 +601,16 @@ export default function BusinessSetupWizard({ action, language }: Props) {
           event.preventDefault();
           return;
         }
+        if (logoCropPending) {
+          event.preventDefault();
+          setValidationError(
+          language === "AR"
+            ? copy.validation
+              : "Confirm the square logo preview before creating the business.",
+          );
+          setStep(4);
+          return;
+        }
         const data = new FormData(event.currentTarget);
         const issue = getBusinessSetupValidationIssue(data);
         if (issue) {
@@ -588,19 +622,29 @@ export default function BusinessSetupWizard({ action, language }: Props) {
         submissionLockRef.current = true;
         setSubmissionStarted(true);
       }}
-      className="mt-6 space-y-5"
+      className="mt-6 space-y-5 pb-24 sm:pb-0"
     >
       <div className="mb-6">
-        <div className="flex items-center justify-between gap-2 overflow-x-auto">
+        <div className="mb-3 flex items-center justify-between gap-3 sm:hidden">
+          <p className="text-sm font-black text-primary">{copy.steps[step]}</p>
+          <span className="lf-type-numeric shrink-0 text-xs font-bold text-foreground-muted">
+            {step + 1}/{copy.steps.length}
+          </span>
+        </div>
+        <div className="flex scroll-px-4 items-center gap-5 overflow-x-auto pb-2 sm:justify-between sm:gap-2 sm:pb-0">
           {copy.steps.map((item, index) => (
             <button
               key={item}
+              ref={(element) => {
+                stepButtonRefs.current[index] = element;
+              }}
               type="button"
               disabled={index > step}
+              aria-current={index === step ? "step" : undefined}
               onClick={() => {
                 if (index < step) editStep(index);
               }}
-              className={`whitespace-nowrap text-xs font-bold ${
+              className={`shrink-0 scroll-mx-4 whitespace-nowrap text-xs font-bold ${
                 index === step
                   ? "text-primary"
                   : index < step
@@ -1009,11 +1053,10 @@ export default function BusinessSetupWizard({ action, language }: Props) {
               </option>
             ))}
           </select>
-          <input
+          <UnitLabelInput
             name="unitName"
             required
             defaultValue={copy.defaultUnit}
-            maxLength={30}
             placeholder={copy.unitName}
             className={fieldClass}
           />
@@ -1061,76 +1104,34 @@ export default function BusinessSetupWizard({ action, language }: Props) {
               {copy.cardDescription}
             </p>
           </div>
-          <div className="rounded-[var(--lf-radius-lg)] border border-border bg-surface p-5">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-foreground-subtle">
-              {copy.businessLogo}
-            </p>
-            <div className="mt-4 flex aspect-square max-w-44 items-center justify-center overflow-hidden rounded-[var(--lf-radius-lg)] border border-border bg-surface-subtle">
-              {logoPreview ? (
-                <img
-                  src={logoPreview}
-                  alt={copy.logoAlt}
-                  className="size-full object-contain p-3"
-                />
-              ) : (
-                <span className="text-5xl font-black text-foreground-subtle">
-                  {cardPreview.businessName.trim().slice(0, 1).toUpperCase() || "L"}
-                </span>
-              )}
-            </div>
-            <label htmlFor="logoFile" className={`mt-5 ${labelClass}`}>
-              {logoPreview ? copy.changeLogo : copy.uploadLogo}{" "}
-              <span className="font-normal text-foreground-subtle">
-                ({copy.optional})
-              </span>
-            </label>
-            <input
-              id="logoFile"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                if (
-                  file.size > 500 * 1024 ||
-                  !["image/png", "image/jpeg", "image/webp"].includes(file.type)
-                ) {
-                  setValidationError(copy.logoError);
-                  event.target.value = "";
-                  setLogoPreview("");
-                  return;
-                }
-                setValidationError("");
-                const reader = new FileReader();
-                reader.onload = () => {
-                  const preview =
-                    typeof reader.result === "string" ? reader.result : "";
-                  setLogoPreview(preview);
-                  setCardPreview((current) => ({ ...current, logoUrl: preview }));
-                };
-                reader.readAsDataURL(file);
-              }}
-              className="mt-2 w-full rounded-[var(--lf-radius-md)] border border-border bg-surface px-4 py-3 text-foreground file:me-4 file:rounded-[var(--lf-radius-sm)] file:border-0 file:bg-foreground file:px-4 file:py-2 file:font-semibold file:text-[var(--lf-inverse)]"
-            />
-            <input
-              type="hidden"
-              name="logoDataUrl"
-              value={logoPreview.startsWith("data:image/") ? logoPreview : ""}
-            />
-            <p className="mt-1 text-xs text-foreground-subtle">{copy.logoHint}</p>
-          </div>
+          <BusinessLogoCropField
+            language={language}
+            value={logoPreview}
+            alt={copy.logoAlt}
+            fallbackText={cardPreview.businessName}
+            onChange={(nextLogo) => {
+              setLogoPreview(nextLogo);
+              setCardPreview((current) => ({ ...current, logoUrl: nextLogo }));
+            }}
+            onPreviewChange={(nextLogo) =>
+              setCardPreview((current) => ({ ...current, logoUrl: nextLogo }))
+            }
+            onPendingChange={setLogoCropPending}
+            onError={setValidationError}
+          />
 
           <StandardCardSetup
             language={language}
             allowCustom
             initial={{
               primaryColor: "#B98A4B",
+              secondaryColor: "#FFFFFF",
               themePreset: "DEFAULT",
               artworkEnabled: true,
               artworkCategory: "OTHER",
               designMode: "STANDARD",
             }}
-            preview={{ ...cardPreview, logoUrl: logoPreview }}
+            preview={cardPreview}
             onPreviewChange={(next) =>
               setCardPreview((current) => ({ ...current, ...next }))
             }
@@ -1138,7 +1139,6 @@ export default function BusinessSetupWizard({ action, language }: Props) {
 
           <input type="hidden" name="logoUrl" value="" />
           <input type="hidden" name="cardStyle" value="CLASSIC" />
-          <input type="hidden" name="secondaryColor" value="#FFFFFF" />
           <input type="hidden" name="fontFamily" value="INTER" />
         </section>
       </div>
@@ -1219,6 +1219,7 @@ export default function BusinessSetupWizard({ action, language }: Props) {
                 rows={[
                   [copy.theme, localizedLabels.theme[reviewData.themePreset as keyof typeof localizedLabels.theme] ?? reviewData.themePreset],
                   [copy.primary, reviewData.primaryColor],
+                  [copy.secondary, reviewData.secondaryColor],
                   [copy.logo, reviewData.logoPreview ? copy.configured : copy.notSet],
                   [copy.design, reviewData.cardDesignMode === "CUSTOM" ? copy.customCard : copy.standardCard],
                   [copy.artwork, reviewData.standardCardArtworkEnabled ? reviewData.standardCardArtworkCategory : copy.disabled],
@@ -1245,23 +1246,26 @@ export default function BusinessSetupWizard({ action, language }: Props) {
         </section>
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2">
+      <div
+        data-testid="business-setup-mobile-action-bar"
+        className="sticky bottom-0 z-20 -mx-5 grid grid-cols-2 items-center gap-3 border-t border-border/80 bg-surface/95 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgb(15_23_42/0.08)] backdrop-blur sm:static sm:mx-0 sm:flex sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+      >
         {step > 0 ? (
           <button
             type="button"
             onClick={goBack}
-            className="rounded-[var(--lf-radius-md)] border border-border bg-surface px-5 py-3 font-semibold text-foreground-muted transition-colors hover:bg-surface-subtle"
+            className="min-h-12 w-full rounded-[var(--lf-radius-md)] border border-border bg-surface px-5 py-3 font-semibold text-foreground-muted transition-colors hover:bg-surface-subtle sm:w-auto"
           >
             {copy.back}
           </button>
         ) : (
-          <span />
+          <span className="hidden sm:block" />
         )}
         {step < copy.steps.length - 1 ? (
           <button
             type="button"
             onClick={goNext}
-            className="ms-auto rounded-[var(--lf-radius-md)] bg-foreground px-5 py-3 font-semibold text-[var(--lf-inverse)] transition-colors hover:bg-primary"
+            className={`${step === 0 ? "col-span-2" : ""} min-h-12 w-full rounded-[var(--lf-radius-md)] bg-foreground px-5 py-3 font-semibold text-[var(--lf-inverse)] transition-colors hover:bg-primary sm:col-span-1 sm:ms-auto sm:w-auto`}
           >
             {copy.next}
           </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Check, Copy, Download, Share2, X } from "lucide-react";
 import { getPublicExperienceCopy } from "@/lib/customer-experience/public-copy";
 
@@ -8,6 +9,7 @@ type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
+type InstallPlatform = "ios" | "android" | "other";
 type Props = {
   cardUrl: string;
   businessName: string;
@@ -30,6 +32,8 @@ export function PublicCardActions({
   const [installed, setInstalled] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [canShowInstall, setCanShowInstall] = useState(false);
+  const [installPlatform, setInstallPlatform] =
+    useState<InstallPlatform>("other");
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
@@ -40,7 +44,9 @@ export function PublicCardActions({
       const ios =
         /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-      setCanShowInstall(ios);
+      const android = /Android/i.test(navigator.userAgent);
+      setInstallPlatform(ios ? "ios" : android ? "android" : "other");
+      setCanShowInstall(ios || android);
     });
     const onPrompt = (event: Event) => {
       event.preventDefault();
@@ -109,10 +115,12 @@ export function PublicCardActions({
     }
     setShowHelp(true);
   }
-  const isIOS =
-    typeof navigator !== "undefined" &&
-    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1));
+  const installSteps =
+    installPlatform === "ios"
+      ? copy.iosInstallSteps
+      : installPlatform === "android"
+        ? copy.androidInstallSteps
+        : null;
   return (
     <section
       className="mt-4 rounded-2xl border border-white/80 bg-white/85 p-2 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.5)] backdrop-blur sm:p-3"
@@ -184,9 +192,31 @@ export function PublicCardActions({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="font-black">{copy.installHelpTitle}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {isIOS ? copy.iosInstallHelp : copy.otherInstallHelp}
-              </p>
+              {installSteps ? (
+                <>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {copy.installHelpIntro}
+                  </p>
+                  <ol className="mt-3 space-y-2 text-sm text-slate-700">
+                    {installSteps.map((instruction, index) => (
+                      <li key={instruction} className="flex items-start gap-2.5">
+                        <span
+                          className="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-black text-white"
+                          style={{ backgroundColor: primaryColor }}
+                          aria-hidden="true"
+                        >
+                          {index + 1}
+                        </span>
+                        <span className="pt-0.5 leading-5">{instruction}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : (
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {copy.otherInstallHelp}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -199,6 +229,17 @@ export function PublicCardActions({
           </div>
         </div>
       ) : null}
+      <div className="mt-3 border-t border-slate-200/80 px-2 pt-3 text-center">
+        <Link
+          href="/features"
+          data-testid="customer-loyalflow-attribution"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg px-2 text-xs font-semibold text-slate-500 transition hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        >
+          {language === "AR"
+            ? "مدعوم من LoyalFlow · هل تريد برنامج ولاء لنشاطك؟"
+            : "Powered by LoyalFlow · Want loyalty for your business?"}
+        </Link>
+      </div>
     </section>
   );
 }

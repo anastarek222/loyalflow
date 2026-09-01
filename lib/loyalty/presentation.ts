@@ -9,6 +9,36 @@ type LoyaltyPresentationInput = {
   earnAmount?: number;
 };
 
+function preserveUnitCase(source: string, value: string) {
+  if (source === source.toUpperCase()) return value.toUpperCase();
+  if (source === source.toLowerCase()) return value.toLowerCase();
+  return `${value.charAt(0).toUpperCase()}${value.slice(1).toLowerCase()}`;
+}
+
+function englishUnitForms(value: string) {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  const words = normalized.split(" ");
+  const sourceWord = words.pop() || normalized;
+  const prefix = words.length ? `${words.join(" ")} ` : "";
+  const singularWord = /ies$/i.test(sourceWord)
+    ? sourceWord.replace(/ies$/i, "y")
+    : /(ch|sh|x|z)es$/i.test(sourceWord)
+      ? sourceWord.replace(/es$/i, "")
+      : /s$/i.test(sourceWord) && !/ss$/i.test(sourceWord)
+        ? sourceWord.slice(0, -1)
+        : sourceWord;
+  const pluralWord = /[^aeiou]y$/i.test(singularWord)
+    ? `${singularWord.slice(0, -1)}ies`
+    : /(s|x|z|ch|sh)$/i.test(singularWord)
+      ? `${singularWord}es`
+      : `${singularWord}s`;
+
+  return {
+    singular: `${prefix}${preserveUnitCase(sourceWord, singularWord)}`,
+    plural: `${prefix}${preserveUnitCase(sourceWord, pluralWord)}`,
+  };
+}
+
 function localeFor(language: AppLanguage) {
   return language === "AR" ? "ar-EG" : "en-US";
 }
@@ -26,10 +56,35 @@ export function operationalUnitLabel(input: LoyaltyPresentationInput) {
   return input.language === "AR" ? "نقطة" : "points";
 }
 
-export function formatLoyaltyAmount(input: LoyaltyPresentationInput & { amount: number }) {
-  const formatted = formatLoyaltyNumber(input.amount, input.language);
+export function loyaltyUnitLabelForAmount(
+  input: LoyaltyPresentationInput & { amount: number },
+) {
   const unit = operationalUnitLabel(input);
-  return input.loyaltyMode === "SALES_AMOUNT" ? `${unit} ${formatted}` : `${formatted} ${unit}`;
+  if (input.loyaltyMode === "SALES_AMOUNT" || input.language === "AR") {
+    return unit;
+  }
+
+  const forms = englishUnitForms(unit);
+  return Math.abs(Math.trunc(input.amount)) === 1
+    ? forms.singular
+    : forms.plural;
+}
+
+export function loyaltyAmountParts(
+  input: LoyaltyPresentationInput & { amount: number },
+) {
+  return {
+    amount: formatLoyaltyNumber(input.amount, input.language),
+    unit: loyaltyUnitLabelForAmount(input),
+    currencyFirst: input.loyaltyMode === "SALES_AMOUNT",
+  };
+}
+
+export function formatLoyaltyAmount(input: LoyaltyPresentationInput & { amount: number }) {
+  const parts = loyaltyAmountParts(input);
+  return parts.currencyFirst
+    ? `${parts.unit} ${parts.amount}`
+    : `${parts.amount} ${parts.unit}`;
 }
 
 export function formatLoyaltyNumber(amount: number, language: AppLanguage) {
@@ -38,8 +93,7 @@ export function formatLoyaltyNumber(amount: number, language: AppLanguage) {
 
 export function balanceLabel(input: LoyaltyPresentationInput) {
   if (input.loyaltyMode === "SALES_AMOUNT") return input.language === "AR" ? "رصيد المبيعات المسجل" : "Recorded sales balance";
-  if (input.loyaltyMode === "VISITS") return input.language === "AR" ? "رصيد الزيارات" : "Visit balance";
-  return input.language === "AR" ? "رصيد النقاط" : "Points balance";
+  return input.language === "AR" ? "رصيد الولاء" : "Loyalty balance";
 }
 
 export function earnActionLabel(input: LoyaltyPresentationInput) {

@@ -6,35 +6,40 @@ function source(path: string) {
   return readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 }
 
-test("Z10 Custom Card localizes system-owned customer copy in AR and EN", () => {
-  const card = source("components/loyalty-card.tsx");
+test("Z10 Custom Card keeps system copy out of owner-supplied artwork", () => {
+  const card = source("components/custom-loyalty-card.tsx");
 
-  assert.match(card, /card:\s*"بطاقة الولاء"/);
-  assert.match(card, /qr:\s*"رمز QR الخاص بالعميل"/);
-  assert.match(card, /terms:\s*"تطبق شروط برنامج الولاء"/);
-  assert.match(card, /card:\s*"LOYALTY CARD"/);
-  assert.match(card, /qr:\s*"Customer loyalty QR code"/);
-  assert.match(card, /terms:\s*"Loyalty programme terms apply"/);
-
-  assert.match(card, /\{labels\.card\}/);
-  assert.match(card, /label=\{labels\.qr\}/);
-  assert.match(card, /LOYALFLOW · \{labels\.terms\}/);
-  assert.doesNotMatch(card, />LOYALTY CARD<\/p>/);
-  assert.doesNotMatch(card, /LOYALFLOW · Loyalty programme terms apply/);
+  assert.match(card, /src=\{artworkUrl\}/);
+  assert.match(card, /alt=""/);
+  assert.match(card, /props\.qrCode/);
+  assert.match(card, /custom loyalty card \$\{side\}/);
+  assert.doesNotMatch(
+    card,
+    /data-safe-zone="brand-logo"|data-safe-zone="contact-information"|LOYALFLOW ·|contactItems/,
+  );
 });
 
 test("Z10 Custom Card keeps accessibility and protected geometry authority unchanged", () => {
-  const card = source("components/loyalty-card.tsx");
+  const card = source("components/custom-loyalty-card.tsx");
+  const authority = source("components/loyalty-card.tsx");
 
-  assert.match(card, /alt=\{label\}/);
-  assert.match(card, /aria-label=\{label\}/);
-  assert.match(card, /data-safe-zone="custom-brand"/);
-  assert.match(card, /data-safe-zone="custom-qr"/);
-  assert.match(card, /data-safe-zone="custom-member"/);
-  assert.match(card, /data-safe-zone="custom-balance"/);
-  assert.match(card, /data-safe-zone="custom-reward"/);
+  assert.match(card, /role="img"/);
+  assert.match(card, /aria-label=\{`\$\{props\.businessName\} custom loyalty card \$\{side\}`\}/);
+  for (const zone of [
+    "qr-code",
+    "customer-information",
+    "loyalty-balance",
+    "progress",
+    "reward",
+    "brand-artwork",
+  ]) {
+    assert.match(card, new RegExp(`data-safe-zone="${zone}"`));
+  }
+  assert.doesNotMatch(card, /data-safe-zone="brand-logo"/);
+  assert.doesNotMatch(card, /data-safe-zone="contact-information"/);
   assert.match(card, /getLoyaltyCardMetrics/);
   assert.match(card, /CUSTOM_CARD_SAFE_ZONE_VERSION/);
   assert.match(card, /STANDARD_CARD_ASPECT_RATIO/);
-  assert.match(card, /StandardLoyaltyCard/);
+  assert.match(authority, /CustomLoyaltyCard/);
+  assert.match(authority, /StandardLoyaltyCard/);
 });

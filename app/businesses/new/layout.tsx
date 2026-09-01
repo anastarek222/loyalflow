@@ -1,14 +1,16 @@
-import { BusinessSetupStepperVisibility } from "@/components/business-setup-stepper-visibility";
+import { MarketingConversionReceipt } from "@/components/marketing/marketing-conversion-receipt";
 
-export default function NewBusinessLayout({
+export default function BusinessOnboardingConversionLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div data-business-setup-route="true">
-      <BusinessSetupStepperVisibility />
+    <>
+      <MarketingConversionReceipt
+        event="onboarding_start"
+        source="super_admin_add_business"
+        target="/businesses/new"
+      />
       {children}
-    </div>
+    </>
   );
 }

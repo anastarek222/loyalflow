@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import {
+  BUSINESS_LOGO_MAX_BYTES,
+  BUSINESS_LOGO_MIME_TYPES,
+} from "@/lib/branding/image-policy";
 import { businessCreationSchema } from "@/lib/business/creation-input";
 
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
@@ -68,7 +72,8 @@ test("Standard Card has one business-logo source and keeps preview in normal lay
   assert.match(setup, /preview/);
   assert.match(setup, /standard-card-preview-container/);
   assert.match(setup, /overflow-hidden/);
-  assert.match(setup, /xl:sticky/);
+  assert.match(setup, /data-testid="standard-card-mobile-preview-shell"/);
+  assert.match(setup, /className="order-1 sticky top-2 z-20 min-w-0 self-start xl:order-2 xl:top-6"/);
   assert.match(setup, /Front/);
   assert.match(setup, /Back/);
 });
@@ -105,7 +110,7 @@ test("Custom Setup uses the native form action and keeps File objects out of the
   assert.match(wizard, /action=\{action\}/);
   assert.doesNotMatch(wizard, /startSubmitting|useTransition/);
   assert.match(wizard, /const data = new FormData\(event\.currentTarget\)/);
-  assert.match(wizard, /name="logoDataUrl"/);
+  assert.match(wizard, /BusinessLogoCropField/);
   assert.doesNotMatch(wizard, /name="logoFile"/);
   assert.match(wizard, /useFormStatus/);
   assert.match(wizard, /submissionLockRef/);
@@ -171,4 +176,38 @@ test("Custom Card creation requires a published Front + Back pair", () => {
       "Custom Card requires approved Front + Back artwork.",
     );
   }
+});
+
+test("Business logo upload shares one policy and preserves full-frame presentation", () => {
+  assert.equal(BUSINESS_LOGO_MAX_BYTES, 500 * 1024);
+  assert.deepEqual([...BUSINESS_LOGO_MIME_TYPES], [
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+  ]);
+
+  const wizard = read("components/business-setup-wizard.tsx");
+  const cropField = read("components/business-logo-crop-field.tsx");
+  const action = read("app/businesses/actions.ts");
+  const imageData = read("lib/branding/image-data.ts");
+
+  assert.match(wizard, /BusinessLogoCropField/);
+  assert.match(cropField, /BUSINESS_LOGO_ACCEPT/);
+  assert.match(cropField, /BUSINESS_LOGO_MAX_BYTES/);
+  assert.match(cropField, /isBusinessLogoUploadAllowed/);
+  assert.doesNotMatch(cropField, /file\.size > 500 \* 1024/);
+  assert.doesNotMatch(cropField, /\["image\/png", "image\/jpeg", "image\/webp"\]\.includes/);
+
+  assert.match(action, /getSafeImageDataUrl\(\s*submittedLogoDataUrl,\s*BUSINESS_LOGO_MAX_BYTES/);
+  assert.doesNotMatch(action, /getSafeImageDataUrl\(submittedLogoDataUrl, 500 \* 1024\)/);
+  assert.match(imageData, /isSupportedImageMimeType/);
+
+  assert.match(
+    read("components/business-logo-image.tsx"),
+    /size-full object-cover object-center/,
+  );
+  assert.match(
+    read("lib/branding/logo-presentation.ts"),
+    /BUSINESS_LOGO_SVG_ASPECT_RATIO = "xMidYMid slice"/,
+  );
 });

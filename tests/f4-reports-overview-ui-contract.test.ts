@@ -23,7 +23,11 @@ test("Reports overview uses language-aware dates and direction-safe final presen
   assert.match(reports, /Recent activity/);
   assert.match(reports, /Top customers/);
   assert.match(reports, /getCustomerSegmentLabel\(segment, language\)/);
-  assert.match(reports, /<table className="min-w-full text-start text-sm">/);
+  assert.match(reports, /data-report-activity-mobile="cards"/);
+  assert.match(reports, /data-report-activity-desktop="table"/);
+  assert.match(reports, /<table className="min-w-\[760px\] text-start text-sm">/);
+  assert.doesNotMatch(reports, /open=\{!simple\}/);
+  assert.match(reports, /group-open:rotate-180/);
 });
 
 test("Reports navigation uses the canonical semantic foreground for the active tab", () => {

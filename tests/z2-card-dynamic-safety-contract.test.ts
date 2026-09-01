@@ -7,7 +7,7 @@ const standardRenderer = readFileSync(
   "utf8",
 );
 const customRenderer = readFileSync(
-  new URL("../components/loyalty-card.tsx", import.meta.url),
+  new URL("../components/custom-loyalty-card.tsx", import.meta.url),
   "utf8",
 );
 const setupSource = readFileSync(
@@ -18,6 +18,8 @@ const setupSource = readFileSync(
 test("Z2 bounds dynamic Standard Card text without mutating source data", () => {
   assert.match(standardRenderer, /boundedText\(props\.customerName, 30\)/);
   assert.match(standardRenderer, /boundedText\(props\.customerId, 24\)/);
+  assert.match(standardRenderer, /data-emphasis="low"/);
+  assert.match(standardRenderer, /fontSize="10"/);
   assert.match(standardRenderer, /boundedText\([\s\S]*?props\.rewardName[\s\S]*?,\s*32,\s*\)/);
   assert.doesNotMatch(standardRenderer, /props\.customerName\s*=/);
   assert.doesNotMatch(standardRenderer, /props\.customerId\s*=/);
@@ -32,13 +34,27 @@ test("Z2 keeps Arabic and English on one geometry with direction-aware text", ()
 });
 
 test("Z2 keeps Custom Card overlays bounded and the QR system-owned", () => {
-  assert.match(customRenderer, /data-safe-zone="custom-qr"/);
-  assert.match(customRenderer, /data-safe-zone="custom-member"/);
-  assert.match(customRenderer, /data-safe-zone="custom-balance"/);
-  assert.match(customRenderer, /data-safe-zone="custom-reward"/);
-  assert.match(customRenderer, /props\.customerId\.slice\(0, 32\)/);
-  assert.match(customRenderer, /props\.rewardName\.slice\(0, 32\)/);
-  assert.match(customRenderer, /className="[^\"]*truncate[^\"]*"/);
+  for (const zone of [
+    "qr-code",
+    "customer-information",
+    "loyalty-balance",
+    "progress",
+    "reward",
+    "brand-artwork",
+  ]) {
+    assert.match(customRenderer, new RegExp(`data-safe-zone="${zone}"`));
+  }
+  assert.match(customRenderer, /STANDARD_CARD_QR_ZONE/);
+  assert.match(customRenderer, /props\.qrCode/);
+  assert.match(customRenderer, /boundedText\(props\.customerName, 30\)/);
+  assert.match(customRenderer, /boundedText\(props\.customerId, 24\)/);
+  assert.match(customRenderer, /data-emphasis="low"/);
+  assert.match(
+    customRenderer,
+    /boundedText\([\s\S]*?props\.rewardName[\s\S]*?,\s*32,\s*\)/,
+  );
+  assert.match(customRenderer, /wrappedText/);
+  assert.match(customRenderer, /standardCardValueFontSize/);
 });
 
 test("Z2 preview uses the same LoyaltyCard renderer as runtime card presentation", () => {

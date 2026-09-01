@@ -245,6 +245,36 @@ body {
     both;
 }
 
+@keyframes lf-scan-success-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes lf-scan-success-mark {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.08);
+  }
+}
+
+.lf-scan-success-reveal {
+  animation: lf-scan-success-reveal var(--lf-motion-overlay)
+    var(--lf-easing-standard) both;
+}
+
+.lf-scan-success-mark {
+  animation: lf-scan-success-mark 420ms var(--lf-easing-standard) 120ms both;
+}
+
 /* User-provided names, contact details, and URLs must not widen a page. */
 :where(p, span, a, dd, td, th) {
   overflow-wrap: anywhere;
@@ -350,13 +380,12 @@ form {
 
 /* Layering remains content < mobile nav (30) < sidebar (50) < dialogs (100). */
 .lf-nav-sidebar {
-  background: rgb(255 255 255 / 0.82);
+  background: var(--lf-surface);
   border-color: var(--lf-border);
-  box-shadow: 12px 0 40px rgb(15 23 42 / 0.035);
-  backdrop-filter: blur(20px);
+  box-shadow: 12px 0 40px rgb(15 23 42 / 0.16);
 }
 [dir="rtl"] .lf-nav-sidebar {
-  box-shadow: -12px 0 40px rgb(15 23 42 / 0.035);
+  box-shadow: -12px 0 40px rgb(15 23 42 / 0.16);
 }
 .lf-brand-mark {
   background: linear-gradient(145deg, #6366f1 0%, #4338ca 58%, #312e81 100%);

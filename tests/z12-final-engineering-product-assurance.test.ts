@@ -25,7 +25,7 @@ test("Z12 preserves migration assurance on disposable PostgreSQL", () => {
   const workflow = source(".github/workflows/migration-integrity.yml");
 
   assert.ok(workflow.includes("name: Migration Integrity"));
-  assert.ok(workflow.includes("postgres:16-alpine"));
+  assert.ok(workflow.includes("postgres:18-alpine"));
   assert.ok(workflow.includes("POSTGRES_DB: loyalflow_ci"));
   assert.ok(workflow.includes("pnpm run validate:migrations"));
   assert.ok(workflow.includes("pnpm run validate:destructive-migrations"));

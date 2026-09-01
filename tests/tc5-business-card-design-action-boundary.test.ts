@@ -20,6 +20,7 @@ const programPage = source("app/businesses/[slug]/program/page.tsx");
 test("TC5 Card design input contract preserves the existing bounded design vocabulary", () => {
   assert.match(input, /cardDesignMode: z\.enum\(\["STANDARD", "CUSTOM"\]\)/);
   assert.match(input, /primaryColor: z\.string\(\)\.regex/);
+  assert.match(input, /secondaryColor: z\.string\(\)\.regex/);
   assert.match(input, /themePreset: z\.enum\(\["DEFAULT", "DARK"\]\)/);
   for (const category of [
     "BARBER",
@@ -49,7 +50,11 @@ test("TC5 bounded Card design action re-establishes auth tenant and lifecycle au
   assert.match(action, /"OPERATE"/);
   assert.match(action, /parseCardDesignFormData\(formData\)/);
   assert.match(action, /getAuthorizedCardDesignUpdate/);
-  assert.match(action, /imageFileToDataUrl\(logoFile, 500 \* 1024\)/);
+  assert.match(action, /BUSINESS_LOGO_MAX_BYTES/);
+  assert.match(
+    action,
+    /imageFileToDataUrl\(\s*logoFile,\s*BUSINESS_LOGO_MAX_BYTES\s*,?\s*\)/,
+  );
 });
 
 test("TC5 bounded Card design action delegates persistence instead of owning a transaction", () => {

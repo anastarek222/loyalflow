@@ -7,6 +7,7 @@ import {
   sendOwnerInvitationEmail,
 } from "@/lib/auth/owner-invitation-email";
 import { getSafeImageDataUrl } from "@/lib/branding/image-data";
+import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import { businessCreationSchema, ownerInvitationSchema } from "@/lib/business/creation-input";
 import { parseDateOnly, parseMoneyToMinor } from "@/lib/billing/subscription";
 import {
@@ -99,7 +100,14 @@ export async function createBusinessAction(formData: FormData) {
   logServerEvent("BUSINESS_CREATE_ACTION_ENTERED", { creationAttemptId });
 
   const submittedLogoDataUrl = String(formData.get("logoDataUrl") ?? "");
-  const uploadedLogoDataUrl = getSafeImageDataUrl(submittedLogoDataUrl, 500 * 1024);
+  const logoCropConfirmed = String(formData.get("logoCropConfirmed") ?? "");
+  if (submittedLogoDataUrl && logoCropConfirmed !== "true") {
+    redirect("/businesses?error=invalid");
+  }
+  const uploadedLogoDataUrl = getSafeImageDataUrl(
+    submittedLogoDataUrl,
+    BUSINESS_LOGO_MAX_BYTES,
+  );
 
   if (submittedLogoDataUrl && !uploadedLogoDataUrl) {
     redirect("/businesses?error=invalid");

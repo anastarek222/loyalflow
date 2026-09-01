@@ -9,22 +9,26 @@ const source = (relativePath: string) =>
 
 test("T006 public homepage keeps authenticated users on the workspace and logged-out users on marketing", () => {
   const page = source("app/page.tsx");
+  const header = source("components/marketing/marketing-header.tsx");
+  const footer = source("components/marketing/marketing-footer.tsx");
 
   assert.match(page, /if \(session\?\.user\) redirect\("\/dashboard"\)/);
   assert.doesNotMatch(
     page,
     /redirect\(session\?\.user \? "\/dashboard" : "\/login"\)/,
   );
-  assert.match(page, /href="\/login"/);
-  assert.match(page, /href="\/accept-owner-invitation"/);
+  assert.match(header, /href="\/login"/);
+  assert.match(footer, /href="\/accept-owner-invitation"/);
 });
 
 test("T006 marketing homepage reuses the canonical locale cookie and direction helpers", () => {
   const page = source("app/page.tsx");
   const header = source("components/marketing/marketing-header.tsx");
+  const requestLocale = source("lib/marketing/request-locale.ts");
 
-  assert.match(page, /LOCALE_COOKIE_NAME/);
-  assert.match(page, /resolveRequestLocale/);
+  assert.match(page, /getMarketingRequestLocale/);
+  assert.match(requestLocale, /LOCALE_COOKIE_NAME/);
+  assert.match(requestLocale, /resolveRequestLocale/);
   assert.match(page, /getLocaleDirection/);
   assert.match(page, /<main\s+lang=\{locale\}\s+dir=\{direction\}/);
   assert.match(page, /<MarketingHeader\s+locale=\{locale\}/);

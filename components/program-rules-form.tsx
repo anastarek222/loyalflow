@@ -4,6 +4,8 @@ import type { FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
+import { UnitLabelInput } from "@/components/unit-label-input";
+import { STANDARD_CARD_UNIT_LABEL_MAX_LENGTH } from "@/lib/cards/standard-card-text";
 import { getLoyaltyEconomicRuleChanges } from "@/lib/loyalty/program-change-safety";
 import {
   fallbackRewardHelp,
@@ -127,7 +129,12 @@ export function ProgramRulesForm({
       business.loyaltyProgramName ?? "",
       80,
     ],
-    ["unitName", t("اسم الوحدة", "Unit name"), business.unitName, 30],
+    [
+      "unitName",
+      t("اسم الوحدة", "Unit name"),
+      business.unitName,
+      STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
+    ],
     [
       "earnAmount",
       t("قيمة الإضافة", "Earn amount"),
@@ -206,28 +213,36 @@ export function ProgramRulesForm({
             className="text-sm font-medium text-foreground-muted"
           >
             <span className="mb-2 block">{label}</span>
-            <input
-              name={name}
-              type={
-                name === "earnAmount" || name === "rewardThreshold"
-                  ? "number"
-                  : "text"
-              }
-              min={
-                name === "earnAmount" || name === "rewardThreshold"
-                  ? 1
-                  : undefined
-              }
-              defaultValue={value}
-              required={[
-                "unitName",
-                "earnAmount",
-                "rewardName",
-                "rewardThreshold",
-              ].includes(name)}
-              maxLength={maxLength}
-              className={inputClass}
-            />
+            {name === "unitName" ? (
+              <UnitLabelInput
+                name={name}
+                defaultValue={value}
+                required
+                className={inputClass}
+              />
+            ) : (
+              <input
+                name={name}
+                type={
+                  name === "earnAmount" || name === "rewardThreshold"
+                    ? "number"
+                    : "text"
+                }
+                min={
+                  name === "earnAmount" || name === "rewardThreshold"
+                    ? 1
+                    : undefined
+                }
+                defaultValue={value}
+                required={[
+                  "earnAmount",
+                  "rewardName",
+                  "rewardThreshold",
+                ].includes(name)}
+                maxLength={maxLength}
+                className={inputClass}
+              />
+            )}
             {helpByField[name] ? (
               <span className="mt-2 block text-xs leading-5 text-foreground-subtle">
                 {helpByField[name]}

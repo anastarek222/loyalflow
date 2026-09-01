@@ -26,8 +26,9 @@ test("Z4 upload UI requires Front and Back in the same draft", () => {
 });
 
 test("Z4 draft preview renders the complete pair only", () => {
-  assert.match(manager, /Custom card front draft/);
-  assert.match(manager, /Custom card back draft/);
+  assert.equal((manager.match(/<LoyaltyCard/g) ?? []).length, 2);
+  assert.match(manager, /side="front"/);
+  assert.match(manager, /side="back"/);
   assert.doesNotMatch(manager, /Safe generated Back/);
   assert.doesNotMatch(manager, /Add custom Back · optional/);
 });

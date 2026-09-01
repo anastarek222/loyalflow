@@ -37,7 +37,13 @@ test("U7.2 has localized search and camera recovery copy", () => {
       "cameraUnavailable",
       "cameraPermissionDenied",
       "scannerInitializationFailed",
+      "startCamera",
+      "tapToStartCamera",
+      "cameraErrorCodeLabel",
       "retryCamera",
+      "scanQrImage",
+      "scanningQrImage",
+      "qrImageUnreadable",
     ] as const)
       assert.ok(copy[key]);
   }
@@ -129,7 +135,8 @@ test("U7.2 ignores ordinary per-frame decode misses without classifying them as 
 test("U7.2 catches scanner import and render failures, retries after cleanup, and retains resolve concurrency protection", () => {
   assert.match(scanner, /await import\("html5-qrcode"\)/);
   assert.match(scanner, /new Html5Qrcode\(/);
-  assert.match(scanner, /Html5Qrcode\.getCameras\(\)/);
+  assert.doesNotMatch(scanner, /Html5Qrcode\.getCameras\(\)/);
+  assert.match(scanner, /navigator\.mediaDevices\.enumerateDevices\(\)/);
   assert.match(scanner, /scanner\.start\(/);
   assert.match(scanner, /await scanner\.stop\(\)/);
   assert.match(scanner, /catch \(error\)/);
@@ -138,34 +145,88 @@ test("U7.2 catches scanner import and render failures, retries after cleanup, an
   assert.match(scanner, /initializationPromiseRef\.current/);
   assert.match(scanner, /stoppingPromiseRef\.current/);
   assert.match(scanner, /await stopScanner\(\)/);
-  assert.match(scanner, /setRestartAttempt/);
+  assert.match(scanner, /function startCamera\(\)/);
+  assert.match(scanner, /void initializeScanner\(undefined, scannerModule\);/);
+  assert.doesNotMatch(scanner, /setRestartAttempt/);
   assert.match(scanner, /processingRef\.current \|\| !value\.trim\(\)/);
-  assert.match(scanner, /facingMode: \{ ideal: "environment" \}/);
+  assert.match(scanner, /facingMode: "environment"/);
+  assert.doesNotMatch(scanner, /facingMode: \{ ideal:/);
 });
 
-test("U7.2 retains the camera that actually started when track settings omit a device ID", () => {
-  assert.match(scanner, /let startedCameraId: string \| null = null;/);
+test("U7.2 prepares the inline iPhone preview without a duplicate readiness timeout", () => {
   assert.match(
     scanner,
-    /startedCameraId = preferred\?\.id \?\? availableCameras\[0\]\.id;/,
+    /reader[\s\S]*?\.querySelectorAll<HTMLVideoElement>\("video"\)/,
   );
-  assert.match(scanner, /startedCameraId = fallback\.id;/);
+  assert.match(scanner, /new MutationObserver\(prepareVideos\)/);
+  assert.match(scanner, /video\.playsInline = true/);
+  assert.match(scanner, /video\.setAttribute\("playsinline", ""\)/);
+  assert.match(scanner, /video\.setAttribute\("webkit-playsinline", ""\)/);
+  assert.doesNotMatch(scanner, /waitForPlayableCameraPreview/);
+  assert.doesNotMatch(scanner, /CAMERA_PREVIEW_READY_TIMEOUT_MS/);
   assert.match(
     scanner,
-    /startedCameraId \?\? preferred\?\.id \?\? availableCameras\[0\]\?\.id \?\? null/,
+    /if \(mountedRef\.current\) \{[\s\S]*?setStatus\(copy\.cameraReady\);/,
   );
+  assert.ok(
+    scanner.indexOf("await scanner.start") <
+      scanner.indexOf("setStatus(copy.cameraReady)"),
+  );
+});
+
+test("U7.2 offers an iPhone-native QR image fallback without uploading the image", () => {
+  assert.match(scanner, /type="file"/);
+  assert.match(scanner, /accept="image\/\*"/);
+  assert.match(scanner, /capture="environment"/);
+  assert.match(scanner, /await scanner\.scanFile\(file, false\)/);
+  assert.match(scanner, /await resolveScannedValue\(decodedText\)/);
+  assert.match(scanner, /setStatus\(copy\.qrImageUnreadable\)/);
+  const imageHandler =
+    scanner.match(/async function scanQrImage[\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.doesNotMatch(imageHandler, /FormData|fetch\(/);
+});
+
+test("U7.2 starts iPhone cameras from an explicit user gesture and exposes safe diagnostics", () => {
+  assert.match(scanner, /function requiresExplicitCameraStart\(\)/);
+  assert.match(scanner, /appleMobile \|\| touchMac/);
+  assert.match(scanner, /scannerModuleRef\.current = scannerModule/);
+  assert.match(scanner, /onClick=\{startCamera\}/);
+  assert.match(scanner, /copy\.tapToStartCamera/);
+  assert.match(scanner, /getCameraFailureCode\(error\)/);
+  assert.match(scanner, /CAMERA_START_FAILED/);
+  assert.match(scanner, /copy\.cameraErrorCodeLabel/);
+});
+
+test("U7.2 starts the rear camera without a throwaway permission stream and retains a selected device ID", () => {
+  assert.match(
+    scanner,
+    /requestedCameraId \?\? \{[\s\S]*?facingMode: "environment"/,
+  );
+  assert.match(
+    scanner,
+    /scanner\.getRunningTrackSettings\(\)\.deviceId \|\| runningCameraId/,
+  );
+  assert.match(scanner, /availableCameras\[0\]\?\.id \?\? null/);
+  assert.doesNotMatch(scanner, /getUserMedia\(/);
+  assert.doesNotMatch(scanner, /aspectRatio: 1/);
+});
+
+test("U7.2 refreshes the camera list before switching devices", () => {
+  const switchHandler =
+    scanner.match(/async function switchCamera[\s\S]*?\n  \}/)?.[0] ?? "";
+  assert.match(switchHandler, /await enumerateVideoCameras\(\)/);
+  assert.match(switchHandler, /nextCameraId\([\s\S]*?availableCameras/);
+  assert.match(switchHandler, /await stopScanner\(\)/);
+  assert.match(switchHandler, /await initializeScanner\(nextId\)/);
 });
 
 test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   const scannerStyles = source("app/globals.css");
   assert.match(
     scanner,
-    /lf-qr-reader min-h-64 w-full max-w-full overflow-hidden/,
+    /lf-qr-reader w-full max-w-full overflow-hidden[\s\S]*?showCameraStart[\s\S]*?min-h-40[\s\S]*?min-h-56 sm:min-h-64/,
   );
-  assert.match(
-    scanner,
-    /qrbox: \(viewfinderWidth: number, viewfinderHeight: number\)/,
-  );
+  assert.doesNotMatch(scanner, /qrbox:/);
   assert.match(scanner, /flex flex-wrap gap-2/);
   assert.match(scanner, /min-h-11 flex-1 basis-36/);
   assert.match(search, /flex flex-wrap gap-2/);
@@ -173,8 +234,14 @@ test("U7.2 keeps the mobile scanner, controls, and search contained", () => {
   assert.match(search, /block truncate text-xs text-foreground-subtle/);
   assert.match(scannerStyles, /#loyalflow-qr-reader :where\(video, canvas\)/);
   assert.match(scannerStyles, /max-width: 100% !important/);
-  assert.match(scanPage, /className="min-h-full[^"]*sm:py-10"/);
-  assert.match(scanPage, /min-h-11 self-start/);
+  assert.match(scanPage, /className="min-h-full[^"]*py-3[^"]*sm:py-10"/);
+  assert.match(scanPage, /className="space-y-2 px-3 sm:space-y-8 sm:px-6"/);
+  assert.match(
+    scanPage,
+    /className="hidden gap-3 p-4 sm:flex sm:gap-5 sm:p-6"/,
+  );
+  assert.match(scanPage, /mb-3 hidden items-start[\s\S]*sm:flex/);
+  assert.match(scanPage, /min-h-10 self-start[\s\S]*?sm:min-h-11/);
 });
 
 test("U7.2 makes no Prisma schema or migration change", () => {

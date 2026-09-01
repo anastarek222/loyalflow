@@ -5,6 +5,7 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { createPublicCardToken } from "@/lib/customers/public-card-token";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -12,6 +13,7 @@ import {
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
+import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerCreateActor = Readonly<{
@@ -58,6 +60,8 @@ export async function createCustomerCommand(input: {
   const activityContext = await getActivityRequestContext();
 
   return prisma.$transaction(async (transaction) => {
+    await lockBusinessCapacity(transaction, input.businessId);
+
     const business = await transaction.business.findUnique({
       where: { id: input.businessId },
       select: { plan: true, slug: true },
@@ -128,6 +132,7 @@ export async function createCustomerCommand(input: {
         phone: input.customer.phone,
         customerCode,
         businessId: input.businessId,
+        publicToken: createPublicCardToken(),
       },
       select: { id: true, publicToken: true },
     });

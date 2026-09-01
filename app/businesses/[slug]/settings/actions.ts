@@ -71,6 +71,7 @@ const cardDesignSchema = z.object({
     .refine((value) => value === "" || isValidRemoteImageUrl(value)),
   cardDesignMode: z.enum(["STANDARD", "CUSTOM"]),
   primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  secondaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   themePreset: z.enum(["DEFAULT", "DARK"]),
   standardCardArtworkEnabled: z.preprocess(
     (value) => value === "on" || value === "true" || value === true,
@@ -479,6 +480,7 @@ export async function updateBusinessCardDesignAction(
     logoUrl: formData.get("logoUrl") ?? "",
     cardDesignMode: formData.get("cardDesignMode") ?? "STANDARD",
     primaryColor: formData.get("primaryColor"),
+    secondaryColor: formData.get("secondaryColor"),
     themePreset: formData.get("themePreset") ?? "DEFAULT",
     standardCardArtworkEnabled: formData.get("standardCardArtworkEnabled") ?? false,
     standardCardArtworkCategory: formData.get("standardCardArtworkCategory") ?? "OTHER",

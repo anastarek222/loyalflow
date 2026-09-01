@@ -14,6 +14,7 @@ import {
   getLoyaltyCardPreviewData,
   getPreviewBalance,
   compactLoyaltyUnit,
+  STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
   standardCardArtworkCategory,
   standardCardTheme,
 } from "@/lib/cards/standard-card";
@@ -126,9 +127,12 @@ test("unit, target and reward remain distinct in English and Arabic", () => {
     rewardThreshold: 5,
     language: "EN",
   });
-  assert.equal(recommendations.currentText, "4 RECS");
-  assert.equal(recommendations.ratioText, "4 / 5 RECS");
-  assert.equal(recommendations.remainingText, "1 REC TO NEXT REWARD");
+  assert.equal(recommendations.currentText, "4 RECOMMENDATIONS");
+  assert.equal(recommendations.ratioText, "4 / 5 RECOMMENDATIONS");
+  assert.equal(
+    recommendations.remainingText,
+    "1 RECOMMENDATION TO NEXT REWARD",
+  );
 
   const arabic = getLoyaltyCardMetrics({
     balance: 4,
@@ -171,17 +175,22 @@ test("category motifs are controlled SVG artwork rather than owner supplied artw
 test("long customer and business names are constrained within the card", () => {
   const card = source("components/standard-loyalty-card.tsx");
   assert.match(card, /boundedText/);
-  assert.match(card, /valueFontSize/);
+  assert.match(card, /standardCardValueFontSize/);
 });
 
-test("long units retain semantic meaning while using bounded display labels", () => {
+test("standard-card units preserve professional labels within a bounded display contract", () => {
+  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 18);
   assert.equal(compactLoyaltyUnit("POINT"), "POINT");
   assert.equal(compactLoyaltyUnit("POINTS"), "POINTS");
-  assert.equal(compactLoyaltyUnit("RECOMMENDATION"), "RECS");
-  assert.equal(compactLoyaltyUnit("RECOMMENDATION", 1), "REC");
-  assert.equal(compactLoyaltyUnit("RECOMMENDATIONS"), "RECS");
+  assert.equal(compactLoyaltyUnit("RECOMMENDATION"), "RECOMMENDATION");
+  assert.equal(compactLoyaltyUnit("RECOMMENDATION", 1), "RECOMMENDATION");
+  assert.equal(compactLoyaltyUnit("RECOMMENDATIONS"), "RECOMMENDATIONS");
   assert.equal(compactLoyaltyUnit("PURCHASE"), "PURCHASE");
-  assert.equal(compactLoyaltyUnit("MEMBERSHIP CREDIT"), "CREDITS");
+  assert.equal(compactLoyaltyUnit("MEMBERSHIP CREDIT"), "MEMBERSHIP CREDIT");
+  assert.equal(
+    compactLoyaltyUnit("CUSTOMER RECOMMENDATION", 4),
+    "CUSTOMER RECOMMEN…",
+  );
 
   const metrics = getLoyaltyCardMetrics({
     balance: 850,
@@ -190,8 +199,8 @@ test("long units retain semantic meaning while using bounded display labels", ()
     rewardThreshold: 1000,
     language: "EN",
   });
-  assert.equal(metrics.currentText, "850 RECS");
-  assert.equal(metrics.ratioText, "850 / 1,000 RECS");
+  assert.equal(metrics.currentText, "850 RECOMMENDATIONS");
+  assert.equal(metrics.ratioText, "850 / 1,000 RECOMMENDATIONS");
   assert.equal(metrics.semanticCurrentText, "850 RECOMMENDATIONS");
 });
 
@@ -253,8 +262,9 @@ test("Back safely renders long and Arabic reward states with intentional RTL", (
     rewardThreshold: 5,
   }));
   assert.match(longBack, /Free 12 months subscription/);
-  assert.match(longBack, /4 \/ 5 RECS/);
-  assert.match(longBack, /1 REC TO NEXT REWARD/);
+  assert.match(longBack, /4 \/ 5 RECOMMENDATIONS/);
+  assert.match(longBack, /1 RECOMMENDATION TO NEXT REWARD/);
+  assert.match(longBack, /font-size="19"[^>]*>4 RECOMMENDATIONS</);
   assert.match(longBack, /<tspan/);
 
   const arabicBack = renderToStaticMarkup(React.createElement(StandardLoyaltyCard, {
@@ -288,6 +298,43 @@ test("front reserves a large deterministic balance panel", () => {
   assert.match(card, /x="430"\s+y="238"\s+width="378"\s+height="250"/);
   assert.match(card, /data-safe-zone="loyalty-balance"/);
   assert.match(card, /data-safe-zone="progress"/);
+});
+
+test("front stacks the amount above long units without changing loyalty semantics", () => {
+  const longUnitFront = renderToStaticMarkup(
+    React.createElement(StandardLoyaltyCard, {
+      businessName: "XTV",
+      primaryColor: "#4F46E5",
+      customerName: "Noor Sameh",
+      customerId: "XTV-EE840D",
+      balance: 104,
+      loyaltyMode: "POINTS",
+      unitName: "Recommendation",
+      rewardName: "Free Year",
+      rewardThreshold: 500,
+    }),
+  );
+  const salesFront = renderToStaticMarkup(
+    React.createElement(StandardLoyaltyCard, {
+      businessName: "XTV",
+      primaryColor: "#4F46E5",
+      customerName: "Noor Sameh",
+      customerId: "XTV-EE840D",
+      balance: 200000,
+      loyaltyMode: "SALES_AMOUNT",
+      unitName: "Sale",
+      currency: "EGP",
+      rewardName: "Free Year",
+      rewardThreshold: 500000,
+    }),
+  );
+
+  assert.match(longUnitFront, /data-value-layout="stacked"/);
+  assert.match(longUnitFront, />104<\/text>/);
+  assert.match(longUnitFront, />RECOMMENDATIONS<\/text>/);
+  assert.match(salesFront, /data-value-layout="stacked"/);
+  assert.match(salesFront, />200,000<\/text>/);
+  assert.match(salesFront, />EGP<\/text>/);
 });
 
 test("Back keeps artwork secondary and fills RTL progress deliberately from the right", () => {
@@ -326,19 +373,23 @@ test("custom artwork capability stays reserved for super-admin architecture", ()
   const schema = source("prisma/schema.prisma");
   const owner = source("components/owner-onboarding-wizard.tsx");
   const settingsAction = source("app/businesses/[slug]/settings/actions.ts");
-  const canonical = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
   assert.deepEqual(CARD_DESIGN_MODES, ["STANDARD", "CUSTOM"]);
   assert.match(schema, /customCardArtworkEnabled\s+Boolean/);
   assert.doesNotMatch(owner, /customCardArtworkEnabled/);
   assert.match(settingsAction, /session\.user\.role !== "SUPER_ADMIN"/);
-  assert.match(canonical, /data-safe-zone-version/);
-  assert.match(canonical, /custom-qr|custom-member|custom-balance|custom-reward/);
+  assert.match(custom, /data-safe-zone-version/);
+  for (const zone of ["qr-code", "customer-information", "loyalty-balance", "reward"]) {
+    assert.match(custom, new RegExp(`data-safe-zone="${zone}"`));
+  }
+  assert.match(custom, /data-layout-authority="standard-card"/);
 });
 
 test("Custom UX delegates paired lifecycle uploads while preserving published URLs", () => {
   const setup = source("components/standard-card-setup.tsx");
   const manager = source("components/custom-card-artwork-manager.tsx");
-  const canonical = source("components/loyalty-card.tsx");
+  const authority = source("components/loyalty-card.tsx");
+  const custom = source("components/custom-loyalty-card.tsx");
   assert.match(setup, /Front \+ Back pair upload, immutable drafts, preview and publish/);
   assert.match(manager, /Create Front \+ Back draft/);
   assert.match(manager, /Publish this Front \+ Back pair/);
@@ -347,26 +398,39 @@ test("Custom UX delegates paired lifecycle uploads while preserving published UR
   assert.doesNotMatch(setup, /type="url"|Custom front artwork URL|Custom back artwork URL/);
   assert.match(setup, /name="customCardFrontArtworkUrl"\s+type="hidden"/);
   assert.match(setup, /name="customCardBackArtworkUrl"\s+type="hidden"/);
-  assert.match(canonical, /props\.customFrontArtworkUrl/);
-  assert.match(canonical, /props\.customBackArtworkUrl/);
-  assert.match(canonical, /cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl/);
-  assert.match(canonical, /radial-gradient/);
+  assert.match(custom, /props\.customFrontArtworkUrl/);
+  assert.match(custom, /props\.customBackArtworkUrl/);
+  assert.match(authority, /cardProps\.customFrontArtworkUrl && cardProps\.customBackArtworkUrl/);
+  assert.match(custom, /radial-gradient/);
   assert.doesNotMatch(setup, /Upload Front Design|Upload Back Design|Remove existing artwork/);
   assert.match(setup, /Managed from the Custom Card artwork panel above/);
-  assert.match(manager, /object-contain/);
+  assert.match(setup, /Managed by Super Admin/);
+  assert.match(
+    setup,
+    /Artwork and protected safe zones are read-only for Business Owners/,
+  );
+  assert.doesNotMatch(setup, /Custom Card — Super Admin managed/);
+  assert.equal((manager.match(/<LoyaltyCard/g) ?? []).length, 2);
+  assert.match(custom, /object-contain/);
 });
 
-test("custom artwork keeps dynamic data readable over dark artwork", () => {
-  const canonical = source("components/loyalty-card.tsx");
-  assert.match(canonical, /function readableAccentOnDark/);
+test("custom artwork preserves owner branding and limits overlays to dynamic data", () => {
+  const custom = source("components/custom-loyalty-card.tsx");
   for (const zone of [
-    "custom-brand",
-    "custom-member",
-    "custom-back-brand",
-    "custom-reward",
+    "customer-information",
+    "loyalty-balance",
+    "reward",
+    "brand-artwork",
   ]) {
-    assert.match(canonical, new RegExp(`data-safe-zone="${zone}"[^>]*bg-black\\/60`));
+    assert.match(custom, new RegExp(`data-safe-zone="${zone}"`));
   }
+  assert.match(custom, /data-layout-authority="standard-card"/);
+  assert.match(custom, /object-contain/);
+  assert.doesNotMatch(custom, /data-safe-zone="brand-logo"/);
+  assert.doesNotMatch(custom, /data-safe-zone="contact-information"/);
+  assert.doesNotMatch(custom, /data-safe-zone="custom-brand"/);
+  assert.doesNotMatch(custom, /data-safe-zone="custom-back-brand"/);
+  assert.doesNotMatch(custom, /LOYALFLOW ·|contactItems/);
 });
 
 test("public card is rendered from dynamic customer and business data", () => {

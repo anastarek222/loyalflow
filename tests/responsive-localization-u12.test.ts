@@ -30,6 +30,14 @@ test("U12 shared navigation and mobile controls retain accessible responsive fou
   assert.doesNotMatch(sidebar, /\b(?:left|right)-0/);
 });
 
+test("U12 Public Join keeps the form close to the top on mobile", () => {
+  const joinPage = source("app/join/[slug]/page.tsx");
+  assert.match(joinPage, /items-start justify-center px-0 py-0 sm:items-center/);
+  assert.match(joinPage, /px-4 py-4 sm:px-7 sm:py-7/);
+  assert.match(joinPage, /p-4 sm:p-7/);
+  assert.match(joinPage, /space-y-3 sm:space-y-4/);
+});
+
 test("U12 mobile shell keeps bounded, safe-area-aware overlays", () => {
   const shell = source("components/authenticated-app-shell.tsx");
   const sidebar = source("components/mobile-sidebar.tsx");
