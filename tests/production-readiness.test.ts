@@ -219,7 +219,7 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 49);
+  assert.equal(committedMigrations.length, 51);
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types",
@@ -295,6 +295,18 @@ test("local database verifier requires the complete reviewed committed migration
   assert.ok(
     committedMigrations.includes("20260727043000_add_google_sheets_sync_state"),
     "The Google Sheets mapping and sync-state migration must be part of the reviewed history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260901113000_add_automatic_customer_messaging",
+    ),
+    "Automatic customer messaging must be part of the reviewed migration history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260901160000_add_business_whatsapp_credentials",
+    ),
+    "Business WhatsApp credentials must be part of the reviewed migration history.",
   );
   assert.match(verifier, /const REVIEWED_MIGRATIONS = \[/);
   assert.doesNotMatch(verifier, /OPTIONAL_REVIEWED_MIGRATIONS/);

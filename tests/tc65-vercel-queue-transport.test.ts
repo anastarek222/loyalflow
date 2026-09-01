@@ -33,13 +33,15 @@ test("TC6.5 domain-facing publication stays provider-neutral and job-id only", a
 test("TC6.5 source enqueue is transactional and Queue only wakes the consumer", () => {
   const owner = source("app/onboarding/actions.ts");
   const admin = source("app/businesses/actions.ts");
-  const scheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const sheetsScheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const scheduler = source("lib/integration-job-scheduler.ts");
   const transport = source("lib/server/integrations/transport.ts");
   const consumer = source("app/api/queues/integration-jobs/route.ts");
   const config = source("vercel.json");
 
   assert.match(owner, /await enqueueIntegrationJob\(tx/);
   assert.match(admin, /await enqueueIntegrationJob\(transaction/);
+  assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
   assert.match(scheduler, /publishIntegrationJob\(\{ jobId \}\)/);
   assert.match(transport, /idempotencyKey: `integration-job:\$\{jobId\}`/);
   assert.doesNotMatch(transport, /businessId|customerId|payload/);

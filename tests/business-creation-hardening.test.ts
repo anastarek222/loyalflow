@@ -98,7 +98,8 @@ test("website input is friendly, canonical, and rejects dangerous protocols", ()
 
 test("business creation commits a durable job before publishing its queue wake-up", () => {
   const action = source("app/businesses/actions.ts");
-  const scheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const sheetsScheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const scheduler = source("lib/integration-job-scheduler.ts");
   const transaction = action.indexOf("prisma.$transaction");
   const backgroundSync = action.indexOf(
     "scheduleBusinessGoogleSheetsSync(integrationJobId)",
@@ -106,6 +107,7 @@ test("business creation commits a durable job before publishing its queue wake-u
 
   assert.ok(transaction >= 0 && backgroundSync > transaction);
   assert.match(action, /await enqueueIntegrationJob\(transaction/);
+  assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
   assert.match(scheduler, /after\(async \(\) =>/);
   assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
   assert.doesNotMatch(action, /await syncBusinessToGoogleSheetSafely\(createdBusiness\.id\)/);

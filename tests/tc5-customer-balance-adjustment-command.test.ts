@@ -32,7 +32,7 @@ test("TC5 bounded balance adjustment action preserves auth capability parsing an
   assert.match(action, /financialOperationSchema\.safeParse/);
   assert.match(action, /adjustCustomerBalanceCommand\(/);
   assert.match(action, /isFinancialOperationConflictError/);
-  assert.match(action, /scheduleBusinessGoogleSheetsSync\(result\.integrationJobId\)/);
+  assert.match(action, /scheduleIntegrationJobs\(result\.integrationJobIds\)/);
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
   assert.match(action, /revalidateCustomerBalanceSurfaces/);
   assert.doesNotMatch(action, /prisma\.\$transaction/);

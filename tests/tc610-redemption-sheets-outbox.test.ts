@@ -19,7 +19,8 @@ test("TC6.10 atomically couples a successful redemption with one durable Sheets 
     command.indexOf("recordRewardRedemption(transaction") <
       command.indexOf("enqueueIntegrationJob(transaction"),
   );
-  assert.match(command, /return \{ ok: true, balance, integrationJobId: integrationJob\.id \}/);
+  assert.match(command, /integrationJobId: sheetsJob\.id/);
+  assert.match(command, /integrationJobIds,/);
   assert.doesNotMatch(
     command,
     /@vercel\/queue|publishIntegrationJob|scheduleBusinessGoogleSheetsSync|syncBusinessToGoogleSheetSafely|process\.env|googleapis/i,
@@ -36,10 +37,10 @@ test("TC6.10 does not enqueue blocked or insufficient-balance redemptions", () =
 });
 
 test("TC6.10 schedules transport only after a committed successful redemption", () => {
-  assert.match(action, /scheduleBusinessGoogleSheetsSync\(result\.integrationJobId\)/);
+  assert.match(action, /scheduleIntegrationJobs\(result\.integrationJobIds\)/);
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
   assert.ok(
     action.indexOf("await redeemLoyaltyRewardCommand") <
-      action.indexOf("scheduleBusinessGoogleSheetsSync(result.integrationJobId)"),
+      action.indexOf("scheduleIntegrationJobs(result.integrationJobIds)"),
   );
 });
