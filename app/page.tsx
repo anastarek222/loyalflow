@@ -1,50 +1,110 @@
 import { auth } from "@/auth";
-import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { ProductPreview } from "@/components/marketing/product-preview";
-import { translate, type MessageKey } from "@/lib/i18n/catalog";
-import { getLocaleDirection } from "@/lib/i18n/config";
-import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
-import { buildPublicWebsiteStructuredData } from "@/lib/seo/public-website-structured-data";
+import { TaneeLogo } from "@/components/marketing/tanee-logo";
+import { getLocaleDirection, type SupportedLocale } from "@/lib/i18n/config";
 import { getPublicMarketingNavigation } from "@/lib/marketing/public-navigation";
 import { getMarketingRequestLocale } from "@/lib/marketing/request-locale";
 import type { Metadata } from "next";
+import { Alexandria } from "next/font/google";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  ArrowUpRight,
-  BadgeCheck,
   BarChart3,
-  Check,
-  Coffee,
-  Dumbbell,
-  Fingerprint,
-  Languages,
-  QrCode,
+  Gift,
   ScanLine,
-  Scissors,
   ShieldCheck,
-  Shirt,
-  Sparkles,
-  Store,
   Users,
+  WalletCards,
 } from "lucide-react";
+
+const alexandria = Alexandria({
+  subsets: ["latin", "arabic"],
+  display: "swap",
+});
+
+const brand = {
+  coral: "#FF6652",
+  amber: "#FFB547",
+  mint: "#78E3C5",
+  charcoal: "#171717",
+  canvas: "#FFF9F5",
+};
+
+const copy = {
+  en: {
+    title: "Built for the next visit.",
+    arabicTagline: "للزيارة الجاية.",
+    body:
+      "Tanee helps local businesses give customers a clear reason to come back—and makes loyalty simple to run.",
+    primary: "Get started",
+    secondary: "See how Tanee works",
+    proofEyebrow: "Merchant reality + product proof",
+    proofTitle: "Make loyalty feel simple in the flow of the day.",
+    proofBody:
+      "Scan, reward, understand activity, and keep the merchant relationship front and center.",
+    reasonOne: "Loyalty Cards",
+    reasonOneBody: "Clear progress and rewards without payment-style confusion.",
+    reasonTwo: "Rewards",
+    reasonTwoBody: "Simple offers and rewards customers can understand.",
+    reasonThree: "Customers",
+    reasonThreeBody: "Useful activity and return context for the team.",
+    reasonFour: "Scan",
+    reasonFourBody: "Fast daily loyalty operation at the counter.",
+    reasonFive: "Reports",
+    reasonFiveBody: "See return activity without turning Tanee into a heavy CRM.",
+    reasonSix: "Secure",
+    reasonSixBody: "Role-aware access and clear operational boundaries.",
+    storyEyebrow: "Built around return",
+    storyTitle: "Not another points app. A simple return cycle.",
+    storyBody:
+      "Tanee combines merchant-branded loyalty, real customer activity, rewards, and practical visibility into one warm operating layer.",
+    ctaTitle: "Give the next visit a reason to happen.",
+    ctaBody: "Start with Tanee and keep loyalty simple for your team and customers.",
+  },
+  ar: {
+    title: "للزيارة الجاية.",
+    arabicTagline: "Built for the next visit.",
+    body:
+      "تاني تساعد الأعمال المحلية على منح عملائها سببًا واضحًا للعودة، وتبسّط إدارة الولاء يوميًا.",
+    primary: "ابدأ مع تاني",
+    secondary: "شوف تاني بتشتغل إزاي",
+    proofEyebrow: "واقع التاجر + دليل المنتج",
+    proofTitle: "خلي إدارة الولاء بسيطة وسط شغل اليوم.",
+    proofBody:
+      "امسح، كافئ، تابع النشاط، وخلي علاقة العميل بالتاجر هي الأساس.",
+    reasonOne: "بطاقات الولاء",
+    reasonOneBody: "تقدم ومكافآت واضحة من غير إحساس الدفع أو البطاقات البنكية.",
+    reasonTwo: "المكافآت",
+    reasonTwoBody: "عروض ومكافآت بسيطة يفهمها العميل بسرعة.",
+    reasonThree: "العملاء",
+    reasonThreeBody: "نشاط وسياق عودة مفيد للفريق.",
+    reasonFour: "المسح",
+    reasonFourBody: "تشغيل سريع للولاء في نقطة الخدمة.",
+    reasonFive: "التقارير",
+    reasonFiveBody: "رؤية نشاط العودة من غير ما تتحول تاني إلى CRM معقد.",
+    reasonSix: "الأمان",
+    reasonSixBody: "صلاحيات واضحة وحدود تشغيلية مفهومة.",
+    storyEyebrow: "مبنية على العودة",
+    storyTitle: "مش تطبيق نقاط وخلاص. دورة عودة بسيطة.",
+    storyBody:
+      "تاني تجمع الولاء بهوية التاجر، نشاط العملاء، المكافآت والرؤية العملية في تجربة واحدة دافئة وواضحة.",
+    ctaTitle: "خلي الزيارة الجاية ليها سبب.",
+    ctaBody: "ابدأ مع تاني وخلي الولاء بسيط لفريقك وعملائك.",
+  },
+} satisfies Record<SupportedLocale, Record<string, string>>;
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingRequestLocale();
-  const title = translate(locale, "marketing.metaTitle");
-  const description = translate(locale, "marketing.metaDescription");
+  const c = copy[locale];
 
   return {
-    title,
-    description,
+    title: locale === "ar" ? "تاني | للزيارة الجاية" : "Tanee | Built for the next visit",
+    description: c.body,
     alternates: { canonical: "/" },
     robots: { index: true, follow: true },
-    ...buildPublicSocialMetadata({
-      title,
-      description,
-      path: "/",
-    }),
   };
 }
 
@@ -54,377 +114,220 @@ export default async function HomePage() {
 
   const locale = await getMarketingRequestLocale();
   const direction = getLocaleDirection(locale);
-  const copy = (key: MessageKey) => translate(locale, key);
-  const websiteStructuredData = buildPublicWebsiteStructuredData({
-    description: copy("marketing.metaDescription"),
-    locale,
-  });
-
   const navigation = getPublicMarketingNavigation(locale);
-
-  const trustItems = [
-    [Languages, "marketing.trustArabic"],
-    [QrCode, "marketing.trustQr"],
-    [ScanLine, "marketing.trustNoApp"],
-    [ShieldCheck, "marketing.trustRoles"],
-  ] as const;
-
-  const workflow = [
-    [Store, "marketing.workflowOne"],
-    [ScanLine, "marketing.workflowTwo"],
-    [BarChart3, "marketing.workflowThree"],
-  ] as const;
+  const c = copy[locale];
 
   const features = [
-    [ScanLine, "marketing.featureOneTitle", "marketing.featureOneBody"],
-    [Users, "marketing.featureTwoTitle", "marketing.featureTwoBody"],
-    [Sparkles, "marketing.featureThreeTitle", "marketing.featureThreeBody"],
-  ] as const;
-
-  const industries = [
-    [Coffee, "marketing.industryCafe", "marketing.industryCafeBody"],
-    [Scissors, "marketing.industryBeauty", "marketing.industryBeautyBody"],
-    [Shirt, "marketing.industryRetail", "marketing.industryRetailBody"],
-    [Dumbbell, "marketing.industryFitness", "marketing.industryFitnessBody"],
-  ] as const;
-
-  const securityPoints = [
-    "marketing.securityRoles",
-    "marketing.securityAudit",
-    "marketing.securityMfa",
-  ] as const;
-
-  const faq = [
-    ["marketing.faqOneQuestion", "marketing.faqOneAnswer"],
-    ["marketing.faqTwoQuestion", "marketing.faqTwoAnswer"],
-    ["marketing.faqThreeQuestion", "marketing.faqThreeAnswer"],
+    [WalletCards, c.reasonOne, c.reasonOneBody],
+    [Gift, c.reasonTwo, c.reasonTwoBody],
+    [Users, c.reasonThree, c.reasonThreeBody],
+    [ScanLine, c.reasonFour, c.reasonFourBody],
+    [BarChart3, c.reasonFive, c.reasonFiveBody],
+    [ShieldCheck, c.reasonSix, c.reasonSixBody],
   ] as const;
 
   return (
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className={`${alexandria.className} min-h-screen bg-[#FFF9F5] text-[#171717]`}
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c"),
-        }}
-      />
       <MarketingHeader
         locale={locale}
-        brand={copy("common.brand")}
-        signIn={copy("auth.signIn")}
-        primaryCta={copy("marketing.primaryCta")}
-        menuLabel={copy("marketing.menuOpen")}
-        closeLabel={copy("marketing.menuClose")}
+        brand="Tanee"
+        signIn={locale === "ar" ? "تسجيل الدخول" : "Log in"}
+        primaryCta={c.primary}
+        menuLabel={locale === "ar" ? "فتح القائمة" : "Open navigation menu"}
+        closeLabel={locale === "ar" ? "إغلاق القائمة" : "Close navigation menu"}
         navigation={navigation}
       />
 
-      <section className="relative isolate overflow-hidden border-b border-border/70">
-        <div
-          className="absolute inset-0 -z-20 bg-[linear-gradient(180deg,#ffffff_0%,#f7f8fc_74%,#eef2ff_100%)]"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -start-32 top-24 -z-10 size-80 rounded-full bg-indigo-200/45 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -end-40 top-4 -z-10 size-96 rounded-full bg-violet-200/35 blur-3xl"
-          aria-hidden="true"
-        />
+      <section className="relative overflow-hidden border-b border-[#E6DED6]">
+        <div className="absolute inset-0 -z-20 bg-[#FFF9F5]" />
+        <div className="absolute -start-28 top-28 -z-10 h-72 w-72 rounded-full bg-[#FF6652]/10 blur-3xl" />
+        <div className="absolute -end-20 top-10 -z-10 h-80 w-80 rounded-full bg-[#78E3C5]/16 blur-3xl" />
 
-        <div className="mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-7xl items-center gap-12 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.94fr_1.06fr] lg:px-8 lg:py-24">
-          <div className="lf-marketing-reveal">
-            <p className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-white/80 px-3.5 py-2 text-sm font-bold text-primary shadow-sm backdrop-blur-lg">
-              <BadgeCheck size={17} aria-hidden="true" />
-              {copy("marketing.badge")}
+        <div className="mx-auto grid min-h-[calc(100svh-4rem)] max-w-[1440px] items-center gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[0.88fr_1.12fr] lg:px-12 lg:py-20">
+          <div>
+            <div className="mb-7 flex items-center gap-4">
+              <TaneeLogo locale={locale} className="h-12 w-auto sm:h-14" />
+              <span className="hidden h-8 w-px bg-[#E6DED6] sm:block" />
+              <p className="hidden text-sm font-semibold text-[#6F6862] sm:block">
+                {locale === "ar"
+                  ? "ولاء واحتفاظ بالعملاء للأعمال المحلية"
+                  : "Customer loyalty & retention for local businesses"}
+              </p>
+            </div>
+
+            <p className="inline-flex min-h-10 items-center rounded-full border border-[#E6DED6] bg-white px-4 text-sm font-bold text-[#A84724] shadow-sm">
+              {locale === "ar" ? "ولاء أبسط للأعمال المحلية" : "Loyalty made simple for local businesses"}
             </p>
-            <h1 className="mt-6 max-w-3xl text-[clamp(2.4rem,7vw,4.5rem)] font-black leading-[1.02] tracking-[-0.045em] text-foreground">
-              {copy("marketing.heroTitle")}
+
+            <h1 className="mt-6 max-w-3xl text-[clamp(3rem,7vw,5.8rem)] font-extrabold leading-[0.98] tracking-[-0.05em] text-[#171717]">
+              {c.title}
             </h1>
-            <p className="mt-6 max-w-2xl text-base leading-8 text-foreground-muted sm:text-lg sm:leading-9">
-              {copy("marketing.heroBody")}
+            <p className="mt-3 text-[clamp(1.4rem,3vw,2.2rem)] font-semibold leading-tight text-[#FF6652]">
+              {c.arabicTagline}
+            </p>
+            <p className="mt-7 max-w-2xl text-base leading-8 text-[#3F3B38] sm:text-lg sm:leading-9">
+              {c.body}
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/get-started"
-                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-[0_12px_28px_rgb(79_70_229/0.24)] transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-primary-hover hover:shadow-[0_16px_34px_rgb(79_70_229/0.3)] active:translate-y-0"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#FF6652] px-6 py-3 font-bold text-white shadow-[0_14px_30px_rgb(255_102_82/0.24)] transition hover:-translate-y-0.5 hover:bg-[#f45d4b]"
               >
-                {copy("marketing.primaryCta")}
-                <ArrowUpRight size={18} aria-hidden="true" />
+                {c.primary}
               </Link>
               <Link
                 href="/features"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border-strong bg-white/80 px-5 py-3 font-bold text-foreground shadow-sm backdrop-blur-lg transition-[background-color,border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-white active:translate-y-0"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#CFC3B8] bg-white px-6 py-3 font-bold text-[#171717] transition hover:-translate-y-0.5 hover:border-[#FF6652]"
               >
-                {copy("marketing.secondaryCta")}
+                {c.secondary}
               </Link>
             </div>
 
-            <p className="mt-5 max-w-2xl text-sm leading-6 text-foreground-subtle">
-              {copy("marketing.trustLine")}
-            </p>
+            <div className="mt-10 grid grid-cols-3 gap-3 sm:max-w-xl">
+              {[
+                [brand.coral, locale === "ar" ? "عودة" : "Return"],
+                [brand.amber, locale === "ar" ? "مكافأة" : "Reward"],
+                [brand.mint, locale === "ar" ? "بساطة" : "Simple"],
+              ].map(([color, label]) => (
+                <div key={label} className="rounded-2xl border border-[#E6DED6] bg-white p-3">
+                  <span className="block h-2 rounded-full" style={{ backgroundColor: color }} />
+                  <p className="mt-3 text-sm font-bold">{label}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="lf-marketing-reveal lf-marketing-delay-1">
-            <ProductPreview
-              locale={locale}
-              labels={{
-                preview: copy("marketing.previewLabel"),
-                dashboard: copy("marketing.previewDashboard"),
-                activeCustomers: copy("marketing.previewActiveCustomers"),
-                repeatRate: copy("marketing.previewRepeatRate"),
-                activity: copy("marketing.previewActivity"),
-                customer: copy("marketing.previewCustomer"),
-                visits: copy("marketing.previewVisits"),
-                reward: copy("marketing.previewReward"),
-                readySoon: copy("marketing.previewReadySoon"),
-              }}
+          <div className="relative">
+            <div
+              className="absolute -start-7 top-16 z-10 hidden h-24 w-40 rounded-[999px_999px_999px_40px] border-[14px] border-[#FF6652] border-e-transparent bg-transparent lg:block"
+              aria-hidden="true"
             />
+            <div className="relative overflow-hidden rounded-[2rem] border border-[#E6DED6] bg-white shadow-[0_32px_80px_rgb(23_23_23/0.12)]">
+              <Image
+                src="/brand/tanee-merchant-photo.jpg"
+                alt={
+                  locale === "ar"
+                    ? "تاجر يستخدم تجربة الولاء مع عميل"
+                    : "Local merchant using a loyalty experience with a customer"
+                }
+                width={900}
+                height={720}
+                priority
+                className="h-[31rem] w-full object-cover object-center sm:h-[36rem]"
+              />
+              <div className="absolute inset-x-4 bottom-4 sm:inset-x-6 sm:bottom-6">
+                <ProductPreview locale={locale} />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section
-        aria-label={copy("marketing.trustSectionLabel")}
-        className="border-b border-border bg-white"
-      >
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-2 gap-px bg-border sm:grid-cols-4">
-          {trustItems.map(([Icon, label]) => (
-            <div
-              key={label}
-              className="flex min-h-24 items-center justify-center gap-3 bg-white px-4 py-5 text-center text-sm font-bold text-foreground-muted"
-            >
-              <Icon
-                size={20}
-                className="shrink-0 text-primary"
-                aria-hidden="true"
-              />
-              <span>{copy(label)}</span>
+      <section className="border-b border-[#E6DED6] bg-white">
+        <div className="mx-auto grid max-w-[1440px] grid-cols-2 divide-x divide-[#E6DED6] px-5 sm:grid-cols-3 lg:grid-cols-6 lg:px-12">
+          {features.map(([Icon, title]) => (
+            <div key={title} className="flex min-h-28 items-center gap-3 px-4 py-5">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#E6DED6] bg-[#FFF9F5] text-[#171717]">
+                <Icon size={21} aria-hidden="true" />
+              </span>
+              <span className="text-sm font-bold leading-5">{title}</span>
             </div>
           ))}
         </div>
       </section>
 
-      <section
-        id="how-it-works"
-        className="scroll-mt-24 px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
-      >
-        <div className="mx-auto w-full max-w-7xl">
-          <div className="max-w-3xl">
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-              {copy("marketing.howEyebrow")}
-            </p>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-              {copy("marketing.howTitle")}
-            </h2>
-          </div>
-          <ol className="mt-12 grid gap-5 md:grid-cols-3">
-            {workflow.map(([Icon, key], index) => (
-              <li
-                key={key}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-[var(--lf-shadow-raised)] transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_18px_38px_rgb(30_41_59/0.1)]"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <span className="flex size-12 items-center justify-center rounded-2xl bg-[var(--lf-primary-soft)] text-primary">
-                    <Icon size={23} aria-hidden="true" />
-                  </span>
-                  <span
-                    dir="ltr"
-                    className="text-4xl font-black text-slate-100"
-                  >
-                    0{index + 1}
-                  </span>
-                </div>
-                <p className="mt-7 text-base font-bold leading-7 text-foreground-muted">
-                  {copy(key)}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section
-        id="product"
-        className="scroll-mt-24 border-y border-border bg-white px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
-      >
-        <div className="mx-auto w-full max-w-7xl">
-          <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+      <section id="product" className="px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+        <div className="mx-auto max-w-[1440px]">
+          <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
             <div>
-              <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-                {copy("marketing.featuresEyebrow")}
+              <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#FF6652]">
+                {c.proofEyebrow}
               </p>
-              <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-                {copy("marketing.featuresTitle")}
+              <h2 className="mt-4 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">
+                {c.proofTitle}
               </h2>
             </div>
-            <p className="max-w-2xl text-base leading-8 text-foreground-muted lg:justify-self-end">
-              {copy("marketing.featuresBody")}
+            <p className="max-w-2xl text-base leading-8 text-[#6F6862] lg:justify-self-end sm:text-lg">
+              {c.proofBody}
             </p>
           </div>
 
-          <div className="mt-12 grid gap-5 lg:grid-cols-3">
-            {features.map(([Icon, titleKey, bodyKey]) => (
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {features.map(([Icon, title, body], index) => (
               <article
-                key={titleKey}
-                className="rounded-2xl border border-border bg-[var(--lf-marketing-canvas)] p-6 sm:p-7"
+                key={title}
+                className="group relative overflow-hidden rounded-3xl border border-[#E6DED6] bg-white p-6 shadow-[0_14px_36px_rgb(23_23_23/0.05)]"
               >
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
+                <div
+                  className="absolute inset-x-0 top-0 h-1"
+                  style={{ backgroundColor: [brand.coral, brand.amber, brand.mint][index % 3] }}
+                />
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF9F5] text-[#171717]">
                   <Icon size={23} aria-hidden="true" />
                 </span>
-                <h3 className="mt-6 text-xl font-black text-foreground">
-                  {copy(titleKey)}
-                </h3>
-                <p className="mt-3 text-sm leading-7 text-foreground-muted">
-                  {copy(bodyKey)}
-                </p>
+                <h3 className="mt-6 text-xl font-extrabold">{title}</h3>
+                <p className="mt-3 text-sm leading-7 text-[#6F6862]">{body}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section
-        id="industries"
-        className="scroll-mt-24 px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
-      >
-        <div className="mx-auto w-full max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-              {copy("marketing.industriesEyebrow")}
+      <section className="border-y border-[#E6DED6] bg-[#171717] px-5 py-20 text-white sm:px-8 lg:px-12 lg:py-28">
+        <div className="mx-auto grid max-w-[1440px] gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#FFB547]">
+              {c.storyEyebrow}
             </p>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-              {copy("marketing.industriesTitle")}
+            <h2 className="mt-4 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">
+              {c.storyTitle}
             </h2>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-white/75 sm:text-lg">
+              {c.storyBody}
+            </p>
           </div>
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {industries.map(([Icon, titleKey, bodyKey]) => (
-              <article
-                key={titleKey}
-                className="group rounded-2xl border border-border bg-white p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_16px_34px_rgb(30_41_59/0.08)]"
-              >
-                <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--lf-primary-soft)] text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                  <Icon size={21} aria-hidden="true" />
-                </span>
-                <h3 className="mt-5 text-lg font-black text-foreground">
-                  {copy(titleKey)}
-                </h3>
-                <p className="mt-2 text-sm leading-7 text-foreground-muted">
-                  {copy(bodyKey)}
-                </p>
-              </article>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              [brand.coral, locale === "ar" ? "العودة أولًا" : "Return First"],
+              [brand.mint, locale === "ar" ? "سهلة في الشغل" : "Easy in the Flow"],
+              [brand.amber, locale === "ar" ? "دليل قبل المبالغة" : "Proof Over Hype"],
+            ].map(([color, label]) => (
+              <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
+                <span className="block h-3 w-14 rounded-full" style={{ backgroundColor: color }} />
+                <p className="mt-5 text-base font-bold">{label}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section
-        id="security"
-        className="scroll-mt-24 bg-slate-950 px-4 py-20 text-white sm:px-6 lg:px-8 lg:py-28"
-      >
-        <div className="mx-auto grid w-full max-w-7xl gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+      <section className="px-5 py-20 sm:px-8 lg:px-12 lg:py-28">
+        <div className="mx-auto max-w-[1440px] rounded-[2rem] border border-[#E6DED6] bg-white p-7 shadow-[0_28px_70px_rgb(23_23_23/0.08)] sm:p-10 lg:flex lg:items-center lg:justify-between lg:gap-10">
           <div>
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-indigo-300">
-              {copy("marketing.securityEyebrow")}
-            </p>
-            <h2 className="mt-4 max-w-2xl text-3xl font-black tracking-tight sm:text-4xl">
-              {copy("marketing.securityTitle")}
+            <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#FF6652]">Tanee</p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+              {c.ctaTitle}
             </h2>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
-              {copy("marketing.securityBody")}
-            </p>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-[#6F6862]">{c.ctaBody}</p>
           </div>
-          <div className="rounded-[1.35rem] border border-white/10 bg-white/[0.06] p-5 shadow-[0_24px_60px_rgb(0_0_0/0.2)] backdrop-blur-xl sm:p-7">
-            <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-indigo-400/15 text-indigo-300">
-              <Fingerprint size={25} aria-hidden="true" />
-            </div>
-            <ul className="space-y-4">
-              {securityPoints.map((key) => (
-                <li
-                  key={key}
-                  className="flex gap-3 text-sm leading-7 text-slate-200"
-                >
-                  <span className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300">
-                    <Check size={14} aria-hidden="true" />
-                  </span>
-                  <span>{copy(key)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="faq"
-        className="scroll-mt-24 bg-white px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
-      >
-        <div className="mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-[0.75fr_1.25fr]">
-          <div>
-            <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-              {copy("marketing.faqEyebrow")}
-            </p>
-            <h2 className="mt-4 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-              {copy("marketing.faqTitle")}
-            </h2>
-          </div>
-          <div className="divide-y divide-border border-y border-border">
-            {faq.map(([questionKey, answerKey], index) => (
-              <details
-                key={questionKey}
-                className="group py-2"
-                open={index === 0}
-              >
-                <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 py-3 font-bold text-foreground marker:content-none">
-                  <span>{copy(questionKey)}</span>
-                  <span
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-primary transition-transform duration-200 group-open:rotate-45"
-                    aria-hidden="true"
-                  >
-                    +
-                  </span>
-                </summary>
-                <p className="max-w-2xl pb-5 text-sm leading-7 text-foreground-muted">
-                  {copy(answerKey)}
-                </p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-10 sm:px-6 lg:px-8 lg:py-16">
-        <div className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-[1.5rem] bg-[linear-gradient(135deg,#312e81,#4f46e5_58%,#7c3aed)] px-6 py-12 text-white shadow-[0_28px_70px_rgb(49_46_129/0.24)] sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-14 lg:py-14">
-          <div
-            className="absolute -end-16 -top-24 size-64 rounded-full border-[38px] border-white/[0.07]"
-            aria-hidden="true"
-          />
-          <div className="relative max-w-2xl">
-            <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
-              {copy("marketing.finalTitle")}
-            </h2>
-            <p className="mt-4 text-base leading-8 text-indigo-100">
-              {copy("marketing.finalBody")}
-            </p>
-          </div>
-          <div className="relative mt-8 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0">
+          <div className="mt-6 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0">
             <Link
               href="/get-started"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 font-bold text-indigo-700 shadow-lg transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-[#FF6652] px-6 py-3 font-bold text-white"
             >
-              {copy("marketing.primaryCta")}
-              <ArrowUpRight size={18} aria-hidden="true" />
+              {c.primary}
             </Link>
             <Link
-              href="/login"
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-5 py-3 font-bold text-white backdrop-blur-lg transition-colors hover:bg-white/15"
+              href="/features"
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#CFC3B8] bg-white px-6 py-3 font-bold text-[#171717]"
             >
-              {copy("auth.signIn")}
+              {c.secondary}
             </Link>
           </div>
         </div>
