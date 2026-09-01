@@ -14,6 +14,7 @@ import { isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
+import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerCreateActor = Readonly<{
@@ -41,6 +42,7 @@ export type CustomerCreateCommandResult =
       ok: true;
       customer: CreatedCustomer;
       integrationJobId: string;
+      integrationJobIds: readonly string[];
     }>
   | CustomerCreateFailure;
 
@@ -49,13 +51,15 @@ export type CustomerCreateCommandResult =
  *
  * The caller keeps authentication, tenant authorization, input parsing,
  * presentation preflight, redirects, revalidation and post-commit transport
- * wake-up. This command owns persisted duplicate/plan/subscription checks and
- * atomically commits Customer + business activity + Sheets integration job.
+ * wake-up. This command atomically commits Customer + business activity +
+ * integration jobs. WhatsApp welcome delivery is automatic after the customer
+ * has explicitly opted in; staff never press a separate send button.
  */
 export async function createCustomerCommand(input: {
   businessId: string;
   customer: PublicMembershipRegistration;
   actor: CustomerCreateActor;
+  whatsappOptIn?: boolean;
 }): Promise<CustomerCreateCommandResult> {
   const activityContext = await getActivityRequestContext();
 
@@ -133,6 +137,7 @@ export async function createCustomerCommand(input: {
         customerCode,
         businessId: input.businessId,
         publicToken: createPublicCardToken(),
+        whatsappOptInAt: input.whatsappOptIn ? new Date() : null,
       },
       select: { id: true, publicToken: true },
     });
@@ -148,16 +153,27 @@ export async function createCustomerCommand(input: {
       },
       select: { id: true },
     });
-    const integrationJob = await enqueueIntegrationJob(transaction, {
+    const sheetsJob = await enqueueIntegrationJob(transaction, {
       businessId: input.businessId,
       kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
       idempotencyKey: `customer-created:${activity.id}`,
     });
+    const welcomeJob = await enqueueCustomerMessageJob(transaction, {
+      businessId: input.businessId,
+      customerId: customer.id,
+      event: "WELCOME",
+      eventKey: activity.id,
+      balance: 0,
+    });
+    const integrationJobIds = [sheetsJob.id, welcomeJob?.id].filter(
+      (jobId): jobId is string => Boolean(jobId),
+    );
 
     return {
       ok: true,
       customer,
-      integrationJobId: integrationJob.id,
+      integrationJobId: sheetsJob.id,
+      integrationJobIds,
     } as const;
   });
 }

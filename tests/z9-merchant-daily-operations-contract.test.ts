@@ -100,6 +100,6 @@ test("Z9 successful financial operations refresh merchant and customer surfaces"
     assert.match(action, /revalidatePath\(`\/businesses\/\$\{slug\}\/activity`\)/);
     assert.match(action, /revalidatePath\(`\/card\/\$\{publicToken\}`\)/);
     assert.match(action, /revalidatePath\("\/dashboard"\)/);
-    assert.match(action, /scheduleBusinessGoogleSheetsSync/);
+    assert.match(action, /scheduleIntegrationJobs\(result\.integrationJobIds\)/);
   }
 });

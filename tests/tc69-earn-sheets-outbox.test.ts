@@ -28,10 +28,10 @@ test("TC6.9 atomically couples a successful earn with one durable Sheets job", (
 });
 
 test("TC6.9 schedules transport only after the committed earn succeeds", () => {
-  assert.match(action, /scheduleBusinessGoogleSheetsSync\(result\.integrationJobId\)/);
+  assert.match(action, /scheduleIntegrationJobs\(result\.integrationJobIds\)/);
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
   assert.ok(
     action.indexOf("await executeLoyaltyEarnCommand") <
-      action.indexOf("scheduleBusinessGoogleSheetsSync(result.integrationJobId)"),
+      action.indexOf("scheduleIntegrationJobs(result.integrationJobIds)"),
   );
 });

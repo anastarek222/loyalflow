@@ -12,8 +12,10 @@ test("Stage 13 custom-card artwork flow follows the authenticated AR/EN locale",
   assert.match(manager, /getAuthenticatedRequestContext\(\)/);
   assert.match(manager, /normalizeLanguage\(requestContext\?\.user\?\.language\)/);
   assert.match(manager, /language === "AR"/);
-  assert.match(manager, /تصميم البطاقة المخصصة · تجريبي/);
-  assert.match(manager, /Custom Card artwork · Beta/);
+  assert.match(manager, /تصميم البطاقة المخصصة/);
+  assert.match(manager, /Custom Card artwork/);
+  assert.doesNotMatch(manager, /Custom Card artwork · Beta/);
+  assert.doesNotMatch(manager, /تصميم البطاقة المخصصة · تجريبي/);
   assert.match(manager, /الواجهة الأمامية · مطلوبة/);
   assert.match(manager, /Front artwork · required/);
   assert.match(manager, /نشر زوج الأمامية \+ الخلفية/);

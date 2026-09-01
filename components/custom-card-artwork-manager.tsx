@@ -75,7 +75,7 @@ export async function CustomCardArtworkManager({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-black">
-            {t("تصميم البطاقة المخصصة · تجريبي", "Custom Card artwork · Beta")}
+            {t("تصميم البطاقة المخصصة", "Custom Card artwork")}
           </p>
           <p className="mt-1 max-w-3xl text-sm text-foreground-muted">
             {t(

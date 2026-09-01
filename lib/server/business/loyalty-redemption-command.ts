@@ -6,10 +6,16 @@ import {
 } from "@/lib/loyalty/transactions";
 import { getRewardUnlockRedemptionState } from "@/lib/rewards/expiration";
 import prisma from "@/lib/prisma";
+import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type LoyaltyRedemptionCommandResult =
-  | Readonly<{ ok: true; balance: number; integrationJobId: string }>
+  | Readonly<{
+      ok: true;
+      balance: number;
+      integrationJobId: string;
+      integrationJobIds: readonly string[];
+    }>
   | Readonly<{ ok: false; reason: "REWARD_EXPIRED" | "INSUFFICIENT_BALANCE" }>;
 
 /**
@@ -19,7 +25,7 @@ export type LoyaltyRedemptionCommandResult =
  * rapid-operation protection, presentation redirects, post-commit transport
  * wake-up and page revalidation remain in the bounded action. This command
  * preserves reward-unlock expiry semantics and atomically commits the canonical
- * redemption plus one durable Google Sheets integration job.
+ * redemption plus durable integration jobs.
  */
 export async function redeemLoyaltyRewardCommand(input: {
   businessId: string;
@@ -124,13 +130,29 @@ export async function redeemLoyaltyRewardCommand(input: {
         return { ok: false, reason: "INSUFFICIENT_BALANCE" } as const;
       }
 
-      const integrationJob = await enqueueIntegrationJob(transaction, {
+      const sheetsJob = await enqueueIntegrationJob(transaction, {
         businessId: input.businessId,
         kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
         idempotencyKey: `loyalty-redemption:${input.idempotencyKey}`,
       });
+      const redeemedJob = await enqueueCustomerMessageJob(transaction, {
+        businessId: input.businessId,
+        customerId: input.customerId,
+        event: "REWARD_REDEEMED",
+        eventKey: input.idempotencyKey,
+        balance,
+        rewardName: input.rewardName,
+      });
+      const integrationJobIds = [sheetsJob.id, redeemedJob?.id].filter(
+        (jobId): jobId is string => Boolean(jobId),
+      );
 
-      return { ok: true, balance, integrationJobId: integrationJob.id } as const;
+      return {
+        ok: true,
+        balance,
+        integrationJobId: sheetsJob.id,
+        integrationJobIds,
+      } as const;
     });
   } catch (error) {
     if (isFinancialOperationAbortedError(error)) {

@@ -78,6 +78,8 @@ const REVIEWED_MIGRATIONS = [
   "20260813003000_add_subscription_lifecycle_persistence",
   "20260814213000_add_integration_outbox_jobs",
   "20260831160000_add_trial_runtime_persistence",
+  "20260901113000_add_automatic_customer_messaging",
+  "20260901160000_add_business_whatsapp_credentials",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;

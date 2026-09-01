@@ -7,8 +7,9 @@ export type IntegrationJobStore = Pick<
 
 export type EnqueueIntegrationJobInput = Readonly<{
   businessId: string;
-  kind: "GOOGLE_SHEETS_BUSINESS_SYNC";
+  kind: "GOOGLE_SHEETS_BUSINESS_SYNC" | "WHATSAPP_CUSTOMER_NOTIFICATION";
   idempotencyKey: string;
+  payload?: Prisma.InputJsonValue;
   availableAt?: Date;
 }>;
 
@@ -37,7 +38,8 @@ function requireSafeErrorCode(value: string) {
 
 /**
  * Creates one business-scoped durable job. Replaying the same key returns the
- * original row without resetting attempts, status, leases, or completion.
+ * original row without resetting attempts, status, leases, completion or the
+ * original event payload.
  */
 export async function enqueueIntegrationJob(
   transaction: IntegrationJobStore,
@@ -61,6 +63,7 @@ export async function enqueueIntegrationJob(
       businessId,
       kind: input.kind,
       idempotencyKey,
+      ...(input.payload === undefined ? {} : { payload: input.payload }),
       ...(input.availableAt ? { availableAt: input.availableAt } : {}),
     },
     update: {},
