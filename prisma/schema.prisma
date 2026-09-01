@@ -32,6 +32,7 @@ model Business {
   whatsappBalanceMessage String?
   whatsappRewardMessage  String?
   whatsappWelcomeMessage String?
+  whatsappRedeemedMessage String?
   address                String?
   cardTerms              String?
   contactPhone           String?
@@ -132,6 +133,7 @@ enum GoogleSheetsSyncState {
 
 enum IntegrationJobKind {
   GOOGLE_SHEETS_BUSINESS_SYNC
+  WHATSAPP_CUSTOMER_NOTIFICATION
 }
 
 enum IntegrationJobStatus {
@@ -147,6 +149,7 @@ model IntegrationJob {
   businessId     String
   kind           IntegrationJobKind
   idempotencyKey String
+  payload        Json?
   status         IntegrationJobStatus @default(PENDING)
   attemptCount   Int                  @default(0)
   availableAt    DateTime             @default(now())
@@ -246,6 +249,7 @@ model Customer {
   lifetimeEarned        Int                     @default(0)
   lifetimeRedeemed      Int                     @default(0)
   isActive              Boolean                 @default(true)
+  whatsappOptInAt       DateTime?
   businessId            String
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt

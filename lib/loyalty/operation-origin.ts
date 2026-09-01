@@ -5,6 +5,7 @@
 export const OPERATION_ORIGINS = ["CUSTOMER_PROFILE", "SCAN"] as const;
 
 export type OperationOrigin = (typeof OPERATION_ORIGINS)[number];
+export type ScanOperationSuccess = "earned" | "reward-ready" | "redeemed";
 export type ScanOperationError =
   | "invalid"
   | "permission"
@@ -27,7 +28,7 @@ export function operationPresentationPath(
   origin: OperationOrigin,
   slug: string,
   customerId: string,
-  state?: { success?: "earned" | "redeemed"; error?: ScanOperationError },
+  state?: { success?: ScanOperationSuccess; error?: ScanOperationError },
 ) {
   const basePath =
     origin === "SCAN"
@@ -35,6 +36,9 @@ export function operationPresentationPath(
       : `/businesses/${slug}/customers/${customerId}`;
 
   if (!state) return basePath;
+  if (state.success === "reward-ready") {
+    return `${basePath}?success=earned&rewardReady=1`;
+  }
   if (state.success) return `${basePath}?success=${state.success}`;
   if (state.error) return `${basePath}?error=${state.error}`;
   return basePath;

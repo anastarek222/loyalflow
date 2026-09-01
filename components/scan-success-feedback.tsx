@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
 import { Volume2, VolumeX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,10 @@ type FeedbackPreference = {
   enabled: boolean;
 };
 
+type ScanSuccessKind = "earned" | "reward-ready" | "redeemed";
+
 type ScanSuccessFeedbackProps = {
+  kind?: ScanSuccessKind;
   enableLabel: string;
   disableLabel: string;
   enabledAnnouncement: string;
@@ -60,12 +64,26 @@ function prefersReducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function playHapticFeedback() {
+function playHapticFeedback(kind: ScanSuccessKind) {
   if (prefersReducedMotion() || !("vibrate" in navigator)) return;
+  if (kind === "reward-ready") {
+    navigator.vibrate([45, 35, 90]);
+    return;
+  }
+  if (kind === "redeemed") {
+    navigator.vibrate([70, 30, 70]);
+    return;
+  }
   navigator.vibrate(45);
 }
 
-function playSuccessChime() {
+function feedbackFrequencies(kind: ScanSuccessKind) {
+  if (kind === "reward-ready") return [659.25, 783.99, 987.77];
+  if (kind === "redeemed") return [392, 523.25, 659.25];
+  return [523.25, 659.25];
+}
+
+function playSuccessChime(kind: ScanSuccessKind) {
   const AudioContextConstructor =
     window.AudioContext ??
     (
@@ -79,7 +97,7 @@ function playSuccessChime() {
     const context = new AudioContextConstructor();
     const startAt = context.currentTime;
 
-    [523.25, 659.25].forEach((frequency, index) => {
+    feedbackFrequencies(kind).forEach((frequency, index) => {
       const oscillator = context.createOscillator();
       const gain = context.createGain();
       const noteStart = startAt + index * 0.09;
@@ -95,23 +113,34 @@ function playSuccessChime() {
       oscillator.stop(noteStart + 0.17);
     });
 
-    window.setTimeout(() => void context.close(), 450);
+    window.setTimeout(() => void context.close(), 550);
   } catch {
     // Browsers may still block audio despite consent; visual feedback remains.
   }
 }
 
-function playFeedback() {
-  playHapticFeedback();
-  playSuccessChime();
+function playFeedback(kind: ScanSuccessKind) {
+  playHapticFeedback(kind);
+  playSuccessChime(kind);
+}
+
+function normalizeKind(value: string | null): ScanSuccessKind {
+  return value === "reward-ready" || value === "redeemed" ? value : "earned";
 }
 
 export default function ScanSuccessFeedback({
+  kind,
   enableLabel,
   disableLabel,
   enabledAnnouncement,
   disabledAnnouncement,
 }: ScanSuccessFeedbackProps) {
+  const searchParams = useSearchParams();
+  const resolvedKind =
+    kind ??
+    (searchParams.get("rewardReady") === "1"
+      ? "reward-ready"
+      : normalizeKind(searchParams.get("success")));
   const enabled = useSyncExternalStore(
     subscribeToFeedbackPreference,
     loadFeedbackPreference,
@@ -126,8 +155,8 @@ export default function ScanSuccessFeedback({
       playedFromGestureRef.current = false;
       return;
     }
-    playFeedback();
-  }, [enabled]);
+    playFeedback(resolvedKind);
+  }, [enabled, resolvedKind]);
 
   const toggleFeedback = () => {
     const nextEnabled = !enabled;
@@ -135,7 +164,7 @@ export default function ScanSuccessFeedback({
     saveFeedbackPreference({ enabled: nextEnabled });
     setAnnouncement(nextEnabled ? enabledAnnouncement : disabledAnnouncement);
 
-    if (nextEnabled) playFeedback();
+    if (nextEnabled) playFeedback(resolvedKind);
     else if ("vibrate" in navigator) navigator.vibrate(0);
   };
 

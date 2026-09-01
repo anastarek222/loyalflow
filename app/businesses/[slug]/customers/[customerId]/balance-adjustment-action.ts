@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
-import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import { isFinancialOperationConflictError } from "@/lib/loyalty/transactions";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -127,7 +127,7 @@ export async function adjustCustomerBalanceCommandAction(
     );
   }
 
-  scheduleBusinessGoogleSheetsSync(result.integrationJobId);
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateCustomerBalanceSurfaces(slug, customer.id, customer.publicToken);
   redirect(`/businesses/${slug}/customers/${customer.id}?success=adjusted`);
 }
