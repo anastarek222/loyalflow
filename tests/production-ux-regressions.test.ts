@@ -12,12 +12,17 @@ const customersResponsiveCss = readFileSync(
   "utf8",
 );
 
-test("get-started does not send invited owners to the token-gated accept route without a token", () => {
+test("get-started keeps owner invitation acceptance token-gated and makes the secure email requirement explicit", () => {
   assert.doesNotMatch(
     getStartedSource,
     /href=["']\/accept-owner-invitation["']/,
   );
   assert.match(getStartedSource, /conversion\.invitedBody/);
+  assert.match(getStartedSource, /conversion\.invitedRequirement/);
+  assert.match(
+    getStartedSource,
+    /data-owner-invitation-requirement=["']secure-email-link["']/,
+  );
 });
 
 test("owner invitation page distinguishes a missing token from an invalid invitation", () => {
