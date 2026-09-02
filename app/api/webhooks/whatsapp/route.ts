@@ -1,4 +1,5 @@
 import { logServerEvent } from "@/lib/server/logging";
+import { revokeWhatsAppConsentFromWebhook } from "@/lib/server/integrations/whatsapp-consent";
 import {
   summarizeWhatsAppWebhookStatuses,
   verifyWhatsAppWebhookChallenge,
@@ -57,7 +58,10 @@ export async function POST(request: Request) {
     return Response.json({ error: "INVALID_PAYLOAD" }, { status: 400 });
   }
 
-  const statuses = summarizeWhatsAppWebhookStatuses(payload);
+  const [statuses, optedOutCount] = await Promise.all([
+    Promise.resolve(summarizeWhatsAppWebhookStatuses(payload)),
+    revokeWhatsAppConsentFromWebhook(payload),
+  ]);
   logServerEvent("WHATSAPP_WEBHOOK_RECEIVED", {
     statusCount: statuses.total,
     sentCount: statuses.sent,
@@ -65,6 +69,7 @@ export async function POST(request: Request) {
     readCount: statuses.read,
     failedCount: statuses.failed,
     otherStatusCount: statuses.other,
+    optedOutCount,
   });
 
   return Response.json({ received: true });
