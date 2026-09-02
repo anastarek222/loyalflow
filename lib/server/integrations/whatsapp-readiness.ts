@@ -15,7 +15,9 @@ const WHATSAPP_GLOBAL_SENDER_ENV_VARS = [
   "WHATSAPP_ACCESS_TOKEN",
 ] as const;
 
-function configured(env: NodeJS.ProcessEnv, name: string) {
+type Environment = Readonly<Record<string, string | undefined>>;
+
+function configured(env: Environment, name: string) {
   return Boolean(env[name]?.trim());
 }
 
@@ -28,7 +30,7 @@ function configured(env: NodeJS.ProcessEnv, name: string) {
  * exposes environment variable names only, never their values.
  */
 export function getWhatsAppProviderReadiness(
-  env: NodeJS.ProcessEnv = process.env,
+  env: Environment = process.env,
 ) {
   const missingProviderConfig = WHATSAPP_PROVIDER_ENV_VARS.filter(
     (name) => !configured(env, name),
