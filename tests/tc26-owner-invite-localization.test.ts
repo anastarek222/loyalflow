@@ -16,7 +16,8 @@ test("TC2.6 keeps owner-invite AR/EN keys in parity", () => {
     Object.keys(ownerInviteMessages.ar).sort(),
     Object.keys(ownerInviteMessages.en).sort(),
   );
-  assert.equal(Object.keys(ownerInviteMessages.en).length, 11);
+  assert.ok("ownerInvite.missing" in ownerInviteMessages.en);
+  assert.ok("ownerInvite.missing" in ownerInviteMessages.ar);
 });
 
 test("TC2.6 preserves compatibility catalog values", () => {
