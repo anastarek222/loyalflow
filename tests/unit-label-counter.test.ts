@@ -6,31 +6,26 @@ import test from "node:test";
 import {
   STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
   standardCardGraphemeLength,
-  truncateStandardCardUnitLabel,
 } from "../lib/cards/standard-card-text";
 
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 
-test("unit label authority remains 18 graphemes", () => {
-  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 18);
+test("unit label authority remains 20 graphemes", () => {
+  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 20);
   assert.equal(standardCardGraphemeLength("👨‍👩‍👧‍👦"), 1);
+  assert.equal(standardCardGraphemeLength("RECOMMENDATIONS"), 15);
 });
 
-test("unit label truncation preserves exactly 18 graphemes", () => {
-  const family = "👨‍👩‍👧‍👦";
-  const bounded = truncateStandardCardUnitLabel(family.repeat(19));
-
-  assert.equal(standardCardGraphemeLength(bounded), 18);
-  assert.equal(bounded, family.repeat(18));
-});
-
-test("shared unit label input exposes a live x/18 counter and grapheme-aware limit", () => {
+test("shared unit label input exposes a live x/20 counter without silently truncating", () => {
   const input = source("components/unit-label-input.tsx");
   assert.match(input, /standardCardGraphemeLength/);
-  assert.match(input, /truncateStandardCardUnitLabel/);
+  assert.doesNotMatch(input, /truncateStandardCardUnitLabel/);
   assert.doesNotMatch(input, /maxLength=/);
   assert.match(input, /data-unit-label-counter/);
+  assert.match(input, /data-unit-label-over-limit/);
+  assert.match(input, /overLimit/);
+  assert.match(input, /aria-invalid=\{overLimit \|\| ariaInvalid \|\| undefined\}/);
   assert.match(input, /\{count\}\/\{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH\}/);
 });
 
