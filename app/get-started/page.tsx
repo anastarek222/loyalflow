@@ -95,12 +95,6 @@ export default async function GetStartedPage() {
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
                 {translate(locale, "conversion.invitedBody")}
               </p>
-              <Link
-                href="/accept-owner-invitation"
-                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-5 py-3 font-semibold text-foreground hover:bg-surface"
-              >
-                {translate(locale, "conversion.invitedCta")}
-              </Link>
             </article>
           </div>
 

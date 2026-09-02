@@ -42,7 +42,8 @@ export default async function AcceptOwnerInvitationPage({
   const params = await searchParams;
   const token = typeof params.token === "string" ? params.token : "";
   const error = typeof params.error === "string" ? params.error : "";
-  const invalidToken = !token || error === "invalid-token";
+  const missingToken = !token;
+  const invalidToken = error === "invalid-token";
   const locale = await getInvitationLocale();
   const direction = getLocaleDirection(locale);
 
@@ -54,10 +55,19 @@ export default async function AcceptOwnerInvitationPage({
         </div>
         <h1 className="text-2xl font-bold text-foreground">{translate(locale, "ownerInvite.title")}</h1>
         <p className="mt-2 text-sm text-foreground-muted">
-          {translate(locale, "ownerInvite.body")}
+          {translate(locale, missingToken ? "ownerInvite.missing" : "ownerInvite.body")}
         </p>
 
-        {invalidToken ? (
+        {missingToken ? (
+          <div className="mt-6">
+            <Link
+              href="/login"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white"
+            >
+              {translate(locale, "ownerInvite.backLogin")}
+            </Link>
+          </div>
+        ) : invalidToken ? (
           <div className="mt-6 space-y-4">
             <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
               {translate(locale, "ownerInvite.invalid")}
