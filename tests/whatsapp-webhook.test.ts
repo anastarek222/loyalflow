@@ -5,6 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 import {
+  extractWhatsAppDeliveryStatusEvents,
   summarizeWhatsAppWebhookStatuses,
   verifyWhatsAppWebhookChallenge,
   verifyWhatsAppWebhookSignature,
@@ -109,6 +110,90 @@ test("WhatsApp webhook status intake summarizes delivery lifecycle without retai
     failed: 1,
     other: 0,
   });
+});
+
+test("WhatsApp delivery status intake extracts bounded provider ids, mapped states, and timestamps", () => {
+  const payload = {
+    entry: [
+      {
+        changes: [
+          {
+            value: {
+              statuses: [
+                { id: " wamid.sent ", status: "sent", timestamp: "1788448200" },
+                { id: "wamid.delivered", status: "delivered", timestamp: 1788448201 },
+                { id: "wamid.read", status: "read", timestamp: "1788448202" },
+                { id: "wamid.failed", status: "failed", timestamp: "bad" },
+                { id: "wamid.other", status: "warning" },
+                { id: " ", status: "sent" },
+                { id: "wamid.sent", status: "sent", timestamp: "1788448200" },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  assert.deepEqual(extractWhatsAppDeliveryStatusEvents(payload), [
+    {
+      providerMessageId: "wamid.sent",
+      status: "SENT",
+      timestamp: new Date(1788448200 * 1000),
+    },
+    {
+      providerMessageId: "wamid.delivered",
+      status: "DELIVERED",
+      timestamp: new Date(1788448201 * 1000),
+    },
+    {
+      providerMessageId: "wamid.read",
+      status: "READ",
+      timestamp: new Date(1788448202 * 1000),
+    },
+    { providerMessageId: "wamid.failed", status: "FAILED", timestamp: null },
+    { providerMessageId: "wamid.other", status: "OTHER", timestamp: null },
+  ]);
+});
+
+test("WhatsApp provider acceptance and webhook delivery states are durably correlated without resends", () => {
+  const cloud = readFileSync(
+    join(process.cwd(), "lib/server/integrations/whatsapp-cloud.ts"),
+    "utf8",
+  );
+  const worker = readFileSync(
+    join(process.cwd(), "lib/server/integrations/worker.ts"),
+    "utf8",
+  );
+  const outbox = readFileSync(
+    join(process.cwd(), "lib/server/integrations/outbox.ts"),
+    "utf8",
+  );
+  const persistence = readFileSync(
+    join(process.cwd(), "lib/server/integrations/whatsapp-delivery-status.ts"),
+    "utf8",
+  );
+  const route = readFileSync(
+    join(process.cwd(), "app/api/webhooks/whatsapp/route.ts"),
+    "utf8",
+  );
+  const schema = readFileSync(join(process.cwd(), "prisma/schema.prisma"), "utf8");
+
+  assert.match(cloud, /extractWhatsAppProviderMessageId/);
+  assert.match(cloud, /await response\.json\(\)/);
+  assert.match(worker, /providerMessageId: result\.providerMessageId/);
+  assert.match(outbox, /providerDeliveryStatus: "ACCEPTED"/);
+  assert.match(schema, /providerMessageId\s+String\?/);
+  assert.match(schema, /providerDeliveryStatus\s+IntegrationProviderDeliveryStatus\?/);
+  assert.match(schema, /providerStatusAt\s+DateTime\?/);
+  assert.match(persistence, /kind: "WHATSAPP_CUSTOMER_NOTIFICATION"/);
+  assert.match(persistence, /SENT: \["OTHER", "ACCEPTED"\]/);
+  assert.match(persistence, /DELIVERED: \["OTHER", "ACCEPTED", "SENT"\]/);
+  assert.match(persistence, /READ: \["OTHER", "ACCEPTED", "SENT", "DELIVERED"\]/);
+  assert.match(persistence, /FAILED: \["OTHER", "ACCEPTED", "SENT"\]/);
+  assert.match(route, /persistWhatsAppDeliveryStatusFromWebhook\(payload\)/);
+  assert.match(route, /persistedStatusCount/);
+  assert.doesNotMatch(persistence, /status:\s*"PENDING"/);
 });
 
 test("WhatsApp webhook route is fail-closed and verifies signature before JSON parsing", () => {

@@ -11,7 +11,7 @@ import { sendWhatsAppCustomerNotificationSafely } from "@/lib/server/integration
 const LEASE_DURATION_MS = 5 * 60 * 1000;
 
 type IntegrationDeliveryResult =
-  | Readonly<{ status: "success" }>
+  | Readonly<{ status: "success"; providerMessageId?: string }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
 
 async function deliverClaimedJob(claimed: {
@@ -54,6 +54,9 @@ export async function processIntegrationJob(jobId: string, deliveryId: string) {
       jobId: claimed.id,
       workerId,
       completedAt: finishedAt,
+      ...(result.providerMessageId
+        ? { providerMessageId: result.providerMessageId }
+        : {}),
     });
     if (completed.count !== 1)
       throw new Error("Integration job lease was lost.");

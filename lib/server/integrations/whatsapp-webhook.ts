@@ -15,6 +15,19 @@ export type WhatsAppOptOutRequest = Readonly<{
   providerMessageId: string | null;
 }>;
 
+export type WhatsAppDeliveryStatus =
+  | "SENT"
+  | "DELIVERED"
+  | "READ"
+  | "FAILED"
+  | "OTHER";
+
+export type WhatsAppDeliveryStatusEvent = Readonly<{
+  providerMessageId: string;
+  status: WhatsAppDeliveryStatus;
+  timestamp: Date | null;
+}>;
+
 const WHATSAPP_OPT_OUT_KEYWORDS = new Set([
   "STOP",
   "STOPALL",
@@ -37,6 +50,32 @@ function normalizeOptOutKeyword(value: string) {
 function normalizeInboundPhone(value: string) {
   const digits = value.replace(/\D/g, "");
   return /^\d{8,15}$/.test(digits) ? digits : null;
+}
+
+function normalizeProviderMessageId(value: unknown) {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized.length >= 1 && normalized.length <= 512 ? normalized : null;
+}
+
+function parseWhatsAppStatusTimestamp(value: unknown) {
+  const seconds =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && /^\d+$/.test(value.trim())
+        ? Number(value.trim())
+        : Number.NaN;
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  const timestamp = new Date(seconds * 1000);
+  return Number.isNaN(timestamp.getTime()) ? null : timestamp;
+}
+
+function mapWhatsAppDeliveryStatus(value: string): WhatsAppDeliveryStatus {
+  if (value === "sent") return "SENT";
+  if (value === "delivered") return "DELIVERED";
+  if (value === "read") return "READ";
+  if (value === "failed") return "FAILED";
+  return "OTHER";
 }
 
 export function verifyWhatsAppWebhookChallenge(input: {
@@ -116,10 +155,7 @@ export function extractWhatsAppOptOutRequests(
         const keyword = normalizeOptOutKeyword(body);
         if (!WHATSAPP_OPT_OUT_KEYWORDS.has(keyword)) continue;
 
-        const providerMessageId =
-          typeof candidate.id === "string" && candidate.id.trim()
-            ? candidate.id.trim()
-            : null;
+        const providerMessageId = normalizeProviderMessageId(candidate.id);
         const dedupeKey = `${phoneNumberId}:${senderPhone}:${providerMessageId ?? keyword}`;
         if (seen.has(dedupeKey)) continue;
         seen.add(dedupeKey);
@@ -129,6 +165,52 @@ export function extractWhatsAppOptOutRequests(
   }
 
   return requests;
+}
+
+export function extractWhatsAppDeliveryStatusEvents(
+  payload: unknown,
+): WhatsAppDeliveryStatusEvent[] {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return [];
+  const entries = (payload as { entry?: unknown }).entry;
+  if (!Array.isArray(entries)) return [];
+
+  const events: WhatsAppDeliveryStatusEvent[] = [];
+  const seen = new Set<string>();
+
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
+    const changes = (entry as { changes?: unknown }).changes;
+    if (!Array.isArray(changes)) continue;
+
+    for (const change of changes) {
+      if (!change || typeof change !== "object" || Array.isArray(change)) continue;
+      const value = (change as { value?: unknown }).value;
+      if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+      const statuses = (value as { statuses?: unknown }).statuses;
+      if (!Array.isArray(statuses)) continue;
+
+      for (const statusValue of statuses) {
+        if (!statusValue || typeof statusValue !== "object" || Array.isArray(statusValue)) {
+          continue;
+        }
+        const candidate = statusValue as {
+          id?: unknown;
+          status?: unknown;
+          timestamp?: unknown;
+        };
+        const providerMessageId = normalizeProviderMessageId(candidate.id);
+        if (!providerMessageId || typeof candidate.status !== "string") continue;
+        const status = mapWhatsAppDeliveryStatus(candidate.status);
+        const timestamp = parseWhatsAppStatusTimestamp(candidate.timestamp);
+        const dedupeKey = `${providerMessageId}:${status}:${timestamp?.toISOString() ?? ""}`;
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+        events.push({ providerMessageId, status, timestamp });
+      }
+    }
+  }
+
+  return events;
 }
 
 export function summarizeWhatsAppWebhookStatuses(
