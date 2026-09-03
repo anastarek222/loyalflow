@@ -144,25 +144,26 @@ export async function sendWhatsAppCustomerNotificationSafely(
     prisma,
     businessId,
   );
-  let phoneNumberId: string;
-  let accessToken: string;
+  if (!businessCredential) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
 
-  if (businessCredential) {
-    phoneNumberId = businessCredential.phoneNumberId;
-    try {
-      accessToken = decryptBusinessWhatsAppAccessToken(
-        businessCredential.accessTokenCiphertext,
-      );
-    } catch {
-      return {
-        status: "failure",
-        reason: "WHATSAPP_BUSINESS_CREDENTIAL_INVALID",
-        retryable: false,
-      };
-    }
-  } else {
-    phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() ?? "";
-    accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim() ?? "";
+  const phoneNumberId = businessCredential.phoneNumberId;
+  let accessToken: string;
+  try {
+    accessToken = decryptBusinessWhatsAppAccessToken(
+      businessCredential.accessTokenCiphertext,
+    );
+  } catch {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_BUSINESS_CREDENTIAL_INVALID",
+      retryable: false,
+    };
   }
 
   const { templateName, languageCode } = getTemplateConfig(

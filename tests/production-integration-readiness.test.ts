@@ -63,17 +63,33 @@ test("production environment template documents Custom Card and WhatsApp runtime
   assert.match(envExample, /^WHATSAPP_APP_SECRET=/m);
 });
 
-test("WhatsApp settings report delivery readiness instead of credential presence alone", () => {
+test("business WhatsApp delivery requires a business-scoped sender credential", () => {
+  const whatsappCloud = readFileSync(
+    "lib/server/integrations/whatsapp-cloud.ts",
+    "utf8",
+  );
+
+  assert.match(
+    whatsappCloud,
+    /getBusinessWhatsAppCredential\(\s*prisma,\s*businessId,?\s*\)/,
+  );
+  assert.match(
+    whatsappCloud,
+    /if \(!businessCredential\) \{[\s\S]*?reason: "WHATSAPP_NOT_CONFIGURED"/,
+  );
+  assert.doesNotMatch(whatsappCloud, /process\.env\.WHATSAPP_PHONE_NUMBER_ID/);
+  assert.doesNotMatch(whatsappCloud, /process\.env\.WHATSAPP_ACCESS_TOKEN/);
+});
+
+test("WhatsApp settings report business-scoped delivery readiness", () => {
   const page = readFileSync(
     "app/businesses/[slug]/settings/whatsapp/page.tsx",
     "utf8",
   );
 
   assert.match(page, /getWhatsAppProviderReadiness\(\)/);
-  assert.match(
-    page,
-    /const senderReady = Boolean\(credential\) \|\| providerReadiness\.globalSenderReady/,
-  );
+  assert.match(page, /const senderReady = Boolean\(credential\);/);
+  assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
   assert.match(
     page,
     /const deliveryReady = providerReadiness\.providerReady && senderReady/,
@@ -81,4 +97,5 @@ test("WhatsApp settings report delivery readiness instead of credential presence
   assert.match(page, /providerReadiness\.missingProviderConfig\.join/);
   assert.match(page, /Ready for automatic delivery/);
   assert.match(page, /Sender credentials saved · delivery setup incomplete/);
+  assert.match(page, /A server-wide sender will not be used as a fallback\./);
 });

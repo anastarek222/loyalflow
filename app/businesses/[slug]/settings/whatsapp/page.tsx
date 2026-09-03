@@ -41,7 +41,7 @@ export default async function BusinessWhatsAppSettingsPage({
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const providerReadiness = getWhatsAppProviderReadiness();
-  const senderReady = Boolean(credential) || providerReadiness.globalSenderReady;
+  const senderReady = Boolean(credential);
   const deliveryReady = providerReadiness.providerReady && senderReady;
   const updateConnection = updateBusinessWhatsAppConnectionAction.bind(
     null,
@@ -121,25 +121,15 @@ export default async function BusinessWhatsAppSettingsPage({
                         "بيانات المرسل محفوظة · الإعداد غير مكتمل",
                         "Sender credentials saved · delivery setup incomplete",
                       )
-                    : providerReadiness.globalSenderReady
-                      ? t(
-                          "المرسل العام متاح · تحقق من إعداد التسليم",
-                          "Global sender available · check delivery setup",
-                        )
-                      : t("غير جاهز للإرسال", "Not ready for delivery")}
+                    : t("غير جاهز للإرسال", "Not ready for delivery")}
               </p>
               <p className="mt-1 text-xs text-foreground-muted">
                 {credential
                   ? `${t("Phone Number ID", "Phone Number ID")}: ${credential.phoneNumberId}`
-                  : providerReadiness.globalSenderReady
-                    ? t(
-                        "لا توجد بيانات خاصة بالنشاط؛ سيتم استخدام مرسل الخادم العام.",
-                        "No business-specific sender is saved; the server-wide fallback sender will be used.",
-                      )
-                    : t(
-                        "احفظ بيانات مرسل خاصة بالنشاط لتفعيل مسار الإرسال.",
-                        "Save business-specific sender credentials to enable the delivery path.",
-                      )}
+                  : t(
+                      "احفظ بيانات مرسل خاصة بهذا النشاط لتفعيل الإرسال. لن يتم استخدام مرسل عام بدلًا منها.",
+                      "Save sender credentials for this business to enable delivery. A server-wide sender will not be used as a fallback.",
+                    )}
               </p>
             </div>
             {credential ? (
@@ -179,8 +169,8 @@ export default async function BusinessWhatsAppSettingsPage({
           {deliveryReady ? (
             <p className="mt-5 rounded-xl border border-success/30 bg-success-subtle p-4 text-sm font-semibold text-success">
               {t(
-                "متطلبات الخادم والمرسل موجودة. يظل نجاح التسليم الفعلي معتمدًا على صلاحية بيانات Meta وحالة القوالب المعتمدة.",
-                "Server and sender prerequisites are configured. Actual delivery still depends on valid Meta credentials and approved template status.",
+                "متطلبات الخادم وبيانات مرسل النشاط موجودة. يظل نجاح التسليم الفعلي معتمدًا على صلاحية بيانات Meta وحالة القوالب المعتمدة.",
+                "Server prerequisites and this business's sender credentials are configured. Actual delivery still depends on valid Meta credentials and approved template status.",
               )}
             </p>
           ) : null}
