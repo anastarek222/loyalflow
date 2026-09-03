@@ -201,7 +201,7 @@ test("Owner creation schedules the canonical non-blocking Sheets sync only after
   assert.match(ownerAction, /await enqueueIntegrationJob\(tx/);
   assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
   assert.match(scheduler, /after\(async \(\) =>/);
-  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
+  assert.match(scheduler, /publishIntegrationJobWithRecovery\(jobId\)/);
   assert.match(
     superAdminAction,
     /scheduleBusinessGoogleSheetsSync\(integrationJobId\)/,
