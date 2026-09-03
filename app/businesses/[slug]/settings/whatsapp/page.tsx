@@ -3,6 +3,7 @@ import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getWhatsAppProviderReadiness } from "@/lib/server/integrations/whatsapp-readiness";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -39,6 +40,9 @@ export default async function BusinessWhatsAppSettingsPage({
   const language = normalizeLanguage(currentUser?.language);
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
+  const providerReadiness = getWhatsAppProviderReadiness();
+  const senderReady = Boolean(credential) || providerReadiness.globalSenderReady;
+  const deliveryReady = providerReadiness.providerReady && senderReady;
   const updateConnection = updateBusinessWhatsAppConnectionAction.bind(
     null,
     business.slug,
@@ -46,9 +50,12 @@ export default async function BusinessWhatsAppSettingsPage({
 
   const statusMessage =
     query.whatsapp === "connected"
-      ? t("تم حفظ اتصال WhatsApp بأمان.", "WhatsApp connection saved securely.")
+      ? t(
+          "تم حفظ بيانات مرسل WhatsApp بأمان.",
+          "WhatsApp sender credentials saved securely.",
+        )
       : query.whatsapp === "disconnected"
-        ? t("تم فصل اتصال WhatsApp.", "WhatsApp connection disconnected.")
+        ? t("تم فصل بيانات مرسل WhatsApp.", "WhatsApp sender credentials disconnected.")
         : null;
   const errorMessage =
     query.whatsapp === "invalid"
@@ -107,17 +114,32 @@ export default async function BusinessWhatsAppSettingsPage({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-black text-foreground">
-                {credential
-                  ? t("متصل", "Connected")
-                  : t("غير متصل", "Not connected")}
+                {deliveryReady
+                  ? t("جاهز للإرسال التلقائي", "Ready for automatic delivery")
+                  : credential
+                    ? t(
+                        "بيانات المرسل محفوظة · الإعداد غير مكتمل",
+                        "Sender credentials saved · delivery setup incomplete",
+                      )
+                    : providerReadiness.globalSenderReady
+                      ? t(
+                          "المرسل العام متاح · تحقق من إعداد التسليم",
+                          "Global sender available · check delivery setup",
+                        )
+                      : t("غير جاهز للإرسال", "Not ready for delivery")}
               </p>
               <p className="mt-1 text-xs text-foreground-muted">
                 {credential
                   ? `${t("Phone Number ID", "Phone Number ID")}: ${credential.phoneNumberId}`
-                  : t(
-                      "يمكنك استخدام الإعداد العام الحالي حتى تضيف اتصالًا خاصًا بالنشاط.",
-                      "The existing global configuration remains available until you add a business-specific connection.",
-                    )}
+                  : providerReadiness.globalSenderReady
+                    ? t(
+                        "لا توجد بيانات خاصة بالنشاط؛ سيتم استخدام مرسل الخادم العام.",
+                        "No business-specific sender is saved; the server-wide fallback sender will be used.",
+                      )
+                    : t(
+                        "احفظ بيانات مرسل خاصة بالنشاط لتفعيل مسار الإرسال.",
+                        "Save business-specific sender credentials to enable the delivery path.",
+                      )}
               </p>
             </div>
             {credential ? (
@@ -133,6 +155,35 @@ export default async function BusinessWhatsAppSettingsPage({
               </form>
             ) : null}
           </div>
+
+          {!providerReadiness.providerReady ? (
+            <div className="mt-5 rounded-xl border border-warning/30 bg-warning-subtle p-4 text-sm leading-6 text-foreground">
+              <p className="font-black">
+                {t(
+                  "إعداد WhatsApp على الخادم غير مكتمل.",
+                  "Server-side WhatsApp delivery configuration is incomplete.",
+                )}
+              </p>
+              <p className="mt-1 text-foreground-muted">
+                {t(
+                  "لن تعمل الرسائل التلقائية حتى يتم ضبط إصدار Graph API وأسماء القوالب المعتمدة لكل الأحداث واللغات المطلوبة.",
+                  "Automatic messages cannot be delivered until the Graph API version and approved template names are configured for every required event and language.",
+                )}
+              </p>
+              <p className="mt-2 break-words font-mono text-xs text-foreground-muted">
+                {providerReadiness.missingProviderConfig.join(", ")}
+              </p>
+            </div>
+          ) : null}
+
+          {deliveryReady ? (
+            <p className="mt-5 rounded-xl border border-success/30 bg-success-subtle p-4 text-sm font-semibold text-success">
+              {t(
+                "متطلبات الخادم والمرسل موجودة. يظل نجاح التسليم الفعلي معتمدًا على صلاحية بيانات Meta وحالة القوالب المعتمدة.",
+                "Server and sender prerequisites are configured. Actual delivery still depends on valid Meta credentials and approved template status.",
+              )}
+            </p>
+          ) : null}
 
           <form action={updateConnection} className="mt-6 grid gap-4">
             <input type="hidden" name="intent" value="connect" />
@@ -172,8 +223,8 @@ export default async function BusinessWhatsAppSettingsPage({
               className="min-h-12 rounded-xl bg-primary px-4 py-3 font-bold text-white sm:w-fit"
             >
               {credential
-                ? t("تحديث الاتصال", "Update connection")
-                : t("حفظ الاتصال", "Save connection")}
+                ? t("تحديث بيانات المرسل", "Update sender credentials")
+                : t("حفظ بيانات المرسل", "Save sender credentials")}
             </button>
           </form>
         </section>
