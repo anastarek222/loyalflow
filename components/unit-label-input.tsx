@@ -10,7 +10,6 @@ import {
 import {
   STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
   standardCardGraphemeLength,
-  truncateStandardCardUnitLabel,
 } from "@/lib/cards/standard-card-text";
 
 type Props = Omit<
@@ -30,19 +29,17 @@ export function UnitLabelInput({
   value,
   onChange,
   "aria-describedby": describedBy,
+  "aria-invalid": ariaInvalid,
   ...props
 }: Props) {
   const counterId = useId();
   const [count, setCount] = useState(() =>
     initialCount(value ?? defaultValue),
   );
+  const overLimit = count > STANDARD_CARD_UNIT_LABEL_MAX_LENGTH;
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const boundedValue = truncateStandardCardUnitLabel(event.currentTarget.value);
-    if (boundedValue !== event.currentTarget.value) {
-      event.currentTarget.value = boundedValue;
-    }
-    setCount(standardCardGraphemeLength(boundedValue));
+    setCount(standardCardGraphemeLength(event.currentTarget.value));
     onChange?.(event);
   }
 
@@ -52,6 +49,7 @@ export function UnitLabelInput({
         {...props}
         value={value}
         defaultValue={defaultValue}
+        aria-invalid={overLimit || ariaInvalid || undefined}
         aria-describedby={
           describedBy ? `${describedBy} ${counterId}` : counterId
         }
@@ -60,7 +58,10 @@ export function UnitLabelInput({
       <span
         id={counterId}
         data-unit-label-counter
-        className="mt-1 block text-end text-xs font-medium tabular-nums text-foreground-subtle"
+        data-unit-label-over-limit={overLimit ? "true" : "false"}
+        className={`mt-1 block text-end text-xs font-medium tabular-nums ${
+          overLimit ? "text-danger" : "text-foreground-subtle"
+        }`}
       >
         {count}/{STANDARD_CARD_UNIT_LABEL_MAX_LENGTH}
       </span>

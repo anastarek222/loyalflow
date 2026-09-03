@@ -95,6 +95,13 @@ export default async function GetStartedPage() {
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
                 {translate(locale, "conversion.invitedBody")}
               </p>
+              <div
+                role="note"
+                data-owner-invitation-requirement="secure-email-link"
+                className="mt-6 rounded-[var(--lf-radius-input)] border border-dashed border-border bg-surface-subtle px-5 py-3 text-center text-sm font-semibold text-foreground-muted"
+              >
+                {translate(locale, "conversion.invitedRequirement")}
+              </div>
             </article>
           </div>
 

@@ -12,8 +12,9 @@ export const conversionMessagesEn = {
   "conversion.existingCta": "Sign in",
   "conversion.invitedTitle": "I received an owner invitation",
   "conversion.invitedBody":
-    "Open the invitation acceptance flow and use the secure invitation token from your email.",
+    "Open the secure owner invitation link in your Tanee email. Invitation acceptance starts only from that tokenized link.",
   "conversion.invitedCta": "Accept owner invitation",
+  "conversion.invitedRequirement": "Secure email link required",
   "conversion.noSignup":
     "Tanee is invitation-only. Public self-signup and payment checkout are not enabled, so this page does not create an unsupported account path.",
   "conversion.backHome": "Back to homepage",

@@ -109,7 +109,7 @@ test("business creation commits a durable job before publishing its queue wake-u
   assert.match(action, /await enqueueIntegrationJob\(transaction/);
   assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
   assert.match(scheduler, /after\(async \(\) =>/);
-  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
+  assert.match(scheduler, /publishIntegrationJobWithRecovery\(jobId\)/);
   assert.doesNotMatch(action, /await syncBusinessToGoogleSheetSafely\(createdBusiness\.id\)/);
   assert.match(action, /sheetSync=pending/);
   assert.match(source("app/businesses/[slug]/users/page.tsx"), /مزامنة Google Sheets تعمل في الخلفية/);

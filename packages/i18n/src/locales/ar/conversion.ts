@@ -12,8 +12,9 @@ export const conversionMessagesAr = {
   "conversion.existingCta": "تسجيل الدخول",
   "conversion.invitedTitle": "وصلتني دعوة مالك",
   "conversion.invitedBody":
-    "افتح مسار قبول الدعوة واستخدم رمز الدعوة الآمن الموجود في البريد الإلكتروني.",
+    "افتح رابط دعوة المالك الآمن الموجود في رسالة تاني. يبدأ قبول الدعوة فقط من الرابط الذي يحتوي على رمز الدعوة.",
   "conversion.invitedCta": "قبول دعوة المالك",
+  "conversion.invitedRequirement": "مطلوب رابط الدعوة الآمن من البريد الإلكتروني",
   "conversion.noSignup":
     "تاني متاح بالدعوة فقط. التسجيل الذاتي العام والدفع غير مفعّلين، لذلك لا تنشئ هذه الصفحة مسار حساب غير مدعوم.",
   "conversion.backHome": "العودة للصفحة الرئيسية",

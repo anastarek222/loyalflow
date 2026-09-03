@@ -50,6 +50,6 @@ test("sync has stable sheet mapping, records retryable failures, and cannot sele
   assert.match(safeSync, /googleSheetsRetryable: retryable/);
   assert.match(creation, /scheduleBusinessGoogleSheetsSync\(integrationJobId\)/);
   assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
-  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
+  assert.match(scheduler, /publishIntegrationJobWithRecovery\(jobId\)/);
   assert.doesNotMatch(scheduler, /syncBusinessToGoogleSheetSafely/);
 });

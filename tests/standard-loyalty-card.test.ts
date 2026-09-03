@@ -179,7 +179,7 @@ test("long customer and business names are constrained within the card", () => {
 });
 
 test("standard-card units preserve professional labels within a bounded display contract", () => {
-  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 18);
+  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 20);
   assert.equal(compactLoyaltyUnit("POINT"), "POINT");
   assert.equal(compactLoyaltyUnit("POINTS"), "POINTS");
   assert.equal(compactLoyaltyUnit("RECOMMENDATION"), "RECOMMENDATION");
@@ -189,7 +189,7 @@ test("standard-card units preserve professional labels within a bounded display 
   assert.equal(compactLoyaltyUnit("MEMBERSHIP CREDIT"), "MEMBERSHIP CREDIT");
   assert.equal(
     compactLoyaltyUnit("CUSTOMER RECOMMENDATION", 4),
-    "CUSTOMER RECOMMEN…",
+    "CUSTOMER RECOMMENDA…",
   );
 
   const metrics = getLoyaltyCardMetrics({

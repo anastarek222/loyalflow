@@ -110,8 +110,14 @@ export async function claimIntegrationJob(
 
 export async function completeIntegrationJob(
   transaction: IntegrationJobStore,
-  input: Readonly<{ jobId: string; workerId: string; completedAt: Date }>,
+  input: Readonly<{
+    jobId: string;
+    workerId: string;
+    completedAt: Date;
+    providerMessageId?: string;
+  }>,
 ) {
+  const providerMessageId = input.providerMessageId?.trim();
   return transaction.integrationJob.updateMany({
     where: {
       id: requireBoundedIdentifier(input.jobId, "jobId"),
@@ -124,6 +130,13 @@ export async function completeIntegrationJob(
       leaseOwner: null,
       leaseExpiresAt: null,
       lastErrorCode: null,
+      ...(providerMessageId
+        ? {
+            providerMessageId,
+            providerDeliveryStatus: "ACCEPTED" as const,
+            providerStatusAt: input.completedAt,
+          }
+        : {}),
     },
   });
 }

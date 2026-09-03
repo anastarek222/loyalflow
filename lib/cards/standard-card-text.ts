@@ -1,4 +1,4 @@
-export const STANDARD_CARD_UNIT_LABEL_MAX_LENGTH = 18;
+export const STANDARD_CARD_UNIT_LABEL_MAX_LENGTH = 20;
 
 const graphemeSegmenter = new Intl.Segmenter(undefined, {
   granularity: "grapheme",
@@ -12,6 +12,11 @@ export function standardCardGraphemeLength(value: string) {
   return standardCardGraphemes(value).length;
 }
 
+/**
+ * Legacy helper for callers that explicitly need a bounded presentation value.
+ * Editable loyalty-unit inputs must never use this helper: configured unit names
+ * are validated before persistence and remain unchanged in stored data.
+ */
 export function truncateStandardCardUnitLabel(value: string) {
   return standardCardGraphemes(value)
     .slice(0, STANDARD_CARD_UNIT_LABEL_MAX_LENGTH)

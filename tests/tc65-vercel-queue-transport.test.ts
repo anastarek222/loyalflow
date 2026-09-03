@@ -42,7 +42,7 @@ test("TC6.5 source enqueue is transactional and Queue only wakes the consumer", 
   assert.match(owner, /await enqueueIntegrationJob\(tx/);
   assert.match(admin, /await enqueueIntegrationJob\(transaction/);
   assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
-  assert.match(scheduler, /publishIntegrationJob\(\{ jobId \}\)/);
+  assert.match(scheduler, /publishIntegrationJobWithRecovery\(jobId\)/);
   assert.match(transport, /idempotencyKey: `integration-job:\$\{jobId\}`/);
   assert.doesNotMatch(transport, /businessId|customerId|payload/);
   assert.match(consumer, /handleCallback<IntegrationJobMessage>/);

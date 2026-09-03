@@ -7,7 +7,7 @@ import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/busines
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 
 type WhatsAppDeliveryResult =
-  | Readonly<{ status: "success" }>
+  | Readonly<{ status: "success"; providerMessageId?: string }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
 
 const TEMPLATE_KEY_BY_EVENT: Record<CustomerMessageEvent, string> = {
@@ -35,6 +35,18 @@ function normalizeRecipientPhone(phone: string) {
 
 function customerName(firstName: string, lastName: string | null) {
   return [firstName, lastName].filter(Boolean).join(" ").trim() || firstName;
+}
+
+export function extractWhatsAppProviderMessageId(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const messages = (payload as { messages?: unknown }).messages;
+  if (!Array.isArray(messages) || messages.length < 1) return null;
+  const first = messages[0];
+  if (!first || typeof first !== "object" || Array.isArray(first)) return null;
+  const id = (first as { id?: unknown }).id;
+  if (typeof id !== "string") return null;
+  const normalized = id.trim();
+  return normalized.length >= 1 && normalized.length <= 512 ? normalized : null;
 }
 
 function bodyVariables(input: {
@@ -205,7 +217,19 @@ export async function sendWhatsAppCustomerNotificationSafely(
       },
     );
 
-    if (response.ok) return { status: "success" };
+    if (response.ok) {
+      let responsePayload: unknown = null;
+      try {
+        responsePayload = await response.json();
+      } catch {
+        // API acceptance is authoritative. Missing observability metadata must
+        // never turn an accepted send into a retry that can duplicate a message.
+      }
+      const providerMessageId = extractWhatsAppProviderMessageId(responsePayload);
+      return providerMessageId
+        ? { status: "success", providerMessageId }
+        : { status: "success" };
+    }
     const retryable = response.status === 429 || response.status >= 500;
     return {
       status: "failure",
