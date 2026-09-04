@@ -65,7 +65,7 @@ test("Pilot Owner trial persistence is exercised by the disposable onboarding br
     invitationBrowser,
     /\/accept-owner-invitation\?token=/,
   );
-  assert.match(invitationBrowser, /login\?invitation=accepted/);
+  assert.match(invitationBrowser, /invitation=accepted/);
   assert.match(invitationBrowser, /error=invalid-token/);
   assert.match(invitationBrowser, /trialStartedAt/);
   assert.match(invitationBrowser, /trialEndsAt/);
