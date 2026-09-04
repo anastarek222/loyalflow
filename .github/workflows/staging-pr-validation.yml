@@ -54,7 +54,7 @@ jobs:
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/(onboarding|accept-owner-invitation)/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|lib/auth/owner-invitation(?:-runtime)?\.ts$|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/(owner-onboarding-mobile|owner-invitation-trial)\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "owner-onboarding=true" >> "$GITHUB_OUTPUT"
           else
             echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
@@ -151,6 +151,7 @@ jobs:
           pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
           if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
             pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
+            pnpm exec playwright test tests/browser/owner-invitation-trial.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
             pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
