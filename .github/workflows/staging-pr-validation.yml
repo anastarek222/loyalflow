@@ -55,7 +55,7 @@ jobs:
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/(onboarding|accept-owner-invitation)/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|lib/auth/owner-invitation(?:-runtime)?\.ts$|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/(owner-onboarding-mobile|owner-invitation-trial)\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/(onboarding|accept-owner-invitation)/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|lib/auth/owner-invitation(-runtime)?\.ts$|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/(owner-onboarding-mobile|owner-invitation-trial)\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "owner-onboarding=true" >> "$GITHUB_OUTPUT"
           else
             echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
