@@ -6,7 +6,10 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { expect, test } from "@playwright/test";
 
 import { PrismaClient } from "@/generated/prisma/client";
-import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
+import {
+  createOwnerInvitationToken,
+  hashOwnerInvitationToken,
+} from "@/lib/auth/owner-invitation";
 import { TRIAL_DURATION_MS } from "@loyalflow/domain/billing/trial-core";
 
 import { cleanupBrowserUat } from "./fixtures";
@@ -14,6 +17,8 @@ import { cleanupBrowserUat } from "./fixtures";
 type InvitationState = {
   id: string;
   token: string;
+  tokenHash: string;
+  expiresAt: Date;
   email: string;
   runId: string;
   businessName: string;
@@ -56,6 +61,8 @@ function createInvitationState(): InvitationState {
   return {
     id: generated.id,
     token: generated.token,
+    tokenHash: generated.tokenHash,
+    expiresAt: generated.expiresAt,
     email: `lf-uat-final-pending-owner-${runId}@example.test`,
     runId,
     businessName: `LoyalFlow final UAT O ${runId}`,
@@ -64,21 +71,9 @@ function createInvitationState(): InvitationState {
 }
 
 async function seedOwnerInvitation(state: InvitationState) {
-  const generated = createOwnerInvitationToken();
-  const tokenHash = generated.token === state.token
-    ? generated.tokenHash
-    : undefined;
-
-  // The invitation token itself must never be persisted. Derive the hash from
-  // the exact browser token by using the same production helper indirectly via
-  // a fresh token only when the generated values match is intentionally not
-  // acceptable; seed the exact state below from the production token helper.
-  if (tokenHash) {
-    throw new Error("Unexpected invitation token collision.");
+  if (state.tokenHash !== hashOwnerInvitationToken(state.token)) {
+    throw new Error("Owner invitation fixture token/hash mismatch.");
   }
-
-  const { hashOwnerInvitationToken } = await import("@/lib/auth/owner-invitation");
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await withDisposableDatabase(async (prisma) => {
     await prisma.$executeRaw`
@@ -89,8 +84,8 @@ async function seedOwnerInvitation(state: InvitationState) {
         ${"Pilot"},
         ${"Owner"},
         ${state.email},
-        ${hashOwnerInvitationToken(state.token)},
-        ${expiresAt},
+        ${state.tokenHash},
+        ${state.expiresAt},
         ${null},
         CURRENT_TIMESTAMP
       )
