@@ -51,16 +51,37 @@ test("Pilot Owner launch retains the governed exact seven-day trial duration", (
 });
 
 test("Pilot Owner trial persistence is exercised by the disposable onboarding browser lane", () => {
-  const browser = source("tests/browser/owner-onboarding-mobile.spec.ts");
+  const onboardingBrowser = source("tests/browser/owner-onboarding-mobile.spec.ts");
+  const invitationBrowser = source("tests/browser/owner-invitation-trial.spec.ts");
   const workflow = source(".github/workflows/staging-pr-validation.yml");
 
-  assert.match(browser, /pending Owner completes setup, launches, and re-enters/);
-  assert.match(browser, /name: "Launch", exact: true/);
-  assert.match(browser, /seedConsumedPendingOwnerInvitation/);
-  assert.match(browser, /if \(process\.env\.STAGING_UAT_MANIFEST_PATH\?\.trim\(\)\) return/);
+  assert.match(
+    onboardingBrowser,
+    /pending Owner completes setup, launches, and re-enters/,
+  );
+  assert.match(onboardingBrowser, /name: "Launch", exact: true/);
 
-  assert.match(workflow, /app\/onboarding\//);
+  assert.match(
+    invitationBrowser,
+    /\/accept-owner-invitation\?token=/,
+  );
+  assert.match(invitationBrowser, /login\?invitation=accepted/);
+  assert.match(invitationBrowser, /error=invalid-token/);
+  assert.match(invitationBrowser, /trialStartedAt/);
+  assert.match(invitationBrowser, /trialEndsAt/);
+  assert.match(invitationBrowser, /TRIAL_DURATION_MS/);
+  assert.match(invitationBrowser, /onboardingStatus/);
+  assert.match(invitationBrowser, /COMPLETE/);
+  assert.match(
+    invitationBrowser,
+    /Refusing owner invitation browser UAT outside a disposable database/,
+  );
+
+  assert.match(workflow, /app\/\(onboarding\|accept-owner-invitation\)\//);
   assert.match(workflow, /echo "owner-onboarding=true"/);
-  assert.match(workflow, /tests\/browser\/owner-onboarding-mobile\.spec\.ts/);
-  assert.match(workflow, /--project=owner-onboarding-chromium/);
+  assert.match(workflow, /owner-invitation-trial/);
+  assert.match(
+    workflow,
+    /tests\/browser\/owner-invitation-trial\.spec\.ts --config=playwright\.config\.ts --project=owner-onboarding-chromium/,
+  );
 });
