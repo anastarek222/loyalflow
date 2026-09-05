@@ -66,7 +66,7 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
 }
 
 function scanOperationTerminalUrl(customerId: string) {
-  return new RegExp(`/scan/customer/${customerId}\\?(?:success=(?:earned|redeemed)|error=(?:invalid|permission|reward-unavailable|insufficient-balance|conflict|invalid-branch|invalid-staff|generic))$`);
+  return new RegExp(`/scan/customer/${customerId}\\?(?:success=(?:earned(?:&rewardReady=1)?|redeemed)|error=(?:invalid|permission|reward-unavailable|insufficient-balance|conflict|invalid-branch|invalid-staff|generic))$`);
 }
 
 function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) {
@@ -260,7 +260,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await page.getByLabel(/Branch/i).selectOption({ label: "Final UAT A Branch One" });
     await page.getByRole("button", { name: "Record visit", exact: true }).click();
     await expect(page).toHaveURL(scanOperationTerminalUrl(fixture.activeCustomer.id), { timeout: 15_000 });
-    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned$`));
+    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned&rewardReady=1$`));
     await expect(page.getByRole("status")).toBeVisible();
     await expect(currentScanBalance(page, "EN", 5)).toBeVisible();
     await page.reload();
@@ -325,7 +325,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(branch).toHaveValue(fixture.staffBranchId);
     await page.getByRole("button", { name: "تسجيل زيارة", exact: true }).click();
     await expect(page).toHaveURL(scanOperationTerminalUrl(fixture.activeCustomer.id), { timeout: 15_000 });
-    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned$`));
+    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned&rewardReady=1$`));
     await expect(page.getByRole("status")).toBeVisible();
     await expect(currentScanBalance(page, "AR", 5)).toBeVisible();
     await page.reload();
