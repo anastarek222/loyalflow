@@ -31,6 +31,10 @@ test("redeeming a valid invitation consumes it exactly once and creates a pendin
     firstName: "Mona",
     lastName: null,
     email: "mona@example.test",
+    phone: null,
+    businessName: null,
+    country: null,
+    source: "MANAGED" as const,
     tokenHash: generated.tokenHash,
     expiresAt: generated.expiresAt,
     usedAt: null as Date | null,
@@ -91,6 +95,10 @@ test("expired invitation cannot create an owner", async () => {
         firstName: "Mona",
         lastName: null,
         email: "mona@example.test",
+        phone: null,
+        businessName: null,
+        country: null,
+        source: "MANAGED",
         tokenHash: generated.tokenHash,
         expiresAt: generated.expiresAt,
         usedAt: null,
@@ -105,6 +113,48 @@ test("expired invitation cannot create an owner", async () => {
 
   assert.deepEqual(result, { status: "invalid_or_expired" });
   assert.equal(ownerCreated, false);
+});
+
+test("public trial redemption prefills normalized identity and business onboarding data", async () => {
+  const now = new Date("2026-09-05T12:00:00.000Z");
+  const generated = createOwnerInvitationToken(now);
+  const createdOwners: Array<
+    Parameters<
+        Parameters<
+          typeof redeemOwnerInvitationWithStore
+        >[1]["consumeAndCreateOwner"]
+      >[0]["owner"]
+  > = [];
+
+  await redeemOwnerInvitationWithStore(
+    { token: generated.token, passwordHash: "hash", now },
+    {
+      findInvitationByTokenHash: async () => ({
+        id: generated.id,
+        firstName: "Mona",
+        lastName: "Ali",
+        email: "mona@example.test",
+        phone: "+201001234567",
+        businessName: "Mona Coffee",
+        country: "Egypt",
+        source: "PUBLIC_TRIAL",
+        tokenHash: generated.tokenHash,
+        expiresAt: generated.expiresAt,
+        usedAt: null,
+      }),
+      findUserByEmail: async () => null,
+      consumeAndCreateOwner: async (input) => {
+        createdOwners.push(input.owner);
+        return { status: "success", userId: "owner-public" };
+      },
+    },
+  );
+
+  assert.equal(createdOwners[0]?.phone, "+201001234567");
+  assert.deepEqual(createdOwners[0]?.onboardingData, {
+    name: "Mona Coffee",
+    country: "Egypt",
+  });
 });
 
 test("schema and migration persist only a hashed invitation token", () => {
@@ -127,6 +177,16 @@ test("invitation creation never creates an active owner directly", () => {
   assert.doesNotMatch(body, /ownerPassword/);
   assert.match(body, /OwnerInvitation/);
   assert.match(body, /sendOwnerInvitationEmail/);
+});
+
+test("legacy managed invitation action cannot recycle public or consumed reservations", () => {
+  const actions = source("app/businesses/actions.ts");
+  const body = actions.match(/export async function createOwnerInvitationAction[\s\S]*?export async function createBusinessAction/)?.[0] ?? "";
+
+  assert.match(body, /\"source\" = 'MANAGED'::\"OwnerInvitationSource\"/);
+  assert.match(body, /\"usedAt\" IS NULL/);
+  assert.match(body, /RETURNING \"id\"/);
+  assert.match(body, /persisted\.length !== 1/);
 });
 
 test("runtime redemption consumes and creates the pending owner inside one transaction", () => {

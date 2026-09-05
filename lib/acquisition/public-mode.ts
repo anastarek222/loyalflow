@@ -1,15 +1,15 @@
-export const PUBLIC_ACQUISITION_MODE = "INVITATION_ONLY" as const;
+export const PUBLIC_ACQUISITION_MODE = "PUBLIC_TRIAL" as const;
 
 export const PUBLIC_ACQUISITION_PATHS = [
+  "NEW_BUSINESS",
   "EXISTING_ACCOUNT",
-  "OWNER_INVITATION",
 ] as const;
 
 export type PublicAcquisitionPath = (typeof PUBLIC_ACQUISITION_PATHS)[number];
 
 export const publicAcquisitionPolicy = Object.freeze({
   mode: PUBLIC_ACQUISITION_MODE,
-  selfServiceSignupEnabled: false,
+  selfServiceSignupEnabled: true,
   paymentCheckoutEnabled: false,
   realParticipantGateRequiredBeforeProduction: true,
 });

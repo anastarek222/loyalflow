@@ -8,8 +8,7 @@ export const marketingMessagesEn = {
     "Run loyalty, rewards, customers, and staff from one workspace.",
   "marketing.heroBody":
     "Tanee gives growing businesses one secure place to manage loyalty programs, customer activity, rewards, branches, teams, and reporting.",
-  "marketing.primaryCta": "Choose how to get started",
-  "marketing.invitationCta": "Accept an owner invitation",
+  "marketing.primaryCta": "Start your free trial",
   "marketing.trustLine":
     "Built for owners, staff, and customer-facing teams with tenant-safe access controls.",
   "marketing.featureOneTitle": "Operate loyalty daily",
@@ -137,7 +136,7 @@ export const marketingMessagesEn = {
   "marketing.features.ctaTitle":
     "Start with the setup path that fits your business.",
   "marketing.features.ctaBody":
-    "Tanee is currently onboarding businesses through controlled setup and owner invitation flows.",
+    "New business acquisition starts on the Tanee website through one secure seven-day Trial setup flow.",
   "marketing.pricing.metaTitle":
     "Tanee Pricing | Plans for growing businesses",
   "marketing.pricing.metaDescription":
@@ -159,7 +158,7 @@ export const marketingMessagesEn = {
   "marketing.pricing.cta": "Choose a setup path",
   "marketing.pricing.noteTitle": "Controlled beta, with no surprise checkout.",
   "marketing.pricing.noteBody":
-    "Tanee currently creates workspaces through supported setup and owner invitations. Online subscription payment will be introduced only after the commercial plans are approved.",
+    "Create a workspace through the secure seven-day Trial flow or supported managed setup. Online subscription payment will be introduced only after the commercial plans are approved.",
   "marketing.about.metaTitle": "About Tanee | Clear loyalty operations",
   "marketing.about.metaDescription":
     "Learn why Tanee brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
@@ -192,7 +191,7 @@ export const marketingMessagesEn = {
     "These answers describe the product and the controlled beta as they work today.",
   "marketing.faq.fourQuestion": "Can I join and pay online immediately?",
   "marketing.faq.fourAnswer":
-    "Not during the controlled beta. Workspaces are created through supported setup or an owner invitation, and public checkout remains off.",
+    "You can start the seven-day Trial online. Public subscription checkout remains off while the commercial contract is finalized.",
   "marketing.faq.fiveQuestion": "Can the loyalty card match my brand?",
   "marketing.faq.fiveAnswer":
     "Yes. Standard cards support brand colours and identity. A complete Front and Back custom artwork pair can also be managed through the controlled Custom Card flow.",
@@ -202,24 +201,20 @@ export const marketingMessagesEn = {
   "marketing.contact.metaTitle":
     "Contact Tanee | Business setup and account access",
   "marketing.contact.metaDescription":
-    "Choose the right Tanee path for a new business setup, an existing account, or an owner invitation during the controlled beta.",
+    "Start a new Tanee business setup or access an existing account.",
   "marketing.contact.eyebrow": "Contact and access",
   "marketing.contact.title":
     "Reach the right Tanee path without the runaround.",
   "marketing.contact.body":
-    "During the controlled beta, setup and support follow the secure path for each account type. Choose what you need below.",
+    "Start a new business from the public setup path, or sign in to an existing account.",
   "marketing.contact.setupTitle": "Set up a business",
   "marketing.contact.setupBody":
-    "See the current onboarding options for a new Tanee business workspace.",
-  "marketing.contact.setupCta": "View setup options",
+    "Begin the secure setup path for a new Tanee business workspace.",
+  "marketing.contact.setupCta": "Start your business",
   "marketing.contact.accountTitle": "Access an existing account",
   "marketing.contact.accountBody":
     "Owners, managers, staff, and viewers with active credentials can sign in here.",
   "marketing.contact.accountCta": "Sign in",
-  "marketing.contact.invitationTitle": "Accept an owner invitation",
-  "marketing.contact.invitationBody":
-    "Use the secure invitation flow if you received an owner setup link.",
-  "marketing.contact.invitationCta": "Accept invitation",
   "marketing.contact.supportTitle": "Direct support channels",
   "marketing.contact.supportBody":
     "Use any published channel below for setup and account support.",
@@ -228,7 +223,7 @@ export const marketingMessagesEn = {
   "marketing.contact.phoneLabel": "Phone",
   "marketing.contact.noticeTitle": "Current beta support process",
   "marketing.contact.noticeBody":
-    "Your approved setup or invitation path remains the source of truth while public email, phone, and WhatsApp channels are finalized.",
+    "The Get Started route and any unique secure setup link sent directly by Tanee remain the source of truth while public support channels are finalized.",
   "marketing.legal.draftTitle": "Legal publication approval is pending",
   "marketing.legal.draftBody":
     "This factual beta baseline is available for review, but it is not the final public legal authority. Search indexing remains disabled until the legal identity, jurisdiction, contact, effective date, and publication approval are configured.",
@@ -271,7 +266,7 @@ export const marketingMessagesEn = {
     "These terms describe the current controlled-beta product model. Final operator identity, jurisdiction, commercial terms, and publication approval remain required before public launch.",
   "marketing.terms.accessTitle": "Controlled-beta access",
   "marketing.terms.accessBody":
-    "Tanee currently creates business workspaces through supported setup or owner invitation. Public self-service checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
+    "Tanee creates business workspaces through the secure seven-day Trial flow or supported managed setup. Public subscription checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
   "marketing.terms.accountsTitle": "Account responsibility",
   "marketing.terms.accountsBody":
     "Users must provide accurate information, keep credentials and recovery material secure, use only their authorised role, and promptly report suspected compromise. Business owners are responsible for the users, branches, programme configuration, and customer-facing information they approve inside their workspace.",

@@ -55,14 +55,11 @@ test("Businesses listing links to dedicated Add Business route and no longer emb
   assert.match(read("app/businesses/new/page.tsx"), /AddBusinessExperience/);
 });
 
-test("Add Business page offers separate localized Custom Setup and Owner Invitation paths", () => {
+test("Add Business opens the localized direct setup wizard without a mode chooser", () => {
   const experience = read("components/add-business-experience.tsx");
-  assert.match(experience, /custom: "Custom setup"/);
-  assert.match(experience, /custom: "إعداد مخصص"/);
-  assert.match(experience, /invite: "Owner invitation"/);
-  assert.match(experience, /invite: "دعوة المالك"/);
   assert.match(experience, /BusinessSetupWizard/);
-  assert.match(experience, /OwnerInvitationForm/);
+  assert.doesNotMatch(experience, /OwnerInvitationForm|type Flow|useState/);
+  assert.doesNotMatch(experience, /Owner invitation|دعوة المالك|Custom setup|إعداد مخصص/);
   assert.doesNotMatch(experience, /prisma\.business/);
 });
 

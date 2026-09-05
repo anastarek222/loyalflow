@@ -1,5 +1,6 @@
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { PublicTrialForm } from "@/components/public-trial-form";
 import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
@@ -8,6 +9,7 @@ import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { startPublicTrialAction } from "./actions";
 
 async function getConversionLocale() {
   const cookieStore = await cookies();
@@ -73,6 +75,21 @@ export default async function GetStartedPage() {
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <article className="flex flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
+              <h2 className="text-xl font-black">
+                {translate(locale, "conversion.invitedTitle")}
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-foreground-muted">
+                {translate(locale, "conversion.invitedBody")}
+              </p>
+              <div className="mt-6">
+                <PublicTrialForm
+                  locale={locale}
+                  action={startPublicTrialAction}
+                />
+              </div>
+            </article>
+
             <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
               <h2 className="text-xl font-black">
                 {translate(locale, "conversion.existingTitle")}
@@ -87,25 +104,13 @@ export default async function GetStartedPage() {
                 {translate(locale, "conversion.existingCta")}
               </Link>
             </article>
-
-            <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
-              <h2 className="text-xl font-black">
-                {translate(locale, "conversion.invitedTitle")}
-              </h2>
-              <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
-                {translate(locale, "conversion.invitedBody")}
-              </p>
-              <div
-                role="note"
-                data-owner-invitation-requirement="secure-email-link"
-                className="mt-6 rounded-[var(--lf-radius-input)] border border-dashed border-border bg-surface-subtle px-5 py-3 text-center text-sm font-semibold text-foreground-muted"
-              >
-                {translate(locale, "conversion.invitedRequirement")}
-              </div>
-            </article>
           </div>
 
-          <div className="mt-6 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-sm text-foreground-muted">
+          <div
+            role="note"
+            data-secure-setup-continuation="email-only"
+            className="mt-6 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-sm text-foreground-muted"
+          >
             {translate(locale, "conversion.noSignup")}
           </div>
 

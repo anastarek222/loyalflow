@@ -263,7 +263,7 @@ export default async function DashboardPage() {
             primaryAction={
               <div className="flex flex-wrap gap-2">
                 <Link
-                  href="/businesses#add-business"
+                  href="/businesses/new"
                   className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
                 >
                   <Plus size={17} aria-hidden="true" />

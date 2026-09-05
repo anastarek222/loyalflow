@@ -7,12 +7,10 @@ const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "
 
 test("credentials login keeps the IP gate and adds a hashed account gate", () => {
   const authSource = read("auth.ts");
+  const securitySource = read("lib/auth/login-security.ts");
 
-  assert.match(authSource, /import \{ createHash \} from "node:crypto";/);
-  assert.match(
-    authSource,
-    /const accountKey = createHash\("sha256"\)\s*\.update\(email\)\s*\.digest\("hex"\);/,
-  );
+  assert.match(authSource, /createLoginAccountKey/);
+  assert.match(securitySource, /createHash\("sha256"\)/);
   assert.match(
     authSource,
     /distributedRateLimit\(\s*`credentials-login-account:\$\{accountKey\}`/,
@@ -37,10 +35,12 @@ test("credentials login account gate preserves the existing login rate policy", 
 
 test("missing accounts still execute a cost-12 bcrypt comparison before denial", () => {
   const authSource = read("auth.ts");
+  const actionSource = read("app/login/actions.ts");
+  const securitySource = read("lib/auth/login-security.ts");
 
   assert.match(
-    authSource,
-    /const DUMMY_PASSWORD_HASH\s*=\s*"\$2b\$12\$[./A-Za-z0-9]{53}";/,
+    securitySource,
+    /DUMMY_PASSWORD_HASH\s*=\s*\n?\s*"\$2b\$12\$[./A-Za-z0-9]{53}";/,
   );
   assert.match(
     authSource,
@@ -54,6 +54,18 @@ test("missing accounts still execute a cost-12 bcrypt comparison before denial",
     unavailableCheck > compareCall,
     "missing-account denial must happen only after the timing-equalizing bcrypt compare",
   );
+
+  assert.match(actionSource, /user\?\.passwordHash \?\? DUMMY_PASSWORD_HASH/);
+  const actionCompare = actionSource.indexOf("const passwordMatches = await compare(");
+  const actionUnavailable = actionSource.indexOf("if (!user || !user.isActive");
+  assert.ok(actionCompare >= 0 && actionUnavailable > actionCompare);
+});
+
+test("primary login pre-check has its own hashed distributed account gate", () => {
+  const actionSource = read("app/login/actions.ts");
+
+  assert.match(actionSource, /credentials-primary-step-account:\$\{createLoginAccountKey\(email\)\}/);
+  assert.doesNotMatch(actionSource, /credentials-primary-step-account:\$\{email\}/);
 });
 
 test("login denial observability remains bounded and does not add account identifiers", () => {

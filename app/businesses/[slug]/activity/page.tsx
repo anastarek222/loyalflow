@@ -11,6 +11,7 @@ import {
 import { getLanguageLocale, normalizeLanguage, type AppLanguage } from "@/lib/i18n";
 import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { ResponsiveFilterPanel } from "@/components/responsive-filter-panel";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -240,8 +241,15 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
           </p>
         </header>
 
-        <section className="mt-8 rounded-[var(--lf-radius-card)] border border-border bg-white p-6">
-          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8">
+          <ResponsiveFilterPanel
+            title={t(language, "البحث والفلاتر", "Search & filters")}
+            showLabel={t(language, "إظهار", "Show")}
+            hideLabel={t(language, "إخفاء", "Hide")}
+            defaultOpen={hasActiveFilters}
+          >
+            <section className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6">
+              <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="xl:col-span-2">
               <label htmlFor="q" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "البحث", "Search")}</label>
               <input id="q" name="q" type="search" maxLength={200} defaultValue={searchQuery}
@@ -306,8 +314,10 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                 </Link>
               )}
             </div>
-          </form>
-        </section>
+              </form>
+            </section>
+          </ResponsiveFilterPanel>
+        </div>
 
         <div className="mt-6 flex items-center justify-between gap-4">
           <p className="text-sm text-foreground-subtle">{t(language, `${filteredActivities} نتيجة من أصل ${totalActivities} عملية`, `${filteredActivities} of ${totalActivities} activities`)}</p>

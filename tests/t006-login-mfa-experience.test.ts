@@ -27,7 +27,8 @@ test("T006 primary login step is rate limited and does not create a second sessi
   assert.match(action, /credentials-primary-step:/);
   assert.match(action, /formData\.get\("mfaCode"\) \?\? undefined/);
   assert.match(action, /distributedRateLimit/);
-  assert.match(action, /compare\(parsed\.data\.password, user\.passwordHash\)/);
+  assert.match(action, /user\?\.passwordHash \?\? DUMMY_PASSWORD_HASH/);
+  assert.match(action, /credentials-primary-step-account:/);
   assert.match(action, /isEmailVerificationSatisfied\(user\.id\)/);
   assert.match(action, /isSuperAdminMfaEnabled\(user\.id\)/);
   assert.match(action, /await signIn\("credentials", formData\)/);

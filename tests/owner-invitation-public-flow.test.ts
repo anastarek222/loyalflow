@@ -46,6 +46,8 @@ test("owner invitation delivery uses shared Resend delivery and a 24-hour link",
   assert.match(delivery, /purpose:\s*"owner-invitation"/);
   assert.match(delivery, /\/accept-owner-invitation\?token=/);
   assert.match(delivery, /expires in 24 hours/i);
+  assert.match(delivery, /seven-day trial starts/i);
+  assert.match(delivery, /Complete your .* business setup/);
   assert.match(transport, /process\.env\.RESEND_API_KEY/);
   assert.match(transport, /resolveTaneeAuthEmailSender\(\)/);
   assert.doesNotMatch(transport, /process\.env\.PASSWORD_RESET_FROM_EMAIL/);

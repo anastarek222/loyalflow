@@ -4,6 +4,10 @@ import { signIn } from "@/auth";
 import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
 import { isLoginDatabaseUnavailableError } from "@/lib/auth/login-dependency-error";
 import { recordLoginDenial } from "@/lib/auth/login-observability";
+import {
+  createLoginAccountKey,
+  DUMMY_PASSWORD_HASH,
+} from "@/lib/auth/login-security";
 import { isSuperAdminMfaEnabled } from "@/lib/auth/super-admin-mfa-runtime";
 import prisma from "@/lib/prisma";
 import {
@@ -60,6 +64,14 @@ export async function loginAction(
     }
 
     const email = parsed.data.email.toLowerCase();
+    const accountAttempt = await distributedRateLimit(
+      `credentials-primary-step-account:${createLoginAccountKey(email)}`,
+      { limit: 10, windowMs: 15 * 60 * 1000 },
+    );
+    if (!accountAttempt.allowed) {
+      recordLoginDenial("primary", "rate_limited");
+      return { status: "invalid" };
+    }
 
     try {
       const user = await prisma.user.findUnique({
@@ -73,12 +85,17 @@ export async function loginAction(
         },
       });
 
+      const passwordMatches = await compare(
+        parsed.data.password,
+        user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+      );
+
       if (!user || !user.isActive || (user.business && !user.business.isActive)) {
         recordLoginDenial("primary", "account_unavailable");
         return { status: "invalid" };
       }
 
-      if (!(await compare(parsed.data.password, user.passwordHash))) {
+      if (!passwordMatches) {
         recordLoginDenial("primary", "password_mismatch");
         return { status: "invalid" };
       }

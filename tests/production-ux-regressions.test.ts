@@ -12,17 +12,19 @@ const customersResponsiveCss = readFileSync(
   "utf8",
 );
 
-test("get-started keeps owner invitation acceptance token-gated and makes the secure email requirement explicit", () => {
+test("get-started keeps secure setup email-only without exposing an invitation product entry point", () => {
   assert.doesNotMatch(
     getStartedSource,
     /href=["']\/accept-owner-invitation["']/,
   );
   assert.match(getStartedSource, /conversion\.invitedBody/);
-  assert.match(getStartedSource, /conversion\.invitedRequirement/);
+  assert.match(getStartedSource, /PublicTrialForm/);
+  assert.match(getStartedSource, /startPublicTrialAction/);
   assert.match(
     getStartedSource,
-    /data-owner-invitation-requirement=["']secure-email-link["']/,
+    /data-secure-setup-continuation=["']email-only["']/,
   );
+  assert.doesNotMatch(getStartedSource, /data-owner-invitation-requirement/);
 });
 
 test("owner invitation page distinguishes a missing token from an invalid invitation", () => {

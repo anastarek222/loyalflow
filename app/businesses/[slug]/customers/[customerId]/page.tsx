@@ -1622,6 +1622,15 @@ export default async function CustomerDetailsPage({
                 )
               ) : null}
 
+              <div className="mt-2 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                <p className="text-sm font-black text-foreground">
+                  {copy.manualWhatsApp}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-foreground-muted">
+                  {copy.manualWhatsAppDescription}
+                </p>
+              </div>
+
               <a
                 href={welcomeWhatsAppUrl}
                 target="_blank"

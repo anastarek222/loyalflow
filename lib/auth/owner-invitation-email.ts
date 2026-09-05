@@ -23,15 +23,15 @@ export async function sendOwnerInvitationEmail(input: {
   try {
     await sendResendAuthEmail({
       to: input.email,
-      subject: `You’re invited to ${TANEE_AUTH_EMAIL_BRAND}`,
+      subject: `Complete your ${TANEE_AUTH_EMAIL_BRAND} business setup`,
       text:
-        `You have been invited to create your ${TANEE_AUTH_EMAIL_BRAND} owner account.\n\n` +
-        `Accept invitation: ${invitationLink}\n\n` +
-        `This link expires in 24 hours.`,
+        `Continue setting up your business with ${TANEE_AUTH_EMAIL_BRAND}.\n\n` +
+        `Set your password and continue: ${invitationLink}\n\n` +
+        `This secure link expires in 24 hours. Your seven-day trial starts when you complete this secure step.`,
       html:
-        `<p>You have been invited to create your ${TANEE_AUTH_EMAIL_BRAND} owner account.</p>` +
-        `<p><a href="${invitationLink}">Accept invitation</a></p>` +
-        `<p>This link expires in 24 hours.</p>`,
+        `<p>Continue setting up your business with ${TANEE_AUTH_EMAIL_BRAND}.</p>` +
+        `<p><a href="${invitationLink}">Set your password and continue</a></p>` +
+        `<p>This secure link expires in 24 hours. Your seven-day trial starts when you complete this secure step.</p>`,
       idempotencyKey: createAuthEmailIdempotencyKey({
         purpose: "owner-invitation",
         email: input.email,

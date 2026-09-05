@@ -50,7 +50,7 @@ export async function createOwnerInvitationAction(formData: FormData) {
   const invitation = createOwnerInvitationToken();
 
   try {
-    await prisma.$executeRaw`
+    const persisted = await prisma.$queryRaw<Array<{ id: string }>>`
       INSERT INTO "OwnerInvitation" (
         "id", "firstName", "lastName", "email", "tokenHash", "expiresAt", "usedAt", "createdAt"
       )
@@ -70,7 +70,14 @@ export async function createOwnerInvitationAction(formData: FormData) {
         "tokenHash" = EXCLUDED."tokenHash",
         "expiresAt" = EXCLUDED."expiresAt",
         "usedAt" = NULL
+      WHERE "OwnerInvitation"."source" = 'MANAGED'::"OwnerInvitationSource"
+        AND "OwnerInvitation"."usedAt" IS NULL
+      RETURNING "id"
     `;
+
+    if (persisted.length !== 1) {
+      redirect("/businesses?error=invite-unavailable");
+    }
 
     await sendOwnerInvitationEmail({
       email,
