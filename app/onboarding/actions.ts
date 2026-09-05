@@ -26,6 +26,8 @@ import {
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { logServerEvent } from "@/lib/server/logging";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
+import { upsertBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { encryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 import {
   businessIdentityFields,
   loyaltyProgramFields,
@@ -84,6 +86,11 @@ const ownerDraftSchema = z
       });
   });
 
+const whatsappConnectionSchema = z.object({
+  phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
+  accessToken: z.string().trim().min(20).max(4096),
+});
+
 async function pendingOwner() {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
@@ -122,6 +129,18 @@ async function draftFrom(formData: FormData) {
   return ownerDraftSchema.safeParse(input);
 }
 
+function whatsappConnectionFrom(formData: FormData) {
+  const phoneNumberId = String(formData.get("whatsappPhoneNumberId") ?? "").trim();
+  const accessToken = String(formData.get("whatsappAccessToken") ?? "").trim();
+  if (!phoneNumberId && !accessToken) return null;
+
+  const parsed = whatsappConnectionSchema.safeParse({
+    phoneNumberId,
+    accessToken,
+  });
+  return parsed.success ? parsed.data : false;
+}
+
 export async function saveOwnerOnboardingAction(formData: FormData) {
   const user = await pendingOwner();
   const parsed = await draftFrom(formData);
@@ -146,15 +165,20 @@ export async function saveOwnerOnboardingAction(formData: FormData) {
 export async function launchOwnerOnboardingAction(formData: FormData) {
   const user = await pendingOwner();
   const parsed = await draftFrom(formData);
+  const whatsappConnection = whatsappConnectionFrom(formData);
   if (
     !parsed.success ||
     !parsed.data.name ||
     !parsed.data.country ||
     !parsed.data.currency ||
-    !parsed.data.timezone
+    !parsed.data.timezone ||
+    whatsappConnection === false
   )
     redirect("/onboarding?error=incomplete");
   const data = parsed.data;
+  const whatsappAccessTokenCiphertext = whatsappConnection
+    ? encryptBusinessWhatsAppAccessToken(whatsappConnection.accessToken)
+    : null;
   const { business, integrationJobId } = await createWithGeneratedSlug(data.name, (slug) =>
     prisma.$transaction(async (tx) => {
       const invitations = await tx.$queryRaw<Array<{ usedAt: Date }>>`
@@ -197,6 +221,15 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
           trialEndsAt: trialWindow.expiresAt,
         },
       });
+
+      if (whatsappConnection && whatsappAccessTokenCiphertext) {
+        await upsertBusinessWhatsAppCredential(tx, {
+          businessId: created.id,
+          phoneNumberId: whatsappConnection.phoneNumberId,
+          accessTokenCiphertext: whatsappAccessTokenCiphertext,
+        });
+      }
+
       const ownerClaimed = await claimPendingOwnerCompletion(
         {
           userId: user.id,

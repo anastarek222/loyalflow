@@ -1,3 +1,7 @@
+[data-customers-route="true"] .lf-page-header {
+  flex-direction: column;
+}
+
 @media (min-width: 1024px) {
   [data-customers-route="true"]
     main[data-experience-customers="advanced"]

@@ -12,11 +12,14 @@ import {
   getRewardUnlockRedemptionState,
 } from "@/lib/rewards/expiration";
 import prisma from "@/lib/prisma";
+import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type LoyaltyEarnCommandResult = Readonly<{
   balance: number | null;
   integrationJobId: string | null;
+  integrationJobIds: readonly string[];
+  rewardReady: boolean;
 }>;
 
 async function createRewardUnlocksForEarn(
@@ -147,14 +150,61 @@ async function createRewardUnlocksForEarn(
   }
 }
 
+async function getNewlyReadyReward(
+  transaction: Prisma.TransactionClient,
+  input: {
+    businessId: string;
+    balanceBefore: number;
+    balanceAfter: number;
+  },
+) {
+  const [business, rewards] = await Promise.all([
+    transaction.business.findUnique({
+      where: { id: input.businessId },
+      select: { rewardThreshold: true, rewardName: true },
+    }),
+    transaction.reward.findMany({
+      where: { businessId: input.businessId, isActive: true },
+      select: { id: true, name: true, cost: true },
+    }),
+  ]);
+
+  if (!business) return null;
+
+  if (rewards.length > 0) {
+    return (
+      rewards
+        .filter(
+          (reward) =>
+            input.balanceBefore < reward.cost && input.balanceAfter >= reward.cost,
+        )
+        .sort((left, right) => right.cost - left.cost || left.id.localeCompare(right.id))[0] ??
+      null
+    );
+  }
+
+  if (
+    input.balanceBefore < business.rewardThreshold &&
+    input.balanceAfter >= business.rewardThreshold
+  ) {
+    return {
+      id: "fallback",
+      name: business.rewardName,
+      cost: business.rewardThreshold,
+    };
+  }
+
+  return null;
+}
+
 /**
  * Authoritative Loyalty Earn transaction boundary.
  *
  * Presentation validation, rapid-operation protection, replay checks,
  * authentication, redirects and post-commit transport wake-up remain in the
  * Server Action. This command owns promotion selection/application, canonical
- * earn persistence, reward-unlock lifecycle updates and the durable Sheets job
- * in the same transaction.
+ * earn persistence, reward-unlock lifecycle updates and durable integration
+ * jobs in the same transaction.
  */
 export async function executeLoyaltyEarnCommand(input: {
   businessId: string;
@@ -204,6 +254,9 @@ export async function executeLoyaltyEarnCommand(input: {
       occurredAt,
       promotions,
     });
+    const promotionBonus = promotion
+      ? calculatePromotionBonus(promotion, input.amount)
+      : 0;
 
     const balanceAfter = await recordLoyaltyEarn(transaction, {
       customerId: input.customerId,
@@ -221,7 +274,7 @@ export async function executeLoyaltyEarnCommand(input: {
         ? {
             id: promotion.id,
             businessId: promotion.businessId,
-            bonusAmount: calculatePromotionBonus(promotion, input.amount),
+            bonusAmount: promotionBonus,
           }
         : undefined,
       transactionNote: input.transactionNote,
@@ -230,8 +283,20 @@ export async function executeLoyaltyEarnCommand(input: {
     });
 
     if (balanceAfter === null) {
-      return { balance: null, integrationJobId: null };
+      return {
+        balance: null,
+        integrationJobId: null,
+        integrationJobIds: [],
+        rewardReady: false,
+      };
     }
+
+    const balanceBefore = balanceAfter - input.amount - promotionBonus;
+    const newlyReadyReward = await getNewlyReadyReward(transaction, {
+      businessId: input.businessId,
+      balanceBefore,
+      balanceAfter,
+    });
 
     await createRewardUnlocksForEarn(transaction, {
       businessId: input.businessId,
@@ -240,12 +305,37 @@ export async function executeLoyaltyEarnCommand(input: {
       balanceAfter,
     });
 
-    const integrationJob = await enqueueIntegrationJob(transaction, {
+    const sheetsJob = await enqueueIntegrationJob(transaction, {
       businessId: input.businessId,
       kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
       idempotencyKey: `loyalty-earn:${input.idempotencyKey}`,
     });
+    const balanceJob = await enqueueCustomerMessageJob(transaction, {
+      businessId: input.businessId,
+      customerId: input.customerId,
+      event: "BALANCE_UPDATED",
+      eventKey: input.idempotencyKey,
+      balance: balanceAfter,
+    });
+    const rewardJob = newlyReadyReward
+      ? await enqueueCustomerMessageJob(transaction, {
+          businessId: input.businessId,
+          customerId: input.customerId,
+          event: "REWARD_READY",
+          eventKey: `${input.idempotencyKey}:${newlyReadyReward.id}`,
+          balance: balanceAfter,
+          rewardName: newlyReadyReward.name,
+        })
+      : null;
+    const integrationJobIds = [sheetsJob.id, balanceJob?.id, rewardJob?.id].filter(
+      (jobId): jobId is string => Boolean(jobId),
+    );
 
-    return { balance: balanceAfter, integrationJobId: integrationJob.id };
+    return {
+      balance: balanceAfter,
+      integrationJobId: sheetsJob.id,
+      integrationJobIds,
+      rewardReady: Boolean(newlyReadyReward),
+    };
   });
 }

@@ -14,7 +14,7 @@ test("TC2.8 keeps conversion AR/EN keys in exact parity", () => {
     Object.keys(conversionMessages.ar).sort(),
     Object.keys(conversionMessages.en).sort(),
   );
-  assert.equal(Object.keys(conversionMessages.en).length, 13);
+  assert.equal(Object.keys(conversionMessages.en).length, 14);
 });
 
 test("TC2.8 compatibility catalog composes conversion values from the package", () => {
@@ -36,11 +36,13 @@ test("TC2.8 compatibility catalog composes conversion values from the package", 
   assert.doesNotMatch(catalog, /"conversion\.[A-Za-z]+"\s*:/);
 });
 
-test("TC2.8 keeps get-started inside the invitation-only Beta acquisition boundary", () => {
+test("TC2.8 keeps get-started inside the invitation-only acquisition boundary", () => {
   const page = source("app/get-started/page.tsx");
   assert.match(page, /PUBLIC_ACQUISITION_MODE/);
   assert.match(page, /href="\/login"/);
-  assert.match(page, /href="\/accept-owner-invitation"/);
+  assert.doesNotMatch(page, /href="\/accept-owner-invitation"/);
   assert.doesNotMatch(page, /href="\/(?:signup|checkout|pricing)"/);
+  assert.match(page, /conversion\.invitedBody/);
+  assert.match(page, /conversion\.invitedRequirement/);
   assert.match(page, /conversion\.noSignup/);
 });

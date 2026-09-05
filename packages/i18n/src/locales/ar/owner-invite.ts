@@ -1,10 +1,11 @@
 import type { OwnerInviteMessageKey } from "../en/owner-invite";
 
 export const arabicOwnerInviteMessages = {
-  "ownerInvite.metaTitle": "قبول دعوة المالك | تاني Beta",
-  "ownerInvite.metaDescription": "اقبل دعوة مالك آمنة في تاني Beta.",
+  "ownerInvite.metaTitle": "قبول دعوة المالك | تاني",
+  "ownerInvite.metaDescription": "اقبل دعوة مالك آمنة في تاني.",
   "ownerInvite.title": "قبول دعوة المالك",
   "ownerInvite.body": "اختر كلمة مرور تاني لتفعيل حساب المالك المدعو.",
+  "ownerInvite.missing": "افتح رابط دعوة المالك الآمن من رسالة تاني لإكمال التفعيل.",
   "ownerInvite.invalid": "رابط الدعوة غير صالح أو انتهت صلاحيته.",
   "ownerInvite.backLogin": "العودة لتسجيل الدخول",
   "ownerInvite.passwordMismatch": "كلمتا المرور غير متطابقتين.",

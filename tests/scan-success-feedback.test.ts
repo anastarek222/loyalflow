@@ -26,7 +26,8 @@ test("Sound and haptics require an explicit, versioned local preference", () => 
   assert.match(feedback, /loyalflow:scan-success-feedback:v1/);
   assert.match(feedback, /return parsed\.enabled === true/);
   assert.match(feedback, /onClick=\{toggleFeedback\}/);
-  assert.match(feedback, /if \(nextEnabled\) playFeedback\(\)/);
+  assert.match(feedback, /if \(nextEnabled\) playFeedback\(resolvedKind\)/);
+  assert.match(feedback, /feedbackFrequencies\(kind\)/);
   assert.match(feedback, /window\.AudioContext/);
   assert.match(feedback, /"vibrate" in navigator/);
   assert.match(feedback, /aria-pressed=\{enabled\}/);

@@ -105,7 +105,7 @@ export default async function JoinBusinessPage({
     : null;
   const appliedReferralCode = validReferral ? referralCandidate : null;
   const { language, lang, dir } = getLanguageAttributes(
-    business.cardDefaultLanguage
+    business.cardDefaultLanguage,
   );
   const copy =
     language === "AR"
@@ -120,6 +120,8 @@ export default async function JoinBusinessPage({
           optional: "(اختياري)",
           phone: "رقم الهاتف",
           phoneHint: "اكتب الرقم مع كود الدولة، مثال: +201000000000",
+          whatsappConsent:
+            "أوافق على استلام تحديثات برنامج الولاء والمكافآت تلقائيًا عبر واتساب. يمكن إيقافها لاحقًا.",
           referralApplied: "تم تطبيق كود الإحالة على تسجيلك.",
           createCard: "إنشاء الكارت الرقمي",
           creatingCard: "جاري إنشاء الكارت...",
@@ -145,6 +147,8 @@ export default async function JoinBusinessPage({
           optional: "(optional)",
           phone: "Phone number",
           phoneHint: "Include the country code, for example: +201000000000",
+          whatsappConsent:
+            "I agree to receive automatic loyalty and reward updates on WhatsApp. I can opt out later.",
           referralApplied: "A referral code has been applied to your registration.",
           createCard: "Create digital card",
           creatingCard: "Creating your card...",
@@ -161,9 +165,7 @@ export default async function JoinBusinessPage({
         };
   const programName =
     business.loyaltyProgramName?.trim() || copy.programFallback;
-  const message =
-    business.welcomeMessage?.trim() ||
-    copy.messageFallback;
+  const message = business.welcomeMessage?.trim() || copy.messageFallback;
   const rewardTarget = formatLoyaltyAmount({
     loyaltyMode: business.loyaltyMode,
     language,
@@ -215,9 +217,7 @@ export default async function JoinBusinessPage({
               />
             ) : null}
 
-            <p className="text-sm font-semibold opacity-80">
-              {programName}
-            </p>
+            <p className="text-sm font-semibold opacity-80">{programName}</p>
 
             <h1 className="mt-1 text-xl font-black sm:text-3xl">
               {copy.join} {business.name}
@@ -301,7 +301,8 @@ export default async function JoinBusinessPage({
                 htmlFor="lastName"
                 className="mb-2 block text-sm font-bold text-slate-800"
               >
-                {copy.lastName} <span className="font-normal text-slate-500">{copy.optional}</span>
+                {copy.lastName}{" "}
+                <span className="font-normal text-slate-500">{copy.optional}</span>
               </label>
               <input
                 id="lastName"
@@ -342,6 +343,15 @@ export default async function JoinBusinessPage({
                 {copy.phoneHint}
               </p>
             </div>
+
+            <label className="flex items-start gap-3 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-4 py-3 text-sm leading-6 text-foreground-muted">
+              <input
+                name="whatsappOptIn"
+                type="checkbox"
+                className="mt-1 size-4 shrink-0 accent-[var(--lf-primary)]"
+              />
+              <span>{copy.whatsappConsent}</span>
+            </label>
 
             <JoinSubmitButton
               label={copy.createCard}

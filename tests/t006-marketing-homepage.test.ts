@@ -18,7 +18,8 @@ test("T006 public homepage keeps authenticated users on the workspace and logged
     /redirect\(session\?\.user \? "\/dashboard" : "\/login"\)/,
   );
   assert.match(header, /href="\/login"/);
-  assert.match(footer, /href="\/accept-owner-invitation"/);
+  assert.match(footer, /href="\/login"/);
+  assert.doesNotMatch(footer, /href="\/accept-owner-invitation"/);
 });
 
 test("T006 marketing homepage reuses the canonical locale cookie and direction helpers", () => {

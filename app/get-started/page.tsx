@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = translate(locale, "conversion.metaDescription");
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: "/get-started" },
     robots: { index: true, follow: true },
@@ -95,12 +95,13 @@ export default async function GetStartedPage() {
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
                 {translate(locale, "conversion.invitedBody")}
               </p>
-              <Link
-                href="/accept-owner-invitation"
-                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-5 py-3 font-semibold text-foreground hover:bg-surface"
+              <div
+                role="note"
+                data-owner-invitation-requirement="secure-email-link"
+                className="mt-6 rounded-[var(--lf-radius-input)] border border-dashed border-border bg-surface-subtle px-5 py-3 text-center text-sm font-semibold text-foreground-muted"
               >
-                {translate(locale, "conversion.invitedCta")}
-              </Link>
+                {translate(locale, "conversion.invitedRequirement")}
+              </div>
             </article>
           </div>
 
