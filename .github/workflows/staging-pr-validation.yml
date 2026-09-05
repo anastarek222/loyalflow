@@ -155,8 +155,10 @@ jobs:
             pnpm exec playwright test tests/browser/owner-invitation-trial.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
           fi
 
-      - name: Run loyalty core desktop browser UAT
+      - name: Run loyalty desktop owner operations UAT
+        id: loyalty-desktop-owner
         if: steps.browser-smoke.outputs.loyalty-core == 'true'
+        continue-on-error: true
         env:
           LOYALFLOW_ENVIRONMENT: staging
           LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
@@ -186,7 +188,42 @@ jobs:
             fi
             sleep 0.25
           done
-          pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep='^authentication, owner navigation, reports, and exact-once Scan earn/redeem @desktop$'
+
+      - name: Run loyalty desktop manager/viewer capability UAT
+        id: loyalty-desktop-capabilities
+        if: steps.browser-smoke.outputs.loyalty-core == 'true'
+        continue-on-error: true
+        env:
+          LOYALFLOW_ENVIRONMENT: staging
+          LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+          LOYALFLOW_STAGING_DATABASE: loyalflow_ci
+          LOYALFLOW_STAGING_DATABASE_HOST: 127.0.0.1
+          LOYALFLOW_PRODUCTION_DATABASE_HOST: production-db.invalid
+          UAT_FIXTURE_PASSWORD: browser-smoke-only-password-2026
+          UAT_BASE_URL: http://127.0.0.1:3100
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+          AUTH_URL: http://127.0.0.1:3100
+          AUTH_TRUST_HOST: "true"
+          UPSTASH_REDIS_REST_URL: http://127.0.0.1:3199
+          UPSTASH_REDIS_REST_TOKEN: browser-smoke-rate-limit-token
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/ci-rate-limit-server.mjs &
+          rate_limit_pid=$!
+          trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3199/health >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "20" ]]; then
+              echo "Disposable rate-limit server did not become ready." >&2
+              exit 1
+            fi
+            sleep 0.25
+          done
+          pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --grep='^manager and viewer remain within their authoritative capabilities @desktop$'
 
       - name: Run loyalty core mobile browser UAT
         if: steps.browser-smoke.outputs.loyalty-mobile == 'true'
@@ -289,3 +326,11 @@ jobs:
 
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"
+
+      - name: Fail if loyalty desktop diagnostics failed
+        if: always() && steps.browser-smoke.outputs.loyalty-core == 'true' && (steps.loyalty-desktop-owner.outcome == 'failure' || steps.loyalty-desktop-capabilities.outcome == 'failure')
+        shell: bash
+        run: |
+          echo "Loyalty desktop owner outcome: ${{ steps.loyalty-desktop-owner.outcome }}"
+          echo "Loyalty desktop manager/viewer outcome: ${{ steps.loyalty-desktop-capabilities.outcome }}"
+          exit 1
