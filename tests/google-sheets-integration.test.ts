@@ -39,7 +39,8 @@ test("sync has stable sheet mapping, records retryable failures, and cannot sele
   const sync = source("lib/google-sheets-sync.ts");
   const safeSync = source("lib/google-sheets-sync-safe.ts");
   const creation = source("app/businesses/actions.ts");
-  const scheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const sheetsScheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const scheduler = source("lib/integration-job-scheduler.ts");
   assert.match(sync, /googleSheetId !== null/);
   assert.match(sync, /sheetId === business\.googleSheetId/);
   assert.match(sync, /A missing mapping deliberately never claims a same-named legacy tab/);
@@ -48,6 +49,7 @@ test("sync has stable sheet mapping, records retryable failures, and cannot sele
   assert.match(safeSync, /googleSheetsSyncState: "FAILED"/);
   assert.match(safeSync, /googleSheetsRetryable: retryable/);
   assert.match(creation, /scheduleBusinessGoogleSheetsSync\(integrationJobId\)/);
-  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
+  assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
+  assert.match(scheduler, /publishIntegrationJobWithRecovery\(jobId\)/);
   assert.doesNotMatch(scheduler, /syncBusinessToGoogleSheetSafely/);
 });

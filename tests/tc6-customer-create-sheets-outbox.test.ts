@@ -18,7 +18,9 @@ test("TC6.11 atomically couples customer creation with one durable Sheets job", 
   assert.match(command, /enqueueIntegrationJob\(transaction/);
   assert.match(command, /kind: "GOOGLE_SHEETS_BUSINESS_SYNC"/);
   assert.match(command, /idempotencyKey: `customer-created:\$\{activity\.id\}`/);
-  assert.match(command, /integrationJobId: integrationJob\.id/);
+  assert.match(command, /integrationJobId: sheetsJob\.id/);
+  assert.match(command, /const integrationJobIds = \[sheetsJob\.id, welcomeJob\?\.id\]/);
+  assert.match(command, /integrationJobIds,/);
 });
 
 test("TC6.11 and TC6.12 both wake durable jobs after successful commands", () => {
@@ -29,7 +31,7 @@ test("TC6.11 and TC6.12 both wake durable jobs after successful commands", () =>
   assert.match(createSource, /createCustomerCommand\(/);
   assert.match(
     createSource,
-    /scheduleBusinessGoogleSheetsSync\(creation\.integrationJobId\)/,
+    /scheduleIntegrationJobs\(creation\.integrationJobIds\)/,
   );
   assert.match(bulkSource, /scheduleBusinessGoogleSheetsSync\(mutation\.integrationJobId\)/);
   assert.doesNotMatch(createSource, /syncBusinessToGoogleSheetSafely/);

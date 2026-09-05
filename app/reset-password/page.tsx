@@ -1,5 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
+
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import {
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+} from "@/lib/auth/password-policy";
+import { translate } from "@/lib/i18n/catalog";
+import { getLocaleDirection } from "@/lib/i18n/config";
+import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 
 import { resetPasswordAction } from "./actions";
 
@@ -16,77 +27,75 @@ type Props = {
   }>;
 };
 
-export default async function ResetPasswordPage({
-  searchParams,
-}: Props) {
-  const params = await searchParams;
+async function getAuthEntryLocale() {
+  const cookieStore = await cookies();
+  return resolveRequestLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+}
 
-  const tokenValue =
-    typeof params.token === "string"
-      ? params.token
-      : "";
-
-  const errorValue =
-    typeof params.error === "string"
-      ? params.error
-      : "";
-
-  const invalidToken =
-    !tokenValue ||
-    errorValue === "invalid-token";
+export default async function ResetPasswordPage({ searchParams }: Props) {
+  const [params, locale] = await Promise.all([
+    searchParams,
+    getAuthEntryLocale(),
+  ]);
+  const direction = getLocaleDirection(locale);
+  const tokenValue = typeof params.token === "string" ? params.token : "";
+  const errorValue = typeof params.error === "string" ? params.error : "";
+  const invalidToken = !tokenValue || errorValue === "invalid-token";
 
   return (
     <main
-      lang="en"
-      dir="ltr"
+      lang={locale}
+      dir={direction}
       className="flex min-h-screen items-center justify-center bg-surface-subtle px-4 py-10 sm:px-6"
     >
       <section className="w-full max-w-md rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
-        <div className="mb-7 text-center">
-          <div className="mx-auto mb-5 flex size-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary text-lg font-black text-white">
-            T
-          </div>
+        <div className="mb-7 flex items-center justify-between gap-4">
+          <Link href="/" className="inline-flex min-h-11 items-center">
+            <PlatformBrandIdentity
+              locale={locale}
+              fallback="letters"
+              markClassName="hidden"
+              wordmarkClassName="h-5 max-w-32"
+              textClassName="font-black text-foreground"
+            />
+          </Link>
+          <LanguageSwitcher locale={locale} />
+        </div>
+
+        <div className="mb-7">
           <h1 className="text-2xl font-black text-foreground">
-            Choose a new password
+            {translate(locale, "auth.chooseNewPassword")}
           </h1>
           <p className="mt-2 text-sm text-foreground-subtle">
-            Your new password must contain at least 10 characters.
+            {translate(locale, "auth.newPasswordRequirement")}
           </p>
         </div>
 
         {invalidToken ? (
           <div className="space-y-4">
             <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
-              This reset link is invalid or has expired.
+              {translate(locale, "auth.resetLinkInvalid")}
             </div>
-
             <Link
               href="/forgot-password"
               className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white"
             >
-              Request a new reset link
+              {translate(locale, "auth.requestNewResetLink")}
             </Link>
           </div>
         ) : (
-          <form
-            action={resetPasswordAction}
-            className="space-y-5"
-          >
-            <input
-              type="hidden"
-              name="token"
-              value={tokenValue}
-            />
+          <form action={resetPasswordAction} className="space-y-5">
+            <input type="hidden" name="token" value={tokenValue} />
 
             {errorValue === "password-mismatch" ? (
               <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
-                The passwords do not match.
+                {translate(locale, "auth.passwordMismatch")}
               </div>
             ) : null}
 
             {errorValue === "password-invalid" ? (
               <div className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-medium text-danger">
-                Please choose a valid password.
+                {translate(locale, "auth.passwordInvalid")}
               </div>
             ) : null}
 
@@ -95,15 +104,15 @@ export default async function ResetPasswordPage({
                 htmlFor="newPassword"
                 className="mb-2 block text-sm font-semibold text-foreground-muted"
               >
-                New password
+                {translate(locale, "auth.newPassword")}
               </label>
               <input
                 id="newPassword"
                 name="newPassword"
                 type="password"
                 required
-                minLength={10}
-                maxLength={128}
+                minLength={MIN_PASSWORD_LENGTH}
+                maxLength={MAX_PASSWORD_LENGTH}
                 autoComplete="new-password"
                 className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
               />
@@ -114,15 +123,15 @@ export default async function ResetPasswordPage({
                 htmlFor="confirmPassword"
                 className="mb-2 block text-sm font-semibold text-foreground-muted"
               >
-                Confirm new password
+                {translate(locale, "auth.confirmNewPassword")}
               </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
-                minLength={10}
-                maxLength={128}
+                minLength={MIN_PASSWORD_LENGTH}
+                maxLength={MAX_PASSWORD_LENGTH}
                 autoComplete="new-password"
                 className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
               />
@@ -132,7 +141,7 @@ export default async function ResetPasswordPage({
               type="submit"
               className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white transition hover:bg-primary-hover"
             >
-              Update password
+              {translate(locale, "auth.updatePassword")}
             </button>
           </form>
         )}

@@ -13,7 +13,7 @@ test("Contact provides truthful beta access paths without invented channels", ()
   assert.match(page, /getMarketingRequestLocale\(\)/);
   assert.match(page, /href: "\/get-started"/);
   assert.match(page, /href: "\/login"/);
-  assert.match(page, /href: "\/accept-owner-invitation"/);
+  assert.doesNotMatch(page, /href: "\/accept-owner-invitation"/);
   assert.match(page, /<MarketingHeader/);
   assert.match(page, /<MarketingFooter locale=\{locale\} \/>/);
   assert.match(page, /getPublicSupportChannels\(\)/);

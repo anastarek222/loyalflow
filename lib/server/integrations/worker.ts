@@ -6,8 +6,34 @@ import {
   failIntegrationJob,
 } from "@/lib/server/integrations/outbox";
 import { shouldRetryIntegrationFailure } from "@/lib/server/integrations/retry-policy";
+import { sendWhatsAppCustomerNotificationSafely } from "@/lib/server/integrations/whatsapp-cloud";
 
 const LEASE_DURATION_MS = 5 * 60 * 1000;
+
+type IntegrationDeliveryResult =
+  | Readonly<{ status: "success"; providerMessageId?: string }>
+  | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
+
+async function deliverClaimedJob(claimed: {
+  kind: "GOOGLE_SHEETS_BUSINESS_SYNC" | "WHATSAPP_CUSTOMER_NOTIFICATION";
+  businessId: string;
+  payload: unknown;
+}): Promise<IntegrationDeliveryResult> {
+  if (claimed.kind === "GOOGLE_SHEETS_BUSINESS_SYNC") {
+    return syncBusinessToGoogleSheetSafely(claimed.businessId);
+  }
+  if (claimed.kind === "WHATSAPP_CUSTOMER_NOTIFICATION") {
+    return sendWhatsAppCustomerNotificationSafely(
+      claimed.businessId,
+      claimed.payload,
+    );
+  }
+  return {
+    status: "failure",
+    reason: "UNSUPPORTED_INTEGRATION_JOB",
+    retryable: false,
+  };
+}
 
 export async function processIntegrationJob(jobId: string, deliveryId: string) {
   const now = new Date();
@@ -20,17 +46,17 @@ export async function processIntegrationJob(jobId: string, deliveryId: string) {
   });
 
   if (!claimed) return;
-  if (claimed.kind !== "GOOGLE_SHEETS_BUSINESS_SYNC") {
-    throw new Error("Unsupported integration job kind.");
-  }
 
-  const result = await syncBusinessToGoogleSheetSafely(claimed.businessId);
+  const result = await deliverClaimedJob(claimed);
   const finishedAt = new Date();
   if (result.status === "success") {
     const completed = await completeIntegrationJob(prisma, {
       jobId: claimed.id,
       workerId,
       completedAt: finishedAt,
+      ...(result.providerMessageId
+        ? { providerMessageId: result.providerMessageId }
+        : {}),
     });
     if (completed.count !== 1)
       throw new Error("Integration job lease was lost.");

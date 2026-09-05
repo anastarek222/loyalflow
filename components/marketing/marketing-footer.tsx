@@ -101,9 +101,6 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
           <Link href="/login" className="hover:text-primary">
             {copy("marketing.footerAccess")}
           </Link>
-          <Link href="/accept-owner-invitation" className="hover:text-primary">
-            {copy("marketing.invitationCta")}
-          </Link>
         </nav>
       </div>
     </footer>

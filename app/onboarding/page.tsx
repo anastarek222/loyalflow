@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { OwnerOnboardingWizard } from "@/components/owner-onboarding-wizard";
+import { OwnerWhatsAppOnboarding } from "@/components/owner-whatsapp-onboarding";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
@@ -101,6 +102,10 @@ export default async function OwnerOnboardingPage() {
           locale={locale}
           draft={(user.onboardingData as Record<string, unknown> | null) ?? {}}
           saveAction={saveOwnerOnboardingAction}
+          launchAction={launchOwnerOnboardingAction}
+        />
+        <OwnerWhatsAppOnboarding
+          locale={locale}
           launchAction={launchOwnerOnboardingAction}
         />
       </div>

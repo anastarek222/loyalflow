@@ -17,6 +17,7 @@ import prisma from "@/lib/prisma";
 import { isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import { createCustomerCommand } from "@/lib/server/business/customer-create-command";
 import {
   mutateBulkCustomerTagCommand,
@@ -291,6 +292,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
     businessId: business.id,
     customer: parsed,
     actor: session.user,
+    whatsappOptIn: formData.get("whatsappOptIn") === "on",
   });
 
   if (!creation.ok) {
@@ -307,7 +309,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   }
 
   const createdCustomer = creation.customer;
-  scheduleBusinessGoogleSheetsSync(creation.integrationJobId);
+  scheduleIntegrationJobs(creation.integrationJobIds);
 
   revalidatePath(`/businesses/${slug}`);
   revalidatePath(`/businesses/${slug}/customers`);

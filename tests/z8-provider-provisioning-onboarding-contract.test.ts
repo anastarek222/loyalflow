@@ -24,9 +24,9 @@ test("Z8 keeps business provisioning under Provider/Super Admin authority", () =
   assert.match(businessActions, /createBusinessAction/);
   assert.match(businessActions, /createOwnerInvitationAction/);
 
-  assert.match(addBusinessExperience, /type Flow = "choose" \| "custom" \| "invite"/);
   assert.match(addBusinessExperience, /<BusinessSetupWizard/);
-  assert.match(addBusinessExperience, /<OwnerInvitationForm/);
+  assert.doesNotMatch(addBusinessExperience, /OwnerInvitationForm|type Flow/);
+  assert.doesNotMatch(addBusinessPage, /createOwnerInvitationAction/);
 });
 
 test("Z8 direct Provider provisioning creates an attached sign-in-ready Owner atomically", () => {

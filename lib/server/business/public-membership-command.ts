@@ -13,6 +13,8 @@ import {
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { canRecordReferral } from "@/lib/referrals/code";
+import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 type PublicMembershipFailure = Readonly<{
   ok: false;
@@ -23,6 +25,7 @@ export type PublicMembershipCommandResult =
   | Readonly<{
       ok: true;
       customer: Readonly<{ id: string; publicToken: string }>;
+      integrationJobIds: readonly string[];
     }>
   | PublicMembershipFailure;
 
@@ -31,12 +34,14 @@ export type PublicMembershipCommandResult =
  *
  * The public Server Action keeps transport validation, rate limiting,
  * presentation preflight, redirects, revalidation and post-commit integrations.
- * This command owns the serializable tenant/customer/referral write transaction.
+ * This command owns the serializable tenant/customer/referral write transaction
+ * and atomically records durable integration jobs for the committed membership.
  */
 export async function createPublicMembershipCommand(input: {
   businessId: string;
   customer: PublicMembershipRegistration;
   referralCode: string | null;
+  whatsappOptIn?: boolean;
 }): Promise<PublicMembershipCommandResult> {
   return prisma.$transaction(
     async (transaction) => {
@@ -108,17 +113,19 @@ export async function createPublicMembershipCommand(input: {
           customerCode,
           businessId: input.businessId,
           publicToken: createPublicCardToken(),
+          whatsappOptInAt: input.whatsappOptIn ? new Date() : null,
         },
         select: { id: true, publicToken: true },
       });
 
-      await transaction.businessActivity.create({
+      const activity = await transaction.businessActivity.create({
         data: {
           type: "CUSTOMER_CREATED",
           description: `انضم العميل ${getCustomerDisplayName(input.customer)} عبر التسجيل الذاتي`,
           businessId: input.businessId,
           customerId: createdCustomer.id,
         },
+        select: { id: true },
       });
 
       if (input.referralCode && canApplyPublicReferral(business.plan)) {
@@ -164,7 +171,27 @@ export async function createPublicMembershipCommand(input: {
         }
       }
 
-      return { ok: true, customer: createdCustomer } as const;
+      const sheetsJob = await enqueueIntegrationJob(transaction, {
+        businessId: input.businessId,
+        kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+        idempotencyKey: `public-membership-created:${activity.id}`,
+      });
+      const welcomeJob = await enqueueCustomerMessageJob(transaction, {
+        businessId: input.businessId,
+        customerId: createdCustomer.id,
+        event: "WELCOME",
+        eventKey: activity.id,
+        balance: 0,
+      });
+      const integrationJobIds = [sheetsJob.id, welcomeJob?.id].filter(
+        (jobId): jobId is string => Boolean(jobId),
+      );
+
+      return {
+        ok: true,
+        customer: createdCustomer,
+        integrationJobIds,
+      } as const;
     },
     { isolationLevel: "Serializable" },
   );

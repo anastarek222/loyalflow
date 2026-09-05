@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
-import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import {
   getRapidEarnRateLimitKey,
   getRapidEarnWhere,
@@ -42,7 +42,10 @@ function operationPath(
   origin: OperationOrigin,
   slug: string,
   customerId: string,
-  state: { success?: "earned"; error?: ScanOperationError },
+  state: {
+    success?: "earned" | "reward-ready";
+    error?: ScanOperationError;
+  },
   customerProfileError?: string,
 ) {
   if (origin === "SCAN" || state.success) {
@@ -258,7 +261,11 @@ export async function addLoyaltyCommandAction(
     );
   }
 
-  scheduleBusinessGoogleSheetsSync(result.integrationJobId);
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateCustomerEarnSurfaces(slug, customer.id, customer.publicToken);
-  redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
+  redirect(
+    operationPath(origin, slug, customer.id, {
+      success: result.rewardReady ? "reward-ready" : "earned",
+    }),
+  );
 }

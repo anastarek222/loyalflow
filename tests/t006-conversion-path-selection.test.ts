@@ -14,7 +14,7 @@ test("T006 homepage routes the primary conversion CTA through one bounded path s
   const footer = source("components/marketing/marketing-footer.tsx");
 
   assert.match(homepage, /href="\/get-started"/);
-  assert.match(footer, /href="\/accept-owner-invitation"/);
+  assert.doesNotMatch(footer, /href="\/accept-owner-invitation"/);
   assert.match(header, /href="\/login"/);
 });
 
@@ -28,15 +28,18 @@ test("T006 get-started page reuses canonical locale and direction behavior", () 
   assert.match(page, /<main\s+lang=\{locale\}\s+dir=\{direction\}/);
 });
 
-test("T006 path selector exposes only supported existing-account and owner-invitation destinations", () => {
+test("T006 acquisition surface exposes sign-in while secure setup remains email-only", () => {
   const page = source("app/get-started/page.tsx");
   const hrefs = [...page.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
 
   assert.ok(hrefs.includes("/login"));
-  assert.ok(hrefs.includes("/accept-owner-invitation"));
+  assert.ok(!hrefs.includes("/accept-owner-invitation"));
+  assert.match(page, /conversion\.invitedBody/);
+  assert.match(page, /PublicTrialForm/);
+  assert.match(page, /data-secure-setup-continuation="email-only"/);
   assert.deepEqual(
     [...new Set(hrefs)].sort(),
-    ["/", "/accept-owner-invitation", "/login"].sort(),
+    ["/", "/login"].sort(),
   );
 });
 

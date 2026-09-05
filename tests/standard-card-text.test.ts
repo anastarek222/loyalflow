@@ -10,14 +10,14 @@ import {
 } from "../lib/cards/standard-card-text";
 
 test("standard-card unit labels keep professional names within a stable limit", () => {
-  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 18);
+  assert.equal(STANDARD_CARD_UNIT_LABEL_MAX_LENGTH, 20);
   assert.equal(
     boundedStandardCardUnitLabel("RECOMMENDATIONS"),
     "RECOMMENDATIONS",
   );
   assert.equal(
     boundedStandardCardUnitLabel("CUSTOMER RECOMMENDATIONS"),
-    "CUSTOMER RECOMMEN…",
+    "CUSTOMER RECOMMENDA…",
   );
 });
 

@@ -32,6 +32,7 @@ model Business {
   whatsappBalanceMessage String?
   whatsappRewardMessage  String?
   whatsappWelcomeMessage String?
+  whatsappRedeemedMessage String?
   address                String?
   cardTerms              String?
   contactPhone           String?
@@ -132,6 +133,7 @@ enum GoogleSheetsSyncState {
 
 enum IntegrationJobKind {
   GOOGLE_SHEETS_BUSINESS_SYNC
+  WHATSAPP_CUSTOMER_NOTIFICATION
 }
 
 enum IntegrationJobStatus {
@@ -142,26 +144,40 @@ enum IntegrationJobStatus {
   DEAD
 }
 
+enum IntegrationProviderDeliveryStatus {
+  ACCEPTED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  OTHER
+}
+
 model IntegrationJob {
-  id             String               @id @default(cuid())
-  businessId     String
-  kind           IntegrationJobKind
-  idempotencyKey String
-  status         IntegrationJobStatus @default(PENDING)
-  attemptCount   Int                  @default(0)
-  availableAt    DateTime             @default(now())
-  leaseOwner     String?
-  leaseExpiresAt DateTime?
-  lastAttemptAt  DateTime?
-  lastErrorCode  String?
-  completedAt    DateTime?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  business       Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id                       String                            @id @default(cuid())
+  businessId               String
+  kind                     IntegrationJobKind
+  idempotencyKey           String
+  payload                  Json?
+  status                   IntegrationJobStatus             @default(PENDING)
+  attemptCount             Int                              @default(0)
+  availableAt              DateTime                         @default(now())
+  leaseOwner               String?
+  leaseExpiresAt           DateTime?
+  lastAttemptAt            DateTime?
+  lastErrorCode            String?
+  completedAt              DateTime?
+  providerMessageId        String?
+  providerDeliveryStatus   IntegrationProviderDeliveryStatus?
+  providerStatusAt         DateTime?
+  createdAt                DateTime                         @default(now())
+  updatedAt                DateTime                         @updatedAt
+  business                 Business                         @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, kind, idempotencyKey])
   @@index([status, availableAt, leaseExpiresAt])
   @@index([businessId, status, createdAt])
+  @@index([providerMessageId])
 }
 
 enum CardDesignMode {
@@ -246,6 +262,7 @@ model Customer {
   lifetimeEarned        Int                     @default(0)
   lifetimeRedeemed      Int                     @default(0)
   isActive              Boolean                 @default(true)
+  whatsappOptInAt       DateTime?
   businessId            String
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt

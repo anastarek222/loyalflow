@@ -33,11 +33,11 @@ test("TC6.8 atomically couples successful balance adjustment with one durable Sh
 });
 
 test("TC6.8 schedules transport only after the committed command succeeds", () => {
-  assert.match(action, /from "@\/lib\/google-sheets-sync-scheduler"/);
-  assert.match(action, /scheduleBusinessGoogleSheetsSync\(result\.integrationJobId\)/);
+  assert.match(action, /from "@\/lib\/integration-job-scheduler"/);
+  assert.match(action, /scheduleIntegrationJobs\(result\.integrationJobIds\)/);
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
   assert.ok(
     action.indexOf("await adjustCustomerBalanceCommand") <
-      action.indexOf("scheduleBusinessGoogleSheetsSync(result.integrationJobId)"),
+      action.indexOf("scheduleIntegrationJobs(result.integrationJobIds)"),
   );
 });

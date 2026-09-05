@@ -24,6 +24,9 @@ test("TC6.12 bulk and customer-create actions both use durable wake-up transport
   const createSource = action.slice(createStart);
 
   assert.match(bulkSource, /scheduleBusinessGoogleSheetsSync\(/);
-  assert.match(createSource, /scheduleBusinessGoogleSheetsSync\(creation\.integrationJobId\)/);
+  assert.match(
+    createSource,
+    /scheduleIntegrationJobs\(creation\.integrationJobIds\)/,
+  );
   assert.doesNotMatch(action, /syncBusinessToGoogleSheetSafely/);
 });

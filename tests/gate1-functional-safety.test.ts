@@ -189,7 +189,8 @@ test("Country search submits only a canonical selection and closes safely", () =
 test("Owner creation schedules the canonical non-blocking Sheets sync only after commit", () => {
   const ownerAction = source("app/onboarding/actions.ts");
   const superAdminAction = source("app/businesses/actions.ts");
-  const scheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const sheetsScheduler = source("lib/google-sheets-sync-scheduler.ts");
+  const scheduler = source("lib/integration-job-scheduler.ts");
   const safeSync = source("lib/google-sheets-sync-safe.ts");
 
   const transaction = ownerAction.indexOf("prisma.$transaction");
@@ -198,8 +199,9 @@ test("Owner creation schedules the canonical non-blocking Sheets sync only after
   );
   assert.ok(transaction >= 0 && schedule > transaction);
   assert.match(ownerAction, /await enqueueIntegrationJob\(tx/);
+  assert.match(sheetsScheduler, /scheduleIntegrationJob\(jobId\)/);
   assert.match(scheduler, /after\(async \(\) =>/);
-  assert.match(scheduler, /await publishIntegrationJob\(\{ jobId \}\)/);
+  assert.match(scheduler, /publishIntegrationJobWithRecovery\(jobId\)/);
   assert.match(
     superAdminAction,
     /scheduleBusinessGoogleSheetsSync\(integrationJobId\)/,
