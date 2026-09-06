@@ -29,8 +29,8 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
           ? "جارٍ الحفظ…"
           : "Saving…"
         : language === "AR"
-          ? "حفظ رسائل العملاء"
-          : "Save customer messages"}
+          ? "حفظ القوالب"
+          : "Save templates"}
     </button>
   );
 }
@@ -77,22 +77,25 @@ export function CustomerMessagesForm({
           }`}
         >
           {status === "saved"
-            ? t("تم حفظ رسائل العملاء.", "Customer messages saved.")
+            ? t("تم حفظ قوالب واتساب اليدوية.", "Manual WhatsApp templates saved.")
             : status === "subscription-restricted"
               ? t(
-                  "لا يمكن تعديل رسائل العملاء في حالة الاشتراك الحالية.",
-                  "Customer messages cannot be changed in the current subscription state.",
+                  "لا يمكن تعديل قوالب واتساب اليدوية في حالة الاشتراك الحالية.",
+                  "Manual WhatsApp templates cannot be changed in the current subscription state.",
                 )
-              : t("راجع رسائل العملاء.", "Review the customer messages.")}
+              : t(
+                  "راجع قوالب واتساب اليدوية.",
+                  "Review the manual WhatsApp templates.",
+                )}
         </p>
       ) : null}
       <h2 className="text-xl font-black text-foreground">
-        {t("رسائل العملاء", "Customer messages")}
+        {t("قوالب واتساب اليدوية", "Manual WhatsApp templates")}
       </h2>
       <p className="mt-1 text-sm text-foreground-subtle">
         {t(
-          "يتم التحقق من هذه القوالب فقط عند حفظ هذا القسم.",
-          "These templates are validated only when this section is saved.",
+          "القوالب دي بتستخدم لما عضو فريق مصرح له يفتح واتساب ويرسل الرسالة يدويًا. إشعارات واتساب التلقائية تستخدم قوالب Meta المعتمدة وبتتدار من الإعدادات ← واتساب.",
+          "These templates are used when an authorized team member opens WhatsApp to send manually. Automatic WhatsApp notifications use approved Meta templates and are managed in Settings → WhatsApp.",
         )}
       </p>
       <div className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/10 bg-primary-subtle/50 p-4 text-sm text-primary">
