@@ -52,8 +52,8 @@ test("message form preserves fields, pending state, feedback, and localization",
   assert.match(messageForm, /aria-live="polite"/);
   assert.match(messageForm, /required/);
   assert.match(messageForm, /maxLength=\{1500\}/);
-  assert.match(messageForm, /رسائل العملاء/);
-  assert.match(messageForm, /Customer messages/);
+  assert.match(messageForm, /قوالب واتساب اليدوية/);
+  assert.match(messageForm, /Manual WhatsApp templates/);
 });
 
 test("customer message action remains domain scoped and returns to Program", () => {
