@@ -72,6 +72,7 @@ function uatBusinessUserEmails(run: string) {
     "inactive-owner",
     "pending-owner",
     "provisioned-owner",
+    "invited-owner",
   ].map((role) => `lf-uat-final-${role}-${run}@example.test`));
 }
 
@@ -230,6 +231,7 @@ async function cleanup(run: string) {
           in: [
             `lf-uat-final-superadmin-${run}@example.test`,
             `lf-uat-final-pending-owner-${run}@example.test`,
+            `lf-uat-final-invited-owner-${run}@example.test`,
           ],
         },
         businessId: null,

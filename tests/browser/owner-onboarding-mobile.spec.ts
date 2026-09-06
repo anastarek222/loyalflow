@@ -4,6 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { expect, test } from "@playwright/test";
 
 import { PrismaClient } from "@/generated/prisma/client";
+import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
 import { generateTotpCode } from "@/lib/auth/super-admin-mfa";
 
 import {
@@ -16,6 +17,7 @@ import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 
 let fixture: BrowserUatFixture;
 let manifestPath: string;
+let publicTrialInvitationToken = "";
 
 async function withDisposableFixtureDatabase(
   operation: (prisma: PrismaClient) => Promise<void>,
@@ -59,14 +61,44 @@ async function seedConsumedPendingOwnerInvitation(runId: string) {
 }
 
 async function cleanupConsumedPendingOwnerInvitation(runId: string) {
-  const email = uatEmail("pending-owner", runId);
+  const pendingOwnerEmail = uatEmail("pending-owner", runId);
+  const invitedOwnerEmail = uatEmail("invited-owner", runId);
 
   await withDisposableFixtureDatabase(async (prisma) => {
     await prisma.$executeRaw`
       DELETE FROM "OwnerInvitation"
-      WHERE "email" = ${email}
+      WHERE "email" IN (${pendingOwnerEmail}, ${invitedOwnerEmail})
     `;
   });
+}
+
+async function seedPublicTrialOwnerInvitation(runId: string) {
+  const invitation = createOwnerInvitationToken();
+  const email = uatEmail("invited-owner", runId);
+
+  await withDisposableFixtureDatabase(async (prisma) => {
+    await prisma.$executeRaw`
+      INSERT INTO "OwnerInvitation" (
+        "id", "firstName", "lastName", "email", "phone", "businessName",
+        "country", "source", "tokenHash", "expiresAt", "usedAt", "createdAt"
+      ) VALUES (
+        ${invitation.id},
+        ${"Public Trial"},
+        ${"Owner"},
+        ${email},
+        ${`+201${BigInt(`0x${runId}`).toString().padStart(9, "0").slice(-9)}`},
+        ${`LoyalFlow final UAT Invitation ${runId}`},
+        ${"Egypt"},
+        'PUBLIC_TRIAL'::"OwnerInvitationSource",
+        ${invitation.tokenHash},
+        ${invitation.expiresAt},
+        NULL,
+        CURRENT_TIMESTAMP
+      )
+    `;
+  });
+
+  return invitation.token;
 }
 
 test.describe
@@ -78,6 +110,7 @@ test.describe
 
     if (!process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
       await seedConsumedPendingOwnerInvitation(fixture.runId);
+      publicTrialInvitationToken = await seedPublicTrialOwnerInvitation(fixture.runId);
     }
   });
 
@@ -190,6 +223,75 @@ test.describe
       timeout: 20_000,
     });
     await expect(page).not.toHaveURL(/\/onboarding$/);
+  });
+
+  test("secure public Trial invitation is accepted once and launches a persisted seven-day Trial", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    test.skip(
+      Boolean(process.env.STAGING_UAT_MANIFEST_PATH?.trim()),
+      "Invitation acceptance mutates only the disposable PR database.",
+    );
+
+    const ownerEmail = uatEmail("invited-owner", fixture.runId);
+    const businessSlug = `loyalflow-final-uat-invitation-${fixture.runId}`;
+
+    await page.goto(
+      `/accept-owner-invitation?token=${encodeURIComponent(publicTrialInvitationToken)}`,
+    );
+    await page
+      .getByLabel("Password", { exact: true })
+      .fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page
+      .getByLabel("Confirm password")
+      .fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page
+      .getByRole("button", { name: "Continue setup", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/login\?invitation=accepted$/, {
+      timeout: 20_000,
+    });
+
+    await page.getByLabel("Email address").fill(ownerEmail);
+    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
+    await expect(page.getByPlaceholder("Business name")).toHaveValue(
+      `LoyalFlow final UAT Invitation ${fixture.runId}`,
+    );
+
+    for (const step of [2, 3, 4, 5, 6]) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+      await expect(page.locator("form[data-owner-step]")).toHaveAttribute(
+        "data-owner-step",
+        String(step),
+      );
+    }
+
+    await page.getByRole("button", { name: "Launch", exact: true }).click();
+    await expect(
+      page,
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
+      timeout: 30_000,
+    });
+
+    await withDisposableFixtureDatabase(async (prisma) => {
+      const business = await prisma.business.findUniqueOrThrow({
+        where: { slug: businessSlug },
+        select: {
+          subscriptionLifecycleState: true,
+          trialStartedAt: true,
+          trialEndsAt: true,
+        },
+      });
+      expect(business.subscriptionLifecycleState).toBe("TRIALING");
+      expect(business.trialStartedAt).not.toBeNull();
+      expect(business.trialEndsAt).not.toBeNull();
+      expect(
+        business.trialEndsAt!.getTime() - business.trialStartedAt!.getTime(),
+      ).toBe(7 * 24 * 60 * 60 * 1000);
+    });
   });
 
   test("Super Admin provisions a complete Business and its Owner can enter directly", async ({
