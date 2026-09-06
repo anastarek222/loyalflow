@@ -181,3 +181,33 @@ test("customer message settings are explicitly manual and separate from automati
   assert.match(source, /Automatic WhatsApp notifications use approved Meta templates/);
   assert.match(source, /Settings → WhatsApp/);
 });
+
+test("manual customer-profile WhatsApp actions require customer edit permission", () => {
+  const source = readFileSync(
+    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "utf8",
+  );
+
+  assert.match(
+    source,
+    /const canManageCustomer = canPerform\([\s\S]*?"CUSTOMERS_EDIT"[\s\S]*?\);/,
+  );
+  assert.match(
+    source,
+    /const smartWhatsAppSuggestion = canManageCustomer\s*\?\s*getCampaignSuggestion\(/,
+  );
+
+  const cardSection = source.indexOf('id="customer-card"');
+  const manualGuard = source.indexOf("{canManageCustomer ? (", cardSection);
+  const manualCopy = source.indexOf("{copy.manualWhatsApp}", manualGuard);
+  const welcomeLink = source.indexOf("href={welcomeWhatsAppUrl}", manualGuard);
+  const balanceLink = source.indexOf("href={balanceWhatsAppUrl}", manualGuard);
+  const rewardLink = source.indexOf("href={rewardWhatsAppUrl}", manualGuard);
+
+  assert.ok(cardSection >= 0);
+  assert.ok(manualGuard > cardSection);
+  assert.ok(manualCopy > manualGuard);
+  assert.ok(welcomeLink > manualGuard);
+  assert.ok(balanceLink > welcomeLink);
+  assert.ok(rewardLink > balanceLink);
+});
