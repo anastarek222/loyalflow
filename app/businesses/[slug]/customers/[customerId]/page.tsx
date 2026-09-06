@@ -466,22 +466,24 @@ export default async function CustomerDetailsPage({
     ),
   );
 
-  const smartWhatsAppSuggestion = getCampaignSuggestion({
-    operation: query.success,
-    phone: customer.phone,
-    context: whatsappContext,
-    templates: {
-      welcome: business.whatsappWelcomeMessage,
-      balance: business.whatsappBalanceMessage,
-      reward: business.whatsappRewardMessage,
-    },
-    rewardAvailable,
-    isOneLoyaltyActionAway:
-      business.loyaltyMode !== "SALES_AMOUNT" &&
-      !rewardAvailable &&
-      remaining > 0 &&
-      remaining <= business.earnAmount,
-  });
+  const smartWhatsAppSuggestion = canManageCustomer
+    ? getCampaignSuggestion({
+        operation: query.success,
+        phone: customer.phone,
+        context: whatsappContext,
+        templates: {
+          welcome: business.whatsappWelcomeMessage,
+          balance: business.whatsappBalanceMessage,
+          reward: business.whatsappRewardMessage,
+        },
+        rewardAvailable,
+        isOneLoyaltyActionAway:
+          business.loyaltyMode !== "SALES_AMOUNT" &&
+          !rewardAvailable &&
+          remaining > 0 &&
+          remaining <= business.earnAmount,
+      })
+    : null;
   const smartSuggestionCopy = smartWhatsAppSuggestion
     ? copy.campaignSuggestion[smartWhatsAppSuggestion.trigger]
     : null;
@@ -1622,42 +1624,46 @@ export default async function CustomerDetailsPage({
                 )
               ) : null}
 
-              <div className="mt-2 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
-                <p className="text-sm font-black text-foreground">
-                  {copy.manualWhatsApp}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-foreground-muted">
-                  {copy.manualWhatsAppDescription}
-                </p>
-              </div>
+              {canManageCustomer ? (
+                <>
+                  <div className="mt-2 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                    <p className="text-sm font-black text-foreground">
+                      {copy.manualWhatsApp}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-foreground-muted">
+                      {copy.manualWhatsAppDescription}
+                    </p>
+                  </div>
 
-              <a
-                href={welcomeWhatsAppUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
-              >
-                {copy.welcomeMessage}
-              </a>
+                  <a
+                    href={welcomeWhatsAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
+                  >
+                    {copy.welcomeMessage}
+                  </a>
 
-              <a
-                href={balanceWhatsAppUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
-              >
-                {copy.balanceMessage}
-              </a>
+                  <a
+                    href={balanceWhatsAppUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
+                  >
+                    {copy.balanceMessage}
+                  </a>
 
-              {rewardAvailable ? (
-                <a
-                  href={rewardWhatsAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
-                >
-                  {copy.rewardMessage}
-                </a>
+                  {rewardAvailable ? (
+                    <a
+                      href={rewardWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
+                    >
+                      {copy.rewardMessage}
+                    </a>
+                  ) : null}
+                </>
               ) : null}
             </div>
           </OperationalDisclosure>
