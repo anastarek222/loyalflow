@@ -17,11 +17,8 @@ type WhatsAppTemplateContext = {
   remaining: number;
 };
 
-export function renderWhatsAppTemplate(
-  template: string,
-  context: WhatsAppTemplateContext
-) {
-  const replacements = {
+function getWhatsAppTemplateReplacements(context: WhatsAppTemplateContext) {
+  return {
     customer: context.customer,
     business: context.business,
     balance: String(context.balance),
@@ -30,6 +27,13 @@ export function renderWhatsAppTemplate(
     card_link: context.cardLink,
     remaining: String(context.remaining),
   };
+}
+
+export function renderWhatsAppTemplate(
+  template: string,
+  context: WhatsAppTemplateContext
+) {
+  const replacements = getWhatsAppTemplateReplacements(context);
 
   return template.replace(
     /\{([a-z_]+)\}/g,
@@ -48,6 +52,36 @@ export function renderWhatsAppTemplate(
       return match;
     }
   );
+}
+
+export function renderWhatsAppTemplateParameters(
+  template: string,
+  context: WhatsAppTemplateContext
+) {
+  const replacements = getWhatsAppTemplateReplacements(context);
+  const parameters: string[] = [];
+
+  template.replace(
+    /\{([a-z_]+)\}/g,
+    (match, key: string) => {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          replacements,
+          key
+        )
+      ) {
+        parameters.push(
+          replacements[
+            key as keyof typeof replacements
+          ]
+        );
+      }
+
+      return match;
+    }
+  );
+
+  return parameters;
 }
 
 function normalizeWhatsAppPhone(

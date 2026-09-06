@@ -1,13 +1,5 @@
 const WHATSAPP_PROVIDER_ENV_VARS = [
   "WHATSAPP_GRAPH_API_VERSION",
-  "WHATSAPP_TEMPLATE_WELCOME_AR",
-  "WHATSAPP_TEMPLATE_WELCOME_EN",
-  "WHATSAPP_TEMPLATE_BALANCE_AR",
-  "WHATSAPP_TEMPLATE_BALANCE_EN",
-  "WHATSAPP_TEMPLATE_REWARD_READY_AR",
-  "WHATSAPP_TEMPLATE_REWARD_READY_EN",
-  "WHATSAPP_TEMPLATE_REDEEMED_AR",
-  "WHATSAPP_TEMPLATE_REDEEMED_EN",
 ] as const;
 
 const WHATSAPP_GLOBAL_SENDER_ENV_VARS = [
@@ -24,10 +16,9 @@ function configured(env: Environment, name: string) {
 /**
  * Safe, non-secret readiness snapshot for automatic WhatsApp delivery.
  *
- * Provider readiness is separate from sender readiness: a business can have an
- * encrypted Phone Number ID/access token while the deployment is still missing
- * the Graph API version or approved template names. The returned diagnostic
- * exposes environment variable names only, never their values.
+ * Deployment-level provider readiness only depends on the Graph API version.
+ * Sender credentials and Meta template approval are business-scoped and are
+ * checked from persisted provider-owned state at delivery time.
  */
 export function getWhatsAppProviderReadiness(
   env: Environment = process.env,
@@ -42,9 +33,7 @@ export function getWhatsAppProviderReadiness(
   return {
     providerReady: missingProviderConfig.length === 0,
     graphApiVersionConfigured: configured(env, "WHATSAPP_GRAPH_API_VERSION"),
-    templatesReady: missingProviderConfig.every(
-      (name) => name === "WHATSAPP_GRAPH_API_VERSION",
-    ),
+    templatesReady: true,
     globalSenderReady: missingGlobalSenderConfig.length === 0,
     missingProviderConfig,
     missingGlobalSenderConfig,
