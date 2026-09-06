@@ -190,7 +190,7 @@ test("manual customer-profile WhatsApp actions require customer edit permission"
 
   assert.match(
     source,
-    /const canManageCustomer = canPerform\([\s\S]*?"CUSTOMERS_EDIT"[\s\S]*?\);/,
+    /const canManageCustomer = canPerform\(\s*session\.user,\s*business\.id,\s*"CUSTOMERS_EDIT",\s*\);/,
   );
   assert.match(
     source,
