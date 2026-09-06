@@ -8,6 +8,7 @@ import {
   getCustomerMessagesUpdate,
   operationsSettingsSchema,
 } from "@/lib/business/settings-domains";
+import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
 
 const source = (path: string) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -50,10 +51,12 @@ test("message form preserves Owner automatic fields, pending state, feedback, an
   }
   assert.match(messageForm, /useFormStatus/);
   assert.match(messageForm, /aria-live="polite"/);
-  assert.match(messageForm, /required/);
+  assert.doesNotMatch(messageForm, /required/);
+  assert.doesNotMatch(messageForm, /minLength=\{1\}/);
   assert.match(messageForm, /maxLength=\{1500\}/);
   assert.match(messageForm, /رسائل واتساب التلقائية/);
   assert.match(messageForm, /Automatic WhatsApp messages/);
+  assert.match(messageForm, /Leave any message blank to disable automatic WhatsApp/);
   assert.match(messageForm, /data-automatic-whatsapp-owner-messages/);
 });
 
@@ -76,17 +79,22 @@ test("customer message action remains domain scoped and returns to Program", () 
   );
 });
 
-test("message validation remains independent of other domains", () => {
+test("message validation lets the Owner independently disable automatic events", () => {
   const messages = customerMessagesSettingsSchema.parse({
     whatsappWelcomeMessage: "Welcome",
-    whatsappBalanceMessage: "Balance updated",
+    whatsappBalanceMessage: "   ",
     whatsappRewardMessage: "Reward ready",
   });
-  assert.deepEqual(Object.keys(getCustomerMessagesUpdate(messages)).sort(), [
-    "whatsappBalanceMessage",
-    "whatsappRewardMessage",
-    "whatsappWelcomeMessage",
-  ]);
+  assert.deepEqual(getCustomerMessagesUpdate(messages), {
+    whatsappWelcomeMessage: "Welcome",
+    whatsappBalanceMessage: null,
+    whatsappRewardMessage: "Reward ready",
+  });
+  assert.deepEqual(DEFAULT_WHATSAPP_TEMPLATES, {
+    welcome: "",
+    balance: "",
+    reward: "",
+  });
   assert.equal(
     businessProfileSettingsSchema.safeParse({}).success,
     false,

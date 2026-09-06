@@ -104,6 +104,12 @@ export function CustomerMessagesForm({
       </p>
       <p className="mt-2 text-xs leading-5 text-foreground-muted">
         {t(
+          "سيب أي رسالة فاضية لو مش عايز الحدث ده يبعت واتساب تلقائيًا. كل رسالة مستقلة عن التانية.",
+          "Leave any message blank to disable automatic WhatsApp for that event. Each message is controlled independently.",
+        )}
+      </p>
+      <p className="mt-2 text-xs leading-5 text-foreground-muted">
+        {t(
           "أدوات الإرسال اليدوي في ملف العميل قد تعيد استخدام نفس النص، لكن تشغيل الإرسال التلقائي وحالة Meta تتم إدارتها من الإعدادات ← واتساب.",
           "Manual send tools on the customer profile may reuse the same copy, while automatic delivery and Meta readiness are managed in Settings → WhatsApp.",
         )}
@@ -130,9 +136,7 @@ export function CustomerMessagesForm({
               defaultValue={value}
               dir="auto"
               rows={8}
-              minLength={1}
               maxLength={1500}
-              required
               className={inputClass}
             />
           </label>

@@ -1,23 +1,10 @@
+// Automatic WhatsApp copy is intentionally Owner-authored per Business.
+// These legacy fallback keys remain for callers that need a string value, but
+// they must never introduce platform-authored message wording.
 export const DEFAULT_WHATSAPP_TEMPLATES = {
-  welcome:
-    "أهلاً {customer} 👋\n\n" +
-    "تم إنشاء كارت الولاء الخاص بك لدى {business}.\n" +
-    "رصيدك الحالي: {balance} {unit}.\n\n" +
-    "تابع رصيدك ومكافآتك من هنا:\n{card_link}",
-
-  balance:
-    "أهلاً {customer} 👋\n\n" +
-    "تم تحديث رصيد الولاء الخاص بك لدى {business}.\n" +
-    "رصيدك الحالي: {balance} {unit}.\n" +
-    "متبقي {remaining} للحصول على {reward}.\n\n" +
-    "تابع كارتك من هنا:\n{card_link}",
-
-  reward:
-    "مبروك يا {customer} 🎁\n\n" +
-    "أصبحت مكافأتك متاحة لدى {business}.\n" +
-    "المكافأة: {reward}.\n" +
-    "رصيدك الحالي: {balance} {unit}.\n\n" +
-    "افتح كارت الولاء من هنا:\n{card_link}",
+  welcome: "",
+  balance: "",
+  reward: "",
 } as const;
 
 type WhatsAppTemplateContext = {
