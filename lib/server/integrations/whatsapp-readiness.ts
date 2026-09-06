@@ -14,11 +14,11 @@ function configured(env: Environment, name: string) {
 }
 
 /**
- * Safe, non-secret readiness snapshot for automatic WhatsApp delivery.
+ * Safe, non-secret deployment readiness snapshot for automatic WhatsApp.
  *
  * Deployment-level provider readiness only depends on the Graph API version.
- * Sender credentials and Meta template approval are business-scoped and are
- * checked from persisted provider-owned state at delivery time.
+ * Sender credentials and Meta template approval are business-scoped and must be
+ * evaluated from persisted provider-owned state for the specific Business.
  */
 export function getWhatsAppProviderReadiness(
   env: Environment = process.env,
@@ -33,7 +33,8 @@ export function getWhatsAppProviderReadiness(
   return {
     providerReady: missingProviderConfig.length === 0,
     graphApiVersionConfigured: configured(env, "WHATSAPP_GRAPH_API_VERSION"),
-    templatesReady: true,
+    templatesReady: null,
+    templateReadinessScope: "business" as const,
     globalSenderReady: missingGlobalSenderConfig.length === 0,
     missingProviderConfig,
     missingGlobalSenderConfig,

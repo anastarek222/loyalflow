@@ -3,6 +3,7 @@ import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getBusinessWhatsAppAutomaticReadiness } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getWhatsAppProviderReadiness } from "@/lib/server/integrations/whatsapp-readiness";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -25,24 +26,44 @@ export default async function BusinessWhatsAppSettingsPage({
   const query = await searchParams;
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, slug: true, name: true },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      cardDefaultLanguage: true,
+      whatsappWelcomeMessage: true,
+      whatsappBalanceMessage: true,
+      whatsappRewardMessage: true,
+    },
   });
   if (!business) notFound();
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
 
-  const [currentUser, credential] = await Promise.all([
+  const [currentUser, credential, automaticTemplateReadiness] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { language: true },
     }),
     getBusinessWhatsAppCredential(prisma, business.id),
+    getBusinessWhatsAppAutomaticReadiness(prisma, {
+      businessId: business.id,
+      language: business.cardDefaultLanguage,
+      messages: {
+        whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+        whatsappBalanceMessage: business.whatsappBalanceMessage,
+        whatsappRewardMessage: business.whatsappRewardMessage,
+      },
+    }),
   ]);
   const language = normalizeLanguage(currentUser?.language);
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const providerReadiness = getWhatsAppProviderReadiness();
   const senderReady = Boolean(credential);
-  const deliveryReady = providerReadiness.providerReady && senderReady;
+  const deliveryReady =
+    providerReadiness.providerReady &&
+    senderReady &&
+    automaticTemplateReadiness.ready;
   const updateConnection = updateBusinessWhatsAppConnectionAction.bind(
     null,
     business.slug,
@@ -117,10 +138,15 @@ export default async function BusinessWhatsAppSettingsPage({
                 {deliveryReady
                   ? t("جاهز للإرسال التلقائي", "Ready for automatic delivery")
                   : credential
-                    ? t(
-                        "بيانات المرسل محفوظة · الإعداد غير مكتمل",
-                        "Sender credentials saved · delivery setup incomplete",
-                      )
+                    ? automaticTemplateReadiness.hasEnabledMessages
+                      ? t(
+                          "بيانات المرسل محفوظة · اعتماد القالب غير مكتمل",
+                          "Sender credentials saved · template approval incomplete",
+                        )
+                      : t(
+                          "بيانات المرسل محفوظة · لا توجد رسائل تلقائية مفعلة",
+                          "Sender credentials saved · no automatic messages enabled",
+                        )
                     : t("غير جاهز للإرسال", "Not ready for delivery")}
               </p>
               <p className="mt-1 text-xs text-foreground-muted">
@@ -156,8 +182,8 @@ export default async function BusinessWhatsAppSettingsPage({
               </p>
               <p className="mt-1 text-foreground-muted">
                 {t(
-                  "لن تعمل الرسائل التلقائية حتى يتم ضبط إصدار Graph API وأسماء القوالب المعتمدة لكل الأحداث واللغات المطلوبة.",
-                  "Automatic messages cannot be delivered until the Graph API version and approved template names are configured for every required event and language.",
+                  "لن تعمل الرسائل التلقائية حتى يتم ضبط إصدار Graph API. أسماء القوالب وحالة اعتمادها مرتبطة بكل نشاط ويتم التحقق منها من البيانات المحفوظة.",
+                  "Automatic messages cannot be delivered until the Graph API version is configured. Template names and approval state are business-scoped and verified from persisted provider state.",
                 )}
               </p>
               <p className="mt-2 break-words font-mono text-xs text-foreground-muted">
@@ -166,11 +192,40 @@ export default async function BusinessWhatsAppSettingsPage({
             </div>
           ) : null}
 
+          {providerReadiness.providerReady &&
+          senderReady &&
+          !automaticTemplateReadiness.ready ? (
+            <div className="mt-5 rounded-xl border border-warning/30 bg-warning-subtle p-4 text-sm leading-6 text-foreground">
+              <p className="font-black">
+                {automaticTemplateReadiness.hasEnabledMessages
+                  ? t(
+                      "اعتماد رسائل WhatsApp التلقائية غير مكتمل.",
+                      "Automatic WhatsApp template approval is incomplete.",
+                    )
+                  : t(
+                      "لا توجد رسالة WhatsApp تلقائية مفعلة.",
+                      "No automatic WhatsApp message is enabled.",
+                    )}
+              </p>
+              <p className="mt-1 text-foreground-muted">
+                {automaticTemplateReadiness.hasEnabledMessages
+                  ? t(
+                      "كل رسالة مفعلة تحتاج قالب Meta معتمدًا لهذا النشاط واللغة ويطابق نفس نسخة النص المحفوظة حاليًا. تعديل النص يوقف الإرسال حتى اعتماد النسخة الجديدة.",
+                      "Every enabled message needs an approved Meta template for this business and language that matches the currently saved copy. Editing the copy pauses delivery until the new version is approved.",
+                    )
+                  : t(
+                      "أضف نصًا واحدًا على الأقل من رسائل Welcome أو Balance Update أو Reward لتفعيل الإرسال التلقائي. ترك الرسالة فارغة يعطل الحدث بشكل مقصود.",
+                      "Add at least one Owner-authored Welcome, Balance Update, or Reward message to enable automatic delivery. Leaving a message blank intentionally disables that event.",
+                    )}
+              </p>
+            </div>
+          ) : null}
+
           {deliveryReady ? (
             <p className="mt-5 rounded-xl border border-success/30 bg-success-subtle p-4 text-sm font-semibold text-success">
               {t(
-                "متطلبات الخادم وبيانات مرسل النشاط موجودة. يظل نجاح التسليم الفعلي معتمدًا على صلاحية بيانات Meta وحالة القوالب المعتمدة.",
-                "Server prerequisites and this business's sender credentials are configured. Actual delivery still depends on valid Meta credentials and approved template status.",
+                "إصدار Graph API وبيانات مرسل النشاط واعتماد قوالب الرسائل المفعلة متطابقة مع النسخة الحالية. يظل نجاح التسليم الفعلي معتمدًا على قبول Meta للطلب.",
+                "The Graph API version, this business's sender credentials, and approvals for all enabled message templates match the current copy. Actual delivery still depends on Meta accepting the request.",
               )}
             </p>
           ) : null}
