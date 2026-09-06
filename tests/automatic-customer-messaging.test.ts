@@ -154,3 +154,30 @@ test("public and staff customer creation expose explicit WhatsApp consent", () =
   );
   assert.match(staffAction, /scheduleIntegrationJobs\(creation\.integrationJobIds\)/);
 });
+
+test("inbound WhatsApp opt-out is scoped only to explicit business sender credentials", () => {
+  const consentSource = readFileSync(
+    "lib/server/integrations/whatsapp-consent.ts",
+    "utf8",
+  );
+
+  assert.doesNotMatch(consentSource, /WHATSAPP_PHONE_NUMBER_ID/);
+  assert.match(
+    consentSource,
+    /INNER JOIN "BusinessWhatsAppCredential" AS credential/,
+  );
+  assert.match(
+    consentSource,
+    /credential\."phoneNumberId" = \$\{request\.phoneNumberId\}/,
+  );
+  assert.doesNotMatch(consentSource, /shared fallback sender/i);
+});
+
+test("customer message settings are explicitly manual and separate from automatic Meta templates", () => {
+  const source = readFileSync("components/customer-messages-form.tsx", "utf8");
+
+  assert.match(source, /Manual WhatsApp templates/);
+  assert.match(source, /قوالب واتساب اليدوية/);
+  assert.match(source, /Automatic WhatsApp notifications use approved Meta templates/);
+  assert.match(source, /Settings → WhatsApp/);
+});
