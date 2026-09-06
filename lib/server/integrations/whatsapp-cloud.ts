@@ -5,6 +5,7 @@ import {
 } from "@/lib/server/integrations/customer-messaging";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
+import { renderWhatsAppTemplate } from "@/lib/whatsapp-templates";
 
 type WhatsAppDeliveryResult =
   | Readonly<{ status: "success"; providerMessageId?: string }>
@@ -37,6 +38,27 @@ function customerName(firstName: string, lastName: string | null) {
   return [firstName, lastName].filter(Boolean).join(" ").trim() || firstName;
 }
 
+function getOwnerMessageTemplate(
+  event: CustomerMessageEvent,
+  messages: {
+    whatsappWelcomeMessage: string | null;
+    whatsappBalanceMessage: string | null;
+    whatsappRewardMessage: string | null;
+    whatsappRedeemedMessage: string | null;
+  },
+) {
+  const value =
+    event === "WELCOME"
+      ? messages.whatsappWelcomeMessage
+      : event === "BALANCE_UPDATED"
+        ? messages.whatsappBalanceMessage
+        : event === "REWARD_READY"
+          ? messages.whatsappRewardMessage
+          : messages.whatsappRedeemedMessage ?? messages.whatsappRewardMessage;
+  const normalized = value?.trim() ?? "";
+  return normalized || null;
+}
+
 export function extractWhatsAppProviderMessageId(payload: unknown) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
   const messages = (payload as { messages?: unknown }).messages;
@@ -49,45 +71,14 @@ export function extractWhatsAppProviderMessageId(payload: unknown) {
   return normalized.length >= 1 && normalized.length <= 512 ? normalized : null;
 }
 
-function bodyVariables(input: {
-  event: CustomerMessageEvent;
-  customerName: string;
-  businessName: string;
-  balance: number;
-  unitName: string;
-  rewardName: string;
-  cardUrl: string;
-}) {
-  switch (input.event) {
-    case "WELCOME":
-      return [input.customerName, input.businessName, input.cardUrl];
-    case "BALANCE_UPDATED":
-      return [
-        input.customerName,
-        input.businessName,
-        String(input.balance),
-        input.unitName,
-      ];
-    case "REWARD_READY":
-      return [
-        input.customerName,
-        input.rewardName,
-        input.businessName,
-        String(input.balance),
-      ];
-    case "REWARD_REDEEMED":
-      return [
-        input.customerName,
-        input.rewardName,
-        input.businessName,
-        String(input.balance),
-      ];
-  }
-}
-
 /**
- * Sends a Meta-approved WhatsApp Cloud API template. Missing/revoked consent is
- * treated as a successful no-op so stale queued jobs can never bypass consent.
+ * Sends the Owner-authored business message through a Meta-approved template.
+ * Missing/revoked consent is a successful no-op so stale queued jobs can never
+ * bypass consent. Missing Owner copy is terminal and is never replaced by
+ * platform-authored/default wording.
+ *
+ * Provider contract: the approved Meta template used for each event accepts the
+ * fully rendered Owner message as its first body text parameter.
  */
 export async function sendWhatsAppCustomerNotificationSafely(
   businessId: string,
@@ -120,7 +111,12 @@ export async function sendWhatsAppCustomerNotificationSafely(
           name: true,
           unitName: true,
           rewardName: true,
+          rewardThreshold: true,
           cardDefaultLanguage: true,
+          whatsappWelcomeMessage: true,
+          whatsappBalanceMessage: true,
+          whatsappRewardMessage: true,
+          whatsappRedeemedMessage: true,
         },
       },
     },
@@ -135,6 +131,18 @@ export async function sendWhatsAppCustomerNotificationSafely(
     return {
       status: "failure",
       reason: "WHATSAPP_INVALID_PHONE",
+      retryable: false,
+    };
+  }
+
+  const ownerMessageTemplate = getOwnerMessageTemplate(
+    payload.event,
+    customer.business,
+  );
+  if (!ownerMessageTemplate) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_OWNER_MESSAGE_NOT_CONFIGURED",
       retryable: false,
     };
   }
@@ -179,14 +187,16 @@ export async function sendWhatsAppCustomerNotificationSafely(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
-  const variables = bodyVariables({
-    event: payload.event,
-    customerName: customerName(customer.firstName, customer.lastName),
-    businessName: customer.business.name,
-    balance: payload.balance ?? customer.balance,
-    unitName: customer.business.unitName,
-    rewardName: payload.rewardName ?? customer.business.rewardName,
-    cardUrl: `${appUrl}/card/${customer.publicToken}`,
+  const balance = payload.balance ?? customer.balance;
+  const cardUrl = `${appUrl}/card/${customer.publicToken}`;
+  const renderedOwnerMessage = renderWhatsAppTemplate(ownerMessageTemplate, {
+    customer: customerName(customer.firstName, customer.lastName),
+    business: customer.business.name,
+    balance,
+    unit: customer.business.unitName,
+    reward: payload.rewardName ?? customer.business.rewardName,
+    remaining: Math.max(0, customer.business.rewardThreshold - balance),
+    cardLink: cardUrl,
   });
 
   try {
@@ -209,7 +219,7 @@ export async function sendWhatsAppCustomerNotificationSafely(
             components: [
               {
                 type: "body",
-                parameters: variables.map((text) => ({ type: "text", text })),
+                parameters: [{ type: "text", text: renderedOwnerMessage }],
               },
             ],
           },

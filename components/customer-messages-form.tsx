@@ -29,8 +29,8 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
           ? "جارٍ الحفظ…"
           : "Saving…"
         : language === "AR"
-          ? "حفظ القوالب"
-          : "Save templates"}
+          ? "حفظ الرسائل التلقائية"
+          : "Save automatic messages"}
     </button>
   );
 }
@@ -45,17 +45,17 @@ export function CustomerMessagesForm({
   const fields = [
     [
       "whatsappWelcomeMessage",
-      t("رسالة الترحيب", "Welcome message"),
+      t("رسالة الترحيب التلقائية", "Automatic welcome message"),
       messages.whatsappWelcomeMessage,
     ],
     [
       "whatsappBalanceMessage",
-      t("رسالة تحديث الرصيد", "Balance update message"),
+      t("رسالة تحديث الرصيد التلقائية", "Automatic balance update message"),
       messages.whatsappBalanceMessage,
     ],
     [
       "whatsappRewardMessage",
-      t("رسالة جاهزية المكافأة", "Reward-ready message"),
+      t("رسالة المكافأة التلقائية", "Automatic reward message"),
       messages.whatsappRewardMessage,
     ],
   ] as const;
@@ -65,6 +65,7 @@ export function CustomerMessagesForm({
       action={action}
       className="rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-8"
       data-customer-messages-form
+      data-automatic-whatsapp-owner-messages
     >
       {status ? (
         <p
@@ -77,25 +78,34 @@ export function CustomerMessagesForm({
           }`}
         >
           {status === "saved"
-            ? t("تم حفظ قوالب واتساب اليدوية.", "Manual WhatsApp templates saved.")
+            ? t(
+                "تم حفظ رسائل واتساب التلقائية الخاصة بالنشاط.",
+                "Automatic WhatsApp messages for this business were saved.",
+              )
             : status === "subscription-restricted"
               ? t(
-                  "لا يمكن تعديل قوالب واتساب اليدوية في حالة الاشتراك الحالية.",
-                  "Manual WhatsApp templates cannot be changed in the current subscription state.",
+                  "لا يمكن تعديل رسائل واتساب التلقائية في حالة الاشتراك الحالية.",
+                  "Automatic WhatsApp messages cannot be changed in the current subscription state.",
                 )
               : t(
-                  "راجع قوالب واتساب اليدوية.",
-                  "Review the manual WhatsApp templates.",
+                  "راجع رسائل واتساب التلقائية.",
+                  "Review the automatic WhatsApp messages.",
                 )}
         </p>
       ) : null}
       <h2 className="text-xl font-black text-foreground">
-        {t("قوالب واتساب اليدوية", "Manual WhatsApp templates")}
+        {t("رسائل واتساب التلقائية", "Automatic WhatsApp messages")}
       </h2>
-      <p className="mt-1 text-sm text-foreground-subtle">
+      <p className="mt-1 text-sm leading-6 text-foreground-subtle">
         {t(
-          "القوالب دي بتستخدم لما عضو فريق مصرح له يفتح واتساب ويرسل الرسالة يدويًا. إشعارات واتساب التلقائية تستخدم قوالب Meta المعتمدة وبتتدار من الإعدادات ← واتساب.",
-          "These templates are used when an authorized team member opens WhatsApp to send manually. Automatic WhatsApp notifications use approved Meta templates and are managed in Settings → WhatsApp.",
+          "الـOwner هو اللي بيحدد نص الرسائل التلقائية الخاصة بهذا النشاط. Tanee لا ينشئ ولا يستبدل محتوى الرسالة من عنده. يتم استخدام النص المحفوظ هنا فقط، مع متغيرات العميل والنشاط، ثم يمر عبر قالب Meta معتمد. الحدث الذي لا توجد له رسالة محفوظة من الـOwner لا يتم إرساله تلقائيًا.",
+          "The Owner defines the automatic message copy for this business. Tanee does not invent or substitute message wording. Only the message saved here is rendered with customer and business variables, then delivered through an approved Meta template. An event without an Owner-saved message is not sent automatically.",
+        )}
+      </p>
+      <p className="mt-2 text-xs leading-5 text-foreground-muted">
+        {t(
+          "أدوات الإرسال اليدوي في ملف العميل قد تعيد استخدام نفس النص، لكن تشغيل الإرسال التلقائي وحالة Meta تتم إدارتها من الإعدادات ← واتساب.",
+          "Manual send tools on the customer profile may reuse the same copy, while automatic delivery and Meta readiness are managed in Settings → WhatsApp.",
         )}
       </p>
       <div className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/10 bg-primary-subtle/50 p-4 text-sm text-primary">

@@ -173,13 +173,32 @@ test("inbound WhatsApp opt-out is scoped only to explicit business sender creden
   assert.doesNotMatch(consentSource, /shared fallback sender/i);
 });
 
-test("customer message settings are explicitly manual and separate from automatic Meta templates", () => {
-  const source = readFileSync("components/customer-messages-form.tsx", "utf8");
+test("automatic WhatsApp copy is Owner-authored per business", () => {
+  const formSource = readFileSync(
+    "components/customer-messages-form.tsx",
+    "utf8",
+  );
+  const senderSource = readFileSync(
+    "lib/server/integrations/whatsapp-cloud.ts",
+    "utf8",
+  );
 
-  assert.match(source, /Manual WhatsApp templates/);
-  assert.match(source, /قوالب واتساب اليدوية/);
-  assert.match(source, /Automatic WhatsApp notifications use approved Meta templates/);
-  assert.match(source, /Settings → WhatsApp/);
+  assert.match(formSource, /Automatic WhatsApp messages/);
+  assert.match(formSource, /رسائل واتساب التلقائية/);
+  assert.match(formSource, /The Owner defines the automatic message copy/);
+  assert.match(formSource, /Tanee does not invent or substitute message wording/);
+
+  assert.match(senderSource, /whatsappWelcomeMessage: true/);
+  assert.match(senderSource, /whatsappBalanceMessage: true/);
+  assert.match(senderSource, /whatsappRewardMessage: true/);
+  assert.match(senderSource, /whatsappRedeemedMessage: true/);
+  assert.match(senderSource, /renderWhatsAppTemplate\(ownerMessageTemplate/);
+  assert.match(senderSource, /WHATSAPP_OWNER_MESSAGE_NOT_CONFIGURED/);
+  assert.match(
+    senderSource,
+    /parameters: \[\{ type: "text", text: renderedOwnerMessage \}\]/,
+  );
+  assert.doesNotMatch(senderSource, /DEFAULT_WHATSAPP_TEMPLATES/);
 });
 
 test("manual customer-profile WhatsApp actions require customer edit permission", () => {

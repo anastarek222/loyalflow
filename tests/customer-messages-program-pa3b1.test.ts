@@ -40,7 +40,7 @@ test("Settings retains profile and operations but no customer messages", () => {
   assert.match(settingsForm, /actions\.operations/);
 });
 
-test("message form preserves fields, pending state, feedback, and localization", () => {
+test("message form preserves Owner automatic fields, pending state, feedback, and localization", () => {
   for (const field of [
     "whatsappWelcomeMessage",
     "whatsappBalanceMessage",
@@ -52,8 +52,9 @@ test("message form preserves fields, pending state, feedback, and localization",
   assert.match(messageForm, /aria-live="polite"/);
   assert.match(messageForm, /required/);
   assert.match(messageForm, /maxLength=\{1500\}/);
-  assert.match(messageForm, /قوالب واتساب اليدوية/);
-  assert.match(messageForm, /Manual WhatsApp templates/);
+  assert.match(messageForm, /رسائل واتساب التلقائية/);
+  assert.match(messageForm, /Automatic WhatsApp messages/);
+  assert.match(messageForm, /data-automatic-whatsapp-owner-messages/);
 });
 
 test("customer message action remains domain scoped and returns to Program", () => {
