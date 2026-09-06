@@ -16,6 +16,17 @@ test("Pilot receipt completes pending Owner launch and direct re-entry", () => {
   assert.match(browser, /new RegExp\(`\/businesses\/\$\{businessSlug\}\$`\)/);
 });
 
+test("Pilot receipt accepts a secure public Trial invitation and persists seven days", () => {
+  const browser = source("tests/browser/owner-onboarding-mobile.spec.ts");
+
+  assert.match(browser, /seedPublicTrialOwnerInvitation/);
+  assert.match(browser, /\/accept-owner-invitation\?token=/);
+  assert.match(browser, /name: "Continue setup", exact: true/);
+  assert.match(browser, /\/login\\\?invitation=accepted/);
+  assert.match(browser, /subscriptionLifecycleState/);
+  assert.match(browser, /7 \* 24 \* 60 \* 60 \* 1000/);
+});
+
 test("Pilot receipt stays isolated and cleanup owns the launched Business", () => {
   const browser = source("tests/browser/owner-onboarding-mobile.spec.ts");
   const fixtures = source("scripts/prepare-final-uat-fixtures.ts");
