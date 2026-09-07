@@ -52,7 +52,7 @@ test("U8 keeps tenant-scoped engines, Scan operations, deterministic recovery, a
 
 test("U8 uses truthful campaign language and responsive bilingual accessible foundations", () => {
   const campaign = source("components/campaign-builder.tsx");
-  assert.match(campaign, /Review audience and content before copying/);
+  assert.match(campaign, /same saved business message with no extra copy/);
   assert.match(campaign, /WhatsApp draft/);
   assert.doesNotMatch(campaign, />[^<]*(Sent|Delivered)[^<]*</);
   assert.match(shell, /language === "AR" \? "rtl" : "ltr"/);

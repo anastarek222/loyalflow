@@ -4,52 +4,30 @@ import test from "node:test";
 
 import { getWhatsAppProviderReadiness } from "../lib/server/integrations/whatsapp-readiness";
 
-const requiredWhatsAppProviderEnv = [
-  "WHATSAPP_GRAPH_API_VERSION",
-  "WHATSAPP_TEMPLATE_WELCOME_AR",
-  "WHATSAPP_TEMPLATE_WELCOME_EN",
-  "WHATSAPP_TEMPLATE_BALANCE_AR",
-  "WHATSAPP_TEMPLATE_BALANCE_EN",
-  "WHATSAPP_TEMPLATE_REWARD_READY_AR",
-  "WHATSAPP_TEMPLATE_REWARD_READY_EN",
-  "WHATSAPP_TEMPLATE_REDEEMED_AR",
-  "WHATSAPP_TEMPLATE_REDEEMED_EN",
-] as const;
+const requiredWhatsAppProviderEnv = ["WHATSAPP_GRAPH_API_VERSION"] as const;
 
-test("WhatsApp readiness fails closed when provider delivery configuration is absent", () => {
+test("WhatsApp deployment readiness fails closed when Graph API configuration is absent", () => {
   const readiness = getWhatsAppProviderReadiness({});
 
   assert.equal(readiness.providerReady, false);
   assert.equal(readiness.graphApiVersionConfigured, false);
-  assert.equal(readiness.templatesReady, false);
-  assert.equal(readiness.globalSenderReady, false);
+  assert.equal(readiness.templatesReady, null);
+  assert.equal(readiness.templateReadinessScope, "business");
   assert.deepEqual(readiness.missingProviderConfig, requiredWhatsAppProviderEnv);
-  assert.deepEqual(readiness.missingGlobalSenderConfig, [
-    "WHATSAPP_PHONE_NUMBER_ID",
-    "WHATSAPP_ACCESS_TOKEN",
-  ]);
 });
 
-test("WhatsApp readiness distinguishes provider templates from sender credentials", () => {
-  const providerOnly = Object.fromEntries(
-    requiredWhatsAppProviderEnv.map((name) => [name, `configured-${name}`]),
-  );
+test("WhatsApp deployment readiness separates Graph API from business-scoped templates and sender credentials", () => {
+  const providerOnly = {
+    WHATSAPP_GRAPH_API_VERSION: "v22.0",
+  };
   const providerReadiness = getWhatsAppProviderReadiness(providerOnly);
 
   assert.equal(providerReadiness.providerReady, true);
-  assert.equal(providerReadiness.templatesReady, true);
-  assert.equal(providerReadiness.globalSenderReady, false);
-
-  const completeReadiness = getWhatsAppProviderReadiness({
-    ...providerOnly,
-    WHATSAPP_PHONE_NUMBER_ID: "1234567890",
-    WHATSAPP_ACCESS_TOKEN: "test-access-token",
-  });
-  assert.equal(completeReadiness.providerReady, true);
-  assert.equal(completeReadiness.globalSenderReady, true);
+  assert.equal(providerReadiness.templatesReady, null);
+  assert.equal(providerReadiness.templateReadinessScope, "business");
 });
 
-test("production environment template documents Custom Card and WhatsApp runtime dependencies", () => {
+test("production environment template documents Custom Card and current WhatsApp runtime dependencies", () => {
   const envExample = readFileSync(".env.example", "utf8");
 
   assert.match(envExample, /^BLOB_READ_WRITE_TOKEN=/m);
@@ -57,13 +35,15 @@ test("production environment template documents Custom Card and WhatsApp runtime
   for (const name of requiredWhatsAppProviderEnv) {
     assert.match(envExample, new RegExp(`^${name}=`, "m"));
   }
-  assert.match(envExample, /^WHATSAPP_PHONE_NUMBER_ID=/m);
-  assert.match(envExample, /^WHATSAPP_ACCESS_TOKEN=/m);
+  assert.doesNotMatch(envExample, /^WHATSAPP_PHONE_NUMBER_ID=/m);
+  assert.doesNotMatch(envExample, /^WHATSAPP_ACCESS_TOKEN=/m);
   assert.match(envExample, /^WHATSAPP_WEBHOOK_VERIFY_TOKEN=/m);
   assert.match(envExample, /^WHATSAPP_APP_SECRET=/m);
+  assert.doesNotMatch(envExample, /^WHATSAPP_TEMPLATE_/m);
+  assert.match(envExample, /persisted per Business\/event\/language/);
 });
 
-test("business WhatsApp delivery requires a business-scoped sender credential", () => {
+test("business WhatsApp delivery requires a business-scoped WABA, sender credential and template binding", () => {
   const whatsappCloud = readFileSync(
     "lib/server/integrations/whatsapp-cloud.ts",
     "utf8",
@@ -73,29 +53,47 @@ test("business WhatsApp delivery requires a business-scoped sender credential", 
     whatsappCloud,
     /getBusinessWhatsAppCredential\(\s*prisma,\s*businessId,?\s*\)/,
   );
+  assert.match(whatsappCloud, /if \(!businessCredential\.wabaId\)/);
+  assert.match(whatsappCloud, /getBusinessWhatsAppTemplateBinding\(prisma/);
+  assert.match(whatsappCloud, /binding\.wabaId !== businessCredential\.wabaId/);
+  assert.match(whatsappCloud, /WHATSAPP_META_TEMPLATE_ACCOUNT_MISMATCH/);
+  assert.match(whatsappCloud, /WHATSAPP_META_TEMPLATE_NOT_APPROVED/);
+  assert.match(whatsappCloud, /WHATSAPP_META_TEMPLATE_CONTENT_MISMATCH/);
   assert.match(
     whatsappCloud,
     /if \(!businessCredential\) \{[\s\S]*?reason: "WHATSAPP_NOT_CONFIGURED"/,
   );
   assert.doesNotMatch(whatsappCloud, /process\.env\.WHATSAPP_PHONE_NUMBER_ID/);
   assert.doesNotMatch(whatsappCloud, /process\.env\.WHATSAPP_ACCESS_TOKEN/);
+  assert.doesNotMatch(whatsappCloud, /WHATSAPP_TEMPLATE_/);
 });
 
-test("WhatsApp settings report business-scoped delivery readiness", () => {
+test("WhatsApp settings report fail-closed WABA and business-scoped automatic delivery readiness", () => {
   const page = readFileSync(
     "app/businesses/[slug]/settings/whatsapp/page.tsx",
     "utf8",
   );
+  const actions = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
+    "utf8",
+  );
 
   assert.match(page, /getWhatsAppProviderReadiness\(\)/);
-  assert.match(page, /const senderReady = Boolean\(credential\);/);
+  assert.match(page, /getBusinessWhatsAppAutomaticReadiness/);
+  assert.match(page, /const senderReady = Boolean\(credential\?\.wabaId\);/);
   assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
   assert.match(
     page,
-    /const deliveryReady = providerReadiness\.providerReady && senderReady/,
+    /providerReadiness\.providerReady\s*&&\s*senderReady\s*&&\s*automaticTemplateReadiness\.ready/,
   );
-  assert.match(page, /providerReadiness\.missingProviderConfig\.join/);
-  assert.match(page, /Ready for automatic delivery/);
-  assert.match(page, /Sender credentials saved · delivery setup incomplete/);
-  assert.match(page, /A server-wide sender will not be used as a fallback\./);
+  assert.doesNotMatch(page, /providerReadiness\.missingProviderConfig\.join/);
+  assert.match(page, /Automatic delivery is still being prepared/);
+  assert.match(page, /Meta setup and required message approvals are complete/);
+  assert.match(page, /WhatsApp message approval is incomplete/);
+  assert.match(page, /No automatic WhatsApp message is enabled/);
+  assert.match(page, /binding\?\.wabaId === credential\.wabaId/);
+  assert.match(page, /name="wabaId"/);
+  assert.match(page, /Submit current copy/);
+  assert.match(page, /Refresh from Meta/);
+  assert.match(actions, /wabaId: formData\.get\("wabaId"\)/);
 });

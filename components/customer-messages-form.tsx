@@ -29,8 +29,8 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
           ? "جارٍ الحفظ…"
           : "Saving…"
         : language === "AR"
-          ? "حفظ رسائل العملاء"
-          : "Save customer messages"}
+          ? "حفظ رسائل واتساب"
+          : "Save WhatsApp messages"}
     </button>
   );
 }
@@ -55,7 +55,7 @@ export function CustomerMessagesForm({
     ],
     [
       "whatsappRewardMessage",
-      t("رسالة جاهزية المكافأة", "Reward-ready message"),
+      t("رسالة المكافأة", "Reward message"),
       messages.whatsappRewardMessage,
     ],
   ] as const;
@@ -65,6 +65,7 @@ export function CustomerMessagesForm({
       action={action}
       className="rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-8"
       data-customer-messages-form
+      data-whatsapp-owner-messages
     >
       {status ? (
         <p
@@ -77,22 +78,31 @@ export function CustomerMessagesForm({
           }`}
         >
           {status === "saved"
-            ? t("تم حفظ رسائل العملاء.", "Customer messages saved.")
+            ? t(
+                "تم حفظ رسائل واتساب الخاصة بالنشاط.",
+                "WhatsApp messages for this business were saved.",
+              )
             : status === "subscription-restricted"
               ? t(
-                  "لا يمكن تعديل رسائل العملاء في حالة الاشتراك الحالية.",
-                  "Customer messages cannot be changed in the current subscription state.",
+                  "لا يمكن تعديل رسائل واتساب في حالة الاشتراك الحالية.",
+                  "WhatsApp messages cannot be changed in the current subscription state.",
                 )
-              : t("راجع رسائل العملاء.", "Review the customer messages.")}
+              : t("راجع رسائل واتساب.", "Review the WhatsApp messages.")}
         </p>
       ) : null}
       <h2 className="text-xl font-black text-foreground">
-        {t("رسائل العملاء", "Customer messages")}
+        {t("رسائل واتساب", "WhatsApp messages")}
       </h2>
-      <p className="mt-1 text-sm text-foreground-subtle">
+      <p className="mt-1 text-sm leading-6 text-foreground-subtle">
         {t(
-          "يتم التحقق من هذه القوالب فقط عند حفظ هذا القسم.",
-          "These templates are validated only when this section is saved.",
+          "دي هي نفس الرسائل في الحالتين: لو الموظف ضغط إرسال يدوي، Tanee يفتح نفس النص للعميل؛ ولو الإرسال التلقائي جاهز، Tanee يرسل نفس النص عند حدوث الحالة المناسبة. مفيش نسخة Manual ونسخة Automatic منفصلين، وTanee لا يؤلف نص بديل من عنده.",
+          "These are the single source of truth for both modes. A manual send uses this exact saved copy, and automatic delivery uses the same copy when the matching event occurs. There are no separate Manual and Automatic message versions, and Tanee never invents substitute wording.",
+        )}
+      </p>
+      <p className="mt-2 text-xs leading-5 text-foreground-muted">
+        {t(
+          "سيب أي رسالة فاضية لو مش عايز الحالة دي تبعت تلقائيًا. تفعيل الإرسال التلقائي وحالة موافقة Meta تتم إدارتهم من الإعدادات ← واتساب.",
+          "Leave a message blank to disable automatic delivery for that case. Automatic delivery readiness and Meta approval are managed in Settings → WhatsApp.",
         )}
       </p>
       <div className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/10 bg-primary-subtle/50 p-4 text-sm text-primary">
@@ -117,9 +127,7 @@ export function CustomerMessagesForm({
               defaultValue={value}
               dir="auto"
               rows={8}
-              minLength={1}
               maxLength={1500}
-              required
               className={inputClass}
             />
           </label>

@@ -18,35 +18,25 @@ async function findConsentTargets(
   transaction: Prisma.TransactionClient,
   request: WhatsAppOptOutRequest,
 ) {
-  const fallbackPhoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim() ?? "";
-
   return transaction.$queryRaw<WhatsAppConsentTarget[]>`
     SELECT
       customer."id",
       customer."businessId"
     FROM "Customer" AS customer
-    LEFT JOIN "BusinessWhatsAppCredential" AS credential
+    INNER JOIN "BusinessWhatsAppCredential" AS credential
       ON credential."businessId" = customer."businessId"
     WHERE regexp_replace(customer."phone", '[^0-9]', '', 'g') = ${request.senderPhone}
       AND customer."whatsappOptInAt" IS NOT NULL
-      AND (
-        credential."phoneNumberId" = ${request.phoneNumberId}
-        OR (
-          credential."businessId" IS NULL
-          AND ${fallbackPhoneNumberId} <> ''
-          AND ${request.phoneNumberId} = ${fallbackPhoneNumberId}
-        )
-      )
+      AND credential."phoneNumberId" = ${request.phoneNumberId}
     LIMIT 50
   `;
 }
 
 /**
  * Applies explicit customer opt-out messages received from Meta's signed
- * WhatsApp webhook. Consent is tenant-scoped when a Business has its own sender
- * credential. Businesses using the shared fallback sender are treated as one
- * sender identity, so STOP revokes all matching opted-in Tanee memberships for
- * that customer phone on that sender.
+ * WhatsApp webhook. Consent revocation is scoped to Businesses whose explicit
+ * WhatsApp sender credential matches the webhook phone-number ID. There is no
+ * server-wide sender fallback: an unknown sender identity revokes nothing.
  *
  * The worker already re-checks whatsappOptInAt immediately before every send,
  * so clearing consent here also blocks previously queued notifications.

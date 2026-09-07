@@ -45,3 +45,20 @@ test("renders a staff-reviewed win-back message without sending it", () => {
     "Hello Mona, 3 visits: https://app.example.com/card/token"
   );
 });
+
+test("blank Owner balance copy produces no win-back WhatsApp draft", () => {
+  assert.equal(
+    getWinBackMessage({
+      customer: "Mona",
+      business: "Loyal Cafe",
+      balance: 3,
+      unit: "visits",
+      reward: "coffee",
+      cardLink: "https://app.example.com/card/token",
+      remaining: 2,
+      loyaltyMode: "VISITS",
+      template: "   ",
+    }),
+    "",
+  );
+});

@@ -47,8 +47,8 @@ Before a Vercel production deployment:
 
 1. Set all required variables for Production and Preview as appropriate.
 2. Confirm `NEXT_PUBLIC_APP_URL` points to the production HTTPS domain.
-3. Run `npm run db:migrate:status` against the intended database. Apply migrations only through `npm run db:migrate:deploy`; never use `migrate dev`, `db push`, or `migrate reset` in production.
-4. Run `npm run test`, `npm run typecheck`, `npm run lint`, and `npm run build`.
+3. Run `pnpm run db:migrate:status` against the intended database. Apply migrations only through `pnpm run db:migrate:deploy`; never use `migrate dev`, `db push`, or `migrate reset` in production.
+4. Run `pnpm test`, `pnpm run typecheck`, `pnpm run validate:workspace`, `pnpm run lint`, and `pnpm run build`.
 5. Confirm the Vercel build log generated Prisma Client and completed the production build.
 6. Perform the isolated consolidated owner, manager, staff, viewer, customer,
    and super-admin UAT in `docs/CONSOLIDATED_UAT_RUNBOOK.md`; do not use
@@ -59,10 +59,10 @@ Before a Vercel production deployment:
 See `docs/PRODUCTION_DEPLOYMENT.md` for the required backup, migration,
 readiness, smoke-test, rate-limit, and incident sequence.
 
-## Current external blocker
+## Runtime evidence boundary
 
-As of 2026-07-20, the configured Neon hostname does not resolve from this
-agent workspace (`ENOTFOUND`). The operator's local `loyalflow_test` terminal
-has separately verified the migration history. The sandbox limitation prevents
-this agent from claiming a fresh live migration result; it does not authorize a
-migration retry, database reset, or schema change.
+Repository validation proves source and disposable-database behavior only.
+Actual Preview, Staging, and Production variable scope, database identity, and
+provider readiness must be verified against the selected deployment at its
+exact release SHA without printing values. A historical connectivity failure
+or an earlier successful deployment is not current-environment evidence.

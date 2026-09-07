@@ -5,7 +5,8 @@
 - Repository: `anastarek222/loyalflow`
 - Working/integration branch: `staging`
 - Final Product Z1–Z14: complete at source/code/automated-test/CI/merge level
-- Current authorized phase: Final Visual / brand-customization preparation and bounded visual implementation
+- Current authorized phase: Pre-Frontend Product / Backend / Integrations closeout in Draft PR #507
+- Stitch / Final Visual implementation: blocked until the formal Pre-Frontend Freeze
 - Current commercial model: Provider-assisted V1
 - Release-gate authority: GitHub issue #206
 - Real Closed Beta authority: GitHub issue #103
@@ -32,7 +33,16 @@ The repository already contains the product foundations needed for Final Visual 
 
 ## Current developer scope
 
-Final Visual work may improve:
+Draft PR #507 is the current pre-frontend integration lane. Close existing
+product logic, permissions, operational flows, integrations, functional mobile
+behavior, and release governance before declaring the freeze. Parallel work
+must use non-overlapping files and be rebased onto the latest exact #507 head
+before integration.
+
+No #507 merge to `staging`, and no Production mutation, is implied by this
+handoff.
+
+After the freeze, Final Visual work may improve:
 
 - brand presentation once approved assets/values are supplied;
 - marketing layout and content presentation;

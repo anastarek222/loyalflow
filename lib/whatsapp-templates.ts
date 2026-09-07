@@ -1,23 +1,10 @@
+// Automatic WhatsApp copy is intentionally Owner-authored per Business.
+// These legacy fallback keys remain for callers that need a string value, but
+// they must never introduce platform-authored message wording.
 export const DEFAULT_WHATSAPP_TEMPLATES = {
-  welcome:
-    "أهلاً {customer} 👋\n\n" +
-    "تم إنشاء كارت الولاء الخاص بك لدى {business}.\n" +
-    "رصيدك الحالي: {balance} {unit}.\n\n" +
-    "تابع رصيدك ومكافآتك من هنا:\n{card_link}",
-
-  balance:
-    "أهلاً {customer} 👋\n\n" +
-    "تم تحديث رصيد الولاء الخاص بك لدى {business}.\n" +
-    "رصيدك الحالي: {balance} {unit}.\n" +
-    "متبقي {remaining} للحصول على {reward}.\n\n" +
-    "تابع كارتك من هنا:\n{card_link}",
-
-  reward:
-    "مبروك يا {customer} 🎁\n\n" +
-    "أصبحت مكافأتك متاحة لدى {business}.\n" +
-    "المكافأة: {reward}.\n" +
-    "رصيدك الحالي: {balance} {unit}.\n\n" +
-    "افتح كارت الولاء من هنا:\n{card_link}",
+  welcome: "",
+  balance: "",
+  reward: "",
 } as const;
 
 type WhatsAppTemplateContext = {
@@ -30,11 +17,20 @@ type WhatsAppTemplateContext = {
   remaining: number;
 };
 
-export function renderWhatsAppTemplate(
-  template: string,
-  context: WhatsAppTemplateContext
-) {
-  const replacements = {
+const META_TEMPLATE_EXAMPLE_BY_TOKEN = {
+  customer: "Ali",
+  business: "Tanee Demo",
+  balance: "12",
+  unit: "points",
+  reward: "Free coffee",
+  card_link: "https://example.com/card/demo",
+  remaining: "3",
+} as const;
+
+type WhatsAppTemplateToken = keyof typeof META_TEMPLATE_EXAMPLE_BY_TOKEN;
+
+function getWhatsAppTemplateReplacements(context: WhatsAppTemplateContext) {
+  return {
     customer: context.customer,
     business: context.business,
     balance: String(context.balance),
@@ -43,6 +39,13 @@ export function renderWhatsAppTemplate(
     card_link: context.cardLink,
     remaining: String(context.remaining),
   };
+}
+
+export function renderWhatsAppTemplate(
+  template: string,
+  context: WhatsAppTemplateContext
+) {
+  const replacements = getWhatsAppTemplateReplacements(context);
 
   return template.replace(
     /\{([a-z_]+)\}/g,
@@ -63,7 +66,78 @@ export function renderWhatsAppTemplate(
   );
 }
 
-function normalizeWhatsAppPhone(
+export function renderWhatsAppTemplateParameters(
+  template: string,
+  context: WhatsAppTemplateContext
+) {
+  const replacements = getWhatsAppTemplateReplacements(context);
+  const parameters: string[] = [];
+
+  template.replace(
+    /\{([a-z_]+)\}/g,
+    (match, key: string) => {
+      if (
+        Object.prototype.hasOwnProperty.call(
+          replacements,
+          key
+        )
+      ) {
+        parameters.push(
+          replacements[
+            key as keyof typeof replacements
+          ]
+        );
+      }
+
+      return match;
+    }
+  );
+
+  return parameters;
+}
+
+export function compileWhatsAppTemplateForMeta(template: string) {
+  const invalidTokens = new Set<string>();
+  const exampleParameters: string[] = [];
+  let parameterIndex = 0;
+
+  const bodyText = template.trim().replace(
+    /\{([^{}]+)\}/g,
+    (match, rawKey: string) => {
+      const key = rawKey.trim();
+      if (
+        !Object.prototype.hasOwnProperty.call(
+          META_TEMPLATE_EXAMPLE_BY_TOKEN,
+          key,
+        )
+      ) {
+        invalidTokens.add(key || match);
+        return match;
+      }
+
+      parameterIndex += 1;
+      exampleParameters.push(
+        META_TEMPLATE_EXAMPLE_BY_TOKEN[key as WhatsAppTemplateToken],
+      );
+      return `{{${parameterIndex}}}`;
+    },
+  );
+
+  if (invalidTokens.size > 0) {
+    return {
+      ok: false,
+      invalidTokens: [...invalidTokens],
+    } as const;
+  }
+
+  return {
+    ok: true,
+    bodyText,
+    exampleParameters,
+  } as const;
+}
+
+export function normalizeWhatsAppPhone(
   phone: string
 ) {
   let digits =

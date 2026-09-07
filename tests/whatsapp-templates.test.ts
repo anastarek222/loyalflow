@@ -4,7 +4,9 @@ import test from "node:test";
 import {
   buildWhatsAppUrl,
   DEFAULT_WHATSAPP_TEMPLATES,
+  normalizeWhatsAppPhone,
   renderWhatsAppTemplate,
+  renderWhatsAppTemplateParameters,
 } from "../lib/whatsapp-templates";
 
 const context = {
@@ -17,28 +19,50 @@ const context = {
   cardLink: "https://app.loyalflow.test/card/public-token",
 };
 
-test("Arabic WhatsApp templates preserve UTF-8 and dynamic LTR values", () => {
-  for (const template of Object.values(DEFAULT_WHATSAPP_TEMPLATES)) {
-    const message = renderWhatsAppTemplate(template, context);
+const ownerAuthoredArabicTemplate =
+  "أهلًا {customer} في {business}! رصيدك {balance} {unit}. بطاقتك: {card_link}";
 
-    assert.equal(message.includes("�"), false);
-    assert.equal(
-      /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(message),
-      false,
-    );
+test("automatic WhatsApp defaults never invent platform-authored copy", () => {
+  assert.deepEqual(DEFAULT_WHATSAPP_TEMPLATES, {
+    welcome: "",
+    balance: "",
+    reward: "",
+  });
+});
 
-    assert.match(message, /Ali Mohammed/);
-    assert.match(message, /Sprint Group/);
-    assert.match(message, /3020 Monthly subscription/);
-    assert.match(message, /https:\/\/app\.loyalflow\.test\/card\/public-token/);
-  }
+test("Owner-authored Arabic WhatsApp copy preserves UTF-8 and dynamic LTR values", () => {
+  const message = renderWhatsAppTemplate(ownerAuthoredArabicTemplate, context);
+
+  assert.equal(message.includes("�"), false);
+  assert.equal(
+    /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(message),
+    false,
+  );
+
+  assert.match(message, /أهلًا/);
+  assert.match(message, /Ali Mohammed/);
+  assert.match(message, /Sprint Group/);
+  assert.match(message, /3020 Monthly subscription/);
+  assert.match(message, /https:\/\/app\.loyalflow\.test\/card\/public-token/);
+});
+
+test("Meta body parameters contain dynamic token values in occurrence order", () => {
+  assert.deepEqual(
+    renderWhatsAppTemplateParameters(
+      "{customer} — {balance} — {customer} — {card_link}",
+      context,
+    ),
+    [
+      "Ali Mohammed",
+      "3020",
+      "Ali Mohammed",
+      "https://app.loyalflow.test/card/public-token",
+    ],
+  );
 });
 
 test("WhatsApp URL encoding round-trips Arabic and English text exactly", () => {
-  const message = renderWhatsAppTemplate(
-    DEFAULT_WHATSAPP_TEMPLATES.balance,
-    context,
-  );
+  const message = renderWhatsAppTemplate(ownerAuthoredArabicTemplate, context);
 
   const url = buildWhatsAppUrl("+20 101 234 5678", message);
   const parsed = new URL(url);
@@ -48,9 +72,15 @@ test("WhatsApp URL encoding round-trips Arabic and English text exactly", () => 
   assert.equal(parsed.searchParams.get("text"), message);
 });
 
+test("manual and automatic WhatsApp paths share Egyptian international normalization", () => {
+  assert.equal(normalizeWhatsAppPhone("010 1234 5678"), "201012345678");
+  assert.equal(normalizeWhatsAppPhone("0020 1012345678"), "201012345678");
+  assert.equal(normalizeWhatsAppPhone("+20 1012345678"), "201012345678");
+});
+
 test("WhatsApp URL safely supports a missing phone number", () => {
   const message = renderWhatsAppTemplate(
-    DEFAULT_WHATSAPP_TEMPLATES.welcome,
+    "Welcome {customer} to {business}",
     context,
   );
 

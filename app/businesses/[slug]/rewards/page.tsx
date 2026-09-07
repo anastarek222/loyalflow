@@ -210,7 +210,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
             </label>
             <Field
               name="code"
-              label={language === "AR" ? "الكود (اختياري)" : "Code (optional)"}
+              label={language === "AR" ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)" : "Code (required for promo code rewards)"}
             />
             <label className="text-sm font-semibold text-foreground-muted">
               {language === "AR" ? "الوصف" : "Description"}
@@ -423,7 +423,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                         </label>
                         <Field
                           name="code"
-                          label={language === "AR" ? "الكود" : "Code"}
+                          label={language === "AR" ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)" : "Code (required for promo code rewards)"}
                           defaultValue={reward.code ?? ""}
                         />
                         <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
