@@ -57,10 +57,11 @@ export function getAuthEmailDeliveryEndpoint(
   env: NodeJS.ProcessEnv = process.env,
 ) {
   // Disposable GitHub Actions browser UAT must never send a real external email.
-  // In the exact CI+test combination, delivery is redirected to a loopback-only
-  // sink started by the browser receipt. Production and normal runtime always
-  // retain the real Resend endpoint and cannot opt into this path via env input.
-  if (env.CI === "true" && env.NODE_ENV === "test") {
+  // `next start` correctly runs with NODE_ENV=production, so the browser harness
+  // injects an explicit sink flag only into that disposable local CI server.
+  // Requiring CI plus the private harness flag keeps normal/production runtime
+  // pinned to the real Resend endpoint.
+  if (env.CI === "true" && env.AUTH_EMAIL_CI_SINK === "1") {
     return CI_AUTH_EMAIL_SINK_ENDPOINT;
   }
 
