@@ -42,6 +42,11 @@ const ALLOWED_META_MESSAGE_ORIGINS = new Set([
   "https://web.facebook.com",
 ]);
 
+const EMBEDDED_SIGNUP_FINISH_EVENTS = new Set([
+  "FINISH",
+  "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING",
+]);
+
 function parseEmbeddedSignupEvent(raw: unknown) {
   let payload = raw;
   if (typeof payload === "string") {
@@ -58,7 +63,11 @@ function parseEmbeddedSignupEvent(raw: unknown) {
     event?: unknown;
     data?: unknown;
   };
-  if (event.type !== "WA_EMBEDDED_SIGNUP" || event.event !== "FINISH") {
+  if (
+    event.type !== "WA_EMBEDDED_SIGNUP" ||
+    typeof event.event !== "string" ||
+    !EMBEDDED_SIGNUP_FINISH_EVENTS.has(event.event)
+  ) {
     return null;
   }
   if (!event.data || typeof event.data !== "object") return null;
@@ -80,6 +89,23 @@ function parseEmbeddedSignupEvent(raw: unknown) {
     wabaId: data.waba_id,
     phoneNumberId: data.phone_number_id,
   };
+}
+
+function getEmbeddedSignupExtras() {
+  const flow = process.env.NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_FLOW?.trim().toLowerCase();
+
+  if (flow === "coexistence") {
+    return {
+      setup: {},
+      featureType: "whatsapp_business_app_onboarding",
+    } as const;
+  }
+
+  return {
+    setup: {},
+    featureType: "",
+    sessionInfoVersion: "3",
+  } as const;
 }
 
 export function WhatsAppEmbeddedSignupButton({
@@ -197,11 +223,7 @@ export function WhatsAppEmbeddedSignupButton({
         config_id: configId,
         response_type: "code",
         override_default_response_type: true,
-        extras: {
-          setup: {},
-          featureType: "",
-          sessionInfoVersion: "3",
-        },
+        extras: getEmbeddedSignupExtras(),
       },
     );
   };
