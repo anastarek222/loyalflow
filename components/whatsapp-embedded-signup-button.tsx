@@ -97,7 +97,7 @@ export function WhatsAppEmbeddedSignupButton({
   const phoneRef = useRef<HTMLInputElement>(null);
   const pendingCode = useRef<string | null>(null);
   const pendingIds = useRef<{ wabaId: string; phoneNumberId: string } | null>(null);
-  const [sdkReady, setSdkReady] = useState(Boolean(window.FB));
+  const [sdkReady, setSdkReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
 
