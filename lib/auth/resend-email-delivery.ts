@@ -8,6 +8,7 @@ export const AUTH_EMAIL_MAX_ATTEMPTS = 3;
 const AUTH_EMAIL_BASE_RETRY_MS = 250;
 const AUTH_EMAIL_MAX_RETRY_MS = 2_000;
 const RESEND_EMAIL_ENDPOINT = "https://api.resend.com/emails";
+const CI_AUTH_EMAIL_SINK_ENDPOINT = "http://127.0.0.1:3198/emails";
 
 const mailboxSchema = z.string().trim().email().max(254);
 
@@ -50,6 +51,20 @@ export function createAuthEmailIdempotencyKey(input: Readonly<{
 
 export function isRetryableResendStatus(status: number) {
   return status === 429 || status >= 500;
+}
+
+export function getAuthEmailDeliveryEndpoint(
+  env: NodeJS.ProcessEnv = process.env,
+) {
+  // Disposable GitHub Actions browser UAT must never send a real external email.
+  // In the exact CI+test combination, delivery is redirected to a loopback-only
+  // sink started by the browser receipt. Production and normal runtime always
+  // retain the real Resend endpoint and cannot opt into this path via env input.
+  if (env.CI === "true" && env.NODE_ENV === "test") {
+    return CI_AUTH_EMAIL_SINK_ENDPOINT;
+  }
+
+  return RESEND_EMAIL_ENDPOINT;
 }
 
 function parseRetryAfterMs(value: string | null) {
@@ -104,6 +119,7 @@ export async function sendResendAuthEmail(
   const from = parseAuthEmailSender(resolveTaneeAuthEmailSender());
   const fetchImpl = dependencies.fetchImpl ?? fetch;
   const sleep = dependencies.sleep ?? defaultSleep;
+  const deliveryEndpoint = getAuthEmailDeliveryEndpoint();
 
   const requestInit: RequestInit = {
     method: "POST",
@@ -123,7 +139,7 @@ export async function sendResendAuthEmail(
 
   for (let attempt = 1; attempt <= AUTH_EMAIL_MAX_ATTEMPTS; attempt += 1) {
     try {
-      const response = await fetchImpl(RESEND_EMAIL_ENDPOINT, requestInit);
+      const response = await fetchImpl(deliveryEndpoint, requestInit);
       if (response.ok) return;
 
       if (!isRetryableResendStatus(response.status)) {
