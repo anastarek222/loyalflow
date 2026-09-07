@@ -1,5 +1,7 @@
 type EmbeddedSignupEnvironment = Record<string, string | undefined>;
 
+type WhatsAppEmbeddedSignupMode = "STANDARD" | "COEXISTENCE";
+
 const REQUIRED_EMBEDDED_SIGNUP_CONFIG = [
   "NEXT_PUBLIC_WHATSAPP_META_APP_ID",
   "NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID",
@@ -14,6 +16,7 @@ export class WhatsAppEmbeddedSignupError extends Error {
       | "TOKEN_EXCHANGE_FAILED"
       | "PHONE_VERIFICATION_FAILED"
       | "PHONE_WABA_MISMATCH"
+      | "PHONE_SELECTION_FAILED"
       | "SUBSCRIPTION_FAILED",
   ) {
     super(reason);
@@ -72,7 +75,7 @@ function getPhoneIds(payload: unknown) {
   return data.flatMap((row) => {
     if (!row || typeof row !== "object") return [];
     const id = (row as { id?: unknown }).id;
-    return typeof id === "string" ? [id] : [];
+    return typeof id === "string" && /^\d{5,30}$/.test(id) ? [id] : [];
   });
 }
 
@@ -82,11 +85,40 @@ function providerSuccess(payload: unknown) {
   return success === true || success === "true";
 }
 
+function resolvePhoneNumberId(input: Readonly<{
+  mode: WhatsAppEmbeddedSignupMode;
+  requestedPhoneNumberId?: string;
+  phoneIds: readonly string[];
+}>) {
+  const requested = input.requestedPhoneNumberId?.trim();
+  if (requested) {
+    if (!input.phoneIds.includes(requested)) {
+      throw new WhatsAppEmbeddedSignupError("PHONE_WABA_MISMATCH");
+    }
+    return requested;
+  }
+
+  // Standard Embedded Signup must explicitly identify the selected phone.
+  // Coexistence completion can omit phone_number_id, so resolve it only when
+  // Meta returns exactly one phone for the selected WABA. Anything ambiguous
+  // stays fail-closed instead of guessing which Business number to connect.
+  if (input.mode !== "COEXISTENCE" || input.phoneIds.length !== 1) {
+    throw new WhatsAppEmbeddedSignupError("PHONE_SELECTION_FAILED");
+  }
+
+  const discovered = input.phoneIds[0];
+  if (!discovered) {
+    throw new WhatsAppEmbeddedSignupError("PHONE_SELECTION_FAILED");
+  }
+  return discovered;
+}
+
 export async function completeWhatsAppEmbeddedSignup(
   input: Readonly<{
     authorizationCode: string;
+    mode: WhatsAppEmbeddedSignupMode;
     wabaId: string;
-    phoneNumberId: string;
+    phoneNumberId?: string;
   }>,
   dependencies: Readonly<{
     fetchImpl?: typeof fetch;
@@ -131,9 +163,11 @@ export async function completeWhatsAppEmbeddedSignup(
     throw new WhatsAppEmbeddedSignupError("PHONE_VERIFICATION_FAILED");
   }
   const phoneIds = getPhoneIds(await readProviderJson(phoneResponse));
-  if (!phoneIds.includes(input.phoneNumberId)) {
-    throw new WhatsAppEmbeddedSignupError("PHONE_WABA_MISMATCH");
-  }
+  const phoneNumberId = resolvePhoneNumberId({
+    mode: input.mode,
+    requestedPhoneNumberId: input.phoneNumberId,
+    phoneIds,
+  });
 
   const subscriptionResponse = await fetchImpl(
     `${graphOrigin}/${encodeURIComponent(input.wabaId)}/subscribed_apps`,
@@ -152,7 +186,7 @@ export async function completeWhatsAppEmbeddedSignup(
 
   return {
     wabaId: input.wabaId,
-    phoneNumberId: input.phoneNumberId,
+    phoneNumberId,
     accessToken,
   } as const;
 }
