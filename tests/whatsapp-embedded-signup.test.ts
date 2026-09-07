@@ -142,19 +142,26 @@ test("embedded signup never persists a connection unless Meta app subscription s
   );
 });
 
-test("Connect WhatsApp client keeps provider tokens server-only and accepts only Meta signup finish events", () => {
+test("Connect WhatsApp client keeps provider tokens server-only and supports standard plus coexistence finish events", () => {
   const source = readFileSync(
     "components/whatsapp-embedded-signup-button.tsx",
     "utf8",
   );
+  const envExample = readFileSync(".env.example", "utf8");
 
   assert.match(source, /Connect WhatsApp/);
   assert.match(source, /WA_EMBEDDED_SIGNUP/);
-  assert.match(source, /event\.event !== "FINISH"/);
+  assert.match(source, /"FINISH"/);
+  assert.match(source, /FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING/);
   assert.match(source, /https:\/\/www\.facebook\.com/);
   assert.match(source, /https:\/\/web\.facebook\.com/);
   assert.match(source, /response_type: "code"/);
   assert.match(source, /override_default_response_type: true/);
+  assert.match(source, /NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_FLOW/);
+  assert.match(source, /flow === "coexistence"/);
+  assert.match(source, /featureType: "whatsapp_business_app_onboarding"/);
+  assert.match(source, /sessionInfoVersion: "3"/);
+  assert.match(envExample, /NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_FLOW=""/);
   assert.doesNotMatch(source, /accessToken|access_token/);
   assert.doesNotMatch(source, /localStorage|sessionStorage/);
 });
