@@ -1,3 +1,4 @@
+import { WhatsAppEmbeddedSignupButton } from "@/components/whatsapp-embedded-signup-button";
 import { auth } from "@/auth";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { canManageBusiness } from "@/lib/permissions";
@@ -8,11 +9,13 @@ import {
   getBusinessWhatsAppTemplateBindings,
   hashBusinessWhatsAppTemplate,
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
+import { getWhatsAppEmbeddedSignupReadiness } from "@/lib/server/integrations/whatsapp-embedded-signup";
 import { getWhatsAppProviderReadiness } from "@/lib/server/integrations/whatsapp-readiness";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import {
+  completeBusinessWhatsAppEmbeddedSignupAction,
   manageBusinessWhatsAppTemplateAction,
   updateBusinessWhatsAppConnectionAction,
 } from "../whatsapp-actions";
@@ -75,15 +78,24 @@ export default async function BusinessWhatsAppSettingsPage({
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const providerReadiness = getWhatsAppProviderReadiness();
+  const embeddedSignupReadiness = getWhatsAppEmbeddedSignupReadiness();
+  const embeddedSignupAppId =
+    process.env.NEXT_PUBLIC_WHATSAPP_META_APP_ID?.trim() ?? "";
+  const embeddedSignupConfigId =
+    process.env.NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID?.trim() ?? "";
+  const graphApiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim() ?? "";
   const senderReady = Boolean(credential?.wabaId);
   const deliveryReady =
     providerReadiness.providerReady &&
     senderReady &&
     automaticTemplateReadiness.ready;
+
   const updateConnection = updateBusinessWhatsAppConnectionAction.bind(
     null,
     business.slug,
   );
+  const completeEmbeddedSignup =
+    completeBusinessWhatsAppEmbeddedSignupAction.bind(null, business.slug);
   const manageTemplate = manageBusinessWhatsAppTemplateAction.bind(
     null,
     business.slug,
@@ -92,11 +104,11 @@ export default async function BusinessWhatsAppSettingsPage({
   const statusMessage =
     query.whatsapp === "connected"
       ? t(
-          "تم حفظ بيانات WhatsApp وWABA بأمان.",
-          "WhatsApp sender and WABA details were saved securely.",
+          "تم ربط WhatsApp بالنشاط بنجاح.",
+          "WhatsApp was connected to this business successfully.",
         )
       : query.whatsapp === "disconnected"
-        ? t("تم فصل بيانات مرسل WhatsApp.", "WhatsApp sender credentials disconnected.")
+        ? t("تم فصل WhatsApp عن النشاط.", "WhatsApp was disconnected from this business.")
         : query.whatsappTemplate === "approved"
           ? t("Meta تؤكد أن القالب معتمد.", "Meta confirms that the template is approved.")
           : query.whatsappTemplate === "pending"
@@ -106,25 +118,41 @@ export default async function BusinessWhatsAppSettingsPage({
               : query.whatsappTemplate === "unknown"
                 ? t("تمت مزامنة القالب لكن Meta أعادت حالة غير معروفة؛ الإرسال متوقف احتياطيًا.", "The template synced but Meta returned an unknown state; delivery remains fail-closed.")
                 : null;
+
   const errorMessage =
     query.whatsapp === "invalid"
       ? t(
-          "تحقق من WABA ID وPhone Number ID وAccess Token ثم حاول مرة أخرى.",
-          "Check the WABA ID, Phone Number ID, and Access Token, then try again.",
+          "راجع بيانات الإعداد المتقدم وحاول مرة أخرى.",
+          "Review the advanced connection details and try again.",
         )
-      : query.whatsapp === "subscription-restricted"
+      : query.whatsapp === "embedded-invalid"
         ? t(
-            "لا يمكن إضافة اتصال أو قالب جديد في حالة الاشتراك الحالية. ما زال بإمكانك فصل الاتصال أو تحديث حالة قالب موجود.",
-            "A new connection or template cannot be added in the current subscription state. You can still disconnect or refresh an existing template state.",
+            "لم تكتمل بيانات الربط القادمة من Meta. حاول ربط WhatsApp مرة أخرى.",
+            "Meta did not return a complete WhatsApp connection. Try connecting again.",
           )
-        : query.whatsappTemplate === "provider-error"
+        : query.whatsapp === "embedded-not-configured"
           ? t(
-              "تعذر إكمال العملية مع Meta. لم يتم اعتماد أي حالة محليًا من عندنا.",
-              "The Meta operation could not be completed. Tanee did not invent or locally approve a provider state.",
+              "إعداد الربط الرسمي مع Meta ما زال قيد التجهيز.",
+              "The official Meta connection setup is still being prepared.",
             )
-          : query.whatsappTemplate === "invalid"
-            ? t("طلب القالب غير صالح.", "The template request is invalid.")
-            : null;
+          : query.whatsapp === "embedded-failed"
+            ? t(
+                "Meta لم تكمل الربط. لم يتم حفظ اتصال جزئي؛ حاول مرة أخرى.",
+                "Meta did not complete the connection. No partial connection was saved; try again.",
+              )
+            : query.whatsapp === "subscription-restricted"
+              ? t(
+                  "لا يمكن إضافة اتصال أو قالب جديد في حالة الاشتراك الحالية. ما زال بإمكانك فصل الاتصال أو تحديث حالة قالب موجود.",
+                  "A new connection or template cannot be added in the current subscription state. You can still disconnect or refresh an existing template state.",
+                )
+              : query.whatsappTemplate === "provider-error"
+                ? t(
+                    "تعذر إكمال العملية مع Meta. لم يتم اعتماد أي حالة محليًا من عندنا.",
+                    "The Meta operation could not be completed. Tanee did not invent or locally approve a provider state.",
+                  )
+                : query.whatsappTemplate === "invalid"
+                  ? t("طلب القالب غير صالح.", "The template request is invalid.")
+                  : null;
 
   const templateRows = [
     {
@@ -164,12 +192,12 @@ export default async function BusinessWhatsAppSettingsPage({
             {t("التكاملات", "Integrations")}
           </p>
           <h1 className="mt-2 text-2xl font-black text-foreground">
-            {t("اتصال WhatsApp", "WhatsApp connection")}
+            {t("WhatsApp", "WhatsApp")}
           </h1>
           <p className="mt-2 text-sm leading-6 text-foreground-muted">
             {t(
-              "اربط WABA ورقم WhatsApp Cloud API الخاصين بهذا النشاط. رمز الوصول يُشفّر على الخادم ولا يتم عرضه مرة أخرى.",
-              "Connect this business's WABA and WhatsApp Cloud API number. The access token is encrypted server-side and is never displayed again.",
+              "اربط WhatsApp مرة واحدة. Tanee يتولى تفاصيل Meta التقنية ويحفظ بيانات الاتصال بأمان لهذا النشاط فقط.",
+              "Connect WhatsApp once. Tanee handles the Meta connection details and stores the connection securely for this business only.",
             )}
           </p>
         </header>
@@ -185,35 +213,35 @@ export default async function BusinessWhatsAppSettingsPage({
           </p>
         ) : null}
 
-        <section className="mt-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section
+          className="mt-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
+          data-whatsapp-simple-connection
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-sm font-black text-foreground">
-                {deliveryReady
-                  ? t("جاهز للإرسال التلقائي", "Ready for automatic delivery")
-                  : credential
-                    ? !credential.wabaId
-                      ? t("بيانات قديمة · WABA ID مطلوب", "Legacy connection · WABA ID required")
-                      : automaticTemplateReadiness.hasEnabledMessages
-                        ? t(
-                            "بيانات المرسل محفوظة · اعتماد القالب غير مكتمل",
-                            "Sender credentials saved · template approval incomplete",
-                          )
-                        : t(
-                            "بيانات المرسل محفوظة · لا توجد رسائل تلقائية مفعلة",
-                            "Sender credentials saved · no automatic messages enabled",
-                          )
-                    : t("غير جاهز للإرسال", "Not ready for delivery")}
-              </p>
-              <p className="mt-1 text-xs text-foreground-muted">
                 {credential
-                  ? `${t("Phone Number ID", "Phone Number ID")}: ${credential.phoneNumberId}${credential.wabaId ? ` · WABA ID: ${credential.wabaId}` : ""}`
+                  ? t("WhatsApp متصل", "WhatsApp connected")
+                  : t("اربط رقم النشاط", "Connect your business number")}
+              </p>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-foreground-muted">
+                {credential
+                  ? deliveryReady
+                    ? t(
+                        "الاتصال والرسائل التلقائية جاهزان.",
+                        "The connection and automatic messages are ready.",
+                      )
+                    : t(
+                        "الاتصال محفوظ. أكمل اعتماد الرسائل أدناه لتشغيل كل الحالات التلقائية المفعلة.",
+                        "The connection is saved. Complete message approval below to enable every automatic case you use.",
+                      )
                   : t(
-                      "احفظ بيانات مرسل خاصة بهذا النشاط لتفعيل الإرسال. لن يتم استخدام مرسل عام بدلًا منها.",
-                      "Save sender credentials for this business to enable delivery. A server-wide sender will not be used as a fallback.",
+                      "اضغط Connect WhatsApp وأكمل خطوات Meta. لن تحتاج لإدخال Phone Number ID أو WABA ID أو Access Token بنفسك.",
+                      "Press Connect WhatsApp and complete Meta's steps. You do not need to enter a Phone Number ID, WABA ID, or Access Token yourself.",
                     )}
               </p>
             </div>
+
             {credential ? (
               <form action={updateConnection}>
                 <button
@@ -222,28 +250,46 @@ export default async function BusinessWhatsAppSettingsPage({
                   value="disconnect"
                   className="min-h-10 rounded-xl border border-danger/30 px-4 text-sm font-bold text-danger"
                 >
-                  {t("فصل الاتصال", "Disconnect")}
+                  {t("فصل WhatsApp", "Disconnect WhatsApp")}
                 </button>
               </form>
             ) : null}
           </div>
 
+          {!credential ? (
+            <div className="mt-5">
+              <WhatsAppEmbeddedSignupButton
+                language={language}
+                appId={embeddedSignupAppId}
+                configId={embeddedSignupConfigId}
+                graphApiVersion={graphApiVersion}
+                enabled={embeddedSignupReadiness.ready}
+                action={completeEmbeddedSignup}
+              />
+              {!embeddedSignupReadiness.ready ? (
+                <p className="mt-3 text-xs leading-5 text-foreground-muted">
+                  {t(
+                    "زر الربط الرسمي موجود في Tanee، ويبدأ العمل بمجرد اكتمال إعداد تطبيق Meta الخاص بـTanee.",
+                    "The official connection flow is built into Tanee and becomes available as soon as Tanee's Meta app setup is completed.",
+                  )}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {!providerReadiness.providerReady ? (
             <div className="mt-5 rounded-xl border border-warning/30 bg-warning-subtle p-4 text-sm leading-6 text-foreground">
               <p className="font-black">
                 {t(
-                  "إعداد WhatsApp على الخادم غير مكتمل.",
-                  "Server-side WhatsApp delivery configuration is incomplete.",
+                  "الإرسال التلقائي ما زال قيد التجهيز.",
+                  "Automatic delivery is still being prepared.",
                 )}
               </p>
               <p className="mt-1 text-foreground-muted">
                 {t(
-                  "لن تعمل الرسائل التلقائية حتى يتم ضبط إصدار Graph API. أسماء القوالب وحالة اعتمادها مرتبطة بكل نشاط وWABA ويتم التحقق منها من Meta والبيانات المحفوظة.",
-                  "Automatic messages cannot be delivered until the Graph API version is configured. Template names and approval state are scoped to each business and WABA and verified from Meta and persisted provider state.",
+                  "اتصال WhatsApp وإرسال الرسائل مرحلتان منفصلتان. Tanee لن يقول إن الإرسال جاهز قبل اكتمال إعداد Meta واعتماد الرسائل المطلوبة.",
+                  "Connecting WhatsApp and enabling automatic delivery are separate steps. Tanee will not report delivery as ready until Meta setup and required message approvals are complete.",
                 )}
-              </p>
-              <p className="mt-2 break-words font-mono text-xs text-foreground-muted">
-                {providerReadiness.missingProviderConfig.join(", ")}
               </p>
             </div>
           ) : null}
@@ -253,8 +299,8 @@ export default async function BusinessWhatsAppSettingsPage({
               <p className="font-black">
                 {automaticTemplateReadiness.hasEnabledMessages
                   ? t(
-                      "اعتماد رسائل WhatsApp التلقائية غير مكتمل.",
-                      "Automatic WhatsApp template approval is incomplete.",
+                      "اعتماد رسائل WhatsApp غير مكتمل.",
+                      "WhatsApp message approval is incomplete.",
                     )
                   : t(
                       "لا توجد رسالة WhatsApp تلقائية مفعلة.",
@@ -264,12 +310,12 @@ export default async function BusinessWhatsAppSettingsPage({
               <p className="mt-1 text-foreground-muted">
                 {automaticTemplateReadiness.hasEnabledMessages
                   ? t(
-                      "كل رسالة مفعلة تحتاج قالب Meta معتمدًا لنفس WABA واللغة ويطابق نفس نسخة النص المحفوظة حاليًا. تعديل النص أو تغيير WABA يوقف الإرسال حتى اعتماد النسخة الصحيحة.",
-                      "Every enabled message needs an approved Meta template for the same WABA and language that matches the currently saved copy. Editing the copy or changing WABA pauses delivery until the correct version is approved.",
+                      "كل رسالة مفعلة تحتاج اعتماد Meta لنفس النص الحالي قبل الإرسال التلقائي.",
+                      "Each enabled message needs Meta approval for the current saved copy before automatic delivery.",
                     )
                   : t(
-                      "أضف نصًا واحدًا على الأقل من رسائل Welcome أو Balance Update أو Reward لتفعيل الإرسال التلقائي. ترك الرسالة فارغة يعطل الحدث بشكل مقصود.",
-                      "Add at least one Owner-authored Welcome, Balance Update, or Reward message to enable automatic delivery. Leaving a message blank intentionally disables that event.",
+                      "أضف نصًا واحدًا على الأقل من Welcome أو Balance Update أو Reward. ترك الرسالة فارغة يعطل تلك الحالة فقط.",
+                      "Add at least one Welcome, Balance Update, or Reward message. Leaving a message blank disables only that case.",
                     )}
               </p>
             </div>
@@ -278,65 +324,76 @@ export default async function BusinessWhatsAppSettingsPage({
           {deliveryReady ? (
             <p className="mt-5 rounded-xl border border-success/30 bg-success-subtle p-4 text-sm font-semibold text-success">
               {t(
-                "إصدار Graph API وWABA وبيانات مرسل النشاط واعتماد قوالب الرسائل المفعلة متطابقة مع النسخة الحالية. يظل نجاح التسليم الفعلي معتمدًا على قبول Meta للطلب.",
-                "The Graph API version, WABA, this business's sender credentials, and approvals for all enabled message templates match the current copy. Actual delivery still depends on Meta accepting the request.",
+                "WhatsApp جاهز للإرسال التلقائي للحالات المفعلة.",
+                "WhatsApp is ready for automatic delivery for the enabled cases.",
               )}
             </p>
           ) : null}
 
-          <form action={updateConnection} className="mt-6 grid gap-4">
-            <input type="hidden" name="intent" value="connect" />
-            <label className="text-sm font-bold text-foreground">
-              WABA ID
-              <input
-                name="wabaId"
-                inputMode="numeric"
-                autoComplete="off"
-                required
-                defaultValue={credential?.wabaId ?? ""}
-                className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
-              />
-            </label>
-            <label className="text-sm font-bold text-foreground">
-              Phone Number ID
-              <input
-                name="phoneNumberId"
-                inputMode="numeric"
-                autoComplete="off"
-                required
-                defaultValue={credential?.phoneNumberId ?? ""}
-                className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
-              />
-            </label>
-            <label className="text-sm font-bold text-foreground">
-              Access Token
-              <input
-                name="accessToken"
-                type="password"
-                autoComplete="new-password"
-                required
-                placeholder={t(
-                  "أدخل رمزًا جديدًا؛ لا يتم إظهار الرمز المحفوظ.",
-                  "Enter a new token; the saved token is never revealed.",
-                )}
-                className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
-              />
-            </label>
-            <p className="text-xs leading-5 text-foreground-muted">
+          <details className="mt-6 rounded-xl border border-border bg-surface-subtle p-4" data-whatsapp-advanced-setup>
+            <summary className="cursor-pointer text-sm font-bold text-foreground">
+              {t("إعداد متقدم", "Advanced setup")}
+            </summary>
+            <p className="mt-2 text-xs leading-5 text-foreground-muted">
               {t(
-                "حفظ هذا النموذج يستبدل بيانات الاتصال السابقة. لا يتم تسجيل Access Token في سجلات النشاط أو إعادته إلى المتصفح.",
-                "Saving this form replaces the previous connection details. The Access Token is not written to business logs or returned to the browser.",
+                "استخدم هذه الحقول فقط للدعم أو الإعداد اليدوي المتقدم. المسار الطبيعي هو Connect WhatsApp أعلاه.",
+                "Use these fields only for support or advanced manual setup. The normal path is Connect WhatsApp above.",
               )}
             </p>
-            <button
-              type="submit"
-              className="min-h-12 rounded-xl bg-primary px-4 py-3 font-bold text-white sm:w-fit"
-            >
-              {credential
-                ? t("تحديث بيانات WhatsApp", "Update WhatsApp connection")
-                : t("حفظ بيانات WhatsApp", "Save WhatsApp connection")}
-            </button>
-          </form>
+            <form action={updateConnection} className="mt-4 grid gap-4">
+              <input type="hidden" name="intent" value="connect" />
+              <label className="text-sm font-bold text-foreground">
+                WABA ID
+                <input
+                  name="wabaId"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  required
+                  defaultValue={credential?.wabaId ?? ""}
+                  className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
+                />
+              </label>
+              <label className="text-sm font-bold text-foreground">
+                Phone Number ID
+                <input
+                  name="phoneNumberId"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  required
+                  defaultValue={credential?.phoneNumberId ?? ""}
+                  className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
+                />
+              </label>
+              <label className="text-sm font-bold text-foreground">
+                Access Token
+                <input
+                  name="accessToken"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  placeholder={t(
+                    "أدخل رمزًا جديدًا؛ لا يتم إظهار الرمز المحفوظ.",
+                    "Enter a new token; the saved token is never revealed.",
+                  )}
+                  className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
+                />
+              </label>
+              <p className="text-xs leading-5 text-foreground-muted">
+                {t(
+                  "رمز الوصول يُشفّر على الخادم ولا يتم عرضه مرة أخرى.",
+                  "The access token is encrypted server-side and is never displayed again.",
+                )}
+              </p>
+              <button
+                type="submit"
+                className="min-h-12 rounded-xl border border-border bg-surface px-4 py-3 font-bold text-foreground sm:w-fit"
+              >
+                {credential
+                  ? t("تحديث الإعداد المتقدم", "Update advanced setup")
+                  : t("حفظ الإعداد المتقدم", "Save advanced setup")}
+              </button>
+            </form>
+          </details>
         </section>
 
         <section className="mt-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
@@ -344,12 +401,12 @@ export default async function BusinessWhatsAppSettingsPage({
             {t("Meta Templates", "Meta Templates")}
           </p>
           <h2 className="mt-2 text-xl font-black text-foreground">
-            {t("اعتماد الرسائل التلقائية", "Automatic message approval")}
+            {t("اعتماد رسائل WhatsApp", "WhatsApp message approval")}
           </h2>
           <p className="mt-2 text-sm leading-6 text-foreground-muted">
             {t(
-              `Tanee يرسل النص المحفوظ للـOwner إلى Meta تحت لغة البرنامج الحالية (${business.cardDefaultLanguage}). حالة الاعتماد أدناه تأتي من Meta وليست اختيارًا يدويًا داخل Tanee.`,
-              `Tanee submits the Owner's saved copy to Meta under the current program language (${business.cardDefaultLanguage}). Approval state below comes from Meta and cannot be selected manually in Tanee.`,
+              `Tanee يرسل نفس النص الذي كتبه الـOwner إلى Meta تحت لغة البرنامج الحالية (${business.cardDefaultLanguage}). حالة الاعتماد تأتي من Meta وليست اختيارًا يدويًا داخل Tanee.`,
+              `Tanee submits the same Owner-authored copy to Meta under the current program language (${business.cardDefaultLanguage}). Approval state comes from Meta and cannot be selected manually in Tanee.`,
             )}
           </p>
 
@@ -378,7 +435,7 @@ export default async function BusinessWhatsAppSettingsPage({
                       <p className="mt-1 text-xs text-foreground-muted">
                         {message
                           ? `${t("حالة Meta", "Meta status")}: ${providerStatus}`
-                          : t("الرسالة فارغة؛ هذا الحدث معطل.", "Message is blank; this event is disabled.")}
+                          : t("الرسالة فارغة؛ هذه الحالة معطلة.", "Message is blank; this case is disabled.")}
                       </p>
                       {bindingMatchesCurrent && binding ? (
                         <p className="mt-1 break-all font-mono text-[11px] text-foreground-subtle">
