@@ -1,5 +1,9 @@
+ALTER TABLE "BusinessWhatsAppCredential"
+  ADD COLUMN "wabaId" VARCHAR(80);
+
 CREATE TABLE "BusinessWhatsAppTemplateBinding" (
   "businessId" TEXT NOT NULL,
+  "wabaId" VARCHAR(80),
   "event" VARCHAR(32) NOT NULL,
   "language" VARCHAR(8) NOT NULL,
   "templateName" VARCHAR(512) NOT NULL,
@@ -21,7 +25,7 @@ CREATE TABLE "BusinessWhatsAppTemplateBinding" (
   CONSTRAINT "BusinessWhatsAppTemplateBinding_language_check"
     CHECK ("language" IN ('AR', 'EN')),
   CONSTRAINT "BusinessWhatsAppTemplateBinding_approval_check"
-    CHECK ("approvalStatus" IN ('PENDING', 'APPROVED', 'REJECTED')),
+    CHECK ("approvalStatus" IN ('PENDING', 'APPROVED', 'REJECTED', 'UNKNOWN')),
   CONSTRAINT "BusinessWhatsAppTemplateBinding_content_hash_check"
     CHECK ("contentSha256" ~ '^[0-9a-f]{64}$')
 );

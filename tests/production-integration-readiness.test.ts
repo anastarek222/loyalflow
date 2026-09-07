@@ -57,7 +57,7 @@ test("production environment template documents Custom Card and current WhatsApp
   assert.match(envExample, /persisted per Business\/event\/language/);
 });
 
-test("business WhatsApp delivery requires a business-scoped sender credential and template binding", () => {
+test("business WhatsApp delivery requires a business-scoped WABA, sender credential and template binding", () => {
   const whatsappCloud = readFileSync(
     "lib/server/integrations/whatsapp-cloud.ts",
     "utf8",
@@ -67,7 +67,10 @@ test("business WhatsApp delivery requires a business-scoped sender credential an
     whatsappCloud,
     /getBusinessWhatsAppCredential\(\s*prisma,\s*businessId,?\s*\)/,
   );
+  assert.match(whatsappCloud, /if \(!businessCredential\.wabaId\)/);
   assert.match(whatsappCloud, /getBusinessWhatsAppTemplateBinding\(prisma/);
+  assert.match(whatsappCloud, /binding\.wabaId !== businessCredential\.wabaId/);
+  assert.match(whatsappCloud, /WHATSAPP_META_TEMPLATE_ACCOUNT_MISMATCH/);
   assert.match(whatsappCloud, /WHATSAPP_META_TEMPLATE_NOT_APPROVED/);
   assert.match(whatsappCloud, /WHATSAPP_META_TEMPLATE_CONTENT_MISMATCH/);
   assert.match(
@@ -79,15 +82,19 @@ test("business WhatsApp delivery requires a business-scoped sender credential an
   assert.doesNotMatch(whatsappCloud, /WHATSAPP_TEMPLATE_/);
 });
 
-test("WhatsApp settings report fail-closed business-scoped automatic delivery readiness", () => {
+test("WhatsApp settings report fail-closed WABA and business-scoped automatic delivery readiness", () => {
   const page = readFileSync(
     "app/businesses/[slug]/settings/whatsapp/page.tsx",
     "utf8",
   );
+  const actions = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
+    "utf8",
+  );
 
   assert.match(page, /getWhatsAppProviderReadiness\(\)/);
-  assert.match(page, /getBusinessWhatsAppAutomaticReadiness\(prisma/);
-  assert.match(page, /const senderReady = Boolean\(credential\);/);
+  assert.match(page, /getBusinessWhatsAppAutomaticReadiness/);
+  assert.match(page, /const senderReady = Boolean\(credential\?\.wabaId\);/);
   assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
   assert.match(
     page,
@@ -97,6 +104,9 @@ test("WhatsApp settings report fail-closed business-scoped automatic delivery re
   assert.match(page, /Ready for automatic delivery/);
   assert.match(page, /template approval incomplete/);
   assert.match(page, /no automatic messages enabled/);
-  assert.match(page, /Editing the copy pauses delivery until the new version is approved/);
-  assert.match(page, /A server-wide sender will not be used as a fallback\./);
+  assert.match(page, /changing WABA pauses delivery until the correct version is approved/);
+  assert.match(page, /name="wabaId"/);
+  assert.match(page, /Submit current copy/);
+  assert.match(page, /Refresh from Meta/);
+  assert.match(actions, /wabaId: formData\.get\("wabaId"\)/);
 });

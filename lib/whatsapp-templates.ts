@@ -17,6 +17,18 @@ type WhatsAppTemplateContext = {
   remaining: number;
 };
 
+const META_TEMPLATE_EXAMPLE_BY_TOKEN = {
+  customer: "Ali",
+  business: "Tanee Demo",
+  balance: "12",
+  unit: "points",
+  reward: "Free coffee",
+  card_link: "https://example.com/card/demo",
+  remaining: "3",
+} as const;
+
+type WhatsAppTemplateToken = keyof typeof META_TEMPLATE_EXAMPLE_BY_TOKEN;
+
 function getWhatsAppTemplateReplacements(context: WhatsAppTemplateContext) {
   return {
     customer: context.customer,
@@ -82,6 +94,47 @@ export function renderWhatsAppTemplateParameters(
   );
 
   return parameters;
+}
+
+export function compileWhatsAppTemplateForMeta(template: string) {
+  const invalidTokens = new Set<string>();
+  const exampleParameters: string[] = [];
+  let parameterIndex = 0;
+
+  const bodyText = template.trim().replace(
+    /\{([^{}]+)\}/g,
+    (match, rawKey: string) => {
+      const key = rawKey.trim();
+      if (
+        !Object.prototype.hasOwnProperty.call(
+          META_TEMPLATE_EXAMPLE_BY_TOKEN,
+          key,
+        )
+      ) {
+        invalidTokens.add(key || match);
+        return match;
+      }
+
+      parameterIndex += 1;
+      exampleParameters.push(
+        META_TEMPLATE_EXAMPLE_BY_TOKEN[key as WhatsAppTemplateToken],
+      );
+      return `{{${parameterIndex}}}`;
+    },
+  );
+
+  if (invalidTokens.size > 0) {
+    return {
+      ok: false,
+      invalidTokens: [...invalidTokens],
+    } as const;
+  }
+
+  return {
+    ok: true,
+    bodyText,
+    exampleParameters,
+  } as const;
 }
 
 function normalizeWhatsAppPhone(

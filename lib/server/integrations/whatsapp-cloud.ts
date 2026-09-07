@@ -57,7 +57,7 @@ export function extractWhatsAppProviderMessageId(payload: unknown) {
 
 /**
  * Sends the Owner-authored business message through the exact provider-owned,
- * approved Meta template binding for this Business/event/language/content.
+ * approved Meta template binding for this Business/WABA/event/language/content.
  * Missing/revoked consent is a successful no-op so stale queued jobs can never
  * bypass consent. Missing Owner copy or provider approval is terminal and is
  * never replaced by platform-authored/default wording.
@@ -75,8 +75,6 @@ export async function sendWhatsAppCustomerNotificationSafely(
   }
   const payload = payloadValue;
 
-  // Keep REWARD_REDEEMED structurally readable for legacy queued payloads, but
-  // it is no longer an automatic WhatsApp event and must never reach a sender.
   if (!isAutomaticCustomerMessageEvent(payload.event)) {
     return {
       status: "failure",
@@ -138,6 +136,25 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
 
+  const businessCredential = await getBusinessWhatsAppCredential(
+    prisma,
+    businessId,
+  );
+  if (!businessCredential) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
+  if (!businessCredential.wabaId) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_WABA_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
+
   const binding = await getBusinessWhatsAppTemplateBinding(prisma, {
     businessId,
     event: payload.event,
@@ -147,6 +164,13 @@ export async function sendWhatsAppCustomerNotificationSafely(
     return {
       status: "failure",
       reason: "WHATSAPP_META_TEMPLATE_BINDING_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
+  if (binding.wabaId !== businessCredential.wabaId) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_ACCOUNT_MISMATCH",
       retryable: false,
     };
   }
@@ -179,18 +203,6 @@ export async function sendWhatsAppCustomerNotificationSafely(
   }
 
   const apiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim();
-  const businessCredential = await getBusinessWhatsAppCredential(
-    prisma,
-    businessId,
-  );
-  if (!businessCredential) {
-    return {
-      status: "failure",
-      reason: "WHATSAPP_NOT_CONFIGURED",
-      retryable: false,
-    };
-  }
-
   const phoneNumberId = businessCredential.phoneNumberId;
   let accessToken: string;
   try {

@@ -10,6 +10,7 @@ export const WHATSAPP_TEMPLATE_APPROVAL_STATUSES = [
   "PENDING",
   "APPROVED",
   "REJECTED",
+  "UNKNOWN",
 ] as const;
 
 export type WhatsAppTemplateApprovalStatus =
@@ -17,6 +18,7 @@ export type WhatsAppTemplateApprovalStatus =
 
 export type BusinessWhatsAppTemplateBinding = Readonly<{
   businessId: string;
+  wabaId: string | null;
   event: AutomaticCustomerMessageEvent;
   language: "AR" | "EN";
   templateName: string;
@@ -31,13 +33,13 @@ export type BusinessWhatsAppTemplateBinding = Readonly<{
 
 type BindingClient = Pick<Prisma.TransactionClient, "$queryRaw">;
 
-type OwnerAutomaticMessages = Readonly<{
+export type OwnerAutomaticMessages = Readonly<{
   whatsappWelcomeMessage: string | null;
   whatsappBalanceMessage: string | null;
   whatsappRewardMessage: string | null;
 }>;
 
-function ownerMessageForEvent(
+export function ownerMessageForAutomaticEvent(
   event: AutomaticCustomerMessageEvent,
   messages: OwnerAutomaticMessages,
 ) {
@@ -54,7 +56,7 @@ export function hashBusinessWhatsAppTemplate(template: string) {
   return createHash("sha256").update(template.trim(), "utf8").digest("hex");
 }
 
-async function getBusinessWhatsAppTemplateBindings(
+export async function getBusinessWhatsAppTemplateBindings(
   client: BindingClient,
   input: Readonly<{
     businessId: string;
@@ -64,6 +66,7 @@ async function getBusinessWhatsAppTemplateBindings(
   return client.$queryRaw<BusinessWhatsAppTemplateBinding[]>`
     SELECT
       "businessId",
+      "wabaId",
       "event",
       "language",
       "templateName",
@@ -91,6 +94,7 @@ export async function getBusinessWhatsAppTemplateBinding(
   const rows = await client.$queryRaw<BusinessWhatsAppTemplateBinding[]>`
     SELECT
       "businessId",
+      "wabaId",
       "event",
       "language",
       "templateName",
@@ -114,12 +118,13 @@ export async function getBusinessWhatsAppAutomaticReadiness(
   client: BindingClient,
   input: Readonly<{
     businessId: string;
+    wabaId: string | null;
     language: "AR" | "EN";
     messages: OwnerAutomaticMessages;
   }>,
 ) {
   const enabledEvents = AUTOMATIC_CUSTOMER_MESSAGE_EVENTS.filter(
-    (event) => ownerMessageForEvent(event, input.messages).length > 0,
+    (event) => ownerMessageForAutomaticEvent(event, input.messages).length > 0,
   );
 
   if (enabledEvents.length === 0) {
@@ -135,14 +140,17 @@ export async function getBusinessWhatsAppAutomaticReadiness(
   const bindingByEvent = new Map(bindings.map((binding) => [binding.event, binding]));
   const blockedEvents = enabledEvents.filter((event) => {
     const binding = bindingByEvent.get(event);
-    if (!binding || binding.approvalStatus !== "APPROVED") return true;
+    if (!input.wabaId || !binding || binding.wabaId !== input.wabaId) return true;
+    if (binding.approvalStatus !== "APPROVED") return true;
     if (!binding.templateName.trim() || !binding.templateLanguageCode.trim()) {
       return true;
     }
 
     return (
       binding.contentSha256 !==
-      hashBusinessWhatsAppTemplate(ownerMessageForEvent(event, input.messages))
+      hashBusinessWhatsAppTemplate(
+        ownerMessageForAutomaticEvent(event, input.messages),
+      )
     );
   });
 
