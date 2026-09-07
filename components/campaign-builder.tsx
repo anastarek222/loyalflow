@@ -15,11 +15,9 @@ import { useMemo, useState } from "react";
 
 import CopyLinkButton from "@/components/copy-link-button";
 import {
-  appendCampaignOffer,
   campaignAudiences,
   campaignTriggers,
   getDefaultCampaignAudience,
-  ONE_AWAY_TEMPLATE,
   type CampaignAudience,
   type CampaignTrigger,
 } from "@/lib/campaigns/builder";
@@ -81,7 +79,6 @@ function getTemplate(
     case "REWARD_READY":
       return templates.reward;
     case "ONE_AWAY":
-      return ONE_AWAY_TEMPLATE;
     case "WIN_BACK":
     case "BALANCE_UPDATED":
       return templates.balance;
@@ -105,11 +102,9 @@ export default function CampaignBuilder({
   templates,
   candidates,
   language,
-  simple = false,
 }: CampaignBuilderProps) {
   const [trigger, setTrigger] = useState<CampaignTrigger>("WIN_BACK");
   const [audience, setAudience] = useState<CampaignAudience>("INACTIVE");
-  const [offer, setOffer] = useState("");
   const filteredCandidates = useMemo(
     () =>
       candidates.filter((candidate) => matchesAudience(candidate, audience)),
@@ -125,18 +120,17 @@ export default function CampaignBuilder({
   }
 
   function messageFor(candidate: CampaignCandidate) {
-    return appendCampaignOffer(
-      renderWhatsAppTemplate(template, {
-        customer: candidate.name,
-        business: businessName,
-        balance: candidate.balance,
-        unit: unitName,
-        reward: rewardName,
-        cardLink: candidate.cardLink,
-        remaining: candidate.remaining,
-      }),
-      offer,
-    );
+    const normalizedTemplate = template.trim();
+    if (!normalizedTemplate) return "";
+    return renderWhatsAppTemplate(normalizedTemplate, {
+      customer: candidate.name,
+      business: businessName,
+      balance: candidate.balance,
+      unit: unitName,
+      reward: rewardName,
+      cardLink: candidate.cardLink,
+      remaining: candidate.remaining,
+    });
   }
 
   return (
@@ -210,45 +204,15 @@ export default function CampaignBuilder({
             </span>
           </label>
 
-          {!simple ? (
-            <label className="text-sm font-black text-foreground-muted lg:col-span-2">
-              <span className="flex items-center justify-between gap-3">
-                <span>
-                  {language === "AR"
-                    ? "نص إضافي اختياري"
-                    : "Optional additional copy"}
-                </span>
-                <span
-                  dir="ltr"
-                  className="lf-type-numeric text-xs font-semibold text-foreground-subtle"
-                >
-                  {offer.length}/300
-                </span>
-              </span>
-              <textarea
-                value={offer}
-                onChange={(event) => setOffer(event.target.value.slice(0, 300))}
-                maxLength={300}
-                rows={3}
-                placeholder={
-                  language === "AR"
-                    ? "مثال: خصم 10% عند الزيارة القادمة"
-                    : "Example: 10% off on your next visit"
-                }
-                className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface p-4 text-foreground outline-none transition placeholder:text-foreground-subtle focus:border-primary focus:ring-2 focus:ring-primary-soft"
-              />
-            </label>
-          ) : (
-            <div className="flex items-center gap-3 rounded-[var(--lf-radius-input)] bg-surface-subtle p-4 text-sm text-foreground-muted lg:col-span-2">
-              <CheckCircle2
-                className="size-5 shrink-0 text-primary"
-                aria-hidden="true"
-              />
-              {language === "AR"
-                ? "راجع الجمهور والمحتوى قبل النسخ."
-                : "Review audience and content before copying."}
-            </div>
-          )}
+          <div className="flex items-center gap-3 rounded-[var(--lf-radius-input)] bg-surface-subtle p-4 text-sm text-foreground-muted lg:col-span-2">
+            <CheckCircle2
+              className="size-5 shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            {language === "AR"
+              ? "المسودة تستخدم نفس رسالة النشاط المحفوظة بدون نص إضافي."
+              : "The draft uses the same saved business message with no extra copy."}
+          </div>
         </div>
       </section>
 
@@ -351,16 +315,20 @@ export default function CampaignBuilder({
                       />
                     </summary>
                     <pre className="whitespace-pre-wrap border-t border-border p-4 font-sans text-sm leading-6 text-foreground-muted">
-                      {message}
+                      {message ||
+                        (language === "AR"
+                          ? "لا توجد رسالة محفوظة لهذه الحالة."
+                          : "No saved message exists for this case.")}
                     </pre>
                   </details>
 
-                  <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
-                    <CopyLinkButton
-                      value={message}
-                      label={language === "AR" ? "نسخ المسودة" : "Copy draft"}
-                    />
-                    <a
+                  {message ? (
+                    <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
+                      <CopyLinkButton
+                        value={message}
+                        label={language === "AR" ? "نسخ المسودة" : "Copy draft"}
+                      />
+                      <a
                       aria-label={
                         language === "AR"
                           ? `فتح مسودة WhatsApp للعميل ${candidate.name}`
@@ -379,8 +347,9 @@ export default function CampaignBuilder({
                         ? "فتح مسودة WhatsApp"
                         : "Open WhatsApp draft"}
                       <ExternalLink className="size-3.5" aria-hidden="true" />
-                    </a>
-                  </div>
+                      </a>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}

@@ -6,12 +6,6 @@ export const winBackAudiences = ["INACTIVE", "AT_RISK"] as const;
 
 export type WinBackAudience = (typeof winBackAudiences)[number];
 
-export const WIN_BACK_TEMPLATE =
-  "أهلاً {customer} 👋\n\n" +
-  "مشتاقين لزيارتك في {business}.\n" +
-  "رصيدك الحالي: {balance} {unit}.\n\n" +
-  "تابع كارت الولاء من هنا:\n{card_link}";
-
 export function getWinBackAudienceWhere(
   audience: WinBackAudience,
   input: {
@@ -39,8 +33,6 @@ export function getWinBackMessage(input: {
   loyaltyMode: LoyaltyMode;
   template?: string | null;
 }) {
-  return renderWhatsAppTemplate(
-    input.template?.trim() || WIN_BACK_TEMPLATE,
-    input
-  );
+  const template = input.template?.trim() ?? "";
+  return template ? renderWhatsAppTemplate(template, input) : "";
 }

@@ -467,13 +467,14 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
                     </pre>
                   </details>
 
-                  <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
-                    <CopyLinkButton
-                      value={message}
-                      label={language === "AR" ? "نسخ المسودة" : "Copy draft"}
-                      language={language}
-                    />
-                    <a
+                  {message ? (
+                    <div className="mt-auto flex flex-col gap-2 pt-4 sm:flex-row">
+                      <CopyLinkButton
+                        value={message}
+                        label={language === "AR" ? "نسخ المسودة" : "Copy draft"}
+                        language={language}
+                      />
+                      <a
                       aria-label={
                         language === "AR"
                           ? `فتح مسودة WhatsApp لـ ${name}`
@@ -492,8 +493,9 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
                         ? "فتح مسودة WhatsApp"
                         : "Open WhatsApp draft"}
                       <ExternalLink className="size-3.5" aria-hidden="true" />
-                    </a>
-                  </div>
+                      </a>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}

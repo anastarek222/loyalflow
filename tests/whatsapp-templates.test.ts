@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   buildWhatsAppUrl,
   DEFAULT_WHATSAPP_TEMPLATES,
+  normalizeWhatsAppPhone,
   renderWhatsAppTemplate,
   renderWhatsAppTemplateParameters,
 } from "../lib/whatsapp-templates";
@@ -69,6 +70,12 @@ test("WhatsApp URL encoding round-trips Arabic and English text exactly", () => 
   assert.equal(parsed.origin, "https://wa.me");
   assert.equal(parsed.pathname, "/201012345678");
   assert.equal(parsed.searchParams.get("text"), message);
+});
+
+test("manual and automatic WhatsApp paths share Egyptian international normalization", () => {
+  assert.equal(normalizeWhatsAppPhone("010 1234 5678"), "201012345678");
+  assert.equal(normalizeWhatsAppPhone("0020 1012345678"), "201012345678");
+  assert.equal(normalizeWhatsAppPhone("+20 1012345678"), "201012345678");
 });
 
 test("WhatsApp URL safely supports a missing phone number", () => {

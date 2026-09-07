@@ -311,14 +311,23 @@ test("manual customer-profile WhatsApp actions require customer edit permission"
   const cardSection = source.indexOf('id="customer-card"');
   const manualGuard = source.indexOf("{canManageCustomer ? (", cardSection);
   const manualCopy = source.indexOf("{copy.manualWhatsApp}", manualGuard);
-  const welcomeLink = source.indexOf("href={welcomeWhatsAppUrl}", manualGuard);
-  const balanceLink = source.indexOf("href={balanceWhatsAppUrl}", manualGuard);
-  const rewardLink = source.indexOf("href={rewardWhatsAppUrl}", manualGuard);
+  const welcomeGuard = source.indexOf("{welcomeWhatsAppUrl ? (", manualGuard);
+  const welcomeLink = source.indexOf("href={welcomeWhatsAppUrl}", welcomeGuard);
+  const balanceGuard = source.indexOf("{balanceWhatsAppUrl ? (", welcomeLink);
+  const balanceLink = source.indexOf("href={balanceWhatsAppUrl}", balanceGuard);
+  const rewardGuard = source.indexOf(
+    "{rewardAvailable && rewardWhatsAppUrl ? (",
+    balanceLink,
+  );
+  const rewardLink = source.indexOf("href={rewardWhatsAppUrl}", rewardGuard);
 
   assert.ok(cardSection >= 0);
   assert.ok(manualGuard > cardSection);
   assert.ok(manualCopy > manualGuard);
+  assert.ok(welcomeGuard > manualCopy);
   assert.ok(welcomeLink > manualGuard);
+  assert.ok(balanceGuard > welcomeLink);
   assert.ok(balanceLink > welcomeLink);
+  assert.ok(rewardGuard > balanceLink);
   assert.ok(rewardLink > balanceLink);
 });
