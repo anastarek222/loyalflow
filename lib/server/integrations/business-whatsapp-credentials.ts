@@ -35,10 +35,11 @@ export async function upsertBusinessWhatsAppCredential(
   input: {
     businessId: string;
     phoneNumberId: string;
-    wabaId: string;
+    wabaId?: string | null;
     accessTokenCiphertext: string;
   },
 ) {
+  const wabaId = input.wabaId?.trim() || null;
   await client.$executeRaw`
     INSERT INTO "BusinessWhatsAppCredential" (
       "businessId",
@@ -51,7 +52,7 @@ export async function upsertBusinessWhatsAppCredential(
     VALUES (
       ${input.businessId},
       ${input.phoneNumberId},
-      ${input.wabaId},
+      ${wabaId},
       ${input.accessTokenCiphertext},
       CURRENT_TIMESTAMP,
       CURRENT_TIMESTAMP
