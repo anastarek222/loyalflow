@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { extractWhatsAppTemplateStatusUpdates } from "../lib/server/integrations/whatsapp-template-status";
 import { compileWhatsAppTemplateForMeta } from "../lib/whatsapp-templates";
 
 test("Owner template compiler preserves static copy and numbers Meta variables by occurrence", () => {
@@ -32,6 +33,58 @@ test("Owner template compiler rejects unsupported variables instead of submittin
   assert.equal(compiled.ok, false);
   if (compiled.ok) return;
   assert.deepEqual(compiled.invalidTokens, ["unknown_variable"]);
+});
+
+test("Meta template status webhook parsing is WABA-scoped and unknown states fail closed", () => {
+  const updates = extractWhatsAppTemplateStatusUpdates({
+    object: "whatsapp_business_account",
+    entry: [
+      {
+        id: "waba_123",
+        changes: [
+          {
+            field: "message_template_status_update",
+            value: {
+              event: "APPROVED",
+              message_template_id: 987654321,
+              message_template_name: "tanee_welcome_ar_demo",
+              message_template_language: "ar",
+            },
+          },
+          {
+            field: "message_template_status_update",
+            value: {
+              event: "PAUSED",
+              message_template_id: "123456789",
+              message_template_name: "tanee_reward_ar_demo",
+              message_template_language: "ar",
+            },
+          },
+          {
+            field: "messages",
+            value: { event: "APPROVED" },
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.deepEqual(updates, [
+    {
+      wabaId: "waba_123",
+      templateName: "tanee_welcome_ar_demo",
+      templateLanguageCode: "ar",
+      providerTemplateId: "987654321",
+      approvalStatus: "APPROVED",
+    },
+    {
+      wabaId: "waba_123",
+      templateName: "tanee_reward_ar_demo",
+      templateLanguageCode: "ar",
+      providerTemplateId: "123456789",
+      approvalStatus: "UNKNOWN",
+    },
+  ]);
 });
 
 test("Meta template provisioning is WABA-scoped, provider-owned and idempotent by deterministic name", () => {
@@ -75,6 +128,48 @@ test("Meta template provisioning is WABA-scoped, provider-owned and idempotent b
   assert.match(credential, /"wabaId"/);
   assert.match(sender, /binding\.wabaId !== businessCredential\.wabaId/);
   assert.match(sender, /WHATSAPP_META_TEMPLATE_ACCOUNT_MISMATCH/);
+});
+
+test("signed provider webhook updates existing template bindings only", () => {
+  const syncSource = readFileSync(
+    "lib/server/integrations/whatsapp-template-status.ts",
+    "utf8",
+  );
+  const routeSource = readFileSync(
+    "app/api/webhooks/whatsapp/route.ts",
+    "utf8",
+  );
+
+  assert.match(syncSource, /UPDATE "BusinessWhatsAppTemplateBinding"/);
+  assert.doesNotMatch(syncSource, /INSERT INTO "BusinessWhatsAppTemplateBinding"/);
+  assert.match(syncSource, /WHERE "wabaId" = \$\{update\.wabaId\}/);
+  assert.match(syncSource, /AND "templateName" = \$\{update\.templateName\}/);
+  assert.match(
+    syncSource,
+    /AND "templateLanguageCode" = \$\{update\.templateLanguageCode\}/,
+  );
+  assert.match(syncSource, /"providerTemplateId" = \$\{update\.providerTemplateId\}/);
+
+  const signatureCheck = routeSource.indexOf("verifyWhatsAppWebhookSignature");
+  const invalidSignatureReturn = routeSource.indexOf("INVALID_SIGNATURE");
+  const templateSync = routeSource.indexOf("persistWhatsAppTemplateStatusFromWebhook(payload)");
+  assert.ok(signatureCheck >= 0);
+  assert.ok(invalidSignatureReturn > signatureCheck);
+  assert.ok(templateSync > invalidSignatureReturn);
+  assert.match(routeSource, /templateStatusUpdatedCount/);
+});
+
+test("provider refresh invalidates stale approval when current copy or Meta body diverges", () => {
+  const provider = readFileSync(
+    "lib/server/integrations/whatsapp-template-provider.ts",
+    "utf8",
+  );
+
+  assert.match(provider, /currentContentSha256 !== binding\.contentSha256/);
+  assert.match(provider, /persistBindingStatus\(binding, "UNKNOWN"\)/);
+  assert.match(provider, /fetched\.template\.bodyText !== compiled\.bodyText/);
+  assert.match(provider, /approvalStatus: "UNKNOWN"/);
+  assert.match(provider, /WHATSAPP_META_TEMPLATE_CONTENT_MISMATCH/);
 });
 
 test("Meta template status cannot be written by the generic read helper", () => {

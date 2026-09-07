@@ -6,6 +6,7 @@ import {
   getBusinessWhatsAppTemplateBinding,
   hashBusinessWhatsAppTemplate,
   ownerMessageForAutomaticEvent,
+  type BusinessWhatsAppTemplateBinding,
   type WhatsAppTemplateApprovalStatus,
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
@@ -235,6 +236,25 @@ async function persistProviderTemplateBinding(input: {
   `;
 }
 
+async function persistBindingStatus(
+  binding: BusinessWhatsAppTemplateBinding,
+  approvalStatus: WhatsAppTemplateApprovalStatus,
+  providerTemplateId = binding.providerTemplateId,
+) {
+  if (!binding.wabaId) return;
+  await persistProviderTemplateBinding({
+    businessId: binding.businessId,
+    wabaId: binding.wabaId,
+    event: binding.event,
+    language: binding.language,
+    templateName: binding.templateName,
+    templateLanguageCode: binding.templateLanguageCode,
+    contentSha256: binding.contentSha256,
+    approvalStatus,
+    providerTemplateId,
+  });
+}
+
 async function providerContext(
   businessId: string,
   event: AutomaticCustomerMessageEvent,
@@ -315,6 +335,17 @@ async function persistExistingTemplate(input: {
   template: MetaTemplateRecord;
 }): Promise<MetaTemplateResult> {
   if (input.template.bodyText !== input.expectedBodyText) {
+    await persistProviderTemplateBinding({
+      businessId: input.businessId,
+      wabaId: input.wabaId,
+      event: input.event,
+      language: input.language,
+      templateName: input.templateName,
+      templateLanguageCode: input.languageCode,
+      contentSha256: input.contentSha256,
+      approvalStatus: "UNKNOWN",
+      providerTemplateId: input.template.id,
+    });
     return {
       status: "failure",
       reason: "WHATSAPP_META_TEMPLATE_NAME_COLLISION",
@@ -465,7 +496,12 @@ export async function refreshBusinessWhatsAppTemplateFromMeta(
     getBusinessWhatsAppCredential(prisma, businessId),
     prisma.business.findUnique({
       where: { id: businessId },
-      select: { cardDefaultLanguage: true },
+      select: {
+        cardDefaultLanguage: true,
+        whatsappWelcomeMessage: true,
+        whatsappBalanceMessage: true,
+        whatsappRewardMessage: true,
+      },
     }),
   ]);
   if (!business) {
@@ -495,6 +531,34 @@ export async function refreshBusinessWhatsAppTemplateFromMeta(
     };
   }
 
+  const ownerTemplate = ownerMessageForAutomaticEvent(event, business);
+  if (!ownerTemplate) {
+    await persistBindingStatus(binding, "UNKNOWN");
+    return {
+      status: "failure",
+      reason: "WHATSAPP_OWNER_MESSAGE_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
+  const currentContentSha256 = hashBusinessWhatsAppTemplate(ownerTemplate);
+  if (currentContentSha256 !== binding.contentSha256) {
+    await persistBindingStatus(binding, "UNKNOWN");
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_CONTENT_MISMATCH",
+      retryable: false,
+    };
+  }
+  const compiled = compileWhatsAppTemplateForMeta(ownerTemplate);
+  if (!compiled.ok) {
+    await persistBindingStatus(binding, "UNKNOWN");
+    return {
+      status: "failure",
+      reason: "WHATSAPP_OWNER_MESSAGE_UNSUPPORTED_TOKEN",
+      retryable: false,
+    };
+  }
+
   const apiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim() ?? "";
   if (!apiVersion) {
     return { status: "failure", reason: "WHATSAPP_GRAPH_API_NOT_CONFIGURED", retryable: false };
@@ -515,24 +579,32 @@ export async function refreshBusinessWhatsAppTemplateFromMeta(
   });
   if (fetched.status === "failure") return fetched;
   if (!fetched.template) {
+    await persistBindingStatus(binding, "UNKNOWN");
+    return {
+      status: "success",
+      approvalStatus: "UNKNOWN",
+      templateName: binding.templateName,
+      providerTemplateId: binding.providerTemplateId,
+    };
+  }
+  if (fetched.template.bodyText !== compiled.bodyText) {
+    await persistBindingStatus(
+      binding,
+      "UNKNOWN",
+      fetched.template.id ?? binding.providerTemplateId,
+    );
     return {
       status: "failure",
-      reason: "WHATSAPP_META_TEMPLATE_NOT_FOUND",
+      reason: "WHATSAPP_META_TEMPLATE_CONTENT_MISMATCH",
       retryable: false,
     };
   }
 
-  await persistProviderTemplateBinding({
-    businessId,
-    wabaId: credential.wabaId,
-    event,
-    language: binding.language,
-    templateName: binding.templateName,
-    templateLanguageCode: binding.templateLanguageCode,
-    contentSha256: binding.contentSha256,
-    approvalStatus: fetched.template.status,
-    providerTemplateId: fetched.template.id ?? binding.providerTemplateId,
-  });
+  await persistBindingStatus(
+    binding,
+    fetched.template.status,
+    fetched.template.id ?? binding.providerTemplateId,
+  );
 
   return {
     status: "success",
