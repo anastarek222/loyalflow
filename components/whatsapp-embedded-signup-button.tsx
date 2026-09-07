@@ -37,17 +37,22 @@ type Props = {
   action: (formData: FormData) => void | Promise<void>;
 };
 
+type EmbeddedSignupResult = Readonly<{
+  mode: "STANDARD" | "COEXISTENCE";
+  wabaId: string;
+  phoneNumberId?: string;
+}>;
+
 const ALLOWED_META_MESSAGE_ORIGINS = new Set([
   "https://www.facebook.com",
   "https://web.facebook.com",
 ]);
 
-const EMBEDDED_SIGNUP_FINISH_EVENTS = new Set([
-  "FINISH",
-  "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING",
-]);
+function validMetaId(value: unknown): value is string {
+  return typeof value === "string" && /^\d{5,30}$/.test(value);
+}
 
-function parseEmbeddedSignupEvent(raw: unknown) {
+function parseEmbeddedSignupEvent(raw: unknown): EmbeddedSignupResult | null {
   let payload = raw;
   if (typeof payload === "string") {
     try {
@@ -63,32 +68,44 @@ function parseEmbeddedSignupEvent(raw: unknown) {
     event?: unknown;
     data?: unknown;
   };
-  if (
-    event.type !== "WA_EMBEDDED_SIGNUP" ||
-    typeof event.event !== "string" ||
-    !EMBEDDED_SIGNUP_FINISH_EVENTS.has(event.event)
-  ) {
+  if (event.type !== "WA_EMBEDDED_SIGNUP" || !event.data || typeof event.data !== "object") {
     return null;
   }
-  if (!event.data || typeof event.data !== "object") return null;
 
   const data = event.data as {
     waba_id?: unknown;
     phone_number_id?: unknown;
   };
-  if (
-    typeof data.waba_id !== "string" ||
-    !/^\d{5,30}$/.test(data.waba_id) ||
-    typeof data.phone_number_id !== "string" ||
-    !/^\d{5,30}$/.test(data.phone_number_id)
-  ) {
-    return null;
+  if (!validMetaId(data.waba_id)) return null;
+
+  if (event.event === "FINISH") {
+    if (!validMetaId(data.phone_number_id)) return null;
+    return {
+      mode: "STANDARD",
+      wabaId: data.waba_id,
+      phoneNumberId: data.phone_number_id,
+    };
   }
 
-  return {
-    wabaId: data.waba_id,
-    phoneNumberId: data.phone_number_id,
-  };
+  if (event.event === "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING") {
+    if (
+      data.phone_number_id !== undefined &&
+      data.phone_number_id !== null &&
+      data.phone_number_id !== "" &&
+      !validMetaId(data.phone_number_id)
+    ) {
+      return null;
+    }
+    return {
+      mode: "COEXISTENCE",
+      wabaId: data.waba_id,
+      ...(validMetaId(data.phone_number_id)
+        ? { phoneNumberId: data.phone_number_id }
+        : {}),
+    };
+  }
+
+  return null;
 }
 
 function getEmbeddedSignupExtras() {
@@ -119,10 +136,11 @@ export function WhatsAppEmbeddedSignupButton({
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const formRef = useRef<HTMLFormElement>(null);
   const codeRef = useRef<HTMLInputElement>(null);
+  const modeRef = useRef<HTMLInputElement>(null);
   const wabaRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const pendingCode = useRef<string | null>(null);
-  const pendingIds = useRef<{ wabaId: string; phoneNumberId: string } | null>(null);
+  const pendingIds = useRef<EmbeddedSignupResult | null>(null);
   const [sdkReady, setSdkReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
@@ -164,11 +182,19 @@ export function WhatsAppEmbeddedSignupButton({
 
     const trySubmit = () => {
       if (!pendingCode.current || !pendingIds.current) return;
-      if (!codeRef.current || !wabaRef.current || !phoneRef.current) return;
+      if (
+        !codeRef.current ||
+        !modeRef.current ||
+        !wabaRef.current ||
+        !phoneRef.current
+      ) {
+        return;
+      }
 
       codeRef.current.value = pendingCode.current;
+      modeRef.current.value = pendingIds.current.mode;
       wabaRef.current.value = pendingIds.current.wabaId;
-      phoneRef.current.value = pendingIds.current.phoneNumberId;
+      phoneRef.current.value = pendingIds.current.phoneNumberId ?? "";
       formRef.current?.requestSubmit();
     };
 
@@ -210,12 +236,14 @@ export function WhatsAppEmbeddedSignupButton({
         if (
           pendingIds.current &&
           codeRef.current &&
+          modeRef.current &&
           wabaRef.current &&
           phoneRef.current
         ) {
           codeRef.current.value = code;
+          modeRef.current.value = pendingIds.current.mode;
           wabaRef.current.value = pendingIds.current.wabaId;
-          phoneRef.current.value = pendingIds.current.phoneNumberId;
+          phoneRef.current.value = pendingIds.current.phoneNumberId ?? "";
           formRef.current?.requestSubmit();
         }
       },
@@ -231,6 +259,7 @@ export function WhatsAppEmbeddedSignupButton({
   return (
     <form ref={formRef} action={action} data-whatsapp-embedded-signup>
       <input ref={codeRef} type="hidden" name="authorizationCode" />
+      <input ref={modeRef} type="hidden" name="mode" />
       <input ref={wabaRef} type="hidden" name="wabaId" />
       <input ref={phoneRef} type="hidden" name="phoneNumberId" />
       <button
