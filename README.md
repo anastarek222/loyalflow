@@ -6,9 +6,10 @@ LoyalFlow is a bilingual loyalty-operations SaaS for Providers, Business Owners,
 
 - Authoritative working branch: `staging`
 - Final Product Z-series: Z1–Z14 complete at source/code/automated-test/CI/merge level
-- Current phase: bounded Final Visual / brand-customization preparation
+- Current phase: Pre-Frontend Product / Backend / Integrations closeout in Draft PR #507
 - Commercial model: Provider-assisted V1
 - Manual UAT / real-business Closed Beta: deferred until explicitly resumed
+- Final Stitch visual implementation remains blocked until the Pre-Frontend Freeze
 - Production deployment or mutation: not authorized by the current phase
 
 The current release-gate checklist is tracked in GitHub issue #206. Real Closed Beta remains separately tracked in issue #103.
@@ -78,7 +79,17 @@ Before changing product behavior or operating a support case, use these current 
 - `docs/CONSOLIDATED_UAT_RUNBOOK.md` — manual/non-production UAT authority.
 - `docs/PRODUCTION_DEPLOYMENT.md` and `docs/PRODUCTION_RELEASE_CHECKLIST.md` — Production release boundary.
 
-## UI and Final Visual authority
+## Pre-Frontend closeout and Final Visual authority
+
+Draft PR #507 is the current pre-frontend integration lane. Product logic,
+permissions, operational flows, functional responsive behavior, integrations,
+and release governance must be closed and certified there before the formal
+Pre-Frontend Freeze. Do not infer that earlier Z-series source completion means
+the current runtime/product closeout is finished.
+
+After that freeze, Final Visual work may change presentation without changing
+routes, permissions, business logic, field semantics, server behavior, or the
+data model.
 
 Application chrome uses semantic `--lf-*` design tokens from `app/globals.css`. Compatibility aliases are centralized in `app/loyalflow-theme-aliases.css`; they are not a second independent theme.
 

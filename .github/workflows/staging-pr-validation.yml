@@ -91,6 +91,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate immutable migration manifest
+        run: pnpm run validate:migrations
+
+      - name: Scan destructive migration SQL
+        run: pnpm run validate:destructive-migrations
+
+      - name: Validate Prisma schema
+        run: pnpm run db:validate
+
+      - name: Apply migrations to disposable PostgreSQL
+        run: pnpm run db:migrate:deploy
+
       - name: Run focused subscription entitlement tests
         run: node --import tsx --test tests/subscription-lifecycle.test.ts tests/tc4*.test.ts
 
@@ -108,10 +120,6 @@ jobs:
 
       - name: Build application
         run: pnpm run build
-
-      - name: Apply disposable browser smoke migrations
-        if: steps.browser-smoke.outputs.run == 'true'
-        run: pnpm exec prisma migrate deploy
 
       - name: Install Chromium for browser smoke
         if: steps.browser-smoke.outputs.run == 'true'
