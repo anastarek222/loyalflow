@@ -1,9 +1,4 @@
-type EmbeddedSignupEnvironment = {
-  NEXT_PUBLIC_WHATSAPP_META_APP_ID?: string;
-  NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID?: string;
-  WHATSAPP_GRAPH_API_VERSION?: string;
-  WHATSAPP_APP_SECRET?: string;
-};
+type EmbeddedSignupEnvironment = Record<string, string | undefined>;
 
 const REQUIRED_EMBEDDED_SIGNUP_CONFIG = [
   "NEXT_PUBLIC_WHATSAPP_META_APP_ID",
