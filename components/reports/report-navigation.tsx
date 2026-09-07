@@ -1,4 +1,4 @@
-import { BarChart3, UsersRound } from "lucide-react";
+import { BarChart3, UserRoundPlus, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 import type { AppLanguage } from "@/lib/i18n";
@@ -10,7 +10,7 @@ export function ReportNavigation({
   language,
 }: {
   slug: string;
-  active: "overview" | "staff";
+  active: "overview" | "staff" | "referrals";
   query: string;
   language: AppLanguage;
 }) {
@@ -29,6 +29,12 @@ export function ReportNavigation({
             href: `/businesses/${slug}/reports/staff?${query}`,
             icon: UsersRound,
           },
+          {
+            id: "referrals" as const,
+            label: "الإحالات",
+            href: `/businesses/${slug}/reports/referrals?${query}`,
+            icon: UserRoundPlus,
+          },
         ]
       : [
           {
@@ -42,6 +48,12 @@ export function ReportNavigation({
             label: "Staff performance",
             href: `/businesses/${slug}/reports/staff?${query}`,
             icon: UsersRound,
+          },
+          {
+            id: "referrals" as const,
+            label: "Referrals",
+            href: `/businesses/${slug}/reports/referrals?${query}`,
+            icon: UserRoundPlus,
           },
         ];
 
