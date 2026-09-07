@@ -40,7 +40,6 @@ import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { customerUiCopy } from "@/lib/customers/ui-copy";
 import {
   buildWhatsAppUrl,
-  DEFAULT_WHATSAPP_TEMPLATES,
   renderWhatsAppTemplate,
 } from "@/lib/whatsapp-templates";
 import Link from "next/link";
@@ -442,29 +441,27 @@ export default async function CustomerDetailsPage({
     remaining,
   };
 
-  const welcomeWhatsAppUrl = buildWhatsAppUrl(
-    customer.phone,
-    renderWhatsAppTemplate(
-      business.whatsappWelcomeMessage ?? DEFAULT_WHATSAPP_TEMPLATES.welcome,
-      whatsappContext,
-    ),
-  );
-
-  const balanceWhatsAppUrl = buildWhatsAppUrl(
-    customer.phone,
-    renderWhatsAppTemplate(
-      business.whatsappBalanceMessage ?? DEFAULT_WHATSAPP_TEMPLATES.balance,
-      whatsappContext,
-    ),
-  );
-
-  const rewardWhatsAppUrl = buildWhatsAppUrl(
-    customer.phone,
-    renderWhatsAppTemplate(
-      business.whatsappRewardMessage ?? DEFAULT_WHATSAPP_TEMPLATES.reward,
-      whatsappContext,
-    ),
-  );
+  const welcomeWhatsAppTemplate = business.whatsappWelcomeMessage?.trim() ?? "";
+  const balanceWhatsAppTemplate = business.whatsappBalanceMessage?.trim() ?? "";
+  const rewardWhatsAppTemplate = business.whatsappRewardMessage?.trim() ?? "";
+  const welcomeWhatsAppUrl = welcomeWhatsAppTemplate
+    ? buildWhatsAppUrl(
+        customer.phone,
+        renderWhatsAppTemplate(welcomeWhatsAppTemplate, whatsappContext),
+      )
+    : null;
+  const balanceWhatsAppUrl = balanceWhatsAppTemplate
+    ? buildWhatsAppUrl(
+        customer.phone,
+        renderWhatsAppTemplate(balanceWhatsAppTemplate, whatsappContext),
+      )
+    : null;
+  const rewardWhatsAppUrl = rewardWhatsAppTemplate
+    ? buildWhatsAppUrl(
+        customer.phone,
+        renderWhatsAppTemplate(rewardWhatsAppTemplate, whatsappContext),
+      )
+    : null;
 
   const smartWhatsAppSuggestion = canManageCustomer
     ? getCampaignSuggestion({
@@ -1635,25 +1632,29 @@ export default async function CustomerDetailsPage({
                     </p>
                   </div>
 
-                  <a
-                    href={welcomeWhatsAppUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
-                  >
-                    {copy.welcomeMessage}
-                  </a>
+                  {welcomeWhatsAppUrl ? (
+                    <a
+                      href={welcomeWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
+                    >
+                      {copy.welcomeMessage}
+                    </a>
+                  ) : null}
 
-                  <a
-                    href={balanceWhatsAppUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
-                  >
-                    {copy.balanceMessage}
-                  </a>
+                  {balanceWhatsAppUrl ? (
+                    <a
+                      href={balanceWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
+                    >
+                      {copy.balanceMessage}
+                    </a>
+                  ) : null}
 
-                  {rewardAvailable ? (
+                  {rewardAvailable && rewardWhatsAppUrl ? (
                     <a
                       href={rewardWhatsAppUrl}
                       target="_blank"

@@ -10,14 +10,17 @@ import {
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
-import { renderWhatsAppTemplateParameters } from "@/lib/whatsapp-templates";
+import {
+  normalizeWhatsAppPhone,
+  renderWhatsAppTemplateParameters,
+} from "@/lib/whatsapp-templates";
 
 type WhatsAppDeliveryResult =
   | Readonly<{ status: "success"; providerMessageId?: string }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
 
 function normalizeRecipientPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
+  const digits = normalizeWhatsAppPhone(phone);
   return /^\d{8,15}$/.test(digits) ? digits : null;
 }
 

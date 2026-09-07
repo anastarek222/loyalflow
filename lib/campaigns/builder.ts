@@ -20,12 +20,6 @@ export const campaignAudiences = [
 
 export type CampaignAudience = (typeof campaignAudiences)[number];
 
-export const ONE_AWAY_TEMPLATE =
-  "أهلاً {customer} 👋\n\n" +
-  "أنت على بُعد خطوة واحدة من {reward} لدى {business}.\n" +
-  "متبقي {remaining} {unit}.\n\n" +
-  "تابع كارتك من هنا:\n{card_link}";
-
 export function getDefaultCampaignAudience(
   trigger: CampaignTrigger
 ): CampaignAudience {
@@ -41,11 +35,4 @@ export function getDefaultCampaignAudience(
     default:
       return "ACTIVE";
   }
-}
-
-export function appendCampaignOffer(message: string, offer: string) {
-  const normalizedOffer = offer.trim();
-  if (!normalizedOffer) return message;
-
-  return `${message.trim()}\n\n${normalizedOffer}`;
 }

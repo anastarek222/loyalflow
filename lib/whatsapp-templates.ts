@@ -137,7 +137,7 @@ export function compileWhatsAppTemplateForMeta(template: string) {
   } as const;
 }
 
-function normalizeWhatsAppPhone(
+export function normalizeWhatsAppPhone(
   phone: string
 ) {
   let digits =
