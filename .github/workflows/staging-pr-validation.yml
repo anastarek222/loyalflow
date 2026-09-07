@@ -95,20 +95,7 @@ jobs:
         run: node --import tsx --test tests/subscription-lifecycle.test.ts tests/tc4*.test.ts
 
       - name: Run full tests
-        id: full-tests
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm test 2>&1 | tee /tmp/loyalflow-full-tests.log
-
-      - name: Upload full test diagnostics
-        if: failure() && steps.full-tests.conclusion == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: full-test-diagnostics
-          path: /tmp/loyalflow-full-tests.log
-          if-no-files-found: error
-          retention-days: 1
+        run: pnpm test
 
       - name: Type-check project
         run: pnpm run typecheck
