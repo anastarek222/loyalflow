@@ -42,7 +42,11 @@ import { notFound, redirect } from "next/navigation";
 
 type PageProps = {
   params: Promise<{ slug: string; customerId: string }>;
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{
+    success?: string;
+    error?: string;
+    rewardReady?: string;
+  }>;
 };
 
 export default async function ScanCustomerPage({
@@ -156,6 +160,7 @@ export default async function ScanCustomerPage({
     query.success === "earned" || query.success === "redeemed"
       ? query.success
       : null;
+  const rewardJustUnlocked = success === "earned" && query.rewardReady === "1";
   const knownErrors: ScanOperationError[] = [
     "invalid",
     "permission",
@@ -171,7 +176,9 @@ export default async function ScanCustomerPage({
     : null;
   const successMessage =
     success === "earned"
-      ? copy.earnSuccess
+      ? rewardJustUnlocked
+        ? copy.rewardReadySuccess
+        : copy.earnSuccess
       : success === "redeemed"
         ? copy.redeemSuccess
         : null;
@@ -265,7 +272,7 @@ export default async function ScanCustomerPage({
                 href={scanCustomerPath}
                 className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] border border-border-strong bg-surface px-6 text-center font-semibold text-foreground-muted hover:bg-surface-subtle"
               >
-                {copy.performAnotherOperation}
+                {rewardJustUnlocked ? copy.redeemReward : copy.performAnotherOperation}
               </Link>
               <Link
                 href={`/businesses/${slug}/customers/${customer.id}`}
