@@ -100,11 +100,12 @@ test("WhatsApp settings report fail-closed WABA and business-scoped automatic de
     page,
     /providerReadiness\.providerReady\s*&&\s*senderReady\s*&&\s*automaticTemplateReadiness\.ready/,
   );
-  assert.match(page, /providerReadiness\.missingProviderConfig\.join/);
-  assert.match(page, /Ready for automatic delivery/);
-  assert.match(page, /template approval incomplete/);
-  assert.match(page, /no automatic messages enabled/);
-  assert.match(page, /changing WABA pauses delivery until the correct version is approved/);
+  assert.doesNotMatch(page, /providerReadiness\.missingProviderConfig\.join/);
+  assert.match(page, /Automatic delivery is still being prepared/);
+  assert.match(page, /Meta setup and required message approvals are complete/);
+  assert.match(page, /WhatsApp message approval is incomplete/);
+  assert.match(page, /No automatic WhatsApp message is enabled/);
+  assert.match(page, /binding\?\.wabaId === credential\.wabaId/);
   assert.match(page, /name="wabaId"/);
   assert.match(page, /Submit current copy/);
   assert.match(page, /Refresh from Meta/);
