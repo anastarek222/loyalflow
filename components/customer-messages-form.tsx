@@ -29,8 +29,8 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
           ? "جارٍ الحفظ…"
           : "Saving…"
         : language === "AR"
-          ? "حفظ الرسائل التلقائية"
-          : "Save automatic messages"}
+          ? "حفظ رسائل واتساب"
+          : "Save WhatsApp messages"}
     </button>
   );
 }
@@ -45,17 +45,17 @@ export function CustomerMessagesForm({
   const fields = [
     [
       "whatsappWelcomeMessage",
-      t("رسالة الترحيب التلقائية", "Automatic welcome message"),
+      t("رسالة الترحيب", "Welcome message"),
       messages.whatsappWelcomeMessage,
     ],
     [
       "whatsappBalanceMessage",
-      t("رسالة تحديث الرصيد التلقائية", "Automatic balance update message"),
+      t("رسالة تحديث الرصيد", "Balance update message"),
       messages.whatsappBalanceMessage,
     ],
     [
       "whatsappRewardMessage",
-      t("رسالة المكافأة التلقائية", "Automatic reward message"),
+      t("رسالة المكافأة", "Reward message"),
       messages.whatsappRewardMessage,
     ],
   ] as const;
@@ -65,7 +65,7 @@ export function CustomerMessagesForm({
       action={action}
       className="rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-8"
       data-customer-messages-form
-      data-automatic-whatsapp-owner-messages
+      data-whatsapp-owner-messages
     >
       {status ? (
         <p
@@ -79,39 +79,30 @@ export function CustomerMessagesForm({
         >
           {status === "saved"
             ? t(
-                "تم حفظ رسائل واتساب التلقائية الخاصة بالنشاط.",
-                "Automatic WhatsApp messages for this business were saved.",
+                "تم حفظ رسائل واتساب الخاصة بالنشاط.",
+                "WhatsApp messages for this business were saved.",
               )
             : status === "subscription-restricted"
               ? t(
-                  "لا يمكن تعديل رسائل واتساب التلقائية في حالة الاشتراك الحالية.",
-                  "Automatic WhatsApp messages cannot be changed in the current subscription state.",
+                  "لا يمكن تعديل رسائل واتساب في حالة الاشتراك الحالية.",
+                  "WhatsApp messages cannot be changed in the current subscription state.",
                 )
-              : t(
-                  "راجع رسائل واتساب التلقائية.",
-                  "Review the automatic WhatsApp messages.",
-                )}
+              : t("راجع رسائل واتساب.", "Review the WhatsApp messages.")}
         </p>
       ) : null}
       <h2 className="text-xl font-black text-foreground">
-        {t("رسائل واتساب التلقائية", "Automatic WhatsApp messages")}
+        {t("رسائل واتساب", "WhatsApp messages")}
       </h2>
       <p className="mt-1 text-sm leading-6 text-foreground-subtle">
         {t(
-          "الـOwner هو اللي بيحدد نص الرسائل التلقائية الخاصة بهذا النشاط. Tanee لا ينشئ ولا يستبدل محتوى الرسالة من عنده. يتم استخدام النص المحفوظ هنا فقط، مع متغيرات العميل والنشاط، ثم يمر عبر قالب Meta معتمد. الحدث الذي لا توجد له رسالة محفوظة من الـOwner لا يتم إرساله تلقائيًا.",
-          "The Owner defines the automatic message copy for this business. Tanee does not invent or substitute message wording. Only the message saved here is rendered with customer and business variables, then delivered through an approved Meta template. An event without an Owner-saved message is not sent automatically.",
+          "دي هي نفس الرسائل في الحالتين: لو الموظف ضغط إرسال يدوي، Tanee يفتح نفس النص للعميل؛ ولو الإرسال التلقائي جاهز، Tanee يرسل نفس النص عند حدوث الحالة المناسبة. مفيش نسخة Manual ونسخة Automatic منفصلين، وTanee لا يؤلف نص بديل من عنده.",
+          "These are the single source of truth for both modes. A manual send uses this exact saved copy, and automatic delivery uses the same copy when the matching event occurs. There are no separate Manual and Automatic message versions, and Tanee never invents substitute wording.",
         )}
       </p>
       <p className="mt-2 text-xs leading-5 text-foreground-muted">
         {t(
-          "سيب أي رسالة فاضية لو مش عايز الحدث ده يبعت واتساب تلقائيًا. كل رسالة مستقلة عن التانية.",
-          "Leave any message blank to disable automatic WhatsApp for that event. Each message is controlled independently.",
-        )}
-      </p>
-      <p className="mt-2 text-xs leading-5 text-foreground-muted">
-        {t(
-          "أدوات الإرسال اليدوي في ملف العميل قد تعيد استخدام نفس النص، لكن تشغيل الإرسال التلقائي وحالة Meta تتم إدارتها من الإعدادات ← واتساب.",
-          "Manual send tools on the customer profile may reuse the same copy, while automatic delivery and Meta readiness are managed in Settings → WhatsApp.",
+          "سيب أي رسالة فاضية لو مش عايز الحالة دي تبعت تلقائيًا. تفعيل الإرسال التلقائي وحالة موافقة Meta تتم إدارتهم من الإعدادات ← واتساب.",
+          "Leave a message blank to disable automatic delivery for that case. Automatic delivery readiness and Meta approval are managed in Settings → WhatsApp.",
         )}
       </p>
       <div className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/10 bg-primary-subtle/50 p-4 text-sm text-primary">
