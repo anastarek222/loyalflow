@@ -43,6 +43,12 @@ test("super admin global navigation exposes the platform businesses and owners d
   assert.ok(ids.includes("owners"));
 });
 
+test("super admin account menu does not duplicate primary platform destinations", () => {
+  const topbar = source("components/app-topbar.tsx");
+  assert.doesNotMatch(topbar, /href="\/businesses"/);
+  assert.doesNotMatch(topbar, /href="\/business-owners"/);
+});
+
 test("navigation is capability-derived and hides inaccessible administration", () => {
   const staffLinks = links(staff).map((entry) => entry.id);
   assert.ok(staffLinks.includes("scan"));
