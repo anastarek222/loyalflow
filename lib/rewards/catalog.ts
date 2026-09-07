@@ -1,19 +1,29 @@
 import { RewardType } from "@/generated/prisma/client";
 import { z } from "zod";
 
-export const rewardInputSchema = z.object({
-  name: z.string().trim().min(2).max(100),
-  description: z.string().trim().max(300).optional(),
-  type: z.nativeEnum(RewardType),
-  code: z.string().trim().max(100).optional(),
-  cost: z.coerce.number().int().min(1).max(1_000_000),
-  expiresAfterDays: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(3_650)
-    .optional(),
-});
+export const rewardInputSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100),
+    description: z.string().trim().max(300).optional(),
+    type: z.nativeEnum(RewardType),
+    code: z.string().trim().max(100).optional(),
+    cost: z.coerce.number().int().min(1).max(1_000_000),
+    expiresAfterDays: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(3_650)
+      .optional(),
+  })
+  .superRefine((reward, ctx) => {
+    if (reward.type === RewardType.PROMO_CODE && !reward.code) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["code"],
+        message: "Code is required for promo code rewards",
+      });
+    }
+  });
 
 export type RewardInput = z.infer<typeof rewardInputSchema>;
 
