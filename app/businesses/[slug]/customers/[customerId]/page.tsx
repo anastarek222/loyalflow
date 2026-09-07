@@ -769,21 +769,21 @@ export default async function CustomerDetailsPage({
               >
                 {copy.openCard}
               </Link>
-              {canManageCustomer ? (
-                <a
-                  href="#customer-details"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
-                >
-                  {copy.manageCustomer}
-                </a>
-              ) : (
+              {canEarnLoyalty || canRedeemLoyalty ? (
                 <a
                   href="#daily-loyalty"
                   className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
                 >
                   {copy.loyaltyAction}
                 </a>
-              )}
+              ) : canManageCustomer ? (
+                <a
+                  href="#customer-details"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
+                >
+                  {copy.manageCustomer}
+                </a>
+              ) : null}
             </nav>
 
             {isSimpleExperience ? (
