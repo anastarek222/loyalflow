@@ -13,7 +13,10 @@ test("auth email delivery keeps the real Resend endpoint unless the disposable C
     "https://api.resend.com/emails",
   );
   assert.equal(
-    getAuthEmailDeliveryEndpoint({ AUTH_EMAIL_CI_SINK: "1" }),
+    getAuthEmailDeliveryEndpoint({
+      NODE_ENV: "production",
+      AUTH_EMAIL_CI_SINK: "1",
+    }),
     "https://api.resend.com/emails",
   );
 });
