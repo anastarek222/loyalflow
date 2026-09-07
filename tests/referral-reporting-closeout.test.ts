@@ -7,18 +7,23 @@ function source(path: string) {
 }
 
 const navigation = source("components/reports/report-navigation.tsx");
+const referralLayout = source(
+  "app/businesses/[slug]/reports/referrals/layout.tsx",
+);
 const referralReport = source("app/businesses/[slug]/reports/referrals/page.tsx");
 const membershipCommand = source(
   "lib/server/business/public-membership-command.ts",
 );
 
-test("Referral closeout gives REPORTS_VIEW users a discoverable AR/EN reports surface", () => {
+test("Referral closeout gives entitled REPORTS_VIEW users a discoverable AR/EN reports surface", () => {
   assert.match(navigation, /active: "overview" \| "staff" \| "referrals"/);
+  assert.match(navigation, /hasFeatureEntitlement\(business\.plan, "REFERRALS"\)/);
   assert.match(navigation, /\/reports\/referrals\?\$\{query\}/);
   assert.match(navigation, /label: "الإحالات"/);
   assert.match(navigation, /label: "Referrals"/);
-  assert.match(referralReport, /"REPORTS_VIEW"/);
-  assert.match(referralReport, /"REPORTING"/);
+  assert.match(referralLayout, /"REPORTS_VIEW"/);
+  assert.match(referralLayout, /"REPORTING"/);
+  assert.match(referralLayout, /"REFERRALS"/);
   assert.match(referralReport, /active="referrals"/);
 });
 
