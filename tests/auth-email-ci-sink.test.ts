@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { getAuthEmailDeliveryEndpoint } from "@/lib/auth/resend-email-delivery";
 
-test("auth email delivery keeps the real Resend endpoint outside exact CI test mode", () => {
+test("auth email delivery keeps the real Resend endpoint unless the disposable CI sink is explicitly enabled", () => {
   assert.equal(
     getAuthEmailDeliveryEndpoint({ NODE_ENV: "production", CI: "true" }),
     "https://api.resend.com/emails",
@@ -13,13 +13,17 @@ test("auth email delivery keeps the real Resend endpoint outside exact CI test m
     "https://api.resend.com/emails",
   );
   assert.equal(
-    getAuthEmailDeliveryEndpoint({ NODE_ENV: "development", CI: "true" }),
+    getAuthEmailDeliveryEndpoint({ AUTH_EMAIL_CI_SINK: "1" }),
     "https://api.resend.com/emails",
   );
 });
 
-test("auth email delivery is loopback-only in disposable CI test mode", () => {
-  const endpoint = getAuthEmailDeliveryEndpoint({ NODE_ENV: "test", CI: "true" });
+test("auth email delivery is loopback-only when CI and the disposable sink flag are both present", () => {
+  const endpoint = getAuthEmailDeliveryEndpoint({
+    NODE_ENV: "production",
+    CI: "true",
+    AUTH_EMAIL_CI_SINK: "1",
+  });
   const url = new URL(endpoint);
 
   assert.equal(url.protocol, "http:");
