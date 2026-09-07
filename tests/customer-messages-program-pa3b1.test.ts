@@ -41,7 +41,7 @@ test("Settings retains profile and operations but no customer messages", () => {
   assert.match(settingsForm, /actions\.operations/);
 });
 
-test("message form preserves Owner automatic fields, pending state, feedback, and localization", () => {
+test("message form exposes exactly three Owner WhatsApp messages as one manual and automatic source", () => {
   for (const field of [
     "whatsappWelcomeMessage",
     "whatsappBalanceMessage",
@@ -54,10 +54,12 @@ test("message form preserves Owner automatic fields, pending state, feedback, an
   assert.doesNotMatch(messageForm, /required/);
   assert.doesNotMatch(messageForm, /minLength=\{1\}/);
   assert.match(messageForm, /maxLength=\{1500\}/);
-  assert.match(messageForm, /رسائل واتساب التلقائية/);
-  assert.match(messageForm, /Automatic WhatsApp messages/);
-  assert.match(messageForm, /Leave any message blank to disable automatic WhatsApp/);
-  assert.match(messageForm, /data-automatic-whatsapp-owner-messages/);
+  assert.match(messageForm, /رسائل واتساب/);
+  assert.match(messageForm, /WhatsApp messages/);
+  assert.match(messageForm, /single source of truth for both modes/);
+  assert.match(messageForm, /There are no separate Manual and Automatic message versions/);
+  assert.match(messageForm, /data-whatsapp-owner-messages/);
+  assert.doesNotMatch(messageForm, /data-automatic-whatsapp-owner-messages/);
 });
 
 test("customer message action remains domain scoped and returns to Program", () => {
