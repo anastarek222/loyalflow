@@ -235,10 +235,15 @@ test("automatic WhatsApp copy is Owner-authored and Meta-bound per business", ()
     "utf8",
   );
 
-  assert.match(formSource, /Automatic WhatsApp messages/);
-  assert.match(formSource, /رسائل واتساب التلقائية/);
-  assert.match(formSource, /The Owner defines the automatic message copy/);
-  assert.match(formSource, /Tanee does not invent or substitute message wording/);
+  assert.match(formSource, /WhatsApp messages/);
+  assert.match(formSource, /رسائل واتساب/);
+  assert.match(formSource, /single source of truth/);
+  assert.match(
+    formSource,
+    /There are no separate Manual and Automatic message versions/,
+  );
+  assert.match(formSource, /data-whatsapp-owner-messages/);
+  assert.doesNotMatch(formSource, /data-automatic-whatsapp-owner-messages/);
 
   assert.match(senderSource, /whatsappWelcomeMessage: true/);
   assert.match(senderSource, /whatsappBalanceMessage: true/);
