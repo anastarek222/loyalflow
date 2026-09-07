@@ -108,14 +108,7 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
   }
 
   try {
-    const connection = await completeWhatsAppEmbeddedSignup({
-      authorizationCode: parsed.data.authorizationCode,
-      mode: parsed.data.mode,
-      wabaId: parsed.data.wabaId,
-      ...(parsed.data.phoneNumberId
-        ? { phoneNumberId: parsed.data.phoneNumberId }
-        : {}),
-    });
+    const connection = await completeWhatsAppEmbeddedSignup(parsed.data);
     const accessTokenCiphertext = encryptBusinessWhatsAppAccessToken(
       connection.accessToken,
     );
