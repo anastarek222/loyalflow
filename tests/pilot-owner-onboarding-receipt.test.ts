@@ -19,10 +19,13 @@ test("Pilot receipt completes pending Owner launch and direct re-entry", () => {
 test("Pilot receipt accepts a secure public Trial invitation and persists seven days", () => {
   const browser = source("tests/browser/owner-onboarding-mobile.spec.ts");
 
-  assert.match(browser, /seedPublicTrialOwnerInvitation/);
-  assert.match(browser, /\/accept-owner-invitation\?token=/);
+  assert.doesNotMatch(browser, /seedPublicTrialOwnerInvitation/);
+  assert.match(browser, /page\.goto\("\/get-started"\)/);
+  assert.match(browser, /waitForCapturedAuthEmail\(ownerEmail\)/);
+  assert.match(browser, /secureInvitationPath/);
+  assert.match(browser, /error=invalid-token/);
   assert.match(browser, /name: "Continue setup", exact: true/);
-  assert.match(browser, /\/login\\\?invitation=accepted/);
+  assert.match(browser, /invitation\.source\)\.toBe\("PUBLIC_TRIAL"\)/);
   assert.match(browser, /subscriptionLifecycleState/);
   assert.match(browser, /7 \* 24 \* 60 \* 60 \* 1000/);
 });
