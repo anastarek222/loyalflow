@@ -21,17 +21,44 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+const metaIdSchema = z.string().trim().regex(/^\d{5,30}$/);
+
 const connectionSchema = z.object({
-  phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
-  wabaId: z.string().trim().regex(/^\d{5,30}$/),
+  phoneNumberId: metaIdSchema,
+  wabaId: metaIdSchema,
   accessToken: z.string().trim().min(20).max(4096),
 });
 
-const embeddedSignupSchema = z.object({
-  authorizationCode: z.string().trim().min(20).max(4096),
-  phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
-  wabaId: z.string().trim().regex(/^\d{5,30}$/),
-});
+const embeddedSignupSchema = z
+  .object({
+    authorizationCode: z.string().trim().min(20).max(4096),
+    mode: z.enum(["STANDARD", "COEXISTENCE"]),
+    phoneNumberId: z.string().trim().max(30),
+    wabaId: metaIdSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.mode === "STANDARD") {
+      if (!metaIdSchema.safeParse(value.phoneNumberId).success) {
+        context.addIssue({
+          code: "custom",
+          path: ["phoneNumberId"],
+          message: "Standard Embedded Signup requires a valid phone number ID.",
+        });
+      }
+      return;
+    }
+
+    if (
+      value.phoneNumberId &&
+      !metaIdSchema.safeParse(value.phoneNumberId).success
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["phoneNumberId"],
+        message: "Coexistence phone number ID must be valid when Meta supplies one.",
+      });
+    }
+  });
 
 const automaticEventSchema = z.enum([
   "WELCOME",
@@ -72,6 +99,7 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
 
   const parsed = embeddedSignupSchema.safeParse({
     authorizationCode: formData.get("authorizationCode") ?? "",
+    mode: formData.get("mode") ?? "",
     phoneNumberId: formData.get("phoneNumberId") ?? "",
     wabaId: formData.get("wabaId") ?? "",
   });
@@ -80,7 +108,14 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
   }
 
   try {
-    const connection = await completeWhatsAppEmbeddedSignup(parsed.data);
+    const connection = await completeWhatsAppEmbeddedSignup({
+      authorizationCode: parsed.data.authorizationCode,
+      mode: parsed.data.mode,
+      wabaId: parsed.data.wabaId,
+      ...(parsed.data.phoneNumberId
+        ? { phoneNumberId: parsed.data.phoneNumberId }
+        : {}),
+    });
     const accessTokenCiphertext = encryptBusinessWhatsAppAccessToken(
       connection.accessToken,
     );
