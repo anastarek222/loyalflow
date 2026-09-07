@@ -90,10 +90,13 @@ export default defineConfig({
       // so a developer's invalid local integration cannot delay a core action.
       GOOGLE_SPREADSHEET_ID: "",
       // Exact CI browser UAT sends auth mail only to the loopback sink selected
-      // by resend-email-delivery.ts. Use a non-secret dummy key so the browser
-      // receipt can exercise the real delivery boundary without external mail.
+      // by resend-email-delivery.ts. `next start` runs as NODE_ENV=production,
+      // so use an explicit CI-only flag plus a non-secret dummy provider key.
       ...(disposableCiBrowser
-        ? { RESEND_API_KEY: "ci-browser-email-sink-key-not-a-secret" }
+        ? {
+            RESEND_API_KEY: "ci-browser-email-sink-key-not-a-secret",
+            AUTH_EMAIL_CI_SINK: "1",
+          }
         : {}),
     },
   },
