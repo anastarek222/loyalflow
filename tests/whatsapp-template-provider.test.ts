@@ -118,7 +118,8 @@ test("Meta template provisioning is WABA-scoped, provider-owned and idempotent b
   assert.match(provider, /approvalStatus: input\.template\.status/);
   assert.match(provider, /"wabaId" = EXCLUDED\."wabaId"/);
 
-  assert.match(actions, /wabaId: z\.string\(\)\.trim\(\)\.regex/);
+  assert.match(actions, /const metaIdSchema = z\.string\(\)\.trim\(\)\.regex/);
+  assert.match(actions, /wabaId: metaIdSchema/);
   assert.match(actions, /submitBusinessWhatsAppTemplateToMeta/);
   assert.match(actions, /refreshBusinessWhatsAppTemplateFromMeta/);
   assert.doesNotMatch(actions, /formData\.get\("approvalStatus"\)/);
