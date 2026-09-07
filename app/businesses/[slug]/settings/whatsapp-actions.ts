@@ -8,6 +8,10 @@ import {
   deleteBusinessWhatsAppCredential,
   upsertBusinessWhatsAppCredential,
 } from "@/lib/server/integrations/business-whatsapp-credentials";
+import {
+  completeWhatsAppEmbeddedSignup,
+  WhatsAppEmbeddedSignupError,
+} from "@/lib/server/integrations/whatsapp-embedded-signup";
 import { encryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 import {
   refreshBusinessWhatsAppTemplateFromMeta,
@@ -21,6 +25,12 @@ const connectionSchema = z.object({
   phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
   wabaId: z.string().trim().regex(/^\d{5,30}$/),
   accessToken: z.string().trim().min(20).max(4096),
+});
+
+const embeddedSignupSchema = z.object({
+  authorizationCode: z.string().trim().min(20).max(4096),
+  phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
+  wabaId: z.string().trim().regex(/^\d{5,30}$/),
 });
 
 const automaticEventSchema = z.enum([
@@ -44,6 +54,53 @@ async function managedBusiness(slug: string) {
   if (!business) redirect("/businesses");
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
   return business;
+}
+
+export async function completeBusinessWhatsAppEmbeddedSignupAction(
+  slug: string,
+  formData: FormData,
+) {
+  const business = await managedBusiness(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`);
+  }
+
+  const parsed = embeddedSignupSchema.safeParse({
+    authorizationCode: formData.get("authorizationCode") ?? "",
+    phoneNumberId: formData.get("phoneNumberId") ?? "",
+    wabaId: formData.get("wabaId") ?? "",
+  });
+  if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=embedded-invalid`);
+  }
+
+  try {
+    const connection = await completeWhatsAppEmbeddedSignup(parsed.data);
+    const accessTokenCiphertext = encryptBusinessWhatsAppAccessToken(
+      connection.accessToken,
+    );
+    await upsertBusinessWhatsAppCredential(prisma, {
+      businessId: business.id,
+      phoneNumberId: connection.phoneNumberId,
+      wabaId: connection.wabaId,
+      accessTokenCiphertext,
+    });
+  } catch (error) {
+    const status =
+      error instanceof WhatsAppEmbeddedSignupError &&
+      error.reason === "NOT_CONFIGURED"
+        ? "embedded-not-configured"
+        : "embedded-failed";
+    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=${status}`);
+  }
+
+  revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
+  redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=connected`);
 }
 
 export async function updateBusinessWhatsAppConnectionAction(
