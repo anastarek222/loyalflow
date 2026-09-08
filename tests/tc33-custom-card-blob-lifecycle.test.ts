@@ -76,6 +76,30 @@ test("TC3.3 private artwork routes derive access from trusted state", () => {
   assert.doesNotMatch(publicArtwork, /tenantId|businessId.*searchParams/);
 });
 
+test("TC3.3 missing private Blob artwork resolves to 404 while provider failures stay observable", () => {
+  const readback = storage.slice(
+    storage.indexOf("export async function readPrivateCustomCardArtwork"),
+  );
+  assert.match(readback, /const result = await get\(url, \{ access: "private" \}\)/);
+  assert.match(readback, /if \(!result \|\| result\.statusCode !== 200\) return null/);
+  assert.doesNotMatch(readback, /\bcatch\b/);
+
+  for (const route of [adminArtwork, publicArtwork]) {
+    assert.match(route, /const blob = await readPrivateCustomCardArtwork\(/);
+    assert.match(route, /if \(!blob\) return new NextResponse\(null, \{ status: 404 \}\)/);
+    assert.match(route, /"X-Content-Type-Options": "nosniff"/);
+  }
+});
+
+test("TC3.3 admin artwork readback rejects invalid side, version, or metadata as not found", () => {
+  assert.match(adminArtwork, /!\["front", "back"\]\.includes\(side\)/);
+  assert.match(adminArtwork, /findCustomCardArtworkVersion\(business\.id, version\)/);
+  assert.match(
+    adminArtwork,
+    /if \(!url \|\| !isManagedCustomCardArtworkUrl\(url, business\.id\)\) \{[\s\S]*?status: 404/,
+  );
+});
+
 test("TC3.3 does not introduce schema, deletion or production behavior", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   assert.doesNotMatch(storage + actions, /vercel\s+--prod|deploy\s+--prod/);
