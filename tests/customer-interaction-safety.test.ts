@@ -11,10 +11,11 @@ test("customer financial recovery shortcuts stay in normal flow on mobile", () =
     "app/businesses/[slug]/customers/[customerId]/layout.tsx",
   );
 
-  assert.match(layout, /data-customer-reversal-actions="true"/);
-  assert.match(layout, /lg:fixed/);
-  assert.match(layout, /lg:bottom-5/);
-  assert.match(layout, /lg:end-5/);
+  assert.match(layout, /<details[\s\S]*data-customer-reversal-actions="true"/);
+  assert.match(layout, /className="mx-auto mt-4 w-full max-w-7xl px-4 pb-4 sm:px-8"/);
+  assert.match(layout, /redemption-reversal/);
+  assert.match(layout, /customers\/\$\{customerId\}\/reversal/);
+  assert.doesNotMatch(layout, /lg:fixed/);
   assert.doesNotMatch(layout, /className="fixed bottom-5 end-5 z-40/);
 });
 
