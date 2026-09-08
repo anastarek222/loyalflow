@@ -39,6 +39,12 @@ function concatBytes(...parts: Uint8Array[]) {
   return bytes;
 }
 
+function fileBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.length);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 function uint32Be(value: number) {
   return new Uint8Array([
     (value >>> 24) & 0xff,
@@ -87,7 +93,9 @@ function pngBytes(width: number, height: number) {
 }
 
 function png(width: number, height: number) {
-  return new File([pngBytes(width, height)], "artwork.png", { type: "image/png" });
+  return new File([fileBuffer(pngBytes(width, height))], "artwork.png", {
+    type: "image/png",
+  });
 }
 
 function headerOnlyPng(width: number, height: number) {
@@ -133,7 +141,9 @@ function jpegBytes(width: number, height: number) {
 }
 
 function jpeg(width: number, height: number) {
-  return new File([jpegBytes(width, height)], "artwork.jpg", { type: "image/jpeg" });
+  return new File([fileBuffer(jpegBytes(width, height))], "artwork.jpg", {
+    type: "image/jpeg",
+  });
 }
 
 function uint32Le(value: number) {
@@ -174,7 +184,9 @@ function webpBytes(width: number, height: number) {
 }
 
 function webp(width: number, height: number) {
-  return new File([webpBytes(width, height)], "artwork.webp", { type: "image/webp" });
+  return new File([fileBuffer(webpBytes(width, height))], "artwork.webp", {
+    type: "image/webp",
+  });
 }
 
 test("reads PNG, JPEG, and WebP artwork dimensions from complete containers", async () => {
@@ -225,20 +237,28 @@ test("rejects malformed image bytes instead of trusting MIME type", async () => 
 });
 
 test("rejects header-only, truncated, and MIME-spoofed artwork", async () => {
-  const headerOnly = new File([headerOnlyPng(856, 540)], "header-only.png", {
-    type: "image/png",
-  });
+  const headerOnly = new File(
+    [fileBuffer(headerOnlyPng(856, 540))],
+    "header-only.png",
+    { type: "image/png" },
+  );
   const truncatedJpegBytes = jpegBytes(856, 540).slice(0, -2);
-  const truncatedJpeg = new File([truncatedJpegBytes], "truncated.jpg", {
-    type: "image/jpeg",
-  });
+  const truncatedJpeg = new File(
+    [fileBuffer(truncatedJpegBytes)],
+    "truncated.jpg",
+    { type: "image/jpeg" },
+  );
   const truncatedWebpBytes = webpBytes(856, 540).slice(0, -2);
-  const truncatedWebp = new File([truncatedWebpBytes], "truncated.webp", {
-    type: "image/webp",
-  });
-  const spoofedPng = new File([jpegBytes(856, 540)], "spoofed.png", {
-    type: "image/png",
-  });
+  const truncatedWebp = new File(
+    [fileBuffer(truncatedWebpBytes)],
+    "truncated.webp",
+    { type: "image/webp" },
+  );
+  const spoofedPng = new File(
+    [fileBuffer(jpegBytes(856, 540))],
+    "spoofed.png",
+    { type: "image/png" },
+  );
 
   for (const file of [headerOnly, truncatedJpeg, truncatedWebp, spoofedPng]) {
     assert.equal(await getCustomCardArtworkDimensions(file), null);
