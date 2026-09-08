@@ -117,7 +117,7 @@ export default function MobileBottomNavigation({
       aria-label={language === "AR" ? "التنقل السريع" : "Quick navigation"}
       className="lf-mobile-nav fixed inset-x-0 bottom-0 z-30 border-t px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 lg:hidden"
     >
-      <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+      <div className="mx-auto grid max-w-lg grid-cols-5 items-end gap-1">
         {bottomItems.map((entry) => {
           const Icon =
             iconById[entry.id as keyof typeof iconById] ?? LayoutDashboard;
@@ -128,13 +128,14 @@ export default function MobileBottomNavigation({
               key={entry.href}
               href={entry.href}
               aria-current={active ? "page" : undefined}
+              data-mobile-primary-action={isScan ? "true" : undefined}
               className={
                 isScan
-                  ? "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl bg-primary px-1 text-[11px] font-bold text-white shadow-md shadow-primary/20"
+                  ? "-mt-3 flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl bg-primary px-2 text-[11px] font-bold text-white shadow-lg shadow-primary/25 ring-4 ring-white transition-transform active:scale-[0.98]"
                   : `flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold ${active ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`
               }
             >
-              <Icon size={isScan ? 21 : 19} aria-hidden="true" />
+              <Icon size={isScan ? 23 : 19} aria-hidden="true" />
               <span className="truncate">{entry.label}</span>
             </Link>
           );
