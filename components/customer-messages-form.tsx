@@ -11,6 +11,7 @@ type Props = {
   };
   status: "saved" | "invalid" | "subscription-restricted" | undefined;
   action: (formData: FormData) => void | Promise<void>;
+  returnTo?: "program" | "whatsapp";
 };
 
 const inputClass =
@@ -40,6 +41,7 @@ export function CustomerMessagesForm({
   messages,
   status,
   action,
+  returnTo = "program",
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const fields = [
@@ -67,6 +69,7 @@ export function CustomerMessagesForm({
       data-customer-messages-form
       data-whatsapp-owner-messages
     >
+      <input type="hidden" name="returnTo" value={returnTo} />
       {status ? (
         <p
           role="status"
