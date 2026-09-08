@@ -17,6 +17,18 @@ export async function GET(request: Request) {
   }
 
   const svgSource = await wordmarkResponse.text();
+
+  if (url.searchParams.get("svgbase64") === "1") {
+    const bytes = Buffer.from(svgSource, "utf8");
+    return new Response(bytes.toString("base64"), {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+        "X-Svg-Bytes": String(bytes.length),
+      },
+    });
+  }
+
   const pathTags = svgSource.match(/<path\b[^>]*\/>/g) ?? [];
   const paths = pathTags.map((tag) => ({
     fill: readAttribute(tag, "fill"),
