@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+const VERCEL_PROJECT_ID = "prj_XR2myqPuensw4MTYF5Rgi0w0MPMG";
+const VERCEL_TEAM_ID = "team_JIxldEzYlted09P36umRYSLa";
+
 function normalizeBlobStoreId(value: string | undefined) {
   const trimmed = value?.trim();
   if (!trimmed) return null;
@@ -27,6 +30,51 @@ if (process.env.VERCEL_ENV === "preview") {
   process.stdout.write(
     `[blob-isolation-cert] vercel_env=preview loyalflow_env=${process.env.LOYALFLOW_ENVIRONMENT?.trim() || "unset"} blob_configured=${Boolean(blobStoreId)} oidc_configured=${oidcConfigured} blob_host=${blobHost}\n`,
   );
+}
+
+let vercelRestAuthProbe: Promise<void> | undefined;
+
+function probeVercelRestAuth() {
+  if (process.env.VERCEL_ENV !== "preview") return Promise.resolve();
+  if (vercelRestAuthProbe) return vercelRestAuthProbe;
+
+  const oidcToken = process.env.VERCEL_OIDC_TOKEN?.trim();
+  if (!oidcToken) {
+    process.stdout.write(
+      "[blob-isolation-cert] vercel_rest_auth=oidc_missing\n",
+    );
+    return Promise.resolve();
+  }
+
+  vercelRestAuthProbe = fetch(
+    `https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(VERCEL_PROJECT_ID)}&teamId=${encodeURIComponent(VERCEL_TEAM_ID)}&limit=1`,
+    {
+      headers: {
+        Authorization: `Bearer ${oidcToken}`,
+      },
+      cache: "no-store",
+    },
+  )
+    .then((response) => {
+      const classification =
+        response.status === 200
+          ? "accepted"
+          : response.status === 401
+            ? "unauthorized"
+            : response.status === 403
+              ? "forbidden"
+              : `status_${response.status}`;
+      process.stdout.write(
+        `[blob-isolation-cert] vercel_rest_auth=${classification} status=${response.status}\n`,
+      );
+    })
+    .catch(() => {
+      process.stdout.write(
+        "[blob-isolation-cert] vercel_rest_auth=network_error\n",
+      );
+    });
+
+  return vercelRestAuthProbe;
 }
 
 const securityHeaders = [
@@ -130,6 +178,8 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 nextConfig.headers = async () => {
+  await probeVercelRestAuth();
+
   const configuredHeaders =
     previousHeaders
       ? await previousHeaders()
