@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 
 function readAttribute(tag: string, name: string) {
@@ -6,17 +8,22 @@ function readAttribute(tag: string, name: string) {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const wordmarkUrl = new URL("/brand/tanee-wordmark-en.svg", request.url);
-  const wordmarkResponse = await fetch(wordmarkUrl, { cache: "no-store" });
+  const wordmarkPath = path.join(
+    process.cwd(),
+    "public",
+    "brand",
+    "tanee-wordmark-en.svg",
+  );
 
-  if (!wordmarkResponse.ok) {
+  let svgSource: string;
+  try {
+    svgSource = await readFile(wordmarkPath, "utf8");
+  } catch {
     return new Response("Unable to read the locked Tanee wordmark.", {
       status: 502,
       headers: { "Cache-Control": "no-store" },
     });
   }
-
-  const svgSource = await wordmarkResponse.text();
 
   if (url.searchParams.get("svgbase64") === "1") {
     const bytes = Buffer.from(svgSource, "utf8");
@@ -39,8 +46,7 @@ export async function GET(request: Request) {
   if (url.searchParams.get("debug") === "1") {
     return Response.json(
       {
-        sourceStatus: wordmarkResponse.status,
-        contentType: wordmarkResponse.headers.get("content-type"),
+        source: "filesystem",
         sourceLength: svgSource.length,
         literalPathCount: (svgSource.match(/<path/g) ?? []).length,
         parsedPathCount: pathTags.length,
