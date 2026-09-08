@@ -1,5 +1,9 @@
 import { ImageResponse } from "next/og";
 
+function readAttribute(tag: string, name: string) {
+  return new RegExp(`${name}="([^"]+)"`).exec(tag)?.[1] ?? null;
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const wordmarkUrl = new URL("/brand/tanee-wordmark-en.svg", request.url);
@@ -13,18 +17,17 @@ export async function GET(request: Request) {
   }
 
   const svgSource = await wordmarkResponse.text();
-  const paths = Array.from(
-    svgSource.matchAll(
-      /<path\b[^>]*\bfill="([^"]+)"[^>]*\bfill-rule="([^"]+)"[^>]*\bd="([^"]+)"[^>]*\/>/g,
-    ),
-    (match) => ({
-      fill: match[1],
-      fillRule: match[2],
-      d: match[3],
-    }),
-  );
+  const pathTags = svgSource.match(/<path\b[^>]*\/>/g) ?? [];
+  const paths = pathTags.map((tag) => ({
+    fill: readAttribute(tag, "fill"),
+    fillRule: readAttribute(tag, "fill-rule"),
+    d: readAttribute(tag, "d"),
+  }));
 
-  if (paths.length !== 4) {
+  if (
+    paths.length !== 4 ||
+    paths.some((path) => !path.fill || !path.fillRule || !path.d)
+  ) {
     return new Response("Locked Tanee wordmark geometry did not match the expected four paths.", {
       status: 502,
       headers: { "Cache-Control": "no-store" },
@@ -47,8 +50,8 @@ export async function GET(request: Request) {
           {paths.map((path, index) => (
             <path
               key={index}
-              d={path.d}
-              fill={path.fill}
+              d={path.d!}
+              fill={path.fill!}
               fillRule={path.fillRule as "evenodd" | "nonzero"}
             />
           ))}
