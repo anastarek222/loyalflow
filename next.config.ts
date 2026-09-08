@@ -22,9 +22,10 @@ if (process.env.VERCEL_ENV === "preview") {
   const blobHost = blobStoreId
     ? `${blobStoreId.toLowerCase()}.private.blob.vercel-storage.com`
     : "missing";
+  const oidcConfigured = Boolean(process.env.VERCEL_OIDC_TOKEN?.trim());
 
   process.stdout.write(
-    `[blob-isolation-cert] vercel_env=preview loyalflow_env=${process.env.LOYALFLOW_ENVIRONMENT?.trim() || "unset"} blob_configured=${Boolean(blobStoreId)} blob_host=${blobHost}\n`,
+    `[blob-isolation-cert] vercel_env=preview loyalflow_env=${process.env.LOYALFLOW_ENVIRONMENT?.trim() || "unset"} blob_configured=${Boolean(blobStoreId)} oidc_configured=${oidcConfigured} blob_host=${blobHost}\n`,
   );
 }
 
