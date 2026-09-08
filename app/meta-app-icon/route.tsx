@@ -1,7 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
-
 export async function GET(request: Request) {
   const wordmarkUrl = new URL("/brand/tanee-wordmark-en.svg", request.url);
 
@@ -14,7 +12,7 @@ export async function GET(request: Request) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#FFFFFF",
+          background: "transparent",
         }}
       >
         <img
