@@ -1,5 +1,33 @@
 import type { NextConfig } from "next";
 
+function normalizeBlobStoreId(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed.startsWith("store_") ? trimmed.slice("store_".length) : trimmed;
+}
+
+function getConfiguredBlobStoreId() {
+  const explicitStoreId = normalizeBlobStoreId(process.env.BLOB_STORE_ID);
+  if (explicitStoreId) return explicitStoreId;
+
+  const readWriteToken = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  if (!readWriteToken) return null;
+
+  const [, , , tokenStoreId = ""] = readWriteToken.split("_");
+  return normalizeBlobStoreId(tokenStoreId);
+}
+
+if (process.env.VERCEL_ENV === "preview") {
+  const blobStoreId = getConfiguredBlobStoreId();
+  const blobHost = blobStoreId
+    ? `${blobStoreId.toLowerCase()}.private.blob.vercel-storage.com`
+    : "missing";
+
+  process.stdout.write(
+    `[blob-isolation-cert] vercel_env=preview loyalflow_env=${process.env.LOYALFLOW_ENVIRONMENT?.trim() || "unset"} blob_configured=${Boolean(blobStoreId)} blob_host=${blobHost}\n`,
+  );
+}
+
 const securityHeaders = [
   {
     key: "X-Content-Type-Options",
