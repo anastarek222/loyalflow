@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { ListPageTemplate, PageHeader } from "@/components/page-layout";
+import { ResponsiveFilterPanel } from "@/components/responsive-filter-panel";
 import {
   derivePaymentState,
   formatMoneyMinor,
@@ -257,6 +258,9 @@ export default async function BusinessOwnersPage({
           lastActivity: "Last activity",
           never: "No activity",
         };
+  const hasActiveFilters = Boolean(
+    query || status !== "all" || payment !== "all" || plan !== "all",
+  );
 
   return (
     <ListPageTemplate
@@ -277,12 +281,10 @@ export default async function BusinessOwnersPage({
                   : "Manage plans & limits"}
               </Link>
               <Link
-                href="/businesses#add-business"
+                href="/businesses/new"
                 className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
               >
-                {language === "AR"
-                  ? "إضافة نشاط ومالك"
-                  : "Add business & owner"}
+                {language === "AR" ? "إضافة نشاط" : "Add business"}
               </Link>
             </div>
           }
@@ -310,11 +312,17 @@ export default async function BusinessOwnersPage({
         </div>
       ) : null}
 
-      <Card>
-        <form
-          className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_11rem_11rem_11rem_auto]"
-          action="/business-owners"
-        >
+      <ResponsiveFilterPanel
+        title={language === "AR" ? "البحث والفلاتر" : "Search & filters"}
+        showLabel={language === "AR" ? "إظهار" : "Show"}
+        hideLabel={language === "AR" ? "إخفاء" : "Hide"}
+        defaultOpen={hasActiveFilters}
+      >
+        <Card>
+          <form
+            className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_11rem_11rem_11rem_auto]"
+            action="/business-owners"
+          >
           <label className="relative">
             <Search
               className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-foreground-subtle"
@@ -380,8 +388,9 @@ export default async function BusinessOwnersPage({
           >
             {language === "AR" ? "تطبيق" : "Apply"}
           </button>
-        </form>
-      </Card>
+          </form>
+        </Card>
+      </ResponsiveFilterPanel>
 
       <section aria-label={copy.title} className="mt-5 space-y-3">
         {owners.length === 0 ? (

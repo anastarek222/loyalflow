@@ -8,6 +8,7 @@ import {
   getCustomerMessagesUpdate,
   operationsSettingsSchema,
 } from "@/lib/business/settings-domains";
+import { DEFAULT_WHATSAPP_TEMPLATES } from "@/lib/whatsapp-templates";
 
 const source = (path: string) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -40,7 +41,7 @@ test("Settings retains profile and operations but no customer messages", () => {
   assert.match(settingsForm, /actions\.operations/);
 });
 
-test("message form preserves fields, pending state, feedback, and localization", () => {
+test("message form exposes exactly three Owner WhatsApp messages as one manual and automatic source", () => {
   for (const field of [
     "whatsappWelcomeMessage",
     "whatsappBalanceMessage",
@@ -50,10 +51,15 @@ test("message form preserves fields, pending state, feedback, and localization",
   }
   assert.match(messageForm, /useFormStatus/);
   assert.match(messageForm, /aria-live="polite"/);
-  assert.match(messageForm, /required/);
+  assert.doesNotMatch(messageForm, /required/);
+  assert.doesNotMatch(messageForm, /minLength=\{1\}/);
   assert.match(messageForm, /maxLength=\{1500\}/);
-  assert.match(messageForm, /رسائل العملاء/);
-  assert.match(messageForm, /Customer messages/);
+  assert.match(messageForm, /رسائل واتساب/);
+  assert.match(messageForm, /WhatsApp messages/);
+  assert.match(messageForm, /single source of truth for both modes/);
+  assert.match(messageForm, /There are no separate Manual and Automatic message versions/);
+  assert.match(messageForm, /data-whatsapp-owner-messages/);
+  assert.doesNotMatch(messageForm, /data-automatic-whatsapp-owner-messages/);
 });
 
 test("customer message action remains domain scoped and returns to Program", () => {
@@ -75,17 +81,22 @@ test("customer message action remains domain scoped and returns to Program", () 
   );
 });
 
-test("message validation remains independent of other domains", () => {
+test("message validation lets the Owner independently disable automatic events", () => {
   const messages = customerMessagesSettingsSchema.parse({
     whatsappWelcomeMessage: "Welcome",
-    whatsappBalanceMessage: "Balance updated",
+    whatsappBalanceMessage: "   ",
     whatsappRewardMessage: "Reward ready",
   });
-  assert.deepEqual(Object.keys(getCustomerMessagesUpdate(messages)).sort(), [
-    "whatsappBalanceMessage",
-    "whatsappRewardMessage",
-    "whatsappWelcomeMessage",
-  ]);
+  assert.deepEqual(getCustomerMessagesUpdate(messages), {
+    whatsappWelcomeMessage: "Welcome",
+    whatsappBalanceMessage: null,
+    whatsappRewardMessage: "Reward ready",
+  });
+  assert.deepEqual(DEFAULT_WHATSAPP_TEMPLATES, {
+    welcome: "",
+    balance: "",
+    reward: "",
+  });
   assert.equal(
     businessProfileSettingsSchema.safeParse({}).success,
     false,

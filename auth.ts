@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
@@ -8,6 +6,10 @@ import { z } from "zod";
 import { isCurrentAuthVersion } from "@/lib/auth/auth-version";
 import { isEmailVerificationSatisfied } from "@/lib/auth/email-verification-access";
 import { recordLoginDenial } from "@/lib/auth/login-observability";
+import {
+  createLoginAccountKey,
+  DUMMY_PASSWORD_HASH,
+} from "@/lib/auth/login-security";
 import { isSuperAdminMfaLoginAllowed } from "@/lib/auth/super-admin-mfa";
 import {
   isSuperAdminMfaEnabled,
@@ -24,9 +26,6 @@ const loginSchema = z.object({
   password: z.string().min(10),
   mfaCode: z.string().trim().max(64).optional().default(""),
 });
-
-const DUMMY_PASSWORD_HASH =
-  "$2b$12$8hnfl17deN358tffaOeFB.4xqYantMxhitSnC6icKfoQKvjIEbUoW";
 
 export const {
   handlers,
@@ -68,9 +67,7 @@ export const {
         }
 
         const email = parsed.data.email.toLowerCase();
-        const accountKey = createHash("sha256")
-          .update(email)
-          .digest("hex");
+        const accountKey = createLoginAccountKey(email);
         const accountLimit = await distributedRateLimit(
           `credentials-login-account:${accountKey}`,
           { limit: 10, windowMs: 15 * 60 * 1000 },

@@ -22,6 +22,22 @@ test("Staff success feedback is attached only to the confirmed success state", (
   assert.doesNotMatch(feedback, /fetch\(|axios|prisma|ServerAction/);
 });
 
+test("Reward-ready earn stays visually explicit and points staff toward redemption", () => {
+  assert.match(scanPage, /rewardReady\?: string/);
+  assert.match(
+    scanPage,
+    /rewardJustUnlocked = success === "earned" && query\.rewardReady === "1"/,
+  );
+  assert.match(scanPage, /rewardJustUnlocked[\s\S]*?copy\.rewardReadySuccess/);
+  assert.match(
+    scanPage,
+    /rewardJustUnlocked \? copy\.redeemReward : copy\.performAnotherOperation/,
+  );
+  assert.match(feedback, /searchParams\.get\("rewardReady"\) === "1"/);
+  assert.match(scanCopy, /rewardReadySuccess: "🎁 تمت إضافة الولاء والمكافأة جاهزة للاستبدال"/);
+  assert.match(scanCopy, /rewardReadySuccess: "🎁 Loyalty added and the reward is ready to redeem"/);
+});
+
 test("Sound and haptics require an explicit, versioned local preference", () => {
   assert.match(feedback, /loyalflow:scan-success-feedback:v1/);
   assert.match(feedback, /return parsed\.enabled === true/);

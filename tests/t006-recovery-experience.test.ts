@@ -53,7 +53,8 @@ test("T006 Win-back engine remains a pure adapter over canonical segmentation an
     /return getCustomerSegmentWhere\([\s\S]{0,160}audience,[\s\S]{0,80}input\.rewardThreshold,[\s\S]{0,80}input\.now,[\s\S]{0,80}input\.earnAmount/,
   );
   assert.match(winBack, /renderWhatsAppTemplate\(/);
-  assert.match(winBack, /input\.template\?\.trim\(\) \|\| WIN_BACK_TEMPLATE/);
+  assert.match(winBack, /const template = input\.template\?\.trim\(\) \?\? ""/);
+  assert.doesNotMatch(winBack, /WIN_BACK_TEMPLATE/);
   assert.doesNotMatch(winBack, /prisma\.|fetch\(|sendMessage|deliveryStatus/);
 });
 

@@ -36,13 +36,14 @@ test("TC2.8 compatibility catalog composes conversion values from the package", 
   assert.doesNotMatch(catalog, /"conversion\.[A-Za-z]+"\s*:/);
 });
 
-test("TC2.8 keeps get-started inside the invitation-only acquisition boundary", () => {
+test("TC2.8 keeps get-started inside the public Trial acquisition boundary", () => {
   const page = source("app/get-started/page.tsx");
   assert.match(page, /PUBLIC_ACQUISITION_MODE/);
+  assert.match(page, /PublicTrialForm/);
+  assert.match(page, /startPublicTrialAction/);
   assert.match(page, /href="\/login"/);
   assert.doesNotMatch(page, /href="\/accept-owner-invitation"/);
   assert.doesNotMatch(page, /href="\/(?:signup|checkout|pricing)"/);
   assert.match(page, /conversion\.invitedBody/);
-  assert.match(page, /conversion\.invitedRequirement/);
   assert.match(page, /conversion\.noSignup/);
 });

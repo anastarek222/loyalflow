@@ -12,9 +12,9 @@ import { translate } from "@/lib/i18n/catalog";
 const root = process.cwd();
 const source = (file: string) => readFileSync(path.join(root, file), "utf8");
 
-test("TC7.1 keeps public acquisition invitation-only without stale Beta state", () => {
-  assert.equal(PUBLIC_ACQUISITION_MODE, "INVITATION_ONLY");
-  assert.equal(publicAcquisitionPolicy.selfServiceSignupEnabled, false);
+test("TC7.1 makes Marketing the public Trial acquisition authority", () => {
+  assert.equal(PUBLIC_ACQUISITION_MODE, "PUBLIC_TRIAL");
+  assert.equal(publicAcquisitionPolicy.selfServiceSignupEnabled, true);
   assert.equal(publicAcquisitionPolicy.paymentCheckoutEnabled, false);
   assert.equal(
     publicAcquisitionPolicy.realParticipantGateRequiredBeforeProduction,
@@ -22,22 +22,25 @@ test("TC7.1 keeps public acquisition invitation-only without stale Beta state", 
   );
 });
 
-test("TC7.1 permits only existing accounts and owner invitations", () => {
+test("TC7.1 exposes new-business intent and existing sign-in without an invitation product path", () => {
+  assert.equal(isSupportedPublicAcquisitionPath("NEW_BUSINESS"), true);
   assert.equal(isSupportedPublicAcquisitionPath("EXISTING_ACCOUNT"), true);
-  assert.equal(isSupportedPublicAcquisitionPath("OWNER_INVITATION"), true);
+  assert.equal(isSupportedPublicAcquisitionPath("OWNER_INVITATION"), false);
   assert.equal(isSupportedPublicAcquisitionPath("SELF_SERVICE_SIGNUP"), false);
   assert.equal(isSupportedPublicAcquisitionPath("PAYMENT_CHECKOUT"), false);
   assert.equal(isSupportedPublicAcquisitionPath("unknown"), false);
   assert.equal(isSupportedPublicAcquisitionPath(null), false);
 });
 
-test("TC7.1 publishes the invitation-only boundary in both locales without Beta wording", () => {
-  assert.match(translate("en", "conversion.noSignup"), /invitation-only/i);
-  assert.match(translate("ar", "conversion.noSignup"), /بالدعوة فقط/);
+test("TC7.1 publishes a truthful public Trial path without legacy invitation terminology", () => {
+  assert.match(translate("en", "conversion.body"), /seven-day Trial/i);
+  assert.match(translate("ar", "conversion.body"), /7 أيام/);
+  assert.doesNotMatch(translate("en", "conversion.body"), /owner invitation/i);
+  assert.doesNotMatch(translate("ar", "conversion.body"), /دعوة مالك/);
   assert.doesNotMatch(translate("en", "conversion.body"), /Beta/i);
   assert.doesNotMatch(translate("en", "conversion.noSignup"), /Beta/i);
-  assert.doesNotMatch(translate("ar", "conversion.body"), /Beta|تجريب/);
-  assert.doesNotMatch(translate("ar", "conversion.noSignup"), /Beta|تجريب/);
+  assert.doesNotMatch(translate("ar", "conversion.body"), /Beta|بيتا/);
+  assert.doesNotMatch(translate("ar", "conversion.noSignup"), /Beta|بيتا/);
 });
 
 test("TC7.1 binds the public conversion page to the canonical mode", () => {
@@ -45,6 +48,10 @@ test("TC7.1 binds the public conversion page to the canonical mode", () => {
 
   assert.match(page, /PUBLIC_ACQUISITION_MODE/);
   assert.match(page, /data-acquisition-mode=\{PUBLIC_ACQUISITION_MODE\}/);
+  assert.match(page, /PublicTrialForm/);
+  assert.match(page, /startPublicTrialAction/);
+  assert.match(page, /data-secure-setup-continuation="email-only"/);
   assert.doesNotMatch(page, /href=["']\/signup/);
   assert.doesNotMatch(page, /href=["']\/checkout/);
+  assert.doesNotMatch(page, /data-owner-invitation-requirement/);
 });

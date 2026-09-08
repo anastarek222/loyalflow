@@ -43,6 +43,10 @@ export async function redeemOwnerInvitation(input: {
               "firstName",
               "lastName",
               "email",
+              "phone",
+              "businessName",
+              "country",
+              "source",
               "tokenHash",
               "expiresAt",
               "usedAt"

@@ -10,6 +10,23 @@ export const CUSTOMER_MESSAGE_EVENTS = [
 
 export type CustomerMessageEvent = (typeof CUSTOMER_MESSAGE_EVENTS)[number];
 
+export const AUTOMATIC_CUSTOMER_MESSAGE_EVENTS = [
+  "WELCOME",
+  "BALANCE_UPDATED",
+  "REWARD_READY",
+] as const;
+
+export type AutomaticCustomerMessageEvent =
+  (typeof AUTOMATIC_CUSTOMER_MESSAGE_EVENTS)[number];
+
+export function isAutomaticCustomerMessageEvent(
+  event: CustomerMessageEvent,
+): event is AutomaticCustomerMessageEvent {
+  return AUTOMATIC_CUSTOMER_MESSAGE_EVENTS.includes(
+    event as AutomaticCustomerMessageEvent,
+  );
+}
+
 export type CustomerMessagePayload = Readonly<{
   version: 1;
   event: CustomerMessageEvent;
@@ -49,6 +66,8 @@ export async function enqueueCustomerMessageJob(
     rewardName?: string;
   }>,
 ) {
+  if (!isAutomaticCustomerMessageEvent(input.event)) return null;
+
   const customer = await transaction.customer.findFirst({
     where: {
       id: input.customerId,

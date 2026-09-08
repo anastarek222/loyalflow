@@ -11,7 +11,6 @@ import {
   Building2,
   KeyRound,
   Mail,
-  MailCheck,
   MessageCircle,
   Phone,
 } from "lucide-react";
@@ -66,13 +65,6 @@ export default async function ContactPage() {
       body: "marketing.contact.accountBody",
       cta: "marketing.contact.accountCta",
     },
-    {
-      href: "/accept-owner-invitation",
-      icon: MailCheck,
-      title: "marketing.contact.invitationTitle",
-      body: "marketing.contact.invitationBody",
-      cta: "marketing.contact.invitationCta",
-    },
   ] as const;
 
   return (
@@ -106,7 +98,7 @@ export default async function ContactPage() {
       </section>
 
       <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-3">
+        <div className="mx-auto grid w-full max-w-4xl gap-5 md:grid-cols-2">
           {paths.map(({ href, icon: Icon, title, body, cta }) => (
             <article
               key={href}

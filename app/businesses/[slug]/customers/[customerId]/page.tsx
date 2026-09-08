@@ -40,7 +40,6 @@ import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { customerUiCopy } from "@/lib/customers/ui-copy";
 import {
   buildWhatsAppUrl,
-  DEFAULT_WHATSAPP_TEMPLATES,
   renderWhatsAppTemplate,
 } from "@/lib/whatsapp-templates";
 import Link from "next/link";
@@ -442,46 +441,46 @@ export default async function CustomerDetailsPage({
     remaining,
   };
 
-  const welcomeWhatsAppUrl = buildWhatsAppUrl(
-    customer.phone,
-    renderWhatsAppTemplate(
-      business.whatsappWelcomeMessage ?? DEFAULT_WHATSAPP_TEMPLATES.welcome,
-      whatsappContext,
-    ),
-  );
+  const welcomeWhatsAppTemplate = business.whatsappWelcomeMessage?.trim() ?? "";
+  const balanceWhatsAppTemplate = business.whatsappBalanceMessage?.trim() ?? "";
+  const rewardWhatsAppTemplate = business.whatsappRewardMessage?.trim() ?? "";
+  const welcomeWhatsAppUrl = welcomeWhatsAppTemplate
+    ? buildWhatsAppUrl(
+        customer.phone,
+        renderWhatsAppTemplate(welcomeWhatsAppTemplate, whatsappContext),
+      )
+    : null;
+  const balanceWhatsAppUrl = balanceWhatsAppTemplate
+    ? buildWhatsAppUrl(
+        customer.phone,
+        renderWhatsAppTemplate(balanceWhatsAppTemplate, whatsappContext),
+      )
+    : null;
+  const rewardWhatsAppUrl = rewardWhatsAppTemplate
+    ? buildWhatsAppUrl(
+        customer.phone,
+        renderWhatsAppTemplate(rewardWhatsAppTemplate, whatsappContext),
+      )
+    : null;
 
-  const balanceWhatsAppUrl = buildWhatsAppUrl(
-    customer.phone,
-    renderWhatsAppTemplate(
-      business.whatsappBalanceMessage ?? DEFAULT_WHATSAPP_TEMPLATES.balance,
-      whatsappContext,
-    ),
-  );
-
-  const rewardWhatsAppUrl = buildWhatsAppUrl(
-    customer.phone,
-    renderWhatsAppTemplate(
-      business.whatsappRewardMessage ?? DEFAULT_WHATSAPP_TEMPLATES.reward,
-      whatsappContext,
-    ),
-  );
-
-  const smartWhatsAppSuggestion = getCampaignSuggestion({
-    operation: query.success,
-    phone: customer.phone,
-    context: whatsappContext,
-    templates: {
-      welcome: business.whatsappWelcomeMessage,
-      balance: business.whatsappBalanceMessage,
-      reward: business.whatsappRewardMessage,
-    },
-    rewardAvailable,
-    isOneLoyaltyActionAway:
-      business.loyaltyMode !== "SALES_AMOUNT" &&
-      !rewardAvailable &&
-      remaining > 0 &&
-      remaining <= business.earnAmount,
-  });
+  const smartWhatsAppSuggestion = canManageCustomer
+    ? getCampaignSuggestion({
+        operation: query.success,
+        phone: customer.phone,
+        context: whatsappContext,
+        templates: {
+          welcome: business.whatsappWelcomeMessage,
+          balance: business.whatsappBalanceMessage,
+          reward: business.whatsappRewardMessage,
+        },
+        rewardAvailable,
+        isOneLoyaltyActionAway:
+          business.loyaltyMode !== "SALES_AMOUNT" &&
+          !rewardAvailable &&
+          remaining > 0 &&
+          remaining <= business.earnAmount,
+      })
+    : null;
   const smartSuggestionCopy = smartWhatsAppSuggestion
     ? copy.campaignSuggestion[smartWhatsAppSuggestion.trigger]
     : null;
@@ -767,21 +766,21 @@ export default async function CustomerDetailsPage({
               >
                 {copy.openCard}
               </Link>
-              {canManageCustomer ? (
-                <a
-                  href="#customer-details"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
-                >
-                  {copy.manageCustomer}
-                </a>
-              ) : (
+              {canEarnLoyalty || canRedeemLoyalty ? (
                 <a
                   href="#daily-loyalty"
                   className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
                 >
                   {copy.loyaltyAction}
                 </a>
-              )}
+              ) : canManageCustomer ? (
+                <a
+                  href="#customer-details"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
+                >
+                  {copy.manageCustomer}
+                </a>
+              ) : null}
             </nav>
 
             {isSimpleExperience ? (
@@ -1622,33 +1621,50 @@ export default async function CustomerDetailsPage({
                 )
               ) : null}
 
-              <a
-                href={welcomeWhatsAppUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
-              >
-                {copy.welcomeMessage}
-              </a>
+              {canManageCustomer ? (
+                <>
+                  <div className="mt-2 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
+                    <p className="text-sm font-black text-foreground">
+                      {copy.manualWhatsApp}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-foreground-muted">
+                      {copy.manualWhatsAppDescription}
+                    </p>
+                  </div>
 
-              <a
-                href={balanceWhatsAppUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
-              >
-                {copy.balanceMessage}
-              </a>
+                  {welcomeWhatsAppUrl ? (
+                    <a
+                      href={welcomeWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
+                    >
+                      {copy.welcomeMessage}
+                    </a>
+                  ) : null}
 
-              {rewardAvailable ? (
-                <a
-                  href={rewardWhatsAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
-                >
-                  {copy.rewardMessage}
-                </a>
+                  {balanceWhatsAppUrl ? (
+                    <a
+                      href={balanceWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
+                    >
+                      {copy.balanceMessage}
+                    </a>
+                  ) : null}
+
+                  {rewardAvailable && rewardWhatsAppUrl ? (
+                    <a
+                      href={rewardWhatsAppUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
+                    >
+                      {copy.rewardMessage}
+                    </a>
+                  ) : null}
+                </>
               ) : null}
             </div>
           </OperationalDisclosure>

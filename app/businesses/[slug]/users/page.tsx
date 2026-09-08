@@ -16,6 +16,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { ConfirmSubmitButton } from "@/components/administration/confirm-submit-button";
+import { ResponsiveFilterPanel } from "@/components/responsive-filter-panel";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -501,7 +502,13 @@ export default async function UsersPage({
               </p>
             </div>
           </div>
-          <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <ResponsiveFilterPanel
+            title={t("فلاتر الفريق", "Team filters")}
+            showLabel={t("إظهار", "Show")}
+            hideLabel={t("إخفاء", "Hide")}
+            defaultOpen={filtersActive}
+          >
+            <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <label className="relative">
               <Search
                 className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-foreground-subtle"
@@ -557,9 +564,9 @@ export default async function UsersPage({
               <CheckCircle2 className="size-4" aria-hidden="true" />
               {t("تطبيق", "Apply")}
             </button>
-          </form>
+            </form>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
             <span>
               {language === "AR"
                 ? `${filteredUsers} نتيجة من ${totalUsers} حساب`
@@ -574,7 +581,8 @@ export default async function UsersPage({
                 {t("مسح الفلاتر", "Clear filters")}
               </Link>
             )}
-          </div>
+            </div>
+          </ResponsiveFilterPanel>
         </section>
 
         <details className="group mb-6 rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">

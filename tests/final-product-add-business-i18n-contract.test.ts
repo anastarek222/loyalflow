@@ -13,7 +13,7 @@ test("Add Business resolves and propagates the authenticated language", () => {
   assert.match(page, /normalizeLanguage\(currentUser\?\.language\)/);
   assert.match(page, /language=\{language\}/);
   assert.match(experience, /<BusinessSetupWizard[\s\S]*language=\{language\}/);
-  assert.match(experience, /<OwnerInvitationForm[\s\S]*language=\{language\}/);
+  assert.doesNotMatch(experience, /OwnerInvitationForm|Owner invitation|دعوة المالك/);
   assert.match(experience, /إضافة نشاط تجاري/);
   assert.match(experience, /Add business/);
 });
@@ -37,11 +37,14 @@ test("Business Setup Wizard no longer forces English card setup", () => {
   assert.match(wizard, /defaultValue=\{copy\.defaultReward\}/);
 });
 
-test("Owner invitation copy and controls are bilingual and semantic", () => {
-  const form = source("components/owner-invitation-form.tsx");
+test("Super Admin entry points use one direct Add Business destination", () => {
+  const dashboard = source("app/dashboard/page.tsx");
+  const businesses = source("app/businesses/page.tsx");
+  const owners = source("app/business-owners/page.tsx");
 
-  assert.match(form, /إرسال دعوة المالك/);
-  assert.match(form, /Send owner invitation/);
-  assert.match(form, /text-primary-foreground/);
-  assert.doesNotMatch(form, /text-white|bg-white|bg-primary-subtle/);
+  assert.match(dashboard, /href="\/businesses\/new"/);
+  assert.match(businesses, /href="\/businesses\/new"/);
+  assert.match(owners, /href="\/businesses\/new"/);
+  assert.doesNotMatch(`${dashboard}\n${owners}`, /\/businesses#add-business/);
+  assert.doesNotMatch(owners, /Add business & owner|إضافة نشاط ومالك/);
 });

@@ -1,15 +1,10 @@
 import {
   buildWhatsAppUrl,
-  DEFAULT_WHATSAPP_TEMPLATES,
   renderWhatsAppTemplate,
 } from "@/lib/whatsapp-templates";
 
 export type CampaignSuggestion = {
-  trigger:
-    | "WELCOME"
-    | "BALANCE_UPDATED"
-    | "REWARD_READY"
-    | "ONE_AWAY";
+  trigger: "WELCOME" | "BALANCE_UPDATED" | "REWARD_READY";
   title: string;
   description: string;
   button: string;
@@ -38,14 +33,14 @@ type CampaignSuggestionInput = {
   context: CampaignContext;
   templates: CampaignTemplateConfig;
   rewardAvailable: boolean;
+  // Retained for call-site compatibility. One-away no longer has its own
+  // platform-authored WhatsApp copy; it reuses the Owner's balance message.
   isOneLoyaltyActionAway: boolean;
 };
 
-const oneAwayTemplate =
-  "أهلاً {customer} 👋\n\n" +
-  "أنت على بُعد خطوة واحدة من {reward} لدى {business}.\n" +
-  "متبقي {remaining} {unit}.\n\n" +
-  "تابع كارتك من هنا:\n{card_link}";
+function configuredTemplate(value: string | null | undefined) {
+  return value?.trim() ? value : null;
+}
 
 function buildSuggestion(
   trigger: CampaignSuggestion["trigger"],
@@ -63,7 +58,7 @@ function buildSuggestion(
       return {
         trigger,
         title: "تم إنشاء العميل بنجاح 👋",
-        description: "أرسل رسالة الترحيب ورابط كارت الولاء للعميل الجديد.",
+        description: "أرسل نفس رسالة الترحيب المحفوظة لهذا النشاط.",
         button: "إرسال رسالة الترحيب",
         url,
       };
@@ -71,23 +66,15 @@ function buildSuggestion(
       return {
         trigger,
         title: "المكافأة أصبحت جاهزة 🎁",
-        description: "أرسل للعميل رسالة المكافأة الجاهزة للاستلام.",
+        description: "أرسل نفس رسالة المكافأة المحفوظة لهذا النشاط.",
         button: "إرسال رسالة المكافأة",
-        url,
-      };
-    case "ONE_AWAY":
-      return {
-        trigger,
-        title: "العميل على بُعد خطوة واحدة ✨",
-        description: "ذكّر العميل بأن مكافأته قريبة لتشجيع الزيارة التالية.",
-        button: "إرسال تذكير المكافأة",
         url,
       };
     case "BALANCE_UPDATED":
       return {
         trigger,
         title: "تم تحديث رصيد العميل",
-        description: "أرسل للعميل رصيده الحالي والمتبقي للحصول على المكافأة.",
+        description: "أرسل نفس رسالة تحديث الرصيد المحفوظة لهذا النشاط.",
         button: "إرسال تحديث الرصيد",
         url,
       };
@@ -95,53 +82,28 @@ function buildSuggestion(
 }
 
 /**
- * Produces a provider-independent, staff-reviewed campaign handoff. It does
- * not send a message or record a delivery; a persistent campaign model will
- * add those capabilities later.
+ * Produces a staff-reviewed manual WhatsApp handoff from the exact same three
+ * Business-scoped Owner messages used by automatic delivery. Blank Owner copy
+ * means there is no manual suggestion for that case either; Tanee never creates
+ * a fourth or fallback WhatsApp message.
  */
 export function getCampaignSuggestion(
   input: CampaignSuggestionInput
 ): CampaignSuggestion | null {
-  const templates = {
-    welcome:
-      input.templates.welcome ??
-      DEFAULT_WHATSAPP_TEMPLATES.welcome,
-    balance:
-      input.templates.balance ??
-      DEFAULT_WHATSAPP_TEMPLATES.balance,
-    reward:
-      input.templates.reward ??
-      DEFAULT_WHATSAPP_TEMPLATES.reward,
-  };
+  const welcome = configuredTemplate(input.templates.welcome);
+  const balance = configuredTemplate(input.templates.balance);
+  const reward = configuredTemplate(input.templates.reward);
 
   if (input.operation === "created") {
-    return buildSuggestion(
-      "WELCOME",
-      input.phone,
-      templates.welcome,
-      input.context
-    );
+    return welcome
+      ? buildSuggestion("WELCOME", input.phone, welcome, input.context)
+      : null;
   }
 
   if (input.operation === "earned" && input.rewardAvailable) {
-    return buildSuggestion(
-      "REWARD_READY",
-      input.phone,
-      templates.reward,
-      input.context
-    );
-  }
-
-  if (
-    input.operation === "earned" &&
-    input.isOneLoyaltyActionAway
-  ) {
-    return buildSuggestion(
-      "ONE_AWAY",
-      input.phone,
-      oneAwayTemplate,
-      input.context
-    );
+    return reward
+      ? buildSuggestion("REWARD_READY", input.phone, reward, input.context)
+      : null;
   }
 
   if (
@@ -149,12 +111,9 @@ export function getCampaignSuggestion(
     input.operation === "redeemed" ||
     input.operation === "adjusted"
   ) {
-    return buildSuggestion(
-      "BALANCE_UPDATED",
-      input.phone,
-      templates.balance,
-      input.context
-    );
+    return balance
+      ? buildSuggestion("BALANCE_UPDATED", input.phone, balance, input.context)
+      : null;
   }
 
   return null;

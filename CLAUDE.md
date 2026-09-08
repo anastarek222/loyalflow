@@ -13,7 +13,10 @@ This file is repository guidance for coding agents. The current repository and `
 
 - Working branch authority: `staging`.
 - Final Product Z1–Z14 is complete at source/code/automated-test/CI/merge level.
-- Current authorized work is bounded Final Visual / brand-customization preparation and later visual implementation.
+- Current authorized work is the bounded Pre-Frontend Product / Backend /
+  Integrations closeout in Draft PR #507.
+- Stitch / Final Visual implementation begins only after the formal
+  Pre-Frontend Freeze.
 - This phase is not Z15.
 - Manual UAT and real-business Closed Beta remain deferred until explicitly resumed.
 - Production is not authorized by the current phase.
@@ -33,6 +36,10 @@ This file is repository guidance for coding agents. The current repository and `
 Use the scripts in `package.json`; do not substitute stale npm commands from old documentation.
 
 ## Required workflow
+
+During the Pre-Frontend Closeout, use #507 as the integration lane. Parallel
+branches must own non-overlapping files and rebase onto the latest exact #507
+head before integration. This does not authorize merging #507 to `staging`.
 
 Start from current Staging:
 

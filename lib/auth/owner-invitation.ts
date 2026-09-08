@@ -22,6 +22,10 @@ export type OwnerInvitationRecord = {
   firstName: string;
   lastName: string | null;
   email: string;
+  phone: string | null;
+  businessName: string | null;
+  country: string | null;
+  source: "MANAGED" | "PUBLIC_TRIAL";
   tokenHash: string;
   expiresAt: Date;
   usedAt: Date | null;
@@ -43,10 +47,15 @@ export type RedeemOwnerInvitationStore = {
       firstName: string;
       lastName: string | null;
       email: string;
+      phone: string | null;
       passwordHash: string;
       role: "OWNER";
       isActive: true;
       onboardingStatus: "PENDING";
+      onboardingData?: {
+        name?: string;
+        country?: string;
+      };
     };
   }): Promise<
     | { status: "success"; userId: string }
@@ -79,10 +88,21 @@ export async function redeemOwnerInvitationWithStore(
       firstName: invitation.firstName,
       lastName: invitation.lastName,
       email: invitation.email,
+      phone: invitation.phone,
       passwordHash: input.passwordHash,
       role: "OWNER",
       isActive: true,
       onboardingStatus: "PENDING",
+      ...(invitation.source === "PUBLIC_TRIAL"
+        ? {
+            onboardingData: {
+              ...(invitation.businessName
+                ? { name: invitation.businessName }
+                : {}),
+              ...(invitation.country ? { country: invitation.country } : {}),
+            },
+          }
+        : {}),
     },
   });
 }

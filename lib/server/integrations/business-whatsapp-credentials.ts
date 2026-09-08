@@ -3,6 +3,7 @@ import type { Prisma } from "@/generated/prisma/client";
 export type BusinessWhatsAppCredential = Readonly<{
   businessId: string;
   phoneNumberId: string;
+  wabaId: string | null;
   accessTokenCiphertext: string;
   connectedAt: Date;
   updatedAt: Date;
@@ -18,6 +19,7 @@ export async function getBusinessWhatsAppCredential(
     SELECT
       "businessId",
       "phoneNumberId",
+      "wabaId",
       "accessTokenCiphertext",
       "connectedAt",
       "updatedAt"
@@ -33,13 +35,16 @@ export async function upsertBusinessWhatsAppCredential(
   input: {
     businessId: string;
     phoneNumberId: string;
+    wabaId?: string | null;
     accessTokenCiphertext: string;
   },
 ) {
+  const wabaId = input.wabaId?.trim() || null;
   await client.$executeRaw`
     INSERT INTO "BusinessWhatsAppCredential" (
       "businessId",
       "phoneNumberId",
+      "wabaId",
       "accessTokenCiphertext",
       "connectedAt",
       "updatedAt"
@@ -47,12 +52,14 @@ export async function upsertBusinessWhatsAppCredential(
     VALUES (
       ${input.businessId},
       ${input.phoneNumberId},
+      ${wabaId},
       ${input.accessTokenCiphertext},
       CURRENT_TIMESTAMP,
       CURRENT_TIMESTAMP
     )
     ON CONFLICT ("businessId") DO UPDATE SET
       "phoneNumberId" = EXCLUDED."phoneNumberId",
+      "wabaId" = EXCLUDED."wabaId",
       "accessTokenCiphertext" = EXCLUDED."accessTokenCiphertext",
       "connectedAt" = CURRENT_TIMESTAMP,
       "updatedAt" = CURRENT_TIMESTAMP

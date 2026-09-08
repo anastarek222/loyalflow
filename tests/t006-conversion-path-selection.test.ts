@@ -28,13 +28,15 @@ test("T006 get-started page reuses canonical locale and direction behavior", () 
   assert.match(page, /<main\s+lang=\{locale\}\s+dir=\{direction\}/);
 });
 
-test("T006 path selector exposes only supported public destinations and keeps invitation acceptance token-gated", () => {
+test("T006 acquisition surface exposes sign-in while secure setup remains email-only", () => {
   const page = source("app/get-started/page.tsx");
   const hrefs = [...page.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);
 
   assert.ok(hrefs.includes("/login"));
   assert.ok(!hrefs.includes("/accept-owner-invitation"));
   assert.match(page, /conversion\.invitedBody/);
+  assert.match(page, /PublicTrialForm/);
+  assert.match(page, /data-secure-setup-continuation="email-only"/);
   assert.deepEqual(
     [...new Set(hrefs)].sort(),
     ["/", "/login"].sort(),

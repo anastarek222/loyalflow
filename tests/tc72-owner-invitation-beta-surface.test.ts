@@ -20,9 +20,9 @@ test("TC7.2 renders the invitation surface from the saved locale", () => {
   assert.match(page, /LanguageSwitcher locale=\{locale\}/);
 });
 
-test("TC7.2 provides bounded Arabic and English invitation copy", () => {
-  assert.equal(translate("en", "ownerInvite.title"), "Accept owner invitation");
-  assert.equal(translate("ar", "ownerInvite.title"), "قبول دعوة المالك");
+test("TC7.2 presents secure activation as business setup continuation", () => {
+  assert.equal(translate("en", "ownerInvite.title"), "Set your password");
+  assert.equal(translate("ar", "ownerInvite.title"), "عيّن كلمة المرور");
   assert.match(translate("en", "ownerInvite.invalid"), /invalid|expired/i);
   assert.match(translate("ar", "ownerInvite.invalid"), /غير صالح|انتهت/);
 });

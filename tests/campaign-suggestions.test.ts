@@ -20,7 +20,7 @@ const baseInput = {
   },
 };
 
-test("suggests a reviewed welcome handoff after registration", () => {
+test("manual welcome handoff uses the Owner-saved welcome copy", () => {
   const suggestion = getCampaignSuggestion({
     ...baseInput,
     operation: "created",
@@ -32,7 +32,7 @@ test("suggests a reviewed welcome handoff after registration", () => {
   assert.match(suggestion?.url ?? "", /Welcome%20Mona/);
 });
 
-test("prioritizes a reward-ready handoff over other earned triggers", () => {
+test("manual reward-ready handoff uses the Owner-saved reward copy", () => {
   const suggestion = getCampaignSuggestion({
     ...baseInput,
     operation: "earned",
@@ -44,7 +44,7 @@ test("prioritizes a reward-ready handoff over other earned triggers", () => {
   assert.match(suggestion?.url ?? "", /Ready%20a%20free%20coffee/);
 });
 
-test("uses the one-away trigger only when a reward is not yet ready", () => {
+test("one-away state reuses the Owner-saved balance copy instead of inventing a fourth message", () => {
   const suggestion = getCampaignSuggestion({
     ...baseInput,
     operation: "earned",
@@ -52,11 +52,21 @@ test("uses the one-away trigger only when a reward is not yet ready", () => {
     isOneLoyaltyActionAway: true,
   });
 
-  assert.equal(suggestion?.trigger, "ONE_AWAY");
-  const message = decodeURIComponent(
-    new URL(suggestion?.url ?? "https://wa.me").searchParams.get("text") ?? ""
+  assert.equal(suggestion?.trigger, "BALANCE_UPDATED");
+  assert.match(suggestion?.url ?? "", /Balance%204%20visits/);
+});
+
+test("blank Owner copy produces no manual handoff for that case", () => {
+  assert.equal(
+    getCampaignSuggestion({
+      ...baseInput,
+      templates: { ...baseInput.templates, balance: "   " },
+      operation: "adjusted",
+      rewardAvailable: false,
+      isOneLoyaltyActionAway: false,
+    }),
+    null,
   );
-  assert.match(message, /متبقي 1 visits/);
 });
 
 test("does not create a campaign handoff for unrelated page state", () => {
@@ -67,6 +77,6 @@ test("does not create a campaign handoff for unrelated page state", () => {
       rewardAvailable: false,
       isOneLoyaltyActionAway: false,
     }),
-    null
+    null,
   );
 });

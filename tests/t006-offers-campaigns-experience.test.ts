@@ -94,8 +94,9 @@ test("T006 Campaign builder preserves deterministic audiences and manual WhatsAp
     builder,
     /candidates\.filter\(\(candidate\) => matchesAudience\(candidate, audience\)\)/,
   );
-  assert.match(builder, /renderWhatsAppTemplate\(template/);
-  assert.match(builder, /appendCampaignOffer\(/);
+  assert.match(builder, /renderWhatsAppTemplate\(normalizedTemplate/);
+  assert.match(builder, /if \(!normalizedTemplate\) return ""/);
+  assert.doesNotMatch(builder, /appendCampaignOffer|ONE_AWAY_TEMPLATE/);
   assert.match(builder, /buildWhatsAppUrl\(candidate\.phone, message\)/);
   assert.match(builder, /target="_blank"/);
   assert.match(builder, /rel="noreferrer"/);

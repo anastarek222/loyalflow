@@ -3,7 +3,7 @@ import { AddBusinessExperience } from "@/components/add-business-experience";
 import { normalizeLanguage } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { createBusinessAction, createOwnerInvitationAction } from "../actions";
+import { createBusinessAction } from "../actions";
 
 export default async function AddBusinessPage() {
   const session = await auth();
@@ -20,7 +20,6 @@ export default async function AddBusinessPage() {
     <AddBusinessExperience
       language={language}
       createBusinessAction={createBusinessAction}
-      createOwnerInvitationAction={createOwnerInvitationAction}
     />
   );
 }

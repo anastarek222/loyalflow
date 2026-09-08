@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { PageHeader } from "@/components/page-layout";
+import { ResponsiveFilterPanel } from "@/components/responsive-filter-panel";
 import type { Prisma } from "@/generated/prisma/client";
 import { normalizeLanguage } from "@/lib/i18n";
 import prisma from "@/lib/prisma";
@@ -94,16 +95,12 @@ export default async function BusinessesPage({
           back: "العودة إلى لوحة التحكم",
           total: "إجمالي الأنشطة",
           add: "إضافة نشاط",
-          invitationSent:
-            "تم إرسال دعوة المالك. يجب على المالك استخدام رابط البريد لتفعيل حسابه وإكمال الإعداد.",
           created: "تم إنشاء النشاط بنجاح.",
           deleted: "تم حذف النشاط نهائيًا مع الاحتفاظ بحسابات المستخدمين.",
           invalid: "راجع البيانات المدخلة.",
           slugGeneration:
             "تعذر إنشاء رابط فريد وآمن للنشاط. حاول مرة أخرى.",
           ownerEmail: "يوجد حساب بالفعل ببريد المالك هذا.",
-          invitationInvalid: "راجع بيانات دعوة المالك.",
-          inviteUnavailable: "تعذر إنشاء الدعوة. حاول مرة أخرى.",
           search: "البحث في الأنشطة",
           searchPlaceholder: "ابحث بالاسم أو الرابط أو بيانات التواصل",
           status: "تصفية حسب الحالة",
@@ -148,16 +145,12 @@ export default async function BusinessesPage({
           back: "Back to dashboard",
           total: "Total businesses",
           add: "Add business",
-          invitationSent:
-            "Owner invitation sent. The owner must use the email link to activate their account and complete setup.",
           created: "Business created successfully.",
           deleted: "Business deleted permanently. User accounts were preserved.",
           invalid: "Please check the entered information.",
           slugGeneration:
             "We could not safely generate a unique business link. Please try again.",
           ownerEmail: "An account with this owner email already exists.",
-          invitationInvalid: "Check the owner invitation details.",
-          inviteUnavailable: "The invitation could not be created. Please try again.",
           search: "Search businesses",
           searchPlaceholder: "Search by name, slug, or contact details",
           status: "Filter by status",
@@ -330,9 +323,9 @@ export default async function BusinessesPage({
           }
         />
 
-        {(params.created === "1" || params.created === "invitation") && (
+        {params.created === "1" && (
           <div className="rounded-[var(--lf-radius-md)] border border-success/30 bg-success-subtle px-4 py-4 text-success">
-            {params.created === "invitation" ? copy.invitationSent : copy.created}
+            {copy.created}
           </div>
         )}
         {params.businessDelete === "success" ? (
@@ -359,22 +352,18 @@ export default async function BusinessesPage({
             {copy.ownerEmail}
           </div>
         )}
-        {params.error === "invitation-invalid" && (
-          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
-            {copy.invitationInvalid}
-          </div>
-        )}
-        {params.error === "invite-unavailable" && (
-          <div className="rounded-[var(--lf-radius-md)] border border-danger/30 bg-danger-subtle px-4 py-4 text-danger">
-            {copy.inviteUnavailable}
-          </div>
-        )}
 
         <section>
-          <form
-            action="/businesses"
-            className="mb-6 rounded-[var(--lf-radius-lg)] border border-border bg-surface p-6 shadow-[var(--lf-shadow-raised)]"
+          <ResponsiveFilterPanel
+            title={language === "AR" ? "البحث والفلاتر" : "Search & filters"}
+            showLabel={language === "AR" ? "إظهار" : "Show"}
+            hideLabel={language === "AR" ? "إخفاء" : "Hide"}
+            defaultOpen={hasActiveFilters}
           >
+            <form
+              action="/businesses"
+              className="mb-6 rounded-[var(--lf-radius-lg)] border border-border bg-surface p-6 shadow-[var(--lf-shadow-raised)]"
+            >
             {params.created && (
               <input type="hidden" name="created" value={params.created} />
             )}
@@ -477,7 +466,8 @@ export default async function BusinessesPage({
                 {copy.results(filteredBusinesses, totalBusinesses)}
               </p>
             </div>
-          </form>
+            </form>
+          </ResponsiveFilterPanel>
 
           {businesses.length === 0 && totalBusinesses === 0 ? (
             <div className="rounded-[var(--lf-radius-lg)] border border-dashed border-border bg-surface p-12 text-center">

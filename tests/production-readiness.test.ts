@@ -219,7 +219,19 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 52);
+  assert.equal(committedMigrations.length, 54);
+  assert.ok(
+    committedMigrations.includes(
+      "20260907120000_add_business_whatsapp_template_bindings",
+    ),
+    "Business WhatsApp Meta template bindings must be part of the reviewed migration history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260905120000_add_public_trial_acquisition_identity",
+    ),
+    "The public Trial identity reservation migration must be part of the reviewed history.",
+  );
   assert.ok(
     committedMigrations.includes(
       "20260723103415_add_branch_audit_activity_types",
