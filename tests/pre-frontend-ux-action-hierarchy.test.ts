@@ -54,3 +54,31 @@ test("Scan keeps camera scanning first and alternate customer search after it", 
   assert.match(scanner, /<details className="group mt-3/);
   assert.match(customerSearch, /<details[\s\S]*data-testid="scan-customer-search"/);
 });
+
+test("Customer Profile prioritizes the permitted operational quick action on mobile", () => {
+  const page = read("app/businesses/[slug]/customers/[customerId]/page.tsx");
+  const layout = read("app/businesses/[slug]/customers/[customerId]/layout.tsx");
+  const hierarchy = read(
+    "app/businesses/[slug]/customers/[customerId]/customer-profile-ux.css",
+  );
+
+  assert.match(page, /data-customer-quick-actions/);
+  assert.match(page, /canEarnLoyalty \|\| canRedeemLoyalty/);
+  assert.match(page, /href="#daily-loyalty"/);
+  assert.match(page, /canManageCustomer \? \(/);
+  assert.match(page, /href="#customer-details"/);
+  assert.match(layout, /import "\.\/customer-profile-ux\.css";/);
+  assert.match(
+    hierarchy,
+    /:has\(> a\[href="#daily-loyalty"\]\)[\s\S]*> a\[href="#daily-loyalty"\][\s\S]*order: -1;/,
+  );
+  assert.match(
+    hierarchy,
+    /:has\(> a\[href="#customer-details"\]\)[\s\S]*> a\[href="#customer-details"\]/,
+  );
+  assert.match(
+    hierarchy,
+    /:has\(> a\[href="#daily-loyalty"\]\)[\s\S]*> a\[target="_blank"\]/,
+  );
+  assert.doesNotMatch(hierarchy, /data-customer-reversal-actions/);
+});

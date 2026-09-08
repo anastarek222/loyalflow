@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 
+import "./customer-profile-ux.css";
+
 type CustomerLayoutProps = {
   children: ReactNode;
   params: Promise<{ slug: string; customerId: string }>;

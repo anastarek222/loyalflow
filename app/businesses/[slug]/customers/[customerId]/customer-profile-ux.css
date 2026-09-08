@@ -1,0 +1,27 @@
+/*
+ * Pre-frontend UX hierarchy only.
+ * Keep the existing permission-gated links and product behavior untouched;
+ * this layer only makes the daily operational action visually primary on mobile.
+ */
+@media (max-width: 639px) {
+  [data-customer-quick-actions]:has(> a[href="#daily-loyalty"])
+    > a[href="#daily-loyalty"],
+  [data-customer-quick-actions]:has(> a[href="#customer-details"])
+    > a[href="#customer-details"] {
+    order: -1;
+    border-color: var(--lf-primary);
+    background: var(--lf-primary);
+    color: var(--lf-primary-foreground);
+    box-shadow: var(--lf-shadow-raised);
+  }
+
+  [data-customer-quick-actions]:has(> a[href="#daily-loyalty"])
+    > a[target="_blank"],
+  [data-customer-quick-actions]:has(> a[href="#customer-details"])
+    > a[target="_blank"] {
+    border: 1px solid var(--lf-border);
+    background: var(--lf-surface);
+    color: var(--lf-foreground-muted);
+    box-shadow: none;
+  }
+}
