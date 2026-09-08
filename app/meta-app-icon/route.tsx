@@ -12,8 +12,24 @@ export async function GET(request: Request) {
     });
   }
 
-  const svg = await wordmarkResponse.text();
-  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg, "utf8").toString("base64")}`;
+  const svgSource = await wordmarkResponse.text();
+  const paths = Array.from(
+    svgSource.matchAll(
+      /<path\b[^>]*\bfill="([^"]+)"[^>]*\bfill-rule="([^"]+)"[^>]*\bd="([^"]+)"[^>]*\/>/g,
+    ),
+    (match) => ({
+      fill: match[1],
+      fillRule: match[2],
+      d: match[3],
+    }),
+  );
+
+  if (paths.length !== 4) {
+    return new Response("Locked Tanee wordmark geometry did not match the expected four paths.", {
+      status: 502,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
 
   const image = new ImageResponse(
     (
@@ -27,13 +43,16 @@ export async function GET(request: Request) {
           background: "transparent",
         }}
       >
-        <img
-          src={dataUri}
-          width="896"
-          height="230"
-          alt="Tanee"
-          style={{ objectFit: "contain" }}
-        />
+        <svg width="896" height="230" viewBox="0 0 1500 384">
+          {paths.map((path, index) => (
+            <path
+              key={index}
+              d={path.d}
+              fill={path.fill}
+              fillRule={path.fillRule as "evenodd" | "nonzero"}
+            />
+          ))}
+        </svg>
       </div>
     ),
     {
