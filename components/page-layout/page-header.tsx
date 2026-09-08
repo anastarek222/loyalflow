@@ -56,9 +56,26 @@ export function PageHeader({
         ) : null}
       </div>
       {hasActions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          {secondaryActions}
-          {primaryAction}
+        <div
+          className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end"
+          data-page-actions="true"
+        >
+          {secondaryActions ? (
+            <div
+              className="order-2 flex flex-wrap items-center gap-2 sm:order-1"
+              data-action-priority="secondary"
+            >
+              {secondaryActions}
+            </div>
+          ) : null}
+          {primaryAction ? (
+            <div
+              className="order-1 flex flex-wrap items-center gap-2 sm:order-2"
+              data-action-priority="primary"
+            >
+              {primaryAction}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </header>
