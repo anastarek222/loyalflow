@@ -10,6 +10,8 @@ import { getSafeImageDataUrl } from "@/lib/branding/image-data";
 import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import { businessCreationSchema, ownerInvitationSchema } from "@/lib/business/creation-input";
 import { parseDateOnly, parseMoneyToMinor } from "@/lib/billing/subscription";
+import { projectPaymentStateToSubscriptionLifecycle } from "@/lib/billing/subscription-lifecycle-projection";
+import { createTrialWindow } from "@loyalflow/domain/billing/trial-core";
 import {
   createWithGeneratedSlug,
   isUniqueConstraintError,
@@ -214,6 +216,15 @@ const ownerPasswordHash = await hash(
 );
 logServerEvent("BUSINESS_CREATE_HASH_OK", { creationAttemptId });
 
+const provisionedAt = new Date();
+const initialSubscriptionLifecycleState =
+  projectPaymentStateToSubscriptionLifecycle(parsed.data.paymentStatus);
+if (!initialSubscriptionLifecycleState) {
+  throw new Error("Unsupported initial subscription payment state");
+}
+const trialWindow =
+  parsed.data.paymentStatus === "TRIAL" ? createTrialWindow(provisionedAt) : null;
+
 let createdBusiness;
 let integrationJobId;
 
@@ -268,6 +279,9 @@ try {
             subscriptionAmountMinor: parseMoneyToMinor(parsed.data.subscriptionAmount),
             billingCurrency: parsed.data.billingCurrency || parsed.data.currency || "EGP",
             paymentStatus: parsed.data.paymentStatus,
+            subscriptionLifecycleState: initialSubscriptionLifecycleState,
+            trialStartedAt: trialWindow?.startedAt ?? null,
+            trialEndsAt: trialWindow?.expiresAt ?? null,
             gracePeriodDays: parsed.data.gracePeriodDays,
             paymentMethod: parsed.data.paymentMethod || null,
             billingNotes: parsed.data.billingNotes || null,
