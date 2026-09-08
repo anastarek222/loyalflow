@@ -33,16 +33,18 @@ export default async function CustomerLayout({
     }
   }
 
-  const language = canReverseLoyalty
-    ? normalizeLanguage(
-        (
-          await prisma.user.findUnique({
-            where: { id: session!.user.id },
-            select: { language: true },
-          })
-        )?.language,
-      )
-    : "EN";
+  const currentUserId = session?.user?.id;
+  const language =
+    canReverseLoyalty && currentUserId
+      ? normalizeLanguage(
+          (
+            await prisma.user.findUnique({
+              where: { id: currentUserId },
+              select: { language: true },
+            })
+          )?.language,
+        )
+      : "EN";
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
 
   return (
