@@ -82,3 +82,22 @@ test("Customer Profile prioritizes the permitted operational quick action on mob
   );
   assert.doesNotMatch(hierarchy, /data-customer-reversal-actions/);
 });
+
+test("Customer correction controls stay advanced, localized, and outside the daily action layer", () => {
+  const layout = read("app/businesses/[slug]/customers/[customerId]/layout.tsx");
+
+  assert.match(
+    layout,
+    /<details\s+[\s\S]*data-customer-reversal-actions="true"/,
+  );
+  assert.match(
+    layout,
+    /تصحيحات العمليات المتقدمة[\s\S]*Advanced transaction corrections/,
+  );
+  assert.match(layout, /عكس الاستبدال[\s\S]*Reverse redemption/);
+  assert.match(layout, /استرداد \/ إلغاء[\s\S]*Refund \/ Void/);
+  assert.match(layout, /customers\/\$\{customerId\}\/redemption-reversal/);
+  assert.match(layout, /customers\/\$\{customerId\}\/reversal/);
+  assert.doesNotMatch(layout, /lg:fixed/);
+  assert.doesNotMatch(layout, /lg:bottom-5/);
+});
