@@ -6,6 +6,7 @@ import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import prisma from "@/lib/prisma";
+import { getWhatsAppEmbeddedSignupReadiness } from "@/lib/server/integrations/whatsapp-embedded-signup";
 import { ShieldCheck, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -52,6 +53,12 @@ export default async function OwnerOnboardingPage() {
     cookieStore.get(LOCALE_COOKIE_NAME)?.value,
   );
   const direction = getLocaleDirection(locale);
+  const embeddedSignupReadiness = getWhatsAppEmbeddedSignupReadiness();
+  const embeddedSignupAppId =
+    process.env.NEXT_PUBLIC_WHATSAPP_META_APP_ID?.trim() ?? "";
+  const embeddedSignupConfigId =
+    process.env.NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID?.trim() ?? "";
+  const graphApiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim() ?? "";
 
   return (
     <main
@@ -107,6 +114,10 @@ export default async function OwnerOnboardingPage() {
         <OwnerWhatsAppOnboarding
           locale={locale}
           launchAction={launchOwnerOnboardingAction}
+          appId={embeddedSignupAppId}
+          configId={embeddedSignupConfigId}
+          graphApiVersion={graphApiVersion}
+          embeddedSignupReady={embeddedSignupReadiness.ready}
         />
       </div>
     </main>
