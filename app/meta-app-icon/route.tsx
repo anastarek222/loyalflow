@@ -3,7 +3,7 @@ import path from "node:path";
 import { ImageResponse } from "next/og";
 
 function readAttribute(tag: string, name: string) {
-  return new RegExp(`${name}="([^"]+)"`).exec(tag)?.[1] ?? null;
+  return new RegExp(`(?:^|\\s)${name}="([^"]+)"`).exec(tag)?.[1] ?? null;
 }
 
 export async function GET(request: Request) {
