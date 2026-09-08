@@ -27,6 +27,10 @@ import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-sched
 import { logServerEvent } from "@/lib/server/logging";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 import { upsertBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import {
+  completeWhatsAppEmbeddedSignup,
+  WhatsAppEmbeddedSignupError,
+} from "@/lib/server/integrations/whatsapp-embedded-signup";
 import { encryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 import {
   businessIdentityFields,
@@ -86,10 +90,37 @@ const ownerDraftSchema = z
       });
   });
 
-const whatsappConnectionSchema = z.object({
-  phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
-  accessToken: z.string().trim().min(20).max(4096),
-});
+const metaIdSchema = z.string().trim().regex(/^\d{5,30}$/);
+const embeddedSignupSchema = z
+  .object({
+    authorizationCode: z.string().trim().min(20).max(4096),
+    mode: z.enum(["STANDARD", "COEXISTENCE"]),
+    phoneNumberId: z.string().trim().max(30),
+    wabaId: metaIdSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.mode === "STANDARD") {
+      if (!metaIdSchema.safeParse(value.phoneNumberId).success) {
+        context.addIssue({
+          code: "custom",
+          path: ["phoneNumberId"],
+          message: "Standard Embedded Signup requires a valid phone number ID.",
+        });
+      }
+      return;
+    }
+
+    if (
+      value.phoneNumberId &&
+      !metaIdSchema.safeParse(value.phoneNumberId).success
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["phoneNumberId"],
+        message: "Coexistence phone number ID must be valid when Meta supplies one.",
+      });
+    }
+  });
 
 async function pendingOwner() {
   const session = await auth();
@@ -129,14 +160,20 @@ async function draftFrom(formData: FormData) {
   return ownerDraftSchema.safeParse(input);
 }
 
-function whatsappConnectionFrom(formData: FormData) {
-  const phoneNumberId = String(formData.get("whatsappPhoneNumberId") ?? "").trim();
-  const accessToken = String(formData.get("whatsappAccessToken") ?? "").trim();
-  if (!phoneNumberId && !accessToken) return null;
+function embeddedSignupFrom(formData: FormData) {
+  const authorizationCode = String(
+    formData.get("authorizationCode") ?? "",
+  ).trim();
+  const mode = String(formData.get("mode") ?? "").trim();
+  const phoneNumberId = String(formData.get("phoneNumberId") ?? "").trim();
+  const wabaId = String(formData.get("wabaId") ?? "").trim();
+  if (!authorizationCode && !mode && !phoneNumberId && !wabaId) return null;
 
-  const parsed = whatsappConnectionSchema.safeParse({
+  const parsed = embeddedSignupSchema.safeParse({
+    authorizationCode,
+    mode,
     phoneNumberId,
-    accessToken,
+    wabaId,
   });
   return parsed.success ? parsed.data : false;
 }
@@ -165,17 +202,36 @@ export async function saveOwnerOnboardingAction(formData: FormData) {
 export async function launchOwnerOnboardingAction(formData: FormData) {
   const user = await pendingOwner();
   const parsed = await draftFrom(formData);
-  const whatsappConnection = whatsappConnectionFrom(formData);
+  const embeddedSignup = embeddedSignupFrom(formData);
   if (
     !parsed.success ||
     !parsed.data.name ||
     !parsed.data.country ||
     !parsed.data.currency ||
     !parsed.data.timezone ||
-    whatsappConnection === false
+    embeddedSignup === false
   )
     redirect("/onboarding?error=incomplete");
   const data = parsed.data;
+
+  let whatsappConnection: Awaited<
+    ReturnType<typeof completeWhatsAppEmbeddedSignup>
+  > | null = null;
+  if (embeddedSignup) {
+    try {
+      whatsappConnection = await completeWhatsAppEmbeddedSignup(embeddedSignup);
+    } catch (error) {
+      logServerEvent("OWNER_ONBOARDING_WHATSAPP_CONNECT_FAILED", {
+        userId: user.id,
+        reason:
+          error instanceof WhatsAppEmbeddedSignupError
+            ? error.reason
+            : "UNKNOWN",
+      });
+      redirect("/onboarding?error=whatsapp");
+    }
+  }
+
   const whatsappAccessTokenCiphertext = whatsappConnection
     ? encryptBusinessWhatsAppAccessToken(whatsappConnection.accessToken)
     : null;
@@ -226,6 +282,7 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
         await upsertBusinessWhatsAppCredential(tx, {
           businessId: created.id,
           phoneNumberId: whatsappConnection.phoneNumberId,
+          wabaId: whatsappConnection.wabaId,
           accessTokenCiphertext: whatsappAccessTokenCiphertext,
         });
       }

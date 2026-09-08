@@ -56,5 +56,5 @@ test("T006 onboarding remains private and preserves the existing owner wizard wr
   assert.match(page, /robots: \{ index: false, follow: false \}/);
   assert.match(page, /saveAction=\{saveOwnerOnboardingAction\}/);
   assert.match(page, /launchAction=\{launchOwnerOnboardingAction\}/);
-  assert.doesNotMatch(page, /signup|checkout|stripe|analytics/i);
+  assert.doesNotMatch(page, /\/sign-?up\b|checkout|stripe|analytics/i);
 });

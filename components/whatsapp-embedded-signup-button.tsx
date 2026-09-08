@@ -35,6 +35,7 @@ type Props = {
   graphApiVersion: string;
   enabled: boolean;
   action: (formData: FormData) => void | Promise<void>;
+  getActionFormData?: () => FormData;
 };
 
 type EmbeddedSignupResult = Readonly<{
@@ -132,6 +133,7 @@ export function WhatsAppEmbeddedSignupButton({
   graphApiVersion,
   enabled,
   action,
+  getActionFormData,
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const formRef = useRef<HTMLFormElement>(null);
@@ -257,7 +259,18 @@ export function WhatsAppEmbeddedSignupButton({
   };
 
   return (
-    <form ref={formRef} action={action} data-whatsapp-embedded-signup>
+    <form
+      ref={formRef}
+      action={async (embeddedSignupFormData) => {
+        const formData = getActionFormData?.() ?? new FormData();
+        for (const [key, value] of embeddedSignupFormData.entries()) {
+          formData.set(key, value);
+        }
+        await action(formData);
+        setConnecting(false);
+      }}
+      data-whatsapp-embedded-signup
+    >
       <input ref={codeRef} type="hidden" name="authorizationCode" />
       <input ref={modeRef} type="hidden" name="mode" />
       <input ref={wabaRef} type="hidden" name="wabaId" />
