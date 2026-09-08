@@ -4,7 +4,6 @@ import { translate, type MessageKey } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { getPublicMarketingNavigation } from "@/lib/marketing/public-navigation";
 import { getMarketingRequestLocale } from "@/lib/marketing/request-locale";
-import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -93,12 +92,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: content.metaTitle,
     description: content.metaDescription,
     alternates: { canonical: "/data-deletion" },
-    robots: { index: true, follow: true },
-    ...buildPublicSocialMetadata({
-      title: content.metaTitle,
-      description: content.metaDescription,
-      path: "/data-deletion",
-    }),
+    robots: { index: false, follow: false },
   };
 }
 
