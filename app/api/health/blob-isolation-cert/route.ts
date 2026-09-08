@@ -1,6 +1,4 @@
-import { readPrivateCustomCardArtwork } from "@/lib/cards/custom-card-storage";
-import { del, list, put } from "@vercel/blob";
-import { randomUUID } from "node:crypto";
+import { list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 const PREVIEW_BLOB_STORE_ID = "zCVSiqC7bhMHfVqW";
@@ -23,9 +21,6 @@ function classifyBlobError(error: unknown) {
   }
   if (message.includes("no blob credentials")) {
     return "credentials_missing";
-  }
-  if (message.includes("readback_missing")) {
-    return "readback_missing";
   }
   return "other";
 }
@@ -68,85 +63,14 @@ async function probeVercelApiAuth() {
   });
 }
 
-async function runBlobRoundTrip() {
-  const nonce = randomUUID();
-  const marker = `tanee-preview-blob-cert:${nonce}`;
-  const pathname = `custom-card/__cert__/${nonce}/front.txt`;
-  let uploadedUrl: string | null = null;
-  let cleanupAttempted = false;
-  let cleanupVerified = false;
-
-  try {
-    const uploaded = await put(pathname, marker, {
-      access: "private",
-      addRandomSuffix: false,
-      allowOverwrite: false,
-      contentType: "text/plain; charset=utf-8",
-    });
-    uploadedUrl = uploaded.url;
-
-    const readback = await readPrivateCustomCardArtwork(uploaded.url);
-    if (!readback) throw new Error("readback_missing");
-    const readbackText = await new Response(readback.stream).text();
-    const roundTripVerified = readbackText === marker;
-
-    await del(uploaded.url);
-    cleanupAttempted = true;
-    uploadedUrl = null;
-    const remaining = await list({ prefix: pathname, limit: 1 });
-    cleanupVerified = remaining.blobs.length === 0;
-
-    return NextResponse.json(
-      {
-        ok: roundTripVerified && cleanupVerified,
-        environment: "preview",
-        storeHost: `${PREVIEW_BLOB_STORE_ID.toLowerCase()}.private.blob.vercel-storage.com`,
-        uploaded: true,
-        readbackVerified: roundTripVerified,
-        cleanupAttempted,
-        cleanupVerified,
-      },
-      { status: roundTripVerified && cleanupVerified ? 200 : 503 },
-    );
-  } catch (error) {
-    if (uploadedUrl) {
-      try {
-        await del(uploadedUrl);
-        cleanupAttempted = true;
-        const remaining = await list({ prefix: pathname, limit: 1 });
-        cleanupVerified = remaining.blobs.length === 0;
-      } catch {
-        cleanupAttempted = true;
-      }
-    }
-
-    return NextResponse.json(
-      {
-        ok: false,
-        environment: "preview",
-        uploaded: Boolean(uploadedUrl) || cleanupAttempted,
-        readbackVerified: false,
-        cleanupAttempted,
-        cleanupVerified,
-        classification: classifyBlobError(error),
-      },
-      { status: 503 },
-    );
-  }
-}
-
 export async function GET(request: Request) {
   if (process.env.VERCEL_ENV !== "preview") {
     return new NextResponse(null, { status: 404 });
   }
 
   const url = new URL(request.url);
-  const mode = url.searchParams.get("mode");
-  if (mode === "vercel-api-auth") {
+  if (url.searchParams.get("mode") === "vercel-api-auth") {
     return probeVercelApiAuth();
-  }
-  if (mode === "roundtrip") {
-    return runBlobRoundTrip();
   }
 
   try {
