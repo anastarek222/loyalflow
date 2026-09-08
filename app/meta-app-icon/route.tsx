@@ -24,6 +24,24 @@ export async function GET(request: Request) {
     d: readAttribute(tag, "d"),
   }));
 
+  if (url.searchParams.get("debug") === "1") {
+    return Response.json(
+      {
+        sourceStatus: wordmarkResponse.status,
+        contentType: wordmarkResponse.headers.get("content-type"),
+        sourceLength: svgSource.length,
+        literalPathCount: (svgSource.match(/<path/g) ?? []).length,
+        parsedPathCount: pathTags.length,
+        attributes: paths.map((path) => ({
+          hasFill: Boolean(path.fill),
+          fillRule: path.fillRule,
+          dLength: path.d?.length ?? 0,
+        })),
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   if (
     paths.length !== 4 ||
     paths.some((path) => !path.fill || !path.fillRule || !path.d)
