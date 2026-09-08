@@ -1,7 +1,7 @@
 import { list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
-const STAGING_BLOB_STORE_ID = "xkfdamj6w49ivkjl";
+const PREVIEW_BLOB_STORE_ID = "zCVSiqC7bhMHfVqW";
 const VERCEL_PROJECT_ID = "prj_XR2myqPuensw4MTYF5Rgi0w0MPMG";
 const VERCEL_TEAM_ID = "team_JIxldEzYlted09P36umRYSLa";
 
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
 
   try {
     const result = await list({
-      storeId: STAGING_BLOB_STORE_ID,
+      storeId: PREVIEW_BLOB_STORE_ID,
       prefix: "custom-card/",
       limit: 1,
     });
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ok: true,
       environment: "preview",
-      storeHost: `${STAGING_BLOB_STORE_ID}.private.blob.vercel-storage.com`,
+      storeHost: `${PREVIEW_BLOB_STORE_ID.toLowerCase()}.private.blob.vercel-storage.com`,
       readable: true,
       sampleCount: result.blobs.length,
     });
