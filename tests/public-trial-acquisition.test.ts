@@ -141,3 +141,11 @@ test("public Trial UI collects only the acquisition contract and exposes all saf
   assert.match(page, /startPublicTrialAction/);
   assert.doesNotMatch(page, /href=["']\/accept-owner-invitation/);
 });
+
+test("public Trial starts its seven usable days at first successful Launch", () => {
+  const onboarding = source("app/onboarding/actions.ts");
+
+  assert.match(onboarding, /const launchedAt = new Date\(\)/);
+  assert.match(onboarding, /createTrialWindow\(launchedAt\)/);
+  assert.doesNotMatch(onboarding, /createTrialWindow\(invitation\.usedAt\)/);
+});

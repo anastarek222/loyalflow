@@ -235,10 +235,11 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
   const whatsappAccessTokenCiphertext = whatsappConnection
     ? encryptBusinessWhatsAppAccessToken(whatsappConnection.accessToken)
     : null;
+  const launchedAt = new Date();
   const { business, integrationJobId } = await createWithGeneratedSlug(data.name, (slug) =>
     prisma.$transaction(async (tx) => {
-      const invitations = await tx.$queryRaw<Array<{ usedAt: Date }>>`
-        SELECT "usedAt"
+      const invitations = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id"
         FROM "OwnerInvitation"
         WHERE "email" = ${user.email}
           AND "usedAt" IS NOT NULL
@@ -250,7 +251,7 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
         throw new Error("Owner invitation acceptance is required before onboarding");
       }
 
-      const trialWindow = createTrialWindow(invitation.usedAt);
+      const trialWindow = createTrialWindow(launchedAt);
       const created = await tx.business.create({
         data: {
           name: data.name,

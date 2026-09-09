@@ -408,7 +408,9 @@ test.describe
       expect(business.subscriptionLifecycleState).toBe("TRIALING");
       expect(business.trialStartedAt).not.toBeNull();
       expect(business.trialEndsAt).not.toBeNull();
-      expect(business.trialStartedAt!.getTime()).toBe(invitation.usedAt!.getTime());
+      expect(business.trialStartedAt!.getTime()).toBeGreaterThan(
+        invitation.usedAt!.getTime(),
+      );
       expect(
         business.trialEndsAt!.getTime() - business.trialStartedAt!.getTime(),
       ).toBe(7 * 24 * 60 * 60 * 1000);
