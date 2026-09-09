@@ -26,6 +26,13 @@ test("T006 live card preview starts from the current onboarding draft", () => {
 
 test("T006 live card preview updates only supported presentation fields", () => {
   const initial = createOwnerOnboardingCardPreviewState({});
+  assert.deepEqual(initial, {
+    businessName: "Your Business",
+    loyaltyMode: "VISITS",
+    unitName: "Visit",
+    rewardName: "Reward",
+    rewardThreshold: 5,
+  });
   const renamed = updateOwnerOnboardingCardPreviewState(initial, "name", "New Name");
   const reward = updateOwnerOnboardingCardPreviewState(
     renamed,

@@ -1,4 +1,5 @@
 import type { LoyaltyCardMode } from "@/lib/cards/standard-card";
+import { OWNER_ONBOARDING_DEFAULTS } from "@/lib/onboarding/owner-onboarding-defaults";
 
 export type OwnerOnboardingCardPreviewState = {
   businessName: string;
@@ -19,9 +20,14 @@ function positiveNumber(value: unknown, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function loyaltyMode(value: unknown): LoyaltyCardMode {
-  const candidate = String(value || "POINTS") as LoyaltyCardMode;
-  return SUPPORTED_MODES.has(candidate) ? candidate : "POINTS";
+function loyaltyMode(
+  value: unknown,
+  fallback: LoyaltyCardMode = OWNER_ONBOARDING_DEFAULTS.loyaltyMode,
+): LoyaltyCardMode {
+  const candidate = String(
+    value || OWNER_ONBOARDING_DEFAULTS.loyaltyMode,
+  ) as LoyaltyCardMode;
+  return SUPPORTED_MODES.has(candidate) ? candidate : fallback;
 }
 
 export function createOwnerOnboardingCardPreviewState(
@@ -30,9 +36,12 @@ export function createOwnerOnboardingCardPreviewState(
   return {
     businessName: String(draft.name || "Your Business"),
     loyaltyMode: loyaltyMode(draft.loyaltyMode),
-    unitName: String(draft.unitName || "Points"),
-    rewardName: String(draft.rewardName || "Free Reward"),
-    rewardThreshold: positiveNumber(draft.rewardThreshold, 1000),
+    unitName: String(draft.unitName || OWNER_ONBOARDING_DEFAULTS.unitName),
+    rewardName: String(draft.rewardName || OWNER_ONBOARDING_DEFAULTS.rewardName),
+    rewardThreshold: positiveNumber(
+      draft.rewardThreshold,
+      OWNER_ONBOARDING_DEFAULTS.rewardThreshold,
+    ),
   };
 }
 
@@ -45,7 +54,10 @@ export function updateOwnerOnboardingCardPreviewState(
     case "name":
       return { ...current, businessName: String(value) };
     case "loyaltyMode":
-      return { ...current, loyaltyMode: loyaltyMode(value) };
+      return {
+        ...current,
+        loyaltyMode: loyaltyMode(value, current.loyaltyMode),
+      };
     case "unitName":
       return { ...current, unitName: String(value) };
     case "rewardName":

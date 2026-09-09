@@ -19,6 +19,10 @@ import { redirect } from "next/navigation";
 import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
 import { normalizeOwnerOnboardingPhone } from "@/lib/onboarding/owner-onboarding-validation";
 import {
+  OWNER_ONBOARDING_DEFAULTS,
+  resolveOwnerOnboardingCountryProfile,
+} from "@/lib/onboarding/owner-onboarding-defaults";
+import {
   canUsePendingOwnerOnboarding,
   claimPendingOwnerCompletion,
   savePendingOwnerDraft,
@@ -40,32 +44,32 @@ import {
 
 const ownerDraftSchema = z
   .object({
-    name: businessIdentityFields.name.or(z.literal("")).default(""),
-    industry: businessIdentityFields.industry.default(""),
-    country: businessIdentityFields.country.default(""),
-    city: businessIdentityFields.city.default(""),
-    contactPhone: businessIdentityFields.contactPhone.default(""),
-    currency: businessIdentityFields.currency.default(""),
-    timezone: businessIdentityFields.timezone.default(""),
-    loyaltyMode: loyaltyProgramFields.loyaltyMode.default("VISITS"),
-    unitName: loyaltyProgramFields.unitName.default("Visit"),
-    rewardName: loyaltyProgramFields.rewardName.default("Reward"),
-    rewardThreshold: loyaltyProgramFields.rewardThreshold.default(5),
-    earnAmount: loyaltyProgramFields.earnAmount.default(1),
+    name: businessIdentityFields.name.or(z.literal("")).default(OWNER_ONBOARDING_DEFAULTS.name),
+    industry: businessIdentityFields.industry.default(OWNER_ONBOARDING_DEFAULTS.industry),
+    country: businessIdentityFields.country.default(OWNER_ONBOARDING_DEFAULTS.country),
+    city: businessIdentityFields.city.default(OWNER_ONBOARDING_DEFAULTS.city),
+    contactPhone: businessIdentityFields.contactPhone.default(OWNER_ONBOARDING_DEFAULTS.contactPhone),
+    currency: businessIdentityFields.currency.default(OWNER_ONBOARDING_DEFAULTS.currency),
+    timezone: businessIdentityFields.timezone.default(OWNER_ONBOARDING_DEFAULTS.timezone),
+    loyaltyMode: loyaltyProgramFields.loyaltyMode.default(OWNER_ONBOARDING_DEFAULTS.loyaltyMode),
+    unitName: loyaltyProgramFields.unitName.default(OWNER_ONBOARDING_DEFAULTS.unitName),
+    rewardName: loyaltyProgramFields.rewardName.default(OWNER_ONBOARDING_DEFAULTS.rewardName),
+    rewardThreshold: loyaltyProgramFields.rewardThreshold.default(OWNER_ONBOARDING_DEFAULTS.rewardThreshold),
+    earnAmount: loyaltyProgramFields.earnAmount.default(OWNER_ONBOARDING_DEFAULTS.earnAmount),
     primaryColor: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
-      .default("#111827"),
+      .default(OWNER_ONBOARDING_DEFAULTS.primaryColor),
     secondaryColor: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
-      .default("#FFFFFF"),
-    themePreset: z.enum(["DEFAULT", "DARK"]).default("DEFAULT"),
-    logoUrl: z.string().trim().max(500).default(""),
-    standardCardArtworkEnabled: z.coerce.boolean().default(true),
+      .default(OWNER_ONBOARDING_DEFAULTS.secondaryColor),
+    themePreset: z.enum(["DEFAULT", "DARK"]).default(OWNER_ONBOARDING_DEFAULTS.themePreset),
+    logoUrl: z.string().trim().max(500).default(OWNER_ONBOARDING_DEFAULTS.logoUrl),
+    standardCardArtworkEnabled: z.coerce.boolean().default(OWNER_ONBOARDING_DEFAULTS.standardCardArtworkEnabled),
     standardCardArtworkCategory: z
       .enum(STANDARD_CARD_ARTWORK_CATEGORIES)
-      .default("OTHER"),
+      .default(OWNER_ONBOARDING_DEFAULTS.standardCardArtworkCategory),
   })
   .superRefine((data, context) => {
     const profileError = validateCountryProfile(data);
@@ -141,6 +145,7 @@ async function pendingOwner() {
 }
 async function draftFrom(formData: FormData) {
   const input = Object.fromEntries(formData);
+  Object.assign(input, resolveOwnerOnboardingCountryProfile(input));
   input.contactPhone = normalizeOwnerOnboardingPhone(
     String(input.contactPhone ?? ""),
     String(input.country ?? ""),
