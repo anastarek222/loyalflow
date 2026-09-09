@@ -1,0 +1,1 @@
+export const BUSINESS_NAME_MAX_LENGTH = 80;

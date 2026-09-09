@@ -7,6 +7,7 @@ import {
   createPublicTrialIdentityKey,
   parsePublicTrialInput,
 } from "@/lib/acquisition/public-trial";
+import { BUSINESS_NAME_MAX_LENGTH } from "@/lib/business/field-limits";
 
 const root = process.cwd();
 const source = (file: string) => readFileSync(path.join(root, file), "utf8");
@@ -47,6 +48,36 @@ test("public Trial rejects unknown countries, unsafe phones, and missing consent
   assert.equal(parsePublicTrialInput({ ...base, country: "Unknown" }), null);
   assert.equal(parsePublicTrialInput({ ...base, phone: "123" }), null);
   assert.equal(parsePublicTrialInput({ ...base, acceptTerms: undefined }), null);
+});
+
+test("public Trial business-name limit matches final Business persistence", () => {
+  const base = {
+    firstName: "Mona",
+    lastName: "",
+    email: "mona@example.test",
+    phone: "01001234567",
+    country: "Egypt",
+    acceptTerms: "on",
+  };
+
+  assert.ok(
+    parsePublicTrialInput({
+      ...base,
+      businessName: "B".repeat(BUSINESS_NAME_MAX_LENGTH),
+    }),
+  );
+  assert.equal(
+    parsePublicTrialInput({
+      ...base,
+      businessName: "B".repeat(BUSINESS_NAME_MAX_LENGTH + 1),
+    }),
+    null,
+  );
+
+  const businessValidation = source("lib/business/domain-validation.ts");
+  const form = source("components/public-trial-form.tsx");
+  assert.match(businessValidation, /\.max\(BUSINESS_NAME_MAX_LENGTH\)/);
+  assert.match(form, /maxLength=\{BUSINESS_NAME_MAX_LENGTH\}/);
 });
 
 test("public Trial limiter identity is deterministic and contains no raw identity", () => {
