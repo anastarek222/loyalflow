@@ -17,7 +17,10 @@ import {
   canViewCustomerNotesTags,
 } from "@/lib/customers/feature-access";
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
-import { getRewardAvailability } from "@/lib/rewards/availability";
+import {
+  getRedeemableCatalogueRewards,
+  getRewardAvailability,
+} from "@/lib/rewards/availability";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
@@ -328,6 +331,14 @@ export default async function CustomerDetailsPage({
   const rewardUnlocksByRewardId = new Map(
     customer.rewardUnlocks.map((unlock) => [unlock.rewardId, unlock]),
   );
+  const redeemableCatalogueRewardIds = new Set(
+    getRedeemableCatalogueRewards({
+      customerActive: customer.isActive,
+      balance: customer.balance,
+      catalogueRewards: canonicalAvailability.activeCatalogueRewards,
+      rewardUnlocks: customer.rewardUnlocks,
+    }).map((reward) => reward.id),
+  );
 
   const rewardStates = availableRewards.map((reward) => {
     const unlock = reward.id
@@ -352,7 +363,9 @@ export default async function CustomerDetailsPage({
       ...progress,
       expirationState,
       expiresAt: unlock?.expiresAt ?? null,
-      rewardAvailable: progress.rewardAvailable && expirationState === "ACTIVE",
+      rewardAvailable: reward.id
+        ? redeemableCatalogueRewardIds.has(reward.id)
+        : progress.rewardAvailable,
     };
   });
   const rewardAvailable = rewardStates.some(
@@ -1280,8 +1293,7 @@ export default async function CustomerDetailsPage({
                         disabled={
                           !customer.isActive ||
                           !canRedeemLoyalty ||
-                          customer.balance < reward.cost ||
-                          rewardState.expirationState === "EXPIRED"
+                          !rewardState.rewardAvailable
                         }
                         rewardName={reward.name}
                         cost={reward.cost}
@@ -1290,8 +1302,7 @@ export default async function CustomerDetailsPage({
                         operationContextFields={operationContextFields(
                           !customer.isActive ||
                             !canRedeemLoyalty ||
-                            customer.balance < reward.cost ||
-                            rewardState.expirationState === "EXPIRED",
+                            !rewardState.rewardAvailable,
                           `redeem-${reward.id ?? "legacy"}`,
                         )}
                         language={language}

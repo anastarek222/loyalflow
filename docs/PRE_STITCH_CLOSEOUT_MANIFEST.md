@@ -25,8 +25,8 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 ### Reward / redemption truth
 - [ ] One authoritative Reward State for Card / Profile / Scan / Redemption / Customers / Reports / Offers / WhatsApp.
-- [ ] Non-expiring earned reward is redeemable without requiring a non-existent unlock lifecycle record.
-- [ ] Fallback reward is unavailable while an active catalogue is authoritative.
+- [x] Non-expiring earned reward is redeemable without requiring a non-existent unlock lifecycle record.
+- [x] Fallback reward is unavailable while an active catalogue is authoritative.
 - [ ] Multi-reward affordability/readiness has one contract.
 - [ ] Earned expiring entitlement snapshot policy is implemented and regression-tested.
 - [ ] Reward cost/name/status changes have explicit treatment for already-earned entitlement.
