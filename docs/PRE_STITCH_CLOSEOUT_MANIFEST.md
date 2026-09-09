@@ -69,10 +69,10 @@ This manifest is the working authority for the final Product / Logic / Functiona
 - [x] Post-Launch first action exposes Join QR/link and first-customer path.
 
 ### Sales Amount
-- [ ] Sales Amount operation records actual transaction amount.
+- [x] Sales Amount operation records actual transaction amount.
 - [ ] Historical Sales Amount currency cannot be silently relabeled through normal Business Profile settings.
 - [ ] Currency choices use one source list across creation/onboarding/settings.
-- [ ] Decimal policy is explicitly locked: whole-unit V1 or proper minor-unit model.
+- [x] Decimal policy is explicitly locked: whole-unit V1.
 
 ### Custom Card
 - [ ] Structurally valid but undecodable image payloads are rejected.
