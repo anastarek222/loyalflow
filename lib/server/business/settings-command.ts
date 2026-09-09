@@ -5,6 +5,7 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { isHistoricalSalesAmountCurrencyChangeBlocked } from "@/lib/business/currency-change-safety";
 import prisma from "@/lib/prisma";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
@@ -20,7 +21,10 @@ export type UpdateBusinessSettingsCommandInput = Readonly<{
 
 export type UpdateBusinessSettingsCommandResult =
   | Readonly<{ ok: true; integrationJobId: string | null }>
-  | Readonly<{ ok: false; reason: "SUBSCRIPTION_RESTRICTED" }>;
+  | Readonly<{
+      ok: false;
+      reason: "SUBSCRIPTION_RESTRICTED" | "CURRENCY_LOCKED";
+    }>;
 
 /**
  * Authoritative non-financial Business Settings write boundary.
@@ -50,6 +54,38 @@ export async function updateBusinessSettingsCommand(
       ))
     ) {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
+    }
+
+    const proposedCurrency = input.data.currency;
+    if (typeof proposedCurrency === "string" || proposedCurrency === null) {
+      const currentBusiness = await transaction.business.findUnique({
+        where: { id: input.businessId },
+        select: { currency: true },
+      });
+      if (currentBusiness) {
+        const currencyChanged =
+          String(currentBusiness.currency ?? "").trim().toUpperCase() !==
+          String(proposedCurrency ?? "").trim().toUpperCase();
+        if (currencyChanged) {
+          const historicalSalesAmount = await transaction.loyaltyTransaction.findFirst({
+            where: {
+              businessId: input.businessId,
+              sourceLoyaltyMode: "SALES_AMOUNT",
+              saleAmount: { not: null },
+            },
+            select: { id: true },
+          });
+          if (
+            isHistoricalSalesAmountCurrencyChangeBlocked({
+              currentCurrency: currentBusiness.currency,
+              proposedCurrency,
+              hasHistoricalSalesAmount: Boolean(historicalSalesAmount),
+            })
+          ) {
+            return { ok: false, reason: "CURRENCY_LOCKED" } as const;
+          }
+        }
+      }
     }
 
     await transaction.business.update({

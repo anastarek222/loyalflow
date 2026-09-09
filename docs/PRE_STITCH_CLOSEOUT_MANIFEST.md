@@ -70,8 +70,8 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 ### Sales Amount
 - [x] Sales Amount operation records actual transaction amount.
-- [ ] Historical Sales Amount currency cannot be silently relabeled through normal Business Profile settings.
-- [ ] Currency choices use one source list across creation/onboarding/settings.
+- [x] Historical Sales Amount currency cannot be silently relabeled through normal Business Profile settings.
+- [x] Currency choices use one source list across creation/onboarding/settings.
 - [x] Decimal policy is explicitly locked: whole-unit V1.
 
 ### Custom Card
