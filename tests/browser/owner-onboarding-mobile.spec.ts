@@ -349,9 +349,10 @@ test.describe
     await page
       .getByRole("button", { name: "Continue setup", exact: true })
       .click();
-    await expect(page).toHaveURL(/\/login\?invitation=accepted$/, {
+    await expect(page).toHaveURL(/\/onboarding$/, {
       timeout: 20_000,
     });
+    await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
 
     // Replay the exact delivered token and prove redemption is single-use.
     await page.goto(secureInvitationPath);
@@ -368,10 +369,8 @@ test.describe
       timeout: 20_000,
     });
 
-    await page.goto("/login");
-    await page.getByLabel("Email address").fill(ownerEmail);
-    await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    // The accepted Owner session remains authoritative after a rejected token replay.
+    await page.goto("/onboarding");
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
     await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
 

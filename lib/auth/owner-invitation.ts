@@ -32,7 +32,7 @@ export type OwnerInvitationRecord = {
 };
 
 export type RedeemOwnerInvitationResult =
-  | { status: "success"; userId: string }
+  | { status: "success"; userId: string; email: string }
   | { status: "invalid_or_expired" }
   | { status: "email_unavailable" };
 
@@ -80,7 +80,7 @@ export async function redeemOwnerInvitationWithStore(
     return { status: "email_unavailable" };
   }
 
-  return store.consumeAndCreateOwner({
+  const result = await store.consumeAndCreateOwner({
     invitationId: invitation.id,
     expectedTokenHash: tokenHash,
     now,
@@ -105,4 +105,8 @@ export async function redeemOwnerInvitationWithStore(
         : {}),
     },
   });
+
+  return result.status === "success"
+    ? { ...result, email: invitation.email }
+    : result;
 }

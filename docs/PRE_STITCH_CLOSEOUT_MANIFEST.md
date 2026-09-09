@@ -61,7 +61,7 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 ### Owner Trial / onboarding
 - [x] Public Trial field limits equal final persistence limits.
-- [ ] Password acceptance continues safely into onboarding without an unnecessary second login.
+- [x] Password acceptance continues safely into onboarding without an unnecessary second login.
 - [ ] Trial-start policy is locked; recommended authority is first successful Launch for a seven-usable-day promise.
 - [ ] Country derives consistent currency/timezone defaults.
 - [ ] Server draft, Wizard state and Card Preview use the same defaults.

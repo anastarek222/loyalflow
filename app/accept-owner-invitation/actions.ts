@@ -1,5 +1,7 @@
 "use server";
 
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -11,6 +13,7 @@ import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
 } from "@/lib/auth/password-policy";
+import { revalidatePath } from "next/cache";
 
 const acceptOwnerInvitationSchema = z.object({
   token: z.string().trim().min(20).max(256),
@@ -38,6 +41,8 @@ export async function acceptOwnerInvitationAction(formData: FormData) {
     redirect(invitationErrorPath(parsed.data.token, "password-mismatch"));
   }
 
+  let acceptedOwner: { email: string } | null = null;
+
   try {
     const result = await redeemOwnerInvitation({
       token: parsed.data.token,
@@ -47,6 +52,8 @@ export async function acceptOwnerInvitationAction(formData: FormData) {
     if (result.status !== "success") {
       redirect("/accept-owner-invitation?error=invalid-token");
     }
+
+    acceptedOwner = result;
   } catch (error) {
     if (error instanceof OwnerInvitationRedemptionError) {
       redirect(invitationErrorPath(parsed.data.token, "password-invalid"));
@@ -55,5 +62,19 @@ export async function acceptOwnerInvitationAction(formData: FormData) {
     throw error;
   }
 
-  redirect("/login?invitation=accepted");
+  const signInData = new FormData();
+  signInData.set("email", acceptedOwner.email);
+  signInData.set("password", parsed.data.password);
+  signInData.set("redirectTo", "/onboarding");
+
+  try {
+    revalidatePath("/", "layout");
+    await signIn("credentials", signInData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect("/login?invitation=accepted");
+    }
+
+    throw error;
+  }
 }
