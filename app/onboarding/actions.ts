@@ -321,5 +321,5 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
   logServerEvent("OWNER_ONBOARDING_SHEETS_SYNC_SCHEDULED", {
     businessId: business.id,
   });
-  redirect(`/businesses/${business.slug}?sheetSync=pending`);
+  redirect(`/businesses/${business.slug}/launch-success?sheetSync=pending`);
 }

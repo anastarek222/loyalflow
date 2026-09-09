@@ -66,7 +66,7 @@ This manifest is the working authority for the final Product / Logic / Functiona
 - [x] Country derives consistent currency/timezone defaults.
 - [x] Server draft, Wizard state and Card Preview use the same defaults.
 - [ ] Logo upload no longer conflicts with a 500-character URL field contract.
-- [ ] Post-Launch first action exposes Join QR/link and first-customer path.
+- [x] Post-Launch first action exposes Join QR/link and first-customer path.
 
 ### Sales Amount
 - [ ] Sales Amount operation records actual transaction amount.
