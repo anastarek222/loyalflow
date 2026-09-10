@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
-import { isCustomCardArtworkDecodable } from "@/lib/cards/custom-card-decoder";
 import {
   customCardStorageConfigured,
   uploadCustomCardArtwork,
@@ -32,10 +31,9 @@ export type CustomCardUploadCommandResult =
  *
  * A Custom Card draft is always an immutable Front + Back pair. The command
  * owns storage readiness, bounded file validation, matching ID-1 geometry,
- * full image decode/readability validation, the persisted EXPAND entitlement
- * re-check immediately before the external write, and immutable version
- * creation. Authentication and tenant-management policy remain in the Server
- * Action transport.
+ * the persisted EXPAND entitlement re-check immediately before the external
+ * write, and immutable version creation. Authentication and tenant-management
+ * policy remain in the Server Action transport.
  */
 export async function uploadCustomCardDraftCommand(input: {
   businessId: string;
@@ -51,14 +49,6 @@ export async function uploadCustomCardDraftCommand(input: {
     input.back,
   );
   if (!validation.ok) return validation;
-
-  const [frontDecodable, backDecodable] = await Promise.all([
-    isCustomCardArtworkDecodable(validation.front),
-    isCustomCardArtworkDecodable(validation.back),
-  ]);
-  if (!frontDecodable || !backDecodable) {
-    return { ok: false, reason: "UNREADABLE_IMAGE" };
-  }
 
   if (
     !(await canBusinessPerformSubscriptionOperation(
