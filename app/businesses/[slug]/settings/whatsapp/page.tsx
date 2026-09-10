@@ -10,7 +10,10 @@ import {
   hashBusinessWhatsAppTemplate,
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getWhatsAppEmbeddedSignupReadiness } from "@/lib/server/integrations/whatsapp-embedded-signup";
-import { getWhatsAppProviderReadiness } from "@/lib/server/integrations/whatsapp-readiness";
+import {
+  getBusinessWhatsAppConnectionReadiness,
+  getWhatsAppProviderReadiness,
+} from "@/lib/server/integrations/whatsapp-readiness";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -84,11 +87,17 @@ export default async function BusinessWhatsAppSettingsPage({
   const embeddedSignupConfigId =
     process.env.NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID?.trim() ?? "";
   const graphApiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim() ?? "";
-  const senderReady = Boolean(credential?.wabaId);
-  const deliveryReady =
-    providerReadiness.providerReady &&
-    senderReady &&
-    automaticTemplateReadiness.ready;
+  const senderReady = Boolean(
+    credential?.wabaId?.trim() && credential.phoneNumberId.trim(),
+  );
+  const connectionReadiness = getBusinessWhatsAppConnectionReadiness({
+    credentialPresent: Boolean(credential),
+    senderReady,
+    providerReady: providerReadiness.providerReady,
+    hasEnabledMessages: automaticTemplateReadiness.hasEnabledMessages,
+    templatesReady: automaticTemplateReadiness.ready,
+  });
+  const deliveryReady = connectionReadiness.automaticDeliveryReady;
 
   const updateConnection = updateBusinessWhatsAppConnectionAction.bind(
     null,
@@ -154,6 +163,44 @@ export default async function BusinessWhatsAppSettingsPage({
                   ? t("طلب القالب غير صالح.", "The template request is invalid.")
                   : null;
 
+  const connectionTitle =
+    connectionReadiness.state === "READY"
+      ? t("WhatsApp جاهز", "WhatsApp ready")
+      : connectionReadiness.state === "NOT_CONNECTED"
+        ? t("WhatsApp غير متصل", "WhatsApp not connected")
+        : t("WhatsApp يحتاج إجراء", "WhatsApp action required");
+
+  const connectionDescription =
+    connectionReadiness.reason === "READY"
+      ? t(
+          "الاتصال والرسائل التلقائية المفعلة جاهزان.",
+          "The connection and enabled automatic messages are ready.",
+        )
+      : connectionReadiness.reason === "NOT_CONNECTED"
+        ? t(
+            "اربط رقم النشاط عبر Meta لتبدأ إعداد رسائل الولاء على WhatsApp.",
+            "Connect the business number through Meta to start setting up loyalty messages on WhatsApp.",
+          )
+        : connectionReadiness.reason === "SENDER_INCOMPLETE"
+          ? t(
+              "بيانات الاتصال المحفوظة غير مكتملة. أعد ربط WhatsApp أو استخدم الإعداد المتقدم للدعم.",
+              "The saved connection is incomplete. Reconnect WhatsApp or use advanced setup with support.",
+            )
+          : connectionReadiness.reason === "PROVIDER_NOT_READY"
+            ? t(
+                "رقم النشاط متصل، لكن إعداد الإرسال لدى Tanee لم يكتمل بعد.",
+                "The business number is connected, but Tanee's delivery setup is not ready yet.",
+              )
+            : connectionReadiness.reason === "NO_AUTOMATIC_MESSAGES"
+              ? t(
+                  "رقم النشاط متصل. أضف نصًا لرسالة تلقائية واحدة على الأقل لبدء اعتمادها.",
+                  "The business number is connected. Add at least one automatic message before requesting approval.",
+                )
+              : t(
+                  "رقم النشاط متصل، لكن رسالة تلقائية مفعلة واحدة على الأقل ما زالت تحتاج اعتماد Meta للنص الحالي.",
+                  "The business number is connected, but at least one enabled automatic message still needs Meta approval for its current copy.",
+                );
+
   const templateRows = [
     {
       event: "WELCOME" as const,
@@ -216,29 +263,14 @@ export default async function BusinessWhatsAppSettingsPage({
         <section
           className="mt-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
           data-whatsapp-simple-connection
+          data-whatsapp-connection-state={connectionReadiness.state}
+          data-whatsapp-connection-reason={connectionReadiness.reason}
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-black text-foreground">
-                {credential
-                  ? t("WhatsApp متصل", "WhatsApp connected")
-                  : t("اربط رقم النشاط", "Connect your business number")}
-              </p>
+              <p className="text-sm font-black text-foreground">{connectionTitle}</p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-foreground-muted">
-                {credential
-                  ? deliveryReady
-                    ? t(
-                        "الاتصال والرسائل التلقائية جاهزان.",
-                        "The connection and automatic messages are ready.",
-                      )
-                    : t(
-                        "الاتصال محفوظ. أكمل اعتماد الرسائل أدناه لتشغيل كل الحالات التلقائية المفعلة.",
-                        "The connection is saved. Complete message approval below to enable every automatic case you use.",
-                      )
-                  : t(
-                      "اضغط Connect WhatsApp وأكمل خطوات Meta. لن تحتاج لإدخال Phone Number ID أو WABA ID أو Access Token بنفسك.",
-                      "Press Connect WhatsApp and complete Meta's steps. You do not need to enter a Phone Number ID, WABA ID, or Access Token yourself.",
-                    )}
+                {connectionDescription}
               </p>
             </div>
 
