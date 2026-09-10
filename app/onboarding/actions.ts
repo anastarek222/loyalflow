@@ -8,9 +8,8 @@ import {
   optionalBusinessPhoneValue,
 } from "@/lib/business-profile";
 import {
-  getSafeImageDataUrl,
   imageFileToDataUrl,
-  isValidRemoteImageUrl,
+  isValidBusinessLogoStorageValue,
 } from "@/lib/branding/image-data";
 import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import prisma from "@/lib/prisma";
@@ -65,7 +64,7 @@ const ownerDraftSchema = z
       .regex(/^#[0-9a-fA-F]{6}$/)
       .default(OWNER_ONBOARDING_DEFAULTS.secondaryColor),
     themePreset: z.enum(["DEFAULT", "DARK"]).default(OWNER_ONBOARDING_DEFAULTS.themePreset),
-    logoUrl: z.string().trim().max(500).default(OWNER_ONBOARDING_DEFAULTS.logoUrl),
+    logoUrl: z.string().trim().default(OWNER_ONBOARDING_DEFAULTS.logoUrl),
     standardCardArtworkEnabled: z.coerce.boolean().default(OWNER_ONBOARDING_DEFAULTS.standardCardArtworkEnabled),
     standardCardArtworkCategory: z
       .enum(STANDARD_CARD_ARTWORK_CATEGORIES)
@@ -82,11 +81,7 @@ const ownerDraftSchema = z
             ? "Choose a timezone for the selected country."
             : `Choose a valid ${profileError.field}.`,
       });
-    if (
-      data.logoUrl &&
-      !isValidRemoteImageUrl(data.logoUrl) &&
-      !getSafeImageDataUrl(data.logoUrl, BUSINESS_LOGO_MAX_BYTES)
-    )
+    if (!isValidBusinessLogoStorageValue(data.logoUrl, BUSINESS_LOGO_MAX_BYTES))
       context.addIssue({
         code: "custom",
         path: ["logoUrl"],
