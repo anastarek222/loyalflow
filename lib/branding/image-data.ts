@@ -84,3 +84,24 @@ export function getSafeImageDataUrl(
 
   return value;
 }
+
+/**
+ * Business logo persistence accepts two deliberately different contracts:
+ * a short browser-rendered remote URL, or a bounded validated inline upload.
+ * Keeping the remote URL limit separate prevents a valid image data URL from
+ * being rejected merely because its base64 representation is longer than the
+ * ordinary text field contract.
+ */
+export function isValidBusinessLogoStorageValue(
+  value: string | null | undefined,
+  maximumBytes: number,
+  maximumRemoteUrlCharacters = 500,
+) {
+  if (!value) return true;
+
+  if (isValidRemoteImageUrl(value)) {
+    return value.length <= maximumRemoteUrlCharacters;
+  }
+
+  return Boolean(getSafeImageDataUrl(value, maximumBytes));
+}
