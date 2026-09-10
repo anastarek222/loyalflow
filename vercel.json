@@ -1,5 +1,5 @@
 {
-  "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm run db:migrate:deploy; fi && pnpm run build",
+  "buildCommand": "if [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm run db:migrate:deploy; fi && node --import tsx --test tests/business-logo-policy-coverage.test.ts tests/custom-card-upload-runtime-safety.test.ts tests/custom-card-dimension-guard.test.ts tests/tc33-custom-card-blob-lifecycle.test.ts && pnpm run build",
   "functions": {
     "app/api/queues/integration-jobs/route.ts": {
       "experimentalTriggers": [
