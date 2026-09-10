@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import {
   isAutomaticCustomerMessageEvent,
   isCustomerMessagePayload,
@@ -109,6 +110,15 @@ export async function sendWhatsAppCustomerNotificationSafely(
           whatsappWelcomeMessage: true,
           whatsappBalanceMessage: true,
           whatsappRewardMessage: true,
+          rewards: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              name: true,
+              cost: true,
+              isActive: true,
+            },
+          },
         },
       },
     },
@@ -230,6 +240,16 @@ export async function sendWhatsAppCustomerNotificationSafely(
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
   const balance = payload.balance ?? customer.balance;
+  const rewardAvailability = getRewardAvailability({
+    customerActive: true,
+    balance,
+    rewardThreshold: customer.business.rewardThreshold,
+    fallbackReward: {
+      name: customer.business.rewardName,
+      cost: customer.business.rewardThreshold,
+    },
+    catalogueRewards: customer.business.rewards,
+  });
   const cardUrl = `${appUrl}/card/${customer.publicToken}`;
   const bodyParameters = renderWhatsAppTemplateParameters(
     ownerMessageTemplate,
@@ -238,8 +258,8 @@ export async function sendWhatsAppCustomerNotificationSafely(
       business: customer.business.name,
       balance,
       unit: customer.business.unitName,
-      reward: payload.rewardName ?? customer.business.rewardName,
-      remaining: Math.max(0, customer.business.rewardThreshold - balance),
+      reward: payload.rewardName ?? rewardAvailability.defaultReward.name,
+      remaining: rewardAvailability.remaining,
       cardLink: cardUrl,
     },
   );
