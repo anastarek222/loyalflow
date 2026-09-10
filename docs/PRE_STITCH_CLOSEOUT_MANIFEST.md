@@ -65,7 +65,7 @@ This manifest is the working authority for the final Product / Logic / Functiona
 - [x] Trial-start policy is locked; authority is first successful Launch for a seven-usable-day promise.
 - [x] Country derives consistent currency/timezone defaults.
 - [x] Server draft, Wizard state and Card Preview use the same defaults.
-- [ ] Logo upload no longer conflicts with a 500-character URL field contract.
+- [x] Logo upload no longer conflicts with a 500-character URL field contract.
 - [x] Post-Launch first action exposes Join QR/link and first-customer path.
 
 ### Sales Amount
@@ -76,11 +76,13 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 ### Custom Card
 - [ ] Structurally valid but undecodable image payloads are rejected.
-- [ ] Missing Blob object has a clean explicit response contract.
-- [ ] Provider/auth/storage failure is distinguished from not-found.
-- [ ] Corrupt/unreadable stored artwork has a defined response contract.
-- [ ] Oversized request behavior is friendly even when framework limits trigger before the action.
-- [ ] Version listing is paginated beyond the first 100 objects.
+- [x] Missing Blob object has a clean explicit response contract.
+- [x] Provider/auth/storage failure is distinguished from not-found.
+- [x] Corrupt/unreadable stored artwork has a defined response contract.
+- [x] Oversized request behavior is friendly even when framework limits trigger before the action.
+- [x] Version listing is paginated beyond the first 100 objects.
+
+Focused evidence for the closed Logo / Custom Card contracts above: Preview commit `900d90698ee2667bcfe814007958929ce2e63e82` executed 28 focused tests with 28 PASS / 0 FAIL before a successful production build and READY Preview deployment. The temporary Preview verifier was removed immediately after evidence capture. Full external Blob lifecycle certification and the structurally-valid-but-undecodable payload case remain open and are not represented by this focused evidence.
 
 ### Source / release governance
 - [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
