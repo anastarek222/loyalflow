@@ -166,16 +166,22 @@ export function publicCustomCardArtworkUrl(token: string, side: CustomCardSide, 
     : storedUrl ?? null;
 }
 
+async function managedBlobExists(url: string) {
+  const pathname = new URL(url).pathname.replace(/^\/+/, "");
+  const result = await list({ prefix: pathname, limit: 2 });
+  return result.blobs.some((blob) => blob.pathname === pathname && blob.url === url);
+}
+
 export async function readPrivateCustomCardArtwork(
   url: string,
 ): Promise<CustomCardArtworkReadResult> {
   if (!isManagedCustomCardArtworkUrl(url)) return { status: "not-found" };
 
   try {
+    if (!(await managedBlobExists(url))) return { status: "not-found" };
+
     const result = await get(url, { access: "private" });
-    if (!result) return { status: "not-found" };
-    if (result.statusCode === 404) return { status: "not-found" };
-    if (result.statusCode !== 200) return { status: "unavailable" };
+    if (!result || result.statusCode !== 200) return { status: "unavailable" };
 
     const contentType = result.blob.contentType;
     const bytes = await new Response(result.stream).arrayBuffer();
