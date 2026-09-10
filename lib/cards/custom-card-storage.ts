@@ -29,7 +29,7 @@ export type CustomCardArtworkVersion = {
 };
 
 export type CustomCardArtworkReadResult =
-  | Readonly<{ status: "ok"; bytes: Uint8Array; contentType: string }>
+  | Readonly<{ status: "ok"; bytes: ArrayBuffer; contentType: string }>
   | Readonly<{ status: "not-found" }>
   | Readonly<{ status: "corrupt" }>
   | Readonly<{ status: "unavailable" }>;
@@ -178,7 +178,7 @@ export async function readPrivateCustomCardArtwork(
     if (result.statusCode !== 200) return { status: "unavailable" };
 
     const contentType = result.blob.contentType;
-    const bytes = new Uint8Array(await new Response(result.stream).arrayBuffer());
+    const bytes = await new Response(result.stream).arrayBuffer();
     const file = new File([bytes], "stored-custom-card-artwork", {
       type: contentType,
     });
