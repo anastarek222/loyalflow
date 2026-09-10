@@ -15,6 +15,10 @@ const manager = readFileSync(
   "components/custom-card-artwork-manager.tsx",
   "utf8",
 );
+const uploadForm = readFileSync(
+  "components/custom-card-upload-form.tsx",
+  "utf8",
+);
 const publicArtwork = readFileSync(
   "app/api/card-artwork/[token]/[side]/route.ts",
   "utf8",
@@ -49,9 +53,10 @@ test("TC3.3 legacy Settings flow remains Super Admin only and fail closed", () =
 });
 
 test("TC3.3 Program manager uploads, previews and confirms one Front + Back pair", () => {
-  assert.match(manager, /Create Front \+ Back draft/);
-  assert.match(manager, /name="customCardFrontFile"/);
-  assert.match(manager, /name="customCardBackFile"/);
+  assert.match(manager, /CustomCardUploadForm/);
+  assert.match(uploadForm, /Create Front \+ Back draft/);
+  assert.match(uploadForm, /name="customCardFrontFile"/);
+  assert.match(uploadForm, /name="customCardBackFile"/);
   assert.match(manager, /Draft preview/);
   assert.match(manager, /Publish this Front \+ Back pair/);
   assert.match(manager, /ConfirmedSubmitButton/);
@@ -61,7 +66,7 @@ test("TC3.3 Program manager uploads, previews and confirms one Front + Back pair
     manager,
     /currently published customer card does not change[\s\S]*?publishing is confirmed/i,
   );
-  assert.doesNotMatch(manager, /Safe generated Back|optional Back|uploadCustomBack/);
+  assert.doesNotMatch(manager + uploadForm, /Safe generated Back|optional Back|uploadCustomBack/);
 });
 
 test("TC3.3 private artwork routes derive access from trusted state", () => {
@@ -76,17 +81,46 @@ test("TC3.3 private artwork routes derive access from trusted state", () => {
   assert.doesNotMatch(publicArtwork, /tenantId|businessId.*searchParams/);
 });
 
-test("TC3.3 missing private Blob artwork resolves to 404 while provider failures stay observable", () => {
-  const readback = storage.slice(
-    storage.indexOf("export async function readPrivateCustomCardArtwork"),
+test("TC3.3 retained custom card library paginates beyond the first 100 Blob objects", () => {
+  const listing = storage.slice(
+    storage.indexOf("async function listAllCustomCardBlobs"),
+    storage.indexOf("export async function findCustomCardArtworkVersion"),
   );
-  assert.match(readback, /const result = await get\(url, \{ access: "private" \}\)/);
-  assert.match(readback, /if \(!result \|\| result\.statusCode !== 200\) return null/);
-  assert.doesNotMatch(readback, /\bcatch\b/);
+  assert.match(listing, /let cursor: string \| undefined/);
+  assert.match(listing, /list\(\{ prefix, limit: 100, cursor \}\)/);
+  assert.match(listing, /result\.hasMore \? result\.cursor : undefined/);
+  assert.match(listing, /while \(cursor\)/);
+  assert.match(listing, /blobs\.push\(\.\.\.result\.blobs\)/);
+});
 
+test("TC3.3 missing, corrupt and unavailable private Blob reads stay distinct", () => {
+  const readback = storage.slice(
+    storage.indexOf("export type CustomCardArtworkReadResult"),
+  );
+  assert.match(readback, /status: "ok"/);
+  assert.match(readback, /status: "not-found"/);
+  assert.match(readback, /status: "corrupt"/);
+  assert.match(readback, /status: "unavailable"/);
+  assert.match(readback, /managedBlobExists\(url\)/);
+  assert.match(readback, /if \(!\(await managedBlobExists\(url\)\)\) return \{ status: "not-found" \}/);
+  assert.match(readback, /const result = await get\(url, \{ access: "private" \}\)/);
+  assert.match(readback, /result\.statusCode !== 200/);
+  assert.match(readback, /validateCustomCardArtworkFile\(file\)/);
+  assert.match(readback, /validateCustomCardArtworkGeometry\(file\)/);
+  assert.match(readback, /return \{ status: "corrupt" \}/);
+  assert.match(readback, /catch \{/);
+  assert.match(readback, /return \{ status: "unavailable" \}/);
+});
+
+test("TC3.3 artwork routes expose controlled 404, 502 and 503 outcomes", () => {
   for (const route of [adminArtwork, publicArtwork]) {
-    assert.match(route, /const blob = await readPrivateCustomCardArtwork\(/);
-    assert.match(route, /if \(!blob\) return new NextResponse\(null, \{ status: 404 \}\)/);
+    assert.match(route, /const artwork = await readPrivateCustomCardArtwork\(/);
+    assert.match(route, /artwork\.status === "not-found"/);
+    assert.match(route, /status: 404/);
+    assert.match(route, /artwork\.status === "corrupt"/);
+    assert.match(route, /status: 502/);
+    assert.match(route, /artwork\.status === "unavailable"/);
+    assert.match(route, /status: 503/);
     assert.match(route, /"X-Content-Type-Options": "nosniff"/);
   }
 });
