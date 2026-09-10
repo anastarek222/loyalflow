@@ -1,7 +1,6 @@
 import "server-only";
 
 import { get, list, put, type ListBlobResultBlob } from "@vercel/blob";
-import { isCustomCardArtworkDecodable } from "@/lib/cards/custom-card-decoder";
 import {
   CUSTOM_CARD_GEOMETRY_ERROR,
   validateCustomCardArtworkGeometry,
@@ -36,7 +35,6 @@ export type CustomCardArtworkReadResult =
   | Readonly<{ status: "unavailable" }>;
 
 const versionPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const CUSTOM_CARD_DECODE_ERROR = "Custom Card artwork could not be decoded.";
 
 export function customCardStorageConfigured() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID);
@@ -56,10 +54,7 @@ export async function validateCustomCardArtworkPair(front: unknown, back: unknow
 
 export async function validateSingleCustomCardArtwork(file: unknown) {
   if (!validateCustomCardArtwork(file)) return false;
-  return (
-    (await validateCustomCardArtworkGeometry(file)) &&
-    (await isCustomCardArtworkDecodable(file))
-  );
+  return validateCustomCardArtworkGeometry(file);
 }
 
 function extensionFor(file: File) {
@@ -82,14 +77,6 @@ export async function uploadCustomCardArtwork(input: {
   const validGeometry = await validateCustomCardArtworkPair(input.front, input.back);
   if (!validGeometry) {
     throw new Error(CUSTOM_CARD_GEOMETRY_ERROR);
-  }
-
-  const [frontDecodable, backDecodable] = await Promise.all([
-    isCustomCardArtworkDecodable(input.front),
-    isCustomCardArtworkDecodable(input.back),
-  ]);
-  if (!frontDecodable || !backDecodable) {
-    throw new Error(CUSTOM_CARD_DECODE_ERROR);
   }
 
   const prefix = customCardVersionPrefix(input.businessId, input.version);
@@ -203,8 +190,7 @@ export async function readPrivateCustomCardArtwork(
     });
     if (
       !validateCustomCardArtworkFile(file) ||
-      !(await validateCustomCardArtworkGeometry(file)) ||
-      !(await isCustomCardArtworkDecodable(file))
+      !(await validateCustomCardArtworkGeometry(file))
     ) {
       return { status: "corrupt" };
     }
