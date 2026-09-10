@@ -3,6 +3,7 @@ import { uploadCustomCardDraftCommandAction } from "@/app/businesses/[slug]/prog
 import { ConfirmedSubmitButton } from "@/components/confirmed-submit-button";
 import { CustomCardExperienceStatus } from "@/components/custom-card-experience-status";
 import { CustomCardSafeZoneGuide } from "@/components/custom-card-safe-zone-guide";
+import { CustomCardUploadForm } from "@/components/custom-card-upload-form";
 import {
   LoyaltyCard,
   type LoyaltyCardProps,
@@ -132,42 +133,10 @@ export async function CustomCardArtworkManager({
           )}
         </p>
       ) : (
-        <form action={uploadCustomArtwork} className="mt-5 grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-bold">
-              {t("الواجهة الأمامية · مطلوبة", "Front artwork · required")}
-              <input
-                required
-                name="customCardFrontFile"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
-              />
-            </label>
-            <label className="text-sm font-bold">
-              {t("الواجهة الخلفية · مطلوبة", "Back artwork · required")}
-              <input
-                required
-                name="customCardBackFile"
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
-              />
-            </label>
-          </div>
-          <p className="text-xs text-foreground-muted">
-            {t(
-              "PNG أو JPEG أو WebP · الملفان معًا بحد أقصى 4 ميجابايت · نفس أبعاد البكسل.",
-              "PNG, JPEG, or WebP · 4 MB combined · identical pixel dimensions.",
-            )}
-          </p>
-          <button
-            type="submit"
-            className="w-fit rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-black text-[var(--lf-primary-foreground)]"
-          >
-            {t("إنشاء مسودة الأمامية + الخلفية", "Create Front + Back draft")}
-          </button>
-        </form>
+        <CustomCardUploadForm
+          language={language}
+          action={uploadCustomArtwork}
+        />
       )}
 
       {selected && selectedArtwork ? (
