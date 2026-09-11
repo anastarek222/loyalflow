@@ -80,11 +80,18 @@ test("WhatsApp settings report fail-closed WABA and business-scoped automatic de
 
   assert.match(page, /getWhatsAppProviderReadiness\(\)/);
   assert.match(page, /getBusinessWhatsAppAutomaticReadiness/);
-  assert.match(page, /const senderReady = Boolean\(credential\?\.wabaId\);/);
-  assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
   assert.match(
     page,
-    /providerReadiness\.providerReady\s*&&\s*senderReady\s*&&\s*automaticTemplateReadiness\.ready/,
+    /const senderReady = Boolean\([\s\S]{0,120}credential\?\.wabaId\?\.trim\(\)[\s\S]{0,120}credential\.phoneNumberId\.trim\(\)[\s\S]{0,40}\);/,
+  );
+  assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
+  assert.match(page, /getBusinessWhatsAppConnectionReadiness\(\{/);
+  assert.match(page, /providerReady: providerReadiness\.providerReady/);
+  assert.match(page, /senderReady,/);
+  assert.match(page, /templatesReady: automaticTemplateReadiness\.ready/);
+  assert.match(
+    page,
+    /const deliveryReady =\s*connectionReadiness\.automaticDeliveryReady && !automation\.paused/,
   );
   assert.doesNotMatch(page, /providerReadiness\.missingProviderConfig\.join/);
   assert.match(page, /Automatic delivery is still being prepared/);
