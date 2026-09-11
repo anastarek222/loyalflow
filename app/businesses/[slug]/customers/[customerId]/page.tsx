@@ -14,23 +14,15 @@ type CustomerDetailsPageProps = {
 
 /**
  * Keeps the established Customer Profile intact while WA-4 moves WhatsApp
- * delivery onto the durable outbox/history contract. Legacy direct wa.me links
- * are hidden so opted-out customers cannot bypass canonical consent state.
+ * delivery onto the durable outbox/history contract. The legacy page no longer
+ * renders direct wa.me links, so every send is checked by the server authority.
  */
-export default async function CustomerDetailsPage(props: CustomerDetailsPageProps) {
+export default async function CustomerDetailsPage(
+  props: CustomerDetailsPageProps,
+) {
   return (
     <>
-      <style>{`
-        .wa4-profile-shell a[href^="https://wa.me/"] {
-          display: none !important;
-        }
-        .wa4-profile-shell section:has(> a[href^="https://wa.me/"]) {
-          display: none !important;
-        }
-      `}</style>
-      <div className="wa4-profile-shell">
-        <LegacyCustomerDetailsPage {...props} />
-      </div>
+      <LegacyCustomerDetailsPage {...props} />
       <CustomerWhatsAppPanel {...props} />
     </>
   );

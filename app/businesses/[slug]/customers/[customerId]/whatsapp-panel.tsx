@@ -2,10 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import { auth } from "@/auth";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
-import { canAccessBusiness } from "@/lib/permissions";
+import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getLatestWhatsAppMessageForCustomer } from "@/lib/server/integrations/whatsapp-message-history";
+import { getBusinessWhatsAppManualReadiness } from "@/lib/server/integrations/whatsapp-manual-readiness";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,11 +17,10 @@ type Props = {
   searchParams: Promise<{ success?: string; error?: string }>;
 };
 
-function canSendForRole(role: string) {
-  return role === "OWNER" || role === "MANAGER" || role === "STAFF" || role === "SUPER_ADMIN";
-}
-
-export default async function CustomerWhatsAppPanel({ params, searchParams }: Props) {
+export default async function CustomerWhatsAppPanel({
+  params,
+  searchParams,
+}: Props) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -37,6 +37,8 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
         whatsappWelcomeMessage: true,
         whatsappBalanceMessage: true,
         whatsappRewardMessage: true,
+        whatsappRedeemedMessage: true,
+        cardDefaultLanguage: true,
         rewards: {
           where: { isActive: true },
           select: { id: true, name: true, cost: true, isActive: true },
@@ -70,10 +72,22 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
     businessId: business.id,
     customerId: customer.id,
   });
+  const manualReadiness = await getBusinessWhatsAppManualReadiness(prisma, {
+    businessId: business.id,
+    language: business.cardDefaultLanguage,
+    messages: {
+      whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+      whatsappBalanceMessage: business.whatsappBalanceMessage,
+      whatsappRewardMessage: business.whatsappRewardMessage,
+      whatsappRedeemedMessage: business.whatsappRedeemedMessage,
+      newRewardMessage: null,
+      newOfferMessage: null,
+    },
+  });
   const language = normalizeLanguage(user?.language);
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
-  const canSend = canSendForRole(session.user.role);
+  const canSend = canPerform(session.user, business.id, "CUSTOMERS_EDIT");
   const eligible =
     customer.isActive &&
     Boolean(customer.whatsappPhoneE164) &&
@@ -96,34 +110,72 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
   );
 
   const eligibilityCopy = !customer.isActive
-    ? t("العميل غير نشط — إرسال واتساب متوقف.", "Customer is inactive — WhatsApp delivery is disabled.")
+    ? t(
+        "العميل غير نشط — إرسال واتساب متوقف.",
+        "Customer is inactive — WhatsApp delivery is disabled.",
+      )
     : customer.whatsappOptedOutAt
-      ? t("العميل أوقف رسائل واتساب. لا يمكن تجاوز STOP يدويًا.", "The customer opted out of WhatsApp. STOP cannot be overridden manually.")
+      ? t(
+          "العميل أوقف رسائل واتساب. لا يمكن تجاوز STOP يدويًا.",
+          "The customer opted out of WhatsApp. STOP cannot be overridden manually.",
+        )
       : !customer.whatsappOptInAt
-        ? t("لا توجد موافقة صريحة على واتساب بعد.", "There is no explicit WhatsApp consent yet.")
+        ? t(
+            "لا توجد موافقة صريحة على واتساب بعد.",
+            "There is no explicit WhatsApp consent yet.",
+          )
         : !customer.whatsappPhoneE164
-          ? t("رقم واتساب يحتاج تصحيحًا قبل الإرسال.", "The WhatsApp phone needs correction before delivery.")
-          : t("العميل مؤهل لإرسال واتساب اليدوي.", "The customer is eligible for manual WhatsApp delivery.");
+          ? t(
+              "رقم واتساب يحتاج تصحيحًا قبل الإرسال.",
+              "The WhatsApp phone needs correction before delivery.",
+            )
+          : t(
+              "العميل مؤهل لإرسال واتساب اليدوي.",
+              "The customer is eligible for manual WhatsApp delivery.",
+            );
 
   const feedback =
     query.success === "whatsapp-scheduled"
-      ? t("تمت إضافة محاولة واتساب إلى طابور التوصيل.", "The WhatsApp delivery attempt was queued.")
+      ? t(
+          "تمت إضافة محاولة واتساب إلى طابور التوصيل.",
+          "The WhatsApp delivery attempt was queued.",
+        )
       : query.success === "whatsapp-ineligible"
-        ? t("لم تُرسل الرسالة لأن حالة العميل لم تعد مؤهلة.", "The message was not queued because the customer is no longer eligible.")
+        ? t(
+            "لم تُرسل الرسالة لأن حالة العميل لم تعد مؤهلة.",
+            "The message was not queued because the customer is no longer eligible.",
+          )
         : query.success === "whatsapp-reward-not-ready"
-          ? t("لم تُرسل رسالة المكافأة لأن Reward Ready لم يعد متحققًا.", "The reward message was not queued because Reward Ready is no longer true.")
+          ? t(
+              "لم تُرسل رسالة المكافأة لأن Reward Ready لم يعد متحققًا.",
+              "The reward message was not queued because Reward Ready is no longer true.",
+            )
           : query.success === "whatsapp-subscription-restricted"
-            ? t("حالة الاشتراك الحالية تمنع محاولة إرسال جديدة.", "The current subscription state blocks a new delivery attempt.")
-            : query.success === "whatsapp-invalid"
-              ? t("تعذر إنشاء محاولة واتساب بسبب بيانات غير صالحة.", "The WhatsApp attempt could not be created because the request was invalid.")
-              : null;
+            ? t(
+                "حالة الاشتراك الحالية تمنع محاولة إرسال جديدة.",
+                "The current subscription state blocks a new delivery attempt.",
+              )
+            : query.success === "whatsapp-not-ready"
+              ? t(
+                  "إرسال واتساب غير جاهز لهذا النوع: راجع اتصال المرسل واعتماد القالب الحالي.",
+                  "WhatsApp delivery is not ready for this message: check the sender connection and current template approval.",
+                )
+              : query.success === "whatsapp-invalid"
+                ? t(
+                    "تعذر إنشاء محاولة واتساب بسبب بيانات غير صالحة.",
+                    "The WhatsApp attempt could not be created because the request was invalid.",
+                  )
+                : null;
 
   const latestStatus = latest
-    ? latest.providerDeliveryStatus ?? latest.status
+    ? (latest.providerDeliveryStatus ?? latest.status)
     : null;
 
   return (
-    <section className="bg-surface-subtle px-3 pb-8 sm:px-8" data-whatsapp-customer-state>
+    <section
+      className="bg-surface-subtle px-3 pb-8 sm:px-8"
+      data-whatsapp-customer-state
+    >
       <div className="mx-auto max-w-7xl rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -131,9 +183,14 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
               WhatsApp
             </p>
             <h2 className="mt-1 text-lg font-black text-foreground">
-              {t("حالة العميل والإرسال اليدوي", "Customer state & manual delivery")}
+              {t(
+                "حالة العميل والإرسال اليدوي",
+                "Customer state & manual delivery",
+              )}
             </h2>
-            <p className={`mt-2 text-sm font-semibold ${eligible ? "text-success" : "text-warning"}`}>
+            <p
+              className={`mt-2 text-sm font-semibold ${eligible ? "text-success" : "text-warning"}`}
+            >
               {eligibilityCopy}
             </p>
           </div>
@@ -166,7 +223,10 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
               </p>
             ) : (
               <p className="mt-1 text-sm text-foreground-muted">
-                {t("لا توجد محاولات واتساب مسجلة لهذا العميل.", "No WhatsApp attempts are recorded for this customer yet.")}
+                {t(
+                  "لا توجد محاولات واتساب مسجلة لهذا العميل.",
+                  "No WhatsApp attempts are recorded for this customer yet.",
+                )}
               </p>
             )}
           </div>
@@ -181,33 +241,43 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
           ) : null}
         </div>
 
-        {canSend && eligible ? (
+        {canSend && eligible && manualReadiness.readyEvents.length > 0 ? (
           <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
-            {business.whatsappWelcomeMessage?.trim() ? (
+            {manualReadiness.isEventReady("WELCOME") ? (
               <form action={sendAction}>
                 <input type="hidden" name="event" value="WELCOME" />
                 <input type="hidden" name="requestId" value={randomUUID()} />
-                <button type="submit" className="rounded-[var(--lf-radius-input)] bg-success px-4 py-2 text-sm font-bold text-white">
+                <button
+                  type="submit"
+                  className="rounded-[var(--lf-radius-input)] bg-success px-4 py-2 text-sm font-bold text-white"
+                >
                   {t("إرسال ترحيب", "Send welcome")}
                 </button>
               </form>
             ) : null}
 
-            {business.whatsappBalanceMessage?.trim() ? (
+            {manualReadiness.isEventReady("BALANCE_UPDATED") ? (
               <form action={sendAction}>
                 <input type="hidden" name="event" value="BALANCE_UPDATED" />
                 <input type="hidden" name="requestId" value={randomUUID()} />
-                <button type="submit" className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-bold text-white">
+                <button
+                  type="submit"
+                  className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-bold text-white"
+                >
                   {t("إرسال تحديث الرصيد", "Send balance update")}
                 </button>
               </form>
             ) : null}
 
-            {availability.rewardReady && business.whatsappRewardMessage?.trim() ? (
+            {availability.rewardReady &&
+            manualReadiness.isEventReady("REWARD_READY") ? (
               <form action={sendAction}>
                 <input type="hidden" name="event" value="REWARD_READY" />
                 <input type="hidden" name="requestId" value={randomUUID()} />
-                <button type="submit" className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-4 py-2 text-sm font-bold text-foreground">
+                <button
+                  type="submit"
+                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-4 py-2 text-sm font-bold text-foreground"
+                >
                   {t("إرسال Reward Ready", "Send Reward Ready")}
                 </button>
               </form>
@@ -215,9 +285,21 @@ export default async function CustomerWhatsAppPanel({ params, searchParams }: Pr
           </div>
         ) : null}
 
+        {canSend && eligible && manualReadiness.readyEvents.length === 0 ? (
+          <p className="mt-5 border-t border-border pt-4 text-sm font-semibold text-warning">
+            {t(
+              "الإرسال اليدوي غير جاهز: أكمل اتصال المرسل واعتماد قوالب Meta الحالية من إعدادات واتساب.",
+              "Manual delivery is not ready: complete the sender connection and approve the current Meta templates in WhatsApp settings.",
+            )}
+          </p>
+        ) : null}
+
         {!canSend ? (
           <p className="mt-5 border-t border-border pt-4 text-sm text-foreground-muted">
-            {t("هذا الدور للقراءة فقط ولا يمكنه إنشاء محاولة إرسال.", "This role is read-only and cannot create a delivery attempt.")}
+            {t(
+              "هذا الدور للقراءة فقط ولا يمكنه إنشاء محاولة إرسال.",
+              "This role is read-only and cannot create a delivery attempt.",
+            )}
           </p>
         ) : null}
       </div>

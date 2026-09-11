@@ -114,6 +114,7 @@ export async function retryWhatsAppDeliveryAction(
       leaseOwner: null,
       leaseExpiresAt: null,
       completedAt: null,
+      lastErrorCode: null,
     },
   });
   if (revived.count !== 1) {

@@ -2,7 +2,6 @@ import { randomUUID } from "node:crypto";
 
 import { auth } from "@/auth";
 import { getRequestBaseUrl } from "@/lib/app-url";
-import { getCampaignSuggestion } from "@/lib/campaigns/suggestions";
 import { calculateRewardProgress } from "@/lib/loyalty/progress";
 import {
   balanceLabel,
@@ -41,10 +40,6 @@ import {
 import prisma from "@/lib/prisma";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { customerUiCopy } from "@/lib/customers/ui-copy";
-import {
-  buildWhatsAppUrl,
-  renderWhatsAppTemplate,
-} from "@/lib/whatsapp-templates";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -444,60 +439,6 @@ export default async function CustomerDetailsPage({
       amount,
     });
 
-  const whatsappContext = {
-    customer: customerName,
-    business: business.name,
-    balance: customer.balance,
-    unit: business.unitName,
-    reward: messageReward.name,
-    cardLink: cardUrl,
-    remaining,
-  };
-
-  const welcomeWhatsAppTemplate = business.whatsappWelcomeMessage?.trim() ?? "";
-  const balanceWhatsAppTemplate = business.whatsappBalanceMessage?.trim() ?? "";
-  const rewardWhatsAppTemplate = business.whatsappRewardMessage?.trim() ?? "";
-  const welcomeWhatsAppUrl = welcomeWhatsAppTemplate
-    ? buildWhatsAppUrl(
-        customer.phone,
-        renderWhatsAppTemplate(welcomeWhatsAppTemplate, whatsappContext),
-      )
-    : null;
-  const balanceWhatsAppUrl = balanceWhatsAppTemplate
-    ? buildWhatsAppUrl(
-        customer.phone,
-        renderWhatsAppTemplate(balanceWhatsAppTemplate, whatsappContext),
-      )
-    : null;
-  const rewardWhatsAppUrl = rewardWhatsAppTemplate
-    ? buildWhatsAppUrl(
-        customer.phone,
-        renderWhatsAppTemplate(rewardWhatsAppTemplate, whatsappContext),
-      )
-    : null;
-
-  const smartWhatsAppSuggestion = canManageCustomer
-    ? getCampaignSuggestion({
-        operation: query.success,
-        phone: customer.phone,
-        context: whatsappContext,
-        templates: {
-          welcome: business.whatsappWelcomeMessage,
-          balance: business.whatsappBalanceMessage,
-          reward: business.whatsappRewardMessage,
-        },
-        rewardAvailable,
-        isOneLoyaltyActionAway:
-          business.loyaltyMode !== "SALES_AMOUNT" &&
-          !rewardAvailable &&
-          remaining > 0 &&
-          remaining <= business.earnAmount,
-      })
-    : null;
-  const smartSuggestionCopy = smartWhatsAppSuggestion
-    ? copy.campaignSuggestion[smartWhatsAppSuggestion.trigger]
-    : null;
-
   return (
     <main
       className="min-h-screen bg-surface-subtle px-3 py-3 sm:px-8 sm:py-8"
@@ -665,29 +606,6 @@ export default async function CustomerDetailsPage({
               ? "لا تسمح حالة الاشتراك الحالية بتنفيذ تغيير تشغيلي جديد. تظل السجلات والبيانات الحالية متاحة للقراءة، وتظل إجراءات الأمان متاحة."
               : "The current subscription state does not allow a new operational change. Existing records and data remain readable, and security controls remain accessible."}
           </div>
-        )}
-
-        {!isSimpleExperience && smartWhatsAppSuggestion && (
-          <section className="mt-6 flex flex-col gap-4 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-black text-success">
-                {smartSuggestionCopy?.title}
-              </p>
-
-              <p className="mt-1 text-sm leading-6 text-success">
-                {smartSuggestionCopy?.description}
-              </p>
-            </div>
-
-            <a
-              href={smartWhatsAppSuggestion.url}
-              target="_blank"
-              rel="noreferrer"
-              className="shrink-0 rounded-[var(--lf-radius-input)] bg-success px-6 py-4 text-center font-bold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
-            >
-              {smartSuggestionCopy?.button}
-            </a>
-          </section>
         )}
 
         <div className="mt-3 grid gap-3 sm:mt-6 sm:gap-7 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -1630,52 +1548,6 @@ export default async function CustomerDetailsPage({
                     </button>
                   </form>
                 )
-              ) : null}
-
-              {canManageCustomer ? (
-                <>
-                  <div className="mt-2 rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
-                    <p className="text-sm font-black text-foreground">
-                      {copy.manualWhatsApp}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-foreground-muted">
-                      {copy.manualWhatsAppDescription}
-                    </p>
-                  </div>
-
-                  {welcomeWhatsAppUrl ? (
-                    <a
-                      href={welcomeWhatsAppUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full rounded-[var(--lf-radius-input)] bg-success px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-success-subtle"
-                    >
-                      {copy.welcomeMessage}
-                    </a>
-                  ) : null}
-
-                  {balanceWhatsAppUrl ? (
-                    <a
-                      href={balanceWhatsAppUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-[var(--lf-radius-input)] bg-info px-5 py-3 text-center font-semibold text-[var(--lf-inverse)] transition hover:bg-info-subtle"
-                    >
-                      {copy.balanceMessage}
-                    </a>
-                  ) : null}
-
-                  {rewardAvailable && rewardWhatsAppUrl ? (
-                    <a
-                      href={rewardWhatsAppUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-5 py-3 text-center font-semibold text-foreground transition hover:bg-warning-subtle"
-                    >
-                      {copy.rewardMessage}
-                    </a>
-                  ) : null}
-                </>
               ) : null}
             </div>
           </OperationalDisclosure>

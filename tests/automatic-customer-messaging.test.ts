@@ -293,7 +293,10 @@ test("public and staff customer creation expose explicit WhatsApp consent", () =
     staffAction,
     /whatsappOptIn:\s*formData\.get\("whatsappOptIn"\)\s*===\s*"on"/,
   );
-  assert.match(staffAction, /scheduleIntegrationJobs\(creation\.integrationJobIds\)/);
+  assert.match(
+    staffAction,
+    /scheduleIntegrationJobs\(creation\.integrationJobIds\)/,
+  );
 });
 
 test("inbound WhatsApp opt-out is scoped only to explicit business sender credentials", () => {
@@ -375,9 +378,18 @@ test("Meta approval remains provider-owned while event toggles remain Owner-owne
   );
 
   assert.match(bindingSource, /FROM "BusinessWhatsAppTemplateBinding"/);
-  assert.doesNotMatch(bindingSource, /\$executeRaw|INSERT INTO|UPDATE "BusinessWhatsAppTemplateBinding"/);
-  assert.doesNotMatch(actionsSource, /approvalStatus:\s*formData|get\("approvalStatus"\)/);
-  assert.doesNotMatch(actionsSource, /providerTemplateId:\s*formData|get\("providerTemplateId"\)/);
+  assert.doesNotMatch(
+    bindingSource,
+    /\$executeRaw|INSERT INTO|UPDATE "BusinessWhatsAppTemplateBinding"/,
+  );
+  assert.doesNotMatch(
+    actionsSource,
+    /approvalStatus:\s*formData|get\("approvalStatus"\)/,
+  );
+  assert.doesNotMatch(
+    actionsSource,
+    /providerTemplateId:\s*formData|get\("providerTemplateId"\)/,
+  );
   assert.match(actionsSource, /rewardRedeemedEnabled/);
   assert.match(actionsSource, /newRewardEnabled/);
   assert.match(actionsSource, /newOfferEnabled/);
@@ -400,40 +412,20 @@ test("New Reward and New Offer are prepared in settings but their producers stay
 });
 
 test("manual customer-profile WhatsApp actions require customer edit permission", () => {
-  const source = readFileSync(
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+  const panelSource = readFileSync(
+    "app/businesses/[slug]/customers/[customerId]/whatsapp-panel.tsx",
     "utf8",
   );
-
-  assert.match(
-    source,
-    /const canManageCustomer = canPerform\(\s*session\.user,\s*business\.id,\s*"CUSTOMERS_EDIT",\s*\);/,
+  const actionSource = readFileSync(
+    "app/businesses/[slug]/customers/[customerId]/whatsapp-actions.ts",
+    "utf8",
   );
   assert.match(
-    source,
-    /const smartWhatsAppSuggestion = canManageCustomer\s*\?\s*getCampaignSuggestion\(/,
+    panelSource,
+    /const canSend = canPerform\(session\.user, business\.id, "CUSTOMERS_EDIT"\)/,
   );
-
-  const cardSection = source.indexOf('id="customer-card"');
-  const manualGuard = source.indexOf("{canManageCustomer ? (", cardSection);
-  const manualCopy = source.indexOf("{copy.manualWhatsApp}", manualGuard);
-  const welcomeGuard = source.indexOf("{welcomeWhatsAppUrl ? (", manualGuard);
-  const welcomeLink = source.indexOf("href={welcomeWhatsAppUrl}", welcomeGuard);
-  const balanceGuard = source.indexOf("{balanceWhatsAppUrl ? (", welcomeLink);
-  const balanceLink = source.indexOf("href={balanceWhatsAppUrl}", balanceGuard);
-  const rewardGuard = source.indexOf(
-    "{rewardAvailable && rewardWhatsAppUrl ? (",
-    balanceLink,
+  assert.match(
+    actionSource,
+    /!canPerform\(session\.user, business\.id, "CUSTOMERS_EDIT"\)/,
   );
-  const rewardLink = source.indexOf("href={rewardWhatsAppUrl}", rewardGuard);
-
-  assert.ok(cardSection >= 0);
-  assert.ok(manualGuard > cardSection);
-  assert.ok(manualCopy > manualGuard);
-  assert.ok(welcomeGuard > manualCopy);
-  assert.ok(welcomeLink > manualGuard);
-  assert.ok(balanceGuard > welcomeLink);
-  assert.ok(balanceLink > welcomeLink);
-  assert.ok(rewardGuard > balanceLink);
-  assert.ok(rewardLink > balanceLink);
 });
