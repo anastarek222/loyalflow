@@ -29,12 +29,10 @@ export function isWhatsAppAutomationEvent(
   );
 }
 
-export function isWhatsAppAutomationEventEnabled(
+export function isWhatsAppAutomationEventSelected(
   controls: BusinessWhatsAppAutomationControls,
   event: WhatsAppAutomationEvent,
 ) {
-  if (controls.paused) return false;
-
   switch (event) {
     case "WELCOME":
       return controls.welcomeEnabled;
@@ -49,4 +47,14 @@ export function isWhatsAppAutomationEventEnabled(
     case "NEW_OFFER":
       return controls.newOfferEnabled;
   }
+}
+
+export function isWhatsAppAutomationEventEnabled(
+  controls: BusinessWhatsAppAutomationControls,
+  event: WhatsAppAutomationEvent,
+) {
+  return (
+    !controls.paused &&
+    isWhatsAppAutomationEventSelected(controls, event)
+  );
 }
