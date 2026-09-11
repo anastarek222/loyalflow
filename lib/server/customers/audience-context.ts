@@ -3,7 +3,11 @@ import {
   getFrequentVisitorWindowStart,
   resolveCustomerAudienceContext,
 } from "@/lib/customers/audience-context";
-import type { CustomerSegmentContext } from "@/lib/customers/segments";
+import {
+  customerMatchesSegment,
+  type CustomerSegment,
+  type CustomerSegmentContext,
+} from "@/lib/customers/segments";
 import type { RewardAvailabilityOption } from "@/lib/rewards/availability";
 import prisma from "@/lib/prisma";
 
@@ -116,4 +120,63 @@ export async function resolveBusinessCustomerAudienceContext(input: {
   });
 
   return contexts.get(input.customer.id) ?? {};
+}
+
+/**
+ * Resolve the current membership of one segment using the same lifecycle and
+ * trait authority used by Offers and other audience consumers. This intentionally
+ * returns IDs so consumers can keep their existing scoped/report queries while
+ * removing legacy lifetimeEarned approximations from audience selection.
+ */
+export async function resolveBusinessCustomerIdsForSegment(input: {
+  business: AudienceBusiness;
+  segment: CustomerSegment;
+  now?: Date;
+}) {
+  const now = input.now ?? new Date();
+  const [customers, catalogueRewards] = await Promise.all([
+    prisma.customer.findMany({
+      where: { businessId: input.business.id },
+      select: {
+        id: true,
+        isActive: true,
+        balance: true,
+        lifetimeEarned: true,
+        createdAt: true,
+        transactions: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+      },
+    }),
+    prisma.reward.findMany({
+      where: { businessId: input.business.id, isActive: true },
+      select: { id: true, name: true, cost: true, isActive: true },
+    }),
+  ]);
+
+  const contexts = await resolveBusinessCustomerAudienceContexts({
+    business: input.business,
+    customers,
+    catalogueRewards,
+    now,
+  });
+
+  return customers
+    .filter((customer) =>
+      customerMatchesSegment(
+        input.segment,
+        {
+          isActive: customer.isActive,
+          createdAt: customer.createdAt,
+          lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+          lifetimeEarned: customer.lifetimeEarned,
+          rewardThreshold: input.business.rewardThreshold,
+        },
+        contexts.get(customer.id) ?? {},
+        now,
+      ),
+    )
+    .map((customer) => customer.id);
 }
