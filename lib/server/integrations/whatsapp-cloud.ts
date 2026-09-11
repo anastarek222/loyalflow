@@ -10,6 +10,8 @@ import {
   hashBusinessWhatsAppTemplate,
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
+import { isWhatsAppAutomationEventEnabled } from "@/lib/server/integrations/whatsapp-automation-policy";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 import {
   normalizeWhatsAppPhone,
@@ -35,6 +37,9 @@ function getOwnerMessageTemplate(
     whatsappWelcomeMessage: string | null;
     whatsappBalanceMessage: string | null;
     whatsappRewardMessage: string | null;
+    whatsappRedeemedMessage: string | null;
+    newRewardMessage: string | null;
+    newOfferMessage: string | null;
   },
 ) {
   const value =
@@ -42,7 +47,13 @@ function getOwnerMessageTemplate(
       ? messages.whatsappWelcomeMessage
       : event === "BALANCE_UPDATED"
         ? messages.whatsappBalanceMessage
-        : messages.whatsappRewardMessage;
+        : event === "REWARD_READY"
+          ? messages.whatsappRewardMessage
+          : event === "REWARD_REDEEMED"
+            ? messages.whatsappRedeemedMessage
+            : event === "NEW_REWARD"
+              ? messages.newRewardMessage
+              : messages.newOfferMessage;
   const normalized = value?.trim() ?? "";
   return normalized || null;
 }
@@ -62,9 +73,9 @@ export function extractWhatsAppProviderMessageId(payload: unknown) {
 /**
  * Sends the Owner-authored business message through the exact provider-owned,
  * approved Meta template binding for this Business/WABA/event/language/content.
- * Missing/revoked consent is a successful no-op so stale queued jobs can never
- * bypass consent. Missing Owner copy or provider approval is terminal and is
- * never replaced by platform-authored/default wording.
+ * Missing/revoked consent or a paused/disabled automation is a successful no-op
+ * so stale queued jobs can never bypass current Owner controls. Missing Owner
+ * copy or provider approval is terminal and is never replaced by platform copy.
  */
 export async function sendWhatsAppCustomerNotificationSafely(
   businessId: string,
@@ -85,6 +96,17 @@ export async function sendWhatsAppCustomerNotificationSafely(
       reason: "WHATSAPP_EVENT_NOT_AUTOMATIC",
       retryable: false,
     };
+  }
+
+  const automationSettings = await getBusinessWhatsAppAutomationSettings(
+    prisma,
+    businessId,
+  );
+  if (
+    !automationSettings ||
+    !isWhatsAppAutomationEventEnabled(automationSettings, payload.event)
+  ) {
+    return { status: "success" };
   }
 
   const customer = await prisma.customer.findFirst({
@@ -110,6 +132,7 @@ export async function sendWhatsAppCustomerNotificationSafely(
           whatsappWelcomeMessage: true,
           whatsappBalanceMessage: true,
           whatsappRewardMessage: true,
+          whatsappRedeemedMessage: true,
           rewards: {
             where: { isActive: true },
             select: {
@@ -137,10 +160,11 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
 
-  const ownerMessageTemplate = getOwnerMessageTemplate(
-    payload.event,
-    customer.business,
-  );
+  const ownerMessageTemplate = getOwnerMessageTemplate(payload.event, {
+    ...customer.business,
+    newRewardMessage: automationSettings.newRewardMessage,
+    newOfferMessage: automationSettings.newOfferMessage,
+  });
   if (!ownerMessageTemplate) {
     return {
       status: "failure",
