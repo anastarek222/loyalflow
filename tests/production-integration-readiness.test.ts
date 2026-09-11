@@ -97,7 +97,10 @@ test("WhatsApp settings report fail-closed WABA and business-scoped automatic de
   assert.match(page, /Automatic delivery is still being prepared/);
   assert.match(page, /Meta setup and required message approvals are complete/);
   assert.match(page, /WhatsApp message approval is incomplete/);
-  assert.match(page, /No automatic WhatsApp message is enabled/);
+  assert.match(
+    page,
+    /The business number is connected\. Enable at least one automatic message when ready\./,
+  );
   assert.match(page, /binding\?\.wabaId === credential\.wabaId/);
   assert.match(page, /name="wabaId"/);
   assert.match(page, /Submit current copy/);
