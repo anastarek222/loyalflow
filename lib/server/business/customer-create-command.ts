@@ -5,6 +5,7 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
 import {
   generateCustomerCode,
@@ -15,6 +16,10 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
+import {
+  persistCustomerWhatsAppPhone,
+  setCustomerWhatsAppConsent,
+} from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerCreateActor = Readonly<{
@@ -28,6 +33,7 @@ type CustomerCreateFailure = Readonly<{
   reason:
     | "BUSINESS_NOT_FOUND"
     | "DUPLICATE"
+    | "INVALID_PHONE"
     | "PLAN_LIMIT"
     | "SUBSCRIPTION_RESTRICTED";
 }>;
@@ -68,7 +74,7 @@ export async function createCustomerCommand(input: {
 
     const business = await transaction.business.findUnique({
       where: { id: input.businessId },
-      select: { plan: true, slug: true },
+      select: { plan: true, slug: true, country: true },
     });
     if (!business) {
       return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
@@ -84,11 +90,16 @@ export async function createCustomerCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
+    const phone = normalizePhoneE164(input.customer.phone, business.country);
+    if (!phone) {
+      return { ok: false, reason: "INVALID_PHONE" } as const;
+    }
+
     const existingCustomer = await transaction.customer.findUnique({
       where: {
         businessId_phone: {
           businessId: input.businessId,
-          phone: input.customer.phone,
+          phone,
         },
       },
       select: { id: true },
@@ -133,7 +144,7 @@ export async function createCustomerCommand(input: {
       data: {
         firstName: input.customer.firstName,
         lastName: input.customer.lastName || null,
-        phone: input.customer.phone,
+        phone,
         customerCode,
         businessId: input.businessId,
         publicToken: createPublicCardToken(),
@@ -141,6 +152,19 @@ export async function createCustomerCommand(input: {
       },
       select: { id: true, publicToken: true },
     });
+    await persistCustomerWhatsAppPhone(transaction, {
+      businessId: input.businessId,
+      customerId: customer.id,
+      whatsappPhoneE164: phone,
+    });
+    if (input.whatsappOptIn) {
+      await setCustomerWhatsAppConsent(transaction, {
+        businessId: input.businessId,
+        customerId: customer.id,
+        consent: "OPT_IN",
+        changedAt: new Date(),
+      });
+    }
 
     const activity = await transaction.businessActivity.create({
       data: {
