@@ -1,11 +1,14 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
+import { isBusinessWhatsAppAutomationEnabled } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 
 export const CUSTOMER_MESSAGE_EVENTS = [
   "WELCOME",
   "BALANCE_UPDATED",
   "REWARD_READY",
   "REWARD_REDEEMED",
+  "NEW_REWARD",
+  "NEW_OFFER",
 ] as const;
 
 export type CustomerMessageEvent = (typeof CUSTOMER_MESSAGE_EVENTS)[number];
@@ -14,6 +17,9 @@ export const AUTOMATIC_CUSTOMER_MESSAGE_EVENTS = [
   "WELCOME",
   "BALANCE_UPDATED",
   "REWARD_READY",
+  "REWARD_REDEEMED",
+  "NEW_REWARD",
+  "NEW_OFFER",
 ] as const;
 
 export type AutomaticCustomerMessageEvent =
@@ -52,8 +58,8 @@ export function isCustomerMessagePayload(
 
 /**
  * Enqueues one customer-facing message inside the same database transaction as
- * the business event. The employee never sends a message manually. Consent is
- * checked both here and again by the worker immediately before delivery.
+ * the business event. Consent and the Owner's automation controls are checked
+ * both here and again by the worker immediately before delivery.
  */
 export async function enqueueCustomerMessageJob(
   transaction: Prisma.TransactionClient,
@@ -67,6 +73,15 @@ export async function enqueueCustomerMessageJob(
   }>,
 ) {
   if (!isAutomaticCustomerMessageEvent(input.event)) return null;
+
+  const automationEnabled = await isBusinessWhatsAppAutomationEnabled(
+    transaction,
+    {
+      businessId: input.businessId,
+      event: input.event,
+    },
+  );
+  if (!automationEnabled) return null;
 
   const customer = await transaction.customer.findFirst({
     where: {
