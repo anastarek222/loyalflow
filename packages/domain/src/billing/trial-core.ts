@@ -5,9 +5,15 @@ export const TRIAL_DURATION_MS = TRIAL_DURATION_DAYS * DAY_MS;
 export const TRIAL_FINAL_DAY_REMINDER_MS = 1 * DAY_MS;
 
 export function createTrialWindow(now = new Date()) {
+  const trialEndsAt = new Date(now.getTime() + TRIAL_DURATION_MS);
+
   return {
     trialStartedAt: now,
-    trialEndsAt: new Date(now.getTime() + TRIAL_DURATION_MS),
+    trialEndsAt,
+    // Compatibility aliases for existing business/admin creation consumers.
+    // New code should prefer the explicit trial* field names above.
+    startedAt: now,
+    expiresAt: trialEndsAt,
   };
 }
 
