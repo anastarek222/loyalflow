@@ -1,3 +1,4 @@
+import { normalizePhoneE164, phoneDigits } from "@/lib/customers/phone";
 import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import {
@@ -13,19 +14,11 @@ import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/busines
 import { getBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 import { isWhatsAppAutomationEventEnabled } from "@/lib/server/integrations/whatsapp-automation-policy";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
-import {
-  normalizeWhatsAppPhone,
-  renderWhatsAppTemplateParameters,
-} from "@/lib/whatsapp-templates";
+import { renderWhatsAppTemplateParameters } from "@/lib/whatsapp-templates";
 
 type WhatsAppDeliveryResult =
   | Readonly<{ status: "success"; providerMessageId?: string }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
-
-function normalizeRecipientPhone(phone: string) {
-  const digits = normalizeWhatsAppPhone(phone);
-  return /^\d{8,15}$/.test(digits) ? digits : null;
-}
 
 function customerName(firstName: string, lastName: string | null) {
   return [firstName, lastName].filter(Boolean).join(" ").trim() || firstName;
@@ -121,10 +114,13 @@ export async function sendWhatsAppCustomerNotificationSafely(
       phone: true,
       balance: true,
       publicToken: true,
+      whatsappPhoneE164: true,
       whatsappOptInAt: true,
+      whatsappOptedOutAt: true,
       business: {
         select: {
           name: true,
+          country: true,
           unitName: true,
           rewardName: true,
           rewardThreshold: true,
@@ -147,11 +143,18 @@ export async function sendWhatsAppCustomerNotificationSafely(
     },
   });
 
-  if (!customer || !customer.whatsappOptInAt) {
+  if (
+    !customer ||
+    !customer.whatsappOptInAt ||
+    customer.whatsappOptedOutAt
+  ) {
     return { status: "success" };
   }
 
-  const to = normalizeRecipientPhone(customer.phone);
+  const canonicalRecipient = customer.whatsappPhoneE164
+    ? normalizePhoneE164(customer.whatsappPhoneE164)
+    : normalizePhoneE164(customer.phone, customer.business.country);
+  const to = canonicalRecipient ? phoneDigits(canonicalRecipient) : null;
   if (!to) {
     return {
       status: "failure",

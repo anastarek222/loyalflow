@@ -89,6 +89,7 @@ export async function enqueueCustomerMessageJob(
       businessId: input.businessId,
       isActive: true,
       whatsappOptInAt: { not: null },
+      whatsappOptedOutAt: null,
     },
     select: { id: true },
   });
