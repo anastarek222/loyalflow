@@ -49,13 +49,6 @@ export async function redeemLoyaltyRewardCommand(input: {
 }): Promise<LoyaltyRedemptionCommandResult> {
   try {
     return await prisma.$transaction(async (transaction) => {
-      const now = new Date();
-      let unlockId: string | null = null;
-      let effectiveCost = input.cost;
-      let effectiveRewardLabel = input.rewardLabel;
-      let effectiveRewardName = input.rewardName;
-      let effectiveRewardExpiresAfterDays = input.rewardExpiresAfterDays;
-
       const existingOperation = await transaction.loyaltyTransaction.findUnique({
         where: {
           businessId_idempotencyKey: {
@@ -67,11 +60,10 @@ export async function redeemLoyaltyRewardCommand(input: {
           businessId: true,
           customerId: true,
           type: true,
-          amount: true,
+          balanceAfter: true,
           rewardRedemption: {
             select: {
               rewardId: true,
-              cost: true,
             },
           },
         },
@@ -82,14 +74,34 @@ export async function redeemLoyaltyRewardCommand(input: {
           existingOperation.businessId !== input.businessId ||
           existingOperation.customerId !== input.customerId ||
           existingOperation.type !== "REDEEM" ||
-          existingOperation.amount !== -input.cost ||
           existingOperation.rewardRedemption?.rewardId !==
-            (input.rewardId ?? null) ||
-          existingOperation.rewardRedemption?.cost !== input.cost
+            (input.rewardId ?? null)
         ) {
           throw new FinancialOperationConflictError();
         }
-      } else if (input.rewardId) {
+
+        const sheetsJob = await enqueueIntegrationJob(transaction, {
+          businessId: input.businessId,
+          kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+          idempotencyKey: `loyalty-redemption:${input.idempotencyKey}`,
+        });
+
+        return {
+          ok: true,
+          balance: existingOperation.balanceAfter,
+          integrationJobId: sheetsJob.id,
+          integrationJobIds: [sheetsJob.id],
+        } as const;
+      }
+
+      const now = new Date();
+      let unlockId: string | null = null;
+      let effectiveCost = input.cost;
+      let effectiveRewardLabel = input.rewardLabel;
+      let effectiveRewardName = input.rewardName;
+      let effectiveRewardExpiresAfterDays = input.rewardExpiresAfterDays;
+
+      if (input.rewardId) {
         const canonicalReward = await transaction.reward.findFirst({
           where: {
             id: input.rewardId,
