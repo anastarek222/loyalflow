@@ -8,6 +8,7 @@ import {
   deleteBusinessWhatsAppCredential,
   upsertBusinessWhatsAppCredential,
 } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { upsertBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 import {
   completeWhatsAppEmbeddedSignup,
   WhatsAppEmbeddedSignupError,
@@ -22,6 +23,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 const metaIdSchema = z.string().trim().regex(/^\d{5,30}$/);
+const ownerMessageSchema = z.string().trim().max(2000);
 
 const connectionSchema = z.object({
   phoneNumberId: metaIdSchema,
@@ -64,7 +66,26 @@ const automaticEventSchema = z.enum([
   "WELCOME",
   "BALANCE_UPDATED",
   "REWARD_READY",
+  "REWARD_REDEEMED",
+  "NEW_REWARD",
+  "NEW_OFFER",
 ]);
+
+const automationSettingsSchema = z.object({
+  whatsappWelcomeMessage: ownerMessageSchema,
+  whatsappBalanceMessage: ownerMessageSchema,
+  whatsappRewardMessage: ownerMessageSchema,
+  whatsappRedeemedMessage: ownerMessageSchema,
+  newRewardMessage: ownerMessageSchema,
+  newOfferMessage: ownerMessageSchema,
+  paused: z.boolean(),
+  welcomeEnabled: z.boolean(),
+  balanceUpdatedEnabled: z.boolean(),
+  rewardReadyEnabled: z.boolean(),
+  rewardRedeemedEnabled: z.boolean(),
+  newRewardEnabled: z.boolean(),
+  newOfferEnabled: z.boolean(),
+});
 
 async function managedBusiness(slug: string) {
   const session = await auth();
@@ -174,6 +195,69 @@ export async function updateBusinessWhatsAppConnectionAction(
 
   revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
   redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=connected`);
+}
+
+export async function updateBusinessWhatsAppAutomationAction(
+  slug: string,
+  formData: FormData,
+) {
+  const business = await managedBusiness(slug);
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=subscription-restricted`);
+  }
+
+  const checked = (key: string) => formData.get(key) === "on";
+  const parsed = automationSettingsSchema.safeParse({
+    whatsappWelcomeMessage: formData.get("whatsappWelcomeMessage") ?? "",
+    whatsappBalanceMessage: formData.get("whatsappBalanceMessage") ?? "",
+    whatsappRewardMessage: formData.get("whatsappRewardMessage") ?? "",
+    whatsappRedeemedMessage: formData.get("whatsappRedeemedMessage") ?? "",
+    newRewardMessage: formData.get("newRewardMessage") ?? "",
+    newOfferMessage: formData.get("newOfferMessage") ?? "",
+    paused: checked("paused"),
+    welcomeEnabled: checked("welcomeEnabled"),
+    balanceUpdatedEnabled: checked("balanceUpdatedEnabled"),
+    rewardReadyEnabled: checked("rewardReadyEnabled"),
+    rewardRedeemedEnabled: checked("rewardRedeemedEnabled"),
+    newRewardEnabled: checked("newRewardEnabled"),
+    newOfferEnabled: checked("newOfferEnabled"),
+  });
+  if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=invalid`);
+  }
+
+  const copy = parsed.data;
+  await prisma.$transaction(async (transaction) => {
+    await transaction.business.update({
+      where: { id: business.id },
+      data: {
+        whatsappWelcomeMessage: copy.whatsappWelcomeMessage || null,
+        whatsappBalanceMessage: copy.whatsappBalanceMessage || null,
+        whatsappRewardMessage: copy.whatsappRewardMessage || null,
+        whatsappRedeemedMessage: copy.whatsappRedeemedMessage || null,
+      },
+    });
+    await upsertBusinessWhatsAppAutomationSettings(transaction, {
+      businessId: business.id,
+      paused: copy.paused,
+      welcomeEnabled: copy.welcomeEnabled,
+      balanceUpdatedEnabled: copy.balanceUpdatedEnabled,
+      rewardReadyEnabled: copy.rewardReadyEnabled,
+      rewardRedeemedEnabled: copy.rewardRedeemedEnabled,
+      newRewardEnabled: copy.newRewardEnabled,
+      newOfferEnabled: copy.newOfferEnabled,
+      newRewardMessage: copy.newRewardMessage || null,
+      newOfferMessage: copy.newOfferMessage || null,
+    });
+  });
+
+  revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
+  redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=saved`);
 }
 
 export async function manageBusinessWhatsAppTemplateAction(
