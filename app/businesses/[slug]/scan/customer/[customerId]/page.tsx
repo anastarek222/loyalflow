@@ -384,7 +384,10 @@ export default async function ScanCustomerPage({
                       <input
                         name="saleAmount"
                         type="number"
-                        inputMode="decimal"
+                        inputMode="numeric"
+                        min={1}
+                        step={1}
+                        required
                         placeholder={copy.saleAmountPlaceholder}
                         aria-label={copy.saleAmountPlaceholder}
                         className="mb-4 min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 font-semibold"
