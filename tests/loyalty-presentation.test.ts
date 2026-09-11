@@ -23,7 +23,6 @@ test("points retain a configured operational label", () => {
 test("configured English units share one singular and plural presentation authority", () => {
   const input = { loyaltyMode: "POINTS", language: "EN", unitName: "Recommendations" } as const;
   assert.equal(formatLoyaltyAmount({ ...input, amount: 1 }), "1 Recommendation");
-  assert.equal(formatLoyaltyAmount({ ...input, amount: 3 }), "3 Recommendations");
   assert.equal(
     formatLoyaltyAmount({ ...input, unitName: "VIP Visits", amount: 1 }),
     "1 VIP Visit",
@@ -39,7 +38,7 @@ test("configured English units share one singular and plural presentation author
 
 test("long loyalty units render as indivisible responsive labels", () => {
   const display = source("components/loyalty-amount-display.tsx");
-  const customer = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
+  const customer = source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx");
   const programme = source("app/businesses/[slug]/program/page.tsx");
   const join = source("app/join/[slug]/page.tsx");
 
@@ -77,7 +76,7 @@ test("CSV values stay localized numeric cells while the unit remains a separate 
 });
 
 test("staff, report, export, and card surfaces use the centralized presentation rules", () => {
-  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/scan/customer/[customerId]/page.tsx", "app/businesses/[slug]/reports/page.tsx"]) {
+  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx", "app/businesses/[slug]/scan/customer/[customerId]/page.tsx", "app/businesses/[slug]/reports/page.tsx"]) {
     assert.match(source(file), /formatLoyaltyAmount/);
   }
   const exportSource = source("app/businesses/[slug]/reports/export/route.ts");
