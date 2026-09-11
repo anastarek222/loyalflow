@@ -66,9 +66,10 @@ export function extractWhatsAppProviderMessageId(payload: unknown) {
 /**
  * Sends the Owner-authored business message through the exact provider-owned,
  * approved Meta template binding for this Business/WABA/event/language/content.
- * Missing/revoked consent or a paused/disabled automation is a successful no-op
- * so stale queued jobs can never bypass current Owner controls. Missing Owner
- * copy or provider approval is terminal and is never replaced by platform copy.
+ * Missing/revoked consent is always a successful no-op. Automatic jobs also
+ * re-check Global Pause and their event toggle at delivery time; explicit MANUAL
+ * jobs intentionally remain independent from automatic controls while sharing
+ * the same consent, sender, template, outbox and provider pipeline.
  */
 export async function sendWhatsAppCustomerNotificationSafely(
   businessId: string,
@@ -95,9 +96,11 @@ export async function sendWhatsAppCustomerNotificationSafely(
     prisma,
     businessId,
   );
+  const manualDelivery = payload.deliveryMode === "MANUAL";
   if (
-    !automationSettings ||
-    !isWhatsAppAutomationEventEnabled(automationSettings, payload.event)
+    !manualDelivery &&
+    (!automationSettings ||
+      !isWhatsAppAutomationEventEnabled(automationSettings, payload.event))
   ) {
     return { status: "success" };
   }
@@ -165,8 +168,8 @@ export async function sendWhatsAppCustomerNotificationSafely(
 
   const ownerMessageTemplate = getOwnerMessageTemplate(payload.event, {
     ...customer.business,
-    newRewardMessage: automationSettings.newRewardMessage,
-    newOfferMessage: automationSettings.newOfferMessage,
+    newRewardMessage: automationSettings?.newRewardMessage ?? null,
+    newOfferMessage: automationSettings?.newOfferMessage ?? null,
   });
   if (!ownerMessageTemplate) {
     return {
