@@ -9,6 +9,34 @@ import {
 } from "../lib/server/integrations/customer-messaging";
 import { operationPresentationPath } from "../lib/loyalty/operation-origin";
 
+function automationRow(
+  overrides: Partial<{
+    paused: boolean;
+    welcomeEnabled: boolean;
+    balanceUpdatedEnabled: boolean;
+    rewardReadyEnabled: boolean;
+    rewardRedeemedEnabled: boolean;
+    newRewardEnabled: boolean;
+    newOfferEnabled: boolean;
+  }> = {},
+) {
+  return {
+    businessId: "business_1",
+    paused: false,
+    welcomeEnabled: true,
+    balanceUpdatedEnabled: true,
+    rewardReadyEnabled: true,
+    rewardRedeemedEnabled: true,
+    newRewardEnabled: false,
+    newOfferEnabled: false,
+    newRewardMessage: null,
+    newOfferMessage: null,
+    createdAt: new Date("2026-09-11T00:00:00.000Z"),
+    updatedAt: new Date("2026-09-11T00:00:00.000Z"),
+    ...overrides,
+  };
+}
+
 test("accepts only bounded versioned customer message payloads", () => {
   assert.equal(
     isCustomerMessagePayload({
@@ -35,7 +63,23 @@ test("accepts only bounded versioned customer message payloads", () => {
       customerId: "customer_1",
     }),
     true,
-    "legacy queued redeemed payloads must remain structurally readable",
+  );
+  assert.equal(
+    isCustomerMessagePayload({
+      version: 1,
+      event: "NEW_REWARD",
+      customerId: "customer_1",
+      rewardName: "Free coffee",
+    }),
+    true,
+  );
+  assert.equal(
+    isCustomerMessagePayload({
+      version: 1,
+      event: "NEW_OFFER",
+      customerId: "customer_1",
+    }),
+    true,
   );
   assert.equal(
     isCustomerMessagePayload({
@@ -64,28 +108,64 @@ test("accepts only bounded versioned customer message payloads", () => {
   );
 });
 
-test("automatic WhatsApp supports exactly welcome, balance and reward-ready", () => {
+test("automatic WhatsApp contract contains six independently controlled events", () => {
   assert.deepEqual(AUTOMATIC_CUSTOMER_MESSAGE_EVENTS, [
     "WELCOME",
     "BALANCE_UPDATED",
     "REWARD_READY",
+    "REWARD_REDEEMED",
+    "NEW_REWARD",
+    "NEW_OFFER",
   ]);
 });
 
-test("redeemed events never enqueue or read customer state", async () => {
-  let customerRead = false;
-  let upsertCalled = false;
-  const transaction = {
-    customer: {
-      findFirst: async () => {
-        customerRead = true;
-        return { id: "customer_1" };
+test("disabled or globally paused events stop before customer state is read", async () => {
+  for (const settings of [
+    automationRow({ rewardRedeemedEnabled: false }),
+    automationRow({ paused: true }),
+  ]) {
+    let customerRead = false;
+    let upsertCalled = false;
+    const transaction = {
+      $queryRaw: async () => [settings],
+      customer: {
+        findFirst: async () => {
+          customerRead = true;
+          return { id: "customer_1" };
+        },
       },
+      integrationJob: {
+        upsert: async () => {
+          upsertCalled = true;
+          return { id: "job_should_not_exist" };
+        },
+      },
+    };
+
+    const result = await enqueueCustomerMessageJob(transaction as never, {
+      businessId: "business_1",
+      customerId: "customer_1",
+      event: "REWARD_REDEEMED",
+      eventKey: "redemption_1",
+    });
+
+    assert.equal(result, null);
+    assert.equal(customerRead, false);
+    assert.equal(upsertCalled, false);
+  }
+});
+
+test("redeemed event enqueues after successful trigger only when its switch is enabled", async () => {
+  let upsertInput: Record<string, unknown> | null = null;
+  const transaction = {
+    $queryRaw: async () => [automationRow()],
+    customer: {
+      findFirst: async () => ({ id: "customer_1" }),
     },
     integrationJob: {
-      upsert: async () => {
-        upsertCalled = true;
-        return { id: "job_should_not_exist" };
+      upsert: async (input: Record<string, unknown>) => {
+        upsertInput = input;
+        return { id: "job_1" };
       },
     },
   };
@@ -95,16 +175,28 @@ test("redeemed events never enqueue or read customer state", async () => {
     customerId: "customer_1",
     event: "REWARD_REDEEMED",
     eventKey: "redemption_1",
+    rewardName: "Free coffee",
   });
 
-  assert.equal(result, null);
-  assert.equal(customerRead, false);
-  assert.equal(upsertCalled, false);
+  assert.equal(result?.id, "job_1");
+  assert.ok(upsertInput);
+  const create = (upsertInput as { create: Record<string, unknown> }).create;
+  assert.equal(
+    create.idempotencyKey,
+    "customer-message:reward_redeemed:redemption_1",
+  );
+  assert.deepEqual(create.payload, {
+    version: 1,
+    event: "REWARD_REDEEMED",
+    customerId: "customer_1",
+    rewardName: "Free coffee",
+  });
 });
 
 test("does not enqueue WhatsApp delivery without explicit opt-in", async () => {
   let upsertCalled = false;
   const transaction = {
+    $queryRaw: async () => [automationRow()],
     customer: {
       findFirst: async () => null,
     },
@@ -131,6 +223,7 @@ test("does not enqueue WhatsApp delivery without explicit opt-in", async () => {
 test("enqueues one idempotent WhatsApp event after opt-in", async () => {
   let upsertInput: Record<string, unknown> | null = null;
   const transaction = {
+    $queryRaw: async () => [automationRow()],
     customer: {
       findFirst: async () => ({ id: "customer_1" }),
     },
@@ -234,6 +327,10 @@ test("automatic WhatsApp copy is Owner-authored and Meta-bound per business", ()
     "lib/server/integrations/whatsapp-readiness.ts",
     "utf8",
   );
+  const settingsSource = readFileSync(
+    "lib/server/integrations/business-whatsapp-automation-settings.ts",
+    "utf8",
+  );
 
   assert.match(formSource, /WhatsApp messages/);
   assert.match(formSource, /رسائل واتساب/);
@@ -248,8 +345,8 @@ test("automatic WhatsApp copy is Owner-authored and Meta-bound per business", ()
   assert.match(senderSource, /whatsappWelcomeMessage: true/);
   assert.match(senderSource, /whatsappBalanceMessage: true/);
   assert.match(senderSource, /whatsappRewardMessage: true/);
-  assert.doesNotMatch(senderSource, /whatsappRedeemedMessage: true/);
-  assert.match(senderSource, /WHATSAPP_EVENT_NOT_AUTOMATIC/);
+  assert.match(senderSource, /whatsappRedeemedMessage: true/);
+  assert.match(senderSource, /isWhatsAppAutomationEventEnabled/);
   assert.match(senderSource, /getBusinessWhatsAppTemplateBinding/);
   assert.match(senderSource, /hashBusinessWhatsAppTemplate/);
   assert.match(senderSource, /WHATSAPP_META_TEMPLATE_NOT_APPROVED/);
@@ -259,38 +356,47 @@ test("automatic WhatsApp copy is Owner-authored and Meta-bound per business", ()
   assert.doesNotMatch(senderSource, /DEFAULT_WHATSAPP_TEMPLATES/);
   assert.doesNotMatch(senderSource, /WHATSAPP_TEMPLATE_/);
   assert.doesNotMatch(readinessSource, /WHATSAPP_TEMPLATE_/);
+  assert.match(settingsSource, /"newRewardMessage"/);
+  assert.match(settingsSource, /"newOfferMessage"/);
 });
 
-test("Meta approval state is provider-owned and not writable by Owner settings", () => {
+test("Meta approval remains provider-owned while event toggles remain Owner-owned", () => {
   const bindingSource = readFileSync(
     "lib/server/integrations/business-whatsapp-template-bindings.ts",
     "utf8",
   );
   const actionsSource = readFileSync(
-    "app/businesses/[slug]/settings/actions.ts",
-    "utf8",
-  );
-  const formSource = readFileSync(
-    "components/customer-messages-form.tsx",
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
     "utf8",
   );
   const migrationSource = readFileSync(
-    "prisma/migrations/20260907120000_add_business_whatsapp_template_bindings/migration.sql",
+    "prisma/migrations/20260911120000_add_whatsapp_automation_controls/migration.sql",
     "utf8",
   );
 
   assert.match(bindingSource, /FROM "BusinessWhatsAppTemplateBinding"/);
   assert.doesNotMatch(bindingSource, /\$executeRaw|INSERT INTO|UPDATE "BusinessWhatsAppTemplateBinding"/);
-  assert.doesNotMatch(actionsSource, /approvalStatus|providerTemplateId/);
-  assert.doesNotMatch(formSource, /approvalStatus|providerTemplateId/);
+  assert.doesNotMatch(actionsSource, /approvalStatus:\s*formData|get\("approvalStatus"\)/);
+  assert.doesNotMatch(actionsSource, /providerTemplateId:\s*formData|get\("providerTemplateId"\)/);
+  assert.match(actionsSource, /rewardRedeemedEnabled/);
+  assert.match(actionsSource, /newRewardEnabled/);
+  assert.match(actionsSource, /newOfferEnabled/);
   assert.match(
     migrationSource,
-    /PRIMARY KEY \("businessId", "event", "language"\)/,
+    /'REWARD_REDEEMED'[\s\S]*'NEW_REWARD'[\s\S]*'NEW_OFFER'/,
   );
-  assert.match(
-    migrationSource,
-    /CHECK \("event" IN \('WELCOME', 'BALANCE_UPDATED', 'REWARD_READY'\)\)/,
+});
+
+test("New Reward and New Offer are prepared in settings but their producers stay WA-5 gated", () => {
+  const pageSource = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp/page.tsx",
+    "utf8",
   );
+
+  assert.match(pageSource, /event: "NEW_REWARD"/);
+  assert.match(pageSource, /event: "NEW_OFFER"/);
+  assert.match(pageSource, /producerReady: false/g);
+  assert.match(pageSource, /WA-5 sync/);
 });
 
 test("manual customer-profile WhatsApp actions require customer edit permission", () => {
