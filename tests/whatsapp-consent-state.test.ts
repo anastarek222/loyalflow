@@ -85,7 +85,7 @@ test("WA-6 schema and migration are additive, tenant-scoped and collision-safe",
   );
   assert.equal(
     latest?.sha256,
-    "654fa161be52e38810059c40c75abe7dfeb2c57d2e7366f92ec19b7a17065a13",
+    "d1686fdafdfe64507ad2b01dabf85183c493232ac2bda3d89f757b61a02a7a97",
   );
 });
 
