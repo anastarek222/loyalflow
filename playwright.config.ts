@@ -12,6 +12,8 @@ const browserProxy = (process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY ?? proce
 const localServerCommand = process.env.CI
   ? `npm run start -- --hostname 127.0.0.1 --port ${port}`
   : `npm run dev -- --webpack --hostname 127.0.0.1 --port ${port}`;
+const disposableCiBrowser =
+  process.env.CI === "true" && process.env.NODE_ENV === "test" && !remoteStaging;
 
 if (remoteStaging && !baseURL.startsWith("https://")) {
   throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
@@ -87,6 +89,15 @@ export default defineConfig({
       // spreadsheet ID keeps it disabled for disposable browser UAT fixtures,
       // so a developer's invalid local integration cannot delay a core action.
       GOOGLE_SPREADSHEET_ID: "",
+      // Exact CI browser UAT sends auth mail only to the loopback sink selected
+      // by resend-email-delivery.ts. `next start` runs as NODE_ENV=production,
+      // so use an explicit CI-only flag plus a non-secret dummy provider key.
+      ...(disposableCiBrowser
+        ? {
+            RESEND_API_KEY: "ci-browser-email-sink-key-not-a-secret",
+            AUTH_EMAIL_CI_SINK: "1",
+          }
+        : {}),
     },
   },
 });

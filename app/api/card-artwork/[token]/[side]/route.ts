@@ -62,11 +62,21 @@ export async function GET(
   if (!isManagedCustomCardArtworkUrl(url, customer.business.id)) {
     return new NextResponse(null, { status: 404 });
   }
-  const blob = await readPrivateCustomCardArtwork(url!);
-  if (!blob) return new NextResponse(null, { status: 404 });
-  return new NextResponse(blob.stream, {
+
+  const artwork = await readPrivateCustomCardArtwork(url!);
+  if (artwork.status === "not-found") {
+    return new NextResponse(null, { status: 404 });
+  }
+  if (artwork.status === "corrupt") {
+    return new NextResponse("Stored artwork is unreadable", { status: 502 });
+  }
+  if (artwork.status === "unavailable") {
+    return new NextResponse("Artwork storage is unavailable", { status: 503 });
+  }
+
+  return new NextResponse(artwork.bytes, {
     headers: {
-      "Content-Type": blob.blob.contentType,
+      "Content-Type": artwork.contentType,
       "Cache-Control": "private, no-store, max-age=0",
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "default-src 'none'; sandbox",

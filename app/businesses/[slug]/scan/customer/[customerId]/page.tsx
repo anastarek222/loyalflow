@@ -22,7 +22,10 @@ import {
   earnActionLabel,
   formatLoyaltyAmount,
 } from "@/lib/loyalty/presentation";
-import { isRewardUnlockActionable } from "@/lib/rewards/expiration";
+import {
+  getRedeemableCatalogueRewards,
+  getRewardAvailability,
+} from "@/lib/rewards/availability";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { scanUiCopy } from "@/lib/scan/copy";
@@ -42,7 +45,11 @@ import { notFound, redirect } from "next/navigation";
 
 type PageProps = {
   params: Promise<{ slug: string; customerId: string }>;
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{
+    success?: string;
+    error?: string;
+    rewardReady?: string;
+  }>;
 };
 
 export default async function ScanCustomerPage({
@@ -72,6 +79,21 @@ export default async function ScanCustomerPage({
       id: true,
       staffAttributionEnabled: true,
       staffAttributionRequired: true,
+      rewardThreshold: true,
+      rewardName: true,
+      rewards: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          cost: true,
+          isActive: true,
+          description: true,
+          type: true,
+          code: true,
+          expiresAfterDays: true,
+        },
+      },
     },
   });
   if (!business) notFound();
@@ -104,6 +126,7 @@ export default async function ScanCustomerPage({
       lastName: true,
       phone: true,
       balance: true,
+      isActive: true,
       transactions: {
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -118,16 +141,11 @@ export default async function ScanCustomerPage({
       },
       rewardUnlocks: {
         where: { redeemedAt: null },
-        include: {
-          reward: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              code: true,
-              isActive: true,
-            },
-          },
+        select: {
+          rewardId: true,
+          expiresAt: true,
+          redeemedAt: true,
+          expiredAt: true,
         },
       },
       business: {
@@ -156,6 +174,7 @@ export default async function ScanCustomerPage({
     query.success === "earned" || query.success === "redeemed"
       ? query.success
       : null;
+  const rewardJustUnlocked = success === "earned" && query.rewardReady === "1";
   const knownErrors: ScanOperationError[] = [
     "invalid",
     "permission",
@@ -171,7 +190,9 @@ export default async function ScanCustomerPage({
     : null;
   const successMessage =
     success === "earned"
-      ? copy.earnSuccess
+      ? rewardJustUnlocked
+        ? copy.rewardReadySuccess
+        : copy.earnSuccess
       : success === "redeemed"
         ? copy.redeemSuccess
         : null;
@@ -194,12 +215,22 @@ export default async function ScanCustomerPage({
     currency: customer.business.currency,
     earnAmount: customer.business.earnAmount,
   } as const;
-  const usableUnlocks = customer.rewardUnlocks.filter((unlock) =>
-    isRewardUnlockActionable({
-      ...unlock,
-      rewardActive: unlock.reward.isActive,
-    }),
-  );
+  const rewardAvailability = getRewardAvailability({
+    customerActive: customer.isActive,
+    balance: customer.balance,
+    rewardThreshold: business.rewardThreshold,
+    fallbackReward: {
+      name: business.rewardName,
+      cost: business.rewardThreshold,
+    },
+    catalogueRewards: business.rewards,
+  });
+  const redeemableRewards = getRedeemableCatalogueRewards({
+    customerActive: customer.isActive,
+    balance: customer.balance,
+    catalogueRewards: rewardAvailability.activeCatalogueRewards,
+    rewardUnlocks: customer.rewardUnlocks,
+  });
 
   return (
     <main className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_34rem)] py-6 sm:py-10">
@@ -265,7 +296,7 @@ export default async function ScanCustomerPage({
                 href={scanCustomerPath}
                 className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] border border-border-strong bg-surface px-6 text-center font-semibold text-foreground-muted hover:bg-surface-subtle"
               >
-                {copy.performAnotherOperation}
+                {rewardJustUnlocked ? copy.redeemReward : copy.performAnotherOperation}
               </Link>
               <Link
                 href={`/businesses/${slug}/customers/${customer.id}`}
@@ -373,7 +404,7 @@ export default async function ScanCustomerPage({
                 </Card>
               ) : null}
 
-              {usableUnlocks.length ? (
+              {redeemableRewards.length ? (
                 <section
                   aria-label={copy.availableRewards}
                   className="rounded-2xl border border-success/15 bg-success-subtle/25 p-4 sm:p-5"
@@ -383,18 +414,18 @@ export default async function ScanCustomerPage({
                     description={copy.redeemSuccess}
                   />
                   <div className="mt-4 space-y-4">
-                    {usableUnlocks.map((unlock) => {
+                    {redeemableRewards.map((reward) => {
                       const redeemAction = redeemRewardAction.bind(
                         null,
                         slug,
                         customer.id,
-                        unlock.reward.id,
+                        reward.id,
                       );
                       return (
                         <Card
-                          key={unlock.id}
+                          key={reward.id}
                           role="region"
-                          aria-labelledby={`scan-reward-${unlock.id}-title`}
+                          aria-labelledby={`scan-reward-${reward.id}-title`}
                           className="border-success/20 p-5 shadow-sm"
                         >
                           <div className="flex items-start gap-3">
@@ -403,15 +434,15 @@ export default async function ScanCustomerPage({
                             </span>
                             <div>
                               <p
-                                id={`scan-reward-${unlock.id}-title`}
+                                id={`scan-reward-${reward.id}-title`}
                                 className="font-semibold text-foreground"
                               >
-                                {unlock.reward.name}
+                                {reward.name}
                               </p>
-                              {unlock.reward.code ? (
+                              {reward.code ? (
                                 <p className="mt-1 text-sm text-foreground-muted">
                                   {copy.rewardCode}:{" "}
-                                  <span dir="ltr">{unlock.reward.code}</span>
+                                  <span dir="ltr">{reward.code}</span>
                                 </p>
                               ) : null}
                             </div>
@@ -430,7 +461,7 @@ export default async function ScanCustomerPage({
                               />
                               {operationContextFields(
                                 !canRedeem,
-                                `scan-redeem-${unlock.id}`,
+                                `scan-redeem-${reward.id}`,
                               )}
                               <ScanActionButton language={language}>
                                 {copy.redeemReward}

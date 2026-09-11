@@ -1,6 +1,7 @@
 "use client";
 
 import type { PublicTrialFormState } from "@/app/get-started/actions";
+import { BUSINESS_NAME_MAX_LENGTH } from "@/lib/business/field-limits";
 import { CountrySelector } from "@/components/onboarding/country-selector";
 import Link from "next/link";
 import { useActionState, useState } from "react";
@@ -126,7 +127,7 @@ export function PublicTrialForm({ locale, action }: Props) {
           name="businessName"
           required
           minLength={2}
-          maxLength={120}
+          maxLength={BUSINESS_NAME_MAX_LENGTH}
           autoComplete="organization"
           className={fieldClass}
         />

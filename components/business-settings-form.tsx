@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
+import { SUPPORTED_CURRENCY_CODES } from "@/lib/onboarding/countries";
 import { useFormStatus } from "react-dom";
 import { Building2, Save, Settings2 } from "lucide-react";
 
@@ -274,13 +275,11 @@ export default function BusinessSettingsForm({
                 className={inputClass}
               >
                 <option value="">{t("بدون تحديد", "Not specified")}</option>
-                {["AED", "EGP", "EUR", "GBP", "KWD", "QAR", "SAR", "USD"].map(
-                  (currency) => (
-                    <option key={currency} value={currency}>
-                      {currency}
-                    </option>
-                  ),
-                )}
+                {SUPPORTED_CURRENCY_CODES.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

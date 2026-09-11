@@ -1,19 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { WhatsAppEmbeddedSignupButton } from "@/components/whatsapp-embedded-signup-button";
 import type { SupportedLocale } from "@/lib/i18n/config";
 
 export function OwnerWhatsAppOnboarding({
   locale,
   launchAction,
+  appId,
+  configId,
+  graphApiVersion,
+  embeddedSignupReady,
 }: {
   locale: SupportedLocale;
   launchAction: (formData: FormData) => Promise<void>;
+  appId: string;
+  configId: string;
+  graphApiVersion: string;
+  embeddedSignupReady: boolean;
 }) {
   const [visible, setVisible] = useState(false);
-  const [phoneNumberId, setPhoneNumberId] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [error, setError] = useState("");
   const isArabic = locale === "ar";
 
   useEffect(() => {
@@ -37,65 +43,33 @@ export function OwnerWhatsAppOnboarding({
       <h2 className="mt-2 text-lg font-black text-foreground">
         {isArabic ? "اربط WhatsApp قبل الإطلاق" : "Connect WhatsApp before launch"}
       </h2>
-      <p className="mt-1 text-sm leading-6 text-foreground-muted">
+      <p className="mt-1 max-w-3xl text-sm leading-6 text-foreground-muted">
         {isArabic
-          ? "بيانات الاتصال دي لا تدخل Save progress. يتم إرسالها فقط عند الضغط على زر الإطلاق بالاتصال، ثم يُشفّر Access Token على الخادم ويرتبط بالنشاط الجديد."
-          : "These connection details are excluded from Save progress. They are sent only when you launch with WhatsApp, then the Access Token is encrypted server-side and attached to the new business."}
+          ? "اضغط ربط WhatsApp وأكمل خطوات Meta الرسمية. Tanee لا يطلب منك Access Token أو Phone Number ID، والرمز السري الناتج من Meta يبقى على الخادم فقط ويرتبط بالنشاط الجديد. لو مش عايز تربطه دلوقتي، استخدم زر الإطلاق العادي بالأعلى وكمل الربط لاحقًا من Settings."
+          : "Press Connect WhatsApp and complete Meta's official flow. Tanee does not ask you for an Access Token or Phone Number ID; the token returned by Meta stays server-side and is attached only to the new business. To skip this for now, use the normal launch button above and connect later from Settings."}
       </p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-bold text-foreground">
-          Phone Number ID
-          <input
-            value={phoneNumberId}
-            onChange={(event) => setPhoneNumberId(event.target.value)}
-            inputMode="numeric"
-            autoComplete="off"
-            className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
-          />
-        </label>
-        <label className="text-sm font-bold text-foreground">
-          Access Token
-          <input
-            value={accessToken}
-            onChange={(event) => setAccessToken(event.target.value)}
-            type="password"
-            autoComplete="new-password"
-            className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3"
-          />
-        </label>
+      <div className="mt-4">
+        <WhatsAppEmbeddedSignupButton
+          language={isArabic ? "AR" : "EN"}
+          appId={appId}
+          configId={configId}
+          graphApiVersion={graphApiVersion}
+          enabled={embeddedSignupReady}
+          action={launchAction}
+          getActionFormData={() => {
+            const form = document.querySelector<HTMLFormElement>("form[data-owner-step]");
+            return form ? new FormData(form) : new FormData();
+          }}
+        />
+        {!embeddedSignupReady ? (
+          <p className="mt-3 text-xs leading-5 text-foreground-muted">
+            {isArabic
+              ? "تقدر تطلق النشاط دلوقتي وتربط WhatsApp لاحقًا من Settings بمجرد اكتمال إعداد Meta."
+              : "You can launch the business now and connect WhatsApp later from Settings as soon as the Meta setup is ready."}
+          </p>
+        ) : null}
       </div>
-
-      {error ? (
-        <p role="alert" className="mt-3 text-sm font-semibold text-danger">
-          {error}
-        </p>
-      ) : null}
-
-      <button
-        type="button"
-        onClick={async () => {
-          const form = document.querySelector<HTMLFormElement>("form[data-owner-step]");
-          const normalizedPhoneNumberId = phoneNumberId.trim();
-          const normalizedAccessToken = accessToken.trim();
-          if (!form || !normalizedPhoneNumberId || !normalizedAccessToken) {
-            setError(
-              isArabic
-                ? "أدخل Phone Number ID وAccess Token معًا."
-                : "Enter both Phone Number ID and Access Token.",
-            );
-            return;
-          }
-          setError("");
-          const formData = new FormData(form);
-          formData.set("whatsappPhoneNumberId", normalizedPhoneNumberId);
-          formData.set("whatsappAccessToken", normalizedAccessToken);
-          await launchAction(formData);
-        }}
-        className="mt-4 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-bold text-white sm:w-auto"
-      >
-        {isArabic ? "إطلاق النشاط وربط WhatsApp" : "Launch business & connect WhatsApp"}
-      </button>
     </section>
   );
 }

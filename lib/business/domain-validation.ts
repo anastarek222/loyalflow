@@ -11,6 +11,7 @@ import {
 } from "@/lib/business-profile";
 import { COUNTRY_OPTIONS } from "@/lib/onboarding/countries";
 import { normalizeWebsiteUrl } from "@/lib/urls/business-url";
+import { BUSINESS_NAME_MAX_LENGTH } from "@/lib/business/field-limits";
 
 const optionalWebsiteSchema = z.preprocess(
   (value) =>
@@ -28,7 +29,7 @@ const optionalWebsiteSchema = z.preprocess(
 );
 
 export const businessIdentityFields = {
-  name: z.string().trim().min(2).max(80),
+  name: z.string().trim().min(2).max(BUSINESS_NAME_MAX_LENGTH),
   industry: z.string().trim().max(100),
   description: z.string().trim().max(500),
   email: z.string().trim().max(255).email().or(z.literal("")),

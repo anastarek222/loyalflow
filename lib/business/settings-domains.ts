@@ -71,9 +71,9 @@ export const programRulesSettingsSchema = z
   });
 
 export const customerMessagesSettingsSchema = z.object({
-  whatsappWelcomeMessage: z.string().trim().min(1).max(1500),
-  whatsappBalanceMessage: z.string().trim().min(1).max(1500),
-  whatsappRewardMessage: z.string().trim().min(1).max(1500),
+  whatsappWelcomeMessage: z.string().trim().max(1500),
+  whatsappBalanceMessage: z.string().trim().max(1500),
+  whatsappRewardMessage: z.string().trim().max(1500),
 });
 
 export const operationsSettingsSchema = z.object({
@@ -123,9 +123,9 @@ export function getCustomerMessagesUpdate(
   value: z.infer<typeof customerMessagesSettingsSchema>,
 ) {
   return {
-    whatsappWelcomeMessage: value.whatsappWelcomeMessage,
-    whatsappBalanceMessage: value.whatsappBalanceMessage,
-    whatsappRewardMessage: value.whatsappRewardMessage,
+    whatsappWelcomeMessage: value.whatsappWelcomeMessage || null,
+    whatsappBalanceMessage: value.whatsappBalanceMessage || null,
+    whatsappRewardMessage: value.whatsappRewardMessage || null,
   };
 }
 

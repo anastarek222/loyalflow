@@ -460,6 +460,17 @@ export default async function CustomersPage({
                 {copy.customersCount(totalCustomers)}
               </span>
             }
+            primaryAction={
+              canReviewDuplicates ? (
+                <a
+                  href={`/businesses/${business.slug}/customers?add=1#add-customer`}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
+                >
+                  <UserPlus className="size-4" aria-hidden="true" />
+                  {copy.addCustomer}
+                </a>
+              ) : null
+            }
             secondaryActions={
               <div className="flex flex-wrap items-center gap-2">
                 <Link
@@ -472,15 +483,6 @@ export default async function CustomersPage({
                   />
                   {copy.backToBusiness}
                 </Link>
-                {canReviewDuplicates ? (
-                  <a
-                    href={`/businesses/${business.slug}/customers?add=1#add-customer`}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
-                  >
-                    <UserPlus className="size-4" aria-hidden="true" />
-                    {copy.addCustomer}
-                  </a>
-                ) : null}
                 {canScanCustomers ? (
                   <Link
                     href={`/businesses/${business.slug}/scan`}

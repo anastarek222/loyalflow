@@ -76,7 +76,7 @@ test("business profile validates and updates without customer messages", () => {
 test("invalid customer messages do not affect another valid domain", () => {
   assert.equal(
     customerMessagesSettingsSchema.safeParse({
-      whatsappWelcomeMessage: "",
+      whatsappWelcomeMessage: "x".repeat(1501),
       whatsappBalanceMessage: "",
       whatsappRewardMessage: "",
     }).success,

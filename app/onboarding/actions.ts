@@ -8,9 +8,8 @@ import {
   optionalBusinessPhoneValue,
 } from "@/lib/business-profile";
 import {
-  getSafeImageDataUrl,
   imageFileToDataUrl,
-  isValidRemoteImageUrl,
+  isValidBusinessLogoStorageValue,
 } from "@/lib/branding/image-data";
 import { BUSINESS_LOGO_MAX_BYTES } from "@/lib/branding/image-policy";
 import prisma from "@/lib/prisma";
@@ -18,6 +17,10 @@ import { Prisma } from "@/generated/prisma/client";
 import { redirect } from "next/navigation";
 import { STANDARD_CARD_ARTWORK_CATEGORIES } from "@/lib/cards/standard-card";
 import { normalizeOwnerOnboardingPhone } from "@/lib/onboarding/owner-onboarding-validation";
+import {
+  OWNER_ONBOARDING_DEFAULTS,
+  resolveOwnerOnboardingCountryProfile,
+} from "@/lib/onboarding/owner-onboarding-defaults";
 import {
   canUsePendingOwnerOnboarding,
   claimPendingOwnerCompletion,
@@ -27,6 +30,10 @@ import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-sched
 import { logServerEvent } from "@/lib/server/logging";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 import { upsertBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import {
+  completeWhatsAppEmbeddedSignup,
+  WhatsAppEmbeddedSignupError,
+} from "@/lib/server/integrations/whatsapp-embedded-signup";
 import { encryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 import {
   businessIdentityFields,
@@ -36,32 +43,32 @@ import {
 
 const ownerDraftSchema = z
   .object({
-    name: businessIdentityFields.name.or(z.literal("")).default(""),
-    industry: businessIdentityFields.industry.default(""),
-    country: businessIdentityFields.country.default(""),
-    city: businessIdentityFields.city.default(""),
-    contactPhone: businessIdentityFields.contactPhone.default(""),
-    currency: businessIdentityFields.currency.default(""),
-    timezone: businessIdentityFields.timezone.default(""),
-    loyaltyMode: loyaltyProgramFields.loyaltyMode.default("VISITS"),
-    unitName: loyaltyProgramFields.unitName.default("Visit"),
-    rewardName: loyaltyProgramFields.rewardName.default("Reward"),
-    rewardThreshold: loyaltyProgramFields.rewardThreshold.default(5),
-    earnAmount: loyaltyProgramFields.earnAmount.default(1),
+    name: businessIdentityFields.name.or(z.literal("")).default(OWNER_ONBOARDING_DEFAULTS.name),
+    industry: businessIdentityFields.industry.default(OWNER_ONBOARDING_DEFAULTS.industry),
+    country: businessIdentityFields.country.default(OWNER_ONBOARDING_DEFAULTS.country),
+    city: businessIdentityFields.city.default(OWNER_ONBOARDING_DEFAULTS.city),
+    contactPhone: businessIdentityFields.contactPhone.default(OWNER_ONBOARDING_DEFAULTS.contactPhone),
+    currency: businessIdentityFields.currency.default(OWNER_ONBOARDING_DEFAULTS.currency),
+    timezone: businessIdentityFields.timezone.default(OWNER_ONBOARDING_DEFAULTS.timezone),
+    loyaltyMode: loyaltyProgramFields.loyaltyMode.default(OWNER_ONBOARDING_DEFAULTS.loyaltyMode),
+    unitName: loyaltyProgramFields.unitName.default(OWNER_ONBOARDING_DEFAULTS.unitName),
+    rewardName: loyaltyProgramFields.rewardName.default(OWNER_ONBOARDING_DEFAULTS.rewardName),
+    rewardThreshold: loyaltyProgramFields.rewardThreshold.default(OWNER_ONBOARDING_DEFAULTS.rewardThreshold),
+    earnAmount: loyaltyProgramFields.earnAmount.default(OWNER_ONBOARDING_DEFAULTS.earnAmount),
     primaryColor: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
-      .default("#111827"),
+      .default(OWNER_ONBOARDING_DEFAULTS.primaryColor),
     secondaryColor: z
       .string()
       .regex(/^#[0-9a-fA-F]{6}$/)
-      .default("#FFFFFF"),
-    themePreset: z.enum(["DEFAULT", "DARK"]).default("DEFAULT"),
-    logoUrl: z.string().trim().max(500).default(""),
-    standardCardArtworkEnabled: z.coerce.boolean().default(true),
+      .default(OWNER_ONBOARDING_DEFAULTS.secondaryColor),
+    themePreset: z.enum(["DEFAULT", "DARK"]).default(OWNER_ONBOARDING_DEFAULTS.themePreset),
+    logoUrl: z.string().trim().default(OWNER_ONBOARDING_DEFAULTS.logoUrl),
+    standardCardArtworkEnabled: z.coerce.boolean().default(OWNER_ONBOARDING_DEFAULTS.standardCardArtworkEnabled),
     standardCardArtworkCategory: z
       .enum(STANDARD_CARD_ARTWORK_CATEGORIES)
-      .default("OTHER"),
+      .default(OWNER_ONBOARDING_DEFAULTS.standardCardArtworkCategory),
   })
   .superRefine((data, context) => {
     const profileError = validateCountryProfile(data);
@@ -74,11 +81,7 @@ const ownerDraftSchema = z
             ? "Choose a timezone for the selected country."
             : `Choose a valid ${profileError.field}.`,
       });
-    if (
-      data.logoUrl &&
-      !isValidRemoteImageUrl(data.logoUrl) &&
-      !getSafeImageDataUrl(data.logoUrl, BUSINESS_LOGO_MAX_BYTES)
-    )
+    if (!isValidBusinessLogoStorageValue(data.logoUrl, BUSINESS_LOGO_MAX_BYTES))
       context.addIssue({
         code: "custom",
         path: ["logoUrl"],
@@ -86,10 +89,37 @@ const ownerDraftSchema = z
       });
   });
 
-const whatsappConnectionSchema = z.object({
-  phoneNumberId: z.string().trim().regex(/^\d{5,30}$/),
-  accessToken: z.string().trim().min(20).max(4096),
-});
+const metaIdSchema = z.string().trim().regex(/^\d{5,30}$/);
+const embeddedSignupSchema = z
+  .object({
+    authorizationCode: z.string().trim().min(20).max(4096),
+    mode: z.enum(["STANDARD", "COEXISTENCE"]),
+    phoneNumberId: z.string().trim().max(30),
+    wabaId: metaIdSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.mode === "STANDARD") {
+      if (!metaIdSchema.safeParse(value.phoneNumberId).success) {
+        context.addIssue({
+          code: "custom",
+          path: ["phoneNumberId"],
+          message: "Standard Embedded Signup requires a valid phone number ID.",
+        });
+      }
+      return;
+    }
+
+    if (
+      value.phoneNumberId &&
+      !metaIdSchema.safeParse(value.phoneNumberId).success
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["phoneNumberId"],
+        message: "Coexistence phone number ID must be valid when Meta supplies one.",
+      });
+    }
+  });
 
 async function pendingOwner() {
   const session = await auth();
@@ -110,6 +140,7 @@ async function pendingOwner() {
 }
 async function draftFrom(formData: FormData) {
   const input = Object.fromEntries(formData);
+  Object.assign(input, resolveOwnerOnboardingCountryProfile(input));
   input.contactPhone = normalizeOwnerOnboardingPhone(
     String(input.contactPhone ?? ""),
     String(input.country ?? ""),
@@ -129,14 +160,20 @@ async function draftFrom(formData: FormData) {
   return ownerDraftSchema.safeParse(input);
 }
 
-function whatsappConnectionFrom(formData: FormData) {
-  const phoneNumberId = String(formData.get("whatsappPhoneNumberId") ?? "").trim();
-  const accessToken = String(formData.get("whatsappAccessToken") ?? "").trim();
-  if (!phoneNumberId && !accessToken) return null;
+function embeddedSignupFrom(formData: FormData) {
+  const authorizationCode = String(
+    formData.get("authorizationCode") ?? "",
+  ).trim();
+  const mode = String(formData.get("mode") ?? "").trim();
+  const phoneNumberId = String(formData.get("phoneNumberId") ?? "").trim();
+  const wabaId = String(formData.get("wabaId") ?? "").trim();
+  if (!authorizationCode && !mode && !phoneNumberId && !wabaId) return null;
 
-  const parsed = whatsappConnectionSchema.safeParse({
+  const parsed = embeddedSignupSchema.safeParse({
+    authorizationCode,
+    mode,
     phoneNumberId,
-    accessToken,
+    wabaId,
   });
   return parsed.success ? parsed.data : false;
 }
@@ -165,24 +202,44 @@ export async function saveOwnerOnboardingAction(formData: FormData) {
 export async function launchOwnerOnboardingAction(formData: FormData) {
   const user = await pendingOwner();
   const parsed = await draftFrom(formData);
-  const whatsappConnection = whatsappConnectionFrom(formData);
+  const embeddedSignup = embeddedSignupFrom(formData);
   if (
     !parsed.success ||
     !parsed.data.name ||
     !parsed.data.country ||
     !parsed.data.currency ||
     !parsed.data.timezone ||
-    whatsappConnection === false
+    embeddedSignup === false
   )
     redirect("/onboarding?error=incomplete");
   const data = parsed.data;
+
+  let whatsappConnection: Awaited<
+    ReturnType<typeof completeWhatsAppEmbeddedSignup>
+  > | null = null;
+  if (embeddedSignup) {
+    try {
+      whatsappConnection = await completeWhatsAppEmbeddedSignup(embeddedSignup);
+    } catch (error) {
+      logServerEvent("OWNER_ONBOARDING_WHATSAPP_CONNECT_FAILED", {
+        userId: user.id,
+        reason:
+          error instanceof WhatsAppEmbeddedSignupError
+            ? error.reason
+            : "UNKNOWN",
+      });
+      redirect("/onboarding?error=whatsapp");
+    }
+  }
+
   const whatsappAccessTokenCiphertext = whatsappConnection
     ? encryptBusinessWhatsAppAccessToken(whatsappConnection.accessToken)
     : null;
+  const launchedAt = new Date();
   const { business, integrationJobId } = await createWithGeneratedSlug(data.name, (slug) =>
     prisma.$transaction(async (tx) => {
-      const invitations = await tx.$queryRaw<Array<{ usedAt: Date }>>`
-        SELECT "usedAt"
+      const invitations = await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT "id"
         FROM "OwnerInvitation"
         WHERE "email" = ${user.email}
           AND "usedAt" IS NOT NULL
@@ -194,7 +251,7 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
         throw new Error("Owner invitation acceptance is required before onboarding");
       }
 
-      const trialWindow = createTrialWindow(invitation.usedAt);
+      const trialWindow = createTrialWindow(launchedAt);
       const created = await tx.business.create({
         data: {
           name: data.name,
@@ -226,6 +283,7 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
         await upsertBusinessWhatsAppCredential(tx, {
           businessId: created.id,
           phoneNumberId: whatsappConnection.phoneNumberId,
+          wabaId: whatsappConnection.wabaId,
           accessTokenCiphertext: whatsappAccessTokenCiphertext,
         });
       }
@@ -258,5 +316,5 @@ export async function launchOwnerOnboardingAction(formData: FormData) {
   logServerEvent("OWNER_ONBOARDING_SHEETS_SYNC_SCHEDULED", {
     businessId: business.id,
   });
-  redirect(`/businesses/${business.slug}?sheetSync=pending`);
+  redirect(`/businesses/${business.slug}/launch-success?sheetSync=pending`);
 }

@@ -14,10 +14,11 @@ const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 const business = { id: "business-1", slug: "north-star", name: "North Star" };
 const owner = { role: "OWNER" as const, businessId: business.id };
+const manager = { role: "MANAGER" as const, businessId: business.id };
 const staff = { role: "STAFF" as const, businessId: business.id };
 const viewer = { role: "VIEWER" as const, businessId: business.id };
 
-const links = (user: typeof owner | typeof staff | typeof viewer) =>
+const links = (user: typeof owner | typeof manager | typeof staff | typeof viewer) =>
   buildShellNavigation({ language: "EN", user, business }).flatMap((group) => group.items);
 
 test("U3 mobile business navigation derives and passes the active business slug", () => {
@@ -43,7 +44,20 @@ test("super admin global navigation exposes the platform businesses and owners d
   assert.ok(ids.includes("owners"));
 });
 
+test("super admin account menu does not duplicate primary platform destinations", () => {
+  const topbar = source("components/app-topbar.tsx");
+  assert.doesNotMatch(topbar, /href="\/businesses"/);
+  assert.doesNotMatch(topbar, /href="\/business-owners"/);
+});
+
 test("navigation is capability-derived and hides inaccessible administration", () => {
+  const managerLinks = links(manager).map((entry) => entry.id);
+  assert.ok(managerLinks.includes("scan"));
+  assert.ok(managerLinks.includes("activity"));
+  assert.ok(managerLinks.includes("reports"));
+  assert.equal(managerLinks.includes("settings"), false);
+  assert.equal(managerLinks.includes("team"), false);
+  assert.equal(managerLinks.includes("branches"), false);
   const staffLinks = links(staff).map((entry) => entry.id);
   assert.ok(staffLinks.includes("scan"));
   assert.equal(staffLinks.includes("reports"), false);

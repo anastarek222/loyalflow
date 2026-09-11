@@ -66,7 +66,7 @@ test("P9.8 preserves tenant isolation for every customer feature policy", () => 
 test("P9.8 customer pages use the same shared policies as their active server actions", () => {
   const listPage = source("app/businesses/[slug]/customers/page.tsx");
   const listActions = source("app/businesses/[slug]/customers/actions.ts");
-  const detailPage = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
+  const detailPage = source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx");
   const noteActions = source(
     "app/businesses/[slug]/customers/[customerId]/note-actions.ts",
   );

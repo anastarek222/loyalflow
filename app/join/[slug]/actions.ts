@@ -35,6 +35,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
       slug: true,
       isActive: true,
       plan: true,
+      country: true,
       subscriptionLifecycleState: true,
     },
   });
@@ -84,11 +85,14 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
     );
   }
 
-  const parsed = parseCustomerRegistration({
-    firstName: formData.get("firstName"),
-    lastName: formData.get("lastName"),
-    phone: formData.get("phone"),
-  });
+  const parsed = parseCustomerRegistration(
+    {
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
+      phone: formData.get("phone"),
+    },
+    business.country,
+  );
 
   if (!parsed) {
     redirect(

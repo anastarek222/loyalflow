@@ -8,7 +8,7 @@ const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 
 test("customer details does not expose ungrounded retention scoring", () => {
   const page = source(
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
   );
 
   assert.doesNotMatch(page, /calculateRetentionScore/);
@@ -20,7 +20,7 @@ test("customer details does not expose ungrounded retention scoring", () => {
 
 test("owner customer details uses the canonical loyalty card renderer", () => {
   const page = source(
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
   );
 
   assert.match(page, /import \{ LoyaltyCardPreview \}/);

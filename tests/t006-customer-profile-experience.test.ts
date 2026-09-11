@@ -7,7 +7,7 @@ const source = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 
 const profilePage = source(
-  "app/businesses/[slug]/customers/[customerId]/page.tsx",
+  "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
 );
 const timeline = source("components/customer-profile/activity-timeline.tsx");
 

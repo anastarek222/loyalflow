@@ -70,7 +70,11 @@ test("redeeming a valid invitation consumes it exactly once and creates a pendin
     store,
   );
 
-  assert.deepEqual(first, { status: "success", userId: "owner-1" });
+  assert.deepEqual(first, {
+    status: "success",
+    userId: "owner-1",
+    email: "mona@example.test",
+  });
   assert.deepEqual(replay, { status: "invalid_or_expired" });
   assert.equal(users.length, 1);
   assert.equal(users[0]?.role, "OWNER");
@@ -198,4 +202,13 @@ test("runtime redemption consumes and creates the pending owner inside one trans
   assert.match(runtime, /"expiresAt" > /);
   assert.match(runtime, /transaction\.user\.create/);
   assert.match(runtime, /passwordValueSchema\.safeParse/);
+});
+
+test("accepted Owner invitation establishes a session and continues to onboarding", () => {
+  const action = source("app/accept-owner-invitation/actions.ts");
+
+  assert.match(action, /await signIn\("credentials", signInData\)/);
+  assert.match(action, /signInData\.set\("redirectTo", "\/onboarding"\)/);
+  assert.match(action, /error instanceof AuthError/);
+  assert.doesNotMatch(action, /redirect\("\/login\?invitation=accepted"\);\s*$/);
 });

@@ -14,6 +14,7 @@ const backCommand = source(
   "lib/server/business/custom-card-back-upload-command.ts",
 );
 const manager = source("components/custom-card-artwork-manager.tsx");
+const uploadForm = source("components/custom-card-upload-form.tsx");
 const programPage = source("app/businesses/[slug]/program/page.tsx");
 
 test("TC5 Custom Card upload command validates the required pair before entitlement and Blob upload", () => {
@@ -131,7 +132,11 @@ test("TC5 Custom Card manager binds the paired upload and confirmed publish acti
     manager,
     /publishCustomCardArtworkAction\.bind\(null, slug\)/,
   );
-  assert.match(manager, /<form action=\{uploadCustomArtwork\}/);
+  assert.match(
+    manager,
+    /<CustomCardUploadForm[\s\S]{0,160}action=\{uploadCustomArtwork\}/,
+  );
+  assert.match(uploadForm, /<form[\s\S]{0,160}action=\{action\}/);
   assert.match(manager, /<form action=\{publishCustomArtwork\}>/);
   assert.match(manager, /ConfirmedSubmitButton/);
 });

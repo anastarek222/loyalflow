@@ -28,6 +28,12 @@ export type CustomCardArtworkVersion = {
   backUrl: string;
 };
 
+export type CustomCardArtworkReadResult =
+  | Readonly<{ status: "ok"; bytes: ArrayBuffer; contentType: string }>
+  | Readonly<{ status: "not-found" }>
+  | Readonly<{ status: "corrupt" }>
+  | Readonly<{ status: "unavailable" }>;
+
 const versionPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export function customCardStorageConfigured() {
@@ -117,10 +123,24 @@ function groupCompleteVersions(blobs: ListBlobResultBlob[]) {
     .sort((left, right) => right.uploadedAt.getTime() - left.uploadedAt.getTime());
 }
 
+async function listAllCustomCardBlobs(prefix: string) {
+  const blobs: ListBlobResultBlob[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const result = await list({ prefix, limit: 100, cursor });
+    blobs.push(...result.blobs);
+    cursor = result.hasMore ? result.cursor : undefined;
+  } while (cursor);
+
+  return blobs;
+}
+
 export async function listCustomCardArtworkVersions(businessId: string) {
   if (!customCardStorageConfigured()) return [];
-  const result = await list({ prefix: `custom-card/${businessId}/`, limit: 100 });
-  return groupCompleteVersions(result.blobs);
+  return groupCompleteVersions(
+    await listAllCustomCardBlobs(`custom-card/${businessId}/`),
+  );
 }
 
 export async function findCustomCardArtworkVersion(businessId: string, version: string) {
@@ -146,9 +166,37 @@ export function publicCustomCardArtworkUrl(token: string, side: CustomCardSide, 
     : storedUrl ?? null;
 }
 
-export async function readPrivateCustomCardArtwork(url: string) {
-  if (!isManagedCustomCardArtworkUrl(url)) return null;
-  const result = await get(url, { access: "private" });
-  if (!result || result.statusCode !== 200) return null;
-  return result;
+async function managedBlobExists(url: string) {
+  const pathname = new URL(url).pathname.replace(/^\/+/, "");
+  const result = await list({ prefix: pathname, limit: 2 });
+  return result.blobs.some((blob) => blob.pathname === pathname && blob.url === url);
+}
+
+export async function readPrivateCustomCardArtwork(
+  url: string,
+): Promise<CustomCardArtworkReadResult> {
+  if (!isManagedCustomCardArtworkUrl(url)) return { status: "not-found" };
+
+  try {
+    if (!(await managedBlobExists(url))) return { status: "not-found" };
+
+    const result = await get(url, { access: "private" });
+    if (!result || result.statusCode !== 200) return { status: "unavailable" };
+
+    const contentType = result.blob.contentType;
+    const bytes = await new Response(result.stream).arrayBuffer();
+    const file = new File([bytes], "stored-custom-card-artwork", {
+      type: contentType,
+    });
+    if (
+      !validateCustomCardArtworkFile(file) ||
+      !(await validateCustomCardArtworkGeometry(file))
+    ) {
+      return { status: "corrupt" };
+    }
+
+    return { status: "ok", bytes, contentType };
+  } catch {
+    return { status: "unavailable" };
+  }
 }

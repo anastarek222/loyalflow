@@ -1,4 +1,5 @@
 import type { RewardType } from "@/generated/prisma/client";
+import { isRewardUnlockActionable } from "@/lib/rewards/expiration";
 
 export type RewardAvailabilityOption = {
   id: string;
@@ -13,6 +14,13 @@ export type RewardAvailabilityOption = {
 
 export type FallbackRewardOption = Omit<RewardAvailabilityOption, "id" | "isActive"> & {
   id?: null;
+};
+
+export type RewardAvailabilityUnlock = {
+  rewardId: string;
+  expiresAt: Date;
+  redeemedAt: Date | null;
+  expiredAt: Date | null;
 };
 
 export function getRewardAvailability(input: {
@@ -45,4 +53,47 @@ export function getRewardAvailability(input: {
     remaining: Math.max(0, targetCost - balance),
     progress: Math.min(100, Math.floor((balance / targetCost) * 100)),
   };
+}
+
+/**
+ * Catalogue redemption uses balance directly for non-expiring rewards. Only a
+ * reward with an expiry policy requires a live persisted unlock lifecycle.
+ */
+export function getRedeemableCatalogueRewards(input: {
+  customerActive: boolean;
+  balance: number;
+  catalogueRewards: readonly RewardAvailabilityOption[];
+  rewardUnlocks: readonly RewardAvailabilityUnlock[];
+  now?: Date;
+}) {
+  if (!input.customerActive) return [];
+
+  const balance = Math.max(0, Math.trunc(input.balance));
+  const actionableUnlockRewardIds = new Set(
+    input.rewardUnlocks
+      .filter((unlock) =>
+        isRewardUnlockActionable({
+          rewardActive: true,
+          expiresAt: unlock.expiresAt,
+          redeemedAt: unlock.redeemedAt,
+          expiredAt: unlock.expiredAt,
+          now: input.now,
+        }),
+      )
+      .map((unlock) => unlock.rewardId),
+  );
+
+  return input.catalogueRewards
+    .filter((reward) => reward.isActive !== false)
+    .slice()
+    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id))
+    .filter((reward) => {
+      if (balance < Math.max(1, Math.trunc(reward.cost))) return false;
+      const expires =
+        reward.expiresAfterDays !== null &&
+        reward.expiresAfterDays !== undefined &&
+        Number.isInteger(reward.expiresAfterDays) &&
+        reward.expiresAfterDays > 0;
+      return !expires || actionableUnlockRewardIds.has(reward.id);
+    });
 }

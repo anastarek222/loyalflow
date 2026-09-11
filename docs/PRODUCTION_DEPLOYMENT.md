@@ -45,13 +45,13 @@ Recommended controlled migration job (with the verified production environment
 already supplied by the deployment platform):
 
 ```bash
-npm run db:generate
-npm run db:validate
-npm run db:migrate:status
-npm run db:migrate:deploy
+pnpm run db:generate
+pnpm run db:validate
+pnpm run db:migrate:status
+pnpm run db:migrate:deploy
 ```
 
-`npm run deploy:check` is a non-mutating pre-deploy gate that validates the
+`pnpm run deploy:check` is a non-mutating pre-deploy gate that validates the
 schema, checks migration status, and builds the app. It does not apply a
 migration.
 
@@ -61,11 +61,11 @@ migration.
 2. Confirm `DATABASE_URL` names the intended production target; keep
    `SHADOW_DATABASE_URL` separate and unset unless a local development Prisma
    workflow needs it.
-3. Run `npm run db:migrate:status` and resolve any failed or pending migration
+3. Run `pnpm run db:migrate:status` and resolve any failed or pending migration
    decision before release.
 4. Run the controlled migration command above, exactly once, after the backup
    or restore-point decision.
-5. Run `npm run build` from the release commit.
+5. Run `pnpm run build` from the release commit.
 6. After deployment, request `GET /api/health/live` and `GET /api/health`.
    Both must return HTTP 200 before traffic is considered ready.
 7. Smoke-test login, business dashboard, customer lookup, earn, redeem, and a
@@ -76,11 +76,11 @@ migration.
 
 ## Rate limiting and observability
 
-LoyalFlow's application limiter is intentionally process-local defense in
-depth. It is not globally distributed and financial correctness does not
-depend on it; database transactions and constraints remain authoritative.
-Configure platform, edge, or global rate limiting for abuse-sensitive public
-endpoints before high-volume production exposure.
+LoyalFlow uses the configured distributed Redis limiter for abuse-sensitive
+public operations and fails closed in Production when that backend is missing
+or unavailable. The bounded process-local fallback is development-only.
+Financial correctness still depends on database transactions, constraints,
+and idempotency rather than on rate limiting.
 
 Use platform logs and Neon metrics to investigate failures. LoyalFlow logs
 compact, redacted server errors; never add credentials, tokens, connection

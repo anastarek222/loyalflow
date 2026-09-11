@@ -388,10 +388,11 @@ test("custom artwork capability stays reserved for super-admin architecture", ()
 test("Custom UX delegates paired lifecycle uploads while preserving published URLs", () => {
   const setup = source("components/standard-card-setup.tsx");
   const manager = source("components/custom-card-artwork-manager.tsx");
+  const uploadForm = source("components/custom-card-upload-form.tsx");
   const authority = source("components/loyalty-card.tsx");
   const custom = source("components/custom-loyalty-card.tsx");
   assert.match(setup, /Front \+ Back pair upload, immutable drafts, preview and publish/);
-  assert.match(manager, /Create Front \+ Back draft/);
+  assert.match(uploadForm, /Create Front \+ Back draft/);
   assert.match(manager, /Publish this Front \+ Back pair/);
   assert.match(manager, /ConfirmedSubmitButton/);
   assert.match(manager, /Vercel Blob is not connected/);

@@ -1,40 +1,54 @@
+import { normalizePhoneE164, phoneDigits } from "@/lib/customers/phone";
 import prisma from "@/lib/prisma";
+import { getRewardAvailability } from "@/lib/rewards/availability";
 import {
+  isAutomaticCustomerMessageEvent,
   isCustomerMessagePayload,
-  type CustomerMessageEvent,
+  type AutomaticCustomerMessageEvent,
 } from "@/lib/server/integrations/customer-messaging";
+import {
+  getBusinessWhatsAppTemplateBinding,
+  hashBusinessWhatsAppTemplate,
+} from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
+import { isWhatsAppAutomationEventEnabled } from "@/lib/server/integrations/whatsapp-automation-policy";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
+import { renderWhatsAppTemplateParameters } from "@/lib/whatsapp-templates";
 
 type WhatsAppDeliveryResult =
   | Readonly<{ status: "success"; providerMessageId?: string }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
 
-const TEMPLATE_KEY_BY_EVENT: Record<CustomerMessageEvent, string> = {
-  WELCOME: "WELCOME",
-  BALANCE_UPDATED: "BALANCE",
-  REWARD_READY: "REWARD_READY",
-  REWARD_REDEEMED: "REDEEMED",
-};
-
-function getTemplateConfig(event: CustomerMessageEvent, language: "AR" | "EN") {
-  const templateKey = TEMPLATE_KEY_BY_EVENT[event];
-  const localeKey = language === "AR" ? "AR" : "EN";
-  const templateName =
-    process.env[`WHATSAPP_TEMPLATE_${templateKey}_${localeKey}`]?.trim() ?? "";
-  const languageCode =
-    process.env[`WHATSAPP_TEMPLATE_LANGUAGE_${localeKey}`]?.trim() ||
-    (language === "AR" ? "ar" : "en_US");
-  return { templateName, languageCode };
-}
-
-function normalizeRecipientPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return /^\d{8,15}$/.test(digits) ? digits : null;
-}
-
 function customerName(firstName: string, lastName: string | null) {
   return [firstName, lastName].filter(Boolean).join(" ").trim() || firstName;
+}
+
+function getOwnerMessageTemplate(
+  event: AutomaticCustomerMessageEvent,
+  messages: {
+    whatsappWelcomeMessage: string | null;
+    whatsappBalanceMessage: string | null;
+    whatsappRewardMessage: string | null;
+    whatsappRedeemedMessage: string | null;
+    newRewardMessage: string | null;
+    newOfferMessage: string | null;
+  },
+) {
+  const value =
+    event === "WELCOME"
+      ? messages.whatsappWelcomeMessage
+      : event === "BALANCE_UPDATED"
+        ? messages.whatsappBalanceMessage
+        : event === "REWARD_READY"
+          ? messages.whatsappRewardMessage
+          : event === "REWARD_REDEEMED"
+            ? messages.whatsappRedeemedMessage
+            : event === "NEW_REWARD"
+              ? messages.newRewardMessage
+              : messages.newOfferMessage;
+  const normalized = value?.trim() ?? "";
+  return normalized || null;
 }
 
 export function extractWhatsAppProviderMessageId(payload: unknown) {
@@ -49,45 +63,13 @@ export function extractWhatsAppProviderMessageId(payload: unknown) {
   return normalized.length >= 1 && normalized.length <= 512 ? normalized : null;
 }
 
-function bodyVariables(input: {
-  event: CustomerMessageEvent;
-  customerName: string;
-  businessName: string;
-  balance: number;
-  unitName: string;
-  rewardName: string;
-  cardUrl: string;
-}) {
-  switch (input.event) {
-    case "WELCOME":
-      return [input.customerName, input.businessName, input.cardUrl];
-    case "BALANCE_UPDATED":
-      return [
-        input.customerName,
-        input.businessName,
-        String(input.balance),
-        input.unitName,
-      ];
-    case "REWARD_READY":
-      return [
-        input.customerName,
-        input.rewardName,
-        input.businessName,
-        String(input.balance),
-      ];
-    case "REWARD_REDEEMED":
-      return [
-        input.customerName,
-        input.rewardName,
-        input.businessName,
-        String(input.balance),
-      ];
-  }
-}
-
 /**
- * Sends a Meta-approved WhatsApp Cloud API template. Missing/revoked consent is
- * treated as a successful no-op so stale queued jobs can never bypass consent.
+ * Sends the Owner-authored business message through the exact provider-owned,
+ * approved Meta template binding for this Business/WABA/event/language/content.
+ * Missing/revoked consent is always a successful no-op. Automatic jobs also
+ * re-check Global Pause and their event toggle at delivery time; explicit MANUAL
+ * jobs intentionally remain independent from automatic controls while sharing
+ * the same consent, sender, template, outbox and provider pipeline.
  */
 export async function sendWhatsAppCustomerNotificationSafely(
   businessId: string,
@@ -102,6 +84,27 @@ export async function sendWhatsAppCustomerNotificationSafely(
   }
   const payload = payloadValue;
 
+  if (!isAutomaticCustomerMessageEvent(payload.event)) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_EVENT_NOT_AUTOMATIC",
+      retryable: false,
+    };
+  }
+
+  const automationSettings = await getBusinessWhatsAppAutomationSettings(
+    prisma,
+    businessId,
+  );
+  const manualDelivery = payload.deliveryMode === "MANUAL";
+  if (
+    !manualDelivery &&
+    (!automationSettings ||
+      !isWhatsAppAutomationEventEnabled(automationSettings, payload.event))
+  ) {
+    return { status: "success" };
+  }
+
   const customer = await prisma.customer.findFirst({
     where: {
       id: payload.customerId,
@@ -114,23 +117,47 @@ export async function sendWhatsAppCustomerNotificationSafely(
       phone: true,
       balance: true,
       publicToken: true,
+      whatsappPhoneE164: true,
       whatsappOptInAt: true,
+      whatsappOptedOutAt: true,
       business: {
         select: {
           name: true,
+          country: true,
           unitName: true,
           rewardName: true,
+          rewardThreshold: true,
           cardDefaultLanguage: true,
+          whatsappWelcomeMessage: true,
+          whatsappBalanceMessage: true,
+          whatsappRewardMessage: true,
+          whatsappRedeemedMessage: true,
+          rewards: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              name: true,
+              cost: true,
+              isActive: true,
+            },
+          },
         },
       },
     },
   });
 
-  if (!customer || !customer.whatsappOptInAt) {
+  if (
+    !customer ||
+    !customer.whatsappOptInAt ||
+    customer.whatsappOptedOutAt
+  ) {
     return { status: "success" };
   }
 
-  const to = normalizeRecipientPhone(customer.phone);
+  const canonicalRecipient = customer.whatsappPhoneE164
+    ? normalizePhoneE164(customer.whatsappPhoneE164)
+    : normalizePhoneE164(customer.phone, customer.business.country);
+  const to = canonicalRecipient ? phoneDigits(canonicalRecipient) : null;
   if (!to) {
     return {
       status: "failure",
@@ -139,7 +166,19 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
 
-  const apiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim();
+  const ownerMessageTemplate = getOwnerMessageTemplate(payload.event, {
+    ...customer.business,
+    newRewardMessage: automationSettings?.newRewardMessage ?? null,
+    newOfferMessage: automationSettings?.newOfferMessage ?? null,
+  });
+  if (!ownerMessageTemplate) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_OWNER_MESSAGE_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
+
   const businessCredential = await getBusinessWhatsAppCredential(
     prisma,
     businessId,
@@ -151,7 +190,62 @@ export async function sendWhatsAppCustomerNotificationSafely(
       retryable: false,
     };
   }
+  if (!businessCredential.wabaId) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_WABA_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
 
+  const binding = await getBusinessWhatsAppTemplateBinding(prisma, {
+    businessId,
+    event: payload.event,
+    language: customer.business.cardDefaultLanguage,
+  });
+  if (!binding) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_BINDING_NOT_CONFIGURED",
+      retryable: false,
+    };
+  }
+  if (binding.wabaId !== businessCredential.wabaId) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_ACCOUNT_MISMATCH",
+      retryable: false,
+    };
+  }
+  if (binding.approvalStatus !== "APPROVED") {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_NOT_APPROVED",
+      retryable: false,
+    };
+  }
+  if (
+    binding.contentSha256 !==
+    hashBusinessWhatsAppTemplate(ownerMessageTemplate)
+  ) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_CONTENT_MISMATCH",
+      retryable: false,
+    };
+  }
+
+  const templateName = binding.templateName.trim();
+  const languageCode = binding.templateLanguageCode.trim();
+  if (!templateName || !languageCode) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_META_TEMPLATE_BINDING_INVALID",
+      retryable: false,
+    };
+  }
+
+  const apiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim();
   const phoneNumberId = businessCredential.phoneNumberId;
   let accessToken: string;
   try {
@@ -166,11 +260,7 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
 
-  const { templateName, languageCode } = getTemplateConfig(
-    payload.event,
-    customer.business.cardDefaultLanguage,
-  );
-  if (!apiVersion || !phoneNumberId || !accessToken || !templateName) {
+  if (!apiVersion || !phoneNumberId || !accessToken) {
     return {
       status: "failure",
       reason: "WHATSAPP_NOT_CONFIGURED",
@@ -179,15 +269,30 @@ export async function sendWhatsAppCustomerNotificationSafely(
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
-  const variables = bodyVariables({
-    event: payload.event,
-    customerName: customerName(customer.firstName, customer.lastName),
-    businessName: customer.business.name,
-    balance: payload.balance ?? customer.balance,
-    unitName: customer.business.unitName,
-    rewardName: payload.rewardName ?? customer.business.rewardName,
-    cardUrl: `${appUrl}/card/${customer.publicToken}`,
+  const balance = payload.balance ?? customer.balance;
+  const rewardAvailability = getRewardAvailability({
+    customerActive: true,
+    balance,
+    rewardThreshold: customer.business.rewardThreshold,
+    fallbackReward: {
+      name: customer.business.rewardName,
+      cost: customer.business.rewardThreshold,
+    },
+    catalogueRewards: customer.business.rewards,
   });
+  const cardUrl = `${appUrl}/card/${customer.publicToken}`;
+  const bodyParameters = renderWhatsAppTemplateParameters(
+    ownerMessageTemplate,
+    {
+      customer: customerName(customer.firstName, customer.lastName),
+      business: customer.business.name,
+      balance,
+      unit: customer.business.unitName,
+      reward: payload.rewardName ?? rewardAvailability.defaultReward.name,
+      remaining: rewardAvailability.remaining,
+      cardLink: cardUrl,
+    },
+  );
 
   try {
     const response = await fetch(
@@ -206,12 +311,19 @@ export async function sendWhatsAppCustomerNotificationSafely(
           template: {
             name: templateName,
             language: { code: languageCode },
-            components: [
-              {
-                type: "body",
-                parameters: variables.map((text) => ({ type: "text", text })),
-              },
-            ],
+            ...(bodyParameters.length === 0
+              ? {}
+              : {
+                  components: [
+                    {
+                      type: "body",
+                      parameters: bodyParameters.map((text) => ({
+                        type: "text",
+                        text,
+                      })),
+                    },
+                  ],
+                }),
           },
         }),
         signal: AbortSignal.timeout(10_000),

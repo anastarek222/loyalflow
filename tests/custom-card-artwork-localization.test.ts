@@ -8,6 +8,7 @@ const source = (path: string) => readFileSync(join(root, path), "utf8");
 
 test("Stage 13 custom-card artwork flow follows the authenticated AR/EN locale", () => {
   const manager = source("components/custom-card-artwork-manager.tsx");
+  const uploadForm = source("components/custom-card-upload-form.tsx");
 
   assert.match(manager, /getAuthenticatedRequestContext\(\)/);
   assert.match(manager, /normalizeLanguage\(requestContext\?\.user\?\.language\)/);
@@ -16,18 +17,19 @@ test("Stage 13 custom-card artwork flow follows the authenticated AR/EN locale",
   assert.match(manager, /Custom Card artwork/);
   assert.doesNotMatch(manager, /Custom Card artwork · Beta/);
   assert.doesNotMatch(manager, /تصميم البطاقة المخصصة · تجريبي/);
-  assert.match(manager, /الواجهة الأمامية · مطلوبة/);
-  assert.match(manager, /Front artwork · required/);
+  assert.match(uploadForm, /الواجهة الأمامية · مطلوبة/);
+  assert.match(uploadForm, /Front artwork · required/);
   assert.match(manager, /نشر زوج الأمامية \+ الخلفية/);
   assert.match(manager, /Publish this Front \+ Back pair/);
 });
 
 test("Stage 13 custom-card localization does not weaken upload or publish safeguards", () => {
   const manager = source("components/custom-card-artwork-manager.tsx");
+  const uploadForm = source("components/custom-card-upload-form.tsx");
 
-  assert.match(manager, /customCardFrontFile/);
-  assert.match(manager, /customCardBackFile/);
-  assert.match(manager, /accept="image\/png,image\/jpeg,image\/webp"/);
+  assert.match(uploadForm, /customCardFrontFile/);
+  assert.match(uploadForm, /customCardBackFile/);
+  assert.match(uploadForm, /accept="image\/png,image\/jpeg,image\/webp"/);
   assert.match(manager, /ConfirmedSubmitButton/);
   assert.match(manager, /name="customVersion"/);
   assert.match(manager, /publishCustomCardArtworkAction\.bind\(null, slug\)/);

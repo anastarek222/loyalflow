@@ -31,10 +31,14 @@ test("TC6 Settings command can atomically attach one durable Sheets job without 
   assert.doesNotMatch(command, /next\/navigation|redirect\(/);
 });
 
-test("TC5 Business Settings command reports subscription restriction without redirecting", () => {
+test("TC5 Business Settings command reports guarded failures without redirecting", () => {
   const command = source("lib/server/business/settings-command.ts");
 
   assert.match(command, /SUBSCRIPTION_RESTRICTED/);
+  assert.match(command, /CURRENCY_LOCKED/);
   assert.match(command, /Readonly<\{ ok: true; integrationJobId: string \| null \}>/);
-  assert.match(command, /Readonly<\{ ok: false; reason: "SUBSCRIPTION_RESTRICTED" \}>/);
+  assert.match(
+    command,
+    /reason: "SUBSCRIPTION_RESTRICTED" \| "CURRENCY_LOCKED";/,
+  );
 });

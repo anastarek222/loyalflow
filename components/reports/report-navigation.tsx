@@ -1,19 +1,29 @@
-import { BarChart3, UsersRound } from "lucide-react";
+import { BarChart3, UserRoundPlus, UsersRound } from "lucide-react";
 import Link from "next/link";
 
+import { hasFeatureEntitlement } from "@/lib/entitlements";
 import type { AppLanguage } from "@/lib/i18n";
+import prisma from "@/lib/prisma";
 
-export function ReportNavigation({
+export async function ReportNavigation({
   slug,
   active,
   query,
   language,
 }: {
   slug: string;
-  active: "overview" | "staff";
+  active: "overview" | "staff" | "referrals";
   query: string;
   language: AppLanguage;
 }) {
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: { plan: true },
+  });
+  const referralsEnabled = Boolean(
+    business && hasFeatureEntitlement(business.plan, "REFERRALS"),
+  );
+
   const items =
     language === "AR"
       ? [
@@ -29,6 +39,16 @@ export function ReportNavigation({
             href: `/businesses/${slug}/reports/staff?${query}`,
             icon: UsersRound,
           },
+          ...(referralsEnabled
+            ? [
+                {
+                  id: "referrals" as const,
+                  label: "الإحالات",
+                  href: `/businesses/${slug}/reports/referrals?${query}`,
+                  icon: UserRoundPlus,
+                },
+              ]
+            : []),
         ]
       : [
           {
@@ -43,6 +63,16 @@ export function ReportNavigation({
             href: `/businesses/${slug}/reports/staff?${query}`,
             icon: UsersRound,
           },
+          ...(referralsEnabled
+            ? [
+                {
+                  id: "referrals" as const,
+                  label: "Referrals",
+                  href: `/businesses/${slug}/reports/referrals?${query}`,
+                  icon: UserRoundPlus,
+                },
+              ]
+            : []),
         ];
 
   return (

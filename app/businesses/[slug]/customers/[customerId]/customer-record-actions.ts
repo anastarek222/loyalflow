@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { canAccessBusiness, canPerform, type Capability } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -23,11 +24,6 @@ const customerSchema = z.object({
   phone: z.string().trim().min(8).max(25),
 });
 
-function normalizePhone(value: string) {
-  const cleaned = value.replace(/[^\d+]/g, "");
-  return cleaned.replace(/(?!^)\+/g, "");
-}
-
 async function getManagementContext(
   slug: string,
   customerId: string,
@@ -41,7 +37,11 @@ async function getManagementContext(
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, subscriptionLifecycleState: true },
+    select: {
+      id: true,
+      country: true,
+      subscriptionLifecycleState: true,
+    },
   });
   if (!business) redirect("/businesses");
   if (!canAccessBusiness(session.user, business.id)) redirect("/dashboard");
@@ -103,8 +103,8 @@ export async function updateCustomerRecordCommandAction(
     );
   }
 
-  const phone = normalizePhone(parsed.data.phone);
-  if (!/^\+?\d{8,15}$/.test(phone)) {
+  const phone = normalizePhoneE164(parsed.data.phone, business.country);
+  if (!phone) {
     redirect(`/businesses/${slug}/customers/${customerId}?error=phone`);
   }
 
@@ -132,6 +132,9 @@ export async function updateCustomerRecordCommandAction(
     }
     if (mutation.reason === "DUPLICATE") {
       redirect(`/businesses/${slug}/customers/${customerId}?error=duplicate`);
+    }
+    if (mutation.reason === "INVALID_PHONE") {
+      redirect(`/businesses/${slug}/customers/${customerId}?error=phone`);
     }
     redirect(`/businesses/${slug}/customers`);
   }

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { COUNTRY_OPTIONS } from "@/lib/onboarding/countries";
 import { findCountryByIso2, getCountryDefaults, searchCountryOptions } from "@/lib/onboarding/country-search";
+import { resolveOwnerOnboardingCountryProfile } from "@/lib/onboarding/owner-onboarding-defaults";
 
 test("country catalog covers the complete officially assigned ISO dataset", () => {
   assert.ok(COUNTRY_OPTIONS.length >= 249);
@@ -23,4 +24,29 @@ test("complete catalog searches name, ISO and calling code", () => {
   assert.ok(searchCountryOptions(COUNTRY_OPTIONS, "Japan").some((country) => country.iso2 === "JP"));
   assert.ok(searchCountryOptions(COUNTRY_OPTIONS, "br").some((country) => country.iso2 === "BR"));
   assert.ok(searchCountryOptions(COUNTRY_OPTIONS, "+81").some((country) => country.iso2 === "JP"));
+});
+
+test("Owner onboarding derives country defaults without overwriting explicit choices", () => {
+  assert.deepEqual(resolveOwnerOnboardingCountryProfile({ country: "Switzerland" }), {
+    country: "Switzerland",
+    currency: "CHF",
+    timezone: "Europe/Zurich",
+  });
+  assert.deepEqual(resolveOwnerOnboardingCountryProfile({ country: "United States" }), {
+    country: "United States",
+    currency: "USD",
+    timezone: "",
+  });
+  assert.deepEqual(
+    resolveOwnerOnboardingCountryProfile({
+      country: "Switzerland",
+      currency: "EUR",
+      timezone: "Europe/Zurich",
+    }),
+    {
+      country: "Switzerland",
+      currency: "EUR",
+      timezone: "Europe/Zurich",
+    },
+  );
 });

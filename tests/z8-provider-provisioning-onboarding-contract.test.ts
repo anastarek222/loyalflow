@@ -43,6 +43,23 @@ test("Z8 direct Provider provisioning creates an attached sign-in-ready Owner at
   assert.match(businessActions, /cardDesignMode: parsed\.data\.cardDesignMode/);
 });
 
+test("Z8 direct Provider provisioning initializes governed subscription state and a bounded Trial", () => {
+  assert.match(
+    businessActions,
+    /projectPaymentStateToSubscriptionLifecycle\(parsed\.data\.paymentStatus\)/,
+  );
+  assert.match(
+    businessActions,
+    /parsed\.data\.paymentStatus === "TRIAL" \? createTrialWindow\(provisionedAt\) : null/,
+  );
+  assert.match(
+    businessActions,
+    /subscriptionLifecycleState: initialSubscriptionLifecycleState/,
+  );
+  assert.match(businessActions, /trialStartedAt: trialWindow\?\.startedAt \?\? null/);
+  assert.match(businessActions, /trialEndsAt: trialWindow\?\.expiresAt \?\? null/);
+});
+
 test("Z8 Owner invitation creates a pending unattached Owner before onboarding", () => {
   assert.match(ownerInvitation, /role: "OWNER"/);
   assert.match(ownerInvitation, /isActive: true/);

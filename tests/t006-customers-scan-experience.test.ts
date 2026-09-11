@@ -98,7 +98,7 @@ test("T006 operational presentation keeps exact-once origin, permissions, and ca
   );
   assert.match(
     operationPage,
-    /redeemRewardAction\.bind\([\s\S]{0,160}null,[\s\S]{0,160}slug,[\s\S]{0,160}customer\.id,[\s\S]{0,160}unlock\.reward\.id/,
+    /redeemRewardAction\.bind\([\s\S]{0,160}null,[\s\S]{0,160}slug,[\s\S]{0,160}customer\.id,[\s\S]{0,160}reward\.id/,
   );
   assert.doesNotMatch(
     operationPage,

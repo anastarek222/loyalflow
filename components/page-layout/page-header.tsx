@@ -57,8 +57,12 @@ export function PageHeader({
       </div>
       {hasActions ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-          {secondaryActions}
-          {primaryAction}
+          {primaryAction ? (
+            <div className="order-first sm:order-last">{primaryAction}</div>
+          ) : null}
+          {secondaryActions ? (
+            <div className="order-last sm:order-first">{secondaryActions}</div>
+          ) : null}
         </div>
       ) : null}
     </header>

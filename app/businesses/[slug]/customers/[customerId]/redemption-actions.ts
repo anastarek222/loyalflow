@@ -99,6 +99,11 @@ export async function redeemRewardCommandAction(
       rewardCode: true,
       rewardThreshold: true,
       rewardName: true,
+      rewards: {
+        where: { isActive: true },
+        take: 1,
+        select: { id: true },
+      },
     },
   });
   if (!business) redirect("/businesses");
@@ -179,6 +184,10 @@ export async function redeemRewardCommandAction(
       redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
     }
     redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
+  }
+
+  if (!rewardId && business.rewards.length > 0) {
+    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
   }
 
   const rapidInput = {

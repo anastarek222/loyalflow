@@ -292,26 +292,6 @@ export default function AppTopbar({
                   <KeyRound size={16} aria-hidden="true" />
                   {language === "AR" ? "أمان الحساب" : "Account security"}
                 </Link>
-                {user.role === "SUPER_ADMIN" && (
-                  <>
-                    <Link
-                      href="/businesses"
-                      onClick={() => setAccountOpen(false)}
-                      className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
-                    >
-                      <Building2 size={16} aria-hidden="true" />
-                      {language === "AR" ? "الأنشطة التجارية" : "Businesses"}
-                    </Link>
-                    <Link
-                      href="/business-owners"
-                      onClick={() => setAccountOpen(false)}
-                      className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-4 text-sm font-semibold text-foreground-muted hover:bg-surface-subtle"
-                    >
-                      <Building2 size={16} aria-hidden="true" />
-                      {language === "AR" ? "ملاك الأنشطة" : "Business owners"}
-                    </Link>
-                  </>
-                )}
                 <form action={logoutAction}>
                   <button
                     type="submit"

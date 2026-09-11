@@ -6,7 +6,7 @@ import test from "node:test";
 const source = (path: string) =>
   readFileSync(join(process.cwd(), path), "utf8");
 
-const page = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
+const page = source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx");
 const referralAction = source(
   "app/businesses/[slug]/customers/[customerId]/referral-actions.ts",
 );

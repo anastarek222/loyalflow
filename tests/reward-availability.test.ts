@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-import { getRewardAvailability } from "@/lib/rewards/availability";
+import { getRedeemableCatalogueRewards, getRewardAvailability } from "@/lib/rewards/availability";
 import { isRewardUnlockActionable } from "@/lib/rewards/expiration";
 
 const fallbackReward = { name: "Fallback", cost: 10 };
@@ -62,14 +62,41 @@ test("keeps all affordable catalogue alternatives while using the cheapest targe
   assert.deepEqual(result.affordableRewards.map((reward) => reward.id), ["five", "eight"]);
 });
 
+test("redeems affordable non-expiring catalogue rewards without requiring an unlock row", () => {
+  const now = new Date("2026-08-04T12:00:00Z");
+  const rewards = [
+    { id: "non-expiring", name: "Always available", cost: 5, isActive: true, expiresAfterDays: null },
+    { id: "expiring", name: "Seven days", cost: 5, isActive: true, expiresAfterDays: 7 },
+  ];
+  const redeemableIds = (customerActive: boolean, expiresAt?: Date) =>
+    getRedeemableCatalogueRewards({
+      customerActive,
+      balance: 5,
+      catalogueRewards: rewards,
+      rewardUnlocks: expiresAt ? [{ rewardId: "expiring", expiresAt, redeemedAt: null, expiredAt: null }] : [],
+      now,
+    }).map((reward) => reward.id);
+
+  assert.deepEqual(redeemableIds(true), ["non-expiring"]);
+  assert.deepEqual(redeemableIds(true, new Date("2026-08-05T12:00:00Z")), ["expiring", "non-expiring"]);
+  assert.deepEqual(redeemableIds(true, now), ["non-expiring"]);
+  assert.deepEqual(redeemableIds(false), []);
+});
+
 test("availability surfaces keep canonical reward semantics and scanner filters unusable unlocks", () => {
   const root = process.cwd();
-  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
+  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
     assert.match(readFileSync(join(root, file), "utf8"), /getRewardAvailability/);
   }
   const dashboard = readFileSync(join(root, "app/businesses/[slug]/page.tsx"), "utf8");
   assert.match(dashboard, /getBusinessRewardTargetCost/);
   const scanner = readFileSync(join(root, "app/businesses/[slug]/scan/customer/[customerId]/page.tsx"), "utf8");
-  assert.match(scanner, /usableUnlocks/);
-  assert.match(scanner, /isRewardUnlockActionable/);
+  assert.match(scanner, /getRedeemableCatalogueRewards/);
+  assert.match(scanner, /redeemableRewards/);
+});
+
+test("redemption action blocks the legacy fallback while an active catalogue reward exists", () => {
+  const action = readFileSync(join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts"), "utf8");
+  assert.match(action, /rewards:\s*\{[\s\S]*?where:\s*\{\s*isActive:\s*true\s*\}/);
+  assert.match(action, /if\s*\(\s*!rewardId\s*&&\s*business\.rewards\.length\s*>\s*0\s*\)/);
 });

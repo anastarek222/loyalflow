@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { BUSINESS_NAME_MAX_LENGTH } from "@/lib/business/field-limits";
 import { isValidOwnerPhone } from "@/lib/business-profile";
 import { COUNTRY_OPTIONS } from "@/lib/onboarding/countries";
 import { normalizeOwnerOnboardingPhone } from "@/lib/onboarding/owner-onboarding-validation";
@@ -16,7 +17,7 @@ const publicTrialInputSchema = z.object({
   lastName: z.string().trim().max(80).default(""),
   email: z.string().trim().max(255).email(),
   phone: z.string().trim().min(8).max(25),
-  businessName: z.string().trim().min(2).max(120),
+  businessName: z.string().trim().min(2).max(BUSINESS_NAME_MAX_LENGTH),
   country: z.string().trim().refine((value) => countryNames.has(value)),
   acceptTerms: z.literal("on"),
 });

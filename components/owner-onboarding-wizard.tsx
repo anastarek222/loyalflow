@@ -21,6 +21,10 @@ import {
 } from "@/lib/onboarding/owner-onboarding-card-preview";
 import { getOwnerOnboardingCopy } from "@/lib/onboarding/owner-onboarding-copy";
 import {
+  OWNER_ONBOARDING_DEFAULTS,
+  resolveOwnerOnboardingCountryProfile,
+} from "@/lib/onboarding/owner-onboarding-defaults";
+import {
   normalizeOwnerOnboardingPhone,
   type OwnerOnboardingFieldError,
   validateOwnerOnboardingStep,
@@ -64,11 +68,10 @@ export function OwnerOnboardingWizard({
   const stepHeadingRefs = useRef<Array<HTMLHeadingElement | null>>([]);
   const hasMountedRef = useRef(false);
   const [step, setStep] = useState(0);
-  const [country, setCountry] = useState(String(draft.country || "Egypt"));
-  const [currency, setCurrency] = useState(String(draft.currency || "EGP"));
-  const [timezone, setTimezone] = useState(
-    String(draft.timezone || "Africa/Cairo"),
-  );
+  const initialCountryProfile = resolveOwnerOnboardingCountryProfile(draft);
+  const [country, setCountry] = useState(initialCountryProfile.country);
+  const [currency, setCurrency] = useState(initialCountryProfile.currency);
+  const [timezone, setTimezone] = useState(initialCountryProfile.timezone);
   const [phone, setPhone] = useState(String(draft.contactPhone || ""));
   const [notice, setNotice] = useState("");
   const [logoPreview, setLogoPreview] = useState(String(draft.logoUrl || ""));
@@ -471,7 +474,9 @@ export function OwnerOnboardingWizard({
                 data-onboarding-field="loyaltyMode"
                 name="loyaltyMode"
                 aria-invalid={Boolean(fieldErrors.loyaltyMode)}
-                defaultValue={String(draft.loyaltyMode || "VISITS")}
+                defaultValue={String(
+                  draft.loyaltyMode || OWNER_ONBOARDING_DEFAULTS.loyaltyMode,
+                )}
                 onChange={updateCardPreview}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               >
@@ -486,7 +491,9 @@ export function OwnerOnboardingWizard({
                 data-onboarding-field="unitName"
                 name="unitName"
                 aria-invalid={Boolean(fieldErrors.unitName)}
-                defaultValue={String(draft.unitName || "Visit")}
+                defaultValue={String(
+                  draft.unitName || OWNER_ONBOARDING_DEFAULTS.unitName,
+                )}
                 onChange={updateCardPreview}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               />
@@ -509,7 +516,9 @@ export function OwnerOnboardingWizard({
                 data-onboarding-field="rewardName"
                 name="rewardName"
                 aria-invalid={Boolean(fieldErrors.rewardName)}
-                defaultValue={String(draft.rewardName || "Reward")}
+                defaultValue={String(
+                  draft.rewardName || OWNER_ONBOARDING_DEFAULTS.rewardName,
+                )}
                 onChange={updateCardPreview}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               />
@@ -522,7 +531,10 @@ export function OwnerOnboardingWizard({
                 aria-invalid={Boolean(fieldErrors.rewardThreshold)}
                 type="number"
                 min="1"
-                defaultValue={String(draft.rewardThreshold || 5)}
+                defaultValue={String(
+                  draft.rewardThreshold ||
+                    OWNER_ONBOARDING_DEFAULTS.rewardThreshold,
+                )}
                 onChange={updateCardPreview}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               />
@@ -535,7 +547,9 @@ export function OwnerOnboardingWizard({
                 aria-invalid={Boolean(fieldErrors.earnAmount)}
                 type="number"
                 min="1"
-                defaultValue={String(draft.earnAmount || 1)}
+                defaultValue={String(
+                  draft.earnAmount || OWNER_ONBOARDING_DEFAULTS.earnAmount,
+                )}
                 className="mt-2 min-h-12 w-full rounded-xl border px-4 py-3"
               />
             </label>
