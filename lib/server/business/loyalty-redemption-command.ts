@@ -1,6 +1,8 @@
 import type { FinancialOperationActor } from "@/lib/loyalty/operation-context";
 import type { ActivityRequestContext } from "@/lib/activity/request-context";
+import { getRewardLabel } from "@/lib/loyalty/operations";
 import {
+  FinancialOperationConflictError,
   isFinancialOperationAbortedError,
   recordRewardRedemption,
 } from "@/lib/loyalty/transactions";
@@ -16,7 +18,10 @@ export type LoyaltyRedemptionCommandResult =
       integrationJobId: string;
       integrationJobIds: readonly string[];
     }>
-  | Readonly<{ ok: false; reason: "REWARD_EXPIRED" | "INSUFFICIENT_BALANCE" }>;
+  | Readonly<{
+      ok: false;
+      reason: "REWARD_EXPIRED" | "REWARD_UNAVAILABLE" | "INSUFFICIENT_BALANCE";
+    }>;
 
 /**
  * Authoritative loyalty redemption transaction boundary.
@@ -46,8 +51,75 @@ export async function redeemLoyaltyRewardCommand(input: {
     return await prisma.$transaction(async (transaction) => {
       const now = new Date();
       let unlockId: string | null = null;
+      let effectiveCost = input.cost;
+      let effectiveRewardLabel = input.rewardLabel;
+      let effectiveRewardName = input.rewardName;
+      let effectiveRewardExpiresAfterDays = input.rewardExpiresAfterDays;
 
-      if (input.rewardId && input.rewardExpiresAfterDays) {
+      const existingOperation = await transaction.loyaltyTransaction.findUnique({
+        where: {
+          businessId_idempotencyKey: {
+            businessId: input.businessId,
+            idempotencyKey: input.idempotencyKey,
+          },
+        },
+        select: {
+          businessId: true,
+          customerId: true,
+          type: true,
+          amount: true,
+          rewardRedemption: {
+            select: {
+              rewardId: true,
+              cost: true,
+            },
+          },
+        },
+      });
+
+      if (existingOperation) {
+        if (
+          existingOperation.businessId !== input.businessId ||
+          existingOperation.customerId !== input.customerId ||
+          existingOperation.type !== "REDEEM" ||
+          existingOperation.amount !== -input.cost ||
+          existingOperation.rewardRedemption?.rewardId !==
+            (input.rewardId ?? null) ||
+          existingOperation.rewardRedemption?.cost !== input.cost
+        ) {
+          throw new FinancialOperationConflictError();
+        }
+      } else if (input.rewardId) {
+        const canonicalReward = await transaction.reward.findFirst({
+          where: {
+            id: input.rewardId,
+            businessId: input.businessId,
+            isActive: true,
+          },
+          select: {
+            name: true,
+            type: true,
+            code: true,
+            cost: true,
+            expiresAfterDays: true,
+          },
+        });
+
+        if (!canonicalReward) {
+          return { ok: false, reason: "REWARD_UNAVAILABLE" } as const;
+        }
+
+        effectiveCost = canonicalReward.cost;
+        effectiveRewardName = canonicalReward.name;
+        effectiveRewardLabel = getRewardLabel(
+          canonicalReward.type,
+          canonicalReward.name,
+          canonicalReward.code,
+        );
+        effectiveRewardExpiresAfterDays = canonicalReward.expiresAfterDays;
+      }
+
+      if (input.rewardId && effectiveRewardExpiresAfterDays) {
         const unlock = await transaction.rewardUnlock.findFirst({
           where: {
             businessId: input.businessId,
@@ -86,7 +158,7 @@ export async function redeemLoyaltyRewardCommand(input: {
               await transaction.businessActivity.create({
                 data: {
                   type: "REWARD_EXPIRED",
-                  description: `انتهت صلاحية ${input.rewardName}`,
+                  description: `انتهت صلاحية ${effectiveRewardName}`,
                   businessId: input.businessId,
                   customerId: input.customerId,
                   createdById: input.actor.id,
@@ -97,7 +169,7 @@ export async function redeemLoyaltyRewardCommand(input: {
             await transaction.businessActivity.create({
               data: {
                 type: "REWARD_REDEMPTION_BLOCKED",
-                description: `تم رفض استبدال ${input.rewardName} لانتهاء الصلاحية`,
+                description: `تم رفض استبدال ${effectiveRewardName} لانتهاء الصلاحية`,
                 businessId: input.businessId,
                 customerId: input.customerId,
                 createdById: input.actor.id,
@@ -117,9 +189,9 @@ export async function redeemLoyaltyRewardCommand(input: {
         branchId: input.branchId,
         attributedStaffId: input.attributedStaffId,
         activityContext: input.activityContext,
-        cost: input.cost,
-        rewardLabel: input.rewardLabel,
-        rewardName: input.rewardName,
+        cost: effectiveCost,
+        rewardLabel: effectiveRewardLabel,
+        rewardName: effectiveRewardName,
         rewardId: input.rewardId,
         ...(unlockId ? { unlockId } : {}),
         idempotencyKey: input.idempotencyKey,
@@ -141,7 +213,7 @@ export async function redeemLoyaltyRewardCommand(input: {
         event: "REWARD_REDEEMED",
         eventKey: input.idempotencyKey,
         balance,
-        rewardName: input.rewardName,
+        rewardName: effectiveRewardName,
       });
       const integrationJobIds = [sheetsJob.id, redeemedJob?.id].filter(
         (jobId): jobId is string => Boolean(jobId),
