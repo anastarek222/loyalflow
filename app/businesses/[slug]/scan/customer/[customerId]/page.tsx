@@ -105,6 +105,9 @@ export default async function ScanCustomerPage({
     businessId: business.id,
     actor: session.user,
   });
+  const branchAssignmentBlocked =
+    operationContextOptions.branchRequired &&
+    operationContextOptions.branches.length === 0;
   const operationContextFields = (disabled: boolean, idPrefix: string) => (
     <LoyaltyOperationContextFields
       branches={operationContextOptions.branches}
@@ -113,7 +116,7 @@ export default async function ScanCustomerPage({
       staffAttributionEnabled={business.staffAttributionEnabled}
       staffAttributionRequired={business.staffAttributionRequired}
       idPrefix={idPrefix}
-      disabled={disabled}
+      disabled={disabled || branchAssignmentBlocked}
       language={language}
     />
   );
@@ -400,7 +403,10 @@ export default async function ScanCustomerPage({
                       value={randomUUID()}
                     />
                     <input type="hidden" name="operationOrigin" value="SCAN" />
-                    <ScanActionButton language={language}>
+                    <ScanActionButton
+                      language={language}
+                      disabled={branchAssignmentBlocked}
+                    >
                       {earnActionLabel(loyaltyPresentation)}
                     </ScanActionButton>
                   </form>
@@ -466,7 +472,10 @@ export default async function ScanCustomerPage({
                                 !canRedeem,
                                 `scan-redeem-${reward.id}`,
                               )}
-                              <ScanActionButton language={language}>
+                              <ScanActionButton
+                                language={language}
+                                disabled={branchAssignmentBlocked}
+                              >
                                 {copy.redeemReward}
                               </ScanActionButton>
                             </form>
