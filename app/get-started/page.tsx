@@ -61,6 +61,7 @@ export default async function GetStartedPage() {
               markImageClassName="p-1"
               wordmarkClassName="h-7 w-auto max-w-40"
               wordmarkSize="marketing"
+              themeAdaptiveWordmark
               textClassName="text-xl"
             />
           </Link>

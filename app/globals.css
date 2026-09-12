@@ -169,12 +169,25 @@
   object-fit: contain;
 }
 
+html[data-marketing-theme="dark"]
+  .lf-marketing-surface
+  [data-platform-brand-wordmark-theme="light"] {
+  display: none;
+}
+
+html[data-marketing-theme="dark"]
+  .lf-marketing-surface
+  [data-platform-brand-wordmark-theme="dark"] {
+  display: block;
+}
+
 .lf-marketing-home {
   font-family: var(--font-marketing-sans), var(--lf-font-sans);
 }
 
 .lf-marketing-home:lang(en) > section :is(h1, h2, h3) {
-  font-family: var(--font-marketing-editorial), Georgia, "Times New Roman", serif;
+  font-family:
+    var(--font-marketing-editorial), Georgia, "Times New Roman", serif;
   font-weight: 600;
 }
 

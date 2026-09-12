@@ -105,6 +105,7 @@ export function MarketingHeader({
             <PlatformBrandIdentity
               locale={locale}
               showMark={false}
+              themeAdaptiveWordmark
               fallback="sparkles"
               fallbackText={brand}
               markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
@@ -132,7 +133,7 @@ export function MarketingHeader({
 
           <div className="hidden items-center gap-2 lg:flex">
             <MarketingThemeSwitcher locale={locale} />
-            <LanguageSwitcher locale={locale} />
+            <LanguageSwitcher locale={locale} alternateOnly />
             <Link
               href="/login"
               className="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-foreground transition-colors hover:bg-surface"
@@ -190,6 +191,7 @@ export function MarketingHeader({
                       <PlatformBrandIdentity
                         locale={locale}
                         showMark={false}
+                        themeAdaptiveWordmark
                         fallback="sparkles"
                         fallbackText={brand}
                         markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
@@ -228,7 +230,7 @@ export function MarketingHeader({
                       locale={locale}
                       className="w-full"
                     />
-                    <LanguageSwitcher locale={locale} />
+                    <LanguageSwitcher locale={locale} alternateOnly />
                     <Link
                       href="/login"
                       onClick={() => setIsOpen(false)}

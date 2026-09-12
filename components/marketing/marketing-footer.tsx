@@ -34,6 +34,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
               <PlatformBrandIdentity
                 locale={locale}
                 showMark={false}
+                themeAdaptiveWordmark
                 fallback="sparkles"
                 fallbackText={copy("common.brand")}
                 markClassName="flex size-7 items-center justify-center text-xl text-primary"
@@ -161,7 +162,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <MarketingThemeSwitcher locale={locale} />
-            <LanguageSwitcher locale={locale} />
+            <LanguageSwitcher locale={locale} alternateOnly />
             <Link
               href="/login"
               className="inline-flex min-h-11 items-center px-3 text-sm font-bold text-foreground-muted hover:text-primary"
