@@ -60,6 +60,7 @@ export default async function GetStartedPage() {
               markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
               markImageClassName="p-1"
               wordmarkClassName="h-7 w-auto max-w-40"
+              wordmarkSize="marketing"
               textClassName="text-xl"
             />
           </Link>

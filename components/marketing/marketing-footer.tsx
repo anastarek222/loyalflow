@@ -33,10 +33,12 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             >
               <PlatformBrandIdentity
                 locale={locale}
+                showMark={false}
                 fallback="sparkles"
                 fallbackText={copy("common.brand")}
                 markClassName="flex size-7 items-center justify-center text-xl text-primary"
                 wordmarkClassName="h-8 w-auto max-w-40"
+                wordmarkSize="marketing-footer"
               />
             </Link>
             <p className="mt-5 max-w-sm text-sm leading-7 text-foreground-muted">
