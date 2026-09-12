@@ -39,7 +39,7 @@ test("WhatsApp sender consumes shared Reward Truth instead of legacy threshold m
   assert.match(source, /remaining:\s*rewardAvailability\.remaining/);
   assert.match(
     source,
-    /reward:\s*payload\.rewardName\s*\?\?\s*rewardAvailability\.defaultReward\.name/,
+    /reward:[\s\S]{0,120}publishedSubjectName[\s\S]{0,80}payload\.rewardName[\s\S]{0,80}rewardAvailability\.defaultReward\.name/,
   );
   assert.doesNotMatch(
     source,

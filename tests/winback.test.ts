@@ -20,8 +20,9 @@ test("uses the existing deterministic inactive segmentation for a win-back audie
       {
         isActive: true,
         createdAt: { lt: new Date("2026-06-20T00:00:00.000Z") },
-        lifetimeEarned: { lt: 25 },
-        transactions: { none: { createdAt: { gte: new Date("2026-05-21T00:00:00.000Z") } } },
+        transactions: {
+          none: { createdAt: { gte: new Date("2026-05-21T00:00:00.000Z") } },
+        },
       },
     ],
   });
@@ -42,7 +43,7 @@ test("renders a staff-reviewed win-back message without sending it", () => {
 
   assert.equal(
     message,
-    "Hello Mona, 3 visits: https://app.example.com/card/token"
+    "Hello Mona, 3 visits: https://app.example.com/card/token",
   );
 });
 
