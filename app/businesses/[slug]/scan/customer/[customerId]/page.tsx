@@ -173,7 +173,7 @@ export default async function ScanCustomerPage({
   const dateFormatter = new Intl.DateTimeFormat(getLanguageLocale(language), {
     dateStyle: "short",
     timeStyle: "short",
-    timeZone: business.timezone,
+    timeZone: business.timezone ?? "UTC",
   });
   const success =
     query.success === "earned" || query.success === "redeemed"
