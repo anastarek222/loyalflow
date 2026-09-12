@@ -20,7 +20,7 @@ import {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{ success?: string; error?: string; queued?: string }>;
 };
 const rewardType = (type: string, language: "AR" | "EN") =>
   ({
@@ -35,6 +35,9 @@ export default async function RewardsPage({ params, searchParams }: Props) {
   if (!session?.user) redirect("/login");
   const { slug } = await params;
   const query = await searchParams;
+  const queuedCount = /^\d+$/.test(query.queued ?? "")
+    ? Number(query.queued)
+    : null;
   const [user, business] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -90,6 +93,11 @@ export default async function RewardsPage({ params, searchParams }: Props) {
           {language === "AR"
             ? "تم حفظ كتالوج المكافآت."
             : "Reward catalog saved."}
+          {queuedCount !== null
+            ? language === "AR"
+              ? ` تم تجهيز ${queuedCount} رسالة WhatsApp للإرسال الآمن.`
+              : ` ${queuedCount} WhatsApp deliveries were queued safely.`
+            : null}
         </p>
       ) : null}
       {query.error ? (
@@ -98,7 +106,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
           className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"
         >
           {query.error === "subscription-restricted"
-              ? language === "AR"
+            ? language === "AR"
               ? "لا تسمح حالة الاشتراك الحالية بإنشاء مكافأة أو تغيير بياناتها أو حالتها. تظل المكافآت والبيانات الحالية متاحة للقراءة."
               : "The current subscription state does not allow creating or changing a reward. Existing rewards and data remain readable."
             : language === "AR"
@@ -203,14 +211,22 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                 className="mt-2 min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               >
                 <option value="GIFT">{rewardType("GIFT", language)}</option>
-                <option value="PROMO_CODE">{rewardType("PROMO_CODE", language)}</option>
-                <option value="DISCOUNT">{rewardType("DISCOUNT", language)}</option>
+                <option value="PROMO_CODE">
+                  {rewardType("PROMO_CODE", language)}
+                </option>
+                <option value="DISCOUNT">
+                  {rewardType("DISCOUNT", language)}
+                </option>
                 <option value="CUSTOM">{rewardType("CUSTOM", language)}</option>
               </select>
             </label>
             <Field
               name="code"
-              label={language === "AR" ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)" : "Code (required for promo code rewards)"}
+              label={
+                language === "AR"
+                  ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)"
+                  : "Code (required for promo code rewards)"
+              }
             />
             <label className="text-sm font-semibold text-foreground-muted">
               {language === "AR" ? "الوصف" : "Description"}
@@ -415,15 +431,27 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                             defaultValue={reward.type}
                             className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3"
                           >
-                            <option value="GIFT">{rewardType("GIFT", language)}</option>
-                            <option value="PROMO_CODE">{rewardType("PROMO_CODE", language)}</option>
-                            <option value="DISCOUNT">{rewardType("DISCOUNT", language)}</option>
-                            <option value="CUSTOM">{rewardType("CUSTOM", language)}</option>
+                            <option value="GIFT">
+                              {rewardType("GIFT", language)}
+                            </option>
+                            <option value="PROMO_CODE">
+                              {rewardType("PROMO_CODE", language)}
+                            </option>
+                            <option value="DISCOUNT">
+                              {rewardType("DISCOUNT", language)}
+                            </option>
+                            <option value="CUSTOM">
+                              {rewardType("CUSTOM", language)}
+                            </option>
                           </select>
                         </label>
                         <Field
                           name="code"
-                          label={language === "AR" ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)" : "Code (required for promo code rewards)"}
+                          label={
+                            language === "AR"
+                              ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)"
+                              : "Code (required for promo code rewards)"
+                          }
                           defaultValue={reward.code ?? ""}
                         />
                         <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
