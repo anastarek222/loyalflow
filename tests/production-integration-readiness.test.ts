@@ -80,17 +80,27 @@ test("WhatsApp settings report fail-closed WABA and business-scoped automatic de
 
   assert.match(page, /getWhatsAppProviderReadiness\(\)/);
   assert.match(page, /getBusinessWhatsAppAutomaticReadiness/);
-  assert.match(page, /const senderReady = Boolean\(credential\?\.wabaId\);/);
-  assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
   assert.match(
     page,
-    /providerReadiness\.providerReady\s*&&\s*senderReady\s*&&\s*automaticTemplateReadiness\.ready/,
+    /const senderReady = Boolean\([\s\S]{0,120}credential\?\.wabaId\?\.trim\(\)[\s\S]{0,120}credential\.phoneNumberId\.trim\(\)[\s\S]{0,40}\);/,
+  );
+  assert.doesNotMatch(page, /providerReadiness\.globalSenderReady/);
+  assert.match(page, /getBusinessWhatsAppConnectionReadiness\(\{/);
+  assert.match(page, /providerReady: providerReadiness\.providerReady/);
+  assert.match(page, /senderReady,/);
+  assert.match(page, /templatesReady: automaticTemplateReadiness\.ready/);
+  assert.match(
+    page,
+    /const deliveryReady =\s*connectionReadiness\.automaticDeliveryReady && !automation\.paused/,
   );
   assert.doesNotMatch(page, /providerReadiness\.missingProviderConfig\.join/);
   assert.match(page, /Automatic delivery is still being prepared/);
   assert.match(page, /Meta setup and required message approvals are complete/);
   assert.match(page, /WhatsApp message approval is incomplete/);
-  assert.match(page, /No automatic WhatsApp message is enabled/);
+  assert.match(
+    page,
+    /The business number is connected\. Enable at least one automatic message when ready\./,
+  );
   assert.match(page, /binding\?\.wabaId === credential\.wabaId/);
   assert.match(page, /name="wabaId"/);
   assert.match(page, /Submit current copy/);

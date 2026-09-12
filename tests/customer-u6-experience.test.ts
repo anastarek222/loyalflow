@@ -12,7 +12,7 @@ import { canPerform } from "../lib/permissions";
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 const list = source("app/businesses/[slug]/customers/page.tsx");
-const detail = source("app/businesses/[slug]/customers/[customerId]/page.tsx");
+const detail = source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx");
 
 test("U6 customer list keeps every query tenant scoped and paginated", () => {
   assert.match(list, /businessId: business\.id/);

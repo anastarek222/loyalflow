@@ -7,7 +7,7 @@ const source = (path: string) =>
 
 test("customer operations keep the daily loyalty action visible and collapse secondary work independently", async () => {
   const [page, disclosure] = await Promise.all([
-    source("app/businesses/[slug]/customers/[customerId]/page.tsx"),
+    source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx"),
     source("components/customer-profile/operational-disclosure.tsx"),
   ]);
 
@@ -26,7 +26,7 @@ test("customer operations keep the daily loyalty action visible and collapse sec
 
 test("customer activity is bounded to ten recent events with a filtered full-history destination", async () => {
   const [page, timeline] = await Promise.all([
-    source("app/businesses/[slug]/customers/[customerId]/page.tsx"),
+    source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx"),
     source("components/customer-profile/activity-timeline.tsx"),
   ]);
 
@@ -44,7 +44,7 @@ test("customer activity is bounded to ten recent events with a filtered full-his
 
 test("action feedback opens only its relevant operational section", async () => {
   const page = await source(
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
   );
 
   assert.match(page, /query\.error === "tag-invalid"/);

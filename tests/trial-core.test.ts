@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
 import {
   TRIAL_DURATION_DAYS,
@@ -13,58 +14,61 @@ describe("trial-core", () => {
     const startedAt = new Date("2026-08-31T12:00:00.000Z");
     const trial = createTrialWindow(startedAt);
 
-    expect(TRIAL_DURATION_DAYS).toBe(14);
-    expect(trial.trialStartedAt.toISOString()).toBe(
+    assert.equal(TRIAL_DURATION_DAYS, 14);
+    assert.equal(
+      trial.trialStartedAt.toISOString(),
       "2026-08-31T12:00:00.000Z",
     );
-    expect(trial.trialEndsAt.toISOString()).toBe("2026-09-14T12:00:00.000Z");
-    expect(
+    assert.equal(trial.trialEndsAt.toISOString(), "2026-09-14T12:00:00.000Z");
+    assert.equal(
       trial.trialEndsAt.getTime() - trial.trialStartedAt.getTime(),
-    ).toBe(TRIAL_DURATION_MS);
+      TRIAL_DURATION_MS,
+    );
   });
 
   it("calculates whole days remaining without dropping partial days", () => {
     const trialEndsAt = new Date("2026-09-14T12:00:00.000Z");
 
-    expect(
+    assert.equal(
       getTrialDaysRemaining({
         now: new Date("2026-09-01T12:00:00.000Z"),
         trialEndsAt,
       }),
-    ).toBe(13);
-    expect(
+      13,
+    );
+    assert.equal(
       getTrialDaysRemaining({
         now: new Date("2026-09-14T11:00:00.000Z"),
         trialEndsAt,
       }),
-    ).toBe(1);
-    expect(
+      1,
+    );
+    assert.equal(
       getTrialDaysRemaining({
         now: new Date("2026-09-14T12:00:00.000Z"),
         trialEndsAt,
       }),
-    ).toBe(0);
+      0,
+    );
   });
 
   it("marks only the final trial day for reminder UX", () => {
     const trialEndsAt = new Date("2026-09-14T12:00:00.000Z");
 
-    expect(
-      getTrialState({
-        now: new Date("2026-09-13T12:00:00.000Z"),
-        trialEndsAt,
-      }),
-    ).toMatchObject({
-      isTrialActive: true,
-      isTrialExpired: false,
-      isFinalDay: true,
-      daysRemaining: 1,
+    const finalDay = getTrialState({
+      now: new Date("2026-09-13T12:00:00.000Z"),
+      trialEndsAt,
     });
-    expect(
+    assert.equal(finalDay.isTrialActive, true);
+    assert.equal(finalDay.isTrialExpired, false);
+    assert.equal(finalDay.isFinalDay, true);
+    assert.equal(finalDay.daysRemaining, 1);
+    assert.equal(
       getTrialState({
         now: new Date("2026-09-13T11:59:59.999Z"),
         trialEndsAt,
       }).isFinalDay,
-    ).toBe(false);
+      false,
+    );
   });
 });

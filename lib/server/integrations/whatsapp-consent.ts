@@ -5,6 +5,10 @@ import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import prisma from "@/lib/prisma";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 import {
+  persistCustomerWhatsAppPhone,
+  setCustomerWhatsAppConsent,
+} from "@/lib/server/integrations/customer-whatsapp-consent-state";
+import {
   extractWhatsAppOptOutRequests,
   type WhatsAppOptOutRequest,
 } from "@/lib/server/integrations/whatsapp-webhook";
@@ -12,21 +16,32 @@ import {
 type WhatsAppConsentTarget = Readonly<{
   id: string;
   businessId: string;
+  whatsappPhoneE164: string | null;
 }>;
 
 async function findConsentTargets(
   transaction: Prisma.TransactionClient,
   request: WhatsAppOptOutRequest,
 ) {
+  const canonicalPhone = `+${request.senderPhone}`;
+
   return transaction.$queryRaw<WhatsAppConsentTarget[]>`
     SELECT
       customer."id",
-      customer."businessId"
+      customer."businessId",
+      customer."whatsappPhoneE164"
     FROM "Customer" AS customer
     INNER JOIN "BusinessWhatsAppCredential" AS credential
       ON credential."businessId" = customer."businessId"
-    WHERE regexp_replace(customer."phone", '[^0-9]', '', 'g') = ${request.senderPhone}
+    WHERE (
+        customer."whatsappPhoneE164" = ${canonicalPhone}
+        OR (
+          customer."whatsappPhoneE164" IS NULL
+          AND regexp_replace(customer."phone", '[^0-9]', '', 'g') = ${request.senderPhone}
+        )
+      )
       AND customer."whatsappOptInAt" IS NOT NULL
+      AND customer."whatsappOptedOutAt" IS NULL
       AND credential."phoneNumberId" = ${request.phoneNumberId}
     LIMIT 50
   `;
@@ -35,11 +50,10 @@ async function findConsentTargets(
 /**
  * Applies explicit customer opt-out messages received from Meta's signed
  * WhatsApp webhook. Consent revocation is scoped to Businesses whose explicit
- * WhatsApp sender credential matches the webhook phone-number ID. There is no
- * server-wide sender fallback: an unknown sender identity revokes nothing.
- *
- * The worker already re-checks whatsappOptInAt immediately before every send,
- * so clearing consent here also blocks previously queued notifications.
+ * WhatsApp sender credential matches the webhook phone-number ID. Canonical
+ * E.164 is the primary identity; exact legacy digit matching is used only for
+ * rows that have not yet persisted canonical identity. Historical opt-in is
+ * retained while whatsappOptedOutAt becomes the authoritative revocation.
  */
 export async function revokeWhatsAppConsentFromWebhook(payload: unknown) {
   const requests = extractWhatsAppOptOutRequests(payload);
@@ -53,17 +67,24 @@ export async function revokeWhatsAppConsentFromWebhook(payload: unknown) {
       const targets = await findConsentTargets(transaction, request);
       let transactionRevokedCount = 0;
       const transactionJobIds: string[] = [];
+      const changedAt = new Date();
 
       for (const target of targets) {
-        const revoked = await transaction.customer.updateMany({
-          where: {
-            id: target.id,
+        if (!target.whatsappPhoneE164) {
+          await persistCustomerWhatsAppPhone(transaction, {
             businessId: target.businessId,
-            whatsappOptInAt: { not: null },
-          },
-          data: { whatsappOptInAt: null },
+            customerId: target.id,
+            whatsappPhoneE164: `+${request.senderPhone}`,
+          });
+        }
+
+        const revoked = await setCustomerWhatsAppConsent(transaction, {
+          businessId: target.businessId,
+          customerId: target.id,
+          consent: "OPT_OUT",
+          changedAt,
         });
-        if (revoked.count !== 1) continue;
+        if (revoked !== 1) continue;
 
         const activity = await transaction.businessActivity.create({
           data: {

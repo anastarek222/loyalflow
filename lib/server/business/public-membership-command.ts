@@ -1,6 +1,7 @@
 import type { PublicMembershipRegistration } from "@loyalflow/contracts/customers/public-membership";
 
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
 import {
   generateCustomerCode,
@@ -14,11 +15,19 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { canRecordReferral } from "@/lib/referrals/code";
 import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
+import {
+  persistCustomerWhatsAppPhone,
+  setCustomerWhatsAppConsent,
+} from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 type PublicMembershipFailure = Readonly<{
   ok: false;
-  reason: "BUSINESS_UNAVAILABLE" | "DUPLICATE" | "PLAN_LIMIT";
+  reason:
+    | "BUSINESS_UNAVAILABLE"
+    | "DUPLICATE"
+    | "INVALID_PHONE"
+    | "PLAN_LIMIT";
 }>;
 
 export type PublicMembershipCommandResult =
@@ -31,11 +40,6 @@ export type PublicMembershipCommandResult =
 
 /**
  * Authoritative public membership persistence boundary.
- *
- * The public Server Action keeps transport validation, rate limiting,
- * presentation preflight, redirects, revalidation and post-commit integrations.
- * This command owns the serializable tenant/customer/referral write transaction
- * and atomically records durable integration jobs for the committed membership.
  */
 export async function createPublicMembershipCommand(input: {
   businessId: string;
@@ -51,6 +55,7 @@ export async function createPublicMembershipCommand(input: {
           isActive: true,
           plan: true,
           slug: true,
+          country: true,
         },
       });
       if (!business?.isActive) {
@@ -67,11 +72,16 @@ export async function createPublicMembershipCommand(input: {
         return { ok: false, reason: "BUSINESS_UNAVAILABLE" } as const;
       }
 
+      const phone = normalizePhoneE164(input.customer.phone, business.country);
+      if (!phone) {
+        return { ok: false, reason: "INVALID_PHONE" } as const;
+      }
+
       const existingCustomer = await transaction.customer.findUnique({
         where: {
           businessId_phone: {
             businessId: input.businessId,
-            phone: input.customer.phone,
+            phone,
           },
         },
         select: { id: true },
@@ -109,7 +119,7 @@ export async function createPublicMembershipCommand(input: {
         data: {
           firstName: input.customer.firstName,
           lastName: input.customer.lastName || null,
-          phone: input.customer.phone,
+          phone,
           customerCode,
           businessId: input.businessId,
           publicToken: createPublicCardToken(),
@@ -117,6 +127,19 @@ export async function createPublicMembershipCommand(input: {
         },
         select: { id: true, publicToken: true },
       });
+      await persistCustomerWhatsAppPhone(transaction, {
+        businessId: input.businessId,
+        customerId: createdCustomer.id,
+        whatsappPhoneE164: phone,
+      });
+      if (input.whatsappOptIn) {
+        await setCustomerWhatsAppConsent(transaction, {
+          businessId: input.businessId,
+          customerId: createdCustomer.id,
+          consent: "OPT_IN",
+          changedAt: new Date(),
+        });
+      }
 
       const activity = await transaction.businessActivity.create({
         data: {

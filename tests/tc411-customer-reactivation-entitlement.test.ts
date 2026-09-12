@@ -16,7 +16,7 @@ const recordCommand = source(
   "lib/server/business/customer-record-maintenance-command.ts",
 );
 const customerPage = source(
-  "app/businesses/[slug]/customers/[customerId]/page.tsx",
+  "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
 );
 
 test("TC4.11 guards customer reactivation as OPERATE before authoritative writes", () => {

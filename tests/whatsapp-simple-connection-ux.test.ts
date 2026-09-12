@@ -27,7 +27,8 @@ test("Owner sees Connect WhatsApp as the primary path and technical fields only 
   assert.ok(wabaField > advancedSetup);
   assert.ok(phoneField > advancedSetup);
   assert.ok(tokenField > advancedSetup);
-  assert.match(page, /You do not need to enter a Phone Number ID, WABA ID, or Access Token yourself/);
+  assert.match(page, /The official connection flow is built into Tanee/);
+  assert.match(page, /Use these fields only for support or advanced manual setup/);
   assert.doesNotMatch(page, /missingProviderConfig\.join/);
 });
 

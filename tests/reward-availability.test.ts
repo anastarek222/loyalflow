@@ -85,7 +85,7 @@ test("redeems affordable non-expiring catalogue rewards without requiring an unl
 
 test("availability surfaces keep canonical reward semantics and scanner filters unusable unlocks", () => {
   const root = process.cwd();
-  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
+  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
     assert.match(readFileSync(join(root, file), "utf8"), /getRewardAvailability/);
   }
   const dashboard = readFileSync(join(root, "app/businesses/[slug]/page.tsx"), "utf8");

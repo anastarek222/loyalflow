@@ -32,7 +32,7 @@ test("mobile Customers keeps secondary operations collapsed and rows compact", (
 
 test("customer details exposes fast mobile actions and compact closed sections", () => {
   const detail = source(
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
   );
   const disclosure = source(
     "components/customer-profile/operational-disclosure.tsx",

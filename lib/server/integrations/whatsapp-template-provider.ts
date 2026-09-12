@@ -10,6 +10,7 @@ import {
   type WhatsAppTemplateApprovalStatus,
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
 import { compileWhatsAppTemplateForMeta } from "@/lib/whatsapp-templates";
 
@@ -39,17 +40,23 @@ const LANGUAGE_CODE = {
   EN: "en_US",
 } as const;
 
-const EVENT_NAME = {
+const EVENT_NAME: Record<AutomaticCustomerMessageEvent, string> = {
   WELCOME: "welcome",
   BALANCE_UPDATED: "balance",
-  REWARD_READY: "reward",
-} as const;
+  REWARD_READY: "reward_ready",
+  REWARD_REDEEMED: "reward_redeemed",
+  NEW_REWARD: "new_reward",
+  NEW_OFFER: "new_offer",
+};
 
-const EVENT_CATEGORY = {
+const EVENT_CATEGORY: Record<AutomaticCustomerMessageEvent, "MARKETING" | "UTILITY"> = {
   WELCOME: "MARKETING",
   BALANCE_UPDATED: "UTILITY",
   REWARD_READY: "MARKETING",
-} as const;
+  REWARD_REDEEMED: "UTILITY",
+  NEW_REWARD: "MARKETING",
+  NEW_OFFER: "MARKETING",
+};
 
 function normalizeApprovalStatus(value: unknown): WhatsAppTemplateApprovalStatus {
   return value === "APPROVED" || value === "PENDING" || value === "REJECTED"
@@ -255,11 +262,8 @@ async function persistBindingStatus(
   });
 }
 
-async function providerContext(
-  businessId: string,
-  event: AutomaticCustomerMessageEvent,
-) {
-  const [business, credential] = await Promise.all([
+async function ownerMessagesForBusiness(businessId: string) {
+  const [business, automation] = await Promise.all([
     prisma.business.findUnique({
       where: { id: businessId },
       select: {
@@ -267,11 +271,34 @@ async function providerContext(
         whatsappWelcomeMessage: true,
         whatsappBalanceMessage: true,
         whatsappRewardMessage: true,
+        whatsappRedeemedMessage: true,
       },
     }),
+    getBusinessWhatsAppAutomationSettings(prisma, businessId),
+  ]);
+  if (!business || !automation) return null;
+  return {
+    business,
+    messages: {
+      whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+      whatsappBalanceMessage: business.whatsappBalanceMessage,
+      whatsappRewardMessage: business.whatsappRewardMessage,
+      whatsappRedeemedMessage: business.whatsappRedeemedMessage,
+      newRewardMessage: automation.newRewardMessage,
+      newOfferMessage: automation.newOfferMessage,
+    },
+  } as const;
+}
+
+async function providerContext(
+  businessId: string,
+  event: AutomaticCustomerMessageEvent,
+) {
+  const [ownerContext, credential] = await Promise.all([
+    ownerMessagesForBusiness(businessId),
     getBusinessWhatsAppCredential(prisma, businessId),
   ]);
-  if (!business) {
+  if (!ownerContext) {
     return { status: "failure", reason: "WHATSAPP_BUSINESS_NOT_FOUND", retryable: false } as const;
   }
   if (!credential?.wabaId) {
@@ -290,7 +317,7 @@ async function providerContext(
     return { status: "failure", reason: "WHATSAPP_BUSINESS_CREDENTIAL_INVALID", retryable: false } as const;
   }
 
-  const ownerTemplate = ownerMessageForAutomaticEvent(event, business);
+  const ownerTemplate = ownerMessageForAutomaticEvent(event, ownerContext.messages);
   if (!ownerTemplate) {
     return { status: "failure", reason: "WHATSAPP_OWNER_MESSAGE_NOT_CONFIGURED", retryable: false } as const;
   }
@@ -300,7 +327,7 @@ async function providerContext(
     return { status: "failure", reason: "WHATSAPP_OWNER_MESSAGE_UNSUPPORTED_TOKEN", retryable: false } as const;
   }
 
-  const language = business.cardDefaultLanguage;
+  const language = ownerContext.business.cardDefaultLanguage;
   const languageCode = LANGUAGE_CODE[language];
   const contentSha256 = hashBusinessWhatsAppTemplate(ownerTemplate);
   const templateName = businessTemplateName({
@@ -492,19 +519,11 @@ export async function refreshBusinessWhatsAppTemplateFromMeta(
   businessId: string,
   event: AutomaticCustomerMessageEvent,
 ): Promise<MetaTemplateResult> {
-  const [credential, business] = await Promise.all([
+  const [credential, ownerContext] = await Promise.all([
     getBusinessWhatsAppCredential(prisma, businessId),
-    prisma.business.findUnique({
-      where: { id: businessId },
-      select: {
-        cardDefaultLanguage: true,
-        whatsappWelcomeMessage: true,
-        whatsappBalanceMessage: true,
-        whatsappRewardMessage: true,
-      },
-    }),
+    ownerMessagesForBusiness(businessId),
   ]);
-  if (!business) {
+  if (!ownerContext) {
     return { status: "failure", reason: "WHATSAPP_BUSINESS_NOT_FOUND", retryable: false };
   }
   if (!credential?.wabaId) {
@@ -514,7 +533,7 @@ export async function refreshBusinessWhatsAppTemplateFromMeta(
   const binding = await getBusinessWhatsAppTemplateBinding(prisma, {
     businessId,
     event,
-    language: business.cardDefaultLanguage,
+    language: ownerContext.business.cardDefaultLanguage,
   });
   if (!binding) {
     return {
@@ -531,7 +550,7 @@ export async function refreshBusinessWhatsAppTemplateFromMeta(
     };
   }
 
-  const ownerTemplate = ownerMessageForAutomaticEvent(event, business);
+  const ownerTemplate = ownerMessageForAutomaticEvent(event, ownerContext.messages);
   if (!ownerTemplate) {
     await persistBindingStatus(binding, "UNKNOWN");
     return {
