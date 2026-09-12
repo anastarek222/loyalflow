@@ -14,16 +14,22 @@ jobs:
   whatsapp-v1-uat-v2:
     if: github.head_ref == 'uat/whatsapp-v1-authenticated-v2-20260912'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     env:
       CI: "true"
       NODE_ENV: test
-      STAGING_UAT_BASE_URL: https://loyalflow-f0x8qvjms-anas-tarek.vercel.app
       LOYALFLOW_ENVIRONMENT: staging
       VERCEL_ENV: preview
       LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
       LOYALFLOW_STAGING_DATABASE: neondb
       AUTH_SECRET: whatsapp-uat-v2-fixture-only-auth-secret-2026-not-runtime
+      BROWSER_UAT_PORT: "3000"
+      UAT_BASE_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      AUTH_URL: http://127.0.0.1:3000
+      AUTH_TRUST_HOST: "true"
+      UPSTASH_REDIS_REST_URL: http://127.0.0.1:3199
+      UPSTASH_REDIS_REST_TOKEN: whatsapp-uat-v2-rate-limit-token
 
     steps:
       - name: Generate ephemeral handoff key
@@ -80,7 +86,7 @@ jobs:
           const d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(p.iv,'base64'));
           d.setAuthTag(Buffer.from(p.tag,'base64'));
           const values = JSON.parse(Buffer.concat([d.update(Buffer.from(p.data,'base64')), d.final()]).toString('utf8'));
-          for (const name of ['DATABASE_URL','UAT_FIXTURE_PASSWORD','VERCEL_SHARE_URL','LOYALFLOW_PRODUCTION_DATABASE_HOST']) {
+          for (const name of ['DATABASE_URL','UAT_FIXTURE_PASSWORD','LOYALFLOW_PRODUCTION_DATABASE_HOST']) {
             if (!values[name]) throw new Error(`${name} missing`);
             process.stdout.write(`::add-mask::${values[name]}\n`);
             fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<WAUATV2EOF\n${values[name]}\nWAUATV2EOF\n`);
@@ -90,9 +96,10 @@ jobs:
           NODE
           rm -f /tmp/wa-uat-v2/payload.json /tmp/wa-uat-v2/private.pem
 
-      - name: Checkout UAT v2 source
+      - name: Checkout source-exact UAT head
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Set up pnpm
@@ -111,30 +118,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build source-exact application
+        run: pnpm run build
+
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run authenticated WhatsApp UAT v2 desktop
+      - name: Run source-exact authenticated WhatsApp UAT
         shell: bash
         run: |
+          set -euo pipefail
+          node scripts/ci-rate-limit-server.mjs > /tmp/wa-uat-v2-rate-limit.log 2>&1 &
+          rate_limit_pid=$!
+          trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3199/health >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "20" ]]; then
+              echo "Disposable rate-limit server did not become ready." >&2
+              exit 1
+            fi
+            sleep 0.25
+          done
           set -o pipefail
-          pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-desktop 2>&1 | tee /tmp/wa-uat-v2-desktop.log
-
-      - name: Run authenticated WhatsApp UAT v2 mobile
-        if: success()
-        shell: bash
-        run: |
-          set -o pipefail
-          pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-mobile 2>&1 | tee /tmp/wa-uat-v2-mobile.log
+          pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.config.ts --project=desktop-chromium 2>&1 | tee /tmp/wa-uat-v2-desktop.log
+          pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.config.ts --project=mobile-chromium 2>&1 | tee /tmp/wa-uat-v2-mobile.log
 
       - name: Upload UAT v2 evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: whatsapp-v1-authenticated-uat-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          name: whatsapp-v1-source-exact-uat-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             /tmp/wa-uat-v2-desktop.log
             /tmp/wa-uat-v2-mobile.log
+            /tmp/wa-uat-v2-rate-limit.log
             playwright-report/
             test-results/
           if-no-files-found: warn
