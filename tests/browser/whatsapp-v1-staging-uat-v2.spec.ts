@@ -10,19 +10,11 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
-const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
-
 async function openProtectedPath(page: Page, path: string) {
-  if (!shareUrl) throw new Error("VERCEL_SHARE_URL is required.");
-  const share = new URL(shareUrl);
-  const token = share.searchParams.get("_vercel_share");
-  if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
-  const target = new URL(path, share.origin);
-  target.searchParams.set("_vercel_share", token);
-  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
+  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-  if (new URL(page.url()).origin !== share.origin) {
-    throw new Error(`Preview origin drifted to ${new URL(page.url()).origin}`);
+  if (new URL(page.url()).hostname === "vercel.com") {
+    throw new Error("Vercel automation bypass did not authorize the candidate Preview.");
   }
   return response;
 }
