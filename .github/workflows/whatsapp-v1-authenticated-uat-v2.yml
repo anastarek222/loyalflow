@@ -1,0 +1,131 @@
+name: WhatsApp V1 Authenticated UAT v2
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  whatsapp-v1-uat-v2:
+    if: github.head_ref == 'uat/whatsapp-v1-authenticated-v2-20260912'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CI: "true"
+      NODE_ENV: test
+      STAGING_UAT_BASE_URL: https://loyalflow-f0x8qvjms-anas-tarek.vercel.app
+      LOYALFLOW_ENVIRONMENT: staging
+      VERCEL_ENV: preview
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+      LOYALFLOW_STAGING_DATABASE: neondb
+      AUTH_SECRET: whatsapp-uat-v2-fixture-only-auth-secret-2026-not-runtime
+    steps:
+      - name: Generate ephemeral handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/wa-uat-v2
+          request_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/wa-uat-v2/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/wa-uat-v2/private.pem -pubout -out /tmp/wa-uat-v2/public.pem
+          printf '%s\n' "$request_id" > /tmp/wa-uat-v2/request-id
+
+      - name: Publish handoff key
+        uses: actions/upload-artifact@v4
+        with:
+          name: whatsapp-v1-uat-v2-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            /tmp/wa-uat-v2/public.pem
+            /tmp/wa-uat-v2/request-id
+          retention-days: 1
+
+      - name: Wait for encrypted handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          request_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          prefix="whatsapp-v1-uat-v2-handoff:${request_id}:"
+          for attempt in $(seq 1 120); do
+            body=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${{ github.event.pull_request.number }}/comments?per_page=100" \
+              | jq -r --arg prefix "$prefix" '[.[] | .body | select(startswith($prefix))] | last // empty')
+            if [ -n "$body" ]; then
+              printf '%s' "${body#${prefix}}" | base64 -d > /tmp/wa-uat-v2/payload.json
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Encrypted UAT v2 handoff not received" >&2
+          exit 1
+
+      - name: Decrypt handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const p = JSON.parse(fs.readFileSync('/tmp/wa-uat-v2/payload.json','utf8'));
+          const expectedRequestId = `${process.env.GITHUB_RUN_ID}-${process.env.GITHUB_RUN_ATTEMPT}`;
+          if (p.requestId !== expectedRequestId) throw new Error('handoff request mismatch');
+          const key = crypto.privateDecrypt({ key: fs.readFileSync('/tmp/wa-uat-v2/private.pem'), oaepHash: 'sha256', padding: crypto.constants.RSA_PKCS1_OAEP_PADDING }, Buffer.from(p.key,'base64'));
+          const d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(p.iv,'base64'));
+          d.setAuthTag(Buffer.from(p.tag,'base64'));
+          const values = JSON.parse(Buffer.concat([d.update(Buffer.from(p.data,'base64')), d.final()]).toString('utf8'));
+          for (const name of ['DATABASE_URL','UAT_FIXTURE_PASSWORD','VERCEL_SHARE_URL','LOYALFLOW_PRODUCTION_DATABASE_HOST']) {
+            if (!values[name]) throw new Error(`${name} missing`);
+            process.stdout.write(`::add-mask::${values[name]}\n`);
+            fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<WAUATV2EOF\n${values[name]}\nWAUATV2EOF\n`);
+          }
+          const host = new URL(values.DATABASE_URL).hostname;
+          fs.appendFileSync(process.env.GITHUB_ENV, `LOYALFLOW_STAGING_DATABASE_HOST=${host}\n`);
+          NODE
+          rm -f /tmp/wa-uat-v2/payload.json /tmp/wa-uat-v2/private.pem
+
+      - name: Checkout UAT v2 source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run authenticated WhatsApp UAT v2 desktop
+        run: pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-desktop
+
+      - name: Run authenticated WhatsApp UAT v2 mobile
+        run: pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-mobile
+
+      - name: Upload UAT v2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whatsapp-v1-authenticated-uat-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
