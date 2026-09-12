@@ -1,6 +1,15 @@
 import { defineConfig } from "@playwright/test";
 
 const baseURL = "http://127.0.0.1:3000";
+const candidateSha = "a0ba58cbfcbf01378b80475de31344d560844243";
+const runtimeEnv = [
+  "NODE_ENV=production",
+  "NEXT_PUBLIC_APP_URL=https://gettanee.com",
+  "NEXT_PUBLIC_SITE_URL=https://gettanee.com",
+  `AUTH_URL=${baseURL}`,
+  "AUTH_TRUST_HOST=true",
+  `LOYALFLOW_RELEASE_SHA=${candidateSha}`,
+].join(" ");
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -11,7 +20,7 @@ export default defineConfig({
   timeout: 90_000,
   reporter: [["list"], ["html", { open: "never" }]],
   webServer: {
-    command: "NODE_ENV=production pnpm run build && NODE_ENV=production pnpm start",
+    command: `${runtimeEnv} pnpm run build && ${runtimeEnv} pnpm start`,
     url: `${baseURL}/api/health/live`,
     reuseExistingServer: false,
     timeout: 240_000,
