@@ -1,8 +1,13 @@
 import { defineConfig } from "@playwright/test";
 
 const baseURL = process.env.STAGING_UAT_BASE_URL?.trim().replace(/\/$/, "");
+const vercelProtectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim();
+
 if (!baseURL?.startsWith("https://")) {
   throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
+}
+if (!vercelProtectionBypass) {
+  throw new Error("VERCEL_AUTOMATION_BYPASS_SECRET is required for protected Preview UAT.");
 }
 
 export default defineConfig({
@@ -15,6 +20,10 @@ export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL,
+    extraHTTPHeaders: {
+      "x-vercel-protection-bypass": vercelProtectionBypass,
+      "x-vercel-set-bypass-cookie": "true",
+    },
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "off",
