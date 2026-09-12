@@ -56,6 +56,9 @@ export async function cleanupBrowserUat(runId: string, manifestPath: string) {
     await execFileAsync("npm", ["run", "cleanup:final-uat", "--", `--cleanup=${runId}`], {
       cwd: process.cwd(), env: process.env, maxBuffer: 1024 * 1024,
     });
+    await execFileAsync("pnpm", ["exec", "tsx", "scripts/cleanup-whatsapp-v1-uat-orphans.ts"], {
+      cwd: process.cwd(), env: process.env, maxBuffer: 1024 * 1024,
+    });
   } finally {
     await rm(manifestPath, { force: true });
   }
