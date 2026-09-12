@@ -11,17 +11,17 @@ test("Stage 13 offer cards localize known customer segment labels", () => {
 
   assert.match(
     offers,
-    /const knownSegment = customerSegments\.find\(\(candidate\) => candidate === segment\);/,
+    /const knownSegment = customerSegments\.find\([\s\S]{0,100}\(candidate\) => candidate === segment,[\s\S]{0,20}\);/,
   );
+  assert.match(offers, /getCustomerSegmentLabel\(knownSegment, language\)/);
   assert.match(
     offers,
-    /getCustomerSegmentLabel\(knownSegment, language\)/,
+    /`شريحة: \$\{segmentLabel\}`[\s\S]{0,40}: `Segment: \$\{segmentLabel\}`/,
   );
-  assert.match(
+  assert.doesNotMatch(
     offers,
-    /`شريحة: \$\{segmentLabel\}` : `Segment: \$\{segmentLabel\}`/,
+    /`شريحة: \$\{segment\}` : `Segment: \$\{segment\}`/,
   );
-  assert.doesNotMatch(offers, /`شريحة: \$\{segment\}` : `Segment: \$\{segment\}`/);
 });
 
 test("Stage 13 offer segment localization preserves form and action boundaries", () => {

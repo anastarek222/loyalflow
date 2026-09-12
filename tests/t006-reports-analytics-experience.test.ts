@@ -79,7 +79,7 @@ test("T006 Reports navigation, Staff attribution, and export retain canonical qu
     /hasFeatureEntitlement\(business\.plan, "REPORTING"\)/,
   );
   assert.match(exportRoute, /resolveReportScope\(/);
-  assert.match(exportRoute, /Spreadsheet Formula Injection/);
+  assert.ok(exportRoute.includes("if (/^[=+\\-@]/.test(text))"));
 });
 
 test("T006 Reports expose the refreshed analytics workspace without a second data path", () => {

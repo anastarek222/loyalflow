@@ -17,7 +17,9 @@ const redemptionActions = source(
 );
 const actions = `${earnActions}\n${redemptionActions}`;
 const earnCommand = source("lib/server/business/loyalty-earn-command.ts");
-const redemptionCommand = source("lib/server/business/loyalty-redemption-command.ts");
+const redemptionCommand = source(
+  "lib/server/business/loyalty-redemption-command.ts",
+);
 const scanPage = source(
   "app/businesses/[slug]/scan/customer/[customerId]/page.tsx",
 );
@@ -130,7 +132,7 @@ test("U7.3 preserves idempotency, pending accessibility, branch/staff, and canon
   assert.match(scanPage, /staff=\{operationContextOptions\.staff\}/);
   assert.match(scanPage, /language=\{language\}/);
   assert.match(button, /useFormStatus/);
-  assert.match(button, /disabled=\{pending\}/);
+  assert.match(button, /disabled=\{unavailable\}/);
   assert.match(button, /aria-busy=\{pending\}/);
   assert.match(earnActions, /executeLoyaltyEarnCommand\(/);
   assert.match(redemptionActions, /redeemLoyaltyRewardCommand\(/);
