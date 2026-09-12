@@ -9,7 +9,10 @@ import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
 import { resolveBusinessCustomerAudienceContext } from "@/lib/server/customers/audience-context";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
-import { getRewardAvailability } from "@/lib/rewards/availability";
+import {
+  getRedeemableCatalogueRewards,
+  getRewardAvailability,
+} from "@/lib/rewards/availability";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
 import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
@@ -123,6 +126,7 @@ export default async function PublicCardPage({
               type: true,
               code: true,
               description: true,
+              expiresAfterDays: true,
               createdAt: true,
             },
           },
@@ -205,6 +209,20 @@ export default async function PublicCardPage({
     },
     catalogueRewards: business.rewards,
   });
+  const redeemableCatalogueRewards =
+    rewardAvailability.source === "CATALOGUE"
+      ? getRedeemableCatalogueRewards({
+          customerActive: customer.isActive,
+          balance: customer.balance,
+          catalogueRewards: business.rewards,
+          rewardUnlocks: customer.rewardUnlocks,
+          now: audienceNow,
+        })
+      : [];
+  const publicRewardReady =
+    rewardAvailability.source === "CATALOGUE"
+      ? redeemableCatalogueRewards.length > 0
+      : rewardAvailability.rewardReady;
   const cardReward =
     rewardAvailability.source === "CATALOGUE"
       ? rewardAvailability.defaultReward
@@ -434,6 +452,7 @@ export default async function PublicCardPage({
           currency={card.program.currency}
           rewardName={card.program.reward.name}
           rewardThreshold={card.program.reward.cost}
+          rewardReady={publicRewardReady}
           qrCode={qrCode}
           artworkEnabled={card.design.standardArtwork.enabled}
           artworkCategory={card.design.standardArtwork.category}
