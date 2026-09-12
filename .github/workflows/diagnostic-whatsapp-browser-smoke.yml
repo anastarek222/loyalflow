@@ -1,0 +1,119 @@
+name: Diagnostic WhatsApp Browser Smoke
+
+on:
+  pull_request:
+    branches: [staging]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-browser-smoke:
+    if: github.head_ref == 'integration/whatsapp-canonical-uat-v2-20260912'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: loyalflow_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d loyalflow_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CI: "true"
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/loyalflow_ci?schema=public
+      AUTH_SECRET: staging-pr-ci-only-auth-secret-not-for-runtime-0123456789abcdef
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+      LOYALFLOW_ENVIRONMENT: staging
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+      LOYALFLOW_STAGING_DATABASE: loyalflow_ci
+      LOYALFLOW_STAGING_DATABASE_HOST: 127.0.0.1
+      LOYALFLOW_PRODUCTION_DATABASE_HOST: production-db.invalid
+      UAT_FIXTURE_PASSWORD: browser-smoke-only-password-2026
+      UAT_BASE_URL: http://127.0.0.1:3100
+      AUTH_URL: http://127.0.0.1:3100
+      AUTH_TRUST_HOST: "true"
+      UPSTASH_REDIS_REST_URL: http://127.0.0.1:3199
+      UPSTASH_REDIS_REST_TOKEN: browser-smoke-rate-limit-token
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate and migrate disposable database
+        run: |
+          pnpm run db:validate
+          pnpm run db:migrate:deploy
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run browser suites and capture output
+        shell: bash
+        run: |
+          set -uo pipefail
+          log=/tmp/whatsapp-browser-smoke.log
+          : > "$log"
+          node scripts/ci-rate-limit-server.mjs >>"$log" 2>&1 &
+          rate_limit_pid=$!
+          trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3199/health >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" == "20" ]]; then
+              echo "Disposable rate-limit server did not become ready." | tee -a "$log"
+              exit 1
+            fi
+            sleep 0.25
+          done
+
+          overall=0
+          echo "===== pr-smoke desktop =====" | tee -a "$log"
+          pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium 2>&1 | tee -a "$log" || overall=1
+
+          echo "===== owner-onboarding mobile =====" | tee -a "$log"
+          pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium 2>&1 | tee -a "$log" || overall=1
+
+          echo "===== final-uat-u13 desktop =====" | tee -a "$log"
+          pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium 2>&1 | tee -a "$log" || overall=1
+
+          echo "===== final-uat-u13 mobile =====" | tee -a "$log"
+          pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium 2>&1 | tee -a "$log" || overall=1
+
+          exit "$overall"
+
+      - name: Upload browser smoke log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: whatsapp-browser-smoke-${{ github.run_id }}
+          path: /tmp/whatsapp-browser-smoke.log
+          if-no-files-found: error
+          retention-days: 1
