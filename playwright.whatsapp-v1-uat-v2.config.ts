@@ -1,10 +1,6 @@
 import { defineConfig } from "@playwright/test";
 
-const baseURL = process.env.STAGING_UAT_BASE_URL?.trim().replace(/\/$/, "");
-
-if (!baseURL?.startsWith("https://")) {
-  throw new Error("STAGING_UAT_BASE_URL must use HTTPS.");
-}
+const baseURL = "http://127.0.0.1:3000";
 
 export default defineConfig({
   testDir: "./tests/browser",
@@ -14,6 +10,12 @@ export default defineConfig({
   workers: 1,
   timeout: 90_000,
   reporter: [["list"], ["html", { open: "never" }]],
+  webServer: {
+    command: "NODE_ENV=production pnpm run build && NODE_ENV=production pnpm start",
+    url: `${baseURL}/api/health/live`,
+    reuseExistingServer: false,
+    timeout: 240_000,
+  },
   use: {
     baseURL,
     trace: "retain-on-failure",
