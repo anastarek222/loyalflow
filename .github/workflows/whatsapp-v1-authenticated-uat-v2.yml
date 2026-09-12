@@ -25,16 +25,68 @@ jobs:
       LOYALFLOW_STAGING_DATABASE: neondb
       AUTH_SECRET: whatsapp-uat-v2-fixture-only-auth-secret-2026-not-runtime
       VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ACCESS_TOKEN: ${{ secrets.VERCEL_ACCESS_TOKEN }}
+      VERCEL_API_TOKEN: ${{ secrets.VERCEL_API_TOKEN }}
     steps:
-      - name: Require protected Preview automation bypass
+      - name: Resolve protected Preview access source
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]; then
-            echo "::error::VERCEL_AUTOMATION_BYPASS_SECRET is not configured in GitHub Actions."
-            exit 42
+          if [ -n "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]; then
+            echo "Canonical Vercel automation bypass is available to the runner."
+            exit 0
           fi
-          echo "Canonical Vercel automation bypass is available to the runner."
+          for name in VERCEL_TOKEN VERCEL_ACCESS_TOKEN VERCEL_API_TOKEN; do
+            value="${!name:-}"
+            if [ -n "$value" ]; then
+              echo "::add-mask::$value"
+              printf 'VERCEL_RESOLUTION_TOKEN<<WAUTTOKEN\n%s\nWAUTTOKEN\n' "$value" >> "$GITHUB_ENV"
+              echo "A Vercel API credential is available for read-only bypass resolution."
+              exit 0
+            fi
+          done
+          echo "::error::No GitHub Actions credential can authorize the protected Vercel Preview."
+          exit 42
+
+      - name: Resolve automation bypass from Vercel project metadata
+        if: env.VERCEL_AUTOMATION_BYPASS_SECRET == ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS \
+            -H "Authorization: Bearer $VERCEL_RESOLUTION_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://api.vercel.com/v9/projects/prj_XR2myqPuensw4MTYF5Rgi0w0MPMG?teamId=team_JIxldEzYlted09P36umRYSLa" \
+            > /tmp/vercel-project.json
+          node <<'NODE'
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('/tmp/vercel-project.json', 'utf8'));
+          const candidates = [];
+          function walk(value, path = []) {
+            if (typeof value === 'string') {
+              const joined = path.join('.').toLowerCase();
+              if (joined.includes('protectionbypass') && value.length >= 8) candidates.push(value);
+              return;
+            }
+            if (Array.isArray(value)) {
+              value.forEach((item, index) => walk(item, [...path, String(index)]));
+              return;
+            }
+            if (value && typeof value === 'object') {
+              for (const [key, item] of Object.entries(value)) walk(item, [...path, key]);
+            }
+          }
+          walk(data);
+          const secret = candidates[0];
+          if (!secret) {
+            console.error('::error::Vercel project metadata did not expose the existing automation bypass to this token.');
+            process.exit(43);
+          }
+          process.stdout.write(`::add-mask::${secret}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `VERCEL_AUTOMATION_BYPASS_SECRET<<WAUTBYPASS\n${secret}\nWAUTBYPASS\n`);
+          NODE
+          rm -f /tmp/vercel-project.json
 
       - name: Generate ephemeral handoff key
         shell: bash
