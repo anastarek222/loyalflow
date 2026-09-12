@@ -5,14 +5,14 @@ export const conversionMessagesEn = {
   "conversion.eyebrow": "Get started",
   "conversion.title": "Start your Tanee business.",
   "conversion.body":
-    "Create your Owner account, continue through secure setup, and start a seven-day Trial for your business.",
+    "Create your Owner account, continue through secure setup, and start a fourteen-day Trial for your business.",
   "conversion.existingTitle": "I already have a Tanee account",
   "conversion.existingBody":
     "Sign in to your existing workspace. Pending owners are routed to their private setup flow automatically.",
   "conversion.existingCta": "Sign in",
   "conversion.invitedTitle": "Start a new business",
   "conversion.invitedBody":
-    "Create an Owner account, set up your business, and begin the seven-day Trial from one secure acquisition flow.",
+    "Create an Owner account, set up your business, and begin the fourteen-day Trial from one secure acquisition flow.",
   "conversion.invitedCta": "Start free trial",
   "conversion.invitedRequirement": "Secure email setup",
   "conversion.noSignup":

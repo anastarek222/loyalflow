@@ -79,12 +79,6 @@ export function getBusinessWhatsAppConnectionReadiness(input: Readonly<{
   operationState?: WhatsAppConnectionOperationState | null;
 }>) {
   const connectionReady = input.credentialPresent && input.senderReady;
-  const automaticDeliveryReady =
-    connectionReady &&
-    input.providerReady &&
-    input.hasEnabledMessages &&
-    input.templatesReady;
-
   if (input.operationState) {
     return {
       state: input.operationState,
