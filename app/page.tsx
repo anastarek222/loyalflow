@@ -40,7 +40,11 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     alternates: { canonical: "/" },
     robots: { index: true, follow: true },
-    ...buildPublicSocialMetadata({ title, description, path: "/" }),
+    ...buildPublicSocialMetadata({
+      title,
+      description,
+      path: "/",
+    }),
   };
 }
 
@@ -203,10 +207,7 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(websiteStructuredData).replace(
-            /</g,
-            "\\u003c",
-          ),
+          __html: JSON.stringify(websiteStructuredData).replace(/</g, "\\u003c"),
         }}
       />
       <MarketingHeader
