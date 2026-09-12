@@ -127,6 +127,33 @@ export async function redeemRewardCommandAction(
     redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
   }
 
+  const parsedOperation = financialOperationSchema.safeParse(formData?.get("operationId"));
+  if (!parsedOperation.success) {
+    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "redemption-invalid"));
+  }
+  const idempotencyKey = parsedOperation.data;
+  const requestedRewardId = parsedRewardId?.success ? parsedRewardId.data : null;
+
+  const completedOperation = await prisma.loyaltyTransaction.findUnique({
+    where: { businessId_idempotencyKey: { businessId: business.id, idempotencyKey } },
+    select: {
+      customerId: true,
+      type: true,
+      rewardRedemption: { select: { rewardId: true } },
+    },
+  });
+
+  if (completedOperation) {
+    if (
+      completedOperation.customerId !== customer.id ||
+      completedOperation.type !== "REDEEM" ||
+      completedOperation.rewardRedemption?.rewardId !== requestedRewardId
+    ) {
+      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
+    }
+    redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
+  }
+
   const selectedReward = parsedRewardId?.success
     ? await prisma.reward.findFirst({
         where: { id: parsedRewardId.data, businessId: business.id, isActive: true },
@@ -154,41 +181,13 @@ export async function redeemRewardCommandAction(
   );
   const cost = selectedReward?.cost ?? business.rewardThreshold;
 
-  const parsedOperation = financialOperationSchema.safeParse(formData?.get("operationId"));
-  if (!parsedOperation.success) {
-    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "redemption-invalid"));
-  }
-  const idempotencyKey = parsedOperation.data;
-  const branchId = getOptionalOperationId(formData, "branchId");
-  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
-  const activityContext = await getActivityRequestContext();
-
-  const completedOperation = await prisma.loyaltyTransaction.findUnique({
-    where: { businessId_idempotencyKey: { businessId: business.id, idempotencyKey } },
-    select: {
-      customerId: true,
-      type: true,
-      amount: true,
-      rewardRedemption: { select: { rewardId: true, cost: true } },
-    },
-  });
-
-  if (completedOperation) {
-    if (
-      completedOperation.customerId !== customer.id ||
-      completedOperation.type !== "REDEEM" ||
-      completedOperation.amount !== -cost ||
-      completedOperation.rewardRedemption?.rewardId !== (selectedReward?.id ?? null) ||
-      completedOperation.rewardRedemption?.cost !== cost
-    ) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
-    }
-    redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
-  }
-
   if (!rewardId && business.rewards.length > 0) {
     redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
   }
+
+  const branchId = getOptionalOperationId(formData, "branchId");
+  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
+  const activityContext = await getActivityRequestContext();
 
   const rapidInput = {
     businessId: business.id,

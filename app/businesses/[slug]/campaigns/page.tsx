@@ -13,7 +13,7 @@ import CampaignBuilder from "@/components/campaign-builder";
 import { GrowthShell } from "@/components/growth/growth-shell";
 import { getRequestBaseUrl } from "@/lib/app-url";
 import { parseSelectedExportIds } from "@/lib/customers/bulk";
-import { getCustomerSegment } from "@/lib/customers/segments";
+import { getCustomerLifecycleSegment } from "@/lib/customers/segments";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import {
   getExperienceModeCookieName,
@@ -142,13 +142,11 @@ export default async function CampaignsPage({
       balance: customer.balance,
       remaining: progress.remaining,
       cardLink: `${baseUrl}/card/${customer.publicToken}`,
-      segment: getCustomerSegment(
+      segment: getCustomerLifecycleSegment(
         {
           isActive: customer.isActive,
           createdAt: customer.createdAt,
           lastActivityAt: customer.transactions[0]?.createdAt ?? null,
-          lifetimeEarned: customer.lifetimeEarned,
-          rewardThreshold: business.rewardThreshold,
         },
         now,
       ),

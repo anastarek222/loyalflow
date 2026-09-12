@@ -1,85 +1,60 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export const TRIAL_DURATION_MS = 7 * DAY_MS;
-export const TRIAL_REMINDER_LEAD_MS = DAY_MS;
+export const TRIAL_DURATION_DAYS = 14;
+export const TRIAL_DURATION_MS = TRIAL_DURATION_DAYS * DAY_MS;
+export const TRIAL_FINAL_DAY_REMINDER_MS = 1 * DAY_MS;
 
-export type TrialEligibilityIdentity = {
-  ownerId: string;
-  businessId: string;
-  invitationId: string;
-};
-
-export type TrialWindow = {
-  startedAt: Date;
-  reminderAt: Date;
-  expiresAt: Date;
-};
-
-export type TrialReminderDecisionInput = {
-  now: Date;
-  reminderAt: Date;
-  expiresAt: Date;
-  reminderSentAt?: Date | null;
-};
-
-function assertIdentifier(name: string, value: string): void {
-  if (value.length === 0) {
-    throw new Error(`Trial ${name} must not be empty`);
-  }
-}
-
-function encodeIdentifier(value: string): string {
-  return `${value.length}:${value}`;
-}
-
-function assertValidDate(name: string, value: Date): void {
-  if (Number.isNaN(value.getTime())) {
-    throw new Error(`Trial ${name} must be a valid date`);
-  }
-}
-
-export function createTrialIdempotencyKey(
-  identity: TrialEligibilityIdentity,
-): string {
-  assertIdentifier("ownerId", identity.ownerId);
-  assertIdentifier("businessId", identity.businessId);
-  assertIdentifier("invitationId", identity.invitationId);
-
-  return [
-    "trial",
-    encodeIdentifier(identity.ownerId),
-    encodeIdentifier(identity.businessId),
-    encodeIdentifier(identity.invitationId),
-  ].join(":");
-}
-
-export function createTrialWindow(startedAt: Date): TrialWindow {
-  assertValidDate("startedAt", startedAt);
-
-  const startedAtMs = startedAt.getTime();
-  const expiresAtMs = startedAtMs + TRIAL_DURATION_MS;
+export function createTrialWindow(now = new Date()) {
+  const trialEndsAt = new Date(now.getTime() + TRIAL_DURATION_MS);
 
   return {
-    startedAt: new Date(startedAtMs),
-    reminderAt: new Date(expiresAtMs - TRIAL_REMINDER_LEAD_MS),
-    expiresAt: new Date(expiresAtMs),
+    trialStartedAt: now,
+    trialEndsAt,
+    // Compatibility aliases for existing business/admin creation consumers.
+    // New code should prefer the explicit trial* field names above.
+    startedAt: now,
+    expiresAt: trialEndsAt,
   };
 }
 
-export function shouldSendTrialReminder(
-  input: TrialReminderDecisionInput,
-): boolean {
-  assertValidDate("now", input.now);
-  assertValidDate("reminderAt", input.reminderAt);
-  assertValidDate("expiresAt", input.expiresAt);
+export function getTrialDaysRemaining(args: {
+  now?: Date;
+  trialEndsAt?: Date | null;
+}) {
+  const now = args.now ?? new Date();
+  const trialEndsAt = args.trialEndsAt;
+  if (!trialEndsAt) return null;
 
-  if (input.reminderSentAt) {
-    assertValidDate("reminderSentAt", input.reminderSentAt);
-    return false;
+  const diff = trialEndsAt.getTime() - now.getTime();
+  if (diff <= 0) return 0;
+  return Math.ceil(diff / DAY_MS);
+}
+
+export function getTrialState(args: {
+  now?: Date;
+  trialEndsAt?: Date | null;
+}) {
+  const now = args.now ?? new Date();
+  const trialEndsAt = args.trialEndsAt;
+
+  if (!trialEndsAt) {
+    return {
+      isTrialActive: false,
+      isTrialExpired: false,
+      isFinalDay: false,
+      daysRemaining: null,
+    };
   }
 
-  const nowMs = input.now.getTime();
-  return (
-    nowMs >= input.reminderAt.getTime() && nowMs < input.expiresAt.getTime()
-  );
+  const diff = trialEndsAt.getTime() - now.getTime();
+  const isTrialActive = diff > 0;
+  const isTrialExpired = diff <= 0;
+  const isFinalDay = isTrialActive && diff <= TRIAL_FINAL_DAY_REMINDER_MS;
+
+  return {
+    isTrialActive,
+    isTrialExpired,
+    isFinalDay,
+    daysRemaining: getTrialDaysRemaining({ now, trialEndsAt }),
+  };
 }

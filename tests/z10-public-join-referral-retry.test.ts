@@ -14,8 +14,12 @@ test("Z10 preserves only normalized plan-eligible referrals across retry redirec
   );
 
   const referralIndex = actionSource.indexOf("const referralCode =");
-  const rateLimitIndex = actionSource.indexOf("const requestHeaders = await headers()");
-  const registrationIndex = actionSource.indexOf("const parsed = parseCustomerRegistration");
+  const rateLimitIndex = actionSource.indexOf(
+    "const requestHeaders = await headers()",
+  );
+  const registrationIndex = actionSource.indexOf(
+    "const parsed = parseCustomerRegistration",
+  );
 
   assert.ok(referralIndex >= 0);
   assert.ok(referralIndex < rateLimitIndex);
@@ -44,11 +48,11 @@ test("Z10 retry URL includes referral only when one survived normalization and e
 });
 
 test("Z10 duplicate membership remains terminal and does not carry referral into another join attempt", () => {
-  const duplicateRedirect =
-    /`\/join\/\$\{business\.slug\}\?error=\$\{publicMembershipRegistrationProblemCodes\.duplicateMembership\}`/g;
-  const matches = actionSource.match(duplicateRedirect) ?? [];
+  const recoveryCalls =
+    actionSource.match(/duplicateMembershipRecoveryPath\(business\.slug\)/g) ??
+    [];
 
-  assert.ok(matches.length >= 2);
+  assert.equal(recoveryCalls.length, 3);
   assert.doesNotMatch(
     actionSource,
     /joinRetryUrl\([\s\S]{0,160}publicMembershipRegistrationProblemCodes\.duplicateMembership/,
