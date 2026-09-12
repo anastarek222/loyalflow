@@ -10,11 +10,19 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
+const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
+
 async function openPreviewPath(page: Page, path: string) {
-  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
+  if (!shareUrl) throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
+  const share = new URL(shareUrl);
+  const token = share.searchParams.get("_vercel_share");
+  if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
+  const target = new URL(path, share.origin);
+  target.searchParams.set("_vercel_share", token);
+  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-  if (new URL(page.url()).hostname === "vercel.com") {
-    throw new Error("Vercel automation bypass did not authorize the candidate Preview.");
+  if (new URL(page.url()).origin !== share.origin) {
+    throw new Error(`Protected Preview drifted to ${new URL(page.url()).origin}.`);
   }
   return response;
 }
@@ -56,7 +64,7 @@ test.describe.serial("WhatsApp V1 authenticated Staging UAT", () => {
 
   test("Owner sees six V1 automation events and saved copy persists @desktop", async ({ page }) => {
     await signIn(page, "owner-a");
-    await page.goto(`/businesses/${fixture.businessA}/settings/whatsapp`);
+    await openPreviewPath(page, `/businesses/${fixture.businessA}/settings/whatsapp`);
     await expect(page.getByRole("heading", { name: "WhatsApp", exact: true })).toBeVisible();
 
     for (const event of [
@@ -107,7 +115,7 @@ test.describe.serial("WhatsApp V1 authenticated Staging UAT", () => {
 
   test("Owner WhatsApp settings are functional on mobile @mobile", async ({ page }) => {
     await signIn(page, "owner-a");
-    await page.goto(`/businesses/${fixture.businessA}/settings/whatsapp`);
+    await openPreviewPath(page, `/businesses/${fixture.businessA}/settings/whatsapp`);
     await expect(page.getByRole("heading", { name: "WhatsApp", exact: true })).toBeVisible();
     await expect(page.locator('[data-whatsapp-automation-event="NEW_REWARD"]')).toBeVisible();
     await expect(page.locator('[data-whatsapp-automation-event="NEW_OFFER"]')).toBeVisible();
@@ -116,7 +124,7 @@ test.describe.serial("WhatsApp V1 authenticated Staging UAT", () => {
   for (const role of ["manager-a", "staff-a", "viewer-a"] as const) {
     test(`${role} cannot manage WhatsApp settings @desktop`, async ({ page }) => {
       await signIn(page, role);
-      await page.goto(`/businesses/${fixture.businessA}/settings/whatsapp`);
+      await openPreviewPath(page, `/businesses/${fixture.businessA}/settings/whatsapp`);
       await expect(page).not.toHaveURL(/\/settings\/whatsapp/);
     });
   }
