@@ -12,7 +12,7 @@ let manifestPath: string;
 
 const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
 
-async function openProtectedPreviewLogin(page: Page) {
+async function openProtectedPreviewPath(page: Page, path: string) {
   if (!shareUrl) {
     throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
   }
@@ -21,9 +21,9 @@ async function openProtectedPreviewLogin(page: Page) {
   const token = share.searchParams.get("_vercel_share");
   if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
 
-  const login = new URL("/login", share.origin);
-  login.searchParams.set("_vercel_share", token);
-  await page.goto(login.toString(), { waitUntil: "domcontentloaded" });
+  const target = new URL(path, share.origin);
+  target.searchParams.set("_vercel_share", token);
+  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
 
   const current = new URL(page.url());
@@ -32,13 +32,15 @@ async function openProtectedPreviewLogin(page: Page) {
       `Protected Preview bypass did not resolve to the candidate deployment; received ${current.origin}.`,
     );
   }
+
+  return response;
 }
 
 async function signIn(
   page: Page,
   role: "owner-a" | "manager-a" | "staff-a" | "viewer-a",
 ) {
-  await openProtectedPreviewLogin(page);
+  await openProtectedPreviewPath(page, "/login");
   await page.getByLabel("Email address", { exact: true }).fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password", { exact: true }).fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -58,6 +60,15 @@ test.describe.serial("WhatsApp V1 authenticated Staging UAT", () => {
     if (fixture && manifestPath) {
       await cleanupBrowserUat(fixture.runId, manifestPath);
     }
+  });
+
+  test("Seeded Staging fixture is visible through the exact Preview @desktop", async ({ page }) => {
+    const response = await openProtectedPreviewPath(
+      page,
+      `/card/${encodeURIComponent(fixture.activeCustomer.publicToken)}`,
+    );
+    expect(response?.status(), "Preview must read the same Staging fixture database").toBe(200);
+    await expect(page.getByText("Business A VISITS", { exact: false })).toBeVisible();
   });
 
   test("Owner sees six V1 automation events and saved copy persists @desktop", async ({ page }) => {
