@@ -24,6 +24,7 @@ jobs:
       LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
       LOYALFLOW_STAGING_DATABASE: neondb
       AUTH_SECRET: whatsapp-uat-v2-fixture-only-auth-secret-2026-not-runtime
+
     steps:
       - name: Generate ephemeral handoff key
         shell: bash
@@ -114,10 +115,17 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run authenticated WhatsApp UAT v2 desktop
-        run: pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-desktop
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-desktop 2>&1 | tee /tmp/wa-uat-v2-desktop.log
 
       - name: Run authenticated WhatsApp UAT v2 mobile
-        run: pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-mobile
+        if: success()
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm exec playwright test tests/browser/whatsapp-v1-staging-uat-v2.spec.ts --config=playwright.whatsapp-v1-uat-v2.config.ts --project=whatsapp-mobile 2>&1 | tee /tmp/wa-uat-v2-mobile.log
 
       - name: Upload UAT v2 evidence
         if: always()
@@ -125,7 +133,9 @@ jobs:
         with:
           name: whatsapp-v1-authenticated-uat-v2-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            /tmp/wa-uat-v2-desktop.log
+            /tmp/wa-uat-v2-mobile.log
             playwright-report/
             test-results/
-          if-no-files-found: ignore
+          if-no-files-found: warn
           retention-days: 7
