@@ -350,7 +350,7 @@ export default async function PublicCardPage({
 
   const localizedDateFormatter = new Intl.DateTimeFormat(
     language === "AR" ? "ar-EG" : "en-US",
-    { dateStyle: "medium", timeZone: business.timezone },
+    { dateStyle: "medium", timeZone: business.timezone ?? "UTC" },
   );
 
   return (
