@@ -32,7 +32,7 @@ async function signIn(
 ) {
   await openCandidatePath(page, "/login");
   await page.getByLabel("Email address", { exact: true }).fill(uatEmail(role, fixture.runId));
-  await page.getByLabel("Password", { exact: true }).fill(process.env.UAT_FIXTURE_PASSWORD!);
+  await page.locator('input[name="password"]').fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
     timeout: 45_000,
