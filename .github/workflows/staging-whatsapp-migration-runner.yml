@@ -1,0 +1,156 @@
+name: Staging WhatsApp Migration Runner
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  migrate:
+    if: github.head_ref == 'agent/staging-whatsapp-migration-runner'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      LOYALFLOW_ENVIRONMENT: staging
+      LOYALFLOW_STAGING_DATABASE: neondb
+      CERTIFIED_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Generate ephemeral handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/lf-migration-handoff
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/lf-migration-handoff/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/lf-migration-handoff/private.pem -pubout -out /tmp/lf-migration-handoff/public.pem
+          printf '%s\n' "$GITHUB_RUN_ID" > /tmp/lf-migration-handoff/request-id
+
+      - name: Publish public handoff key
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-migration-handoff-${{ github.run_id }}
+          path: |
+            /tmp/lf-migration-handoff/public.pem
+            /tmp/lf-migration-handoff/request-id
+          retention-days: 1
+
+      - name: Wait for encrypted DATABASE_URL handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="staging-migration-handoff:${GITHUB_RUN_ID}:"
+          rm -f /tmp/lf-migration-handoff/payload.json
+          for attempt in $(seq 1 120); do
+            body=$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              | jq -r --arg prefix "$prefix" '[.[] | .body | select(startswith($prefix))] | last // empty')
+            if [ -n "$body" ]; then
+              encoded="${body#${prefix}}"
+              printf '%s' "$encoded" | base64 -d > /tmp/lf-migration-handoff/payload.json
+              if jq -e --arg requestId "$GITHUB_RUN_ID" '.requestId == $requestId' /tmp/lf-migration-handoff/payload.json >/dev/null 2>&1; then
+                exit 0
+              fi
+            fi
+            sleep 3
+          done
+          echo "::error::Encrypted migration handoff was not received"
+          exit 1
+
+      - name: Decrypt ephemeral DATABASE_URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const payload = JSON.parse(fs.readFileSync('/tmp/lf-migration-handoff/payload.json', 'utf8'));
+          const privateKey = fs.readFileSync('/tmp/lf-migration-handoff/private.pem', 'utf8');
+          const key = crypto.privateDecrypt(
+            { key: privateKey, oaepHash: 'sha256', padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+            Buffer.from(payload.key, 'base64'),
+          );
+          const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(payload.iv, 'base64'));
+          decipher.setAuthTag(Buffer.from(payload.tag, 'base64'));
+          const clear = Buffer.concat([
+            decipher.update(Buffer.from(payload.data, 'base64')),
+            decipher.final(),
+          ]);
+          const values = JSON.parse(clear.toString('utf8'));
+          if (!values.DATABASE_URL) throw new Error('DATABASE_URL missing from encrypted handoff');
+          process.stdout.write(`::add-mask::${values.DATABASE_URL}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `DATABASE_URL<<LFMIGEOF\n${values.DATABASE_URL}\nLFMIGEOF\n`);
+          NODE
+          rm -f /tmp/lf-migration-handoff/payload.json /tmp/lf-migration-handoff/private.pem
+
+      - name: Checkout certified Staging source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CERTIFIED_SHA }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Staging database identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const url = new URL(process.env.DATABASE_URL);
+          const database = decodeURIComponent(url.pathname.replace(/^\//, ''));
+          if (process.env.LOYALFLOW_ENVIRONMENT !== 'staging') throw new Error('Environment is not staging');
+          if (database !== process.env.LOYALFLOW_STAGING_DATABASE) throw new Error(`Unexpected staging database: ${database}`);
+          console.log(`Verified staging database identity: ${database}`);
+          NODE
+
+      - name: Validate Prisma schema
+        run: pnpm run db:validate
+
+      - name: Deploy reviewed migrations
+        run: pnpm run db:migrate:deploy
+
+      - name: Verify migration status
+        run: pnpm run db:migrate:status
+
+      - name: Verify WhatsApp migrations applied
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --import tsx <<'NODE'
+          import { PrismaPg } from '@prisma/adapter-pg';
+          import { PrismaClient } from './generated/prisma/client.ts';
+          const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
+          try {
+            const rows = await prisma.$queryRawUnsafe(`SELECT migration_name, finished_at, rolled_back_at FROM "_prisma_migrations" WHERE migration_name IN ('20260911120000_add_whatsapp_automation_controls','20260911183000_add_customer_whatsapp_consent_state') ORDER BY migration_name`);
+            if (rows.length !== 2 || rows.some((row) => !row.finished_at || row.rolled_back_at)) {
+              throw new Error('WhatsApp staging migrations are not fully applied');
+            }
+            console.log('Verified both WhatsApp Staging migrations are applied.');
+          } finally {
+            await prisma.$disconnect();
+          }
+          NODE
