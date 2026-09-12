@@ -332,7 +332,7 @@ export default async function PublicCardPage({
 
   const localizedDateFormatter = new Intl.DateTimeFormat(
     language === "AR" ? "ar-EG" : "en-US",
-    { dateStyle: "medium", timeZone: "Africa/Cairo" },
+    { dateStyle: "medium", timeZone: business.timezone },
   );
 
   return (
