@@ -24,18 +24,7 @@ jobs:
       LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
       LOYALFLOW_STAGING_DATABASE: neondb
       AUTH_SECRET: whatsapp-uat-fixture-only-auth-secret-2026-not-runtime
-      VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
     steps:
-      - name: Require protected Preview automation bypass
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -z "${VERCEL_AUTOMATION_BYPASS_SECRET:-}" ]; then
-            echo "::error::VERCEL_AUTOMATION_BYPASS_SECRET is not configured in GitHub Actions."
-            exit 42
-          fi
-          echo "Canonical Vercel automation bypass is available to the runner."
-
       - name: Generate ephemeral handoff key
         shell: bash
         run: |
@@ -90,7 +79,7 @@ jobs:
           const d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(p.iv,'base64'));
           d.setAuthTag(Buffer.from(p.tag,'base64'));
           const values = JSON.parse(Buffer.concat([d.update(Buffer.from(p.data,'base64')), d.final()]).toString('utf8'));
-          for (const name of ['DATABASE_URL','UAT_FIXTURE_PASSWORD','LOYALFLOW_PRODUCTION_DATABASE_HOST']) {
+          for (const name of ['DATABASE_URL','UAT_FIXTURE_PASSWORD','VERCEL_SHARE_URL','LOYALFLOW_PRODUCTION_DATABASE_HOST']) {
             if (!values[name]) throw new Error(`${name} missing`);
             process.stdout.write(`::add-mask::${values[name]}\n`);
             fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<WAUATEOF\n${values[name]}\nWAUATEOF\n`);
