@@ -56,7 +56,9 @@ test.describe.serial("WhatsApp V1 authenticated source-exact Staging UAT", () =>
       `/card/${encodeURIComponent(fixture.activeCustomer.publicToken)}`,
     );
     expect(response?.status(), "Candidate runtime must read the isolated Staging DB").toBe(200);
-    await expect(page.getByText("Business A VISITS", { exact: false })).toBeVisible();
+    await expect(
+      page.getByRole("paragraph").filter({ hasText: "Business A VISITS" }),
+    ).toBeVisible();
   });
 
   test("Owner persists all six WhatsApp V1 events with Global Pause @desktop", async ({ page }) => {
