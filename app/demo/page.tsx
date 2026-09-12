@@ -25,7 +25,7 @@ export default async function DemoPage() {
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className="lf-marketing-surface min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
     >
       <MarketingHeader
         locale={locale}

@@ -1,10 +1,12 @@
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { PublicTrialForm } from "@/components/public-trial-form";
 import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
+import { MARKETING_THEME_BOOTSTRAP } from "@/lib/marketing/theme";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -42,8 +44,9 @@ export default async function GetStartedPage() {
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] px-4 py-8 text-foreground [overflow-wrap:anywhere] sm:px-6"
+      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] px-4 py-8 text-foreground [overflow-wrap:anywhere] sm:px-6"
     >
+      <script dangerouslySetInnerHTML={{ __html: MARKETING_THEME_BOOTSTRAP }} />
       <div
         data-acquisition-mode={PUBLIC_ACQUISITION_MODE}
         className="mx-auto w-full max-w-5xl"
@@ -60,7 +63,10 @@ export default async function GetStartedPage() {
               textClassName="text-xl"
             />
           </Link>
-          <LanguageSwitcher locale={locale} />
+          <div className="flex items-center gap-2">
+            <MarketingThemeSwitcher locale={locale} />
+            <LanguageSwitcher locale={locale} />
+          </div>
         </header>
 
         <section className="py-12 sm:py-16">

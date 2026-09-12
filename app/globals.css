@@ -130,6 +130,55 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/*
+ * Marketing themes are deliberately scoped to public marketing surfaces.
+ * Persisting a marketing preference must not restyle authenticated product UI.
+ */
+.lf-marketing-surface {
+  color-scheme: light;
+}
+
+html[data-marketing-theme="dark"] .lf-marketing-surface {
+  color-scheme: dark;
+  --lf-canvas: #11100f;
+  --lf-surface: #191715;
+  --lf-surface-subtle: #211e1b;
+  --lf-surface-raised: rgb(31 28 26 / 0.94);
+  --lf-marketing-canvas: #11100f;
+  --lf-foreground: #fff9f5;
+  --lf-foreground-muted: #d7cbc5;
+  --lf-foreground-subtle: #aa9e98;
+  --lf-inverse: #171717;
+  --lf-border: #3c3531;
+  --lf-border-strong: #584d47;
+  --lf-divider: #3c3531;
+  --lf-primary: #ff7a68;
+  --lf-primary-hover: #ff6652;
+  --lf-primary-active: #e65340;
+  --lf-primary-foreground: #171717;
+  --lf-primary-soft: #3a211d;
+  --lf-focus: #ff8d7d;
+  --lf-selection: #5c2a24;
+  --lf-chart-grid: #3c3531;
+  --background: #11100f;
+  --foreground: #fff9f5;
+  --card: #191715;
+  --card-foreground: #fff9f5;
+  --popover: #191715;
+  --popover-foreground: #fff9f5;
+  --border: #3c3531;
+  --input: #584d47;
+  --ring: #ff8d7d;
+}
+
+.lf-marketing-surface :where(.bg-white) {
+  background-color: var(--lf-surface);
+}
+
+html[data-marketing-theme="dark"] .lf-marketing-surface :where(.bg-foreground) {
+  background-color: #171717;
+}
+
 /* Apply business colors only inside a deliberate business-context boundary. */
 .lf-business-context {
   --lf-business-primary: var(--business-primary, var(--lf-primary));

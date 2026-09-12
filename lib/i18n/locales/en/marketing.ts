@@ -1,6 +1,5 @@
 export const marketingMessagesEn = {
-  "marketing.metaTitle":
-    "Tanee | Loyalty operations for growing businesses",
+  "marketing.metaTitle": "Tanee | Loyalty operations for growing businesses",
   "marketing.metaDescription":
     "Manage loyalty programs, rewards, customers, branches, teams, and reporting from one secure workspace.",
   "marketing.badge": "Loyalty operations, without the spreadsheet chaos",
@@ -11,6 +10,78 @@ export const marketingMessagesEn = {
   "marketing.primaryCta": "Start your free trial",
   "marketing.trustLine":
     "Built for owners, staff, and customer-facing teams with tenant-safe access controls.",
+  "marketing.home.heroTitle": "Tanee helps your customers choose you again.",
+  "marketing.home.heroBody":
+    "Turn everyday visits into stronger customer relationships with branded digital loyalty cards, clear rewards, and customer activity your team can understand and act on.",
+  "marketing.home.trialNote": "14 days free · No payment required",
+  "marketing.home.problemEyebrow": "The problem",
+  "marketing.home.problemTitle":
+    "A customer may buy from you once. That does not mean they will choose you again.",
+  "marketing.home.problemBody":
+    "Without a clear reason to return, the relationship can end after a single transaction—even when the experience was good.",
+  "marketing.home.solutionEyebrow": "The solution",
+  "marketing.home.solutionTitle":
+    "Tanee turns every transaction into a step in an ongoing relationship.",
+  "marketing.home.solutionBody":
+    "Understand customers through real activity, reward continued visits, and make the next return feel natural and worthwhile.",
+  "marketing.home.relationshipTitle":
+    "From every interaction to a stronger relationship.",
+  "marketing.home.relationshipInteraction": "Interaction",
+  "marketing.home.relationshipRecognition": "Recognition",
+  "marketing.home.relationshipReward": "Reward",
+  "marketing.home.relationshipReturn": "A reason to return",
+  "marketing.home.relationshipValue": "A stronger relationship",
+  "marketing.home.journeyTitle": "A simple journey for you and your customers.",
+  "marketing.home.journeyBody":
+    "Three clear steps make loyalty simple to operate and easy for customers to understand.",
+  "marketing.home.stepLabel": "Step",
+  "marketing.home.workflowOneBody":
+    "Create the loyalty programme that fits your business and give customers a branded digital card they can open without installing an app.",
+  "marketing.home.workflowTwoBody":
+    "Keep customer profiles, visits, balances, and reward progress together so your team can recognise returning customers clearly.",
+  "marketing.home.workflowThreeBody":
+    "Record activity, issue and redeem rewards, and use focused reporting to improve the programme over time.",
+  "marketing.home.benefitsTitle":
+    "More business from your customers. More value from every relationship.",
+  "marketing.home.benefitsBody":
+    "Tanee turns customer activity into a clearer view of what brings people back and where your loyalty programme can improve.",
+  "marketing.home.benefitReturnTitle": "Encourage customers to return",
+  "marketing.home.benefitReturnBody":
+    "Give progress and rewards a visible place in each customer relationship.",
+  "marketing.home.benefitRelationshipTitle":
+    "Build stronger customer relationships",
+  "marketing.home.benefitRelationshipBody":
+    "Keep recognition, activity, and rewards connected across repeat visits.",
+  "marketing.home.benefitInsightTitle": "Understand what keeps them engaged",
+  "marketing.home.benefitInsightBody":
+    "Use reports and customer activity to make more informed programme decisions.",
+  "marketing.home.benefitBrandTitle": "Let your brand lead the experience",
+  "marketing.home.benefitBrandBody":
+    "Give customers a digital card and loyalty journey that carry your business identity.",
+  "marketing.home.industriesBody":
+    "Flexible loyalty operations for businesses built on recurring customer relationships.",
+  "marketing.home.outcomesEyebrow": "The outcome",
+  "marketing.home.outcomesTitle":
+    "Every transaction can add more value to your customer relationship.",
+  "marketing.home.outcomesBody":
+    "When customers can see their progress and your team can understand their activity, each visit can support the next one.",
+  "marketing.home.outcomeOneTitle": "A clearer reason to return",
+  "marketing.home.outcomeOneBody":
+    "Customers can follow their progress towards a reward without installing an app.",
+  "marketing.home.outcomeTwoTitle": "Better insight into customer activity",
+  "marketing.home.outcomeTwoBody":
+    "Your team can understand visits, rewards, and loyalty activity from one workspace.",
+  "marketing.home.outcomeThreeTitle": "A consistent branded experience",
+  "marketing.home.outcomeThreeBody":
+    "Digital cards and customer-facing loyalty moments stay connected to your identity.",
+  "marketing.home.ownershipTitle": "Your customer relationships remain yours.",
+  "marketing.home.ownershipBody":
+    "Your business owns the customer relationship and programme decisions. Tanee provides the secure tools and controls that help your team operate them clearly.",
+  "marketing.home.securityLink": "Explore Tanee features",
+  "marketing.home.finalTitle":
+    "Give your customers a clear reason to choose you again.",
+  "marketing.home.finalBody":
+    "Create a loyalty experience that carries your brand, rewards continued visits, and strengthens every relationship over time.",
   "marketing.featureOneTitle": "Operate loyalty daily",
   "marketing.featureOneBody":
     "Scan customers, earn and redeem rewards, and keep a clear activity trail.",
@@ -36,10 +107,13 @@ export const marketingMessagesEn = {
   "marketing.navContact": "Contact",
   "marketing.navPrivacy": "Privacy",
   "marketing.navTerms": "Terms",
+  "marketing.navDataDeletion": "Data deletion",
   "marketing.primaryNavLabel": "Primary navigation",
   "marketing.mobileNavLabel": "Mobile navigation",
   "marketing.menuOpen": "Open navigation menu",
   "marketing.menuClose": "Close navigation menu",
+  "marketing.themeToDark": "Switch to dark mode",
+  "marketing.themeToLight": "Switch to light mode",
   "marketing.secondaryCta": "See how it works",
   "marketing.previewLabel": "Tanee product preview",
   "marketing.previewDashboard": "Owner overview",
@@ -102,11 +176,14 @@ export const marketingMessagesEn = {
   "marketing.finalBody":
     "Choose the supported setup path for your workspace, or sign in if your account is already active.",
   "marketing.footerProduct": "Product",
+  "marketing.footerSupport": "Support",
+  "marketing.footerLegal": "Legal",
   "marketing.footerAccess": "Access",
+  "marketing.footerRights": "© Tanee. All rights reserved.",
+  "marketing.socialLinksLabel": "Social links",
   "marketing.footerNote":
     "Bilingual loyalty operations for growing businesses.",
-  "marketing.features.metaTitle":
-    "Tanee Features | Digital loyalty operations",
+  "marketing.features.metaTitle": "Tanee Features | Digital loyalty operations",
   "marketing.features.metaDescription":
     "Explore Tanee digital cards, QR scanning, rewards, customer tools, reporting, and role-aware business controls.",
   "marketing.features.navHome": "Home",
@@ -136,9 +213,8 @@ export const marketingMessagesEn = {
   "marketing.features.ctaTitle":
     "Start with the setup path that fits your business.",
   "marketing.features.ctaBody":
-    "New business acquisition starts on the Tanee website through one secure seven-day Trial setup flow.",
-  "marketing.pricing.metaTitle":
-    "Tanee Pricing | Plans for growing businesses",
+    "New business acquisition starts on the Tanee website through one secure 14-day Trial setup flow.",
+  "marketing.pricing.metaTitle": "Tanee Pricing | Plans for growing businesses",
   "marketing.pricing.metaDescription":
     "Compare Tanee Free, Starter, Pro, and Business plans during the controlled beta.",
   "marketing.pricing.eyebrow": "Plans and pricing",
@@ -158,7 +234,7 @@ export const marketingMessagesEn = {
   "marketing.pricing.cta": "Choose a setup path",
   "marketing.pricing.noteTitle": "Controlled beta, with no surprise checkout.",
   "marketing.pricing.noteBody":
-    "Create a workspace through the secure seven-day Trial flow or supported managed setup. Online subscription payment will be introduced only after the commercial plans are approved.",
+    "Create a workspace through the secure 14-day Trial flow or supported managed setup. Online subscription payment will be introduced only after the commercial plans are approved.",
   "marketing.about.metaTitle": "About Tanee | Clear loyalty operations",
   "marketing.about.metaDescription":
     "Learn why Tanee brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
@@ -180,8 +256,7 @@ export const marketingMessagesEn = {
     "Built for real daily operations, not a demo-only dashboard.",
   "marketing.about.ctaBody":
     "The current closed beta focuses on reliable onboarding, mobile staff workflows, customer cards, and evidence-backed product improvement.",
-  "marketing.faq.metaTitle":
-    "Tanee FAQ | Digital loyalty questions answered",
+  "marketing.faq.metaTitle": "Tanee FAQ | Digital loyalty questions answered",
   "marketing.faq.metaDescription":
     "Answers about Tanee digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",
   "marketing.faq.pageEyebrow": "Frequently asked questions",
@@ -191,7 +266,7 @@ export const marketingMessagesEn = {
     "These answers describe the product and the controlled beta as they work today.",
   "marketing.faq.fourQuestion": "Can I join and pay online immediately?",
   "marketing.faq.fourAnswer":
-    "You can start the seven-day Trial online. Public subscription checkout remains off while the commercial contract is finalized.",
+    "You can start the 14-day Trial online. Public subscription checkout remains off while the commercial contract is finalized.",
   "marketing.faq.fiveQuestion": "Can the loyalty card match my brand?",
   "marketing.faq.fiveAnswer":
     "Yes. Standard cards support brand colours and identity. A complete Front and Back custom artwork pair can also be managed through the controlled Custom Card flow.",
@@ -256,8 +331,7 @@ export const marketingMessagesEn = {
   "marketing.privacy.choicesTitle": "Questions and data requests",
   "marketing.privacy.choicesBody":
     "Customers should first contact the business whose loyalty programme they joined because that business controls its customer relationship and programme rules. Business users can use the published Tanee support path for account or workspace requests. The final legal and privacy email will appear here only after it is verified and approved.",
-  "marketing.terms.metaTitle":
-    "Tanee Terms | Controlled-beta service baseline",
+  "marketing.terms.metaTitle": "Tanee Terms | Controlled-beta service baseline",
   "marketing.terms.metaDescription":
     "Review the Tanee controlled-beta service baseline covering access, accounts, loyalty programmes, acceptable use, manual billing, and availability.",
   "marketing.terms.eyebrow": "Terms",
@@ -266,7 +340,7 @@ export const marketingMessagesEn = {
     "These terms describe the current controlled-beta product model. Final operator identity, jurisdiction, commercial terms, and publication approval remain required before public launch.",
   "marketing.terms.accessTitle": "Controlled-beta access",
   "marketing.terms.accessBody":
-    "Tanee creates business workspaces through the secure seven-day Trial flow or supported managed setup. Public subscription checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
+    "Tanee creates business workspaces through the secure 14-day Trial flow or supported managed setup. Public subscription checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
   "marketing.terms.accountsTitle": "Account responsibility",
   "marketing.terms.accountsBody":
     "Users must provide accurate information, keep credentials and recovery material secure, use only their authorised role, and promptly report suspected compromise. Business owners are responsible for the users, branches, programme configuration, and customer-facing information they approve inside their workspace.",
