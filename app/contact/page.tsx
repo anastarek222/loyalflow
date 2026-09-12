@@ -71,7 +71,7 @@ export default async function ContactPage() {
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
+      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
     >
       <MarketingHeader
         locale={locale}

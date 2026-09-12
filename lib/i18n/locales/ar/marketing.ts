@@ -10,6 +10,74 @@ export const marketingMessagesAr = {
   "marketing.primaryCta": "ابدأ فترتك التجريبية المجانية",
   "marketing.trustLine":
     "مصمم للمالكين والموظفين وفرق خدمة العملاء مع صلاحيات آمنة ومعزولة لكل نشاط.",
+  "marketing.home.heroTitle": "Tanee تساعد عملاءك يختاروك تاني.",
+  "marketing.home.heroBody":
+    "حوّل كل زيارة لعلاقة أقوى مع عميلك من خلال بطاقات ولاء رقمية بهوية نشاطك، ومكافآت واضحة، ونشاط عملاء يقدر فريقك يفهمه ويتصرف على أساسه.",
+  "marketing.home.trialNote": "14 يومًا مجانًا · بدون دفع",
+  "marketing.home.problemEyebrow": "المشكلة",
+  "marketing.home.problemTitle":
+    "العميل ممكن يتعامل معاك مرة، لكن ده مش معناه إنه هيختارك تاني.",
+  "marketing.home.problemBody":
+    "من غير سبب واضح للرجوع، العلاقة ممكن تنتهي بعد أول تعامل حتى لو كانت التجربة كويسة.",
+  "marketing.home.solutionEyebrow": "الحل",
+  "marketing.home.solutionTitle": "Tanee تحوّل كل تعامل لخطوة في علاقة مستمرة.",
+  "marketing.home.solutionBody":
+    "افهم عملاءك من نشاطهم الحقيقي، وكافئ زياراتهم المستمرة، وخلّي الرجوع لنشاطك خطوة طبيعية ولها قيمة.",
+  "marketing.home.relationshipTitle": "من كل تعامل... لعلاقة أقوى.",
+  "marketing.home.relationshipInteraction": "تفاعل",
+  "marketing.home.relationshipRecognition": "تعرّف على العميل",
+  "marketing.home.relationshipReward": "مكافأة",
+  "marketing.home.relationshipReturn": "سبب واضح للرجوع",
+  "marketing.home.relationshipValue": "علاقة أقوى",
+  "marketing.home.journeyTitle": "رحلة بسيطة ليك ولعملائك.",
+  "marketing.home.journeyBody":
+    "ثلاث خطوات واضحة تخلي تشغيل الولاء بسيط، وتخلي العميل فاهم رحلته معاك.",
+  "marketing.home.stepLabel": "الخطوة",
+  "marketing.home.workflowOneBody":
+    "جهّز برنامج الولاء المناسب لنشاطك، وادّي عملاءك بطاقة رقمية بهويتك يفتحوها من غير ما ينزّلوا تطبيق.",
+  "marketing.home.workflowTwoBody":
+    "اجمع ملفات العملاء وزياراتهم وأرصدتهم وتقدمهم نحو المكافآت علشان فريقك يتعرّف على العميل العائد بوضوح.",
+  "marketing.home.workflowThreeBody":
+    "سجّل النشاط، وفعّل واستخدم المكافآت، واستفد من تقارير مركزة تطوّر بيها البرنامج مع الوقت.",
+  "marketing.home.benefitsTitle":
+    "تعاملات أكتر من عملائك، وقيمة أكبر من كل علاقة.",
+  "marketing.home.benefitsBody":
+    "Tanee تحوّل نشاط العملاء لصورة أوضح عن اللي بيرجعهم لنشاطك والفرص اللي تحسّن بيها برنامج الولاء.",
+  "marketing.home.benefitReturnTitle": "شجّع عملاءك يرجعوا",
+  "marketing.home.benefitReturnBody":
+    "خلّي تقدم العميل ومكافآته جزء واضح من علاقته بنشاطك.",
+  "marketing.home.benefitRelationshipTitle": "ابنِ علاقة أقوى مع العميل",
+  "marketing.home.benefitRelationshipBody":
+    "اربط التعرّف على العميل ونشاطه ومكافآته عبر زياراته المتكررة.",
+  "marketing.home.benefitInsightTitle": "افهم اللي بيحافظ على تفاعله",
+  "marketing.home.benefitInsightBody":
+    "استخدم التقارير ونشاط العملاء علشان تاخد قرارات أفضل لبرنامج الولاء.",
+  "marketing.home.benefitBrandTitle": "خلّي هويتك تقود التجربة",
+  "marketing.home.benefitBrandBody":
+    "ادّي عملاءك بطاقة رقمية ورحلة ولاء تحمل هوية نشاطك.",
+  "marketing.home.industriesBody":
+    "تشغيل ولاء مرن للأنشطة اللي نموها مبني على رجوع العملاء واستمرار العلاقة.",
+  "marketing.home.outcomesEyebrow": "النتيجة",
+  "marketing.home.outcomesTitle":
+    "كل تعامل ممكن يضيف قيمة أكبر لعلاقتك بعميلك.",
+  "marketing.home.outcomesBody":
+    "لما العميل يشوف تقدمه وفريقك يفهم نشاطه، كل زيارة تقدر تدعم الزيارة اللي بعدها.",
+  "marketing.home.outcomeOneTitle": "سبب أوضح للرجوع",
+  "marketing.home.outcomeOneBody":
+    "العميل يتابع تقدمه نحو المكافأة من غير ما يحتاج ينزّل تطبيق.",
+  "marketing.home.outcomeTwoTitle": "فهم أفضل لنشاط العملاء",
+  "marketing.home.outcomeTwoBody":
+    "فريقك يقدر يفهم الزيارات والمكافآت ونشاط الولاء من مساحة واحدة.",
+  "marketing.home.outcomeThreeTitle": "تجربة ثابتة بهوية نشاطك",
+  "marketing.home.outcomeThreeBody":
+    "البطاقات الرقمية ولحظات الولاء اللي بيشوفها العميل تفضل مرتبطة بهويتك.",
+  "marketing.home.ownershipTitle": "علاقتك بعملائك تفضل ملكك.",
+  "marketing.home.ownershipBody":
+    "نشاطك هو صاحب علاقة العميل وقرارات برنامج الولاء. Tanee توفّر الأدوات الآمنة والتحكم الواضح اللي يساعدوا فريقك يشغّل العلاقة صح.",
+  "marketing.home.securityLink": "اكتشف مميزات Tanee",
+  "marketing.home.finalTitle": "ادّي عملاءك سببًا واضحًا يختاروك تاني.",
+  "marketing.home.finalBody":
+    "اعمل تجربة ولاء تحمل هوية نشاطك، وتكافئ الزيارات المستمرة، وتقوّي علاقتك بعملائك مع الوقت.",
   "marketing.featureOneTitle": "شغّل الولاء يوميًا",
   "marketing.featureOneBody":
     "امسح بطاقات العملاء وأضف واستخدم المكافآت مع سجل نشاط واضح.",
@@ -35,10 +103,13 @@ export const marketingMessagesAr = {
   "marketing.navContact": "تواصل معنا",
   "marketing.navPrivacy": "الخصوصية",
   "marketing.navTerms": "الشروط",
+  "marketing.navDataDeletion": "حذف البيانات",
   "marketing.primaryNavLabel": "التنقل الرئيسي",
   "marketing.mobileNavLabel": "تنقل الهاتف",
   "marketing.menuOpen": "فتح قائمة التنقل",
   "marketing.menuClose": "إغلاق قائمة التنقل",
+  "marketing.themeToDark": "التبديل إلى الوضع الداكن",
+  "marketing.themeToLight": "التبديل إلى الوضع الفاتح",
   "marketing.secondaryCta": "شاهد كيف يعمل",
   "marketing.previewLabel": "معاينة منتج تاني",
   "marketing.previewDashboard": "نظرة المالك",
@@ -98,7 +169,11 @@ export const marketingMessagesAr = {
   "marketing.finalBody":
     "اختر مسار الإعداد المدعوم لمساحة عملك، أو سجّل الدخول إذا كان حسابك مفعّلًا بالفعل.",
   "marketing.footerProduct": "المنتج",
+  "marketing.footerSupport": "الدعم",
+  "marketing.footerLegal": "قانوني",
   "marketing.footerAccess": "الوصول",
+  "marketing.footerRights": "© Tanee. جميع الحقوق محفوظة.",
+  "marketing.socialLinksLabel": "روابط التواصل الاجتماعي",
   "marketing.footerNote": "تشغيل ولاء ثنائي اللغة للشركات المتنامية.",
   "marketing.features.metaTitle": "مميزات تاني | تشغيل الولاء الرقمي",
   "marketing.features.metaDescription":
@@ -128,7 +203,7 @@ export const marketingMessagesAr = {
     "يحصل المالك والمدير والموظف والمشاهد على الصلاحيات ومساحة العمل المناسبة لمسؤوليته.",
   "marketing.features.ctaTitle": "ابدأ بمسار الإعداد المناسب لنشاطك.",
   "marketing.features.ctaBody":
-    "يبدأ اكتساب الأنشطة الجديدة من موقع تاني عبر مسار إعداد آمن واحد لفترة تجريبية مدتها 7 أيام.",
+    "يبدأ اكتساب الأنشطة الجديدة من موقع تاني عبر مسار إعداد آمن واحد لفترة تجريبية مدتها 14 يومًا.",
   "marketing.pricing.metaTitle": "أسعار تاني | خطط للأنشطة المتنامية",
   "marketing.pricing.metaDescription":
     "قارن خطط تاني المجانية وStarter وPro وBusiness خلال المرحلة التجريبية المنضبطة.",
@@ -148,7 +223,7 @@ export const marketingMessagesAr = {
   "marketing.pricing.cta": "اختر مسار الإعداد",
   "marketing.pricing.noteTitle": "مرحلة تجريبية منضبطة بدون دفع مفاجئ.",
   "marketing.pricing.noteBody":
-    "أنشئ مساحة العمل من خلال مسار الفترة التجريبية الآمن لمدة 7 أيام أو الإعداد المدعوم والمدار. لن يبدأ دفع الاشتراك عبر الموقع قبل اعتماد الخطط التجارية.",
+    "أنشئ مساحة العمل من خلال مسار الفترة التجريبية الآمن لمدة 14 يومًا أو الإعداد المدعوم والمدار. لن يبدأ دفع الاشتراك عبر الموقع قبل اعتماد الخطط التجارية.",
   "marketing.about.metaTitle": "عن تاني | تشغيل ولاء واضح",
   "marketing.about.metaDescription":
     "تعرّف على سبب جمع تاني للبطاقات الرقمية ونشاط العملاء والمكافآت وصلاحيات الفريق والتقارير في مساحة واضحة واحدة.",
@@ -168,8 +243,7 @@ export const marketingMessagesAr = {
   "marketing.about.ctaTitle": "مصمم للتشغيل اليومي الحقيقي، وليس للعرض فقط.",
   "marketing.about.ctaBody":
     "تركز المرحلة التجريبية المغلقة حاليًا على إعداد موثوق ومسارات هاتف سهلة للموظفين وبطاقات العملاء وتطوير مبني على الاستخدام الحقيقي.",
-  "marketing.faq.metaTitle":
-    "أسئلة تاني الشائعة | إجابات عن الولاء الرقمي",
+  "marketing.faq.metaTitle": "أسئلة تاني الشائعة | إجابات عن الولاء الرقمي",
   "marketing.faq.metaDescription":
     "إجابات عن بطاقات تاني الرقمية واستخدام الهاتف وصلاحيات الموظفين ودعم العربية والبطاقات المخصصة والإعداد التجريبي.",
   "marketing.faq.pageEyebrow": "الأسئلة الشائعة",
@@ -178,15 +252,14 @@ export const marketingMessagesAr = {
     "تصف هذه الإجابات المنتج والمرحلة التجريبية المنضبطة كما يعملان حاليًا.",
   "marketing.faq.fourQuestion": "هل أستطيع الاشتراك والدفع عبر الموقع فورًا؟",
   "marketing.faq.fourAnswer":
-    "يمكنك بدء الفترة التجريبية لمدة 7 أيام عبر الموقع. يظل دفع الاشتراك العام مغلقًا حتى اعتماد العقد التجاري.",
+    "يمكنك بدء الفترة التجريبية لمدة 14 يومًا عبر الموقع. يظل دفع الاشتراك العام مغلقًا حتى اعتماد العقد التجاري.",
   "marketing.faq.fiveQuestion": "هل يمكن أن تطابق بطاقة الولاء هوية نشاطي؟",
   "marketing.faq.fiveAnswer":
     "نعم. تدعم البطاقة القياسية ألوان وهوية النشاط، ويمكن أيضًا إدارة تصميم مخصص كامل للوجه والظهر من خلال مسار البطاقة المخصصة المنضبط.",
   "marketing.faq.sixQuestion": "هل يعمل المنتج بشكل جيد على الهاتف؟",
   "marketing.faq.sixAnswer":
     "نعم. بطاقات العملاء ومسح الموظفين والمسارات الأساسية للمالك مصممة للهاتف وكذلك لسطح المكتب.",
-  "marketing.contact.metaTitle":
-    "تواصل مع تاني | إعداد النشاط والدخول للحساب",
+  "marketing.contact.metaTitle": "تواصل مع تاني | إعداد النشاط والدخول للحساب",
   "marketing.contact.metaDescription":
     "ابدأ إعداد نشاط جديد على تاني أو ادخل إلى حساب قائم.",
   "marketing.contact.eyebrow": "التواصل والوصول",
@@ -251,7 +324,7 @@ export const marketingMessagesAr = {
     "تصف هذه الشروط نموذج المنتج الحالي في المرحلة التجريبية المنضبطة. تظل هوية المشغّل والدولة والشروط التجارية واعتماد النشر مطلوبة قبل الإطلاق العام.",
   "marketing.terms.accessTitle": "الوصول في المرحلة التجريبية",
   "marketing.terms.accessBody":
-    "ينشئ تاني مساحات الأنشطة من خلال مسار الفترة التجريبية الآمن لمدة 7 أيام أو الإعداد المدعوم والمدار. دفع الاشتراك العام غير مفعّل. يمكن تقييد الوصول أو تعليقه أو إيقافه عند الحاجة لحماية الخدمة أو المستخدمين أو الأنشطة أو بيانات العملاء.",
+    "ينشئ تاني مساحات الأنشطة من خلال مسار الفترة التجريبية الآمن لمدة 14 يومًا أو الإعداد المدعوم والمدار. دفع الاشتراك العام غير مفعّل. يمكن تقييد الوصول أو تعليقه أو إيقافه عند الحاجة لحماية الخدمة أو المستخدمين أو الأنشطة أو بيانات العملاء.",
   "marketing.terms.accountsTitle": "مسؤولية الحساب",
   "marketing.terms.accountsBody":
     "يجب على المستخدم تقديم معلومات صحيحة وحماية بيانات الدخول ووسائل الاسترداد واستخدام الدور المصرح له فقط والإبلاغ سريعًا عن أي اشتباه في اختراق. ويتحمل مالك النشاط مسؤولية المستخدمين والفروع وإعداد البرنامج والمعلومات الموجهة للعملاء التي يعتمدها داخل مساحته.",

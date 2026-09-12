@@ -1,0 +1,72 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+function source(relativePath: string) {
+  return readFileSync(new URL(`../${relativePath}`, import.meta.url), "utf8");
+}
+
+test("Stitch marketing theme stays isolated from authenticated product UI", () => {
+  const styles = source("app/globals.css");
+  const switcher = source("components/marketing/marketing-theme-switcher.tsx");
+  const authority = source("lib/marketing/theme.ts");
+
+  assert.match(
+    styles,
+    /html\[data-marketing-theme="dark"\] \.lf-marketing-surface/,
+  );
+  assert.doesNotMatch(switcher, /classList\.(?:add|toggle)\("dark"/);
+  assert.match(authority, /tanee-marketing-theme/);
+  assert.match(
+    source("components/marketing/marketing-header.tsx"),
+    /className="lf-marketing-surface fixed inset-y-0 end-0/,
+  );
+});
+
+test("public marketing routes opt into the shared theme surface", () => {
+  const routes = [
+    "app/page.tsx",
+    "app/features/page.tsx",
+    "app/pricing/page.tsx",
+    "app/about/page.tsx",
+    "app/faq/page.tsx",
+    "app/contact/page.tsx",
+    "app/data-deletion/page.tsx",
+    "app/demo/page.tsx",
+    "components/marketing/legal-document-page.tsx",
+    "app/get-started/page.tsx",
+  ];
+
+  for (const route of routes) {
+    assert.match(source(route), /lf-marketing-surface/);
+  }
+});
+
+test("marketing content uses the current 14-day Trial truth in both locales", () => {
+  const english = source("lib/i18n/locales/en/marketing.ts");
+  const arabic = source("lib/i18n/locales/ar/marketing.ts");
+
+  assert.doesNotMatch(english, /seven-day Trial/i);
+  assert.doesNotMatch(arabic, /(?:7|٧) أيام/);
+  assert.match(english, /14-day Trial/);
+  assert.match(arabic, /14 يومًا/);
+});
+
+test("Home follows the supplied Stitch narrative without placeholder routes", () => {
+  const home = source("app/page.tsx");
+
+  for (const key of [
+    "marketing.home.problemTitle",
+    "marketing.home.relationshipTitle",
+    "marketing.home.journeyTitle",
+    "marketing.home.benefitsTitle",
+    "marketing.home.outcomesTitle",
+    "marketing.home.ownershipTitle",
+    "marketing.home.finalTitle",
+  ]) {
+    assert.match(home, new RegExp(key.replaceAll(".", "\\.")));
+  }
+
+  assert.doesNotMatch(home, /href=["']#["']/);
+  assert.match(home, /rtl:-scale-x-100/);
+});
