@@ -10,12 +10,29 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
+const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
+
 async function openProtectedPath(page: Page, path: string) {
-  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
-  if (new URL(page.url()).hostname === "vercel.com") {
-    throw new Error("Vercel automation bypass did not authorize the candidate Preview.");
+  if (!shareUrl) {
+    throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
   }
+
+  const share = new URL(shareUrl);
+  const token = share.searchParams.get("_vercel_share");
+  if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
+
+  const target = new URL(path, share.origin);
+  target.searchParams.set("_vercel_share", token);
+  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle");
+
+  const current = new URL(page.url());
+  if (current.origin !== share.origin) {
+    throw new Error(
+      `Protected Preview share session did not resolve to the candidate deployment; received ${current.origin}.`,
+    );
+  }
+
   return response;
 }
 
