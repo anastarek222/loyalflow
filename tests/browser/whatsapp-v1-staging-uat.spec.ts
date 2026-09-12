@@ -10,29 +10,12 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 
-const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
-
-async function openProtectedPreviewPath(page: Page, path: string) {
-  if (!shareUrl) {
-    throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
-  }
-
-  const share = new URL(shareUrl);
-  const token = share.searchParams.get("_vercel_share");
-  if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
-
-  const target = new URL(path, share.origin);
-  target.searchParams.set("_vercel_share", token);
-  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
+async function openPreviewPath(page: Page, path: string) {
+  const response = await page.goto(path, { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
-
-  const current = new URL(page.url());
-  if (current.origin !== share.origin) {
-    throw new Error(
-      `Protected Preview bypass did not resolve to the candidate deployment; received ${current.origin}.`,
-    );
+  if (new URL(page.url()).hostname === "vercel.com") {
+    throw new Error("Vercel automation bypass did not authorize the candidate Preview.");
   }
-
   return response;
 }
 
@@ -40,7 +23,7 @@ async function signIn(
   page: Page,
   role: "owner-a" | "manager-a" | "staff-a" | "viewer-a",
 ) {
-  await openProtectedPreviewPath(page, "/login");
+  await openPreviewPath(page, "/login");
   await page.getByLabel("Email address", { exact: true }).fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password", { exact: true }).fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
@@ -63,7 +46,7 @@ test.describe.serial("WhatsApp V1 authenticated Staging UAT", () => {
   });
 
   test("Seeded Staging fixture is visible through the exact Preview @desktop", async ({ page }) => {
-    const response = await openProtectedPreviewPath(
+    const response = await openPreviewPath(
       page,
       `/card/${encodeURIComponent(fixture.activeCustomer.publicToken)}`,
     );
