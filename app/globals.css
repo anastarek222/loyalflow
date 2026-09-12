@@ -136,6 +136,64 @@
  */
 .lf-marketing-surface {
   color-scheme: light;
+  --lf-canvas: #fff9f5;
+  --lf-surface: #ffffff;
+  --lf-surface-subtle: #fff3ed;
+  --lf-marketing-canvas: #fff9f5;
+  --lf-foreground: #171717;
+  --lf-foreground-muted: #5f5e5e;
+  --lf-foreground-subtle: #756f6b;
+  --lf-border: #e8e2de;
+  --lf-border-strong: #171717;
+  --lf-primary: #ff6652;
+  --lf-primary-hover: #f25543;
+  --lf-primary-active: #dc4938;
+  --lf-primary-foreground: #171717;
+  --lf-primary-soft: #ffebe7;
+  --lf-focus: #ff6652;
+}
+
+.lf-marketing-surface [data-platform-brand-wordmark-size="marketing"] {
+  display: block;
+  block-size: 1.75rem;
+  inline-size: auto;
+  max-inline-size: 10rem;
+  object-fit: contain;
+}
+
+.lf-marketing-surface [data-platform-brand-wordmark-size="marketing-footer"] {
+  display: block;
+  block-size: 2rem;
+  inline-size: auto;
+  max-inline-size: 10rem;
+  object-fit: contain;
+}
+
+html[data-marketing-theme="dark"]
+  .lf-marketing-surface
+  [data-platform-brand-wordmark-theme="light"] {
+  display: none;
+}
+
+html[data-marketing-theme="dark"]
+  .lf-marketing-surface
+  [data-platform-brand-wordmark-theme="dark"] {
+  display: block;
+}
+
+.lf-marketing-home {
+  font-family: var(--font-marketing-sans), var(--lf-font-sans);
+}
+
+.lf-marketing-home:lang(en) > section :is(h1, h2, h3) {
+  font-family:
+    var(--font-marketing-editorial), Georgia, "Times New Roman", serif;
+  font-weight: 600;
+}
+
+.lf-marketing-home:lang(ar) > section :is(h1, h2, h3) {
+  font-family: var(--font-marketing-sans), var(--lf-font-arabic);
+  letter-spacing: 0;
 }
 
 html[data-marketing-theme="dark"] .lf-marketing-surface {

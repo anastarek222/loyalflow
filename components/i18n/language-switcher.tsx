@@ -8,11 +8,15 @@ import { LOCALE_COOKIE_NAME } from "@/lib/i18n/request";
 
 type LanguageSwitcherProps = {
   locale: SupportedLocale;
+  alternateOnly?: boolean;
 };
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
-export function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  locale,
+  alternateOnly = false,
+}: LanguageSwitcherProps) {
   const router = useRouter();
 
   function setLocale(nextLocale: SupportedLocale) {
@@ -26,22 +30,26 @@ export function LanguageSwitcher({ locale }: LanguageSwitcherProps) {
       aria-label={translate(locale, "common.language")}
       className="flex items-center justify-center gap-2 text-xs"
     >
-      <button
-        type="button"
-        aria-pressed={locale === "en"}
-        onClick={() => setLocale("en")}
-        className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
-      >
-        {translate(locale, "common.english")}
-      </button>
-      <button
-        type="button"
-        aria-pressed={locale === "ar"}
-        onClick={() => setLocale("ar")}
-        className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
-      >
-        {translate(locale, "common.arabic")}
-      </button>
+      {!alternateOnly || locale === "ar" ? (
+        <button
+          type="button"
+          aria-pressed={locale === "en"}
+          onClick={() => setLocale("en")}
+          className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
+        >
+          {translate(locale, "common.english")}
+        </button>
+      ) : null}
+      {!alternateOnly || locale === "en" ? (
+        <button
+          type="button"
+          aria-pressed={locale === "ar"}
+          onClick={() => setLocale("ar")}
+          className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
+        >
+          {translate(locale, "common.arabic")}
+        </button>
+      ) : null}
     </div>
   );
 }

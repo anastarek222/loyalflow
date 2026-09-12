@@ -9,6 +9,7 @@ import { getMarketingRequestLocale } from "@/lib/marketing/request-locale";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import { buildPublicWebsiteStructuredData } from "@/lib/seo/public-website-structured-data";
 import type { Metadata } from "next";
+import { Alexandria, Libre_Bodoni } from "next/font/google";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -29,6 +30,18 @@ import {
   UserRoundCheck,
   Users,
 } from "lucide-react";
+
+const marketingSans = Alexandria({
+  subsets: ["arabic", "latin"],
+  variable: "--font-marketing-sans",
+  display: "swap",
+});
+
+const marketingEditorial = Libre_Bodoni({
+  subsets: ["latin"],
+  variable: "--font-marketing-editorial",
+  display: "swap",
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingRequestLocale();
@@ -202,7 +215,7 @@ export default async function HomePage() {
     <main
       lang={locale}
       dir={direction}
-      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
+      className={`lf-marketing-surface lf-marketing-home ${marketingSans.variable} ${marketingEditorial.variable} min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]`}
     >
       <script
         type="application/ld+json"

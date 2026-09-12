@@ -70,3 +70,33 @@ test("Home follows the supplied Stitch narrative without placeholder routes", ()
   assert.doesNotMatch(home, /href=["']#["']/);
   assert.match(home, /rtl:-scale-x-100/);
 });
+
+test("marketing wordmarks keep explicit production dimensions", () => {
+  const identity = source("components/platform-brand-identity.tsx");
+  const header = source("components/marketing/marketing-header.tsx");
+  const footer = source("components/marketing/marketing-footer.tsx");
+  const styles = source("app/globals.css");
+
+  assert.match(identity, /data-platform-brand-wordmark-size/);
+  assert.match(header, /showMark=\{false\}/);
+  assert.match(header, /wordmarkSize="marketing"/);
+  assert.match(footer, /wordmarkSize="marketing-footer"/);
+  assert.match(styles, /wordmark-size="marketing"/);
+  assert.match(styles, /block-size:\s*1\.75rem/);
+  assert.match(header, /themeAdaptiveWordmark/);
+  assert.match(styles, /wordmark-theme="dark"/);
+  assert.match(
+    source("public/brand/tanee-wordmark-en-dark.svg"),
+    /fill="#FFF9F5"/,
+  );
+});
+
+test("marketing language controls offer only the alternate locale", () => {
+  const switcher = source("components/i18n/language-switcher.tsx");
+  const header = source("components/marketing/marketing-header.tsx");
+  const footer = source("components/marketing/marketing-footer.tsx");
+
+  assert.match(switcher, /alternateOnly/);
+  assert.match(header, /<LanguageSwitcher locale=\{locale\} alternateOnly \/>/);
+  assert.match(footer, /<LanguageSwitcher locale=\{locale\} alternateOnly \/>/);
+});
