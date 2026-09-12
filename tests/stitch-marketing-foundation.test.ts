@@ -86,6 +86,10 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   assert.match(header, /themeAdaptiveWordmark/);
   assert.match(styles, /wordmark-theme="dark"/);
   assert.match(
+    styles,
+    /\.lf-marketing-surface \[data-platform-brand-wordmark-theme="dark"\]\s*\{\s*display: none;/,
+  );
+  assert.match(
     source("public/brand/tanee-wordmark-en-dark.svg"),
     /fill="#FFF9F5"/,
   );

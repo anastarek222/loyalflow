@@ -169,6 +169,10 @@
   object-fit: contain;
 }
 
+.lf-marketing-surface [data-platform-brand-wordmark-theme="dark"] {
+  display: none;
+}
+
 html[data-marketing-theme="dark"]
   .lf-marketing-surface
   [data-platform-brand-wordmark-theme="light"] {
