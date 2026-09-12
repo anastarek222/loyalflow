@@ -71,6 +71,9 @@ jobs:
           pnpm run db:validate
           pnpm run db:migrate:deploy
 
+      - name: Build application
+        run: pnpm run build
+
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
