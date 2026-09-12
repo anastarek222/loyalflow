@@ -12,24 +12,42 @@ let manifestPath: string;
 
 const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
 
-async function openProtectedPath(page: Page, path: string) {
+async function establishProtectedPreviewSession(page: Page) {
   if (!shareUrl) {
     throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
   }
 
   const share = new URL(shareUrl);
-  const token = share.searchParams.get("_vercel_share");
-  if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
+  if (!share.searchParams.get("_vercel_share")) {
+    throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
+  }
 
-  const target = new URL(path, share.origin);
-  target.searchParams.set("_vercel_share", token);
-  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
+  // Vercel share access is a session bootstrap URL: open the exact URL first so
+  // Vercel can redirect and set the deployment-access cookie. Only after that
+  // cookie exists do we navigate to the actual UAT route without reusing the token.
+  await page.goto(share.toString(), { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
 
   const current = new URL(page.url());
   if (current.origin !== share.origin) {
     throw new Error(
-      `Protected Preview share session did not resolve to the candidate deployment; received ${current.origin}.`,
+      `Protected Preview share bootstrap did not resolve to the candidate deployment; received ${current.origin}.`,
+    );
+  }
+
+  return share.origin;
+}
+
+async function openProtectedPath(page: Page, path: string) {
+  const origin = await establishProtectedPreviewSession(page);
+  const target = new URL(path, origin);
+  const response = await page.goto(target.toString(), { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("networkidle");
+
+  const current = new URL(page.url());
+  if (current.origin !== origin) {
+    throw new Error(
+      `Protected Preview session did not remain on the candidate deployment; received ${current.origin}.`,
     );
   }
 
