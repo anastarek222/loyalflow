@@ -12,20 +12,35 @@ let manifestPath: string;
 
 const shareUrl = process.env.VERCEL_SHARE_URL?.trim();
 
-async function unlockPreview(page: Page) {
-  if (!shareUrl) throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
-  await page.goto(shareUrl, { waitUntil: "domcontentloaded" });
+async function openProtectedPreviewLogin(page: Page) {
+  if (!shareUrl) {
+    throw new Error("VERCEL_SHARE_URL is required for protected Preview UAT.");
+  }
+
+  const share = new URL(shareUrl);
+  const token = share.searchParams.get("_vercel_share");
+  if (!token) throw new Error("VERCEL_SHARE_URL is missing _vercel_share.");
+
+  const login = new URL("/login", share.origin);
+  login.searchParams.set("_vercel_share", token);
+  await page.goto(login.toString(), { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("networkidle");
+
+  const current = new URL(page.url());
+  if (current.origin !== share.origin) {
+    throw new Error(
+      `Protected Preview bypass did not resolve to the candidate deployment; received ${current.origin}.`,
+    );
+  }
 }
 
 async function signIn(
   page: Page,
   role: "owner-a" | "manager-a" | "staff-a" | "viewer-a",
 ) {
-  await unlockPreview(page);
-  await page.goto("/login");
-  await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
-  await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+  await openProtectedPreviewLogin(page);
+  await page.getByLabel("Email address", { exact: true }).fill(uatEmail(role, fixture.runId));
+  await page.getByLabel("Password", { exact: true }).fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
     timeout: 45_000,
