@@ -77,6 +77,7 @@ export default async function ScanCustomerPage({
       cardStyle: true,
       fontFamily: true,
       id: true,
+      timezone: true,
       staffAttributionEnabled: true,
       staffAttributionRequired: true,
       rewardThreshold: true,
@@ -172,6 +173,7 @@ export default async function ScanCustomerPage({
   const dateFormatter = new Intl.DateTimeFormat(getLanguageLocale(language), {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone: business.timezone,
   });
   const success =
     query.success === "earned" || query.success === "redeemed"
