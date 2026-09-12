@@ -16,6 +16,7 @@ export function PublicLoyaltyCardViewer({
   ...cardProps
 }: PublicLoyaltyCardViewerProps) {
   const [side, setSide] = useState<"front" | "back">("front");
+  const nextSide = side === "front" ? "back" : "front";
   const copy =
     language === "AR"
       ? {
