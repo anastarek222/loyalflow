@@ -98,6 +98,7 @@ export const marketingMessagesEn = {
     "Track results and improve retention with reports and campaigns.",
   "marketing.navHome": "Home",
   "marketing.navFeatures": "Features",
+  "marketing.navHowItWorks": "How it works",
   "marketing.navPricing": "Pricing",
   "marketing.navAbout": "About",
   "marketing.navProduct": "Features",

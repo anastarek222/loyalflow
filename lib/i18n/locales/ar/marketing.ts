@@ -94,6 +94,7 @@ export const marketingMessagesAr = {
     "تابع النتائج وحسّن الاحتفاظ بالعملاء عبر التقارير والحملات.",
   "marketing.navHome": "الرئيسية",
   "marketing.navFeatures": "المميزات",
+  "marketing.navHowItWorks": "كيف تعمل Tanee",
   "marketing.navPricing": "الأسعار",
   "marketing.navAbout": "من نحن",
   "marketing.navProduct": "المميزات",

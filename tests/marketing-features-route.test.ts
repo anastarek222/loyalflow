@@ -41,7 +41,7 @@ test("Features implements the supplied Stitch narrative with product-truth CTAs"
   }
 
   assert.match(page, /href="\/privacy"/);
-  assert.match(page, /href="\/\#how-it-works"/);
+  assert.match(page, /href="\/how-it-works"/);
   assert.doesNotMatch(english, /7 days free|under 7 minutes/i);
   assert.doesNotMatch(arabic, /7 أيام|أقل من 7 دقائق/);
   assert.doesNotMatch(page, /APPROVED TANEE|SCREENSHOT REQUIRED/);
@@ -68,6 +68,7 @@ test("marketing navigation uses independent routes without Home-page anchors", (
   for (const route of [
     "/",
     "/features",
+    "/how-it-works",
     "/pricing",
     "/about",
     "/faq",

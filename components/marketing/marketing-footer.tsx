@@ -91,6 +91,11 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/how-it-works" className="hover:text-primary">
+                    {copy("marketing.navHowItWorks")}
+                  </Link>
+                </li>
+                <li>
                   <Link href="/pricing" className="hover:text-primary">
                     {copy("marketing.navPricing")}
                   </Link>
