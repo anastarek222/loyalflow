@@ -153,14 +153,26 @@ export async function resolveBusinessCustomerAudienceContext(input: {
   catalogueRewards: readonly RewardAvailabilityOption[];
   now?: Date;
 }) {
-  const contexts = await resolveBusinessCustomerAudienceContexts({
-    business: input.business,
-    customers: [input.customer],
-    catalogueRewards: input.catalogueRewards,
-    now: input.now,
-  });
+  const [contexts, tagAssignments] = await Promise.all([
+    resolveBusinessCustomerAudienceContexts({
+      business: input.business,
+      customers: [input.customer],
+      catalogueRewards: input.catalogueRewards,
+      now: input.now,
+    }),
+    prisma.customerTagAssignment.findMany({
+      where: {
+        businessId: input.business.id,
+        customerId: input.customer.id,
+      },
+      select: { tagId: true },
+    }),
+  ]);
 
-  return contexts.get(input.customer.id) ?? {};
+  return {
+    ...(contexts.get(input.customer.id) ?? {}),
+    customerTagIds: tagAssignments.map((assignment) => assignment.tagId),
+  };
 }
 
 export async function resolveBusinessCustomerIdsForSegment(input: {
