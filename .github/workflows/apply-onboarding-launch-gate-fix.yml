@@ -1,0 +1,58 @@
+name: Apply onboarding launch gate fix
+
+on:
+  push:
+    branches: [fix/reward-truth-core]
+    paths: [.github/workflows/apply-onboarding-launch-gate-fix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/reward-truth-core
+          fetch-depth: 0
+
+      - name: Apply minimal launch transition fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          component = Path('components/owner-onboarding-wizard-v2.tsx')
+          text = component.read_text()
+          replacements = [
+              ('step === 3 ? <button type="submit" formAction={launchAction}', 'step === 3 ? <button key="launch" type="submit" formAction={launchAction}'),
+              (': <button type="button" onClick={goNext}', ': <button key="next" type="button" onClick={goNext}'),
+          ]
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one component match for: {old}')
+              text = text.replace(old, new, 1)
+          component.write_text(text)
+
+          spec = Path('tests/browser/owner-onboarding-mobile.spec.ts')
+          text = spec.read_text()
+          old = r'/businesses/${businessSlug}(?:\\?.*)?$'
+          new = r'/businesses/${businessSlug}/launch-success(?:\\?.*)?$'
+          if text.count(old) != 2:
+              raise SystemExit(f'Expected exactly two launch URL expectations, found {text.count(old)}')
+          spec.write_text(text.replace(old, new))
+          PY
+
+          git rm .github/workflows/apply-onboarding-launch-gate-fix.yml
+          git diff --check
+          git diff -- components/owner-onboarding-wizard-v2.tsx tests/browser/owner-onboarding-mobile.spec.ts
+
+      - name: Commit patch and remove helper
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/owner-onboarding-wizard-v2.tsx tests/browser/owner-onboarding-mobile.spec.ts
+          git commit -m "fix: stabilize owner onboarding launch transition"
+          git push origin HEAD:fix/reward-truth-core
