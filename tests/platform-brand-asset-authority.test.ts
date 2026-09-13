@@ -7,11 +7,10 @@ import { platformBrand } from "../lib/platform-brand";
 const source = (path: string) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("platform brand assets use the approved bilingual Tanee wordmarks", () => {
+test("platform brand assets use the approved English Tanee wordmark", () => {
   assert.deepEqual(platformBrand.assets, {
     mark: null,
     wordmark: "/brand/tanee-wordmark-en.svg",
-    wordmarkAr: "/brand/tanee-wordmark-ar.svg",
     socialPreview: null,
   });
   assert.equal(platformBrand.iconMark, "ee");
@@ -19,13 +18,14 @@ test("platform brand assets use the approved bilingual Tanee wordmarks", () => {
   assert.equal(platformBrand.nameAr, "تاني");
 });
 
-test("shared brand identity renderer owns mark and wordmark fallbacks", () => {
+test("shared brand identity renderer owns mark and English wordmark fallbacks", () => {
   const identity = source("components/platform-brand-identity.tsx");
 
   assert.match(identity, /platformBrand\.assets\.mark/);
   assert.match(identity, /platformBrand\.assets\.wordmark/);
-  assert.match(identity, /platformBrand\.assets\.wordmarkAr/);
-  assert.match(identity, /locale\.toLowerCase\(\) === "ar"/);
+  assert.match(identity, /tanee-wordmark-en-dark\.svg/);
+  assert.doesNotMatch(identity, /platformBrand\.assets\.wordmarkAr/);
+  assert.doesNotMatch(identity, /locale\.toLowerCase\(\) === "ar"/);
   assert.match(identity, /fallback === "sparkles"/);
   assert.match(identity, /platformBrand\.iconMark/);
   assert.match(identity, /fallbackText = platformBrand\.name/);
