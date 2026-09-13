@@ -31,6 +31,7 @@ async function getOfferManagementContext(slug: string) {
       id: true,
       slug: true,
       plan: true,
+      timezone: true,
       subscriptionLifecycleState: true,
     },
   });
@@ -90,7 +91,7 @@ export async function createOfferAction(slug: string, formData: FormData) {
 
   const result = await createOfferCommand({
     businessId: business.id,
-    offer: normalizeOfferInput(parsed.data),
+    offer: normalizeOfferInput(parsed.data, business.timezone ?? "UTC"),
     actor: session.user,
   });
   const error = offerCommandError(result);
@@ -135,7 +136,7 @@ export async function updateOfferAction(
   const result = await updateOfferCommand({
     businessId: business.id,
     offerId: existingOffer.id,
-    offer: normalizeOfferInput(parsed.data),
+    offer: normalizeOfferInput(parsed.data, business.timezone ?? "UTC"),
     actor: session.user,
   });
   const error = offerCommandError(result);

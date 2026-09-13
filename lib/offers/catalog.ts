@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { customerSegments } from "@/lib/customers/segments";
+import { localOfferDayBoundaryToUtc } from "@/lib/offers/date-window";
 import { offerEligibilityValues } from "@/lib/offers/eligibility";
 
 const optionalDate = z
@@ -29,21 +30,20 @@ export const offerInputSchema = z
     }
   });
 
-function startOfUtcDay(value: string) {
-  return new Date(`${value}T00:00:00.000Z`);
-}
-
-function endOfUtcDay(value: string) {
-  return new Date(`${value}T23:59:59.999Z`);
-}
-
-/** Admin date inputs consistently represent a whole UTC calendar day. */
-export function normalizeOfferInput(input: z.infer<typeof offerInputSchema>) {
+/** Date-only inputs represent a whole calendar day in the Business timezone. */
+export function normalizeOfferInput(
+  input: z.infer<typeof offerInputSchema>,
+  timeZone = "UTC",
+) {
   return {
     name: input.name.trim(),
     description: input.description?.trim() || null,
-    validFrom: input.validFrom ? startOfUtcDay(input.validFrom) : null,
-    validUntil: input.validUntil ? endOfUtcDay(input.validUntil) : null,
+    validFrom: input.validFrom
+      ? localOfferDayBoundaryToUtc(input.validFrom, timeZone, "start")
+      : null,
+    validUntil: input.validUntil
+      ? localOfferDayBoundaryToUtc(input.validUntil, timeZone, "end")
+      : null,
     eligibility: input.eligibility,
     segment: input.eligibility === "SEGMENT" ? input.segment ?? null : null,
   };
