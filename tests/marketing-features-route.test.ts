@@ -12,9 +12,39 @@ test("public Features route is bilingual, indexable, and conversion-ready", () =
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.match(page, /getLocaleDirection\(locale\)/);
   assert.match(page, /href="\/get-started"/);
-  assert.match(page, /href="\/login"/);
+  assert.match(
+    source("components/marketing/marketing-header.tsx"),
+    /href="\/login"/,
+  );
   assert.match(page, /<MarketingFooter locale=\{locale\} \/>/);
   assert.doesNotMatch(page, /checkout|payment|guarantee/i);
+});
+
+test("Features implements the supplied Stitch narrative with product-truth CTAs", () => {
+  const page = source("app/features/page.tsx");
+  const english = source("lib/i18n/locales/en/marketing.ts");
+  const arabic = source("lib/i18n/locales/ar/marketing.ts");
+
+  for (const section of [
+    "overviewTitle",
+    "brandTitle",
+    "activityTitle",
+    "rewardsSectionTitle",
+    "insightsTitle",
+    "journeyTitle",
+    "securityTitle",
+    "outcomesTitle",
+    "faqTitle",
+    "finalTitle",
+  ]) {
+    assert.match(page, new RegExp(`marketing\\.features\\.${section}`));
+  }
+
+  assert.match(page, /href="\/privacy"/);
+  assert.match(page, /href="\/\#how-it-works"/);
+  assert.doesNotMatch(english, /7 days free|under 7 minutes/i);
+  assert.doesNotMatch(arabic, /7 أيام|أقل من 7 دقائق/);
+  assert.doesNotMatch(page, /APPROVED TANEE|SCREENSHOT REQUIRED/);
 });
 
 test("Features is discoverable from the Home page and sitemap", () => {

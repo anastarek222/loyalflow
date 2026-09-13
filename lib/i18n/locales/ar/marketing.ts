@@ -179,31 +179,133 @@ export const marketingMessagesAr = {
   "marketing.features.metaDescription":
     "اكتشف البطاقات الرقمية والمسح برمز QR والمكافآت وأدوات العملاء والتقارير والصلاحيات حسب الدور في تاني.",
   "marketing.features.navHome": "الرئيسية",
-  "marketing.features.eyebrow": "مميزات المنتج",
-  "marketing.features.title": "كل ما يحتاجه فريقك لتشغيل الولاء بوضوح.",
+  "marketing.features.eyebrow": "مزايا Tanee",
+  "marketing.features.title":
+    "كل ما تحتاجه لتحوّل تفاعل عملائك إلى ولاء مستمر.",
   "marketing.features.body":
-    "من أول مسح لبطاقة العميل حتى المكافآت والتقارير، يجمع تاني العمل اليومي في مساحة ثنائية اللغة ومهيأة للهاتف.",
-  "marketing.features.cardsTitle": "بطاقات رقمية بهوية نشاطك",
+    "تجمع Tanee أدوات الولاء في تجربة واحدة مترابطة تساعدك على فهم عملائك ومتابعة نشاطهم ومكافأة استمرارهم بطريقة واضحة تحمل هوية نشاطك.",
+  "marketing.features.cardsTitle": "بطاقة ولاء تحمل هوية نشاطك",
   "marketing.features.cardsBody":
-    "امنح كل عميل بطاقة برمز QR تعرض الرصيد وتقدم المكافأة وهوية نشاطك بشكل مباشر.",
+    "صمّم تجربة ولاء تعكس ألوانك وهويتك البصرية، لتبدو البطاقة امتدادًا طبيعيًا لنشاطك.",
   "marketing.features.staffTitle": "مسح سريع للموظفين",
   "marketing.features.staffBody":
     "ينتقل الموظف مباشرة إلى مسار مسح العميل لتظل الإضافة والاستخدام سريعين عند نقطة الخدمة.",
-  "marketing.features.customersTitle": "ملفات عملاء مفيدة",
+  "marketing.features.customersTitle": "تعرّف على عملائك وتابع نشاطهم",
   "marketing.features.customersBody":
-    "اجمع نشاط الولاء والأرصدة والشرائح وعمليات العملاء بدون إظهار التفاصيل الداخلية للعامة.",
-  "marketing.features.rewardsTitle": "المكافآت والعروض",
+    "احتفظ ببيانات العملاء والنشاط المسجّل والتقدّم بشكل منظم يسهّل عليك فهم كل علاقة.",
+  "marketing.features.rewardsTitle": "مكافآت وعروض تناسب نشاطك",
   "marketing.features.rewardsBody":
-    "اضبط قواعد الولاء وانشر المكافآت والعروض واعرض للعميل تقدمه بوضوح نحو المكافأة التالية.",
-  "marketing.features.reportingTitle": "تقارير تشغيلية",
+    "اختر كيف يتقدّم العملاء وما يحصلون عليه، بمكافآت واضحة ومناسبة لنشاطك وسهلة الإدارة.",
+  "marketing.features.reportingTitle": "معلومات تساعدك على اتخاذ قرارات أفضل",
   "marketing.features.reportingBody":
-    "تابع نشاط العملاء وعمليات الاستخدام وسلوك العودة وأداء النشاط من تقارير مركزة.",
+    "راقب تفاعل العملاء بوضوح وتعرّف على العوامل التي تدعم استمرار ولائهم.",
   "marketing.features.controlTitle": "تحكم حسب الدور",
   "marketing.features.controlBody":
     "يحصل المالك والمدير والموظف والمشاهد على الصلاحيات ومساحة العمل المناسبة لمسؤوليته.",
   "marketing.features.ctaTitle": "ابدأ بمسار الإعداد المناسب لنشاطك.",
   "marketing.features.ctaBody":
     "يبدأ اكتساب الأنشطة الجديدة من موقع تاني عبر مسار إعداد آمن واحد لفترة تجريبية مدتها 14 يومًا.",
+  "marketing.features.overviewTitle": "تجربة ولاء واحدة ومترابطة لك ولعملائك.",
+  "marketing.features.overviewBody":
+    "كل ميزة تدعم جانبًا مختلفًا من العلاقة، بينما تعمل المنظومة بأكملها في نظام مترابط وواضح.",
+  "marketing.features.brandEyebrow": "هوية نشاطك",
+  "marketing.features.brandTitle": "تجربة ولاء تعكس هوية نشاطك.",
+  "marketing.features.brandBody":
+    "يجب أن يتعرّف عميلك على نشاطك في كل خطوة. تساعدك Tanee على بناء بطاقة ولاء تحمل ألوانك وهويتك البصرية، لتبقى التجربة متسقة ومألوفة.",
+  "marketing.features.brandPointOne": "بطاقة مصممة وفق الهوية البصرية لنشاطك",
+  "marketing.features.brandPointTwo":
+    "وضوح كامل للعميل في متابعة التقدّم والمكافآت",
+  "marketing.features.brandPointThree":
+    "تجربة متسقة عبر نقاط التفاعل مع العميل",
+  "marketing.features.activityEyebrow": "نشاط واضح لكل عميل",
+  "marketing.features.activityTitle": "افهم كل عميل بصورة تتجاوز عملية واحدة.",
+  "marketing.features.activityBody":
+    "تحافظ Tanee على ترابط نشاط العملاء المسجّل وتقدّمهم، مما يسهّل عليك تمييز العميل العائد وفهم كيفية نمو علاقته بنشاطك.",
+  "marketing.features.profilesTitle": "ملفات العملاء",
+  "marketing.features.profilesBody":
+    "احتفظ بالبيانات الأساسية ونشاط الولاء في مكان واحد منظم.",
+  "marketing.features.historyTitle": "سجل النشاط والتقدّم",
+  "marketing.features.historyBody":
+    "تابع النشاط المسجّل وأظهر للعملاء مدى قربهم من مكافأتهم التالية.",
+  "marketing.features.contextTitle": "صورة أوضح عن علاقة كل عميل بنشاطك",
+  "marketing.features.contextBody":
+    "تعرّف على من يستمر في التفاعل ومن يحتاج إلى سبب أقوى لاختيارك مجددًا.",
+  "marketing.features.rewardsEyebrow": "المكافآت والعروض",
+  "marketing.features.rewardsSectionTitle":
+    "كافئ ولاء عملائك بالطريقة التي تناسب نشاطك.",
+  "marketing.features.rewardsSectionBody":
+    "أنت من يحدد ما يكسبه العملاء، وكيف يُقاس التقدّم، ومتى تصبح المكافأة متاحة. حافظ على تجربة واضحة للعملاء وسهلة الإدارة لفريقك.",
+  "marketing.features.rewardsPointOne": "حدد المكافآت المناسبة لطبيعة نشاطك",
+  "marketing.features.rewardsPointTwo":
+    "أنشئ عروضًا تدعم استمرار تفاعل العملاء",
+  "marketing.features.rewardsPointThree": "وضّح شروط الاستحقاق ومسار التقدّم",
+  "marketing.features.rewardsPointFour": "تحكّم في قيمة وتوقيت كل مكافأة",
+  "marketing.features.insightsTitle": "اعرف ما يشجّع عملاءك على الاستمرار.",
+  "marketing.features.insightsBody":
+    "يساعدك وضوح النشاط في فهم سلوك العملاء واتخاذ قرارات ولاء مدروسة دون الاعتماد على التخمين.",
+  "marketing.features.activityItemTitle": "نشاط العملاء",
+  "marketing.features.activityItemBody":
+    "تابع كيف يتفاعل العملاء مع تجربة الولاء بمرور الوقت.",
+  "marketing.features.progressItemTitle": "التقدّم والمكافآت",
+  "marketing.features.progressItemBody":
+    "تعرّف على كيفية تقدّم العملاء نحو مكافآتهم وما يحصلون عليه.",
+  "marketing.features.engagementItemTitle": "استمرار التفاعل",
+  "marketing.features.engagementItemBody":
+    "تعرّف على العملاء المستمرين والعلاقات التي قد تحتاج إلى اهتمام.",
+  "marketing.features.improvementItemTitle": "تحسينات عملية",
+  "marketing.features.improvementItemBody":
+    "استفد من بيانات النشاط الحقيقية لتطوير المكافآت وتحسين تجربة العميل.",
+  "marketing.features.journeyTitle": "كل ميزة تعمل ضمن تجربة واحدة مترابطة.",
+  "marketing.features.journeyBody":
+    "لا ينبغي أن تتشتت تجربة العميل عبر أدوات منفصلة. تحافظ Tanee على وضوح مسار الولاء لعملائك وسهولة إدارته لنشاطك.",
+  "marketing.features.journeyJoin": "انضمام العميل",
+  "marketing.features.journeyCard": "بقاء البطاقة مع العميل",
+  "marketing.features.journeyProgress": "تراكم التقدّم مع كل نشاط",
+  "marketing.features.journeyReward": "وضوح مسار المكافأة",
+  "marketing.features.journeyRelationship": "نمو العلاقة واستمرارها",
+  "marketing.features.securityEyebrow": "التحكم والأمان",
+  "marketing.features.securityTitle": "علاقاتك بعملائك وبيانات نشاطك تظل ملكك.",
+  "marketing.features.securityBody":
+    "تظل معلومات نشاطك وبيانات عملائك محمية، مع احتفاظك بالتحكم في إعدادات برنامج الولاء والمكافآت وكيفية تشغيل التجربة.",
+  "marketing.features.securityPointOne": "تحكّم في كيفية إعداد برنامج الولاء",
+  "marketing.features.securityPointTwo": "حافظ على حماية معلومات العملاء",
+  "marketing.features.securityPointThree":
+    "أدر المكافآت والنشاط من نظام واحد مترابط",
+  "marketing.features.securityLink": "اعرف أكثر عن الأمان",
+  "marketing.features.outcomesEyebrow": "ما تحققه لك هذه المزايا",
+  "marketing.features.outcomesTitle":
+    "امنح عملاءك أسبابًا أكثر ليختاروك من جديد.",
+  "marketing.features.outcomesBody":
+    "تربط Tanee بين هوية نشاطك ونشاط العملاء والمكافآت، ليسهم كل تفاعل في بناء علاقة أقوى.",
+  "marketing.features.outcomeOne": "أظهر لعملائك تقدّمهم بوضوح",
+  "marketing.features.outcomeTwo": "اجعل العميل العائد يشعر بأنك تتذكره",
+  "marketing.features.outcomeThree": "افهم ما يدعم استمرار تفاعل العملاء",
+  "marketing.features.outcomeFour": "اصنع فرصًا أكثر لتكرار التعامل",
+  "marketing.features.faqTitle": "الأسئلة الشائعة عن مزايا Tanee",
+  "marketing.features.faqOneQuestion":
+    "هل يمكنني تخصيص بطاقة الولاء لتناسب نشاطي؟",
+  "marketing.features.faqOneAnswer":
+    "تتيح لك Tanee إنشاء بطاقة ولاء تعكس ألوان نشاطك وهويته، مع عرض معلومات التقدّم والمكافآت بوضوح.",
+  "marketing.features.faqTwoQuestion": "ما نشاط العملاء الذي يمكنني متابعته؟",
+  "marketing.features.faqTwoAnswer":
+    "يمكنك متابعة نشاط العملاء المسجّل، ومدى تقدّمهم نحو المكافآت، ونشاط المكافآت داخل تجربة Tanee.",
+  "marketing.features.faqThreeQuestion": "هل يمكنني اختيار المكافآت بنفسي؟",
+  "marketing.features.faqThreeAnswer":
+    "نعم. أنت من يحدد نوع المكافآت وقيمتها وشروط استحقاقها وفق ما يناسب طبيعة نشاطك.",
+  "marketing.features.faqFourQuestion": "هل يستطيع العملاء رؤية تقدّمهم؟",
+  "marketing.features.faqFourAnswer":
+    "صُممت تجربة الولاء لتمكين العملاء من متابعة تقدّمهم ومعرفة المكافآت القادمة بوضوح.",
+  "marketing.features.faqFiveQuestion":
+    "هل تناسب Tanee أنواعًا مختلفة من الأنشطة؟",
+  "marketing.features.faqFiveAnswer":
+    "صُممت Tanee للأنشطة التي تستفيد من استمرار العملاء في اختيارها، سواء كانت تبيع منتجات أو تقدم خدمات أو تستقبل طلبات أو تدير حجوزات.",
+  "marketing.features.faqSixQuestion": "هل بيانات العملاء محمية؟",
+  "marketing.features.faqSixAnswer":
+    "تظل معلومات العملاء محمية، مع احتفاظك بالتحكم في برنامج الولاء وكيفية إدارته وتشغيله.",
+  "marketing.features.finalTitle":
+    "اجمع علاقات عملائك في تجربة واحدة مع Tanee.",
+  "marketing.features.finalBody":
+    "ابدأ ببناء تجربة ولاء تحمل هوية نشاطك، وافهم نشاط عملائك وكافئ استمرارهم عبر منصة واحدة مترابطة.",
   "marketing.pricing.metaTitle": "أسعار تاني | خطط للأنشطة المتنامية",
   "marketing.pricing.metaDescription":
     "قارن خطط تاني المجانية وStarter وPro وBusiness خلال المرحلة التجريبية المنضبطة.",
