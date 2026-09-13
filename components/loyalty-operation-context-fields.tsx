@@ -1,5 +1,8 @@
 "use client";
 
+import { customerUiCopy } from "@/lib/customers/ui-copy";
+import type { AppLanguage } from "@/lib/i18n";
+
 type LoyaltyOperationContextFieldsProps = {
   branches: Array<{ id: string; name: string }>;
   staff: Array<{ id: string; firstName: string; lastName: string | null }>;
@@ -23,9 +26,21 @@ export default function LoyaltyOperationContextFields({
   language = "AR",
 }: LoyaltyOperationContextFieldsProps) {
   const copy = customerUiCopy(language);
+  const singleRequiredBranch = branchRequired && branches.length === 1 ? branches[0] : null;
+  const missingRequiredBranchAssignment = branchRequired && branches.length === 0;
+
   return (
     <>
-      {branches.length > 0 ? (
+      {missingRequiredBranchAssignment ? (
+        <div
+          role="alert"
+          className="mb-4 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-3 text-sm font-semibold leading-6 text-warning-foreground"
+        >
+          {language === "AR"
+            ? "لا يوجد فرع نشط مخصص لحسابك. اطلب من المدير تعيينك إلى فرع قبل تسجيل أي عملية ولاء."
+            : "No active branch is assigned to your account. Ask a manager to assign you to a branch before recording a loyalty operation."}
+        </div>
+      ) : branches.length > 0 ? (
         <div className="mb-4">
           <label className="mb-2 block text-sm font-bold text-foreground-muted" htmlFor={`${idPrefix}-branch`}>
             {copy.branch}
@@ -35,7 +50,7 @@ export default function LoyaltyOperationContextFields({
             name="branchId"
             required={branchRequired}
             disabled={disabled}
-            defaultValue=""
+            defaultValue={singleRequiredBranch?.id ?? ""}
             className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
           >
             <option value="">
@@ -79,5 +94,3 @@ export default function LoyaltyOperationContextFields({
     </>
   );
 }
-import { customerUiCopy } from "@/lib/customers/ui-copy";
-import type { AppLanguage } from "@/lib/i18n";
