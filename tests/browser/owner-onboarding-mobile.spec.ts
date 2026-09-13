@@ -265,7 +265,7 @@ test.describe
     await page.getByRole("button", { name: "Launch", exact: true }).click();
     await expect(
       page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`), {
       timeout: 30_000,
     });
     await expect(
@@ -386,7 +386,7 @@ test.describe
     await page.getByRole("button", { name: "Launch", exact: true }).click();
     await expect(
       page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`), {
       timeout: 30_000,
     });
 
