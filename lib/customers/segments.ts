@@ -51,6 +51,8 @@ export type CustomerSegmentContext = {
   qualifyingVisitCount?: number;
   /** Explicit product threshold for FREQUENT_VISITOR. */
   frequentVisitorThreshold?: number;
+  /** Private tenant-scoped CRM tags for server-side audience matching only. */
+  customerTagIds?: readonly string[];
 };
 
 const NEW_CUSTOMER_DAYS = 30;
