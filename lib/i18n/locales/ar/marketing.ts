@@ -398,13 +398,48 @@ export const marketingMessagesAr = {
   "marketing.about.ctaTitle": "مصمم للتشغيل اليومي الحقيقي، وليس للعرض فقط.",
   "marketing.about.ctaBody":
     "تربط Tanee بين الإعداد ومسارات الهاتف للموظفين وبطاقات العملاء وتشغيل الولاء اليومي في تجربة واحدة واضحة.",
-  "marketing.faq.metaTitle": "أسئلة تاني الشائعة | إجابات عن الولاء الرقمي",
+  "marketing.faq.group1Title": "البداية مع Tanee",
+  "marketing.faq.group2Title": "إدارة برنامج الولاء",
+  "marketing.faq.group3Title": "تجربة العميل",
+  "marketing.faq.item1Question": "ما هي Tanee؟",
+  "marketing.faq.item1Answer":
+    "تجمع Tanee نشاط العميل وتقدمه ومكافآته في تجربة ولاء واحدة مترابطة تحمل هوية نشاطك.",
+  "marketing.faq.item2Question": "مدة التجربة المجانية قد إيه؟",
+  "marketing.faq.item2Answer":
+    "التجربة المجانية مدتها 14 يومًا، وتقدر تبدأ من غير دفع.",
+  "marketing.faq.item3Question": "أجهّز إيه قبل ما أبدأ؟",
+  "marketing.faq.item3Answer":
+    "جهّز بيانات نشاطك وشعارك وألوان هويتك، وفكرة مبدئية عن طريقة تقدم العملاء والمكافآت اللي تحب تقدمها.",
+  "marketing.faq.item4Question": "أقدر أستخدم هوية نشاطي؟",
+  "marketing.faq.item4Answer":
+    "نعم، تقدر تجهّز بطاقة ولاء باستخدام هوية نشاطك وألوانه.",
+  "marketing.faq.item5Question":
+    "إيه العمليات اللي ممكن تتحسب ضمن تقدم العميل؟",
+  "marketing.faq.item5Answer":
+    "ممكن يعتمد برنامجك على عمليات مؤهلة، زي الشراء أو الطلب أو الحجز، حسب طريقة استخدام نشاطك لـTanee.",
+  "marketing.faq.item6Question": "أقدر أختار المكافآت بنفسي؟",
+  "marketing.faq.item6Answer":
+    "نعم، نشاطك بيحدد المكافآت والشروط اللي يحتاج العميل يحققها علشان يستحقها.",
+  "marketing.faq.item7Question": "العميل بينضم إزاي؟",
+  "marketing.faq.item7Answer":
+    "العميل بينضم من خلال تجربة التسجيل المرتبطة بنشاطك. وبعد التسجيل، يقدر يوصل لبطاقة الولاء ويتابع تقدمه.",
+  "marketing.faq.item8Question": "العميل يقدر يشوف تقدمه؟",
+  "marketing.faq.item8Answer":
+    "نعم، تجربة العميل بتوضح تقدمه الحالي والمكافأة اللي بيقترب منها.",
+  "marketing.faq.item9Question": "لو عندي سؤال تاني، أتواصل مع مين؟",
+  "marketing.faq.item9Answer":
+    "تقدر تتواصل مع فريق Tanee على واتساب أو البريد الإلكتروني من خلال الخيارات الموجودة تحت.",
+  "marketing.faq.contactTitle": "لسه عندك سؤال؟",
+  "marketing.faq.contactBody": "تواصل مع فريق Tanee.",
+  "marketing.faq.whatsappLabel": "واتساب",
+  "marketing.faq.emailLabel": "راسلنا بالإيميل",
+  "marketing.faq.metaTitle": "الأسئلة الشائعة | إجابات عن برنامج الولاء",
   "marketing.faq.metaDescription":
-    "إجابات عن بطاقات تاني الرقمية واستخدام الهاتف وصلاحيات الموظفين ودعم العربية والبطاقات المخصصة والإعداد التجريبي.",
+    "اعرف أكثر عن بدء استخدام Tanee، وإدارة برنامج الولاء، ومتابعة عملائك لتقدمهم.",
   "marketing.faq.pageEyebrow": "الأسئلة الشائعة",
-  "marketing.faq.pageTitle": "إجابات واضحة قبل أن يبدأ نشاطك.",
+  "marketing.faq.pageTitle": "إجابات واضحة قبل ما تبدأ.",
   "marketing.faq.pageBody":
-    "تصف هذه الإجابات المنتج والمرحلة التجريبية المنضبطة كما يعملان حاليًا.",
+    "اعرف أكثر عن بدء استخدام Tanee، وإدارة برنامج الولاء، ومتابعة عملائك لتقدمهم.",
   "marketing.faq.fourQuestion": "هل أستطيع الاشتراك والدفع عبر الموقع فورًا؟",
   "marketing.faq.fourAnswer":
     "يمكنك بدء الفترة التجريبية لمدة 14 يومًا عبر الموقع. يظل دفع الاشتراك العام مغلقًا حتى اعتماد العقد التجاري.",
