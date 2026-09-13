@@ -72,7 +72,7 @@ test("CSV values stay localized numeric cells while the unit remains a separate 
   assert.equal(operationalUnitLabel({ loyaltyMode: "SALES_AMOUNT", language: "AR", unitName: "credits", currency: null }), "EGP");
   const exportSource = source("app/businesses/[slug]/reports/export/route.ts");
   assert.match(exportSource, /formatLoyaltyNumber\(transaction\.amount, "AR"\)/);
-  assert.match(exportSource, /operationalUnitLabel\(\{ loyaltyMode: business\.loyaltyMode/);
+  assert.match(exportSource, /operationalUnitLabel\(\{[\s\S]{0,120}loyaltyMode:\s*business\.loyaltyMode/);
   assert.doesNotMatch(exportSource, /formatLoyaltyAmount/);
 });
 

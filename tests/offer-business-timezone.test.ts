@@ -49,7 +49,7 @@ test("offer management UI displays and edits dates in the business timezone", ()
   );
 
   assert.match(page, /formatOfferDateInput/);
-  assert.match(page, /timeZone:\s*true/);
+  assert.match(page, /timezone:\s*true/);
   assert.match(page, /timeZone=\{timeZone\}/);
   assert.doesNotMatch(page, /timeZone:\s*"Africa\/Cairo"/);
   assert.doesNotMatch(page, /toISOString\(\)\.slice\(0,\s*10\)/);

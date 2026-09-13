@@ -13,10 +13,10 @@ const action = source(
 
 test("historical redemption replay ignores mutable reward cost and expiry state", () => {
   const replayStart = command.indexOf("if (existingOperation)");
-  const canonicalRewardStart = command.indexOf("const canonicalReward");
-  assert.ok(replayStart >= 0 && canonicalRewardStart > replayStart);
+  const replayEnd = command.indexOf("const now = new Date()", replayStart);
+  assert.ok(replayStart >= 0 && replayEnd > replayStart);
 
-  const replayBlock = command.slice(replayStart, canonicalRewardStart);
+  const replayBlock = command.slice(replayStart, replayEnd);
   assert.match(replayBlock, /existingOperation\.customerId !== input\.customerId/);
   assert.match(replayBlock, /existingOperation\.type !== "REDEEM"/);
   assert.match(

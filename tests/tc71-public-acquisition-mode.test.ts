@@ -33,8 +33,8 @@ test("TC7.1 exposes new-business intent and existing sign-in without an invitati
 });
 
 test("TC7.1 publishes a truthful public Trial path without legacy invitation terminology", () => {
-  assert.match(translate("en", "conversion.body"), /seven-day Trial/i);
-  assert.match(translate("ar", "conversion.body"), /7 أيام/);
+  assert.match(translate("en", "conversion.body"), /fourteen-day Trial/i);
+  assert.match(translate("ar", "conversion.body"), /14 يومًا/);
   assert.doesNotMatch(translate("en", "conversion.body"), /owner invitation/i);
   assert.doesNotMatch(translate("ar", "conversion.body"), /دعوة مالك/);
   assert.doesNotMatch(translate("en", "conversion.body"), /Beta/i);

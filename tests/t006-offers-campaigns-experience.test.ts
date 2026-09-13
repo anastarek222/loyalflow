@@ -82,7 +82,7 @@ test("T006 Campaign preparation keeps plan, selection, and candidate queries ten
   );
   assert.match(campaigns, /take: 100/);
   assert.match(campaigns, /getRewardAvailability\(/);
-  assert.match(campaigns, /getCustomerSegment\(/);
+  assert.match(campaigns, /getCustomerLifecycleSegment\(/);
 });
 
 test("T006 Campaign builder preserves deterministic audiences and manual WhatsApp drafts", () => {

@@ -20,8 +20,8 @@ function sourceSection(start: string, end?: string) {
 
 test("audience context ledger reads are tenant-scoped", () => {
   const transactionQuery = sourceSection(
-    "const transactions = await prisma.loyaltyTransaction.findMany",
-    "const transactionsByCustomer",
+    "prisma.loyaltyTransaction.findMany",
+    "prisma.rewardUnlock.findMany",
   );
 
   assert.match(transactionQuery, /businessId:\s*input\.business\.id/);

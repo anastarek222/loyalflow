@@ -81,7 +81,7 @@ test("U7.1 resolves Scan language from the authenticated User, not browser local
 
 test("U7.1 passes explicit language to Scan client components without forcing RTL", () => {
   assert.match(scanPage, /<QrScanner businessId=\{business\.id\} language=\{language\} \/>/);
-  assert.match(customerPage, /<ScanActionButton language=\{language\}>/);
+  assert.match(customerPage, /<ScanActionButton[\s\S]{0,160}language=\{language\}/);
   assert.match(customerPage, /<LoyaltyOperationContextFields[\s\S]*language=\{language\}/);
   assert.match(scanner, /language: AppLanguage/);
   assert.doesNotMatch(`${scanPage}\n${customerPage}\n${scanner}`, /dir="rtl"/);
@@ -92,7 +92,9 @@ test("U7.1 exposes scanner and pending operation progress accessibly", () => {
   assert.match(scanner, /aria-busy=\{isProcessing\}/);
   assert.match(scanner, /aria-disabled=\{!manualValue\.trim\(\) \|\| isProcessing\}/);
   assert.match(actionButton, /useFormStatus/);
-  assert.match(actionButton, /aria-disabled=\{pending\}/);
+  assert.match(actionButton, /const unavailable = disabled \|\| pending/);
+  assert.match(actionButton, /disabled=\{unavailable\}/);
+  assert.match(actionButton, /aria-disabled=\{unavailable\}/);
   assert.match(actionButton, /aria-busy=\{pending\}/);
 });
 

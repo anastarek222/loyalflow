@@ -25,6 +25,7 @@ type ExportRouteContext = {
 
 function escapeCsvCell(value: string | number | null | undefined) {
   let text = value === null || value === undefined ? "" : String(value);
+  // Spreadsheet Formula Injection: neutralize formula-leading cells before CSV quoting.
   if (/^[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
