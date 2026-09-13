@@ -1,11 +1,17 @@
 "use server";
 
 import { auth } from "@/auth";
-import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
+import { canViewCustomerNotesTags } from "@/lib/customers/feature-access";
+import {
+  hasFeatureEntitlement,
+  isWithinPlanLimit,
+  type LoyalFlowPlan,
+} from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
+import { getOfferTagAudienceId } from "@/lib/offers/eligibility";
 import { parseOfferFormInput } from "@/lib/offers/form-input";
-import { canManageBusiness } from "@/lib/permissions";
+import { canManageBusiness, type TenantUser } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
   createOfferCommand,
@@ -41,6 +47,30 @@ async function getOfferManagementContext(slug: string) {
   return { business, session };
 }
 
+async function hasValidOfferAudience(input: {
+  user: TenantUser;
+  businessId: string;
+  plan: LoyalFlowPlan;
+  selector?: string;
+}) {
+  const tagId = getOfferTagAudienceId(input.selector);
+  if (!tagId) return true;
+
+  if (!canViewCustomerNotesTags(input.user, input.businessId, input.plan)) {
+    return false;
+  }
+
+  const tag = await prisma.customerTag.findFirst({
+    where: {
+      id: tagId,
+      businessId: input.businessId,
+    },
+    select: { id: true },
+  });
+
+  return Boolean(tag);
+}
+
 function revalidateOfferPaths(slug: string) {
   revalidatePath(`/businesses/${slug}/offers`);
   revalidatePath(`/businesses/${slug}`);
@@ -66,6 +96,16 @@ export async function createOfferAction(slug: string, formData: FormData) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsed = parseOfferFormInput(formData);
   if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
+  if (
+    !(await hasValidOfferAudience({
+      user: session.user,
+      businessId: business.id,
+      plan: business.plan,
+      selector: parsed.data.segment,
+    }))
+  ) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
   if (
@@ -112,6 +152,16 @@ export async function updateOfferAction(
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsed = parseOfferFormInput(formData);
   if (!parsed.success || !parsedOfferId.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
+  if (
+    !(await hasValidOfferAudience({
+      user: session.user,
+      businessId: business.id,
+      plan: business.plan,
+      selector: parsed.data.segment,
+    }))
+  ) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
   if (
