@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TRIAL_DURATION_DAYS } from "@loyalflow/domain/billing/trial-core";
 
 import { BusinessLogoImage } from "@/components/business-logo-image";
@@ -114,6 +114,7 @@ export function OwnerOnboardingWizardV2({
 
   const formRef = useRef<HTMLFormElement>(null);
   const countrySelectorRef = useRef<CountrySelectorHandle>(null);
+  const mobileStepHeadingRef = useRef<HTMLHeadingElement>(null);
   const [step, setStep] = useState(0);
   const countryProfile = resolveOwnerOnboardingCountryProfile(draft);
   const [country, setCountry] = useState(countryProfile.country);
@@ -148,6 +149,18 @@ export function OwnerOnboardingWizardV2({
     formRef.current = node;
     if (node) node.dataset.ownerHydrated = "true";
   }, []);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      mobileStepHeadingRef.current?.focus({ preventScroll: true });
+      mobileStepHeadingRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [step]);
 
   const selectedCountry = COUNTRY_OPTIONS.find(
     (option) => option.name === country,
@@ -289,7 +302,7 @@ export function OwnerOnboardingWizardV2({
             <div className="flex items-end justify-between gap-3">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">{copy.step} {step + 1} {copy.of} {OWNER_ONBOARDING_V2_STEP_COUNT}</p>
-                <h1 className="mt-1 text-xl font-black">{sections[step]}</h1>
+                <h1 ref={mobileStepHeadingRef} tabIndex={-1} className="mt-1 text-xl font-black">{sections[step]}</h1>
               </div>
               <span className="text-sm font-bold text-foreground-muted">{Math.round(((step + 1) / OWNER_ONBOARDING_V2_STEP_COUNT) * 100)}%</span>
             </div>
