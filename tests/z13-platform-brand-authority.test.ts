@@ -17,7 +17,6 @@ test("Z13 central platform brand authority preserves the approved Tanee identity
     assets: {
       mark: null,
       wordmark: "/brand/tanee-wordmark-en.svg",
-      wordmarkAr: "/brand/tanee-wordmark-ar.svg",
       socialPreview: null,
     },
     iconGradientStart: "#FF6652",

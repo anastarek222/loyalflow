@@ -423,7 +423,7 @@ export const marketingMessagesEn = {
   "marketing.about.ctaTitle":
     "Built for real daily operations, not a demo-only dashboard.",
   "marketing.about.ctaBody":
-    "The current closed beta focuses on reliable onboarding, mobile staff workflows, customer cards, and evidence-backed product improvement.",
+    "Tanee keeps onboarding, mobile staff workflows, customer cards, and everyday loyalty operations connected in one clear experience.",
   "marketing.faq.metaTitle": "Tanee FAQ | Digital loyalty questions answered",
   "marketing.faq.metaDescription":
     "Answers about Tanee digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",

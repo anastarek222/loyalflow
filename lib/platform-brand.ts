@@ -6,7 +6,6 @@ export const platformBrand = {
   assets: {
     mark: null as string | null,
     wordmark: "/brand/tanee-wordmark-en.svg",
-    wordmarkAr: "/brand/tanee-wordmark-ar.svg",
     socialPreview: null as string | null,
   },
   iconGradientStart: "#FF6652",

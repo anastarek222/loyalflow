@@ -30,16 +30,9 @@ export function PlatformBrandIdentity({
   showMark = true,
   themeAdaptiveWordmark = false,
   wordmarkSize,
-  locale = "en",
 }: PlatformBrandIdentityProps) {
-  const wordmark =
-    locale.toLowerCase() === "ar"
-      ? platformBrand.assets.wordmarkAr
-      : platformBrand.assets.wordmark;
-  const darkWordmark =
-    locale.toLowerCase() === "ar"
-      ? "/brand/tanee-wordmark-ar-dark.svg"
-      : "/brand/tanee-wordmark-en-dark.svg";
+  const wordmark = platformBrand.assets.wordmark;
+  const darkWordmark = "/brand/tanee-wordmark-en-dark.svg";
 
   return (
     <>
