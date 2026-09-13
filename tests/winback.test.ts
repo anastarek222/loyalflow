@@ -6,7 +6,7 @@ import {
   getWinBackMessage,
 } from "@/lib/campaigns/winback";
 
-test("uses the existing deterministic inactive segmentation for a win-back audience", () => {
+test("uses lifecycle inactive segmentation for a win-back audience", () => {
   const now = new Date("2026-07-20T00:00:00.000Z");
   const where = getWinBackAudienceWhere("INACTIVE", {
     rewardThreshold: 5,
@@ -20,8 +20,11 @@ test("uses the existing deterministic inactive segmentation for a win-back audie
       {
         isActive: true,
         createdAt: { lt: new Date("2026-06-20T00:00:00.000Z") },
-        lifetimeEarned: { lt: 25 },
-        transactions: { none: { createdAt: { gte: new Date("2026-05-21T00:00:00.000Z") } } },
+        transactions: {
+          none: {
+            createdAt: { gte: new Date("2026-05-21T00:00:00.000Z") },
+          },
+        },
       },
     ],
   });
@@ -42,7 +45,7 @@ test("renders a staff-reviewed win-back message without sending it", () => {
 
   assert.equal(
     message,
-    "Hello Mona, 3 visits: https://app.example.com/card/token"
+    "Hello Mona, 3 visits: https://app.example.com/card/token",
   );
 });
 

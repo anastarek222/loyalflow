@@ -19,7 +19,7 @@ function getSegment(overrides: Partial<Parameters<typeof getCustomerSegment>[0]>
       rewardThreshold: 5,
       ...overrides,
     },
-    now
+    now,
   );
 }
 
@@ -29,7 +29,7 @@ test("assigns one deterministic segment using documented priority", () => {
       createdAt: new Date("2026-07-01T12:00:00.000Z"),
       lifetimeEarned: 100,
     }),
-    "NEW"
+    "NEW",
   );
   assert.equal(getSegment({ lifetimeEarned: 25 }), "VIP");
   assert.equal(getSegment({}), "ACTIVE");
@@ -37,42 +37,36 @@ test("assigns one deterministic segment using documented priority", () => {
     getSegment({
       lastActivityAt: new Date("2026-06-10T12:00:00.000Z"),
     }),
-    "AT_RISK"
+    "AT_RISK",
   );
   assert.equal(
     getSegment({
       lastActivityAt: new Date("2026-05-01T12:00:00.000Z"),
     }),
-    "INACTIVE"
+    "INACTIVE",
   );
   assert.equal(getSegment({ isActive: false }), "INACTIVE");
 });
 
 test("keeps advanced segment filters deterministic and programme-aware", () => {
-  assert.deepEqual(
-    getCustomerFilterSegments("SALES_AMOUNT"),
-    [
-      "NEW",
-      "ACTIVE",
-      "VIP",
-      "AT_RISK",
-      "INACTIVE",
-      "REWARD_READY",
-      "HIGH_SPENDER",
-    ]
-  );
-  assert.deepEqual(
-    getCustomerFilterSegments("VISITS"),
-    [
-      "NEW",
-      "ACTIVE",
-      "VIP",
-      "AT_RISK",
-      "INACTIVE",
-      "REWARD_READY",
-      "FREQUENT_VISITOR",
-    ]
-  );
+  assert.deepEqual(getCustomerFilterSegments("SALES_AMOUNT"), [
+    "NEW",
+    "ACTIVE",
+    "VIP",
+    "AT_RISK",
+    "INACTIVE",
+    "REWARD_READY",
+    "HIGH_SPENDER",
+  ]);
+  assert.deepEqual(getCustomerFilterSegments("VISITS"), [
+    "NEW",
+    "ACTIVE",
+    "VIP",
+    "AT_RISK",
+    "INACTIVE",
+    "REWARD_READY",
+    "FREQUENT_VISITOR",
+  ]);
   assert.deepEqual(getCustomerSegmentWhere("REWARD_READY", 5, now), {
     isActive: true,
     balance: { gte: 5 },
@@ -82,18 +76,15 @@ test("keeps advanced segment filters deterministic and programme-aware", () => {
     {
       isActive: true,
       lifetimeEarned: { gte: 20 },
-    }
+    },
   );
 });
 
-test("builds a transaction-aware filter for the at-risk segment", () => {
+test("builds a lifecycle-only transaction-aware filter for the at-risk segment", () => {
   assert.deepEqual(getCustomerSegmentWhere("AT_RISK", 5, now), {
     isActive: true,
     createdAt: {
       lt: new Date("2026-06-20T12:00:00.000Z"),
-    },
-    lifetimeEarned: {
-      lt: 25,
     },
     transactions: {
       none: {
