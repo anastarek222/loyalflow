@@ -1,7 +1,5 @@
 import { auth } from "@/auth";
-import {
-  parseReportDateRange,
-} from "@/lib/analytics/date-range";
+import { parseReportDateRange } from "@/lib/analytics/date-range";
 import { resolveReportScope } from "@/lib/analytics/report-filters";
 import {
   getCustomerFilterSegments,
@@ -9,7 +7,10 @@ import {
 } from "@/lib/customers/segments";
 import { canExportBusinessData } from "@/lib/permissions";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
-import { formatLoyaltyNumber, operationalUnitLabel } from "@/lib/loyalty/presentation";
+import {
+  formatLoyaltyNumber,
+  operationalUnitLabel,
+} from "@/lib/loyalty/presentation";
 import prisma from "@/lib/prisma";
 import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
 
@@ -28,18 +29,24 @@ function escapeCsvCell(value: string | number | null | undefined) {
   return `"${text.replaceAll('"', '""')}"`;
 }
 
-const dateFormatter = new Intl.DateTimeFormat("ar-EG-u-ca-gregory", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "UTC",
-});
+function getDateFormatter(timeZone: string) {
+  return new Intl.DateTimeFormat("ar-EG-u-ca-gregory", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+  });
+}
 
 function getTransactionLabel(type: string) {
   switch (type) {
-    case "EARN": return "إضافة رصيد";
-    case "REDEEM": return "استبدال مكافأة";
-    case "ADJUSTMENT": return "تعديل يدوي";
-    default: return type;
+    case "EARN":
+      return "إضافة رصيد";
+    case "REDEEM":
+      return "استبدال مكافأة";
+    case "ADJUSTMENT":
+      return "تعديل يدوي";
+    default:
+      return type;
   }
 }
 
@@ -59,6 +66,7 @@ export async function GET(request: Request, context: ExportRouteContext) {
       slug: true,
       unitName: true,
       currency: true,
+      timezone: true,
       loyaltyMode: true,
       rewardName: true,
       rewardThreshold: true,
@@ -80,10 +88,13 @@ export async function GET(request: Request, context: ExportRouteContext) {
     return Response.json({ error: "غير مسموح" }, { status: 403 });
   }
 
+  const timeZone = business.timezone ?? "UTC";
+  const dateFormatter = getDateFormatter(timeZone);
   const url = new URL(request.url);
   const dateRange = parseReportDateRange({
     from: url.searchParams.get("from"),
     to: url.searchParams.get("to"),
+    timeZone,
   });
   if (!dateRange) {
     return Response.json({ error: "فترة التاريخ غير صالحة" }, { status: 400 });
@@ -107,7 +118,10 @@ export async function GET(request: Request, context: ExportRouteContext) {
     staff,
   });
   if (!reportScope) {
-    return Response.json({ error: "فلتر الفرع أو الموظف غير صالح" }, { status: 400 });
+    return Response.json(
+      { error: "فلتر الفرع أو الموظف غير صالح" },
+      { status: 400 },
+    );
   }
 
   const availableSegments = getCustomerFilterSegments(business.loyaltyMode);
@@ -126,7 +140,7 @@ export async function GET(request: Request, context: ExportRouteContext) {
   const transactions = await prisma.loyaltyTransaction.findMany({
     where: {
       businessId: business.id,
-      createdAt: { gte: dateRange.from, lte: dateRange.to },
+      createdAt: { gte: dateRange.from, lt: dateRange.toExclusive },
       ...reportScope,
       ...(segmentCustomerIds ? { customerId: { in: segmentCustomerIds } } : {}),
     },
@@ -136,21 +150,35 @@ export async function GET(request: Request, context: ExportRouteContext) {
       amount: true,
       balanceAfter: true,
       createdAt: true,
-      customer: { select: { firstName: true, lastName: true, customerCode: true } },
-      createdBy: { select: { firstName: true, lastName: true, role: true } },
+      customer: {
+        select: { firstName: true, lastName: true, customerCode: true },
+      },
+      createdBy: {
+        select: { firstName: true, lastName: true, role: true },
+      },
       attributedStaff: { select: { firstName: true, lastName: true } },
       branch: { select: { name: true } },
     },
   });
 
   const headers = [
-    "التاريخ", "نوع الحركة", "القيمة", "الوحدة", "الرصيد بعد الحركة",
-    "كود العميل", "نفذها", "الدور", "الفرع", "الموظف المنسوب إليه",
+    "التاريخ",
+    "نوع الحركة",
+    "القيمة",
+    "الوحدة",
+    "الرصيد بعد الحركة",
+    "كود العميل",
+    "نفذها",
+    "الدور",
+    "الفرع",
+    "الموظف المنسوب إليه",
   ];
 
   const rows = transactions.map((transaction) => {
     const employeeName = transaction.createdBy
-      ? [transaction.createdBy.firstName, transaction.createdBy.lastName].filter(Boolean).join(" ")
+      ? [transaction.createdBy.firstName, transaction.createdBy.lastName]
+          .filter(Boolean)
+          .join(" ")
       : "النظام أو مستخدم محذوف";
     return [
       dateFormatter.format(transaction.createdAt),
@@ -168,14 +196,21 @@ export async function GET(request: Request, context: ExportRouteContext) {
       transaction.createdBy?.role ?? "",
       transaction.branch?.name ?? "غير منسوب تاريخيًا",
       transaction.attributedStaff
-        ? [transaction.attributedStaff.firstName, transaction.attributedStaff.lastName].filter(Boolean).join(" ")
+        ? [
+            transaction.attributedStaff.firstName,
+            transaction.attributedStaff.lastName,
+          ]
+            .filter(Boolean)
+            .join(" ")
         : "غير منسوب",
     ];
   });
 
-  const csvContent = "\uFEFF" + [headers, ...rows]
-    .map((row) => row.map(escapeCsvCell).join(","))
-    .join("\r\n");
+  const csvContent =
+    "\uFEFF" +
+    [headers, ...rows]
+      .map((row) => row.map(escapeCsvCell).join(","))
+      .join("\r\n");
   const filename = `${business.slug}-report-${dateRange.fromInput}-to-${dateRange.toInput}.csv`;
 
   return new Response(csvContent, {
