@@ -40,6 +40,7 @@ test("About Tanee uses current trial and contact truth", () => {
   assert.match(identity, /\+17166571813/);
   assert.match(identity, /\+201212312746/);
   assert.doesNotMatch(page, /href="#"|SCREENSHOT REQUIRED|APPROVED TANEE/);
+  assert.doesNotMatch(page, /linear-gradient|radial-gradient/);
 });
 
 test("About Tanee is indexable and discoverable", () => {

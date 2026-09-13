@@ -265,7 +265,7 @@ export default async function AboutPage() {
       </section>
 
       <section className="px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
-        <div className="mx-auto grid max-w-6xl gap-8 overflow-hidden rounded-[1.75rem] bg-[linear-gradient(120deg,#1f1d1c_0%,#1f1d1c_58%,#4a2925_100%)] p-7 text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-end lg:p-14">
+        <div className="mx-auto grid max-w-6xl gap-8 overflow-hidden rounded-[1.75rem] bg-[#1f1d1c] p-7 text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-end lg:p-14">
           <div className="max-w-3xl">
             <p
               className={`text-xs font-black text-[#ff806f] ${locale === "en" ? "uppercase tracking-[0.16em]" : ""}`}
