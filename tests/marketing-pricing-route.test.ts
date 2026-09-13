@@ -53,3 +53,16 @@ test("Pricing copy preserves four real plans and rejects stale Stitch claims", (
   assert.match(english, /14-day Trial/);
   assert.match(arabic, /14 يومًا/);
 });
+
+test("Shared Marketing header owns its light/dark theme scope", () => {
+  const header = source("components/marketing/marketing-header.tsx");
+
+  assert.match(
+    header,
+    /"lf-marketing-surface sticky top-0 z-40 border-b/,
+  );
+  assert.match(
+    header,
+    /className="lf-marketing-surface fixed inset-y-0 end-0 z-\[90\]/,
+  );
+});
