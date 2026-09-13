@@ -118,31 +118,31 @@ export function MarketingHeader({
 
           <nav
             aria-label={translate(locale, "marketing.primaryNavLabel")}
-            className="hidden items-center gap-1 lg:flex"
+            className="hidden min-w-0 items-center gap-0 xl:flex"
           >
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-foreground-muted transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-foreground"
+                className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-foreground-muted transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-foreground"
               >
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="hidden shrink-0 items-center gap-2 xl:flex">
             <MarketingThemeSwitcher locale={locale} />
             <LanguageSwitcher locale={locale} alternateOnly />
             <Link
               href="/login"
-              className="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-foreground transition-colors hover:bg-surface"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface"
             >
               {signIn}
             </Link>
             <Link
               href="/get-started"
-              className="inline-flex min-h-11 items-center rounded-2xl bg-primary px-5 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl bg-primary px-4 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
             >
               {primaryCta}
             </Link>
@@ -155,7 +155,7 @@ export function MarketingHeader({
             aria-expanded={isOpen}
             aria-controls="marketing-mobile-menu"
             onClick={() => setIsOpen((open) => !open)}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-foreground lg:hidden"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-foreground xl:hidden"
           >
             {isOpen ? (
               <X size={20} aria-hidden="true" />
@@ -172,7 +172,7 @@ export function MarketingHeader({
                   type="button"
                   aria-label={closeLabel}
                   onClick={() => setIsOpen(false)}
-                  className="fixed inset-0 z-[80] cursor-default bg-foreground/55 lg:hidden"
+                  className="fixed inset-0 z-[80] cursor-default bg-foreground/55 xl:hidden"
                 />
                 <aside
                   ref={drawerRef}
@@ -180,7 +180,7 @@ export function MarketingHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={translate(locale, "marketing.mobileNavLabel")}
-                  className="lf-marketing-surface fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-s border-border bg-surface shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] lg:hidden"
+                  className="lf-marketing-surface fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-s border-border bg-surface shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] xl:hidden"
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
                     <Link
