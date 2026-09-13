@@ -143,28 +143,32 @@ export default async function AboutPage() {
       </section>
 
       <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-6xl gap-10 rounded-[1.75rem] border border-border bg-white p-6 shadow-[var(--lf-shadow-raised)] sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:p-14">
-          <div>
-            <Eyebrow locale={locale}>{pageCopy.whoEyebrow}</Eyebrow>
-            <h2
-              className={`${editorialClass} mt-6 text-3xl font-black leading-tight tracking-[-0.025em] sm:text-4xl lg:text-5xl ${locale === "en" ? "font-normal" : ""}`}
-            >
-              {pageCopy.whoTitle}
-            </h2>
-            <div className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[var(--lf-primary-soft)] px-4 py-3 text-sm font-bold text-primary">
-              <BadgeCheck className="size-5" aria-hidden="true" />
-              {pageCopy.availability}
+        <div className="mx-auto max-w-6xl">
+          <Eyebrow locale={locale}>{pageCopy.whoEyebrow}</Eyebrow>
+          <div className="mt-6 grid gap-10 rounded-[1.75rem] border border-border bg-white p-6 shadow-[var(--lf-shadow-raised)] sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:p-14">
+            <div>
+              <h2
+                className={`${editorialClass} text-3xl font-black leading-tight tracking-[-0.025em] sm:text-4xl lg:text-5xl ${locale === "en" ? "font-normal" : ""}`}
+              >
+                {pageCopy.whoTitle}
+              </h2>
             </div>
-          </div>
-          <div className="space-y-5 self-center text-base leading-8 text-foreground-muted">
-            {pageCopy.whoParagraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
+            <div className="self-center text-base leading-8 text-foreground-muted">
+              <div className="space-y-5">
+                {pageCopy.whoParagraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
+              <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[var(--lf-primary-soft)] px-4 py-3 text-sm font-bold text-primary">
+                <BadgeCheck className="size-5" aria-hidden="true" />
+                {pageCopy.availability}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-border bg-white px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+      <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <Eyebrow locale={locale}>{pageCopy.whyEyebrow}</Eyebrow>
@@ -183,7 +187,7 @@ export default async function AboutPage() {
               return (
                 <article
                   key={principle.id}
-                  className="flex min-h-72 min-w-0 flex-col rounded-[1.5rem] border border-border bg-[var(--lf-marketing-canvas)] p-6 transition-[border-color,transform,box-shadow] hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--lf-shadow-raised)] sm:p-8"
+                  className="flex min-h-72 min-w-0 flex-col rounded-[1.5rem] border border-border bg-white p-6 transition-[border-color,transform,box-shadow] hover:-translate-y-1 hover:border-primary/40 hover:shadow-[var(--lf-shadow-raised)] sm:p-8"
                 >
                   <div className="flex items-center justify-between gap-4">
                     <span className="flex size-12 items-center justify-center rounded-2xl border border-border bg-white text-primary">
@@ -265,7 +269,7 @@ export default async function AboutPage() {
       </section>
 
       <section className="px-4 pb-16 sm:px-6 sm:pb-20 lg:px-8 lg:pb-24">
-        <div className="mx-auto grid max-w-6xl gap-8 overflow-hidden rounded-[1.75rem] bg-[#1f1d1c] p-7 text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:p-10 lg:grid-cols-[1fr_auto] lg:items-end lg:p-14">
+        <div className="mx-auto flex max-w-6xl flex-col items-center overflow-hidden rounded-[1.75rem] bg-[#1f1d1c] p-7 text-center text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:p-10 lg:p-14">
           <div className="max-w-3xl">
             <p
               className={`text-xs font-black text-[#ff806f] ${locale === "en" ? "uppercase tracking-[0.16em]" : ""}`}
@@ -277,11 +281,11 @@ export default async function AboutPage() {
             >
               {pageCopy.finalTitle}
             </h2>
-            <p className="mt-5 max-w-2xl leading-8 text-[#c7bfba]">
+            <p className="mx-auto mt-5 max-w-2xl leading-8 text-[#c7bfba]">
               {pageCopy.finalBody}
             </p>
           </div>
-          <div className="flex flex-col items-start gap-3 lg:items-stretch">
+          <div className="mt-8 flex flex-col items-center gap-3">
             <Link
               href="/get-started"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#ff6652] px-6 py-3 font-bold text-white transition-colors hover:bg-[#e85745] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
