@@ -223,10 +223,21 @@ export async function toggleOfferStatusAction(
 
   const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
-    select: { id: true },
+    select: { id: true, segment: true },
   });
   if (!existingOffer) {
     redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  }
+  if (
+    parsedStatus.data &&
+    !(await hasValidOfferAudience({
+      user: session.user,
+      businessId: business.id,
+      plan: business.plan,
+      selector: existingOffer.segment ?? undefined,
+    }))
+  ) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
 
   const result = await setOfferStatusCommand({
