@@ -48,6 +48,17 @@ test("offer actions tenant-validate tag audiences before writes", () => {
   assert.match(offerActions, /hasValidOfferAudience\(/);
 });
 
+test("reactivating an offer revalidates its stored tag audience", () => {
+  assert.match(
+    offerActions,
+    /select: \{ id: true, segment: true \}/,
+  );
+  assert.match(
+    offerActions,
+    /parsedStatus\.data &&[\s\S]*?hasValidOfferAudience\(\{[\s\S]*?selector: existingOffer\.segment \?\? undefined,/,
+  );
+});
+
 test("offers workspace exposes only tenant-scoped tags as audience choices", () => {
   assert.match(offersPage, /canViewCustomerNotesTags\(/);
   assert.match(
