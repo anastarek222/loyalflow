@@ -107,6 +107,7 @@ test("robots and sitemap advertise only the canonical public-site authority", ()
       publicSiteUrl("/"),
       publicSiteUrl("/get-started"),
       publicSiteUrl("/features"),
+      publicSiteUrl("/how-it-works"),
       publicSiteUrl("/pricing"),
       publicSiteUrl("/about"),
       publicSiteUrl("/faq"),

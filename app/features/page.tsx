@@ -349,7 +349,7 @@ export default async function FeaturesPage() {
                 />
               </Link>
               <Link
-                href="/#how-it-works"
+                href="/how-it-works"
                 className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-border-strong px-7 py-3 font-bold transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
               >
                 {copy("marketing.secondaryCta")}

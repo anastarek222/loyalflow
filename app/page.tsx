@@ -255,7 +255,7 @@ export default async function HomePage() {
                 />
               </Link>
               <Link
-                href="/features"
+                href="/how-it-works"
                 className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-border-strong bg-transparent px-7 py-3 font-bold text-foreground transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
               >
                 {copy("marketing.secondaryCta")}

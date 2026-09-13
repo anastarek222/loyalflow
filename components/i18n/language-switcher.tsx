@@ -35,7 +35,7 @@ export function LanguageSwitcher({
           type="button"
           aria-pressed={locale === "en"}
           onClick={() => setLocale("en")}
-          className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
+          className="whitespace-nowrap rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
         >
           {translate(locale, "common.english")}
         </button>
@@ -45,7 +45,7 @@ export function LanguageSwitcher({
           type="button"
           aria-pressed={locale === "ar"}
           onClick={() => setLocale("ar")}
-          className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
+          className="whitespace-nowrap rounded-[var(--lf-radius-input)] border border-border px-3 py-2 font-semibold text-foreground-muted hover:bg-surface-subtle"
         >
           {translate(locale, "common.arabic")}
         </button>
