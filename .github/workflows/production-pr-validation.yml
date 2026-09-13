@@ -141,6 +141,16 @@ jobs:
             sleep 0.25
           done
           pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          pnpm exec playwright test tests/browser/marketing-faq.spec.ts --config=playwright.config.ts --project=desktop-chromium --project=mobile-chromium
+
+      - name: Save FAQ visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketing-faq-screenshots
+          path: test-results/**/faq-*.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"
