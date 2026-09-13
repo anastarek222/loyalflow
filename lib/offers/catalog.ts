@@ -1,13 +1,21 @@
 import { z } from "zod";
 
-import { customerSegments } from "@/lib/customers/segments";
 import { localOfferDayBoundaryToUtc } from "@/lib/offers/date-window";
-import { offerEligibilityValues } from "@/lib/offers/eligibility";
+import {
+  isOfferAudienceSelector,
+  offerEligibilityValues,
+} from "@/lib/offers/eligibility";
 
 const optionalDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .optional();
+
+const audienceSelector = z
+  .string()
+  .trim()
+  .max(132)
+  .refine(isOfferAudienceSelector, "Unknown offer audience selector.");
 
 export const offerInputSchema = z
   .object({
@@ -16,17 +24,17 @@ export const offerInputSchema = z
     validFrom: optionalDate,
     validUntil: optionalDate,
     eligibility: z.enum(offerEligibilityValues),
-    segment: z.enum(customerSegments).optional(),
+    segment: audienceSelector.optional(),
   })
   .superRefine((value, context) => {
     if (value.validFrom && value.validUntil && value.validFrom > value.validUntil) {
       context.addIssue({ code: "custom", message: "Offer end must not precede its start." });
     }
     if (value.eligibility === "SEGMENT" && !value.segment) {
-      context.addIssue({ code: "custom", message: "Segment eligibility needs a segment." });
+      context.addIssue({ code: "custom", message: "Segment eligibility needs an audience selector." });
     }
     if (value.eligibility !== "SEGMENT" && value.segment) {
-      context.addIssue({ code: "custom", message: "Only segment offers can store a segment." });
+      context.addIssue({ code: "custom", message: "Only segment offers can store an audience selector." });
     }
   });
 
