@@ -41,3 +41,16 @@ test("offer server actions pass the business timezone into normalization", () =>
     2,
   );
 });
+
+test("offer management UI displays and edits dates in the business timezone", () => {
+  const page = fs.readFileSync(
+    path.join(process.cwd(), "app/businesses/[slug]/offers/page.tsx"),
+    "utf8",
+  );
+
+  assert.match(page, /formatOfferDateInput/);
+  assert.match(page, /timeZone:\s*true/);
+  assert.match(page, /timeZone=\{timeZone\}/);
+  assert.doesNotMatch(page, /timeZone:\s*"Africa\/Cairo"/);
+  assert.doesNotMatch(page, /toISOString\(\)\.slice\(0,\s*10\)/);
+});

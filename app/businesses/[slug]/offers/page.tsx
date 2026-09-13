@@ -24,6 +24,7 @@ import {
   resolveExperienceMode,
 } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
+import { formatOfferDateInput } from "@/lib/offers/date-window";
 import { isOfferCurrentlyValid } from "@/lib/offers/eligibility";
 import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -50,11 +51,11 @@ type OfferFormValue = {
   segment: string | null;
 };
 
-function formatDate(value: Date | null, language: Language) {
+function formatDate(value: Date | null, language: Language, timeZone: string) {
   return value
     ? new Intl.DateTimeFormat(getLanguageLocale(language), {
         dateStyle: "medium",
-        timeZone: "Africa/Cairo",
+        timeZone,
       }).format(value)
     : language === "AR"
       ? "بدون حد"
@@ -94,6 +95,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
         id: true,
         slug: true,
         name: true,
+        timezone: true,
         offers: { orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }] },
       },
     }),
@@ -104,6 +106,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
 
   const manage = canManageBusiness(session.user, business.id);
   const language = normalizeLanguage(user?.language);
+  const timeZone = business.timezone ?? "UTC";
   const mode = resolveExperienceMode(
     (await cookies()).get(getExperienceModeCookieName(session.user.id))?.value,
     user?.role ?? session.user.role,
@@ -255,6 +258,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
             <OfferForm
               action={createOfferAction.bind(null, business.slug)}
               language={language}
+              timeZone={timeZone}
             />
           </div>
         </details>
@@ -343,7 +347,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                       label={
                         language === "AR" ? "فترة الظهور" : "Visibility window"
                       }
-                      value={`${formatDate(offer.validFrom, language)} — ${formatDate(offer.validUntil, language)}`}
+                      value={`${formatDate(offer.validFrom, language, timeZone)} — ${formatDate(offer.validUntil, language, timeZone)}`}
                     />
                   </div>
 
@@ -411,6 +415,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                               offer.id,
                             )}
                             language={language}
+                            timeZone={timeZone}
                             offer={offer}
                           />
                         </div>
@@ -500,10 +505,12 @@ function Empty({ language }: { language: Language }) {
 function OfferForm({
   action,
   language,
+  timeZone,
   offer,
 }: {
   action: (data: FormData) => void;
   language: Language;
+  timeZone: string;
   offer?: OfferFormValue;
 }) {
   const label = (ar: string, en: string) => (language === "AR" ? ar : en);
@@ -554,7 +561,7 @@ function OfferForm({
           <input
             name="validFrom"
             type="date"
-            defaultValue={offer?.validFrom?.toISOString().slice(0, 10)}
+            defaultValue={formatOfferDateInput(offer?.validFrom ?? null, timeZone)}
             className={fieldClass}
           />
         </label>
@@ -563,7 +570,7 @@ function OfferForm({
           <input
             name="validUntil"
             type="date"
-            defaultValue={offer?.validUntil?.toISOString().slice(0, 10)}
+            defaultValue={formatOfferDateInput(offer?.validUntil ?? null, timeZone)}
             className={fieldClass}
           />
         </label>
