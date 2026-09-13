@@ -301,10 +301,10 @@ export default async function CustomersPage({
               {
                 balance: "asc" as const,
               },
-              {
-                createdAt: "desc" as const,
-              },
-            ]
+            {
+              createdAt: "desc" as const,
+            },
+          ]
           : {
               createdAt: "desc" as const,
             };
@@ -421,8 +421,16 @@ export default async function CustomersPage({
     "LOYALTY_EARN",
   );
   const bulkAction = bulkCustomerAction.bind(null, business.slug);
+  const customerExportParameters = new URLSearchParams();
+  if (segment) {
+    customerExportParameters.set("segment", segment);
+  }
+  if (selectedTagId) {
+    customerExportParameters.set("tag", selectedTagId);
+  }
+  const customerExportQuery = customerExportParameters.toString();
   const customerExportUrl = `/businesses/${business.slug}/customers/export${
-    segment ? `?segment=${encodeURIComponent(segment)}` : ""
+    customerExportQuery ? `?${customerExportQuery}` : ""
   }`;
 
   return (
@@ -759,7 +767,7 @@ export default async function CustomersPage({
                 }))}
                 tags={businessTags}
                 action={bulkAction}
-                exportUrl={`/businesses/${business.slug}/customers/export`}
+                exportUrl={customerExportUrl}
                 campaignUrl={`/businesses/${business.slug}/campaigns`}
                 canExport={canExportData}
                 canUseCampaigns={canUseCampaigns}
