@@ -18,7 +18,9 @@ import { GrowthShell } from "@/components/growth/growth-shell";
 import { canViewCustomerNotesTags } from "@/lib/customers/feature-access";
 import {
   customerSegments,
+  getCustomerFilterSegments,
   getCustomerSegmentLabel,
+  type CustomerSegment,
 } from "@/lib/customers/segments";
 import {
   getExperienceModeCookieName,
@@ -116,6 +118,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
         slug: true,
         name: true,
         timezone: true,
+        loyaltyMode: true,
         plan: true,
         offers: { orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }] },
       },
@@ -138,6 +141,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
         select: { id: true, name: true },
       })
     : [];
+  const audienceSegments = getCustomerFilterSegments(business.loyaltyMode);
   const language = normalizeLanguage(user?.language);
   const timeZone = business.timezone ?? "UTC";
   const mode = resolveExperienceMode(
@@ -293,6 +297,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
               language={language}
               timeZone={timeZone}
               audienceTags={audienceTags}
+              audienceSegments={audienceSegments}
             />
           </div>
         </details>
@@ -453,6 +458,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                             timeZone={timeZone}
                             offer={offer}
                             audienceTags={audienceTags}
+                            audienceSegments={audienceSegments}
                           />
                         </div>
                       </div>
@@ -543,12 +549,14 @@ function OfferForm({
   language,
   timeZone,
   audienceTags,
+  audienceSegments,
   offer,
 }: {
   action: (data: FormData) => void;
   language: Language;
   timeZone: string;
   audienceTags: readonly OfferAudienceTag[];
+  audienceSegments: readonly CustomerSegment[];
   offer?: OfferFormValue;
 }) {
   const label = (ar: string, en: string) => (language === "AR" ? ar : en);
@@ -623,7 +631,7 @@ function OfferForm({
           >
             <option value="">—</option>
             <optgroup label={label("الشرائح", "Segments")}>
-              {customerSegments.map((segment) => (
+              {audienceSegments.map((segment) => (
                 <option key={segment} value={segment}>
                   {getCustomerSegmentLabel(segment, language)}
                 </option>

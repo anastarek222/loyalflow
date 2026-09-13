@@ -48,6 +48,25 @@ test("offer actions tenant-validate tag audiences before writes", () => {
   assert.match(offerActions, /hasValidOfferAudience\(/);
 });
 
+test("offer audience choices and writes respect the business loyalty mode", () => {
+  assert.match(offersPage, /loyaltyMode:\s*true/);
+  assert.match(
+    offersPage,
+    /getCustomerFilterSegments\(business\.loyaltyMode\)/,
+  );
+  assert.match(offersPage, /audienceSegments=\{audienceSegments\}/);
+  assert.match(offersPage, /audienceSegments\.map\(\(segment\)/);
+  assert.match(offerActions, /loyaltyMode:\s*true/);
+  assert.match(
+    offerActions,
+    /isOfferAudienceSelectorForLoyaltyMode\([\s\S]*?input\.selector,[\s\S]*?input\.loyaltyMode,/,
+  );
+  assert.match(
+    offerActions,
+    /loyaltyMode: business\.loyaltyMode,/,
+  );
+});
+
 test("reactivating an offer revalidates its stored tag audience", () => {
   assert.match(
     offerActions,
