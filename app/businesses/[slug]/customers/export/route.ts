@@ -1,5 +1,7 @@
 import { auth } from "@/auth";
 import { parseSelectedExportIds } from "@/lib/customers/bulk";
+import { canViewCustomerNotesTags } from "@/lib/customers/feature-access";
+import { getCustomerTagWhere } from "@/lib/customers/notes-tags";
 import {
   customerMatchesSegment,
   getCustomerFilterSegments,
@@ -63,6 +65,7 @@ export async function GET(
       slug: true,
       isActive: true,
       loyaltyMode: true,
+      plan: true,
       rewardName: true,
       rewardThreshold: true,
     },
@@ -113,6 +116,29 @@ export async function GET(
     return Response.json({ error: "Invalid customer segment" }, { status: 400 });
   }
 
+  const requestedTagId = url.searchParams.get("tag");
+  let selectedTagId: string | null = null;
+
+  if (requestedTagId) {
+    if (!canViewCustomerNotesTags(session.user, business.id, business.plan)) {
+      return Response.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const tag = await prisma.customerTag.findFirst({
+      where: {
+        id: requestedTagId,
+        businessId: business.id,
+      },
+      select: { id: true },
+    });
+
+    if (!tag) {
+      return Response.json({ error: "Invalid customer tag" }, { status: 400 });
+    }
+
+    selectedTagId = tag.id;
+  }
+
   if (selectedIds) {
     const selectedCount = await prisma.customer.count({
       where: { businessId: business.id, id: { in: selectedIds } },
@@ -127,6 +153,7 @@ export async function GET(
       where: {
         businessId: business.id,
         ...(selectedIds ? { id: { in: selectedIds } } : {}),
+        ...(selectedTagId ? getCustomerTagWhere(selectedTagId) : {}),
       },
       orderBy: {
         createdAt: "desc",
