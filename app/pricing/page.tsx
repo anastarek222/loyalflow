@@ -130,7 +130,9 @@ function PlanCard({
               {plan.currency}
             </span>
           ) : null}
-          <span className={`text-4xl font-semibold tracking-tight ${editorial}`}>
+          <span
+            className={`text-4xl font-semibold tracking-tight ${editorial}`}
+          >
             {plan.price}
           </span>
           {locale === "ar" ? (
@@ -271,7 +273,9 @@ export default async function PricingPage() {
                   <span className="flex size-10 items-center justify-center rounded-xl bg-[var(--lf-primary-soft)] text-primary">
                     <Icon size={19} aria-hidden="true" />
                   </span>
-                  <h3 className={`mt-7 text-lg font-semibold leading-7 ${editorial}`}>
+                  <h3
+                    className={`mt-7 text-lg font-semibold leading-7 ${editorial}`}
+                  >
                     {item.title}
                   </h3>
                   <p className="mt-4 text-sm leading-7 text-foreground-muted">
@@ -316,7 +320,7 @@ export default async function PricingPage() {
       </section>
 
       <section className="px-5 pb-20 pt-8 sm:px-8 lg:px-20 lg:pb-28">
-        <div className="mx-auto flex w-full max-w-4xl flex-col items-center overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#3b211d_0%,#171717_58%)] px-6 py-14 text-center text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:px-10 lg:py-20">
+        <div className="mx-auto flex w-full max-w-4xl flex-col items-center overflow-hidden rounded-3xl border border-white/10 bg-[#171717] px-6 py-14 text-center text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:px-10 lg:py-20">
           <Gift size={23} className="text-primary" aria-hidden="true" />
           <p className="mt-5 text-xs font-black uppercase tracking-[0.16em] text-primary">
             {pricing.finalEyebrow}
