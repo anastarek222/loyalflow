@@ -46,7 +46,11 @@ test("owner invitation delivery uses shared Resend delivery and a 24-hour link",
   assert.match(delivery, /purpose:\s*"owner-invitation"/);
   assert.match(delivery, /\/accept-owner-invitation\?token=/);
   assert.match(delivery, /expires in 24 hours/i);
-  assert.match(delivery, /seven-day trial starts/i);
+  assert.match(
+    delivery,
+    /import \{ TRIAL_DURATION_DAYS \} from "@loyalflow\/domain\/billing\/trial-core"/,
+  );
+  assert.match(delivery, /\$\{TRIAL_DURATION_DAYS\}-day trial starts/i);
   assert.match(delivery, /Complete your .* business setup/);
   assert.match(transport, /process\.env\.RESEND_API_KEY/);
   assert.match(transport, /resolveTaneeAuthEmailSender\(\)/);
