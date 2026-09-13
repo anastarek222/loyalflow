@@ -5,6 +5,7 @@ import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
+import { getPublicLegalProfile } from "@/lib/legal/public-legal-profile";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -37,6 +38,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GetStartedPage() {
   const locale = await getConversionLocale();
   const direction = getLocaleDirection(locale);
+  const legalProfile = getPublicLegalProfile();
 
   return (
     <main
@@ -86,6 +88,8 @@ export default async function GetStartedPage() {
                 <PublicTrialForm
                   locale={locale}
                   action={startPublicTrialAction}
+                  legalPublished={legalProfile.isPublished}
+                  legalEffectiveDate={legalProfile.effectiveDate}
                 />
               </div>
             </article>
