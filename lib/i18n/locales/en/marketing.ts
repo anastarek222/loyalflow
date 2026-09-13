@@ -424,14 +424,48 @@ export const marketingMessagesEn = {
     "Built for real daily operations, not a demo-only dashboard.",
   "marketing.about.ctaBody":
     "Tanee keeps onboarding, mobile staff workflows, customer cards, and everyday loyalty operations connected in one clear experience.",
-  "marketing.faq.metaTitle": "Tanee FAQ | Digital loyalty questions answered",
+  "marketing.faq.group1Title": "Getting started",
+  "marketing.faq.group2Title": "Running your programme",
+  "marketing.faq.group3Title": "The customer experience",
+  "marketing.faq.item1Question": "What is Tanee?",
+  "marketing.faq.item1Answer":
+    "Tanee brings customer activity, loyalty progress and rewards together in one connected experience that carries your business identity.",
+  "marketing.faq.item2Question": "How long is the free trial?",
+  "marketing.faq.item2Answer":
+    "The free trial lasts 14 days. No payment is required to start.",
+  "marketing.faq.item3Question": "What should I prepare before setting up?",
+  "marketing.faq.item3Answer":
+    "Have your business details, brand assets and an initial idea of how customers should make progress and which rewards you would like to offer.",
+  "marketing.faq.item4Question": "Can I use my own branding?",
+  "marketing.faq.item4Answer":
+    "Yes. You can set up a loyalty card using your business identity and colours.",
+  "marketing.faq.item5Question":
+    "What customer activity can count towards progress?",
+  "marketing.faq.item5Answer":
+    "Your programme can be based on eligible activity such as a purchase, order or booking, depending on how your business uses Tanee.",
+  "marketing.faq.item6Question": "Can I choose the rewards?",
+  "marketing.faq.item6Answer":
+    "Yes. Your business chooses the rewards and the conditions customers need to meet to earn them.",
+  "marketing.faq.item7Question": "How do customers join?",
+  "marketing.faq.item7Answer":
+    "Customers join through the registration experience linked to your business. Once registered, they can access their loyalty card and follow their progress.",
+  "marketing.faq.item8Question": "Can customers see their progress?",
+  "marketing.faq.item8Answer":
+    "Yes. The customer experience shows their current progress and the reward they are working towards.",
+  "marketing.faq.item9Question": "Where can I ask another question?",
+  "marketing.faq.item9Answer":
+    "Contact the Tanee team by WhatsApp or email using the options below.",
+  "marketing.faq.contactTitle": "Still have a question?",
+  "marketing.faq.contactBody": "Talk to the Tanee team.",
+  "marketing.faq.whatsappLabel": "WhatsApp",
+  "marketing.faq.emailLabel": "Email us",
+  "marketing.faq.metaTitle": "FAQ | Loyalty questions answered",
   "marketing.faq.metaDescription":
-    "Answers about Tanee digital cards, mobile use, staff permissions, Arabic support, custom cards, and beta onboarding.",
-  "marketing.faq.pageEyebrow": "Frequently asked questions",
-  "marketing.faq.pageTitle":
-    "Straight answers before your business gets started.",
+    "Find answers about getting started, running your loyalty programme and helping customers keep track of their progress.",
+  "marketing.faq.pageEyebrow": "FAQ",
+  "marketing.faq.pageTitle": "A little clarity before you start.",
   "marketing.faq.pageBody":
-    "These answers describe the product and the controlled beta as they work today.",
+    "Find answers about getting started, running your loyalty programme and helping customers keep track of their progress.",
   "marketing.faq.fourQuestion": "Can I join and pay online immediately?",
   "marketing.faq.fourAnswer":
     "You can start the 14-day Trial online. Public subscription checkout remains off while the commercial contract is finalized.",
