@@ -1,0 +1,179 @@
+name: Apply Reports Timezone Fix
+
+on:
+  push:
+    branches: [fix/reward-truth-core]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v6
+        with:
+          ref: fix/reward-truth-core
+
+      - name: Wire reports to business-local calendar boundaries
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('app/businesses/[slug]/reports/page.tsx')
+          text = path.read_text()
+
+          replacements = [
+              (
+                  '''import {
+  formatUtcDateInput,
+  parseUtcDateInput,
+  parseReportDateRange,
+} from "@/lib/analytics/date-range";''',
+                  '''import {
+  getReportPresetDateRange,
+  parseReportDateRange,
+} from "@/lib/analytics/date-range";''',
+              ),
+              (
+                  '''function getReportRange(period: ReportPeriod, now: Date) {
+  const toInput = formatUtcDateInput(now);
+  const from = new Date(now);
+
+  if (period === "7d") {
+    from.setUTCDate(from.getUTCDate() - 6);
+  } else if (period === "30d") {
+    from.setUTCDate(from.getUTCDate() - 29);
+  }
+
+  const fromInput = formatUtcDateInput(from);
+
+  return {
+    fromInput,
+    toInput,
+    from: parseUtcDateInput(fromInput)!,
+    to: parseUtcDateInput(toInput, true)!,
+  };
+}
+
+''',
+                  '',
+              ),
+              (
+                  '''      loyaltyMode: true,
+      currency: true,
+      unitName: true,''',
+                  '''      loyaltyMode: true,
+      currency: true,
+      timezone: true,
+      unitName: true,''',
+              ),
+              (
+                  '''  const locale = getLanguageLocale(language);
+  const numberFormatter = new Intl.NumberFormat(locale);
+  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });''',
+                  '''  const locale = getLanguageLocale(language);
+  const timeZone = business.timezone ?? "UTC";
+  const numberFormatter = new Intl.NumberFormat(locale);
+  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+  });''',
+              ),
+              (
+                  '''  const defaultRange = getReportRange("30d", today);
+  const shortcutRange = requestedPeriod
+    ? getReportRange(requestedPeriod, today)
+    : null;
+
+  let period: ReportPeriod = requestedPeriod ?? "custom";
+  const customRange = parseReportDateRange({
+    from: query.from,
+    to: query.to,
+    now: today,
+  });
+  const selectedRange = shortcutRange ?? customRange ?? defaultRange;
+  if (!shortcutRange && !customRange) period = "30d";
+  const { fromInput, toInput, from: fromDate, to: toDate } = selectedRange;''',
+                  '''  const defaultRange = getReportPresetDateRange("30d", today, timeZone);
+  const shortcutRange = requestedPeriod
+    ? getReportPresetDateRange(requestedPeriod, today, timeZone)
+    : null;
+  const customRange =
+    !requestedPeriod && (query.from || query.to)
+      ? parseReportDateRange({
+          from: query.from,
+          to: query.to,
+          now: today,
+          timeZone,
+        })
+      : null;
+  const period: ReportPeriod = requestedPeriod ?? (customRange ? "custom" : "30d");
+  const selectedRange = shortcutRange ?? customRange ?? defaultRange;
+  const {
+    fromInput,
+    toInput,
+    from: fromDate,
+    to: toDate,
+    toExclusive,
+  } = selectedRange;''',
+              ),
+              (
+                  '''  const historicalTrends = createHistoricalAnalyticsTrends(
+    {
+      customers: historicalCustomers,
+      loyaltyEarned: historicalEarned,
+      rewardsRedeemed: historicalRedemptions,
+    },
+    fromDate,
+    toDate,
+  );''',
+                  '''  const historicalTrends = createHistoricalAnalyticsTrends(
+    {
+      customers: historicalCustomers,
+      loyaltyEarned: historicalEarned,
+      rewardsRedeemed: historicalRedemptions,
+    },
+    fromDate,
+    toDate,
+    timeZone,
+  );''',
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'replacement expected once, got {count}: {old[:120]!r}')
+              text = text.replace(old, new, 1)
+
+          lte_count = text.count('lte: toDate')
+          if lte_count != 6:
+              raise SystemExit(f'expected six inclusive DB end bounds, got {lte_count}')
+          text = text.replace('lte: toDate', 'lt: toExclusive')
+
+          if 'formatUtcDateInput' in text or 'parseUtcDateInput' in text or 'getReportRange(' in text:
+              raise SystemExit('legacy UTC report range wiring still present')
+          if text.count('lt: toExclusive') != 6:
+              raise SystemExit('half-open report DB range count mismatch')
+
+          path.write_text(text)
+          PY
+
+          rm .github/workflows/apply-reports-timezone-fix.yml
+          git diff --check
+
+      - name: Commit and push reports timezone patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'app/businesses/[slug]/reports/page.tsx' .github/workflows/apply-reports-timezone-fix.yml
+          git commit -m "fix: use business timezone for reports"
+          git push origin HEAD:fix/reward-truth-core
