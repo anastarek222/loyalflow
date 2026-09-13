@@ -33,10 +33,14 @@ export function getPublicSupportChannels(
 ): PublicSupportChannel[] {
   const source = environment ?? {
     NEXT_PUBLIC_SUPPORT_EMAIL:
-      process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? OWNER_PUBLIC_IDENTITY.support.email,
-    NEXT_PUBLIC_SUPPORT_WHATSAPP: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP,
+      process.env.NEXT_PUBLIC_SUPPORT_EMAIL ??
+      OWNER_PUBLIC_IDENTITY.support.email,
+    NEXT_PUBLIC_SUPPORT_WHATSAPP:
+      process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ??
+      OWNER_PUBLIC_IDENTITY.support.whatsapp,
     NEXT_PUBLIC_SUPPORT_PHONE:
-      process.env.NEXT_PUBLIC_SUPPORT_PHONE ?? OWNER_PUBLIC_IDENTITY.support.phone,
+      process.env.NEXT_PUBLIC_SUPPORT_PHONE ??
+      OWNER_PUBLIC_IDENTITY.support.phone,
   };
   const channels: PublicSupportChannel[] = [];
   const email = normalizeEmail(source.NEXT_PUBLIC_SUPPORT_EMAIL);

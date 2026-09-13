@@ -1,6 +1,7 @@
 export const OWNER_PUBLIC_IDENTITY = {
   support: {
-    email: "loyaltyy.programme@gmail.com",
+    email: "tanee.eg.loyalty@gmail.com",
+    whatsapp: "+17166571813",
     phone: "+201212312746",
   },
   social: {
