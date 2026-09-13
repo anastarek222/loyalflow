@@ -6,52 +6,45 @@ function source(relativePath: string) {
   return readFileSync(new URL(`../${relativePath}`, import.meta.url), "utf8");
 }
 
-test("Pricing implements the supplied Stitch structure with current commercial truth", () => {
+test("Pricing keeps the supplied Stitch structure while using shared Marketing authorities", () => {
   const page = source("app/pricing/page.tsx");
 
-  for (const key of [
-    "marketing.pricing.proofTrial",
-    "marketing.pricing.proofPayment",
-    "marketing.pricing.proofSetup",
-    "marketing.pricing.includedTitle",
-    "marketing.pricing.faqTitle",
-    "marketing.pricing.finalTitle",
-  ]) {
-    assert.match(page, new RegExp(key.replaceAll(".", "\\.")));
-  }
-
-  assert.match(page, /loyalFlowPlans\.map/);
+  assert.match(page, /getMarketingPricingCopy/);
+  assert.match(page, /pricing\.plans\.map/);
+  assert.match(page, /lg:grid-cols-3/);
   assert.match(page, /href="\/get-started"/);
   assert.match(page, /<MarketingHeader/);
   assert.match(page, /<MarketingFooter/);
   assert.match(page, /<details/);
   assert.match(page, /rtl:-scale-x-100/);
-  assert.doesNotMatch(page, /899|1,599|2,799/);
-  assert.doesNotMatch(page, /under 7 minutes|أقل من 7 دقائق/i);
 });
 
-test("Pricing copy preserves four real plans and rejects stale Stitch claims", () => {
-  const english = source("lib/i18n/locales/en/marketing.ts");
-  const arabic = source("lib/i18n/locales/ar/marketing.ts");
+test("Official Pricing authority preserves Stitch plans and prices with product-truth overrides", () => {
+  const pricing = source("lib/marketing/pricing.ts");
 
-  for (const catalog of [english, arabic]) {
-    for (const key of [
-      "freePlanName",
-      "starterPlanName",
-      "proPlanName",
-      "businessPlanName",
-      "managedCommercial",
-      "faqOneAnswer",
-      "finalBody",
-    ]) {
-      assert.match(catalog, new RegExp(`marketing\\.pricing\\.${key}`));
-    }
-
-    assert.doesNotMatch(catalog, /899|1,599|2,799/);
+  for (const value of [
+    'name: "Starter"',
+    'name: "Growth"',
+    'name: "Scale"',
+    'name: "الأساسية"',
+    'name: "الاحترافية"',
+    'name: "المتقدمة"',
+    'price: "899"',
+    'price: "1,599"',
+    'price: "2,799"',
+    'currency: "EGP"',
+    'currency: "جنيهًا مصريًا"',
+    'popularLabel: "MOST POPULAR"',
+    'popularLabel: "الأكثر اختيارًا"',
+  ]) {
+    assert.match(pricing, new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
 
-  assert.match(english, /14-day Trial/);
-  assert.match(arabic, /14 يومًا/);
+  assert.match(pricing, /MARKETING_PRICING_TRIAL_DAYS = 14/);
+  assert.match(pricing, /14 days free/);
+  assert.match(pricing, /14 يومًا مجانًا/);
+  assert.doesNotMatch(pricing, /7-day free trial|7 days free|7 أيام مجانًا/);
+  assert.doesNotMatch(pricing, /under 7 minutes|أقل من 7 دقائق/);
 });
 
 test("Shared Marketing header owns its light/dark theme scope", () => {
