@@ -39,11 +39,11 @@ test("team management actions share the authoritative STAFF_MANAGE gate", () => 
 test("team target lookups are tenant-scoped and owner management stays protected", () => {
   assert.match(
     actionsSource,
-    /findFirst\(\{\s*where:\s*\{\s*id:\s*userId,\s*businessId,/s,
+    /findFirst\(\{\s*where:\s*\{\s*id:\s*userId,\s*businessId,/,
   );
   assert.match(
     actionsSource,
-    /!isSuperAdmin\s*&&\s*targetUser\.role\s*===\s*"OWNER"/s,
+    /!isSuperAdmin\s*&&\s*targetUser\.role\s*===\s*"OWNER"/,
   );
 });
 

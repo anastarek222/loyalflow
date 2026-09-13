@@ -15,9 +15,9 @@ const actionsSource = fs.readFileSync(
 
 test("staff management remains owner/super-admin server-side authority", () => {
   assert.match(permissionsSource, /OWNER:\s*capabilities/);
-  assert.doesNotMatch(permissionsSource, /MANAGER:\s*\[[^\]]*STAFF_MANAGE/s);
-  assert.doesNotMatch(permissionsSource, /STAFF:\s*\[[^\]]*STAFF_MANAGE/s);
-  assert.doesNotMatch(permissionsSource, /VIEWER:\s*\[[^\]]*STAFF_MANAGE/s);
+  assert.doesNotMatch(permissionsSource, /MANAGER:\s*\[[^\]]*STAFF_MANAGE/);
+  assert.doesNotMatch(permissionsSource, /STAFF:\s*\[[^\]]*STAFF_MANAGE/);
+  assert.doesNotMatch(permissionsSource, /VIEWER:\s*\[[^\]]*STAFF_MANAGE/);
 
   assert.match(
     actionsSource,

@@ -24,7 +24,7 @@ test("team server actions authorize through STAFF_MANAGE and tenant-scope target
   const actions = source("app/businesses/[slug]/users/actions.ts");
 
   assert.match(actions, /canPerform\(session\.user, business\.id, "STAFF_MANAGE"\)/);
-  assert.match(actions, /where:\s*\{\s*id:\s*userId,\s*businessId,/s);
+  assert.match(actions, /where:\s*\{\s*id:\s*userId,\s*businessId,/);
   assert.match(actions, /targetUser\.role === "OWNER"/);
-  assert.match(actions, /targetUser\.id ===\s*session\.user\.id/s);
+  assert.match(actions, /targetUser\.id ===\s*session\.user\.id/);
 });
