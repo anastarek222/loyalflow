@@ -10,6 +10,25 @@ export const offerEligibilityValues = ["ALL", "SEGMENT", "VIP"] as const;
 
 export type OfferEligibilityValue = (typeof offerEligibilityValues)[number];
 
+export const OFFER_TAG_AUDIENCE_PREFIX = "TAG:";
+
+export function encodeOfferTagAudience(tagId: string) {
+  return `${OFFER_TAG_AUDIENCE_PREFIX}${tagId.trim()}`;
+}
+
+export function getOfferTagAudienceId(value: string | null | undefined) {
+  if (!value?.startsWith(OFFER_TAG_AUDIENCE_PREFIX)) return null;
+
+  const tagId = value.slice(OFFER_TAG_AUDIENCE_PREFIX.length).trim();
+  return tagId.length > 0 && tagId.length <= 128 ? tagId : null;
+}
+
+export function isOfferAudienceSelector(
+  value: string | null | undefined,
+) {
+  return isOfferSegment(value) || getOfferTagAudienceId(value) !== null;
+}
+
 type OfferEligibilityInput = {
   businessId: string;
   isActive: boolean;
@@ -46,7 +65,8 @@ export function isOfferCurrentlyValid(
 
 /**
  * Read-only audience predicate shared by public visibility and previews.
- * Segment membership is dimensioned: lifecycle and traits can coexist.
+ * Segment membership is dimensioned: lifecycle, computed traits, and private
+ * tenant-scoped tag audiences can coexist without exposing tag metadata.
  */
 export function isOfferEligible(
   offer: OfferEligibilityInput,
@@ -66,13 +86,17 @@ export function isOfferEligible(
 
   if (offer.eligibility === "ALL") return true;
 
-  const segment =
-    offer.eligibility === "VIP" ? "VIP" : offer.segment;
+  const selector = offer.eligibility === "VIP" ? "VIP" : offer.segment;
+  const tagId = getOfferTagAudienceId(selector);
 
-  if (!isOfferSegment(segment)) return false;
+  if (tagId) {
+    return segmentContext.customerTagIds?.includes(tagId) ?? false;
+  }
+
+  if (!isOfferSegment(selector)) return false;
 
   return customerMatchesSegment(
-    segment,
+    selector,
     {
       isActive: customer.isActive,
       createdAt: customer.createdAt,
