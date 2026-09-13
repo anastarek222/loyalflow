@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  encodeOfferTagAudience,
+  getOfferTagAudienceId,
   isOfferCurrentlyValid,
   isOfferEligible,
 } from "../lib/offers/eligibility";
@@ -161,6 +163,32 @@ test("segment audiences use independent authoritative trait context", () => {
   );
 });
 
+test("tag audiences match only tenant-resolved private tag ids", () => {
+  const tagId = "tag-loyal-customers";
+  const tagOffer = {
+    ...baseOffer,
+    segment: encodeOfferTagAudience(tagId),
+  };
+
+  assert.equal(getOfferTagAudienceId(tagOffer.segment), tagId);
+  assert.equal(
+    isOfferEligible(tagOffer, baseCustomer, business, now, {
+      customerTagIds: [tagId],
+    }),
+    true,
+  );
+  assert.equal(
+    isOfferEligible(tagOffer, baseCustomer, business, now, {
+      customerTagIds: ["tag-other"],
+    }),
+    false,
+  );
+  assert.equal(
+    isOfferEligible(tagOffer, baseCustomer, business, now),
+    false,
+  );
+});
+
 test("rejects inactive customers, wrong tenants, and unknown segments", () => {
   assert.equal(
     isOfferEligible(baseOffer, { ...baseCustomer, isActive: false }, business, now),
@@ -181,6 +209,16 @@ test("rejects inactive customers, wrong tenants, and unknown segments", () => {
       baseCustomer,
       business,
       now,
+    ),
+    false,
+  );
+  assert.equal(
+    isOfferEligible(
+      { ...baseOffer, segment: encodeOfferTagAudience("tag-1") },
+      { ...baseCustomer, businessId: "business-2" },
+      business,
+      now,
+      { customerTagIds: ["tag-1"] },
     ),
     false,
   );
