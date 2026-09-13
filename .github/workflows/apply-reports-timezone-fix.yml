@@ -177,3 +177,5 @@ jobs:
           git add 'app/businesses/[slug]/reports/page.tsx' .github/workflows/apply-reports-timezone-fix.yml
           git commit -m "fix: use business timezone for reports"
           git push origin HEAD:fix/reward-truth-core
+
+# Trigger after workflow registration.
