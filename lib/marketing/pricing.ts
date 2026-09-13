@@ -54,7 +54,6 @@ const pricingCopy: Record<SupportedLocale, MarketingPricingCopy> = {
       "Choose the plan that fits your business and start building stronger customer relationships with Tanee.",
     proofTrial: "14 days free",
     proofPayment: "No payment required",
-    // Stitch says “Set up in under 7 minutes”. Keep the visual slot, but use a product-safe claim.
     proofSetup: "Clear, supported setup",
     planLabel: "Plan",
     plans: [
@@ -150,7 +149,6 @@ const pricingCopy: Record<SupportedLocale, MarketingPricingCopy> = {
       "اختر الباقة المناسبة لاحتياجات نشاطك، وابدأ في بناء علاقات أقوى مع عملائك باستخدام Tanee.",
     proofTrial: "14 يومًا مجانًا",
     proofPayment: "بدون دفع",
-    // Stitch says “إعداد في أقل من 7 دقائق”. Keep the slot while avoiding an unverified timing promise.
     proofSetup: "إعداد واضح ومدعوم",
     planLabel: "الخطة",
     plans: [
