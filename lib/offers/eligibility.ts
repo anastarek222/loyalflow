@@ -1,7 +1,11 @@
-import type { OfferEligibility } from "@/generated/prisma/client";
+import type {
+  LoyaltyMode,
+  OfferEligibility,
+} from "@/generated/prisma/client";
 import {
   customerMatchesSegment,
   customerSegments,
+  getCustomerFilterSegments,
   type CustomerSegment,
   type CustomerSegmentContext,
 } from "@/lib/customers/segments";
@@ -27,6 +31,21 @@ export function isOfferAudienceSelector(
   value: string | null | undefined,
 ) {
   return isOfferSegment(value) || getOfferTagAudienceId(value) !== null;
+}
+
+/**
+ * New offer writes must stay compatible with the business loyalty mode. Tags
+ * remain mode-agnostic because their membership is explicitly curated by the
+ * tenant; computed traits are constrained to modes that can calculate them.
+ */
+export function isOfferAudienceSelectorForLoyaltyMode(
+  value: string | null | undefined,
+  loyaltyMode: LoyaltyMode,
+) {
+  if (getOfferTagAudienceId(value)) return true;
+  if (!isOfferSegment(value)) return false;
+
+  return getCustomerFilterSegments(loyaltyMode).includes(value);
 }
 
 type OfferEligibilityInput = {

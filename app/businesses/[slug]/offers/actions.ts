@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import type { LoyaltyMode } from "@/generated/prisma/client";
 import { canViewCustomerNotesTags } from "@/lib/customers/feature-access";
 import {
   hasFeatureEntitlement,
@@ -9,7 +10,10 @@ import {
 } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
-import { getOfferTagAudienceId } from "@/lib/offers/eligibility";
+import {
+  getOfferTagAudienceId,
+  isOfferAudienceSelectorForLoyaltyMode,
+} from "@/lib/offers/eligibility";
 import { parseOfferFormInput } from "@/lib/offers/form-input";
 import { canManageBusiness, type TenantUser } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -38,6 +42,7 @@ async function getOfferManagementContext(slug: string) {
       slug: true,
       plan: true,
       timezone: true,
+      loyaltyMode: true,
       subscriptionLifecycleState: true,
     },
   });
@@ -51,10 +56,18 @@ async function hasValidOfferAudience(input: {
   user: TenantUser;
   businessId: string;
   plan: LoyalFlowPlan;
+  loyaltyMode: LoyaltyMode;
   selector?: string;
 }) {
+  if (!input.selector) return true;
+
   const tagId = getOfferTagAudienceId(input.selector);
-  if (!tagId) return true;
+  if (!tagId) {
+    return isOfferAudienceSelectorForLoyaltyMode(
+      input.selector,
+      input.loyaltyMode,
+    );
+  }
 
   if (!canViewCustomerNotesTags(input.user, input.businessId, input.plan)) {
     return false;
@@ -103,6 +116,7 @@ export async function createOfferAction(slug: string, formData: FormData) {
       user: session.user,
       businessId: business.id,
       plan: business.plan,
+      loyaltyMode: business.loyaltyMode,
       selector: parsed.data.segment,
     }))
   ) {
@@ -159,6 +173,7 @@ export async function updateOfferAction(
       user: session.user,
       businessId: business.id,
       plan: business.plan,
+      loyaltyMode: business.loyaltyMode,
       selector: parsed.data.segment,
     }))
   ) {
@@ -234,6 +249,7 @@ export async function toggleOfferStatusAction(
       user: session.user,
       businessId: business.id,
       plan: business.plan,
+      loyaltyMode: business.loyaltyMode,
       selector: existingOffer.segment ?? undefined,
     }))
   ) {

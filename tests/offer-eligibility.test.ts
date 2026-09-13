@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   encodeOfferTagAudience,
   getOfferTagAudienceId,
+  isOfferAudienceSelectorForLoyaltyMode,
   isOfferCurrentlyValid,
   isOfferEligible,
 } from "../lib/offers/eligibility";
@@ -160,6 +161,44 @@ test("segment audiences use independent authoritative trait context", () => {
       { qualifyingVisitCount: 10, frequentVisitorThreshold: 10 },
     ),
     true,
+  );
+});
+
+test("offer audience selectors respect the business loyalty mode", () => {
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("HIGH_SPENDER", "SALES_AMOUNT"),
+    true,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("FREQUENT_VISITOR", "SALES_AMOUNT"),
+    false,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("HIGH_SPENDER", "VISITS"),
+    false,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("FREQUENT_VISITOR", "VISITS"),
+    true,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("FREQUENT_VISITOR", "POINTS"),
+    true,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("REWARD_READY", "SALES_AMOUNT"),
+    true,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode(
+      encodeOfferTagAudience("tag-1"),
+      "VISITS",
+    ),
+    true,
+  );
+  assert.equal(
+    isOfferAudienceSelectorForLoyaltyMode("NOT_A_SEGMENT", "VISITS"),
+    false,
   );
 });
 
