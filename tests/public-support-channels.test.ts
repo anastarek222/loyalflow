@@ -22,19 +22,19 @@ test("approved Owner support identity resolves to the three public channels", ()
     }),
     [
       {
-        kind: "email",
-        displayValue: "tanee.eg.loyalty@gmail.com",
-        href: "mailto:tanee.eg.loyalty@gmail.com",
-      },
-      {
         kind: "whatsapp",
-        displayValue: "+17166571813",
+        displayValue: "+1 716 657 1813",
         href: "https://wa.me/17166571813",
       },
       {
         kind: "phone",
-        displayValue: "+201212312746",
+        displayValue: "01212312746",
         href: "tel:+201212312746",
+      },
+      {
+        kind: "email",
+        displayValue: "tanee.eg.loyalty@gmail.com",
+        href: "mailto:tanee.eg.loyalty@gmail.com",
       },
     ],
   );
@@ -49,11 +49,6 @@ test("public support channels normalize approved values", () => {
     }),
     [
       {
-        kind: "email",
-        displayValue: "support@loyalflow.example",
-        href: "mailto:support@loyalflow.example",
-      },
-      {
         kind: "whatsapp",
         displayValue: "+201001234567",
         href: "https://wa.me/201001234567",
@@ -62,6 +57,11 @@ test("public support channels normalize approved values", () => {
         kind: "phone",
         displayValue: "+14165550199",
         href: "tel:+14165550199",
+      },
+      {
+        kind: "email",
+        displayValue: "support@loyalflow.example",
+        href: "mailto:support@loyalflow.example",
       },
     ],
   );
@@ -84,4 +84,6 @@ test("Contact support authority consumes the Owner public identity defaults", ()
   assert.match(authority, /OWNER_PUBLIC_IDENTITY\.support\.email/);
   assert.match(authority, /OWNER_PUBLIC_IDENTITY\.support\.whatsapp/);
   assert.match(authority, /OWNER_PUBLIC_IDENTITY\.support\.phone/);
+  assert.match(authority, /OWNER_PUBLIC_IDENTITY\.support\.whatsappDisplay/);
+  assert.match(authority, /OWNER_PUBLIC_IDENTITY\.support\.phoneDisplay/);
 });
