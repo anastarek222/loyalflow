@@ -9,14 +9,14 @@ test("Pilot receipt completes pending Owner launch and direct re-entry", () => {
   const browser = source("tests/browser/owner-onboarding-mobile.spec.ts");
 
   assert.match(browser, /LoyalFlow final UAT O \$\{fixture\.runId\}/);
-  assert.match(browser, /for \(const step of \[3, 4, 5, 6\]\)/);
+  assert.match(browser, /for \(const step of \[3, 4\]\)/);
   assert.match(browser, /name: "Launch", exact: true/);
   assert.match(browser, /name: "Log out", exact: true/);
   assert.match(browser, /uatEmail\("pending-owner", fixture\.runId\)/);
   assert.match(browser, /new RegExp\(`\/businesses\/\$\{businessSlug\}\$`\)/);
 });
 
-test("Pilot receipt accepts a secure public Trial invitation and persists seven days", () => {
+test("Pilot receipt accepts a secure public Trial invitation and persists the canonical Trial duration", () => {
   const browser = source("tests/browser/owner-onboarding-mobile.spec.ts");
 
   assert.doesNotMatch(browser, /seedPublicTrialOwnerInvitation/);
@@ -27,7 +27,7 @@ test("Pilot receipt accepts a secure public Trial invitation and persists seven 
   assert.match(browser, /name: "Continue setup", exact: true/);
   assert.match(browser, /invitation\.source\)\.toBe\("PUBLIC_TRIAL"\)/);
   assert.match(browser, /subscriptionLifecycleState/);
-  assert.match(browser, /7 \* 24 \* 60 \* 60 \* 1000/);
+  assert.match(browser, /TRIAL_DURATION_DAYS \* 24 \* 60 \* 60 \* 1000/);
 });
 
 test("Pilot receipt stays isolated and cleanup owns the launched Business", () => {
