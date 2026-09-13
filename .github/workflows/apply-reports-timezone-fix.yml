@@ -26,125 +26,12 @@ jobs:
           text = path.read_text()
 
           replacements = [
-              (
-                  '''import {
-  formatUtcDateInput,
-  parseUtcDateInput,
-  parseReportDateRange,
-} from "@/lib/analytics/date-range";''',
-                  '''import {
-  getReportPresetDateRange,
-  parseReportDateRange,
-} from "@/lib/analytics/date-range";''',
-              ),
-              (
-                  '''function getReportRange(period: ReportPeriod, now: Date) {
-  const toInput = formatUtcDateInput(now);
-  const from = new Date(now);
-
-  if (period === "7d") {
-    from.setUTCDate(from.getUTCDate() - 6);
-  } else if (period === "30d") {
-    from.setUTCDate(from.getUTCDate() - 29);
-  }
-
-  const fromInput = formatUtcDateInput(from);
-
-  return {
-    fromInput,
-    toInput,
-    from: parseUtcDateInput(fromInput)!,
-    to: parseUtcDateInput(toInput, true)!,
-  };
-}
-
-''',
-                  '',
-              ),
-              (
-                  '''      loyaltyMode: true,
-      currency: true,
-      unitName: true,''',
-                  '''      loyaltyMode: true,
-      currency: true,
-      timezone: true,
-      unitName: true,''',
-              ),
-              (
-                  '''  const locale = getLanguageLocale(language);
-  const numberFormatter = new Intl.NumberFormat(locale);
-  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });''',
-                  '''  const locale = getLanguageLocale(language);
-  const timeZone = business.timezone ?? "UTC";
-  const numberFormatter = new Intl.NumberFormat(locale);
-  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone,
-  });''',
-              ),
-              (
-                  '''  const defaultRange = getReportRange("30d", today);
-  const shortcutRange = requestedPeriod
-    ? getReportRange(requestedPeriod, today)
-    : null;
-
-  let period: ReportPeriod = requestedPeriod ?? "custom";
-  const customRange = parseReportDateRange({
-    from: query.from,
-    to: query.to,
-    now: today,
-  });
-  const selectedRange = shortcutRange ?? customRange ?? defaultRange;
-  if (!shortcutRange && !customRange) period = "30d";
-  const { fromInput, toInput, from: fromDate, to: toDate } = selectedRange;''',
-                  '''  const defaultRange = getReportPresetDateRange("30d", today, timeZone);
-  const shortcutRange = requestedPeriod
-    ? getReportPresetDateRange(requestedPeriod, today, timeZone)
-    : null;
-  const customRange =
-    !requestedPeriod && (query.from || query.to)
-      ? parseReportDateRange({
-          from: query.from,
-          to: query.to,
-          now: today,
-          timeZone,
-        })
-      : null;
-  const period: ReportPeriod = requestedPeriod ?? (customRange ? "custom" : "30d");
-  const selectedRange = shortcutRange ?? customRange ?? defaultRange;
-  const {
-    fromInput,
-    toInput,
-    from: fromDate,
-    to: toDate,
-    toExclusive,
-  } = selectedRange;''',
-              ),
-              (
-                  '''  const historicalTrends = createHistoricalAnalyticsTrends(
-    {
-      customers: historicalCustomers,
-      loyaltyEarned: historicalEarned,
-      rewardsRedeemed: historicalRedemptions,
-    },
-    fromDate,
-    toDate,
-  );''',
-                  '''  const historicalTrends = createHistoricalAnalyticsTrends(
-    {
-      customers: historicalCustomers,
-      loyaltyEarned: historicalEarned,
-      rewardsRedeemed: historicalRedemptions,
-    },
-    fromDate,
-    toDate,
-    timeZone,
-  );''',
-              ),
+              ('import {\n  formatUtcDateInput,\n  parseUtcDateInput,\n  parseReportDateRange,\n} from "@/lib/analytics/date-range";', 'import {\n  getReportPresetDateRange,\n  parseReportDateRange,\n} from "@/lib/analytics/date-range";'),
+              ('function getReportRange(period: ReportPeriod, now: Date) {\n  const toInput = formatUtcDateInput(now);\n  const from = new Date(now);\n\n  if (period === "7d") {\n    from.setUTCDate(from.getUTCDate() - 6);\n  } else if (period === "30d") {\n    from.setUTCDate(from.getUTCDate() - 29);\n  }\n\n  const fromInput = formatUtcDateInput(from);\n\n  return {\n    fromInput,\n    toInput,\n    from: parseUtcDateInput(fromInput)!,\n    to: parseUtcDateInput(toInput, true)!,\n  };\n}\n\n', ''),
+              ('      loyaltyMode: true,\n      currency: true,\n      unitName: true,', '      loyaltyMode: true,\n      currency: true,\n      timezone: true,\n      unitName: true,'),
+              ('  const locale = getLanguageLocale(language);\n  const numberFormatter = new Intl.NumberFormat(locale);\n  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {\n    dateStyle: "medium",\n    timeStyle: "short",\n  });', '  const locale = getLanguageLocale(language);\n  const timeZone = business.timezone ?? "UTC";\n  const numberFormatter = new Intl.NumberFormat(locale);\n  const dateTimeFormatter = new Intl.DateTimeFormat(locale, {\n    dateStyle: "medium",\n    timeStyle: "short",\n    timeZone,\n  });'),
+              ('  const defaultRange = getReportRange("30d", today);\n  const shortcutRange = requestedPeriod\n    ? getReportRange(requestedPeriod, today)\n    : null;\n\n  let period: ReportPeriod = requestedPeriod ?? "custom";\n  const customRange = parseReportDateRange({\n    from: query.from,\n    to: query.to,\n    now: today,\n  });\n  const selectedRange = shortcutRange ?? customRange ?? defaultRange;\n  if (!shortcutRange && !customRange) period = "30d";\n  const { fromInput, toInput, from: fromDate, to: toDate } = selectedRange;', '  const defaultRange = getReportPresetDateRange("30d", today, timeZone);\n  const shortcutRange = requestedPeriod\n    ? getReportPresetDateRange(requestedPeriod, today, timeZone)\n    : null;\n  const customRange =\n    !requestedPeriod && (query.from || query.to)\n      ? parseReportDateRange({\n          from: query.from,\n          to: query.to,\n          now: today,\n          timeZone,\n        })\n      : null;\n  const period: ReportPeriod = requestedPeriod ?? (customRange ? "custom" : "30d");\n  const selectedRange = shortcutRange ?? customRange ?? defaultRange;\n  const {\n    fromInput,\n    toInput,\n    from: fromDate,\n    to: toDate,\n    toExclusive,\n  } = selectedRange;'),
+              ('  const historicalTrends = createHistoricalAnalyticsTrends(\n    {\n      customers: historicalCustomers,\n      loyaltyEarned: historicalEarned,\n      rewardsRedeemed: historicalRedemptions,\n    },\n    fromDate,\n    toDate,\n  );', '  const historicalTrends = createHistoricalAnalyticsTrends(\n    {\n      customers: historicalCustomers,\n      loyaltyEarned: historicalEarned,\n      rewardsRedeemed: historicalRedemptions,\n    },\n    fromDate,\n    toDate,\n    timeZone,\n  );'),
           ]
 
           for old, new in replacements:
@@ -177,5 +64,3 @@ jobs:
           git add 'app/businesses/[slug]/reports/page.tsx' .github/workflows/apply-reports-timezone-fix.yml
           git commit -m "fix: use business timezone for reports"
           git push origin HEAD:fix/reward-truth-core
-
-# Trigger after workflow registration.
