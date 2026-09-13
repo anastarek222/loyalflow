@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { MarketingNavLink } from "@/components/marketing/marketing-nav-link";
 import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { MARKETING_THEME_BOOTSTRAP } from "@/lib/marketing/theme";
@@ -106,7 +107,6 @@ export function MarketingHeader({
               locale={locale}
               showMark={false}
               themeAdaptiveWordmark
-              fallback="sparkles"
               fallbackText={brand}
               markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
               markImageClassName="p-1"
@@ -121,13 +121,14 @@ export function MarketingHeader({
             className="hidden min-w-0 items-center gap-0 xl:flex"
           >
             {navigation.map((item) => (
-              <Link
+              <MarketingNavLink
                 key={item.href}
                 href={item.href}
                 className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-foreground-muted transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-foreground"
+                activeClassName="bg-[var(--lf-primary-soft)] text-foreground"
               >
                 {item.label}
-              </Link>
+              </MarketingNavLink>
             ))}
           </nav>
 
@@ -192,7 +193,6 @@ export function MarketingHeader({
                         locale={locale}
                         showMark={false}
                         themeAdaptiveWordmark
-                        fallback="sparkles"
                         fallbackText={brand}
                         markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
                         markImageClassName="p-1"
@@ -215,14 +215,15 @@ export function MarketingHeader({
                     className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-3 py-4"
                   >
                     {navigation.map((item) => (
-                      <Link
+                      <MarketingNavLink
                         key={item.href}
                         href={item.href}
                         onClick={() => setIsOpen(false)}
                         className="flex min-h-12 items-center rounded-xl px-3 font-semibold leading-6 text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
+                        activeClassName="bg-[var(--lf-primary-soft)] text-foreground"
                       >
                         {item.label}
-                      </Link>
+                      </MarketingNavLink>
                     ))}
                   </nav>
                   <div className="grid gap-3 border-t border-border bg-surface-subtle p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">

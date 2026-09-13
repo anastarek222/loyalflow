@@ -1,14 +1,17 @@
+import { Briefcase, Camera, MessageCircle, Music2, Play } from "lucide-react";
+import Link from "next/link";
+
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { MarketingNavLink } from "@/components/marketing/marketing-nav-link";
 import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
+import { getPublicMarketingFooterNavigation } from "@/lib/marketing/public-navigation";
 import {
   getPublicSocialLinks,
   type PublicSocialKind,
 } from "@/lib/marketing/public-social-links";
-import { Briefcase, Camera, MessageCircle, Music2, Play } from "lucide-react";
-import Link from "next/link";
 
 const socialIcons = {
   instagram: Camera,
@@ -18,9 +21,13 @@ const socialIcons = {
   youtube: Play,
 } satisfies Record<PublicSocialKind, typeof Camera>;
 
+const footerLinkClassName = "transition-colors hover:text-primary";
+const footerLinkActiveClassName = "font-semibold text-primary";
+
 export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
   const copy = (key: Parameters<typeof translate>[1]) => translate(locale, key);
   const socialLinks = getPublicSocialLinks();
+  const navigation = getPublicMarketingFooterNavigation(locale);
 
   return (
     <footer className="border-t border-border bg-surface px-5 pb-8 pt-16 sm:px-8 lg:px-10 lg:pt-20">
@@ -35,7 +42,6 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                 locale={locale}
                 showMark={false}
                 themeAdaptiveWordmark
-                fallback="sparkles"
                 fallbackText={copy("common.brand")}
                 markClassName="flex size-7 items-center justify-center text-xl text-primary"
                 wordmarkClassName="h-8 w-auto max-w-40"
@@ -80,26 +86,17 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                 {copy("marketing.footerProduct")}
               </h2>
               <ul className="mt-5 space-y-3 text-sm text-foreground-muted">
-                <li>
-                  <Link href="/" className="hover:text-primary">
-                    {copy("marketing.navHome")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/features" className="hover:text-primary">
-                    {copy("marketing.navFeatures")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/how-it-works" className="hover:text-primary">
-                    {copy("marketing.navHowItWorks")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/pricing" className="hover:text-primary">
-                    {copy("marketing.navPricing")}
-                  </Link>
-                </li>
+                {navigation.product.map((item) => (
+                  <li key={item.href}>
+                    <MarketingNavLink
+                      href={item.href}
+                      className={footerLinkClassName}
+                      activeClassName={footerLinkActiveClassName}
+                    >
+                      {item.label}
+                    </MarketingNavLink>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
@@ -107,16 +104,17 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                 {copy("common.brand")}
               </h2>
               <ul className="mt-5 space-y-3 text-sm text-foreground-muted">
-                <li>
-                  <Link href="/about" className="hover:text-primary">
-                    {copy("marketing.navAbout")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="hover:text-primary">
-                    {copy("marketing.navContact")}
-                  </Link>
-                </li>
+                {navigation.brand.map((item) => (
+                  <li key={item.href}>
+                    <MarketingNavLink
+                      href={item.href}
+                      className={footerLinkClassName}
+                      activeClassName={footerLinkActiveClassName}
+                    >
+                      {item.label}
+                    </MarketingNavLink>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
@@ -124,15 +122,25 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                 {copy("marketing.footerSupport")}
               </h2>
               <ul className="mt-5 space-y-3 text-sm text-foreground-muted">
+                {navigation.support.map((item) => (
+                  <li key={item.href}>
+                    <MarketingNavLink
+                      href={item.href}
+                      className={footerLinkClassName}
+                      activeClassName={footerLinkActiveClassName}
+                    >
+                      {item.label}
+                    </MarketingNavLink>
+                  </li>
+                ))}
                 <li>
-                  <Link href="/faq" className="hover:text-primary">
-                    {copy("marketing.navFaq")}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/login" className="hover:text-primary">
+                  <MarketingNavLink
+                    href="/login"
+                    className={footerLinkClassName}
+                    activeClassName={footerLinkActiveClassName}
+                  >
                     {copy("marketing.footerAccess")}
-                  </Link>
+                  </MarketingNavLink>
                 </li>
               </ul>
             </div>
@@ -142,19 +150,31 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
               </h2>
               <ul className="mt-5 space-y-3 text-sm text-foreground-muted">
                 <li>
-                  <Link href="/privacy" className="hover:text-primary">
+                  <MarketingNavLink
+                    href="/privacy"
+                    className={footerLinkClassName}
+                    activeClassName={footerLinkActiveClassName}
+                  >
                     {copy("marketing.navPrivacy")}
-                  </Link>
+                  </MarketingNavLink>
                 </li>
                 <li>
-                  <Link href="/terms" className="hover:text-primary">
+                  <MarketingNavLink
+                    href="/terms"
+                    className={footerLinkClassName}
+                    activeClassName={footerLinkActiveClassName}
+                  >
                     {copy("marketing.navTerms")}
-                  </Link>
+                  </MarketingNavLink>
                 </li>
                 <li>
-                  <Link href="/data-deletion" className="hover:text-primary">
+                  <MarketingNavLink
+                    href="/data-deletion"
+                    className={footerLinkClassName}
+                    activeClassName={footerLinkActiveClassName}
+                  >
                     {copy("marketing.navDataDeletion")}
-                  </Link>
+                  </MarketingNavLink>
                 </li>
               </ul>
             </div>
@@ -168,12 +188,13 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
           <div className="flex flex-wrap items-center gap-2">
             <MarketingThemeSwitcher locale={locale} />
             <LanguageSwitcher locale={locale} alternateOnly />
-            <Link
+            <MarketingNavLink
               href="/login"
               className="inline-flex min-h-11 items-center px-3 text-sm font-bold text-foreground-muted hover:text-primary"
+              activeClassName="text-primary"
             >
               {copy("marketing.footerAccess")}
-            </Link>
+            </MarketingNavLink>
           </div>
         </div>
       </div>
