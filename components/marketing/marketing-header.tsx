@@ -91,7 +91,7 @@ export function MarketingHeader({
       <script dangerouslySetInnerHTML={{ __html: MARKETING_THEME_BOOTSTRAP }} />
       <header
         className={cn(
-          "sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-200",
+          "lf-marketing-surface sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-200",
           isScrolled
             ? "border-border bg-surface shadow-[var(--lf-shadow-raised)]"
             : "border-border/70 bg-[var(--lf-marketing-canvas)]",
