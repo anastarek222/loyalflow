@@ -23,7 +23,6 @@ import {
   QrCode,
   Search,
   ShieldCheck,
-  Sparkles,
   Stamp,
   UserPlus,
   Users,
@@ -666,7 +665,7 @@ export default async function FeaturesPage() {
 
       <section className="px-5 pb-20 sm:px-8 lg:px-20 lg:pb-28">
         <div className="mx-auto flex w-full max-w-[1240px] flex-col items-center rounded-2xl bg-[#171717] px-6 py-14 text-center text-[#fff9f5] sm:px-10 lg:py-20">
-          <Sparkles size={24} className="text-primary" aria-hidden="true" />
+          <Stamp size={24} className="text-primary" aria-hidden="true" />
           <h2
             className={`mt-5 max-w-3xl text-3xl font-semibold sm:text-4xl ${editorial}`}
           >
