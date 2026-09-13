@@ -308,11 +308,32 @@ export const marketingMessagesAr = {
     "ابدأ ببناء تجربة ولاء تحمل هوية نشاطك، وافهم نشاط عملائك وكافئ استمرارهم عبر منصة واحدة مترابطة.",
   "marketing.pricing.metaTitle": "أسعار تاني | خطط للأنشطة المتنامية",
   "marketing.pricing.metaDescription":
-    "قارن خطط تاني المجانية وStarter وPro وBusiness خلال المرحلة التجريبية المنضبطة.",
-  "marketing.pricing.eyebrow": "الخطط والأسعار",
-  "marketing.pricing.title": "ابدأ مجانًا، وزد السعة عندما ينمو برنامج الولاء.",
+    "قارن خطط Tanee الحالية Free وStarter وPro وBusiness، وابدأ بفترة تجريبية آمنة لمدة 14 يومًا.",
+  "marketing.pricing.eyebrow": "الأسعار",
+  "marketing.pricing.title": "خطط واضحة تناسب كل مرحلة من نمو نشاطك.",
   "marketing.pricing.body":
-    "الخطة المجانية هي نقطة البداية. يتم تأكيد سعر وتفعيل الخطط المدفوعة أثناء الإعداد في المرحلة التجريبية؛ الدفع العام عبر الموقع غير مفتوح حاليًا.",
+    "ابدأ بفترة تجريبية لمدة 14 يومًا، ثم اختر السعة المناسبة لنشاطك. يتم تأكيد أسعار وتفعيل الخطط المدفوعة من خلال مسار الإعداد المُدار حاليًا.",
+  "marketing.pricing.proofTrial": "14 يومًا مجانًا",
+  "marketing.pricing.proofPayment": "بدون وسيلة دفع",
+  "marketing.pricing.proofSetup": "إعداد واضح ومدعوم",
+  "marketing.pricing.planLabel": "الخطة",
+  "marketing.pricing.startHere": "ابدأ من هنا",
+  "marketing.pricing.freePlanName": "المجانية",
+  "marketing.pricing.starterPlanName": "الأساسية",
+  "marketing.pricing.proPlanName": "الاحترافية",
+  "marketing.pricing.businessPlanName": "الأعمال",
+  "marketing.pricing.freeCommercial": "مجانية للبدء",
+  "marketing.pricing.managedCommercial": "يُؤكد أثناء الإعداد",
+  "marketing.pricing.freePlanBody":
+    "للأنشطة التي تبدأ أول تجربة ولاء منظمة لعملائها.",
+  "marketing.pricing.starterPlanBody":
+    "للأنشطة النامية التي تحتاج إلى سعة أكبر للعملاء وتقارير عملية.",
+  "marketing.pricing.proPlanBody":
+    "للفِرق النشطة التي تدير الحملات والإحالات والفروع المتعددة وعمليات ولاء أوسع.",
+  "marketing.pricing.businessPlanBody":
+    "للأنشطة الراسخة التي تحتاج إلى أوسع سعة ومجموعة مزايا Tanee الكاملة.",
+  "marketing.pricing.planFootnote":
+    "تتبع حدود العملاء والفريق والفروع والعروض والمكافآت سياسة الخطط الحالية. يتم تأكيد سعر الخطط المدفوعة قبل التفعيل، والدفع العام عبر الموقع غير مفتوح حاليًا.",
   "marketing.pricing.freeLabel": "مجاني",
   "marketing.pricing.betaLabel": "سعر المرحلة التجريبية",
   "marketing.pricing.confirmedAtSetup": "يُؤكد أثناء الإعداد",
@@ -322,10 +343,41 @@ export const marketingMessagesAr = {
   "marketing.pricing.offers": "عرض",
   "marketing.pricing.rewards": "مكافأة",
   "marketing.pricing.unlimited": "بدون حد",
-  "marketing.pricing.cta": "اختر مسار الإعداد",
+  "marketing.pricing.cta": "ابدأ تجربتك المجانية",
   "marketing.pricing.noteTitle": "مرحلة تجريبية منضبطة بدون دفع مفاجئ.",
   "marketing.pricing.noteBody":
     "أنشئ مساحة العمل من خلال مسار الفترة التجريبية الآمن لمدة 14 يومًا أو الإعداد المدعوم والمدار. لن يبدأ دفع الاشتراك عبر الموقع قبل اعتماد الخطط التجارية.",
+  "marketing.pricing.includedEyebrow": "تشمل كل الخطط",
+  "marketing.pricing.includedTitle": "كل ما تحتاجه لإدارة تجربة ولاء مترابطة.",
+  "marketing.pricing.includedBrandTitle": "تجربة ولاء تحمل هويتك",
+  "marketing.pricing.includedBrandBody":
+    "اربط بطاقة ولاء رقمية واضحة بهوية نشاطك.",
+  "marketing.pricing.includedActivityTitle": "نشاط العملاء وتقدّمهم",
+  "marketing.pricing.includedActivityBody":
+    "نظّم نشاط العملاء المؤهل والمسجّل، واجعل تقدّمهم في برنامج الولاء واضحًا.",
+  "marketing.pricing.includedRewardsTitle": "تحكّم كامل في المكافآت",
+  "marketing.pricing.includedRewardsBody":
+    "اختر المكافآت وشروط الاستحقاق التي تناسب طريقة عمل برنامجك.",
+  "marketing.pricing.includedContextTitle": "صورة أوضح لكل علاقة",
+  "marketing.pricing.includedContextBody":
+    "اجمع معلومات العميل ونشاطه وتقدّمه ومكافآته في مكان واحد.",
+  "marketing.pricing.faqTitle": "أسئلة شائعة عن الأسعار",
+  "marketing.pricing.faqOneQuestion": "هل يمكنني تجربة Tanee قبل الاشتراك؟",
+  "marketing.pricing.faqOneAnswer":
+    "نعم. يبدأ مسار التسجيل الحالي بفترة تجريبية لمدة 14 يومًا، ولا يحتاج إلى إضافة وسيلة دفع.",
+  "marketing.pricing.faqTwoQuestion": "هل أحتاج إلى إضافة وسيلة دفع للبدء؟",
+  "marketing.pricing.faqTwoAnswer":
+    "لا. يمكنك بدء الفترة التجريبية لمدة 14 يومًا من دون إضافة وسيلة دفع.",
+  "marketing.pricing.faqThreeQuestion": "هل يمكنني تغيير خطتي لاحقًا؟",
+  "marketing.pricing.faqThreeAnswer":
+    "تتم تغييرات الخطط من خلال مسار الإعداد المُدار حاليًا، حتى تظل السعة والصلاحيات مناسبة لنشاطك.",
+  "marketing.pricing.faqFourQuestion": "ما الفرق بين الخطط؟",
+  "marketing.pricing.faqFourAnswer":
+    "تختلف الخطط في سعة العملاء والفريق والفروع والعروض والمكافآت والمزايا. ويتم تأكيد سعر الخطط المدفوعة قبل التفعيل.",
+  "marketing.pricing.finalEyebrow": "ابدأ اليوم",
+  "marketing.pricing.finalTitle": "اختر الخطة المناسبة لنشاطك.",
+  "marketing.pricing.finalBody":
+    "ابدأ فترتك التجريبية المجانية، واكتشف كيف تناسب Tanee تجربة عملائك قبل أي تفعيل مدفوع.",
   "marketing.about.metaTitle": "عن تاني | تشغيل ولاء واضح",
   "marketing.about.metaDescription":
     "تعرّف على سبب جمع تاني للبطاقات الرقمية ونشاط العملاء والمكافآت وصلاحيات الفريق والتقارير في مساحة واضحة واحدة.",

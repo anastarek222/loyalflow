@@ -331,12 +331,32 @@ export const marketingMessagesEn = {
     "Create a branded loyalty experience, understand customer activity, and reward continued loyalty from one connected platform.",
   "marketing.pricing.metaTitle": "Tanee Pricing | Plans for growing businesses",
   "marketing.pricing.metaDescription":
-    "Compare Tanee Free, Starter, Pro, and Business plans during the controlled beta.",
-  "marketing.pricing.eyebrow": "Plans and pricing",
-  "marketing.pricing.title":
-    "Start free. Add capacity when your loyalty programme grows.",
+    "Compare the current Tanee Free, Starter, Pro, and Business plans and begin with a secure 14-day Trial.",
+  "marketing.pricing.eyebrow": "Pricing",
+  "marketing.pricing.title": "Clear plans for every stage of growth.",
   "marketing.pricing.body":
-    "The Free plan is the starting point. Paid-plan pricing and activation are confirmed during the controlled beta setup; public checkout is not open yet.",
+    "Start with a 14-day Trial, then choose the capacity that fits your business. Paid-plan pricing and activation are confirmed through the current managed setup.",
+  "marketing.pricing.proofTrial": "14 days free",
+  "marketing.pricing.proofPayment": "No payment required",
+  "marketing.pricing.proofSetup": "Clear, supported setup",
+  "marketing.pricing.planLabel": "Plan",
+  "marketing.pricing.startHere": "Start here",
+  "marketing.pricing.freePlanName": "Free",
+  "marketing.pricing.starterPlanName": "Starter",
+  "marketing.pricing.proPlanName": "Pro",
+  "marketing.pricing.businessPlanName": "Business",
+  "marketing.pricing.freeCommercial": "Free to start",
+  "marketing.pricing.managedCommercial": "Confirmed during setup",
+  "marketing.pricing.freePlanBody":
+    "For businesses beginning their first structured loyalty experience.",
+  "marketing.pricing.starterPlanBody":
+    "For growing businesses that need more customer capacity and practical reporting.",
+  "marketing.pricing.proPlanBody":
+    "For active teams managing campaigns, referrals, multiple branches, and deeper loyalty operations.",
+  "marketing.pricing.businessPlanBody":
+    "For established businesses that need the broadest capacity and the complete Tanee feature set.",
+  "marketing.pricing.planFootnote":
+    "Customer, team, branch, offer, and reward allowances follow the current plan policy. Paid pricing is confirmed before activation; public checkout is not open yet.",
   "marketing.pricing.freeLabel": "Free",
   "marketing.pricing.betaLabel": "Beta pricing",
   "marketing.pricing.confirmedAtSetup": "Confirmed during setup",
@@ -346,10 +366,42 @@ export const marketingMessagesEn = {
   "marketing.pricing.offers": "offers",
   "marketing.pricing.rewards": "rewards",
   "marketing.pricing.unlimited": "Unlimited",
-  "marketing.pricing.cta": "Choose a setup path",
+  "marketing.pricing.cta": "Start your free trial",
   "marketing.pricing.noteTitle": "Controlled beta, with no surprise checkout.",
   "marketing.pricing.noteBody":
     "Create a workspace through the secure 14-day Trial flow or supported managed setup. Online subscription payment will be introduced only after the commercial plans are approved.",
+  "marketing.pricing.includedEyebrow": "Every plan includes",
+  "marketing.pricing.includedTitle":
+    "Everything you need to run a connected loyalty experience.",
+  "marketing.pricing.includedBrandTitle": "A branded loyalty experience",
+  "marketing.pricing.includedBrandBody":
+    "Connect a clear digital loyalty card to your business identity.",
+  "marketing.pricing.includedActivityTitle": "Customer activity and progress",
+  "marketing.pricing.includedActivityBody":
+    "Keep eligible recorded activity organised and make loyalty progress easy to understand.",
+  "marketing.pricing.includedRewardsTitle": "Rewards under your control",
+  "marketing.pricing.includedRewardsBody":
+    "Choose rewards and conditions that fit the way your programme operates.",
+  "marketing.pricing.includedContextTitle": "Clear relationship context",
+  "marketing.pricing.includedContextBody":
+    "Bring customer information, activity, progress, and rewards together in one place.",
+  "marketing.pricing.faqTitle": "Pricing questions",
+  "marketing.pricing.faqOneQuestion": "Can I try Tanee before subscribing?",
+  "marketing.pricing.faqOneAnswer":
+    "Yes. The current signup flow begins with a 14-day Trial and does not require a payment method.",
+  "marketing.pricing.faqTwoQuestion": "Do I need a payment method to start?",
+  "marketing.pricing.faqTwoAnswer":
+    "No. You can begin the 14-day Trial without adding a payment method.",
+  "marketing.pricing.faqThreeQuestion": "Can I change my plan later?",
+  "marketing.pricing.faqThreeAnswer":
+    "Plan changes are handled through the current managed setup so capacity and access remain aligned with your business.",
+  "marketing.pricing.faqFourQuestion": "What is different between the plans?",
+  "marketing.pricing.faqFourAnswer":
+    "Plans differ by customer, team, branch, offer, reward, and feature capacity. Final paid pricing is confirmed before activation.",
+  "marketing.pricing.finalEyebrow": "Start today",
+  "marketing.pricing.finalTitle": "Find the right plan for your business.",
+  "marketing.pricing.finalBody":
+    "Start your free Trial and see how Tanee fits your customer experience before any paid activation.",
   "marketing.about.metaTitle": "About Tanee | Clear loyalty operations",
   "marketing.about.metaDescription":
     "Learn why Tanee brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
