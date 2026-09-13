@@ -53,6 +53,6 @@ test("About Tanee is indexable and discoverable", () => {
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.match(page, /buildPublicSocialMetadata/);
   assert.match(navigation, /href: "\/about"/);
-  assert.match(footer, /href="\/about"/);
+  assert.match(footer, /getPublicMarketingFooterNavigation\(locale\)/);
   assert.match(sitemap, /publicSiteUrl\("\/about"\)/);
 });

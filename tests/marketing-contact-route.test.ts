@@ -27,7 +27,7 @@ test("Contact is discoverable from navigation, footer, and sitemap", () => {
   );
   assert.match(
     source("components/marketing/marketing-footer.tsx"),
-    /href="\/contact"/,
+    /getPublicMarketingFooterNavigation\(locale\)/,
   );
   assert.match(source("app/sitemap.ts"), /publicSiteUrl\("\/contact"\)/);
 });

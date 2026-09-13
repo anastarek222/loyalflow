@@ -63,7 +63,7 @@ test("How Tanee Works is discoverable through all public Marketing entry points"
   assert.match(home, /href="\/how-it-works"/);
   assert.match(features, /href="\/how-it-works"/);
   assert.match(navigation, /href: "\/how-it-works"/);
-  assert.match(footer, /href="\/how-it-works"/);
+  assert.match(footer, /getPublicMarketingFooterNavigation\(locale\)/);
   assert.match(sitemap, /publicSiteUrl\("\/how-it-works"\)/);
   assert.match(english, /"marketing\.navHowItWorks": "How it works"/);
   assert.match(arabic, /"marketing\.navHowItWorks": "كيف تعمل Tanee"/);

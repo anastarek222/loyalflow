@@ -56,7 +56,7 @@ test("Features is discoverable from the Home page and sitemap", () => {
   assert.match(home, /getPublicMarketingNavigation\(locale\)/);
   assert.match(navigation, /href: "\/features"/);
   assert.match(home, /<MarketingFooter locale=\{locale\} \/>/);
-  assert.match(footer, /href="\/features"/);
+  assert.match(footer, /getPublicMarketingFooterNavigation\(locale\)/);
   assert.match(sitemap, /publicSiteUrl\("\/features"\)/);
 });
 
