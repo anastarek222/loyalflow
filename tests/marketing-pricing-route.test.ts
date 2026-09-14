@@ -56,6 +56,6 @@ test("Shared Marketing header owns its light/dark theme scope", () => {
   );
   assert.match(
     header,
-    /className="lf-marketing-surface fixed inset-y-0 end-0 z-\[90\]/,
+    /className="lf-marketing-surface fixed inset-y-0 right-0 z-\[90\]/,
   );
 });

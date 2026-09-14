@@ -9,13 +9,18 @@ import {
   Globe2,
   LogIn,
   Mail,
-  MessageCircle,
   Phone,
   UserRound,
   Video,
 } from "lucide-react";
 import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ComponentType,
+  type FormEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import type { SupportedLocale } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
@@ -31,13 +36,74 @@ type ContactSalesExperienceProps = {
   supportChannels: ReadonlyArray<SupportChannel>;
 };
 
-type MeetingMethod =
-  | "phone"
-  | "whatsapp"
-  | "google-meet"
-  | "zoom"
-  | "teams"
-  | "ringcentral";
+type MeetingMethod = "phone" | "whatsapp" | "google-meet";
+
+type MethodIcon = ComponentType<{
+  size?: number;
+  className?: string;
+  "aria-hidden"?: boolean | "true" | "false";
+}>;
+
+const BOOKING_TIME_ZONE = "Africa/Cairo";
+const BOOKING_TIME_SLOTS = [
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
+  "23:00",
+  "00:00",
+] as const;
+
+function getBookingDateIso(dayOffset: number) {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: BOOKING_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = Object.fromEntries(
+    formatter
+      .formatToParts(now)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, Number(part.value)]),
+  ) as Record<"year" | "month" | "day", number>;
+  const shifted = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day + dayOffset),
+  );
+  return [
+    shifted.getUTCFullYear(),
+    String(shifted.getUTCMonth() + 1).padStart(2, "0"),
+    String(shifted.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function WhatsAppIcon({
+  size = 24,
+  className,
+  "aria-hidden": ariaHidden,
+}: {
+  size?: number;
+  className?: string;
+  "aria-hidden"?: boolean | "true" | "false";
+}) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaHidden}
+      fill="currentColor"
+    >
+      <path d="M12.04 2a9.84 9.84 0 0 0-8.43 14.9L2 22l5.23-1.55A9.97 9.97 0 0 0 12.04 22C17.53 22 22 17.52 22 12S17.53 2 12.04 2Zm0 18.18a8.12 8.12 0 0 1-4.14-1.14l-.3-.18-3.1.92.95-3.02-.2-.31a8.03 8.03 0 0 1-1.25-4.34 8.08 8.08 0 1 1 8.04 8.07Zm4.43-6.05c-.24-.12-1.44-.71-1.66-.79-.22-.08-.38-.12-.54.12-.16.24-.62.79-.76.95-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.43-1.34-1.67-.14-.24-.02-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.19-.47-.39-.4-.54-.41h-.46c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.12 3.65.58.25 1.03.4 1.38.51.58.18 1.1.16 1.52.1.46-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28Z" />
+    </svg>
+  );
+}
 
 const copy = {
   en: {
@@ -57,24 +123,19 @@ const copy = {
     bookingEyebrow: "Book a meeting",
     bookingTitle: "Tell us how you would like to meet.",
     bookingBody:
-      "Choose your preferred date, time and meeting method. We’ll confirm availability and send the final meeting details by email.",
+      "Choose a date from tomorrow onward, then pick an available Cairo-time slot and meeting method. We’ll confirm the final meeting details with you.",
     noAccount: "No Tanee account needed",
-    timezoneAware: "Your local timezone is shown",
+    timezoneAware: "Booking times use Cairo time",
+    earliestNote: "Earliest booking: tomorrow",
     methodsTitle: "Preferred meeting method",
     methodsBody:
-      "Choose the option that works best for you. The final link or call details are confirmed after we check availability.",
+      "Choose one of the three practical meeting options. Final call or meeting details are confirmed after availability is checked.",
     methodPhone: "Phone call",
     methodPhoneBody: "We call the number you provide.",
     methodWhatsapp: "WhatsApp call",
     methodWhatsappBody: "Use your WhatsApp number for the call.",
     methodGoogle: "Google Meet",
     methodGoogleBody: "Receive a Google Meet link after confirmation.",
-    methodZoom: "Zoom",
-    methodZoomBody: "Receive a Zoom meeting link after confirmation.",
-    methodTeams: "Microsoft Teams",
-    methodTeamsBody: "Receive a Teams meeting link after confirmation.",
-    methodRingCentral: "RingCentral",
-    methodRingCentralBody: "Use RingCentral when it suits your business.",
     name: "Your name",
     business: "Business name",
     email: "Business email",
@@ -89,12 +150,14 @@ const copy = {
     purposeOther: "Something else",
     preferredDate: "Preferred date",
     preferredTime: "Preferred time",
+    selectTime: "Choose an available time",
+    midnightNextDay: "12:00 AM · next day",
     notes: "Anything we should know?",
     notesPlaceholder:
       "Optional — tell us about your business, locations, team or what you want to solve.",
     request: "Prepare meeting request",
     requestNote:
-      "This is a meeting request, not an instant confirmation. We’ll confirm the exact time and meeting link with you.",
+      "This currently prepares the verified request details for sending. Automatic admin delivery will only be enabled after the notification provider is connected safely.",
     readyTitle: "Your meeting request is ready.",
     readyBody:
       "Send it to Tanee by email or WhatsApp. We’ll reply with availability and the final meeting details.",
@@ -130,24 +193,19 @@ const copy = {
     bookingEyebrow: "احجز اجتماع",
     bookingTitle: "قول لنا تحب نتقابل إزاي.",
     bookingBody:
-      "اختار اليوم والوقت وطريقة الاجتماع المفضلة. هنأكد التوفر ونبعت لك تفاصيل الاجتماع النهائية على الإيميل.",
+      "اختار يوم بداية من بكرة، وبعدها اختار ميعاد متاح بتوقيت القاهرة وطريقة الاجتماع. هنأكد معاك التفاصيل النهائية.",
     noAccount: "مش محتاج حساب Tanee",
-    timezoneAware: "المواعيد بتوقيتك المحلي",
+    timezoneAware: "المواعيد بتوقيت القاهرة",
+    earliestNote: "أقرب حجز متاح: بكرة",
     methodsTitle: "طريقة الاجتماع المفضلة",
     methodsBody:
-      "اختار الطريقة الأنسب ليك. رابط الاجتماع أو تفاصيل المكالمة بيتأكدوا بعد مراجعة التوفر.",
+      "اختار واحدة من 3 طرق واضحة للاجتماع. تفاصيل المكالمة أو الرابط بتتأكد بعد مراجعة التوفر.",
     methodPhone: "مكالمة تليفون",
     methodPhoneBody: "نتصل على الرقم اللي هتكتبه.",
     methodWhatsapp: "مكالمة WhatsApp",
     methodWhatsappBody: "نستخدم رقم WhatsApp الخاص بيك للمكالمة.",
     methodGoogle: "Google Meet",
     methodGoogleBody: "يوصلك رابط Google Meet بعد التأكيد.",
-    methodZoom: "Zoom",
-    methodZoomBody: "يوصلك رابط Zoom بعد التأكيد.",
-    methodTeams: "Microsoft Teams",
-    methodTeamsBody: "يوصلك رابط Teams بعد التأكيد.",
-    methodRingCentral: "RingCentral",
-    methodRingCentralBody: "نستخدم RingCentral لو هو الأنسب لنشاطك.",
     name: "اسمك",
     business: "اسم النشاط",
     email: "إيميل العمل",
@@ -158,16 +216,18 @@ const copy = {
     purposeDemo: "عرض للمنتج",
     purposePricing: "الأسعار واختيار الخطة",
     purposeSetup: "إعداد النشاط والبدء",
-    purposeMigration: "النقل من نظام ولاء تاني",
-    purposeOther: "موضوع تاني",
+    purposeMigration: "النقل من نظام ولاء آخر",
+    purposeOther: "موضوع آخر",
     preferredDate: "اليوم المفضّل",
     preferredTime: "الوقت المفضّل",
+    selectTime: "اختار ميعاد متاح",
+    midnightNextDay: "12:00 منتصف الليل · اليوم التالي",
     notes: "في حاجة تحب نعرفها قبل الاجتماع؟",
     notesPlaceholder:
       "اختياري — قول لنا عن نشاطك أو الفروع أو الفريق أو المشكلة اللي عايز تحلها.",
     request: "جهّز طلب الاجتماع",
     requestNote:
-      "ده طلب اجتماع مش تأكيد فوري. هنأكد معاك الموعد النهائي ورابط الاجتماع.",
+      "الخطوة دي حاليًا بتجهّز بيانات الطلب المراجعة للإرسال. التوصيل التلقائي للإدارة هيتفعّل فقط بعد ربط مزوّد الإشعارات بشكل آمن.",
     readyTitle: "طلب الاجتماع جاهز.",
     readyBody:
       "ابعت الطلب لـTanee على الإيميل أو WhatsApp، وهنرد عليك بالتوفر وتفاصيل الاجتماع النهائية.",
@@ -192,9 +252,6 @@ const meetingMethodIds: MeetingMethod[] = [
   "phone",
   "whatsapp",
   "google-meet",
-  "zoom",
-  "teams",
-  "ringcentral",
 ];
 
 export function ContactSalesExperience({
@@ -202,7 +259,7 @@ export function ContactSalesExperience({
   supportChannels,
 }: ContactSalesExperienceProps) {
   const content = copy[locale];
-  const [timezone, setTimezone] = useState("");
+  const minimumBookingDate = getBookingDateIso(1);
   const [selectedMethod, setSelectedMethod] =
     useState<MeetingMethod>("google-meet");
   const [requestDraft, setRequestDraft] = useState<{
@@ -210,14 +267,6 @@ export function ContactSalesExperience({
     whatsappHref: string | null;
   } | null>(null);
   const requestActionsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   const channels = useMemo(
     () =>
@@ -229,7 +278,7 @@ export function ContactSalesExperience({
 
   const methodCopy: Record<
     MeetingMethod,
-    { label: string; body: string; icon: typeof Phone }
+    { label: string; body: string; icon: MethodIcon }
   > = {
     phone: {
       label: content.methodPhone,
@@ -239,26 +288,11 @@ export function ContactSalesExperience({
     whatsapp: {
       label: content.methodWhatsapp,
       body: content.methodWhatsappBody,
-      icon: MessageCircle,
+      icon: WhatsAppIcon,
     },
     "google-meet": {
       label: content.methodGoogle,
       body: content.methodGoogleBody,
-      icon: Video,
-    },
-    zoom: {
-      label: content.methodZoom,
-      body: content.methodZoomBody,
-      icon: Video,
-    },
-    teams: {
-      label: content.methodTeams,
-      body: content.methodTeamsBody,
-      icon: Video,
-    },
-    ringcentral: {
-      label: content.methodRingCentral,
-      body: content.methodRingCentralBody,
       icon: Video,
     },
   };
@@ -270,6 +304,14 @@ export function ContactSalesExperience({
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const value = (name: string) => String(data.get(name) ?? "").trim();
+    const preferredDate = value("preferredDate");
+    const preferredTime = value("preferredTime");
+
+    if (preferredDate < minimumBookingDate) return;
+    if (!BOOKING_TIME_SLOTS.includes(preferredTime as (typeof BOOKING_TIME_SLOTS)[number])) {
+      return;
+    }
+
     const method = methodCopy[selectedMethod].label;
     const lines = [
       locale === "en" ? "Tanee meeting request" : "طلب اجتماع مع Tanee",
@@ -280,9 +322,9 @@ export function ContactSalesExperience({
       `${content.phone}: ${value("phone")}`,
       `${content.country}: ${value("country")}`,
       `${content.purpose}: ${value("purpose")}`,
-      `${content.preferredDate}: ${value("preferredDate")}`,
-      `${content.preferredTime}: ${value("preferredTime")}`,
-      `${content.timezone}: ${timezone || "Local time"}`,
+      `${content.preferredDate}: ${preferredDate}`,
+      `${content.preferredTime}: ${preferredTime}`,
+      `${content.timezone}: ${BOOKING_TIME_ZONE}`,
       `${content.methodsTitle}: ${method}`,
       `${content.notes}: ${value("notes") || "—"}`,
     ];
@@ -359,7 +401,7 @@ export function ContactSalesExperience({
             className="group flex min-h-64 scroll-mt-28 flex-col rounded-2xl border border-border bg-surface p-6 shadow-sm transition-[transform,border-color] duration-200 hover:-translate-y-1 hover:border-primary/40 md:p-7"
           >
             <span className="flex size-12 items-center justify-center rounded-xl bg-[var(--lf-primary-soft)] text-primary">
-              <MessageCircle size={22} aria-hidden="true" />
+              <WhatsAppIcon size={22} aria-hidden="true" />
             </span>
             <h2 className="mt-7 font-[var(--font-marketing-editorial)] text-2xl font-semibold tracking-tight text-foreground">
               {content.routeWhatsapp}
@@ -404,7 +446,8 @@ export function ContactSalesExperience({
 
       <section
         id="book-meeting"
-        className="scroll-mt-24 border-y border-border bg-surface px-5 py-16 sm:px-8 md:py-20 lg:px-10"
+        tabIndex={-1}
+        className="scroll-mt-24 border-y border-border bg-surface px-5 py-16 outline-none sm:px-8 md:py-20 lg:px-10"
       >
         <div className="mx-auto grid w-full max-w-[1120px] gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
@@ -424,10 +467,11 @@ export function ContactSalesExperience({
               </div>
               <div className="flex items-center gap-3">
                 <Globe2 size={18} aria-hidden="true" className="text-primary" />
-                <span>
-                  {content.timezoneAware}
-                  {timezone ? ` · ${timezone}` : ""}
-                </span>
+                <span>{content.timezoneAware} · {BOOKING_TIME_ZONE}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <CalendarDays size={18} aria-hidden="true" className="text-primary" />
+                <span>{content.earliestNote}</span>
               </div>
             </div>
           </div>
@@ -553,6 +597,9 @@ export function ContactSalesExperience({
                     name="preferredDate"
                     type="date"
                     required
+                    min={minimumBookingDate}
+                    defaultValue={minimumBookingDate}
+                    data-testid="meeting-date"
                     className="min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface ps-10 pe-3 text-sm outline-none transition-colors focus:border-primary"
                   />
                 </span>
@@ -566,12 +613,20 @@ export function ContactSalesExperience({
                     aria-hidden="true"
                     className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-foreground-subtle"
                   />
-                  <input
+                  <select
                     name="preferredTime"
-                    type="time"
                     required
+                    defaultValue=""
+                    data-testid="meeting-time"
                     className="min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface ps-10 pe-3 text-sm outline-none transition-colors focus:border-primary"
-                  />
+                  >
+                    <option value="" disabled>{content.selectTime}</option>
+                    {BOOKING_TIME_SLOTS.map((time) => (
+                      <option key={time} value={time}>
+                        {time === "00:00" ? content.midnightNextDay : time}
+                      </option>
+                    ))}
+                  </select>
                 </span>
               </label>
             </div>
@@ -583,7 +638,7 @@ export function ContactSalesExperience({
               <p className="mt-1 text-xs leading-5 text-foreground-muted">
                 {content.methodsBody}
               </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 {meetingMethodIds.map((methodId) => {
                   const method = methodCopy[methodId];
                   const Icon = method.icon;
@@ -592,7 +647,7 @@ export function ContactSalesExperience({
                     <label
                       key={methodId}
                       className={cn(
-                        "flex min-h-24 cursor-pointer gap-3 rounded-xl border p-4 transition-colors",
+                        "flex min-h-28 cursor-pointer flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors sm:min-h-32 sm:p-4",
                         selected
                           ? "border-primary bg-[var(--lf-primary-soft)]"
                           : "border-border bg-surface hover:border-primary/35",
@@ -617,10 +672,10 @@ export function ContactSalesExperience({
                         <Icon size={18} aria-hidden="true" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-sm font-bold text-foreground">
+                        <span className="block text-xs font-bold leading-5 text-foreground sm:text-sm">
                           {method.label}
                         </span>
-                        <span className="mt-1 block text-xs leading-5 text-foreground-muted">
+                        <span className="mt-1 hidden text-xs leading-5 text-foreground-muted sm:block">
                           {method.body}
                         </span>
                       </span>
@@ -687,7 +742,7 @@ export function ContactSalesExperience({
                       rel="noreferrer"
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-bold text-foreground hover:border-primary/40 hover:text-primary"
                     >
-                      <MessageCircle size={17} aria-hidden="true" />
+                      <WhatsAppIcon size={17} aria-hidden="true" />
                       {content.sendWhatsapp}
                     </a>
                   ) : null}
@@ -714,11 +769,11 @@ export function ContactSalesExperience({
             const channelCopy = {
               whatsapp: {
                 label: content.whatsappLabel,
-                icon: MessageCircle,
+                icon: WhatsAppIcon,
               },
               phone: { label: content.phoneLabel, icon: Phone },
               email: { label: content.emailLabel, icon: Mail },
-            }[channel.kind];
+            }[channel.kind] as { label: string; icon: MethodIcon };
             const Icon = channelCopy.icon;
             return (
               <a
