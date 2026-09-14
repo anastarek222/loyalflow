@@ -10,6 +10,7 @@ import {
   validateCustomCardArtworkFile,
   validateCustomCardUploadPair,
 } from "@/lib/cards/custom-card-upload-validation";
+import { decodeCustomCardArtwork } from "@/lib/server/cards/custom-card-image-decode";
 
 export { CUSTOM_CARD_GEOMETRY_ERROR } from "@/lib/cards/custom-card-geometry";
 
@@ -190,7 +191,8 @@ export async function readPrivateCustomCardArtwork(
     });
     if (
       !validateCustomCardArtworkFile(file) ||
-      !(await validateCustomCardArtworkGeometry(file))
+      !(await validateCustomCardArtworkGeometry(file)) ||
+      !(await decodeCustomCardArtwork(file))
     ) {
       return { status: "corrupt" };
     }

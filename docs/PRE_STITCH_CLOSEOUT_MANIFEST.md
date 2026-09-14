@@ -77,7 +77,7 @@ Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-seg
 - [x] Decimal policy is explicitly locked: whole-unit V1.
 
 ### Custom Card
-- [ ] Structurally valid but undecodable image payloads are rejected.
+- [x] Structurally valid but undecodable image payloads are rejected.
 - [x] Missing Blob object has a clean explicit response contract.
 - [x] Provider/auth/storage failure is distinguished from not-found.
 - [x] Corrupt/unreadable stored artwork has a defined response contract.
