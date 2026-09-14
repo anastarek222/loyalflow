@@ -4,7 +4,10 @@ import { Alexandria, Libre_Bodoni } from "next/font/google";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
-import { getLocaleDirection } from "@/lib/i18n/config";
+import {
+  getLocaleDirection,
+  type SupportedLocale,
+} from "@/lib/i18n/config";
 import { getPublicLegalProfile } from "@/lib/legal/public-legal-profile";
 import { getPublicMarketingNavigation } from "@/lib/marketing/public-navigation";
 import { getMarketingRequestLocale } from "@/lib/marketing/request-locale";
@@ -23,7 +26,33 @@ const marketingEditorial = Libre_Bodoni({
   display: "swap",
 });
 
-const privacyContent = {
+type PrivacyTextSection = Readonly<{
+  title: string;
+  body: string;
+}>;
+
+type PrivacyCookieSection = Readonly<{
+  title: string;
+  bodyBeforeLink: string;
+  bodyAfterLink: string;
+  cookieSection: true;
+}>;
+
+type PrivacySection = PrivacyTextSection | PrivacyCookieSection;
+
+type PrivacyPageContent = Readonly<{
+  metaTitle: string;
+  metaDescription: string;
+  eyebrow: string;
+  draft: string;
+  title: string;
+  updated: string;
+  privacyQuestions: string;
+  cookiePolicy: string;
+  sections: readonly PrivacySection[];
+}>;
+
+const privacyContent: Record<SupportedLocale, PrivacyPageContent> = {
   en: {
     metaTitle: "Privacy Policy | Tanee",
     metaDescription:
@@ -126,7 +155,7 @@ const privacyContent = {
       },
     ],
   },
-} as const;
+};
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingRequestLocale();
