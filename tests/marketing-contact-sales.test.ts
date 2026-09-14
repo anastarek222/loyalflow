@@ -83,10 +83,15 @@ test("shared Marketing header exposes smart mobile navigation and booking launch
 test("shared marketing navigation and footer keep one brand contract", () => {
   const navigation = source("lib/marketing/public-navigation.ts");
   const footer = source("components/marketing/marketing-footer.tsx");
+  const marketingCatalog = source("lib/i18n/marketing.ts");
 
   assert.match(navigation, /About Tanee/);
   assert.match(navigation, /عن Tanee/);
   assert.match(footer, /dir="ltr"/);
   assert.match(footer, /<SocialBrandIcon kind=\{link\.kind\}/);
   assert.doesNotMatch(footer, /Camera|MessageCircle|Briefcase|Music2|Play/);
+  assert.match(marketingCatalog, /ARABIC_AGAIN_KEYS/);
+  assert.match(marketingCatalog, /value\.split\("تاني"\)\.join\("Tanee"\)/);
+  assert.match(marketingCatalog, /"marketing\.navAbout"/);
+  assert.match(marketingCatalog, /"عن Tanee"/);
 });
