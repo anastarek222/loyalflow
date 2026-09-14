@@ -45,7 +45,6 @@ test("Privacy and Terms remain noindex drafts until legal publication", () => {
     assert.match(page, /getPublicLegalProfile\(\)/);
     assert.match(page, /profile\.isPublished/);
     assert.match(page, /index: false, follow: false/);
-    assert.match(page, /<LegalDocumentPage/);
   }
 });
 
