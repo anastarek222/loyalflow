@@ -1,3 +1,4 @@
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { ProductPreview } from "@/components/marketing/product-preview";
@@ -300,7 +301,7 @@ export default async function FeaturesPage() {
           ) : (
             <span className="mt-2.5 size-2 shrink-0 rounded-full bg-primary" />
           )}
-          {copy(key)}
+          <MarketingBrandText text={copy(key)} />
         </li>
       ))}
     </ul>
@@ -326,22 +327,22 @@ export default async function FeaturesPage() {
         <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-12 lg:px-20 lg:py-28">
           <div className="lg:col-span-7 lg:pe-8">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.features.eyebrow")}
+              <MarketingBrandText text={copy("marketing.features.eyebrow")} />
             </p>
             <h1
               className={`mt-4 max-w-3xl text-[clamp(2.35rem,4.3vw,4rem)] font-semibold leading-[1.08] tracking-[-0.025em] ${editorial}`}
             >
-              {copy("marketing.features.title")}
+              <MarketingBrandText text={copy("marketing.features.title")} />
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-foreground-muted sm:text-lg sm:leading-9">
-              {copy("marketing.features.body")}
+              <MarketingBrandText text={copy("marketing.features.body")} />
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/get-started"
                 className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] focus-visible:ring-offset-2"
               >
-                {copy("marketing.primaryCta")}
+                <MarketingBrandText text={copy("marketing.primaryCta")} />
                 <ArrowUpRight
                   size={18}
                   className="rtl:-scale-x-100"
@@ -352,11 +353,11 @@ export default async function FeaturesPage() {
                 href="/how-it-works"
                 className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-border-strong px-7 py-3 font-bold transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
               >
-                {copy("marketing.secondaryCta")}
+                <MarketingBrandText text={copy("marketing.secondaryCta")} />
               </Link>
             </div>
             <p className="mt-5 text-sm text-foreground-subtle">
-              {copy("marketing.home.trialNote")}
+              <MarketingBrandText text={copy("marketing.home.trialNote")} />
             </p>
           </div>
           <div className="lg:col-span-5">
@@ -382,10 +383,10 @@ export default async function FeaturesPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className={`text-3xl font-semibold sm:text-4xl ${editorial}`}>
-              {copy("marketing.features.overviewTitle")}
+              <MarketingBrandText text={copy("marketing.features.overviewTitle")} />
             </h2>
             <p className="mt-4 leading-8 text-foreground-muted">
-              {copy("marketing.features.overviewBody")}
+              <MarketingBrandText text={copy("marketing.features.overviewBody")} />
             </p>
           </div>
           <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -398,10 +399,10 @@ export default async function FeaturesPage() {
                   <Icon size={21} aria-hidden="true" />
                 </span>
                 <h3 className="mt-6 text-lg font-bold leading-7">
-                  {copy(titleKey)}
+                  <MarketingBrandText text={copy(titleKey)} />
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-foreground-muted">
-                  {copy(bodyKey)}
+                  <MarketingBrandText text={copy(bodyKey)} />
                 </p>
               </article>
             ))}
@@ -413,15 +414,15 @@ export default async function FeaturesPage() {
         <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.features.brandEyebrow")}
+              <MarketingBrandText text={copy("marketing.features.brandEyebrow")} />
             </p>
             <h2
               className={`mt-3 text-3xl font-semibold sm:text-4xl ${editorial}`}
             >
-              {copy("marketing.features.brandTitle")}
+              <MarketingBrandText text={copy("marketing.features.brandTitle")} />
             </h2>
             <p className="mt-5 leading-8 text-foreground-muted">
-              {copy("marketing.features.brandBody")}
+              <MarketingBrandText text={copy("marketing.features.brandBody")} />
             </p>
             {bullets([
               "marketing.features.brandPointOne",
@@ -436,15 +437,15 @@ export default async function FeaturesPage() {
       <section className="bg-[#171717] px-5 py-20 text-[#fff9f5] sm:px-8 lg:px-20 lg:py-24">
         <div className="mx-auto w-full max-w-[1240px]">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-            {copy("marketing.features.activityEyebrow")}
+            <MarketingBrandText text={copy("marketing.features.activityEyebrow")} />
           </p>
           <h2
             className={`mt-3 max-w-3xl text-3xl font-semibold sm:text-4xl ${editorial}`}
           >
-            {copy("marketing.features.activityTitle")}
+            <MarketingBrandText text={copy("marketing.features.activityTitle")} />
           </h2>
           <p className="mt-5 max-w-3xl leading-8 text-[#d7cbc5]">
-            {copy("marketing.features.activityBody")}
+            <MarketingBrandText text={copy("marketing.features.activityBody")} />
           </p>
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {activityCards.map(([Icon, titleKey, bodyKey], index) => (
@@ -462,7 +463,7 @@ export default async function FeaturesPage() {
                 </div>
                 <h3 className="mt-6 text-lg font-bold">{copy(titleKey)}</h3>
                 <p className="mt-3 text-sm leading-7 text-[#d7cbc5]">
-                  {copy(bodyKey)}
+                  <MarketingBrandText text={copy(bodyKey)} />
                 </p>
               </article>
             ))}
@@ -475,15 +476,15 @@ export default async function FeaturesPage() {
           <RewardsPreview locale={locale} />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.features.rewardsEyebrow")}
+              <MarketingBrandText text={copy("marketing.features.rewardsEyebrow")} />
             </p>
             <h2
               className={`mt-3 text-3xl font-semibold sm:text-4xl ${editorial}`}
             >
-              {copy("marketing.features.rewardsSectionTitle")}
+              <MarketingBrandText text={copy("marketing.features.rewardsSectionTitle")} />
             </h2>
             <p className="mt-5 leading-8 text-foreground-muted">
-              {copy("marketing.features.rewardsSectionBody")}
+              <MarketingBrandText text={copy("marketing.features.rewardsSectionBody")} />
             </p>
             {bullets(
               [
@@ -502,10 +503,10 @@ export default async function FeaturesPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="max-w-3xl">
             <h2 className={`text-3xl font-semibold sm:text-4xl ${editorial}`}>
-              {copy("marketing.features.insightsTitle")}
+              <MarketingBrandText text={copy("marketing.features.insightsTitle")} />
             </h2>
             <p className="mt-4 leading-8 text-foreground-muted">
-              {copy("marketing.features.insightsBody")}
+              <MarketingBrandText text={copy("marketing.features.insightsBody")} />
             </p>
           </div>
           <div className="mt-12 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
@@ -517,7 +518,7 @@ export default async function FeaturesPage() {
                 >
                   <h3 className="font-bold">{copy(titleKey)}</h3>
                   <p className="mt-2 text-sm leading-7 text-foreground-muted">
-                    {copy(bodyKey)}
+                    <MarketingBrandText text={copy(bodyKey)} />
                   </p>
                 </article>
               ))}
@@ -531,10 +532,10 @@ export default async function FeaturesPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className={`text-3xl font-semibold sm:text-4xl ${editorial}`}>
-              {copy("marketing.features.journeyTitle")}
+              <MarketingBrandText text={copy("marketing.features.journeyTitle")} />
             </h2>
             <p className="mt-4 leading-8 text-foreground-muted">
-              {copy("marketing.features.journeyBody")}
+              <MarketingBrandText text={copy("marketing.features.journeyBody")} />
             </p>
           </div>
           <ol className="relative mt-14 grid gap-4 md:grid-cols-5 md:gap-3">
@@ -557,7 +558,7 @@ export default async function FeaturesPage() {
                     {locale === "ar" ? "الخطوة" : "Step"} {index + 1}
                   </p>
                   <p className="mt-1 text-sm font-bold leading-6">
-                    {copy(labelKey)}
+                    <MarketingBrandText text={copy(labelKey)} />
                   </p>
                 </div>
               </li>
@@ -570,15 +571,15 @@ export default async function FeaturesPage() {
         <div className="mx-auto grid w-full max-w-[1240px] items-center gap-8 rounded-2xl border border-border bg-white p-7 shadow-[var(--lf-shadow-soft)] sm:p-10 lg:grid-cols-[1fr_auto] lg:p-12">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.features.securityEyebrow")}
+              <MarketingBrandText text={copy("marketing.features.securityEyebrow")} />
             </p>
             <h2
               className={`mt-3 max-w-3xl text-3xl font-semibold sm:text-4xl ${editorial}`}
             >
-              {copy("marketing.features.securityTitle")}
+              <MarketingBrandText text={copy("marketing.features.securityTitle")} />
             </h2>
             <p className="mt-4 max-w-3xl leading-8 text-foreground-muted">
-              {copy("marketing.features.securityBody")}
+              <MarketingBrandText text={copy("marketing.features.securityBody")} />
             </p>
             {bullets(
               [
@@ -592,7 +593,7 @@ export default async function FeaturesPage() {
               href="/privacy"
               className="mt-7 inline-flex min-h-11 items-center gap-2 font-bold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
             >
-              {copy("marketing.features.securityLink")}
+              <MarketingBrandText text={copy("marketing.features.securityLink")} />
               <ArrowUpRight
                 size={17}
                 className="rtl:-scale-x-100"
@@ -609,15 +610,15 @@ export default async function FeaturesPage() {
       <section className="bg-[#171717] px-5 py-20 text-[#fff9f5] sm:px-8 lg:px-20 lg:py-24">
         <div className="mx-auto w-full max-w-[1240px]">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-            {copy("marketing.features.outcomesEyebrow")}
+            <MarketingBrandText text={copy("marketing.features.outcomesEyebrow")} />
           </p>
           <h2
             className={`mt-3 max-w-3xl text-3xl font-semibold sm:text-4xl ${editorial}`}
           >
-            {copy("marketing.features.outcomesTitle")}
+            <MarketingBrandText text={copy("marketing.features.outcomesTitle")} />
           </h2>
           <p className="mt-4 max-w-3xl leading-8 text-[#d7cbc5]">
-            {copy("marketing.features.outcomesBody")}
+            <MarketingBrandText text={copy("marketing.features.outcomesBody")} />
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {outcomes.map((key) => (
@@ -638,7 +639,7 @@ export default async function FeaturesPage() {
           <h2
             className={`text-center text-3xl font-semibold sm:text-4xl ${editorial}`}
           >
-            {copy("marketing.features.faqTitle")}
+            <MarketingBrandText text={copy("marketing.features.faqTitle")} />
           </h2>
           <div className="mt-12 grid items-start gap-4 lg:grid-cols-2">
             {faqs.map(([questionKey, answerKey]) => (
@@ -647,7 +648,7 @@ export default async function FeaturesPage() {
                 className="group rounded-2xl border border-border bg-white p-5 open:shadow-[var(--lf-shadow-soft)]"
               >
                 <summary className="flex min-h-7 cursor-pointer list-none items-center justify-between gap-4 font-bold leading-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] [&::-webkit-details-marker]:hidden">
-                  {copy(questionKey)}
+                  <MarketingBrandText text={copy(questionKey)} />
                   <ChevronDown
                     size={18}
                     className="shrink-0 text-primary transition-transform duration-200 group-open:rotate-180"
@@ -655,7 +656,7 @@ export default async function FeaturesPage() {
                   />
                 </summary>
                 <p className="mt-4 border-t border-border pt-4 text-sm leading-7 text-foreground-muted">
-                  {copy(answerKey)}
+                  <MarketingBrandText text={copy(answerKey)} />
                 </p>
               </details>
             ))}
@@ -669,16 +670,16 @@ export default async function FeaturesPage() {
           <h2
             className={`mt-5 max-w-3xl text-3xl font-semibold sm:text-4xl ${editorial}`}
           >
-            {copy("marketing.features.finalTitle")}
+            <MarketingBrandText text={copy("marketing.features.finalTitle")} />
           </h2>
           <p className="mt-4 max-w-2xl leading-8 text-[#d7cbc5]">
-            {copy("marketing.features.finalBody")}
+            <MarketingBrandText text={copy("marketing.features.finalBody")} />
           </p>
           <Link
             href="/get-started"
             className="mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#171717]"
           >
-            {copy("marketing.primaryCta")}
+            <MarketingBrandText text={copy("marketing.primaryCta")} />
             <ArrowUpRight
               size={18}
               className="rtl:-scale-x-100"
@@ -686,7 +687,7 @@ export default async function FeaturesPage() {
             />
           </Link>
           <p className="mt-4 text-sm text-[#aa9e98]">
-            {copy("marketing.home.trialNote")}
+            <MarketingBrandText text={copy("marketing.home.trialNote")} />
           </p>
         </div>
       </section>
