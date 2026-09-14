@@ -1,4 +1,5 @@
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { PublicTrialForm } from "@/components/public-trial-form";
@@ -73,22 +74,22 @@ export default async function GetStartedPage() {
 
         <section className="py-12 sm:py-16">
           <p className="text-sm font-black uppercase tracking-[0.12em] text-primary">
-            {translate(locale, "conversion.eyebrow")}
+            <MarketingBrandText text={translate(locale, "conversion.eyebrow")} />
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">
-            {translate(locale, "conversion.title")}
+            <MarketingBrandText text={translate(locale, "conversion.title")} />
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-foreground-muted sm:text-lg">
-            {translate(locale, "conversion.body")}
+            <MarketingBrandText text={translate(locale, "conversion.body")} />
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             <article className="flex flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
               <h2 className="text-xl font-black">
-                {translate(locale, "conversion.invitedTitle")}
+                <MarketingBrandText text={translate(locale, "conversion.invitedTitle")} />
               </h2>
               <p className="mt-3 text-sm leading-7 text-foreground-muted">
-                {translate(locale, "conversion.invitedBody")}
+                <MarketingBrandText text={translate(locale, "conversion.invitedBody")} />
               </p>
               <div className="mt-6">
                 <PublicTrialForm
@@ -100,16 +101,16 @@ export default async function GetStartedPage() {
 
             <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
               <h2 className="text-xl font-black">
-                {translate(locale, "conversion.existingTitle")}
+                <MarketingBrandText text={translate(locale, "conversion.existingTitle")} />
               </h2>
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
-                {translate(locale, "conversion.existingBody")}
+                <MarketingBrandText text={translate(locale, "conversion.existingBody")} />
               </p>
               <Link
                 href="/login"
                 className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-semibold text-white hover:bg-primary-hover"
               >
-                {translate(locale, "conversion.existingCta")}
+                <MarketingBrandText text={translate(locale, "conversion.existingCta")} />
               </Link>
             </article>
           </div>
@@ -119,14 +120,14 @@ export default async function GetStartedPage() {
             data-secure-setup-continuation="email-only"
             className="mt-6 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-sm text-foreground-muted"
           >
-            {translate(locale, "conversion.noSignup")}
+            <MarketingBrandText text={translate(locale, "conversion.noSignup")} />
           </div>
 
           <Link
             href="/"
             className="mt-8 inline-flex text-sm font-semibold text-primary hover:underline"
           >
-            {translate(locale, "conversion.backHome")}
+            <MarketingBrandText text={translate(locale, "conversion.backHome")} />
           </Link>
         </section>
       </div>
