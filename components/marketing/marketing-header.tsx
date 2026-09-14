@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingNavLink } from "@/components/marketing/marketing-nav-link";
 import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
 import { TalkToExpertLauncher } from "@/components/marketing/talk-to-expert-launcher";
@@ -155,7 +156,7 @@ export function MarketingHeader({
                 className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-[var(--lf-foreground-muted)] transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-[var(--lf-foreground)]"
                 activeClassName="bg-[var(--lf-primary-soft)] text-[var(--lf-foreground)]"
               >
-                <span dir={contentDirection}>{item.label}</span>
+                <span dir={contentDirection}><MarketingBrandText text={item.label} /></span>
               </MarketingNavLink>
             ))}
           </nav>
@@ -254,7 +255,7 @@ export function MarketingHeader({
                         activeClassName="bg-[var(--lf-primary-soft)] text-[var(--lf-foreground)]"
                       >
                         <span className="w-full" dir={contentDirection}>
-                          {item.label}
+                          <MarketingBrandText text={item.label} />
                         </span>
                       </MarketingNavLink>
                     ))}
