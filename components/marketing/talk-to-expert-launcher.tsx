@@ -12,6 +12,8 @@ import { useEffect, useRef, useState } from "react";
 
 import type { SupportedLocale } from "@/lib/i18n/config";
 
+import styles from "./talk-to-expert-launcher.module.css";
+
 const copy = {
   en: {
     trigger: "Talk to an expert",
@@ -88,7 +90,7 @@ export function TalkToExpertLauncher({ locale }: TalkToExpertLauncherProps) {
           aria-modal="false"
           aria-label={content.title}
           data-testid="talk-to-expert-panel"
-          className="mb-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-[var(--lf-shadow-overlay)]"
+          className={`${styles.panel} mb-3 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-[var(--lf-shadow-overlay)]`}
         >
           <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
             <div>
@@ -109,11 +111,14 @@ export function TalkToExpertLauncher({ locale }: TalkToExpertLauncherProps) {
             </button>
           </div>
 
-          <div className="grid gap-1 p-2">
+          <div
+            data-testid="talk-to-expert-actions"
+            className={`${styles.actions} grid p-2`}
+          >
             <Link
               href="/contact#book-meeting"
               onClick={close}
-              className="group flex min-h-20 items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-[var(--lf-primary-soft)]"
+              className={`${styles.action} group rounded-xl transition-colors hover:bg-[var(--lf-primary-soft)]`}
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-[var(--lf-primary-foreground)]">
                 <CalendarDays size={19} aria-hidden="true" />
@@ -122,21 +127,23 @@ export function TalkToExpertLauncher({ locale }: TalkToExpertLauncherProps) {
                 <span className="block text-sm font-bold text-foreground">
                   {content.book}
                 </span>
-                <span className="mt-0.5 block text-xs leading-5 text-foreground-muted">
+                <span
+                  className={`${styles.actionBody} mt-0.5 text-xs leading-5 text-foreground-muted`}
+                >
                   {content.bookBody}
                 </span>
               </span>
               <ArrowUpRight
                 size={17}
                 aria-hidden="true"
-                className="shrink-0 text-foreground-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100"
+                className={`${styles.actionArrow} shrink-0 text-foreground-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100`}
               />
             </Link>
 
             <Link
               href="/contact#whatsapp"
               onClick={close}
-              className="group flex min-h-20 items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-[var(--lf-primary-soft)]"
+              className={`${styles.action} group rounded-xl transition-colors hover:bg-[var(--lf-primary-soft)]`}
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-[var(--lf-marketing-canvas)] text-primary">
                 <MessageCircle size={19} aria-hidden="true" />
@@ -145,21 +152,23 @@ export function TalkToExpertLauncher({ locale }: TalkToExpertLauncherProps) {
                 <span className="block text-sm font-bold text-foreground">
                   {content.whatsapp}
                 </span>
-                <span className="mt-0.5 block text-xs leading-5 text-foreground-muted">
+                <span
+                  className={`${styles.actionBody} mt-0.5 text-xs leading-5 text-foreground-muted`}
+                >
                   {content.whatsappBody}
                 </span>
               </span>
               <ArrowUpRight
                 size={17}
                 aria-hidden="true"
-                className="shrink-0 text-foreground-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100"
+                className={`${styles.actionArrow} shrink-0 text-foreground-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100`}
               />
             </Link>
 
             <Link
               href="/contact#contact-options"
               onClick={close}
-              className="group flex min-h-20 items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-[var(--lf-primary-soft)]"
+              className={`${styles.action} group rounded-xl transition-colors hover:bg-[var(--lf-primary-soft)]`}
             >
               <span className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-[var(--lf-marketing-canvas)] text-primary">
                 <MessagesSquare size={19} aria-hidden="true" />
@@ -168,14 +177,16 @@ export function TalkToExpertLauncher({ locale }: TalkToExpertLauncherProps) {
                 <span className="block text-sm font-bold text-foreground">
                   {content.contact}
                 </span>
-                <span className="mt-0.5 block text-xs leading-5 text-foreground-muted">
+                <span
+                  className={`${styles.actionBody} mt-0.5 text-xs leading-5 text-foreground-muted`}
+                >
                   {content.contactBody}
                 </span>
               </span>
               <ArrowUpRight
                 size={17}
                 aria-hidden="true"
-                className="shrink-0 text-foreground-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100"
+                className={`${styles.actionArrow} shrink-0 text-foreground-subtle transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100`}
               />
             </Link>
           </div>

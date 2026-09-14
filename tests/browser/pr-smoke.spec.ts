@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   cleanupBrowserUat,
@@ -49,6 +49,14 @@ async function signOut(page: Page) {
     page.getByRole("button", { name: "Log out", exact: true }).click(),
   ]);
   await expect(page.getByLabel("Email address")).toBeVisible();
+}
+
+async function expectSameRow(locator: Locator) {
+  const tops = await locator.evaluateAll((nodes) =>
+    nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
+  );
+  expect(tops.length).toBeGreaterThan(1);
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
 }
 
 test.describe.serial("PR browser smoke", () => {
@@ -111,5 +119,60 @@ test.describe.serial("PR browser smoke", () => {
     await expect(
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
+  });
+
+  test("Contact booking stays compact and three-across on a phone viewport @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    for (const locale of ["en", "ar"] as const) {
+      for (const theme of ["light", "dark"] as const) {
+        await context.addCookies([
+          { name: "loyalflow_locale", value: locale, url: baseURL! },
+        ]);
+        await page.addInitScript(
+          (value) => localStorage.setItem("tanee-marketing-theme", value),
+          theme,
+        );
+
+        const response = await page.goto("/contact");
+        expect(response?.status()).toBe(200);
+        await expect(page.locator("main")).toHaveAttribute(
+          "dir",
+          locale === "ar" ? "rtl" : "ltr",
+        );
+        await expect(page.locator("html")).toHaveAttribute(
+          "data-marketing-theme",
+          theme,
+        );
+
+        const contactOptions = page.locator("#contact-options > div > a");
+        await expect(contactOptions).toHaveCount(3);
+        await expectSameRow(contactOptions);
+
+        const firstMethodRow = page.locator(
+          "#book-meeting fieldset > div > label:nth-child(-n+3)",
+        );
+        await expect(firstMethodRow).toHaveCount(3);
+        await expectSameRow(firstMethodRow);
+
+        const trigger = page.getByTestId("talk-to-expert-trigger");
+        await trigger.click();
+        const quickActions = page.locator(
+          '[data-testid="talk-to-expert-actions"] > a',
+        );
+        await expect(quickActions).toHaveCount(3);
+        await expectSameRow(quickActions);
+
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        ).toBe(true);
+      }
+    }
   });
 });
