@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { MarketingNavLink } from "@/components/marketing/marketing-nav-link";
 import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
+import { TalkToExpertLauncher } from "@/components/marketing/talk-to-expert-launcher";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import type { SupportedLocale } from "@/lib/i18n/config";
@@ -253,6 +254,7 @@ export function MarketingHeader({
             )
           : null}
       </header>
+      <TalkToExpertLauncher locale={locale} />
     </>
   );
 }
