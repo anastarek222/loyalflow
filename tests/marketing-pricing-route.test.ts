@@ -52,7 +52,7 @@ test("Shared Marketing header owns its light/dark theme scope", () => {
 
   assert.match(
     header,
-    /"lf-marketing-surface sticky top-0 z-40 border-b/,
+    /"lf-marketing-surface fixed inset-x-0 top-0 z-40 border-b/,
   );
   assert.match(
     header,
