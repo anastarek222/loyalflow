@@ -117,8 +117,9 @@ for (const locale of ["en", "ar"] as const) {
 
       const cards = page.locator("section article");
       await expect(cards).toHaveCount(3);
-      await expect(page.locator('a[href="/privacy"]')).toBeVisible();
-      await expect(page.locator('a[href="/terms"]')).toBeVisible();
+      const policyCard = cards.nth(2);
+      await expect(policyCard.locator('a[href="/privacy"]')).toBeVisible();
+      await expect(policyCard.locator('a[href="/terms"]')).toBeVisible();
       await expect(page.locator('a[href="#privacy"]')).toHaveCount(0);
       await expect(page.locator('a[href="#terms"]')).toHaveCount(0);
 
