@@ -607,15 +607,15 @@ export function ContactSalesExperience({
                   className="min-h-12 rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm outline-none transition-colors focus:border-primary"
                 >
                   <option value="" disabled>
-                    <MarketingBrandText text={content.purposePlaceholder} />
+                    {content.purposePlaceholder}
                   </option>
                   <option value={content.purposeDemo}>{content.purposeDemo}</option>
                   <option value={content.purposePricing}>
-                    <MarketingBrandText text={content.purposePricing} />
+                    {content.purposePricing}
                   </option>
                   <option value={content.purposeSetup}>{content.purposeSetup}</option>
                   <option value={content.purposeMigration}>
-                    <MarketingBrandText text={content.purposeMigration} />
+                    {content.purposeMigration}
                   </option>
                   <option value={content.purposeOther}>{content.purposeOther}</option>
                 </select>
