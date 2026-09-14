@@ -96,6 +96,11 @@ export default defineConfig({
         ? {
             RESEND_API_KEY: "ci-browser-email-sink-key-not-a-secret",
             AUTH_EMAIL_CI_SINK: "1",
+            NEXT_PUBLIC_LEGAL_PUBLICATION_STATUS: "published",
+            NEXT_PUBLIC_LEGAL_ENTITY_NAME: "Tanee Browser UAT",
+            NEXT_PUBLIC_LEGAL_COUNTRY: "Egypt",
+            NEXT_PUBLIC_LEGAL_CONTACT_EMAIL: "legal-uat@gettanee.com",
+            NEXT_PUBLIC_LEGAL_EFFECTIVE_DATE: "2026-09-01",
           }
         : {}),
     },

@@ -8,6 +8,8 @@ import { useActionState, useState } from "react";
 
 type Props = {
   locale: "ar" | "en";
+  legalPublished: boolean;
+  legalEffectiveDate: string | null;
   action: (
     previousState: PublicTrialFormState,
     formData: FormData,
@@ -17,7 +19,12 @@ type Props = {
 const fieldClass =
   "min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-foreground outline-none placeholder:text-foreground-subtle focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
 
-export function PublicTrialForm({ locale, action }: Props) {
+export function PublicTrialForm({
+  locale,
+  legalPublished,
+  legalEffectiveDate,
+  action,
+}: Props) {
   const [state, formAction, pending] = useActionState(action, {});
   const [country, setCountry] = useState("");
   const isArabic = locale === "ar";
@@ -33,6 +40,11 @@ export function PublicTrialForm({ locale, action }: Props) {
         terms: "الشروط",
         and: "و",
         privacy: "سياسة الخصوصية",
+        legalRevision: "تاريخ سريان النسخة القانونية",
+        legalUpdated:
+          "تم تحديث الشروط أو سياسة الخصوصية. حدّث الصفحة وراجع النسخة الحالية قبل المتابعة.",
+        legalUnavailable:
+          "بدء الفترة التجريبية غير متاح مؤقتًا حتى تصبح الشروط وسياسة الخصوصية المنشورتان جاهزتين.",
         submit: "ابدأ الفترة التجريبية",
         submitting: "جارٍ إرسال رابط الإعداد...",
         validation: "راجع البيانات المطلوبة وحاول مرة أخرى.",
@@ -53,6 +65,11 @@ export function PublicTrialForm({ locale, action }: Props) {
         terms: "Terms",
         and: "and",
         privacy: "Privacy Policy",
+        legalRevision: "Legal effective date",
+        legalUpdated:
+          "The Terms or Privacy Policy changed. Refresh this page and review the current version before continuing.",
+        legalUnavailable:
+          "Trial signup is temporarily unavailable until the published Terms and Privacy Policy are ready.",
         submit: "Start free trial",
         submitting: "Sending your secure setup link...",
         validation: "Review the required details and try again.",
@@ -84,10 +101,20 @@ export function PublicTrialForm({ locale, action }: Props) {
         ? copy.limited
         : state.status === "service-unavailable"
           ? copy.unavailable
-          : null;
+          : state.status === "legal-updated"
+            ? copy.legalUpdated
+            : state.status === "legal-unavailable"
+              ? copy.legalUnavailable
+              : null;
 
   return (
     <form action={formAction} className="grid gap-4" data-public-trial-form="true">
+      <input
+        type="hidden"
+        name="legalEffectiveDate"
+        value={legalEffectiveDate ?? ""}
+      />
+
       {error ? (
         <div
           role="alert"
@@ -95,6 +122,16 @@ export function PublicTrialForm({ locale, action }: Props) {
           className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle px-4 py-3 text-sm font-semibold text-danger"
         >
           {error}
+        </div>
+      ) : null}
+
+      {!legalPublished ? (
+        <div
+          role="status"
+          data-public-legal-state="unavailable"
+          className="rounded-[var(--lf-radius-input)] border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-950"
+        >
+          {copy.legalUnavailable}
         </div>
       ) : null}
 
@@ -190,6 +227,7 @@ export function PublicTrialForm({ locale, action }: Props) {
           name="acceptTerms"
           type="checkbox"
           required
+          disabled={!legalPublished}
           className="mt-1 size-4 shrink-0 accent-primary"
         />
         <span>
@@ -202,12 +240,17 @@ export function PublicTrialForm({ locale, action }: Props) {
             {copy.privacy}
           </Link>
           .
+          {legalPublished && legalEffectiveDate ? (
+            <span className="mt-1 block text-xs text-foreground-subtle">
+              {copy.legalRevision}: {legalEffectiveDate}
+            </span>
+          ) : null}
         </span>
       </label>
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || !legalPublished}
         className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? copy.submitting : copy.submit}

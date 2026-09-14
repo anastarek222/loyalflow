@@ -7,8 +7,12 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
+import { resolveBusinessCustomerAudienceContext } from "@/lib/server/customers/audience-context";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
-import { getRewardAvailability } from "@/lib/rewards/availability";
+import {
+  getRedeemableCatalogueRewards,
+  getRewardAvailability,
+} from "@/lib/rewards/availability";
 import { getCustomerExperienceTheme } from "@/lib/theme";
 import { getLanguageAttributes } from "@/lib/i18n";
 import { getPublicCardLocalization } from "@/lib/cards/public-card-localization";
@@ -122,6 +126,7 @@ export default async function PublicCardPage({
               type: true,
               code: true,
               description: true,
+              expiresAfterDays: true,
               createdAt: true,
             },
           },
@@ -171,6 +176,13 @@ export default async function PublicCardPage({
     `/card/${encodeURIComponent(token)}?lang=${nextLanguage}${showWelcome ? "&welcome=1" : ""}`;
 
   const theme = getCustomerExperienceTheme(business);
+  const audienceNow = new Date();
+  const segmentContext = await resolveBusinessCustomerAudienceContext({
+    business,
+    customer,
+    catalogueRewards: business.rewards,
+    now: audienceNow,
+  });
   const publicOffers = business.offers.filter((offer) =>
     isOfferEligible(
       offer,
@@ -182,6 +194,8 @@ export default async function PublicCardPage({
         lastActivityAt: customer.transactions[0]?.createdAt ?? null,
       },
       { id: business.id, rewardThreshold: business.rewardThreshold },
+      audienceNow,
+      segmentContext,
     ),
   );
 
@@ -195,6 +209,20 @@ export default async function PublicCardPage({
     },
     catalogueRewards: business.rewards,
   });
+  const redeemableCatalogueRewards =
+    rewardAvailability.source === "CATALOGUE"
+      ? getRedeemableCatalogueRewards({
+          customerActive: customer.isActive,
+          balance: customer.balance,
+          catalogueRewards: business.rewards,
+          rewardUnlocks: customer.rewardUnlocks,
+          now: audienceNow,
+        })
+      : [];
+  const publicRewardReady =
+    rewardAvailability.source === "CATALOGUE"
+      ? redeemableCatalogueRewards.length > 0
+      : rewardAvailability.rewardReady;
   const cardReward =
     rewardAvailability.source === "CATALOGUE"
       ? rewardAvailability.defaultReward
@@ -322,7 +350,7 @@ export default async function PublicCardPage({
 
   const localizedDateFormatter = new Intl.DateTimeFormat(
     language === "AR" ? "ar-EG" : "en-US",
-    { dateStyle: "medium", timeZone: "Africa/Cairo" },
+    { dateStyle: "medium", timeZone: business.timezone ?? "UTC" },
   );
 
   return (
@@ -424,6 +452,7 @@ export default async function PublicCardPage({
           currency={card.program.currency}
           rewardName={card.program.reward.name}
           rewardThreshold={card.program.reward.cost}
+          rewardReady={publicRewardReady}
           qrCode={qrCode}
           artworkEnabled={card.design.standardArtwork.enabled}
           artworkCategory={card.design.standardArtwork.category}

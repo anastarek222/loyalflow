@@ -1,11 +1,21 @@
 "use server";
 
 import { auth } from "@/auth";
-import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
+import type { LoyaltyMode } from "@/generated/prisma/client";
+import { canViewCustomerNotesTags } from "@/lib/customers/feature-access";
+import {
+  hasFeatureEntitlement,
+  isWithinPlanLimit,
+  type LoyalFlowPlan,
+} from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
+import {
+  getOfferTagAudienceId,
+  isOfferAudienceSelectorForLoyaltyMode,
+} from "@/lib/offers/eligibility";
 import { parseOfferFormInput } from "@/lib/offers/form-input";
-import { canManageBusiness } from "@/lib/permissions";
+import { canManageBusiness, type TenantUser } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
   createOfferCommand,
@@ -31,6 +41,8 @@ async function getOfferManagementContext(slug: string) {
       id: true,
       slug: true,
       plan: true,
+      timezone: true,
+      loyaltyMode: true,
       subscriptionLifecycleState: true,
     },
   });
@@ -38,6 +50,38 @@ async function getOfferManagementContext(slug: string) {
     redirect("/dashboard");
   }
   return { business, session };
+}
+
+async function hasValidOfferAudience(input: {
+  user: TenantUser;
+  businessId: string;
+  plan: LoyalFlowPlan;
+  loyaltyMode: LoyaltyMode;
+  selector?: string;
+}) {
+  if (!input.selector) return true;
+
+  const tagId = getOfferTagAudienceId(input.selector);
+  if (!tagId) {
+    return isOfferAudienceSelectorForLoyaltyMode(
+      input.selector,
+      input.loyaltyMode,
+    );
+  }
+
+  if (!canViewCustomerNotesTags(input.user, input.businessId, input.plan)) {
+    return false;
+  }
+
+  const tag = await prisma.customerTag.findFirst({
+    where: {
+      id: tagId,
+      businessId: input.businessId,
+    },
+    select: { id: true },
+  });
+
+  return Boolean(tag);
 }
 
 function revalidateOfferPaths(slug: string) {
@@ -55,6 +99,8 @@ function offerCommandError(result: OfferWriteCommandResult) {
       return "plan-feature";
     case "PLAN_LIMIT":
       return "plan-limit";
+    case "INVALID_AUDIENCE":
+      return "invalid";
     case "BUSINESS_NOT_FOUND":
     case "TARGET_NOT_FOUND":
       return "not-found";
@@ -65,6 +111,17 @@ export async function createOfferAction(slug: string, formData: FormData) {
   const { business, session } = await getOfferManagementContext(slug);
   const parsed = parseOfferFormInput(formData);
   if (!parsed.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
+  if (
+    !(await hasValidOfferAudience({
+      user: session.user,
+      businessId: business.id,
+      plan: business.plan,
+      loyaltyMode: business.loyaltyMode,
+      selector: parsed.data.segment,
+    }))
+  ) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
   if (
@@ -90,7 +147,7 @@ export async function createOfferAction(slug: string, formData: FormData) {
 
   const result = await createOfferCommand({
     businessId: business.id,
-    offer: normalizeOfferInput(parsed.data),
+    offer: normalizeOfferInput(parsed.data, business.timezone ?? "UTC"),
     actor: session.user,
   });
   const error = offerCommandError(result);
@@ -111,6 +168,17 @@ export async function updateOfferAction(
   const parsedOfferId = opaqueIdSchema.safeParse(offerId);
   const parsed = parseOfferFormInput(formData);
   if (!parsed.success || !parsedOfferId.success) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
+  }
+  if (
+    !(await hasValidOfferAudience({
+      user: session.user,
+      businessId: business.id,
+      plan: business.plan,
+      loyaltyMode: business.loyaltyMode,
+      selector: parsed.data.segment,
+    }))
+  ) {
     redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
   if (
@@ -135,7 +203,7 @@ export async function updateOfferAction(
   const result = await updateOfferCommand({
     businessId: business.id,
     offerId: existingOffer.id,
-    offer: normalizeOfferInput(parsed.data),
+    offer: normalizeOfferInput(parsed.data, business.timezone ?? "UTC"),
     actor: session.user,
   });
   const error = offerCommandError(result);
@@ -172,10 +240,22 @@ export async function toggleOfferStatusAction(
 
   const existingOffer = await prisma.offer.findFirst({
     where: { id: parsedOfferId.data, businessId: business.id },
-    select: { id: true },
+    select: { id: true, segment: true },
   });
   if (!existingOffer) {
     redirect(`/businesses/${business.slug}/offers?error=not-found`);
+  }
+  if (
+    parsedStatus.data &&
+    !(await hasValidOfferAudience({
+      user: session.user,
+      businessId: business.id,
+      plan: business.plan,
+      loyaltyMode: business.loyaltyMode,
+      selector: existingOffer.segment ?? undefined,
+    }))
+  ) {
+    redirect(`/businesses/${business.slug}/offers?error=invalid`);
   }
 
   const result = await setOfferStatusCommand({

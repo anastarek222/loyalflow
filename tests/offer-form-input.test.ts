@@ -39,7 +39,7 @@ test("offer form preserves the selected segment for SEGMENT eligibility", () => 
   assert.equal(parsed.data.segment, "REWARD_READY");
 });
 
-test("strict offer schema still rejects non-segment eligibility carrying a segment", () => {
+test("strict offer schema still rejects non-segment eligibility carrying an audience selector", () => {
   const parsed = offerInputSchema.safeParse({
     name: "Summer offer",
     eligibility: "ALL",
@@ -49,6 +49,6 @@ test("strict offer schema still rejects non-segment eligibility carrying a segme
   assert.equal(parsed.success, false);
   assert.match(
     parsed.success ? "" : parsed.error.issues.map((issue) => issue.message).join(" "),
-    /Only segment offers can store a segment/,
+    /Only segment offers can store an audience selector/,
   );
 });

@@ -3,6 +3,7 @@
 import { publicMembershipRegistrationProblemCodes } from "@loyalflow/contracts/customers/public-membership";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 
+import { duplicateMembershipRecoveryPath } from "@/lib/customers/public-membership-recovery";
 import { parseCustomerRegistration } from "@/lib/customers/registration";
 import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
 import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
@@ -115,9 +116,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
   });
 
   if (existingCustomer) {
-    redirect(
-      `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
-    );
+    redirect(duplicateMembershipRecoveryPath(business.slug));
   }
 
   let result: Awaited<ReturnType<typeof createPublicMembershipCommand>>;
@@ -135,9 +134,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
       "code" in error &&
       error.code === "P2002"
     ) {
-      redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
-      );
+      redirect(duplicateMembershipRecoveryPath(business.slug));
     }
 
     redirect(
@@ -151,9 +148,7 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
 
   if (!result.ok) {
     if (result.reason === "DUPLICATE") {
-      redirect(
-        `/join/${business.slug}?error=${publicMembershipRegistrationProblemCodes.duplicateMembership}`,
-      );
+      redirect(duplicateMembershipRecoveryPath(business.slug));
     }
     if (result.reason === "PLAN_LIMIT") {
       redirect(

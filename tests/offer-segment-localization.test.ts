@@ -27,7 +27,7 @@ test("Stage 13 offer cards localize known customer segment labels", () => {
 test("Stage 13 offer segment localization preserves form and action boundaries", () => {
   const offers = source("app/businesses/[slug]/offers/page.tsx");
 
-  assert.match(offers, /customerSegments\.map\(\(segment\) => \(/);
+  assert.match(offers, /audienceSegments\.map\(\(segment\) => \(/);
   assert.match(offers, /getCustomerSegmentLabel\(segment, language\)/);
   assert.match(offers, /createOfferAction\.bind\(null, business\.slug\)/);
   assert.match(offers, /updateOfferAction\.bind\(/);

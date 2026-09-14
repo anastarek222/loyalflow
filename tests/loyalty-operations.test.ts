@@ -6,21 +6,34 @@ import {
   getRewardLabel,
 } from "../lib/loyalty/operations";
 
-test("uses the configured amount for visits and points", () => {
-  for (const loyaltyMode of ["VISITS", "POINTS"] as const) {
-    assert.deepEqual(
-      getEarnDetails({
-        loyaltyMode,
-        earnAmount: 2,
-        unitName: "points",
-      }),
-      {
-        amount: 2,
-        transactionNote: "Loyalty credit added",
-        activityDescription: "Added 2 loyalty credit",
-      }
-    );
-  }
+test("records exactly one visit regardless of stored earn amount", () => {
+  assert.deepEqual(
+    getEarnDetails({
+      loyaltyMode: "VISITS",
+      earnAmount: 2,
+      unitName: "visits",
+    }),
+    {
+      amount: 1,
+      transactionNote: "Visit recorded",
+      activityDescription: "Recorded 1 visit",
+    },
+  );
+});
+
+test("uses the configured amount for points", () => {
+  assert.deepEqual(
+    getEarnDetails({
+      loyaltyMode: "POINTS",
+      earnAmount: 2,
+      unitName: "points",
+    }),
+    {
+      amount: 2,
+      transactionNote: "Loyalty credit added",
+      activityDescription: "Added 2 loyalty credit",
+    },
+  );
 });
 
 test("uses the recorded sale amount for sales-based loyalty", () => {

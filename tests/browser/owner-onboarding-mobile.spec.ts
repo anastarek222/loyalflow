@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { expect, test } from "@playwright/test";
+import { TRIAL_DURATION_DAYS } from "@loyalflow/domain/billing/trial-core";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { generateTotpCode } from "@/lib/auth/super-admin-mfa";
@@ -256,7 +257,7 @@ test.describe
     // database executes and cleans the complete launch receipt below.
     if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;
 
-    for (const step of [3, 4, 5, 6]) {
+    for (const step of [3, 4]) {
       await page.getByRole("button", { name: "Next", exact: true }).click();
       await expect(form).toHaveAttribute("data-owner-step", String(step));
     }
@@ -264,7 +265,7 @@ test.describe
     await page.getByRole("button", { name: "Launch", exact: true }).click();
     await expect(
       page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`), {
       timeout: 30_000,
     });
     await expect(
@@ -290,7 +291,7 @@ test.describe
     await expect(page).not.toHaveURL(/\/onboarding$/);
   });
 
-  test("public Trial request sends a secure email link once and launches a persisted seven-day Trial", async ({
+  test("public Trial request sends a secure email link once and launches a persisted 14-day Trial", async ({
     page,
   }) => {
     test.setTimeout(150_000);
@@ -328,7 +329,7 @@ test.describe
     expect(deliveredEmail.from).toBe("Tanee <noreply@gettanee.com>");
     expect(deliveredEmail.subject).toBe("Complete your Tanee business setup");
     expect(deliveredEmail.text).toContain("This secure link expires in 24 hours");
-    expect(deliveredEmail.text).toContain("seven-day trial starts");
+    expect(deliveredEmail.text).toContain(`${TRIAL_DURATION_DAYS}-day trial starts`);
 
     const linkMatch = deliveredEmail.text.match(
       /https?:\/\/[^\s]+\/accept-owner-invitation\?token=[^\s]+/,
@@ -374,7 +375,7 @@ test.describe
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
     await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
 
-    for (const step of [2, 3, 4, 5, 6]) {
+    for (const step of [2, 3, 4]) {
       await page.getByRole("button", { name: "Next", exact: true }).click();
       await expect(page.locator("form[data-owner-step]")).toHaveAttribute(
         "data-owner-step",
@@ -385,7 +386,7 @@ test.describe
     await page.getByRole("button", { name: "Launch", exact: true }).click();
     await expect(
       page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
+    ).toHaveURL(new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`), {
       timeout: 30_000,
     });
 
@@ -413,7 +414,7 @@ test.describe
       );
       expect(
         business.trialEndsAt!.getTime() - business.trialStartedAt!.getTime(),
-      ).toBe(7 * 24 * 60 * 60 * 1000);
+      ).toBe(TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
     });
   });
 

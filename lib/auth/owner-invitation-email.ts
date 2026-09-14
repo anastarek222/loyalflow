@@ -1,3 +1,5 @@
+import { TRIAL_DURATION_DAYS } from "@loyalflow/domain/billing/trial-core";
+
 import { TANEE_AUTH_EMAIL_BRAND } from "@/lib/auth/auth-email-sender";
 import {
   AuthEmailDeliveryError,
@@ -27,11 +29,11 @@ export async function sendOwnerInvitationEmail(input: {
       text:
         `Continue setting up your business with ${TANEE_AUTH_EMAIL_BRAND}.\n\n` +
         `Set your password and continue: ${invitationLink}\n\n` +
-        `This secure link expires in 24 hours. Your seven-day trial starts when you complete this secure step.`,
+        `This secure link expires in 24 hours. Your ${TRIAL_DURATION_DAYS}-day trial starts when you complete this secure step.`,
       html:
         `<p>Continue setting up your business with ${TANEE_AUTH_EMAIL_BRAND}.</p>` +
         `<p><a href="${invitationLink}">Set your password and continue</a></p>` +
-        `<p>This secure link expires in 24 hours. Your seven-day trial starts when you complete this secure step.</p>`,
+        `<p>This secure link expires in 24 hours. Your ${TRIAL_DURATION_DAYS}-day trial starts when you complete this secure step.</p>`,
       idempotencyKey: createAuthEmailIdempotencyKey({
         purpose: "owner-invitation",
         email: input.email,

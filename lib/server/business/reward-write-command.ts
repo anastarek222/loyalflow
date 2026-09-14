@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import {
   activityActorFields,
   activityRequestMetadata,
@@ -25,10 +26,30 @@ type RewardWriteFailure = Readonly<{
     | "TARGET_NOT_FOUND"
     | "SUBSCRIPTION_RESTRICTED"
     | "PLAN_FEATURE"
-    | "PLAN_LIMIT";
+    | "PLAN_LIMIT"
+    | "ACTIVE_ENTITLEMENTS";
 }>;
 
 export type RewardWriteCommandResult = Readonly<{ ok: true }> | RewardWriteFailure;
+
+async function hasLiveRewardEntitlements(
+  transaction: Prisma.TransactionClient,
+  businessId: string,
+  rewardId: string,
+) {
+  const entitlement = await transaction.rewardUnlock.findFirst({
+    where: {
+      businessId,
+      rewardId,
+      redeemedAt: null,
+      expiredAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(entitlement);
+}
 
 /**
  * Authoritative non-financial Reward creation boundary.
@@ -134,10 +155,34 @@ export async function updateRewardCommand(input: {
 
     const existingReward = await transaction.reward.findFirst({
       where: { id: input.rewardId, businessId: input.businessId },
-      select: { id: true },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        code: true,
+        cost: true,
+        expiresAfterDays: true,
+      },
     });
     if (!existingReward) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
+
+    const changesEarnedEntitlement =
+      existingReward.name !== input.reward.name ||
+      existingReward.type !== input.reward.type ||
+      existingReward.code !== input.reward.code ||
+      existingReward.cost !== input.reward.cost ||
+      existingReward.expiresAfterDays !== input.reward.expiresAfterDays;
+    if (
+      changesEarnedEntitlement &&
+      (await hasLiveRewardEntitlements(
+        transaction,
+        input.businessId,
+        existingReward.id,
+      ))
+    ) {
+      return { ok: false, reason: "ACTIVE_ENTITLEMENTS" } as const;
     }
 
     const reward = await transaction.reward.update({
@@ -180,10 +225,22 @@ export async function setRewardStatusCommand(input: {
 
     const existingReward = await transaction.reward.findFirst({
       where: { id: input.rewardId, businessId: input.businessId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!existingReward) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
+
+    if (
+      existingReward.isActive &&
+      !input.isActive &&
+      (await hasLiveRewardEntitlements(
+        transaction,
+        input.businessId,
+        existingReward.id,
+      ))
+    ) {
+      return { ok: false, reason: "ACTIVE_ENTITLEMENTS" } as const;
     }
 
     const reward = await transaction.reward.update({

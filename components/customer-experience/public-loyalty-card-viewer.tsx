@@ -7,13 +7,16 @@ import { LoyaltyCard, type LoyaltyCardProps } from "@/components/loyalty-card";
 
 type PublicLoyaltyCardViewerProps = LoyaltyCardProps & {
   language: "AR" | "EN";
+  rewardReady?: boolean;
 };
 
 export function PublicLoyaltyCardViewer({
   language,
+  rewardReady,
   ...cardProps
 }: PublicLoyaltyCardViewerProps) {
   const [side, setSide] = useState<"front" | "back">("front");
+  const nextSide = side === "front" ? "back" : "front";
   const copy =
     language === "AR"
       ? {
@@ -35,10 +38,10 @@ export function PublicLoyaltyCardViewer({
           rewardReadyBody: "You reached the target. Show this card to staff to redeem your reward.",
         };
 
-  const nextSide = side === "front" ? "back" : "front";
-  const rewardReady =
+  const balanceRewardReady =
     Math.max(0, Math.trunc(cardProps.balance)) >=
     Math.max(1, Math.trunc(cardProps.rewardThreshold));
+  const isRewardReady = rewardReady ?? balanceRewardReady;
 
   return (
     <section
@@ -81,7 +84,7 @@ export function PublicLoyaltyCardViewer({
         </div>
       </div>
 
-      {rewardReady ? (
+      {isRewardReady ? (
         <div
           role="status"
           data-testid="customer-reward-ready-notice"

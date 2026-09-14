@@ -130,7 +130,9 @@ test("U7.3 preserves idempotency, pending accessibility, branch/staff, and canon
   assert.match(scanPage, /staff=\{operationContextOptions\.staff\}/);
   assert.match(scanPage, /language=\{language\}/);
   assert.match(button, /useFormStatus/);
-  assert.match(button, /disabled=\{pending\}/);
+  assert.match(button, /const unavailable = disabled \|\| pending/);
+  assert.match(button, /disabled=\{unavailable\}/);
+  assert.match(button, /aria-disabled=\{unavailable\}/);
   assert.match(button, /aria-busy=\{pending\}/);
   assert.match(earnActions, /executeLoyaltyEarnCommand\(/);
   assert.match(redemptionActions, /redeemLoyaltyRewardCommand\(/);

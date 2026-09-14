@@ -32,15 +32,17 @@ This manifest is the working authority for the final Product / Logic / Functiona
 - [ ] Reward cost/name/status changes have explicit treatment for already-earned entitlement.
 
 ### Customer state / audience truth
-- [ ] Replace single mutually-exclusive segment authority with explicit lifecycle/value/engagement/reward traits where needed.
-- [ ] Reward Ready is identical in Customers, Reports, Exports, Offers and messaging.
-- [ ] High Spender uses qualifying monetary behavior, not generic lifetime loyalty credit.
-- [ ] Frequent Visitor uses qualifying operation frequency, not generic lifetime loyalty credit.
-- [ ] VIP/value and At-Risk/activity can coexist.
-- [ ] Refund/void/promotion effects on audience metrics are explicitly defined and tested.
+- [x] Replace single mutually-exclusive segment authority with explicit lifecycle/value/engagement/reward traits where needed.
+- [x] Reward Ready is identical in Customers, Reports, Exports and Offers. Messaging remains tracked in the separate WhatsApp lane.
+- [x] High Spender uses qualifying monetary behavior, not generic lifetime loyalty credit.
+- [x] Frequent Visitor uses qualifying operation frequency, not generic lifetime loyalty credit.
+- [x] VIP/value and At-Risk/activity can coexist.
+- [x] Refund/void/promotion effects on audience metrics are explicitly defined and tested.
+
+Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-segments.test.ts`, `tests/offer-eligibility.test.ts`, and the ten-customer reconciliation fixture in `tests/customer-audience-cross-surface.test.ts`. Exact branch commit `a2dd5809d7cc7808dfc18ac7a37d88d4b0c42bc4` passed 34/34 focused assertions; its full exact-head gate is tracked below.
 
 ### Offers / customer notifications
-- [ ] Offer audience engine can actually produce every offered audience choice.
+- [x] Offer audience engine can actually produce every offered audience choice.
 - [ ] New published Reward creates one brand-scoped customer notification event for opted-in eligible customers.
 - [ ] New published Offer notifies only its exact eligible opted-in audience.
 - [ ] Publish notification fan-out is idempotent and consent is rechecked before delivery.
@@ -75,7 +77,7 @@ This manifest is the working authority for the final Product / Logic / Functiona
 - [x] Decimal policy is explicitly locked: whole-unit V1.
 
 ### Custom Card
-- [ ] Structurally valid but undecodable image payloads are rejected.
+- [x] Structurally valid but undecodable image payloads are rejected.
 - [x] Missing Blob object has a clean explicit response contract.
 - [x] Provider/auth/storage failure is distinguished from not-found.
 - [x] Corrupt/unreadable stored artwork has a defined response contract.

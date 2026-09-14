@@ -6,6 +6,7 @@ import {
   type RedeemOwnerInvitationResult,
 } from "@/lib/auth/owner-invitation";
 import { passwordValueSchema } from "@/lib/auth/password-policy";
+import { recordSecurityNotification } from "@/lib/auth/security-notification";
 import { isUniqueConstraintError } from "@/lib/business-profile";
 import prisma from "@/lib/prisma";
 
@@ -96,6 +97,21 @@ export async function redeemOwnerInvitation(input: {
                 "verifiedAt" = COALESCE("EmailVerificationState"."verifiedAt", EXCLUDED."verifiedAt"),
                 "updatedAt" = CURRENT_TIMESTAMP
             `;
+
+            if (atomicInput.legalAcceptance) {
+              await recordSecurityNotification(transaction, {
+                userId: owner.id,
+                event: "LEGAL_TERMS_PRIVACY_ACCEPTED",
+                createdAt: atomicInput.legalAcceptance.acceptedAt,
+                metadata: {
+                  effectiveDate: atomicInput.legalAcceptance.effectiveDate,
+                  acceptedAt: atomicInput.legalAcceptance.acceptedAt.toISOString(),
+                  termsPath: "/terms",
+                  privacyPath: "/privacy",
+                  source: "PUBLIC_TRIAL",
+                },
+              });
+            }
 
             return {
               status: "success" as const,

@@ -2,8 +2,7 @@ import { auth } from "@/auth";
 import { ReportCharts } from "@/components/reports/report-charts";
 import { ReportNavigation } from "@/components/reports/report-navigation";
 import {
-  formatUtcDateInput,
-  parseUtcDateInput,
+  getReportPresetDateRange,
   parseReportDateRange,
 } from "@/lib/analytics/date-range";
 import {
@@ -23,6 +22,7 @@ import {
   getCustomerSegmentWhere,
   type CustomerSegment,
 } from "@/lib/customers/segments";
+import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
 import { canExportBusinessData, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
@@ -82,26 +82,6 @@ const reportFieldClass =
 
 type ReportPeriod = (typeof reportPeriods)[number] | "custom";
 
-function getReportRange(period: ReportPeriod, now: Date) {
-  const toInput = formatUtcDateInput(now);
-  const from = new Date(now);
-
-  if (period === "7d") {
-    from.setUTCDate(from.getUTCDate() - 6);
-  } else if (period === "30d") {
-    from.setUTCDate(from.getUTCDate() - 29);
-  }
-
-  const fromInput = formatUtcDateInput(from);
-
-  return {
-    fromInput,
-    toInput,
-    from: parseUtcDateInput(fromInput)!,
-    to: parseUtcDateInput(toInput, true)!,
-  };
-}
-
 function getLoyaltyModeLabel(mode: string, language: "AR" | "EN") {
   switch (mode) {
     case "VISITS":
@@ -151,6 +131,7 @@ export default async function ReportsPage({
       fontFamily: true,
       loyaltyMode: true,
       currency: true,
+      timezone: true,
       unitName: true,
       rewardName: true,
       rewardThreshold: true,
@@ -178,10 +159,12 @@ export default async function ReportsPage({
   const simple = experienceMode === "SIMPLE";
   const copy = reportCopy(language);
   const locale = getLanguageLocale(language);
+  const timeZone = business.timezone ?? "UTC";
   const numberFormatter = new Intl.NumberFormat(locale);
   const dateTimeFormatter = new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone,
   });
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const loyaltyPresentation = {
@@ -207,20 +190,28 @@ export default async function ReportsPage({
   )
     ? (query.period as (typeof reportPeriods)[number])
     : null;
-  const defaultRange = getReportRange("30d", today);
+  const defaultRange = getReportPresetDateRange("30d", today, timeZone);
   const shortcutRange = requestedPeriod
-    ? getReportRange(requestedPeriod, today)
+    ? getReportPresetDateRange(requestedPeriod, today, timeZone)
     : null;
-
-  let period: ReportPeriod = requestedPeriod ?? "custom";
-  const customRange = parseReportDateRange({
-    from: query.from,
-    to: query.to,
-    now: today,
-  });
+  const customRange =
+    !requestedPeriod && (query.from || query.to)
+      ? parseReportDateRange({
+          from: query.from,
+          to: query.to,
+          now: today,
+          timeZone,
+        })
+      : null;
+  const period: ReportPeriod = requestedPeriod ?? (customRange ? "custom" : "30d");
   const selectedRange = shortcutRange ?? customRange ?? defaultRange;
-  if (!shortcutRange && !customRange) period = "30d";
-  const { fromInput, toInput, from: fromDate, to: toDate } = selectedRange;
+  const {
+    fromInput,
+    toInput,
+    from: fromDate,
+    to: toDate,
+    toExclusive,
+  } = selectedRange;
 
   const availableSegments = getCustomerFilterSegments(business.loyaltyMode);
   const segment = availableSegments.includes(query.segment as CustomerSegment)
@@ -266,15 +257,20 @@ export default async function ReportsPage({
     ? { branchId: reportScope.branchId }
     : {};
 
+  const segmentCustomerIds = segment
+    ? await resolveBusinessCustomerIdsForSegment({
+        business,
+        segment,
+        now: today,
+      })
+    : null;
+
   const customerWhere: Prisma.CustomerWhereInput = {
     businessId: business.id,
-    ...(segment
-      ? getCustomerSegmentWhere(
-          segment,
-          business.rewardThreshold,
-          undefined,
-          business.earnAmount,
-        )
+    ...(segmentCustomerIds
+      ? {
+          id: { in: segmentCustomerIds },
+        }
       : {}),
   };
 
@@ -282,7 +278,7 @@ export default async function ReportsPage({
     businessId: business.id,
     createdAt: {
       gte: fromDate,
-      lte: toDate,
+      lt: toExclusive,
     },
     ...operationScope,
     ...(segment
@@ -296,7 +292,7 @@ export default async function ReportsPage({
     businessId: business.id,
     createdAt: {
       gte: fromDate,
-      lte: toDate,
+      lt: toExclusive,
     },
     ...operationScope,
     ...(segment
@@ -340,7 +336,7 @@ export default async function ReportsPage({
         ...customerWhere,
         createdAt: {
           gte: fromDate,
-          lte: toDate,
+          lt: toExclusive,
         },
       },
     }),
@@ -468,7 +464,7 @@ export default async function ReportsPage({
         businessId: business.id,
         unlockedAt: {
           gte: fromDate,
-          lte: toDate,
+          lt: toExclusive,
         },
         ...(segment ? { customer: customerWhere } : {}),
       },
@@ -499,7 +495,7 @@ export default async function ReportsPage({
         },
         createdAt: {
           gte: fromDate,
-          lte: toDate,
+          lt: toExclusive,
         },
         ...(segment
           ? {
@@ -844,7 +840,7 @@ export default async function ReportsPage({
   const [historicalCustomers, historicalEarned, historicalRedemptions] =
     await Promise.all([
       prisma.customer.findMany({
-        where: { ...customerWhere, createdAt: { gte: fromDate, lte: toDate } },
+        where: { ...customerWhere, createdAt: { gte: fromDate, lt: toExclusive } },
         select: { createdAt: true },
         orderBy: { createdAt: "asc" },
       }),
@@ -865,6 +861,7 @@ export default async function ReportsPage({
     },
     fromDate,
     toDate,
+    timeZone,
   );
 
   const advancedMetrics = [

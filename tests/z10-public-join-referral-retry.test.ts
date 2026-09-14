@@ -44,11 +44,11 @@ test("Z10 retry URL includes referral only when one survived normalization and e
 });
 
 test("Z10 duplicate membership remains terminal and does not carry referral into another join attempt", () => {
-  const duplicateRedirect =
-    /`\/join\/\$\{business\.slug\}\?error=\$\{publicMembershipRegistrationProblemCodes\.duplicateMembership\}`/g;
-  const matches = actionSource.match(duplicateRedirect) ?? [];
+  assert.match(actionSource, /duplicateMembershipRecoveryPath/);
+  const recoveryRedirects =
+    actionSource.match(/redirect\(duplicateMembershipRecoveryPath\(business\.slug\)\);/g) ?? [];
 
-  assert.ok(matches.length >= 2);
+  assert.ok(recoveryRedirects.length >= 3);
   assert.doesNotMatch(
     actionSource,
     /joinRetryUrl\([\s\S]{0,160}publicMembershipRegistrationProblemCodes\.duplicateMembership/,

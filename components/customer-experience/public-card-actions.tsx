@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, Copy, Download, Share2, X } from "lucide-react";
 import { getPublicExperienceCopy } from "@/lib/customer-experience/public-copy";
 
@@ -18,6 +19,8 @@ type Props = {
   primaryColor: string;
 };
 
+const PUBLIC_CARD_REFRESH_INTERVAL_MS = 20_000;
+
 export function PublicCardActions({
   cardUrl,
   businessName,
@@ -25,6 +28,7 @@ export function PublicCardActions({
   language,
   primaryColor,
 }: Props) {
+  const router = useRouter();
   const copy = getPublicExperienceCopy(language);
   const [notice, setNotice] = useState<string | null>(null);
   const [installPrompt, setInstallPrompt] =
@@ -34,6 +38,25 @@ export function PublicCardActions({
   const [canShowInstall, setCanShowInstall] = useState(false);
   const [installPlatform, setInstallPlatform] =
     useState<InstallPlatform>("other");
+
+  useEffect(() => {
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        router.refresh();
+      }
+    };
+    const intervalId = window.setInterval(
+      refreshIfVisible,
+      PUBLIC_CARD_REFRESH_INTERVAL_MS,
+    );
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [router]);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createDailyTrend } from "../lib/analytics/trends";
+import {
+  createDailyTrend,
+  createHistoricalAnalyticsTrends,
+} from "../lib/analytics/trends";
 
 const from = new Date("2026-07-01T00:00:00.000Z");
 const to = new Date("2026-07-03T23:59:59.999Z");
@@ -24,13 +27,13 @@ test("creates complete daily buckets and sums loyalty values", () => {
         },
       ],
       from,
-      to
+      to,
     ),
     [
       { date: "2026-07-01", value: 5 },
       { date: "2026-07-02", value: 0 },
       { date: "2026-07-03", value: 1 },
-    ]
+    ],
   );
 });
 
@@ -42,19 +45,15 @@ test("counts events by default and ignores events outside the requested range", 
         { createdAt: new Date("2026-07-02T12:00:00.000Z") },
       ],
       from,
-      to
+      to,
     ),
     [
       { date: "2026-07-01", value: 0 },
       { date: "2026-07-02", value: 1 },
       { date: "2026-07-03", value: 0 },
-    ]
+    ],
   );
 });
-
-import {
-  createHistoricalAnalyticsTrends,
-} from "../lib/analytics/trends";
 
 test("builds historical analytics trends with complete daily buckets", () => {
   assert.deepEqual(
@@ -83,7 +82,7 @@ test("builds historical analytics trends with complete daily buckets", () => {
         ],
       },
       from,
-      to
+      to,
     ),
     {
       customers: [
@@ -101,6 +100,46 @@ test("builds historical analytics trends with complete daily buckets", () => {
         { date: "2026-07-02", value: 1 },
         { date: "2026-07-03", value: 0 },
       ],
-    }
+    },
+  );
+});
+
+test("buckets events by the business local date across UTC midnight", () => {
+  const localFrom = new Date("2026-03-08T05:00:00.000Z");
+  const localTo = new Date("2026-03-09T03:59:59.999Z");
+
+  assert.deepEqual(
+    createDailyTrend(
+      [
+        { createdAt: new Date("2026-03-08T04:30:00.000Z") },
+        { createdAt: new Date("2026-03-08T05:30:00.000Z") },
+        { createdAt: new Date("2026-03-09T03:30:00.000Z") },
+      ],
+      localFrom,
+      localTo,
+      "America/New_York",
+    ),
+    [{ date: "2026-03-08", value: 2 }],
+  );
+});
+
+test("historical trend buckets use the same business timezone contract", () => {
+  const localFrom = new Date("2026-11-01T04:00:00.000Z");
+  const localTo = new Date("2026-11-02T04:59:59.999Z");
+
+  assert.deepEqual(
+    createHistoricalAnalyticsTrends(
+      {
+        customers: [
+          { createdAt: new Date("2026-11-02T04:30:00.000Z") },
+        ],
+        loyaltyEarned: [],
+        rewardsRedeemed: [],
+      },
+      localFrom,
+      localTo,
+      "America/New_York",
+    ).customers,
+    [{ date: "2026-11-01", value: 1 }],
   );
 });

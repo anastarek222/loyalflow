@@ -36,11 +36,11 @@ test("T006 Report filters and analytics queries retain tenant, date, segment, br
   );
   assert.match(
     reports,
-    /const transactionWhere:[\s\S]{0,100}businessId: business\.id,[\s\S]{0,120}gte: fromDate,[\s\S]{0,80}lte: toDate,[\s\S]{0,80}\.\.\.operationScope/,
+    /const transactionWhere:[\s\S]{0,120}businessId: business\.id,[\s\S]{0,120}gte: fromDate,[\s\S]{0,80}lt: toExclusive,[\s\S]{0,80}\.\.\.operationScope/,
   );
   assert.match(
     reports,
-    /const redemptionWhere:[\s\S]{0,100}businessId: business\.id,[\s\S]{0,120}gte: fromDate,[\s\S]{0,80}lte: toDate,[\s\S]{0,80}\.\.\.operationScope/,
+    /const redemptionWhere:[\s\S]{0,120}businessId: business\.id,[\s\S]{0,120}gte: fromDate,[\s\S]{0,80}lt: toExclusive,[\s\S]{0,80}\.\.\.operationScope/,
   );
   assert.match(reports, /getCustomerSegmentWhere\(/);
   assert.match(reports, /getRecordedSalesWhere\(\)/);

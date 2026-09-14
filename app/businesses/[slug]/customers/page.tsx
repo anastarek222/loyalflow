@@ -3,9 +3,9 @@ import {
   getCustomerFilterSegments,
   getCustomerSegment,
   getCustomerSegmentLabel,
-  getCustomerSegmentWhere,
   type CustomerSegment,
 } from "@/lib/customers/segments";
+import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { formatLoyaltyAmount } from "@/lib/loyalty/presentation";
 import { getCustomerTagWhere } from "@/lib/customers/notes-tags";
@@ -140,11 +140,6 @@ export default async function CustomersPage({
     },
     catalogueRewards: activeRewards,
   };
-  const canonicalTargetCost = getRewardAvailability({
-    ...availabilityInput,
-    customerActive: true,
-    balance: 0,
-  }).targetCost;
 
   const search = query.q?.trim() ?? "";
 
@@ -168,6 +163,10 @@ export default async function CustomersPage({
 
   const segment = availableSegments.includes(query.segment as CustomerSegment)
     ? (query.segment as CustomerSegment)
+    : null;
+
+  const segmentCustomerIds = segment
+    ? await resolveBusinessCustomerIdsForSegment({ business, segment })
     : null;
 
   const allowedSorts = ["newest", "oldest", "balance_high", "balance_low"];
@@ -250,20 +249,10 @@ export default async function CustomersPage({
     });
   }
 
-  if (segment === "REWARD_READY") {
+  if (segmentCustomerIds) {
     customerFilters.push({
-      isActive: true,
-      balance: { gte: canonicalTargetCost },
+      id: { in: segmentCustomerIds },
     });
-  } else if (segment) {
-    customerFilters.push(
-      getCustomerSegmentWhere(
-        segment,
-        business.rewardThreshold,
-        undefined,
-        business.earnAmount,
-      ),
-    );
   }
 
   if (selectedTagId) {
@@ -312,10 +301,10 @@ export default async function CustomersPage({
               {
                 balance: "asc" as const,
               },
-              {
-                createdAt: "desc" as const,
-              },
-            ]
+            {
+              createdAt: "desc" as const,
+            },
+          ]
           : {
               createdAt: "desc" as const,
             };
@@ -432,6 +421,17 @@ export default async function CustomersPage({
     "LOYALTY_EARN",
   );
   const bulkAction = bulkCustomerAction.bind(null, business.slug);
+  const customerExportParameters = new URLSearchParams();
+  if (segment) {
+    customerExportParameters.set("segment", segment);
+  }
+  if (selectedTagId) {
+    customerExportParameters.set("tag", selectedTagId);
+  }
+  const customerExportQuery = customerExportParameters.toString();
+  const customerExportUrl = `/businesses/${business.slug}/customers/export${
+    customerExportQuery ? `?${customerExportQuery}` : ""
+  }`;
 
   return (
     <main
@@ -503,7 +503,7 @@ export default async function CustomersPage({
                 )}
                 {canExportData && (
                   <a
-                    href={`/businesses/${business.slug}/customers/export`}
+                    href={customerExportUrl}
                     className={`hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted shadow-sm hover:border-success/30 hover:bg-success-subtle sm:inline-flex ${isSimpleExperience ? "sm:hidden" : ""}`}
                   >
                     <Download className="size-4" aria-hidden="true" />
@@ -767,7 +767,7 @@ export default async function CustomersPage({
                 }))}
                 tags={businessTags}
                 action={bulkAction}
-                exportUrl={`/businesses/${business.slug}/customers/export`}
+                exportUrl={customerExportUrl}
                 campaignUrl={`/businesses/${business.slug}/campaigns`}
                 canExport={canExportData}
                 canUseCampaigns={canUseCampaigns}

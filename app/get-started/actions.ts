@@ -1,7 +1,5 @@
 "use server";
 
-import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
-import { sendOwnerInvitationEmail } from "@/lib/auth/owner-invitation-email";
 import {
   createPublicTrialIdentityKey,
   parsePublicTrialInput,
@@ -9,6 +7,9 @@ import {
   PUBLIC_TRIAL_IP_LIMIT,
   PUBLIC_TRIAL_RATE_WINDOW_MS,
 } from "@/lib/acquisition/public-trial";
+import { createOwnerInvitationToken } from "@/lib/auth/owner-invitation";
+import { sendOwnerInvitationEmail } from "@/lib/auth/owner-invitation-email";
+import { getPublicLegalProfile } from "@/lib/legal/public-legal-profile";
 import prisma from "@/lib/prisma";
 import { logServerError } from "@/lib/server/logging";
 import {
@@ -22,7 +23,9 @@ export type PublicTrialFormState = {
     | "submitted"
     | "validation-error"
     | "rate-limited"
-    | "service-unavailable";
+    | "service-unavailable"
+    | "legal-updated"
+    | "legal-unavailable";
 };
 
 type ReservedInvitation = {
@@ -158,6 +161,17 @@ export async function startPublicTrialAction(
   });
   if (!input) return { status: "validation-error" };
 
+  const legalProfile = getPublicLegalProfile();
+  if (!legalProfile.isPublished || !legalProfile.effectiveDate) {
+    return { status: "legal-unavailable" };
+  }
+  const submittedEffectiveDate = String(
+    formData.get("legalEffectiveDate") ?? "",
+  ).trim();
+  if (submittedEffectiveDate !== legalProfile.effectiveDate) {
+    return { status: "legal-updated" };
+  }
+
   const identityLimit = await distributedRateLimit(
     `public-trial-identity:${createPublicTrialIdentityKey(input)}`,
     {
@@ -167,7 +181,11 @@ export async function startPublicTrialAction(
   );
   if (!identityLimit.allowed) return { status: "rate-limited" };
 
-  const token = createOwnerInvitationToken();
+  const acceptedAt = new Date();
+  const token = createOwnerInvitationToken(acceptedAt, {
+    effectiveDate: legalProfile.effectiveDate,
+    acceptedAt,
+  });
   let reserved: ReservedInvitation | null;
 
   try {
