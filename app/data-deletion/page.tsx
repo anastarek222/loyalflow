@@ -1,3 +1,4 @@
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
@@ -121,13 +122,13 @@ export default async function DataDeletionPage() {
       <section className="border-b border-border bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto w-full max-w-4xl">
           <p className="text-sm font-black uppercase tracking-[0.16em] text-primary">
-            {content.eyebrow}
+            <MarketingBrandText text={content.eyebrow} />
           </p>
           <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">
-            {content.title}
+            <MarketingBrandText text={content.title} />
           </h1>
           <p className="mt-6 max-w-3xl text-base leading-8 text-foreground-muted sm:text-lg">
-            {content.introduction}
+            <MarketingBrandText text={content.introduction} />
           </p>
         </div>
       </section>
@@ -135,10 +136,10 @@ export default async function DataDeletionPage() {
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto w-full max-w-4xl divide-y divide-border rounded-[var(--lf-radius-card)] border border-border bg-white px-5 sm:px-8">
           {content.sections.map((section) => (
-            <article key={section.title} className="py-7 sm:py-8">
+            <article key=<MarketingBrandText text={section.title} /> className="py-7 sm:py-8">
               <h2 className="text-xl font-black">{section.title}</h2>
               <p className="mt-3 whitespace-pre-line text-sm leading-8 text-foreground-muted sm:text-base">
-                {section.body}
+                <MarketingBrandText text={section.body} />
               </p>
             </article>
           ))}
@@ -149,7 +150,7 @@ export default async function DataDeletionPage() {
             href="/contact"
             className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-semibold text-white hover:bg-primary-hover"
           >
-            {content.cta}
+            <MarketingBrandText text={content.cta} />
           </Link>
         </div>
       </section>
