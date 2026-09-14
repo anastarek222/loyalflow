@@ -212,7 +212,11 @@ export function ContactSalesExperience({
   const requestActionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+    const frame = requestAnimationFrame(() => {
+      setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const channels = useMemo(
