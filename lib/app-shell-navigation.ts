@@ -139,7 +139,7 @@ export function buildShellNavigation({
     ...(can("CUSTOMERS_VIEW")
       ? [
           item(language, "customers", `${root}/customers`),
-          item(language, "messages", `${root}/whatsapp-history`),
+          item(language, "messages", `${root}/messages`),
         ]
       : []),
     ...(can("REPORTS_VIEW")
@@ -308,7 +308,10 @@ export function getShellPageContext(
         ? text.duplicates
         : suffix === "/scan" || suffix.startsWith("/scan/")
           ? text.scan
-          : suffix === "/whatsapp-history" || suffix.startsWith("/whatsapp-history/")
+          : suffix === "/messages" ||
+              suffix.startsWith("/messages/") ||
+              suffix === "/whatsapp-history" ||
+              suffix.startsWith("/whatsapp-history/")
             ? text.messages
             : suffix === "/activity"
               ? text.activity
