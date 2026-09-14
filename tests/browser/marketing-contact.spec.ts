@@ -1,4 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function expectSameRow(locator: Locator) {
+  const tops = await locator.evaluateAll((nodes) =>
+    nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
+  );
+  expect(tops.length).toBeGreaterThan(1);
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+}
 
 for (const locale of ["en", "ar"] as const) {
   for (const theme of ["light", "dark"] as const) {
@@ -33,9 +41,17 @@ for (const locale of ["en", "ar"] as const) {
           : "مكالمة صح ممكن توفّر عليك وقت كبير في تجهيز نشاطك.",
       );
 
-      await expect(page.locator("#contact-options > div > a")).toHaveCount(3);
+      const contactOptions = page.locator("#contact-options > div > a");
+      await expect(contactOptions).toHaveCount(3);
+      await expectSameRow(contactOptions);
+
       await expect(page.locator("#book-meeting")).toBeVisible();
       await expect(page.locator('input[name="meetingMethod"]')).toHaveCount(6);
+      await expectSameRow(
+        page.locator(
+          "#book-meeting fieldset > div > label:nth-child(-n+3)",
+        ),
+      );
       await expect(page.locator('input[name="preferredDate"]')).toBeVisible();
       await expect(page.locator('input[name="preferredTime"]')).toBeVisible();
       await expect(
@@ -50,6 +66,11 @@ for (const locale of ["en", "ar"] as const) {
       await trigger.click();
       const panel = page.getByTestId("talk-to-expert-panel");
       await expect(panel).toBeVisible();
+      const quickActions = panel.locator(
+        '[data-testid="talk-to-expert-actions"] > a',
+      );
+      await expect(quickActions).toHaveCount(3);
+      await expectSameRow(quickActions);
       await expect(panel.locator('a[href="/contact#book-meeting"]')).toBeVisible();
       await expect(panel.locator('a[href="/contact#whatsapp"]')).toBeVisible();
       await expect(
