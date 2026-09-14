@@ -1,0 +1,92 @@
+.scope :global(main) {
+  font-family: var(--font-marketing-sans);
+}
+
+.scope :global(main > section:first-of-type) {
+  background: var(--lf-marketing-canvas);
+  padding-block: 4.5rem;
+}
+
+.scope :global(main > section:first-of-type > div) {
+  max-width: 70rem;
+}
+
+.scope :global(main > section:first-of-type p:first-child) {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--surface);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: var(--lf-shadow-subtle);
+}
+
+.scope :global(main > section:first-of-type h1) {
+  max-width: 56rem;
+  margin-top: 1.5rem;
+  font-family: var(--font-marketing-editorial);
+  font-size: clamp(2.4rem, 5vw, 3.65rem);
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.scope :global(main > section:first-of-type h1 + p) {
+  max-width: 48rem;
+  margin-top: 1.25rem;
+}
+
+.scope :global(main > section:nth-of-type(2)) {
+  padding-block: 4.5rem;
+}
+
+.scope :global(main > section:nth-of-type(2) > div:first-child) {
+  max-width: 70rem;
+  background: transparent;
+  border: 0;
+  padding-inline: 0;
+}
+
+.scope :global(main > section:nth-of-type(2) article) {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  padding: 1.75rem;
+  box-shadow: var(--lf-shadow-subtle);
+}
+
+.scope :global(main > section:nth-of-type(2) article h2) {
+  font-family: var(--font-marketing-editorial);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.scope :global(main > section:nth-of-type(2) article p) {
+  margin-top: 0.75rem;
+}
+
+.scope :global(main > section:first-of-type [role="status"]),
+.scope :global(main > section:first-of-type dl) {
+  max-width: 48rem;
+  margin-top: 2rem;
+  border-color: var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: var(--lf-shadow-subtle);
+}
+
+@media (max-width: 640px) {
+  .scope :global(main > section:first-of-type),
+  .scope :global(main > section:nth-of-type(2)) {
+    padding-block: 3.5rem;
+  }
+
+  .scope :global(main > section:nth-of-type(2) article) {
+    padding: 1.25rem;
+  }
+}
