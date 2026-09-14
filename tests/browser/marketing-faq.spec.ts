@@ -85,5 +85,67 @@ for (const locale of ["en", "ar"] as const) {
       });
       expect(errors).toEqual([]);
     });
+
+    test(`Privacy Policy ${locale} ${theme}: draft content and shared shell @desktop @mobile`, async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+      await context.addInitScript(
+        (value) => localStorage.setItem("tanee-marketing-theme", value),
+        theme,
+      );
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+
+      const response = await page.goto("/privacy");
+      expect(response?.status()).toBe(200);
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-marketing-theme",
+        theme,
+      );
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+        locale === "en" ? "Privacy Policy" : "سياسة الخصوصية",
+      );
+      await expect(
+        page.getByText(
+          locale === "en"
+            ? "Draft — pending content review"
+            : "مسودة — المحتوى قيد المراجعة",
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await expect(page.locator("article section h2")).toHaveCount(9);
+      await expect(page.locator('section#cookies a[href="#cookies"]')).toHaveText(
+        locale === "en"
+          ? "Cookie Policy"
+          : "سياسة ملفات تعريف الارتباط",
+      );
+      await expect(
+        page.locator('article a[href="mailto:tanee.eg.loyalty@gmail.com"]'),
+      ).toBeVisible();
+      await expect(page.locator('footer a[href="/privacy"]')).toHaveAttribute(
+        "aria-current",
+        "page",
+      );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+      await page.evaluate(() => document.fonts.ready);
+      await page.screenshot({
+        path: test.info().outputPath(`faq-privacy-${locale}-${theme}.png`),
+        fullPage: true,
+      });
+      expect(errors).toEqual([]);
+    });
   }
 }
