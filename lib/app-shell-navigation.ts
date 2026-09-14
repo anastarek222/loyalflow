@@ -34,6 +34,7 @@ export type ShellNavigationItem = {
     | "platformOps"
     | "scan"
     | "customers"
+    | "messages"
     | "activity"
     | "program"
     | "rewards"
@@ -57,6 +58,7 @@ type NavigationId =
   | "platformOps"
   | "scan"
   | "customers"
+  | "messages"
   | "activity"
   | "program"
   | "rewards"
@@ -135,7 +137,10 @@ export function buildShellNavigation({
     item(language, "overview", root),
     ...(can("LOYALTY_EARN") ? [item(language, "scan", `${root}/scan`)] : []),
     ...(can("CUSTOMERS_VIEW")
-      ? [item(language, "customers", `${root}/customers`)]
+      ? [
+          item(language, "customers", `${root}/customers`),
+          item(language, "messages", `${root}/whatsapp-history`),
+        ]
       : []),
     ...(can("REPORTS_VIEW")
       ? [item(language, "activity", `${root}/activity`)]
@@ -215,6 +220,7 @@ export function buildShellNavigation({
     "overview",
     "scan",
     "customers",
+    "messages",
     "activity",
   ]);
   const advancedDestinations = advancedNavigation
@@ -302,31 +308,33 @@ export function getShellPageContext(
         ? text.duplicates
         : suffix === "/scan" || suffix.startsWith("/scan/")
           ? text.scan
-          : suffix === "/activity"
-            ? text.activity
-            : suffix === "/program"
-              ? text.program
-              : suffix === "/rewards"
-                ? text.rewards
-                : suffix === "/offers"
-                  ? text.offers
-                  : suffix === "/campaigns"
-                    ? text.campaigns
-                    : suffix === "/recovery"
-                      ? text.recovery
-                      : suffix === "/reports/staff"
-                        ? text.staffReports
-                        : suffix === "/reports"
-                          ? text.reports
-                          : suffix === "/users"
-                            ? text.team
-                            : suffix === "/branches"
-                              ? text.branches
-                              : suffix === "/settings"
-                                ? text.settings
-                                : suffix === "/playbooks"
-                                  ? text.playbooks
-                                  : text.overview;
+          : suffix === "/whatsapp-history" || suffix.startsWith("/whatsapp-history/")
+            ? text.messages
+            : suffix === "/activity"
+              ? text.activity
+              : suffix === "/program"
+                ? text.program
+                : suffix === "/rewards"
+                  ? text.rewards
+                  : suffix === "/offers"
+                    ? text.offers
+                    : suffix === "/campaigns"
+                      ? text.campaigns
+                      : suffix === "/recovery"
+                        ? text.recovery
+                        : suffix === "/reports/staff"
+                          ? text.staffReports
+                          : suffix === "/reports"
+                            ? text.reports
+                            : suffix === "/users"
+                              ? text.team
+                              : suffix === "/branches"
+                                ? text.branches
+                                : suffix === "/settings"
+                                  ? text.settings
+                                  : suffix === "/playbooks"
+                                    ? text.playbooks
+                                    : text.overview;
 
   return { title, parent: business.name };
 }
