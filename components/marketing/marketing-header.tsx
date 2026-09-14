@@ -35,17 +35,42 @@ export function MarketingHeader({
   navigation,
 }: MarketingHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const lastScrollYRef = useRef(0);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const updateHeader = () => setIsScrolled(window.scrollY > 12);
+    lastScrollYRef.current = window.scrollY;
+
+    const updateHeader = () => {
+      const currentY = window.scrollY;
+      const previousY = lastScrollYRef.current;
+      const isMobileHeader = window.matchMedia("(max-width: 1279px)").matches;
+
+      setIsScrolled(currentY > 12);
+
+      if (!isMobileHeader || currentY <= 24 || isOpen) {
+        setIsHeaderVisible(true);
+      } else if (currentY > previousY + 4) {
+        setIsHeaderVisible(false);
+      } else if (currentY < previousY - 2) {
+        setIsHeaderVisible(true);
+      }
+
+      lastScrollYRef.current = currentY;
+    };
+
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
     return () => window.removeEventListener("scroll", updateHeader);
-  }, []);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) setIsHeaderVisible(true);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -88,21 +113,27 @@ export function MarketingHeader({
     };
   }, [isOpen]);
 
+  const contentDirection = locale === "ar" ? "rtl" : "ltr";
+
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: MARKETING_THEME_BOOTSTRAP }} />
       <header
+        dir="ltr"
+        data-testid="marketing-header"
+        data-header-visible={isHeaderVisible ? "true" : "false"}
         className={cn(
-          "lf-marketing-surface sticky top-0 z-40 border-b transition-[background-color,border-color,box-shadow] duration-200",
+          "lf-marketing-surface sticky top-0 z-40 border-b transition-[transform,background-color,border-color,box-shadow] duration-200 xl:translate-y-0",
+          isHeaderVisible ? "translate-y-0" : "-translate-y-full",
           isScrolled
-            ? "border-border bg-surface shadow-[var(--lf-shadow-raised)]"
-            : "border-border/70 bg-[var(--lf-marketing-canvas)]",
+            ? "border-[var(--lf-border)] bg-[var(--lf-surface)] shadow-[var(--lf-shadow-raised)]"
+            : "border-[var(--lf-border)]/70 bg-[var(--lf-marketing-canvas)]",
         )}
       >
         <div className="mx-auto flex min-h-[72px] w-full max-w-[1240px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
           <Link
             href="/"
-            className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-foreground"
+            className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-[var(--lf-foreground)]"
           >
             <PlatformBrandIdentity
               locale={locale}
@@ -125,10 +156,10 @@ export function MarketingHeader({
               <MarketingNavLink
                 key={item.href}
                 href={item.href}
-                className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-foreground-muted transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-foreground"
-                activeClassName="bg-[var(--lf-primary-soft)] text-foreground"
+                className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-[var(--lf-foreground-muted)] transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-[var(--lf-foreground)]"
+                activeClassName="bg-[var(--lf-primary-soft)] text-[var(--lf-foreground)]"
               >
-                {item.label}
+                <span dir={contentDirection}>{item.label}</span>
               </MarketingNavLink>
             ))}
           </nav>
@@ -138,12 +169,14 @@ export function MarketingHeader({
             <LanguageSwitcher locale={locale} alternateOnly />
             <Link
               href="/login"
-              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface"
+              dir={contentDirection}
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold text-[var(--lf-foreground)] transition-colors hover:bg-[var(--lf-surface)]"
             >
               {signIn}
             </Link>
             <Link
               href="/get-started"
+              dir={contentDirection}
               className="inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl bg-primary px-4 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
             >
               {primaryCta}
@@ -157,7 +190,7 @@ export function MarketingHeader({
             aria-expanded={isOpen}
             aria-controls="marketing-mobile-menu"
             onClick={() => setIsOpen((open) => !open)}
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-foreground xl:hidden"
+            className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-[var(--lf-border)] bg-[var(--lf-surface)] text-[var(--lf-foreground)] xl:hidden"
           >
             {isOpen ? (
               <X size={20} aria-hidden="true" />
@@ -174,7 +207,7 @@ export function MarketingHeader({
                   type="button"
                   aria-label={closeLabel}
                   onClick={() => setIsOpen(false)}
-                  className="fixed inset-0 z-[80] cursor-default bg-foreground/55 xl:hidden"
+                  className="fixed inset-0 z-[80] cursor-default bg-black/55 xl:hidden"
                 />
                 <aside
                   ref={drawerRef}
@@ -182,13 +215,14 @@ export function MarketingHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={translate(locale, "marketing.mobileNavLabel")}
-                  className="lf-marketing-surface fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-s border-border bg-surface shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] xl:hidden"
+                  dir="ltr"
+                  className="lf-marketing-surface fixed inset-y-0 right-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-l border-[var(--lf-border)] bg-[var(--lf-surface)] text-[var(--lf-foreground)] shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] xl:hidden"
                 >
-                  <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+                  <div className="flex items-center justify-between gap-3 border-b border-[var(--lf-border)] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
                     <Link
                       href="/"
                       onClick={() => setIsOpen(false)}
-                      className="inline-flex min-h-11 items-center gap-2 font-black"
+                      className="inline-flex min-h-11 items-center gap-2 font-black text-[var(--lf-foreground)]"
                     >
                       <PlatformBrandIdentity
                         locale={locale}
@@ -206,7 +240,7 @@ export function MarketingHeader({
                       type="button"
                       aria-label={closeLabel}
                       onClick={() => setIsOpen(false)}
-                      className="flex size-11 items-center justify-center rounded-xl border border-border bg-surface text-foreground"
+                      className="flex size-11 items-center justify-center rounded-xl border border-[var(--lf-border)] bg-[var(--lf-surface)] text-[var(--lf-foreground)]"
                     >
                       <X size={20} aria-hidden="true" />
                     </button>
@@ -220,14 +254,16 @@ export function MarketingHeader({
                         key={item.href}
                         href={item.href}
                         onClick={() => setIsOpen(false)}
-                        className="flex min-h-12 items-center rounded-xl px-3 font-semibold leading-6 text-foreground-muted hover:bg-surface-subtle hover:text-foreground"
-                        activeClassName="bg-[var(--lf-primary-soft)] text-foreground"
+                        className="flex min-h-12 items-center rounded-xl px-3 font-semibold leading-6 text-[var(--lf-foreground-muted)] transition-colors hover:bg-[var(--lf-surface-subtle)] hover:text-[var(--lf-foreground)]"
+                        activeClassName="bg-[var(--lf-primary-soft)] text-[var(--lf-foreground)]"
                       >
-                        {item.label}
+                        <span className="w-full" dir={contentDirection}>
+                          {item.label}
+                        </span>
                       </MarketingNavLink>
                     ))}
                   </nav>
-                  <div className="grid gap-3 border-t border-border bg-surface-subtle p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                  <div className="grid gap-3 border-t border-[var(--lf-border)] bg-[var(--lf-surface-subtle)] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-[var(--lf-foreground)]">
                     <MarketingThemeSwitcher
                       locale={locale}
                       className="w-full"
@@ -235,13 +271,15 @@ export function MarketingHeader({
                     <LanguageSwitcher locale={locale} alternateOnly />
                     <Link
                       href="/login"
+                      dir={contentDirection}
                       onClick={() => setIsOpen(false)}
-                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-foreground"
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--lf-border)] bg-[var(--lf-surface)] px-4 text-sm font-semibold text-[var(--lf-foreground)]"
                     >
                       {signIn}
                     </Link>
                     <Link
                       href="/get-started"
+                      dir={contentDirection}
                       onClick={() => setIsOpen(false)}
                       className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-bold text-[var(--lf-primary-foreground)]"
                     >
