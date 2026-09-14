@@ -37,12 +37,16 @@ type OfferWriteFailure = Readonly<{
 export type OfferWriteCommandResult = Readonly<{ ok: true }> | OfferWriteFailure;
 
 type OfferAudienceValidationClient = Pick<typeof prisma, "customerTag">;
+type OfferAudienceValidationInput = Pick<
+  NormalizedOfferInput,
+  "eligibility" | "segment"
+>;
 
 async function hasValidOfferAudience(
   client: OfferAudienceValidationClient,
   businessId: string,
   loyaltyMode: LoyaltyMode,
-  offer: NormalizedOfferInput,
+  offer: OfferAudienceValidationInput,
 ) {
   if (offer.eligibility !== "SEGMENT") {
     return offer.segment === null;
