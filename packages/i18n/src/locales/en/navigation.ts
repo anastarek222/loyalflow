@@ -12,6 +12,7 @@ export const englishNavigationMessages = {
   scan: "Scan",
   customers: "Customers",
   activity: "Activity",
+  messages: "Messages",
   program: "Loyalty Program",
   rewards: "Rewards",
   offers: "Offers",
