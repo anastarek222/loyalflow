@@ -18,7 +18,7 @@ const page = readFileSync(
 test("live earned entitlements freeze reward economic identity", () => {
   assert.match(
     command,
-    /hasLiveRewardEntitlements[\s\S]*rewardUnlock\.count\([\s\S]*redeemedAt: null[\s\S]*expiredAt: null[\s\S]*expiresAt: \{ gt: new Date\(\) \}/,
+    /hasLiveRewardEntitlements[\s\S]*rewardUnlock\.findFirst\([\s\S]*redeemedAt: null[\s\S]*expiredAt: null[\s\S]*expiresAt: \{ gt: new Date\(\) \}/,
   );
   assert.match(
     command,
