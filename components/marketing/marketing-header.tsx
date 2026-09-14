@@ -69,10 +69,6 @@ export function MarketingHeader({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) setIsHeaderVisible(true);
-  }, [isOpen]);
-
-  useEffect(() => {
     if (!isOpen) return;
     const previousOverflow = document.body.style.overflow;
     const previousFocus = document.activeElement as HTMLElement | null;
