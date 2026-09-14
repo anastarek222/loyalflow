@@ -80,6 +80,12 @@
   box-shadow: var(--lf-shadow-raised);
 }
 
+.scope :global(main:lang(ar) > section:first-of-type h1),
+.scope :global(main:lang(ar) > section:nth-of-type(2) article h2) {
+  font-family: var(--font-marketing-sans);
+  letter-spacing: 0;
+}
+
 @media (max-width: 640px) {
   .scope :global(main > section:first-of-type),
   .scope :global(main > section:nth-of-type(2)) {
