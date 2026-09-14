@@ -81,5 +81,10 @@ export function getPublicMarketingFooterNavigation(locale: SupportedLocale) {
     groups[route.footerGroup].push(localizeMarketingRoute(locale, route));
   }
 
+  groups.support.unshift({
+    href: "/security",
+    label: locale === "ar" ? "الأمان والخصوصية" : "Security & Privacy",
+  });
+
   return groups;
 }
