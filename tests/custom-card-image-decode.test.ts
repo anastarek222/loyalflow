@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import sharp from "sharp";
+import { getSharp } from "next/dist/server/image-optimizer";
 
 import { getCustomCardArtworkDimensions } from "../lib/cards/custom-card-geometry";
 import { decodeCustomCardArtwork } from "../lib/server/cards/custom-card-image-decode";
@@ -43,6 +43,7 @@ function structurallyCompleteButUndecodablePng() {
 }
 
 test("server decoder accepts readable pixels and rejects metadata-valid corrupt payloads", async () => {
+  const sharp = getSharp(undefined);
   const validBytes = await sharp({
     create: {
       width: 856,

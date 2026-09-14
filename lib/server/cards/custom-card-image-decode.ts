@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { getSharp } from "next/dist/server/image-optimizer";
 
 import type { CustomCardArtworkDimensions } from "@/lib/cards/custom-card-geometry";
 
@@ -15,6 +15,7 @@ export async function decodeCustomCardArtwork(
   if (!expectedFormat) return null;
 
   try {
+    const sharp = getSharp(undefined);
     const bytes = Buffer.from(await file.arrayBuffer());
     const image = sharp(bytes, {
       failOn: "warning",
