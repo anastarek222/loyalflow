@@ -37,17 +37,18 @@ async function hasLiveRewardEntitlements(
   businessId: string,
   rewardId: string,
 ) {
-  return (
-    (await transaction.rewardUnlock.count({
-      where: {
-        businessId,
-        rewardId,
-        redeemedAt: null,
-        expiredAt: null,
-        expiresAt: { gt: new Date() },
-      },
-    })) > 0
-  );
+  const entitlement = await transaction.rewardUnlock.findFirst({
+    where: {
+      businessId,
+      rewardId,
+      redeemedAt: null,
+      expiredAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  return Boolean(entitlement);
 }
 
 /**
