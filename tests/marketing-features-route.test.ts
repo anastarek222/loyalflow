@@ -104,7 +104,7 @@ test("marketing mobile navigation is a solid viewport portal", () => {
   assert.match(header, /createPortal/);
   assert.match(header, /document\.body/);
   assert.match(header, /fixed inset-y-0 right-0 z-\[90\]/);
-  assert.match(header, /bg-surface/);
+  assert.match(header, /bg-\[var\(--lf-surface\)\]/);
   assert.match(header, /aria-modal="true"/);
   assert.match(header, /document\.body\.style\.overflow = "hidden"/);
 });
