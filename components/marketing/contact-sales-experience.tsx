@@ -36,7 +36,13 @@ type ContactSalesExperienceProps = {
   supportChannels: ReadonlyArray<SupportChannel>;
 };
 
-type MeetingMethod = "phone" | "whatsapp" | "google-meet";
+type MeetingMethod =
+  | "phone"
+  | "whatsapp"
+  | "google-meet"
+  | "zoom"
+  | "teams"
+  | "ringcentral";
 
 type MethodIcon = ComponentType<{
   size?: number;
@@ -129,13 +135,19 @@ const copy = {
     earliestNote: "Earliest booking: tomorrow",
     methodsTitle: "Preferred meeting method",
     methodsBody:
-      "Choose one of the three practical meeting options. Final call or meeting details are confirmed after availability is checked.",
+      "Choose your preferred meeting option. Final call or meeting details are confirmed after availability is checked.",
     methodPhone: "Phone call",
     methodPhoneBody: "We call the number you provide.",
     methodWhatsapp: "WhatsApp call",
     methodWhatsappBody: "Use your WhatsApp number for the call.",
     methodGoogle: "Google Meet",
     methodGoogleBody: "Receive a Google Meet link after confirmation.",
+    methodZoom: "Zoom Meeting",
+    methodZoomBody: "Receive a Zoom link after confirmation.",
+    methodTeams: "Microsoft Teams",
+    methodTeamsBody: "Receive a Teams link after confirmation.",
+    methodRingCentral: "RingCentral",
+    methodRingCentralBody: "Use RingCentral after confirmation.",
     name: "Your name",
     business: "Business name",
     email: "Business email",
@@ -199,13 +211,19 @@ const copy = {
     earliestNote: "أقرب حجز متاح: بكرة",
     methodsTitle: "طريقة الاجتماع المفضلة",
     methodsBody:
-      "اختار واحدة من 3 طرق واضحة للاجتماع. تفاصيل المكالمة أو الرابط بتتأكد بعد مراجعة التوفر.",
+      "اختار طريقة الاجتماع المفضلة. تفاصيل المكالمة أو الرابط بتتأكد بعد مراجعة التوفر.",
     methodPhone: "مكالمة تليفون",
     methodPhoneBody: "نتصل على الرقم اللي هتكتبه.",
     methodWhatsapp: "مكالمة WhatsApp",
     methodWhatsappBody: "نستخدم رقم WhatsApp الخاص بيك للمكالمة.",
     methodGoogle: "Google Meet",
     methodGoogleBody: "يوصلك رابط Google Meet بعد التأكيد.",
+    methodZoom: "Zoom Meeting",
+    methodZoomBody: "يوصلك رابط Zoom بعد التأكيد.",
+    methodTeams: "Microsoft Teams",
+    methodTeamsBody: "يوصلك رابط Teams بعد التأكيد.",
+    methodRingCentral: "RingCentral",
+    methodRingCentralBody: "يتم استخدام RingCentral بعد التأكيد.",
     name: "اسمك",
     business: "اسم النشاط",
     email: "إيميل العمل",
@@ -249,9 +267,12 @@ const copy = {
 } as const;
 
 const meetingMethodIds: MeetingMethod[] = [
+  "google-meet",
+  "zoom",
+  "teams",
+  "ringcentral",
   "phone",
   "whatsapp",
-  "google-meet",
 ];
 
 export function ContactSalesExperience({
@@ -293,6 +314,21 @@ export function ContactSalesExperience({
     "google-meet": {
       label: content.methodGoogle,
       body: content.methodGoogleBody,
+      icon: Video,
+    },
+    zoom: {
+      label: content.methodZoom,
+      body: content.methodZoomBody,
+      icon: Video,
+    },
+    teams: {
+      label: content.methodTeams,
+      body: content.methodTeamsBody,
+      icon: Video,
+    },
+    ringcentral: {
+      label: content.methodRingCentral,
+      body: content.methodRingCentralBody,
       icon: Video,
     },
   };
@@ -631,59 +667,26 @@ export function ContactSalesExperience({
               </label>
             </div>
 
-            <fieldset className="mt-7">
-              <legend className="text-sm font-bold text-foreground">
-                {content.methodsTitle}
-              </legend>
-              <p className="mt-1 text-xs leading-5 text-foreground-muted">
+            <label className="mt-7 grid gap-2 text-sm font-bold text-foreground">
+              <span>{content.methodsTitle}</span>
+              <span className="text-xs font-normal leading-5 text-foreground-muted">
                 {content.methodsBody}
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-                {meetingMethodIds.map((methodId) => {
-                  const method = methodCopy[methodId];
-                  const Icon = method.icon;
-                  const selected = selectedMethod === methodId;
-                  return (
-                    <label
-                      key={methodId}
-                      className={cn(
-                        "flex min-h-28 cursor-pointer flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors sm:min-h-32 sm:p-4",
-                        selected
-                          ? "border-primary bg-[var(--lf-primary-soft)]"
-                          : "border-border bg-surface hover:border-primary/35",
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="meetingMethod"
-                        value={methodId}
-                        checked={selected}
-                        onChange={() => setSelectedMethod(methodId)}
-                        className="sr-only"
-                      />
-                      <span
-                        className={cn(
-                          "flex size-10 shrink-0 items-center justify-center rounded-xl border",
-                          selected
-                            ? "border-primary/20 bg-primary text-[var(--lf-primary-foreground)]"
-                            : "border-border bg-[var(--lf-marketing-canvas)] text-primary",
-                        )}
-                      >
-                        <Icon size={18} aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-xs font-bold leading-5 text-foreground sm:text-sm">
-                          {method.label}
-                        </span>
-                        <span className="mt-1 hidden text-xs leading-5 text-foreground-muted sm:block">
-                          {method.body}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+              </span>
+              <select
+                name="meetingMethod"
+                value={selectedMethod}
+                onChange={(event) =>
+                  setSelectedMethod(event.target.value as MeetingMethod)
+                }
+                className="min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:border-primary"
+              >
+                {meetingMethodIds.map((methodId) => (
+                  <option key={methodId} value={methodId}>
+                    {methodCopy[methodId].label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label className="mt-6 grid gap-2 text-sm font-semibold text-foreground">
               <span>{content.notes}</span>
