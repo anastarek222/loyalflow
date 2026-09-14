@@ -103,7 +103,7 @@ test("marketing mobile navigation is a solid viewport portal", () => {
   const header = source("components/marketing/marketing-header.tsx");
   assert.match(header, /createPortal/);
   assert.match(header, /document\.body/);
-  assert.match(header, /fixed inset-y-0 end-0 z-\[90\]/);
+  assert.match(header, /fixed inset-y-0 right-0 z-\[90\]/);
   assert.match(header, /bg-surface/);
   assert.match(header, /aria-modal="true"/);
   assert.match(header, /document\.body\.style\.overflow = "hidden"/);
