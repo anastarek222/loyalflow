@@ -22,10 +22,7 @@ import {
   earnActionLabel,
   formatLoyaltyAmount,
 } from "@/lib/loyalty/presentation";
-import {
-  getRedeemableCatalogueRewards,
-  getRewardAvailability,
-} from "@/lib/rewards/availability";
+import { getRewardTruth } from "@/lib/rewards/availability";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { scanUiCopy } from "@/lib/scan/copy";
@@ -220,7 +217,7 @@ export default async function ScanCustomerPage({
     currency: customer.business.currency,
     earnAmount: customer.business.earnAmount,
   } as const;
-  const rewardAvailability = getRewardAvailability({
+  const rewardAvailability = getRewardTruth({
     customerActive: customer.isActive,
     balance: customer.balance,
     rewardThreshold: business.rewardThreshold,
@@ -229,13 +226,9 @@ export default async function ScanCustomerPage({
       cost: business.rewardThreshold,
     },
     catalogueRewards: business.rewards,
-  });
-  const redeemableRewards = getRedeemableCatalogueRewards({
-    customerActive: customer.isActive,
-    balance: customer.balance,
-    catalogueRewards: rewardAvailability.activeCatalogueRewards,
     rewardUnlocks: customer.rewardUnlocks,
   });
+  const redeemableRewards = rewardAvailability.redeemableRewards;
 
   return (
     <main className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_34rem)] py-6 sm:py-10">
@@ -301,7 +294,9 @@ export default async function ScanCustomerPage({
                 href={scanCustomerPath}
                 className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] border border-border-strong bg-surface px-6 text-center font-semibold text-foreground-muted hover:bg-surface-subtle"
               >
-                {rewardJustUnlocked ? copy.redeemReward : copy.performAnotherOperation}
+                {rewardJustUnlocked
+                  ? copy.redeemReward
+                  : copy.performAnotherOperation}
               </Link>
               <Link
                 href={`/businesses/${slug}/customers/${customer.id}`}

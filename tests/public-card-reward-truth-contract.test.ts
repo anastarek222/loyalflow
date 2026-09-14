@@ -9,14 +9,20 @@ const pageSource = fs.readFileSync(
   "utf8",
 );
 const viewerSource = fs.readFileSync(
-  path.join(root, "components/customer-experience/public-loyalty-card-viewer.tsx"),
+  path.join(
+    root,
+    "components/customer-experience/public-loyalty-card-viewer.tsx",
+  ),
   "utf8",
 );
 
 test("public card reward-ready notice uses live catalogue entitlement truth", () => {
-  assert.match(pageSource, /getRedeemableCatalogueRewards/);
+  assert.match(pageSource, /getRewardTruth/);
   assert.match(pageSource, /expiresAfterDays:\s*true/);
-  assert.match(pageSource, /redeemableCatalogueRewards\.length\s*>\s*0/);
+  assert.match(
+    pageSource,
+    /publicRewardReady\s*=\s*rewardAvailability\.rewardReady/,
+  );
   assert.match(pageSource, /rewardReady=\{publicRewardReady\}/);
   assert.match(viewerSource, /rewardReady\s*\?\?\s*balanceRewardReady/);
 });

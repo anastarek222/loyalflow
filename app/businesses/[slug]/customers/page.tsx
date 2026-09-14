@@ -6,7 +6,7 @@ import {
   type CustomerSegment,
 } from "@/lib/customers/segments";
 import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
-import { getRewardAvailability } from "@/lib/rewards/availability";
+import { getRewardTruth } from "@/lib/rewards/availability";
 import { formatLoyaltyAmount } from "@/lib/loyalty/presentation";
 import { getCustomerTagWhere } from "@/lib/customers/notes-tags";
 import {
@@ -130,7 +130,13 @@ export default async function CustomersPage({
 
   const activeRewards = await prisma.reward.findMany({
     where: { businessId: business.id, isActive: true },
-    select: { id: true, name: true, cost: true, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      cost: true,
+      isActive: true,
+      expiresAfterDays: true,
+    },
   });
   const availabilityInput = {
     rewardThreshold: business.rewardThreshold,
@@ -301,10 +307,10 @@ export default async function CustomersPage({
               {
                 balance: "asc" as const,
               },
-            {
-              createdAt: "desc" as const,
-            },
-          ]
+              {
+                createdAt: "desc" as const,
+              },
+            ]
           : {
               createdAt: "desc" as const,
             };
@@ -330,6 +336,15 @@ export default async function CustomersPage({
           tag: {
             select: { id: true, name: true },
           },
+        },
+      },
+      rewardUnlocks: {
+        where: { redeemedAt: null },
+        select: {
+          rewardId: true,
+          expiresAt: true,
+          redeemedAt: true,
+          expiredAt: true,
         },
       },
     },
@@ -1063,10 +1078,11 @@ export default async function CustomersPage({
                       </thead>
                       <tbody className="divide-y divide-border">
                         {customers.map((customer) => {
-                          const availability = getRewardAvailability({
+                          const availability = getRewardTruth({
                             ...availabilityInput,
                             customerActive: customer.isActive,
                             balance: customer.balance,
+                            rewardUnlocks: customer.rewardUnlocks,
                           });
                           const { progress, rewardReady: rewardAvailable } =
                             availability;
@@ -1170,10 +1186,11 @@ export default async function CustomersPage({
                   aria-label={copy.mobileCustomerList}
                 >
                   {customers.map((customer) => {
-                    const availability = getRewardAvailability({
+                    const availability = getRewardTruth({
                       ...availabilityInput,
                       customerActive: customer.isActive,
                       balance: customer.balance,
+                      rewardUnlocks: customer.rewardUnlocks,
                     });
                     const { progress } = availability;
 

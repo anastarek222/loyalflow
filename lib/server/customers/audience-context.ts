@@ -9,7 +9,7 @@ import {
   type CustomerSegmentContext,
 } from "@/lib/customers/segments";
 import {
-  getRedeemableCatalogueRewards,
+  getRewardTruth,
   type RewardAvailabilityOption,
 } from "@/lib/rewards/availability";
 import prisma from "@/lib/prisma";
@@ -99,7 +99,10 @@ export async function resolveBusinessCustomerAudienceContexts(input: {
     }),
   ]);
 
-  const transactionsByCustomer = new Map<string, (typeof transactions)[number][]>();
+  const transactionsByCustomer = new Map<
+    string,
+    (typeof transactions)[number][]
+  >();
   for (const transaction of transactions) {
     const existing = transactionsByCustomer.get(transaction.customerId) ?? [];
     existing.push(transaction);
@@ -131,15 +134,18 @@ export async function resolveBusinessCustomerAudienceContexts(input: {
       now,
     });
 
-    if (catalogueRewards.length > 0) {
-      context.rewardReady = getRedeemableCatalogueRewards({
-        customerActive: customer.isActive,
-        balance: customer.balance,
-        catalogueRewards,
-        rewardUnlocks: unlocksByCustomer.get(customer.id) ?? [],
-        now,
-      }).length > 0;
-    }
+    context.rewardReady = getRewardTruth({
+      customerActive: customer.isActive,
+      balance: customer.balance,
+      rewardThreshold: input.business.rewardThreshold,
+      fallbackReward: {
+        name: input.business.rewardName,
+        cost: input.business.rewardThreshold,
+      },
+      catalogueRewards,
+      rewardUnlocks: unlocksByCustomer.get(customer.id) ?? [],
+      now,
+    }).rewardReady;
 
     contexts.set(customer.id, context);
   }

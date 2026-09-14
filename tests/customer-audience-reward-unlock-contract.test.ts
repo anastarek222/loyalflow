@@ -11,7 +11,7 @@ const source = fs.readFileSync(
 test("audience reward-ready truth requires live unlocks for expiring catalogue rewards", () => {
   assert.match(source, /prisma\.rewardUnlock\.findMany/);
   assert.match(source, /expiresAfterDays:\s*\{\s*gt:\s*0\s*\}/);
-  assert.match(source, /getRedeemableCatalogueRewards/);
-  assert.match(source, /context\.rewardReady\s*=\s*getRedeemableCatalogueRewards/);
+  assert.match(source, /getRewardTruth/);
+  assert.match(source, /context\.rewardReady\s*=\s*getRewardTruth/);
   assert.match(source, /expiresAfterDays:\s*true/);
 });

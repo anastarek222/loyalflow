@@ -12,7 +12,10 @@ export type RewardAvailabilityOption = {
   expiresAfterDays?: number | null;
 };
 
-export type FallbackRewardOption = Omit<RewardAvailabilityOption, "id" | "isActive"> & {
+export type FallbackRewardOption = Omit<
+  RewardAvailabilityOption,
+  "id" | "isActive"
+> & {
   id?: null;
 };
 
@@ -33,15 +36,31 @@ export function getRewardAvailability(input: {
   const activeCatalogueRewards = input.catalogueRewards
     .filter((reward) => reward.isActive !== false)
     .slice()
-    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id));
-  const source = activeCatalogueRewards.length ? "CATALOGUE" as const : "FALLBACK" as const;
-  const fallbackReward = { ...input.fallbackReward, id: null, cost: Math.max(1, Math.trunc(input.rewardThreshold)) };
-  const rewards = source === "CATALOGUE" ? activeCatalogueRewards : [fallbackReward];
+    .sort(
+      (left, right) =>
+        left.cost - right.cost || left.id.localeCompare(right.id),
+    );
+  const source = activeCatalogueRewards.length
+    ? ("CATALOGUE" as const)
+    : ("FALLBACK" as const);
+  const fallbackReward = {
+    ...input.fallbackReward,
+    id: null,
+    cost: Math.max(1, Math.trunc(input.rewardThreshold)),
+  };
+  const rewards =
+    source === "CATALOGUE" ? activeCatalogueRewards : [fallbackReward];
   const defaultReward = rewards[0]!;
   const balance = Math.max(0, Math.trunc(input.balance));
   const targetCost = Math.max(1, Math.trunc(defaultReward.cost));
-  const affordableRewards = activeCatalogueRewards.filter((reward) => balance >= Math.max(1, Math.trunc(reward.cost)));
-  const rewardReady = input.customerActive && (source === "CATALOGUE" ? affordableRewards.length > 0 : balance >= targetCost);
+  const affordableRewards = activeCatalogueRewards.filter(
+    (reward) => balance >= Math.max(1, Math.trunc(reward.cost)),
+  );
+  const rewardReady =
+    input.customerActive &&
+    (source === "CATALOGUE"
+      ? affordableRewards.length > 0
+      : balance >= targetCost);
 
   return {
     source,
@@ -86,7 +105,10 @@ export function getRedeemableCatalogueRewards(input: {
   return input.catalogueRewards
     .filter((reward) => reward.isActive !== false)
     .slice()
-    .sort((left, right) => left.cost - right.cost || left.id.localeCompare(right.id))
+    .sort(
+      (left, right) =>
+        left.cost - right.cost || left.id.localeCompare(right.id),
+    )
     .filter((reward) => {
       if (balance < Math.max(1, Math.trunc(reward.cost))) return false;
       const expires =
@@ -96,4 +118,36 @@ export function getRedeemableCatalogueRewards(input: {
         reward.expiresAfterDays > 0;
       return !expires || actionableUnlockRewardIds.has(reward.id);
     });
+}
+
+/**
+ * Canonical cross-surface reward truth. Affordability is balance-only, while
+ * Reward Ready means that at least one reward can actually be redeemed now.
+ */
+export function getRewardTruth(
+  input: Parameters<typeof getRewardAvailability>[0] & {
+    rewardUnlocks: readonly RewardAvailabilityUnlock[];
+    now?: Date;
+  },
+) {
+  const availability = getRewardAvailability(input);
+  const redeemableRewards =
+    availability.source === "CATALOGUE"
+      ? getRedeemableCatalogueRewards({
+          customerActive: input.customerActive,
+          balance: input.balance,
+          catalogueRewards: availability.activeCatalogueRewards,
+          rewardUnlocks: input.rewardUnlocks,
+          now: input.now,
+        })
+      : [];
+
+  return {
+    ...availability,
+    redeemableRewards,
+    rewardReady:
+      availability.source === "CATALOGUE"
+        ? redeemableRewards.length > 0
+        : availability.rewardReady,
+  };
 }
