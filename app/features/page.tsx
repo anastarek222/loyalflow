@@ -65,7 +65,7 @@ function BrandedCardPreview({ locale }: { locale: SupportedLocale }) {
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] opacity-70">
-              Tanee loyalty
+              <MarketingBrandText text="Tanee loyalty" />
             </p>
             <p className="mt-2 text-xl font-black">Nile Brew Café</p>
           </div>
