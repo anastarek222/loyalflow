@@ -6,6 +6,7 @@ import {
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
+import { equivalentPhoneIdentities, normalizePhone } from "@/lib/customers/phone";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -68,7 +69,7 @@ export async function createCustomerCommand(input: {
 
     const business = await transaction.business.findUnique({
       where: { id: input.businessId },
-      select: { plan: true, slug: true },
+      select: { plan: true, slug: true, country: true },
     });
     if (!business) {
       return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
@@ -84,12 +85,11 @@ export async function createCustomerCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
-    const existingCustomer = await transaction.customer.findUnique({
+    const canonicalPhone = normalizePhone(input.customer.phone, business.country);
+    const existingCustomer = await transaction.customer.findFirst({
       where: {
-        businessId_phone: {
-          businessId: input.businessId,
-          phone: input.customer.phone,
-        },
+        businessId: input.businessId,
+        phone: { in: equivalentPhoneIdentities(canonicalPhone, business.country) },
       },
       select: { id: true },
     });
@@ -133,7 +133,7 @@ export async function createCustomerCommand(input: {
       data: {
         firstName: input.customer.firstName,
         lastName: input.customer.lastName || null,
-        phone: input.customer.phone,
+        phone: canonicalPhone,
         customerCode,
         businessId: input.businessId,
         publicToken: createPublicCardToken(),

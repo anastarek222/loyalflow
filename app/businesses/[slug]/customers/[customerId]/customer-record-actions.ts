@@ -5,6 +5,7 @@ import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subsc
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
 import { canAccessBusiness, canPerform, type Capability } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { normalizePhone } from "@/lib/customers/phone";
 import {
   setCustomerRecordStatusCommand,
   updateCustomerRecordCommand,
@@ -23,11 +24,6 @@ const customerSchema = z.object({
   phone: z.string().trim().min(8).max(25),
 });
 
-function normalizePhone(value: string) {
-  const cleaned = value.replace(/[^\d+]/g, "");
-  return cleaned.replace(/(?!^)\+/g, "");
-}
-
 async function getManagementContext(
   slug: string,
   customerId: string,
@@ -41,7 +37,7 @@ async function getManagementContext(
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, subscriptionLifecycleState: true },
+    select: { id: true, subscriptionLifecycleState: true, country: true },
   });
   if (!business) redirect("/businesses");
   if (!canAccessBusiness(session.user, business.id)) redirect("/dashboard");
@@ -103,7 +99,7 @@ export async function updateCustomerRecordCommandAction(
     );
   }
 
-  const phone = normalizePhone(parsed.data.phone);
+  const phone = normalizePhone(parsed.data.phone, business.country);
   if (!/^\+?\d{8,15}$/.test(phone)) {
     redirect(`/businesses/${slug}/customers/${customerId}?error=phone`);
   }

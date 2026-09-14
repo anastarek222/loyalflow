@@ -1,4 +1,4 @@
-import { normalizePhone } from "@/lib/customers/registration";
+import { normalizePhone } from "@/lib/customers/phone";
 
 export type DuplicateCustomerCandidate = {
   id: string;
@@ -9,6 +9,7 @@ export type DuplicateCustomerCandidate = {
   customerCode: string;
   email?: string | null;
   createdAt: Date;
+  country?: string | null;
 };
 
 export type DuplicateReason =
@@ -64,7 +65,7 @@ export function findDuplicateCustomerGroups<
   T extends DuplicateCustomerCandidate,
 >(customers: readonly T[]): DuplicateGroup<T>[] {
   const phoneGroups = createGroups(customers, "NORMALIZED_PHONE", (customer) => {
-    const phone = normalizePhone(customer.phone).replace(/^\+/, "");
+    const phone = normalizePhone(customer.phone, customer.country).replace(/^\+/, "");
     return /^\d{8,15}$/.test(phone) ? phone : null;
   });
   const emailGroups = createGroups(customers, "NORMALIZED_EMAIL", (customer) =>

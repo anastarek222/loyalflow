@@ -36,6 +36,7 @@ export default async function DuplicateReviewPage({
         slug: true,
         name: true,
         unitName: true,
+        country: true,
       },
     }),
     prisma.user.findUnique({
@@ -180,7 +181,9 @@ export default async function DuplicateReviewPage({
     },
   });
 
-  const groups = findDuplicateCustomerGroups(customers);
+  const groups = findDuplicateCustomerGroups(
+    customers.map((customer) => ({ ...customer, country: business.country })),
+  );
 
   return (
     <main

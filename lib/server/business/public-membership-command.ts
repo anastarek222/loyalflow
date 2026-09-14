@@ -2,6 +2,7 @@ import type { PublicMembershipRegistration } from "@loyalflow/contracts/customer
 
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
+import { equivalentPhoneIdentities, normalizePhone } from "@/lib/customers/phone";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -51,6 +52,7 @@ export async function createPublicMembershipCommand(input: {
           isActive: true,
           plan: true,
           slug: true,
+          country: true,
         },
       });
       if (!business?.isActive) {
@@ -67,12 +69,11 @@ export async function createPublicMembershipCommand(input: {
         return { ok: false, reason: "BUSINESS_UNAVAILABLE" } as const;
       }
 
-      const existingCustomer = await transaction.customer.findUnique({
+      const canonicalPhone = normalizePhone(input.customer.phone, business.country);
+      const existingCustomer = await transaction.customer.findFirst({
         where: {
-          businessId_phone: {
-            businessId: input.businessId,
-            phone: input.customer.phone,
-          },
+          businessId: input.businessId,
+          phone: { in: equivalentPhoneIdentities(canonicalPhone, business.country) },
         },
         select: { id: true },
       });
@@ -109,7 +110,7 @@ export async function createPublicMembershipCommand(input: {
         data: {
           firstName: input.customer.firstName,
           lastName: input.customer.lastName || null,
-          phone: input.customer.phone,
+          phone: canonicalPhone,
           customerCode,
           businessId: input.businessId,
           publicToken: createPublicCardToken(),

@@ -16,6 +16,7 @@ function customer(overrides: Partial<{
   customerCode: string;
   email: string | null;
   createdAt: Date;
+  country: string | null;
 }> = {}) {
   return {
     id: "customer-1",
@@ -38,6 +39,15 @@ test("detects same-phone candidates after safe normalization", () => {
 
   assert.deepEqual(groups.map((group) => group.reason), ["NORMALIZED_PHONE"]);
   assert.deepEqual(groups[0]?.customers.map((item) => item.id), ["one", "two"]);
+});
+
+test("collision audit matches local and international forms using business country", () => {
+  const groups = findDuplicateCustomerGroups([
+    customer({ id: "local", phone: "01000000001", country: "Egypt" }),
+    customer({ id: "international", phone: "+201000000001", customerCode: "CUS-002", country: "Egypt" }),
+  ]);
+
+  assert.deepEqual(groups.map((group) => group.reason), ["NORMALIZED_PHONE"]);
 });
 
 test("supports normalized email matching only when a persisted email is available", () => {

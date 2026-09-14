@@ -13,6 +13,12 @@ test("normalizes Arabic separators while retaining an international prefix", () 
   );
 });
 
+test("canonicalizes equivalent Egyptian local and international phone forms", () => {
+  assert.equal(normalizePhone("0100 000 0000", "Egypt"), "+201000000000");
+  assert.equal(normalizePhone("0020 100 000 0000", "Egypt"), "+201000000000");
+  assert.equal(normalizePhone("+20 100 000 0000", "Egypt"), "+201000000000");
+});
+
 test("rejects malformed customer registration input", () => {
   assert.equal(
     parseCustomerRegistration({

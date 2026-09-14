@@ -29,7 +29,8 @@ type CustomerCodeLookup = {
 };
 
 export function parseCustomerRegistration(
-  value: PublicMembershipRegistrationInput
+  value: PublicMembershipRegistrationInput,
+  countryName?: string | null,
 ): PublicMembershipRegistration | null {
   const parsed = customerRegistrationSchema.safeParse({
     firstName: value.firstName,
@@ -41,7 +42,7 @@ export function parseCustomerRegistration(
     return null;
   }
 
-  const phone = normalizePhone(parsed.data.phone);
+  const phone = normalizePhone(parsed.data.phone, countryName);
 
   if (!/^\+?\d{8,15}$/.test(phone)) {
     return null;

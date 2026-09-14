@@ -4,6 +4,7 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { equivalentPhoneIdentities, normalizePhone } from "@/lib/customers/phone";
 import prisma from "@/lib/prisma";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
@@ -52,18 +53,24 @@ export async function updateCustomerRecordCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
+    const business = await transaction.business.findUnique({
+      where: { id: input.businessId },
+      select: { country: true },
+    });
     const customer = await transaction.customer.findFirst({
       where: { id: input.customerId, businessId: input.businessId },
       select: { id: true },
     });
-    if (!customer) {
+    if (!business || !customer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
     }
+
+    const canonicalPhone = normalizePhone(input.phone, business.country);
 
     const duplicateCustomer = await transaction.customer.findFirst({
       where: {
         businessId: input.businessId,
-        phone: input.phone,
+        phone: { in: equivalentPhoneIdentities(canonicalPhone, business.country) },
         id: { not: customer.id },
       },
       select: { id: true },
@@ -77,7 +84,7 @@ export async function updateCustomerRecordCommand(input: {
       data: {
         firstName: input.firstName,
         lastName: input.lastName || null,
-        phone: input.phone,
+        phone: canonicalPhone,
       },
     });
 
