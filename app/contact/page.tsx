@@ -9,6 +9,8 @@ import { getPublicSupportChannels } from "@/lib/marketing/public-support-channel
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 
+import styles from "./contact-booking.module.css";
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getMarketingRequestLocale();
   const title = translate(locale, "marketing.contact.metaTitle");
@@ -33,7 +35,7 @@ export default async function ContactPage() {
     <main
       lang={locale}
       dir={direction}
-      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] font-[var(--font-marketing-sans)] text-foreground [overflow-wrap:anywhere]"
+      className={`${styles.bookingExperience} lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] font-[var(--font-marketing-sans)] text-foreground [overflow-wrap:anywhere]`}
     >
       <MarketingHeader
         locale={locale}
