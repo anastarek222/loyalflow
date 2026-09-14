@@ -2,6 +2,23 @@
   width: min(31rem, calc(100vw - 1.25rem));
 }
 
+.teaser {
+  position: relative;
+}
+
+.teaser::after {
+  position: absolute;
+  inset-inline-end: 1.2rem;
+  bottom: -0.28rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  content: "";
+  transform: rotate(45deg);
+  border-inline-end: 1px solid var(--lf-border);
+  border-bottom: 1px solid var(--lf-border);
+  background: var(--lf-surface);
+}
+
 .actions {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
