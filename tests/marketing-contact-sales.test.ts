@@ -17,20 +17,25 @@ test("Contact uses the shared Tanee marketing shell and sales experience", () =>
   assert.match(page, /styles\.bookingExperience/);
 });
 
-test("meeting request UI enforces tomorrow-first Cairo booking with three methods", () => {
+test("meeting request UI keeps tomorrow-first Cairo booking with compact provider options", () => {
   const experience = source(
     "components/marketing/contact-sales-experience.tsx",
   );
   const bookingLayout = source("app/contact/contact-booking.module.css");
 
-  for (const method of ["phone", "whatsapp", "google-meet"]) {
+  for (const method of [
+    "phone",
+    "whatsapp",
+    "google-meet",
+    "zoom",
+    "teams",
+    "ringcentral",
+  ]) {
     assert.match(experience, new RegExp(`"${method}"`));
   }
 
-  assert.doesNotMatch(
-    experience,
-    /const meetingMethodIds[\s\S]*"zoom"[\s\S]*"teams"[\s\S]*"ringcentral"/,
-  );
+  assert.match(experience, /<select[\s\S]*name="meetingMethod"/);
+  assert.doesNotMatch(experience, /input[\s\S]*name="meetingMethod"/);
   assert.match(experience, /BOOKING_TIME_ZONE = "Africa\/Cairo"/);
   assert.match(experience, /getBookingDateIso\(1\)/);
   assert.match(experience, /min=\{minimumBookingDate\}/);
@@ -60,7 +65,8 @@ test("shared Marketing header exposes smart mobile navigation and booking launch
   assert.match(header, /currentY > previousY \+ 4/);
   assert.match(header, /currentY < previousY - 2/);
   assert.match(header, /-translate-y-full/);
-  assert.match(header, /xl:translate-y-0/);
+  assert.match(header, /min-\[1440px\]:translate-y-0/);
+  assert.match(header, /fixed inset-x-0 top-0/);
   assert.match(header, /fixed inset-y-0 right-0/);
   assert.match(header, /text-\[var\(--lf-foreground-muted\)\]/);
   assert.match(header, /<TalkToExpertLauncher locale=\{locale\}/);
