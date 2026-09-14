@@ -51,20 +51,26 @@ export type PublicMarketingNavigationItem = {
   label: string;
 };
 
+const CANONICAL_MARKETING_LABELS: Record<
+  (typeof PUBLIC_MARKETING_ROUTES)[number]["href"],
+  Record<SupportedLocale, string>
+> = {
+  "/": { en: "Home", ar: "الرئيسية" },
+  "/features": { en: "Features", ar: "المميزات" },
+  "/how-it-works": { en: "How it works", ar: "كيف يعمل" },
+  "/pricing": { en: "Pricing", ar: "الأسعار" },
+  "/about": { en: "About Tanee", ar: "عن Tanee" },
+  "/faq": { en: "FAQ", ar: "الأسئلة الشائعة" },
+  "/contact": { en: "Contact", ar: "تواصل معنا" },
+};
+
 function localizeMarketingRoute(
   locale: SupportedLocale,
   route: (typeof PUBLIC_MARKETING_ROUTES)[number],
 ): PublicMarketingNavigationItem {
-  if (route.href === "/about") {
-    return {
-      href: route.href,
-      label: locale === "ar" ? "عن Tanee" : "About Tanee",
-    };
-  }
-
   return {
     href: route.href,
-    label: translate(locale, route.labelKey),
+    label: CANONICAL_MARKETING_LABELS[route.href][locale],
   };
 }
 
