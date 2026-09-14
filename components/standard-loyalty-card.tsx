@@ -17,6 +17,7 @@ import {
   standardCardValueFontSize,
 } from "@/lib/cards/standard-card-text";
 import { BUSINESS_LOGO_SVG_ASPECT_RATIO } from "@/lib/branding/logo-presentation";
+import { resolveCardColorRoles } from "@/lib/cards/card-color-semantics";
 import { formatWebsiteForCard } from "@/lib/urls/business-url";
 
 export type StandardLoyaltyCardProps = {
@@ -416,8 +417,9 @@ export function StandardLoyaltyCard(props: StandardLoyaltyCardProps) {
   const customerNameAnchor = customerNameIsArabic ? "end" : "start";
   const customerNameDirection = customerNameIsArabic ? "rtl" : "ltr";
   const dark = standardCardTheme(props.themePreset) === "dark";
-  const accent = safeColor(props.primaryColor);
-  const secondary = safeColor(props.secondaryColor || "#FFFFFF");
+  const colorRoles = resolveCardColorRoles(props);
+  const accent = safeColor(colorRoles.accentColor);
+  const secondary = safeColor(colorRoles.supportingSurfaceColor);
   const category = standardCardArtworkCategory(props.artworkCategory);
   const foreground = dark ? "#F8FAFC" : "#111827";
   const muted = dark ? "#CBD5E1" : "#536074";
