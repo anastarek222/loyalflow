@@ -1,6 +1,8 @@
 import { normalizePhoneE164, phoneDigits } from "@/lib/customers/phone";
+import { isOfferEligible } from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
+import { resolveBusinessCustomerAudienceContext } from "@/lib/server/customers/audience-context";
 import {
   isAutomaticCustomerMessageEvent,
   isCustomerMessagePayload,
@@ -52,7 +54,8 @@ function getOwnerMessageTemplate(
 }
 
 export function extractWhatsAppProviderMessageId(payload: unknown) {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload))
+    return null;
   const messages = (payload as { messages?: unknown }).messages;
   if (!Array.isArray(messages) || messages.length < 1) return null;
   const first = messages[0];
@@ -112,18 +115,29 @@ export async function sendWhatsAppCustomerNotificationSafely(
       isActive: true,
     },
     select: {
+      id: true,
+      businessId: true,
       firstName: true,
       lastName: true,
       phone: true,
       balance: true,
+      createdAt: true,
+      lifetimeEarned: true,
       publicToken: true,
       whatsappPhoneE164: true,
       whatsappOptInAt: true,
       whatsappOptedOutAt: true,
+      transactions: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
+      },
       business: {
         select: {
+          id: true,
           name: true,
           country: true,
+          loyaltyMode: true,
           unitName: true,
           rewardName: true,
           rewardThreshold: true,
@@ -146,12 +160,73 @@ export async function sendWhatsAppCustomerNotificationSafely(
     },
   });
 
-  if (
-    !customer ||
-    !customer.whatsappOptInAt ||
-    customer.whatsappOptedOutAt
-  ) {
+  if (!customer || !customer.whatsappOptInAt || customer.whatsappOptedOutAt) {
     return { status: "success" };
+  }
+
+  let publishedSubjectName: string | null = null;
+  if (payload.event === "NEW_REWARD") {
+    const reward = await prisma.reward.findFirst({
+      where: {
+        id: payload.rewardId,
+        businessId,
+        isActive: true,
+      },
+      select: { name: true },
+    });
+    if (!reward) return { status: "success" };
+    publishedSubjectName = reward.name;
+  }
+
+  if (payload.event === "NEW_OFFER") {
+    const now = new Date();
+    const offer = await prisma.offer.findFirst({
+      where: { id: payload.offerId, businessId },
+      select: {
+        businessId: true,
+        isActive: true,
+        validFrom: true,
+        validUntil: true,
+        eligibility: true,
+        segment: true,
+        name: true,
+      },
+    });
+    if (!offer) return { status: "success" };
+
+    const audienceContext = await resolveBusinessCustomerAudienceContext({
+      business: {
+        id: customer.business.id,
+        loyaltyMode: customer.business.loyaltyMode,
+        rewardThreshold: customer.business.rewardThreshold,
+        rewardName: customer.business.rewardName,
+      },
+      customer: {
+        id: customer.id,
+        isActive: true,
+        balance: customer.balance,
+      },
+      catalogueRewards: customer.business.rewards,
+      now,
+    });
+    const eligible = isOfferEligible(
+      offer,
+      {
+        businessId: customer.businessId,
+        isActive: true,
+        createdAt: customer.createdAt,
+        lifetimeEarned: customer.lifetimeEarned,
+        lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+      },
+      {
+        id: customer.business.id,
+        rewardThreshold: customer.business.rewardThreshold,
+      },
+      now,
+      audienceContext,
+    );
+    if (!eligible) return { status: "success" };
+    publishedSubjectName = offer.name;
   }
 
   const canonicalRecipient = customer.whatsappPhoneE164
@@ -225,8 +300,7 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
   if (
-    binding.contentSha256 !==
-    hashBusinessWhatsAppTemplate(ownerMessageTemplate)
+    binding.contentSha256 !== hashBusinessWhatsAppTemplate(ownerMessageTemplate)
   ) {
     return {
       status: "failure",
@@ -288,7 +362,10 @@ export async function sendWhatsAppCustomerNotificationSafely(
       business: customer.business.name,
       balance,
       unit: customer.business.unitName,
-      reward: payload.rewardName ?? rewardAvailability.defaultReward.name,
+      reward:
+        publishedSubjectName ??
+        payload.rewardName ??
+        rewardAvailability.defaultReward.name,
       remaining: rewardAvailability.remaining,
       cardLink: cardUrl,
     },
@@ -338,7 +415,8 @@ export async function sendWhatsAppCustomerNotificationSafely(
         // API acceptance is authoritative. Missing observability metadata must
         // never turn an accepted send into a retry that can duplicate a message.
       }
-      const providerMessageId = extractWhatsAppProviderMessageId(responsePayload);
+      const providerMessageId =
+        extractWhatsAppProviderMessageId(responsePayload);
       return providerMessageId
         ? { status: "success", providerMessageId }
         : { status: "success" };

@@ -69,6 +69,7 @@ test("accepts only bounded versioned customer message payloads", () => {
       version: 1,
       event: "NEW_REWARD",
       customerId: "customer_1",
+      rewardId: "reward_1",
       rewardName: "Free coffee",
     }),
     true,
@@ -78,8 +79,25 @@ test("accepts only bounded versioned customer message payloads", () => {
       version: 1,
       event: "NEW_OFFER",
       customerId: "customer_1",
+      offerId: "offer_1",
     }),
     true,
+  );
+  assert.equal(
+    isCustomerMessagePayload({
+      version: 1,
+      event: "NEW_REWARD",
+      customerId: "customer_1",
+    }),
+    false,
+  );
+  assert.equal(
+    isCustomerMessagePayload({
+      version: 1,
+      event: "NEW_OFFER",
+      customerId: "customer_1",
+    }),
+    false,
   );
   assert.equal(
     isCustomerMessagePayload({
@@ -399,16 +417,21 @@ test("Meta approval remains provider-owned while event toggles remain Owner-owne
   );
 });
 
-test("New Reward and New Offer are prepared in settings but their producers stay WA-5 gated", () => {
+test("New Reward and New Offer producers are enabled after WA-5 integration", () => {
   const pageSource = readFileSync(
     "app/businesses/[slug]/settings/whatsapp/page.tsx",
     "utf8",
   );
 
-  assert.match(pageSource, /event: "NEW_REWARD"/);
-  assert.match(pageSource, /event: "NEW_OFFER"/);
-  assert.match(pageSource, /producerReady: false/g);
-  assert.match(pageSource, /WA-5 sync/);
+  assert.match(
+    pageSource,
+    /event: "NEW_REWARD"[\s\S]*?producerReady: true/,
+  );
+  assert.match(
+    pageSource,
+    /event: "NEW_OFFER"[\s\S]*?producerReady: true/,
+  );
+  assert.doesNotMatch(pageSource, /WA-5 sync/);
 });
 
 test("manual customer-profile WhatsApp actions require customer edit permission", () => {
