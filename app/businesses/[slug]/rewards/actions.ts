@@ -59,6 +59,8 @@ function rewardCommandError(result: RewardWriteCommandResult) {
       return "plan-feature";
     case "PLAN_LIMIT":
       return "plan-limit";
+    case "ACTIVE_ENTITLEMENTS":
+      return "active-entitlements";
     case "BUSINESS_NOT_FOUND":
     case "TARGET_NOT_FOUND":
       return "not-found";
