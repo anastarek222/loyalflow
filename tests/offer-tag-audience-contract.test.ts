@@ -9,6 +9,10 @@ const offerActions = readFileSync(
   "app/businesses/[slug]/offers/actions.ts",
   "utf8",
 );
+const offerWriteCommand = readFileSync(
+  "lib/server/business/offer-write-command.ts",
+  "utf8",
+);
 const offersPage = readFileSync(
   "app/businesses/[slug]/offers/page.tsx",
   "utf8",
@@ -46,6 +50,28 @@ test("offer actions tenant-validate tag audiences before writes", () => {
     /prisma\.customerTag\.findFirst\(\{[\s\S]*?id: tagId,[\s\S]*?businessId: input\.businessId,/,
   );
   assert.match(offerActions, /hasValidOfferAudience\(/);
+});
+
+test("authoritative offer commands revalidate audiences inside the write transaction", () => {
+  assert.match(offerWriteCommand, /async function hasValidOfferAudience\(/);
+  assert.match(offerWriteCommand, /getOfferTagAudienceId\(offer\.segment\)/);
+  assert.match(
+    offerWriteCommand,
+    /isOfferAudienceSelectorForLoyaltyMode\(offer\.segment, loyaltyMode\)/,
+  );
+  assert.match(
+    offerWriteCommand,
+    /client\.customerTag\.findFirst\(\{[\s\S]*?id: tagId, businessId/,
+  );
+  assert.match(offerWriteCommand, /reason: "INVALID_AUDIENCE"/);
+  assert.ok(
+    (offerWriteCommand.match(/hasValidOfferAudience\(/g) ?? []).length >= 4,
+    "create, update, and status activation must all call the command-level audience guard",
+  );
+  assert.match(
+    offerActions,
+    /case "INVALID_AUDIENCE":[\s\S]*?return "invalid";/,
+  );
 });
 
 test("offer audience choices and writes respect the business loyalty mode", () => {
