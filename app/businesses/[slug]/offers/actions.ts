@@ -99,6 +99,8 @@ function offerCommandError(result: OfferWriteCommandResult) {
       return "plan-feature";
     case "PLAN_LIMIT":
       return "plan-limit";
+    case "INVALID_AUDIENCE":
+      return "invalid";
     case "BUSINESS_NOT_FOUND":
     case "TARGET_NOT_FOUND":
       return "not-found";
