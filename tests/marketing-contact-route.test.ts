@@ -7,17 +7,24 @@ const source = (path: string) =>
 
 test("Contact provides truthful beta access paths without invented channels", () => {
   const page = source("app/contact/page.tsx");
+  const header = source("components/marketing/marketing-header.tsx");
+  const experience = source(
+    "components/marketing/contact-sales-experience.tsx",
+  );
+  const contactSurface = `${page}\n${header}\n${experience}`;
 
   assert.match(page, /alternates: \{ canonical: "\/contact" \}/);
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.match(page, /getMarketingRequestLocale\(\)/);
-  assert.match(page, /href: "\/get-started"/);
-  assert.match(page, /href: "\/login"/);
-  assert.doesNotMatch(page, /href: "\/accept-owner-invitation"/);
+  assert.match(header, /href="\/get-started"/);
+  assert.match(experience, /href="\/login"/);
+  assert.doesNotMatch(contactSurface, /href="\/accept-owner-invitation"/);
   assert.match(page, /<MarketingHeader/);
+  assert.match(page, /<ContactSalesExperience/);
   assert.match(page, /<MarketingFooter locale=\{locale\} \/>/);
   assert.match(page, /getPublicSupportChannels\(\)/);
-  assert.doesNotMatch(page, /<form/i);
+  assert.match(experience, /<form/);
+  assert.doesNotMatch(experience, /prisma|DATABASE_URL|api\/meetings/i);
 });
 
 test("Contact is discoverable from navigation, footer, and sitemap", () => {
