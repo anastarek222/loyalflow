@@ -13,11 +13,6 @@ export type LoyaltyCardProps = CustomLoyaltyCardProps & {
   customDesignEnabled?: boolean;
 };
 
-// The loyalty card is a product object, not a localized dashboard surface.
-// UI shells may be Arabic or English, but switching their language must never
-// change card geometry, labels, direction, QR placement, or reward layout.
-export const CARD_PRESENTATION_LANGUAGE = "EN" as const;
-
 function LoyaltyCardFace({
   side,
   useCustom,
@@ -37,9 +32,10 @@ function LoyaltyCardFace({
 
 export function LoyaltyCard(props: LoyaltyCardProps) {
   const side = props.side ?? "front";
+  const language = props.language ?? "EN";
   const cardProps: LoyaltyCardProps = {
     ...props,
-    language: CARD_PRESENTATION_LANGUAGE,
+    language,
   };
   const useCustom =
     cardDesignMode(cardProps.designMode) === "CUSTOM" &&
@@ -53,7 +49,7 @@ export function LoyaltyCard(props: LoyaltyCardProps) {
     <div
       data-testid="loyalty-card-flip"
       data-card-side={side}
-      data-card-presentation-language={CARD_PRESENTATION_LANGUAGE}
+      data-card-presentation-language={language}
       className="w-full [perspective:1200px]"
     >
       <div
