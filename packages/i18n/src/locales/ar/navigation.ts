@@ -14,6 +14,7 @@ export const arabicNavigationMessages = {
   scan: "المسح",
   customers: "العملاء",
   activity: "النشاط",
+  messages: "الرسائل",
   program: "برنامج الولاء",
   rewards: "المكافآت",
   offers: "العروض",
