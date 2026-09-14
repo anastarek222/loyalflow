@@ -12,6 +12,7 @@ import {
 import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
 import { getBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
+import { logWhatsAppMetaProviderFailure } from "@/lib/server/integrations/whatsapp-meta-provider-diagnostics";
 import { compileWhatsAppTemplateForMeta } from "@/lib/whatsapp-templates";
 
 type MetaTemplateResult =
@@ -155,6 +156,11 @@ async function fetchTemplateByName(input: {
     } as const;
   }
   if (!result.response.ok) {
+    logWhatsAppMetaProviderFailure({
+      operation: "fetch-template",
+      httpStatus: result.response.status,
+      payload: result.payload,
+    });
     return {
       status: "failure",
       reason: `WHATSAPP_META_TEMPLATE_HTTP_${result.response.status}`,
@@ -460,6 +466,11 @@ export async function submitBusinessWhatsAppTemplateToMeta(
     };
   }
   if (!created.response.ok) {
+    logWhatsAppMetaProviderFailure({
+      operation: "create-template",
+      httpStatus: created.response.status,
+      payload: created.payload,
+    });
     const reconciled = await fetchTemplateByName({
       apiVersion: context.apiVersion,
       wabaId: context.wabaId,
