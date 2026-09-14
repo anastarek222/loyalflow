@@ -74,9 +74,9 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
       dir="ltr"
       className="lf-marketing-surface border-t border-[var(--lf-border)] bg-[var(--lf-surface)] px-5 pb-8 pt-16 text-[var(--lf-foreground)] sm:px-8 lg:px-10 lg:pt-20"
     >
-      <div className="mx-auto w-full max-w-[1240px]">
-        <div className="grid gap-12 border-b border-[var(--lf-border)] pb-14 md:grid-cols-12">
-          <div className="md:col-span-4">
+      <div className="mx-auto w-full max-w-[1440px]">
+        <div className="grid gap-12 border-b border-[var(--lf-border)] pb-14 lg:grid-cols-12">
+          <div className="lg:col-span-4">
             <Link
               href="/"
               className="inline-flex items-center gap-2 text-lg font-black text-[var(--lf-foreground)]"
@@ -122,7 +122,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
 
           <nav
             aria-label={copy("marketing.primaryNavLabel")}
-            className="grid grid-cols-2 gap-x-6 gap-y-10 md:col-span-8 md:grid-cols-4"
+            className="grid grid-cols-2 gap-x-6 gap-y-10 lg:col-span-8 lg:grid-cols-4"
           >
             <div dir={contentDirection}>
               <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lf-foreground)]">
@@ -224,7 +224,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
           </nav>
         </div>
 
-        <div className="flex flex-col gap-5 pt-7 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-5 pt-7 md:flex-row md:items-center md:justify-between">
           <p dir={contentDirection} className="text-sm text-[var(--lf-foreground-subtle)]">
             {copy("marketing.footerRights")}
           </p>
