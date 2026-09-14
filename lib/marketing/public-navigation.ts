@@ -55,6 +55,13 @@ function localizeMarketingRoute(
   locale: SupportedLocale,
   route: (typeof PUBLIC_MARKETING_ROUTES)[number],
 ): PublicMarketingNavigationItem {
+  if (route.href === "/about") {
+    return {
+      href: route.href,
+      label: locale === "ar" ? "عن Tanee" : "About Tanee",
+    };
+  }
+
   return {
     href: route.href,
     label: translate(locale, route.labelKey),
