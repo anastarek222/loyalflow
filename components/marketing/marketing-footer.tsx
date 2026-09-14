@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingNavLink } from "@/components/marketing/marketing-nav-link";
 import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
@@ -136,7 +137,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                       className={footerLinkClassName}
                       activeClassName={footerLinkActiveClassName}
                     >
-                      {item.label}
+                      <MarketingBrandText text={item.label} />
                     </MarketingNavLink>
                   </li>
                 ))}
@@ -144,7 +145,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             </div>
             <div dir={contentDirection}>
               <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lf-foreground)]">
-                Tanee
+                <MarketingBrandText text="Tanee" />
               </h2>
               <ul className="mt-5 space-y-3 text-sm text-[var(--lf-foreground-muted)]">
                 {navigation.brand.map((item) => (
@@ -154,7 +155,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                       className={footerLinkClassName}
                       activeClassName={footerLinkActiveClassName}
                     >
-                      {item.label}
+                      <MarketingBrandText text={item.label} />
                     </MarketingNavLink>
                   </li>
                 ))}
@@ -172,7 +173,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
                       className={footerLinkClassName}
                       activeClassName={footerLinkActiveClassName}
                     >
-                      {item.label}
+                      <MarketingBrandText text={item.label} />
                     </MarketingNavLink>
                   </li>
                 ))}
@@ -226,7 +227,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
 
         <div className="flex flex-col gap-5 pt-7 md:flex-row md:items-center md:justify-between">
           <p dir={contentDirection} className="text-sm text-[var(--lf-foreground-subtle)]">
-            {copy("marketing.footerRights")}
+            <MarketingBrandText text={copy("marketing.footerRights")} />
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <MarketingThemeSwitcher locale={locale} />
