@@ -73,6 +73,6 @@ test("new redemptions still revalidate the canonical reward inside the transacti
   );
   assert.match(
     command,
-    /recordRewardRedemption\(transaction, \{[\s\S]*cost: effectiveCost[\s\S]*idempotencyKey: input\.idempotencyKey/,
+    /recordRewardRedemption\(transaction, \{[\s\S]*cost: rewardEntitlementSnapshot\.cost[\s\S]*idempotencyKey: input\.idempotencyKey/,
   );
 });
