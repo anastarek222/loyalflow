@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 for (const locale of ["en", "ar"] as const) {
   for (const theme of ["light", "dark"] as const) {
     for (const route of ["terms", "data-deletion"] as const) {
-      test(`${route} ${locale} ${theme}: shared marketing legal shell @desktop @mobile`, async ({
+      test(`${route} ${locale} ${theme}: shared marketing legal shell @critical @desktop @mobile`, async ({
         page,
         context,
         baseURL,
