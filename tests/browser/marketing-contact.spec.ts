@@ -45,21 +45,36 @@ for (const locale of ["en", "ar"] as const) {
       await expect(contactOptions).toHaveCount(3);
       await expectSameRow(contactOptions);
 
-      await expect(page.locator("#book-meeting")).toBeVisible();
-      await expect(page.locator('input[name="meetingMethod"]')).toHaveCount(6);
-      await expectSameRow(
-        page.locator(
-          "#book-meeting fieldset > div > label:nth-child(-n+3)",
-        ),
-      );
-      await expect(page.locator('input[name="preferredDate"]')).toBeVisible();
-      await expect(page.locator('input[name="preferredTime"]')).toBeVisible();
+      const bookingSection = page.locator("#book-meeting");
+      await expect(bookingSection).toBeVisible();
+      await expect(bookingSection).toHaveAttribute("tabindex", "-1");
+      await expect(page.locator('input[name="meetingMethod"]')).toHaveCount(3);
+      await expectSameRow(page.locator("#book-meeting fieldset > div > label"));
+
+      const meetingDate = page.getByTestId("meeting-date");
+      await expect(meetingDate).toBeVisible();
+      const minimumDate = await meetingDate.getAttribute("min");
+      expect(minimumDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      await expect(meetingDate).toHaveValue(minimumDate!);
+
+      const meetingTime = page.getByTestId("meeting-time");
+      await expect(meetingTime).toBeVisible();
+      await expect(meetingTime.locator('option[value="15:00"]')).toHaveCount(1);
+      await expect(meetingTime.locator('option[value="00:00"]')).toHaveCount(1);
+      await expect(page.getByText("Africa/Cairo", { exact: false })).toBeVisible();
+
       await expect(
         page.locator('a[href="https://wa.me/17166571813"]').first(),
       ).toBeVisible();
       await expect(
         page.locator('a[href="mailto:tanee.eg.loyalty@gmail.com"]').first(),
       ).toBeVisible();
+
+      const teaser = page.getByTestId("talk-to-expert-teaser");
+      await expect(teaser).toBeVisible();
+      await expect(teaser).toContainText(
+        locale === "en" ? "Book your meeting" : "احجز اجتماعك",
+      );
 
       const trigger = page.getByTestId("talk-to-expert-trigger");
       await expect(trigger).toBeVisible();
@@ -78,6 +93,24 @@ for (const locale of ["en", "ar"] as const) {
       ).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(panel).toBeHidden();
+
+      if ((page.viewportSize()?.width ?? 1440) < 1280) {
+        const mobileMenuButton = page.locator(
+          'button[aria-controls="marketing-mobile-menu"]',
+        );
+        await mobileMenuButton.click();
+        const drawer = page.locator("#marketing-mobile-menu");
+        await expect(drawer).toBeVisible();
+        const foreground = await drawer.evaluate(
+          (node) => getComputedStyle(node).color,
+        );
+        const background = await drawer.evaluate(
+          (node) => getComputedStyle(node).backgroundColor,
+        );
+        expect(foreground).not.toBe(background);
+        await page.keyboard.press("Escape");
+        await expect(drawer).toBeHidden();
+      }
 
       expect(
         await page.evaluate(
