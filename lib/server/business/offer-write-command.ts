@@ -7,8 +7,13 @@ import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscript
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
+import {
+  getOfferTagAudienceId,
+  isOfferAudienceSelectorForLoyaltyMode,
+} from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
+import type { LoyaltyMode } from "@/generated/prisma/client";
 
 export type OfferWriteActor = Readonly<{
   id: string;
@@ -25,17 +30,46 @@ type OfferWriteFailure = Readonly<{
     | "TARGET_NOT_FOUND"
     | "SUBSCRIPTION_RESTRICTED"
     | "PLAN_FEATURE"
-    | "PLAN_LIMIT";
+    | "PLAN_LIMIT"
+    | "INVALID_AUDIENCE";
 }>;
 
 export type OfferWriteCommandResult = Readonly<{ ok: true }> | OfferWriteFailure;
+
+type OfferAudienceValidationClient = Pick<typeof prisma, "customerTag">;
+
+async function hasValidOfferAudience(
+  client: OfferAudienceValidationClient,
+  businessId: string,
+  loyaltyMode: LoyaltyMode,
+  offer: NormalizedOfferInput,
+) {
+  if (offer.eligibility !== "SEGMENT") {
+    return offer.segment === null;
+  }
+  if (
+    !offer.segment ||
+    !isOfferAudienceSelectorForLoyaltyMode(offer.segment, loyaltyMode)
+  ) {
+    return false;
+  }
+
+  const tagId = getOfferTagAudienceId(offer.segment);
+  if (!tagId) return true;
+
+  const tag = await client.customerTag.findFirst({
+    where: { id: tagId, businessId },
+    select: { id: true },
+  });
+  return Boolean(tag);
+}
 
 /**
  * Authoritative non-financial Offer creation boundary.
  *
  * The caller keeps authentication, tenant authorization, input parsing,
  * presentation preflight, redirects and revalidation. This command owns the
- * persisted subscription/plan checks and the atomic Offer + audit write.
+ * persisted subscription/plan/audience checks and the atomic Offer + audit write.
  */
 export async function createOfferCommand(input: {
   businessId: string;
@@ -59,7 +93,7 @@ export async function createOfferCommand(input: {
 
     const business = await transaction.business.findUnique({
       where: { id: input.businessId },
-      select: { plan: true },
+      select: { plan: true, loyaltyMode: true },
     });
     if (!business) {
       return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
@@ -82,6 +116,16 @@ export async function createOfferCommand(input: {
 
     if (!hasFeatureEntitlement(business.plan, "OFFERS")) {
       return { ok: false, reason: "PLAN_FEATURE" } as const;
+    }
+    if (
+      !(await hasValidOfferAudience(
+        transaction,
+        input.businessId,
+        business.loyaltyMode,
+        input.offer,
+      ))
+    ) {
+      return { ok: false, reason: "INVALID_AUDIENCE" } as const;
     }
     if (
       !isWithinPlanLimit(
@@ -132,12 +176,31 @@ export async function updateOfferCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
-    const existingOffer = await transaction.offer.findFirst({
-      where: { id: input.offerId, businessId: input.businessId },
-      select: { id: true },
-    });
+    const [business, existingOffer] = await Promise.all([
+      transaction.business.findUnique({
+        where: { id: input.businessId },
+        select: { loyaltyMode: true },
+      }),
+      transaction.offer.findFirst({
+        where: { id: input.offerId, businessId: input.businessId },
+        select: { id: true },
+      }),
+    ]);
+    if (!business) {
+      return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
+    }
     if (!existingOffer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
+    if (
+      !(await hasValidOfferAudience(
+        transaction,
+        input.businessId,
+        business.loyaltyMode,
+        input.offer,
+      ))
+    ) {
+      return { ok: false, reason: "INVALID_AUDIENCE" } as const;
     }
 
     const offer = await transaction.offer.update({
@@ -178,12 +241,32 @@ export async function setOfferStatusCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
-    const existingOffer = await transaction.offer.findFirst({
-      where: { id: input.offerId, businessId: input.businessId },
-      select: { id: true },
-    });
+    const [business, existingOffer] = await Promise.all([
+      transaction.business.findUnique({
+        where: { id: input.businessId },
+        select: { loyaltyMode: true },
+      }),
+      transaction.offer.findFirst({
+        where: { id: input.offerId, businessId: input.businessId },
+        select: { id: true, eligibility: true, segment: true },
+      }),
+    ]);
+    if (!business) {
+      return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
+    }
     if (!existingOffer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
+    if (
+      input.isActive &&
+      !(await hasValidOfferAudience(
+        transaction,
+        input.businessId,
+        business.loyaltyMode,
+        existingOffer,
+      ))
+    ) {
+      return { ok: false, reason: "INVALID_AUDIENCE" } as const;
     }
 
     const offer = await transaction.offer.update({
