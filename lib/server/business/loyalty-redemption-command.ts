@@ -142,7 +142,11 @@ export async function redeemLoyaltyRewardCommand(input: {
           orderBy: { unlockedAt: "desc" },
         });
 
-        if (unlock) {
+        if (!unlock) {
+          return { ok: false, reason: "REWARD_UNAVAILABLE" } as const;
+        }
+
+        {
           const unlockState = getRewardUnlockRedemptionState({
             expectedBusinessId: input.businessId,
             unlockBusinessId: unlock.businessId,
@@ -194,6 +198,13 @@ export async function redeemLoyaltyRewardCommand(input: {
         }
       }
 
+      const rewardEntitlementSnapshot = {
+        cost: effectiveCost,
+        label: effectiveRewardLabel,
+        name: effectiveRewardName,
+        unlockId,
+      } as const;
+
       const balance = await recordRewardRedemption(transaction, {
         customerId: input.customerId,
         businessId: input.businessId,
@@ -201,11 +212,13 @@ export async function redeemLoyaltyRewardCommand(input: {
         branchId: input.branchId,
         attributedStaffId: input.attributedStaffId,
         activityContext: input.activityContext,
-        cost: effectiveCost,
-        rewardLabel: effectiveRewardLabel,
-        rewardName: effectiveRewardName,
+        cost: rewardEntitlementSnapshot.cost,
+        rewardLabel: rewardEntitlementSnapshot.label,
+        rewardName: rewardEntitlementSnapshot.name,
         rewardId: input.rewardId,
-        ...(unlockId ? { unlockId } : {}),
+        ...(rewardEntitlementSnapshot.unlockId
+          ? { unlockId: rewardEntitlementSnapshot.unlockId }
+          : {}),
         idempotencyKey: input.idempotencyKey,
         reportContextFailure: input.reportContextFailure,
       });
@@ -225,7 +238,7 @@ export async function redeemLoyaltyRewardCommand(input: {
         event: "REWARD_REDEEMED",
         eventKey: input.idempotencyKey,
         balance,
-        rewardName: effectiveRewardName,
+        rewardName: rewardEntitlementSnapshot.name,
       });
       const integrationJobIds = [sheetsJob.id, redeemedJob?.id].filter(
         (jobId): jobId is string => Boolean(jobId),
