@@ -14,6 +14,7 @@ import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import { platformBrand } from "@/lib/platform-brand";
 import { PUBLIC_SITE_URL } from "@/lib/urls/public-site-url";
 import { CustomerFeedbackBanner } from "@/components/customer-feedback-banner";
+import { WhatsAppTemplateActionFeedback } from "@/components/whatsapp-template-action-feedback";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -69,6 +70,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <CustomerFeedbackBanner locale={locale} />
         </Suspense>
+        <WhatsAppTemplateActionFeedback />
         {children}
       </body>
     </html>
