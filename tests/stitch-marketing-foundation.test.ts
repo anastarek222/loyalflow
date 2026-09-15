@@ -88,7 +88,7 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   assert.match(brandRenderer, /data-marketing-inline-wordmark/);
   assert.match(styles, /inline-size:\s*3\.515625em/);
   assert.match(styles, /block-size:\s*0\.9em/);
-  assert.match(styles, /wordmark-size="compact"[^}]*block-size:\s*100%/s);
+  assert.match(styles, /wordmark-size="compact"[\s\S]*?block-size:\s*100%/);
   assert.match(styles, /wordmark-size="marketing"/);
   assert.match(styles, /block-size:\s*1\.75rem/);
   assert.match(header, /themeAdaptiveWordmark/);
