@@ -27,9 +27,9 @@ The earlier Phase H pass remains valid for these already-executed surfaces and w
 | Protected direct route | PASS | Anonymous protected-route access redirected to `/login`. |
 | Arabic / RTL | PASS | Arabic switch produced RTL direction and no desktop horizontal overflow in the prior browser pass. |
 
-## Staging database verification — read-only
+## Designated Staging database verification — read-only
 
-The designated Staging Neon target was re-verified after the external browser run:
+The intended Staging Neon target was re-verified after the external browser run:
 
 - Neon project: `loyalflow-staging` (`divine-fog-40741793`)
 - Branch: `main` (`br-wispy-morning-aub14jdr`)
@@ -69,11 +69,52 @@ Vercel runtime logs for the same deployment and request at `2026-09-15T12:12:25Z
 - missing runtime column: `Customer.whatsappOptInAt`
 - response: HTTP `500`
 
-This conflicts with the designated Staging Neon target, where the migration is applied and the column is present. Therefore the protected Preview is not operating against the verified Staging database state expected by this Phase H run.
+## Exact Preview database target — read-only proof
 
-This is a Preview database-target/schema-drift gate. It is not valid to hide it by changing the Public Card query because fixture-backed UAT would then create fixtures in the verified Staging database while the Preview would continue reading a different/stale database target.
+The Preview database mismatch is now identified, not merely inferred.
 
-Changing `DATABASE_URL`, Vercel Environment Variables, Secrets, Schema, or migrations is explicitly outside the authorization for this Phase H run, so execution stops at this gate.
+At the failed external-browser request, the Neon compute that became active at exactly `2026-09-15T12:12:27Z` was the legacy project's Staging branch:
+
+- Neon project: `Loyalty Card` (`ancient-tooth-70219018`)
+- Branch: `staging` (`br-late-leaf-adwhj06g`)
+- Endpoint identity: `ep-lucky-mountain-adz1ckw2.c-2.us-east-1.aws.neon.tech`
+
+Read-only verification of that exact branch showed:
+
+- `Customer.whatsappOptInAt`: **absent**
+- migration `20260901113000_add_automatic_customer_messaging`: **not applied**
+- Final-UAT business fixtures: **0**
+- latest applied repository migration: `20260814213000_add_integration_outbox_jobs`
+
+The repository currently contains six migrations after that point:
+
+1. `20260831160000_add_trial_runtime_persistence`
+2. `20260901113000_add_automatic_customer_messaging`
+3. `20260901160000_add_business_whatsapp_credentials`
+4. `20260903171000_add_whatsapp_delivery_status`
+5. `20260905120000_add_public_trial_acquisition_identity`
+6. `20260907120000_add_business_whatsapp_template_bindings`
+
+Therefore this is not a safe single-column or single-migration catch-up. Blindly migrating the legacy Preview database would cross trial, acquisition, and WhatsApp schema scopes and was intentionally **not** performed.
+
+The correct remediation is to repoint the Vercel Preview environment for `fix/reward-truth-core` to the designated, already-current `loyalflow-staging` database rather than masking the failure in application code or bulk-migrating the legacy database.
+
+## Environment write-path gate
+
+The connected Vercel capability can inspect projects, deployments, build/runtime logs, and protected Preview URLs, but it does not expose a project Environment Variable mutation action in this session.
+
+The repository also has prior explicit evidence that repository secret `VERCEL_TOKEN` is not configured, so a temporary GitHub Actions Vercel REST mutation cannot be performed without introducing a new credential.
+
+Required administrative correction:
+
+- Vercel project: `loyalflow` (`prj_XR2myqPuensw4MTYF5Rgi0w0MPMG`)
+- scope: Preview / branch `fix/reward-truth-core` only
+- repoint the Preview database target from legacy `Loyalty Card/staging` to designated Neon `loyalflow-staging/main`
+- keep any staging-isolation host variables consistent with the designated Staging host
+- do not change Production environment variables or Production aliases
+- redeploy the branch Preview after the Environment Variable correction
+
+No database credentials or connection strings are recorded in this evidence file.
 
 ## Fixture gate and cleanup
 
@@ -83,7 +124,7 @@ The required invalid-card preflight failed before fixture creation. Consequently
 - Final UAT fixtures created: **0**.
 - Desktop, tablet, and mobile fixture-backed UAT steps were skipped.
 - The workflow's emergency cleanup step executed successfully.
-- Read-only Neon verification after the run confirmed final-UAT fixture count remains **0**.
+- Read-only Neon verification after the run confirmed final-UAT fixture count remains **0** on both the designated Staging branch and the legacy Preview Staging branch.
 
 The following journeys therefore remain unexecuted in the current external run: Customer join/profile, Scan, reward availability/redemption, Owner, Manager, Staff, Viewer, Super Admin, permission-denied, subscription-restricted, tenant isolation, and fixture-backed mobile/RTL coverage.
 
@@ -91,6 +132,12 @@ The following journeys therefore remain unexecuted in the current external run: 
 
 Phase H remains `PARTIAL / BLOCKED`.
 
-The browser tooling blocker is resolved: a real external Chromium browser reached the exact Preview. The remaining blocker is now proven to be the Preview runtime database target/state: the Preview still returns Prisma `P2022` for a column that exists in the designated Staging Neon database.
+The browser tooling blocker is resolved and the database-target blocker is now precisely identified. The exact Preview is using legacy `Loyalty Card/staging`, which is six repository migrations behind, while the designated `loyalflow-staging/main` target already contains the required schema state.
 
-To continue Phase H, the Preview runtime must first be pointed at the already-migrated designated Staging database (or its actual Preview database must be brought to the already-approved migration state) under a separately authorized Environment/Database gate. After that, rerun the invalid-card preflight; only when it returns `404` should the official staging fixtures be created and the remaining browser journeys executed, followed by official cleanup regardless of result.
+After the Preview Environment Variable correction and redeploy, the next gate is strictly:
+
+1. authenticate external Chromium to the corrected exact Preview;
+2. verify `/card/not-a-valid-public-token` returns HTTP `404` with the unavailable-card surface;
+3. only after that PASS, create the official Staging final-UAT fixtures;
+4. execute the remaining desktop/tablet/mobile role, reward, permission, subscription, and tenant-isolation journeys;
+5. run official cleanup regardless of UAT result.
