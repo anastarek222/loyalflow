@@ -55,7 +55,10 @@ test("T006 Offer mutations retain validation, plan limits, tenant scope, and aud
   assert.match(offerActions, /updateOfferCommand\(/);
   assert.match(offerActions, /setOfferStatusCommand\(/);
   assert.match(offerCommand, /canBusinessPerformSubscriptionOperation\(/);
-  assert.match(offerCommand, /hasFeatureEntitlement\(business\.plan, "OFFERS"\)/);
+  assert.match(
+    offerCommand,
+    /hasFeatureEntitlement\(business\.plan, "OFFERS"\)/,
+  );
   assert.match(offerCommand, /isWithinPlanLimit\(/);
   assert.match(
     offerCommand,
@@ -82,7 +85,7 @@ test("T006 Campaign preparation keeps plan, selection, and candidate queries ten
   );
   assert.match(campaigns, /take: 100/);
   assert.match(campaigns, /getRewardAvailability\(/);
-  assert.match(campaigns, /getCustomerSegment\(/);
+  assert.match(campaigns, /getCustomerLifecycleSegment\(/);
 });
 
 test("T006 Campaign builder preserves deterministic audiences and manual WhatsApp drafts", () => {

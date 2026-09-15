@@ -1,7 +1,13 @@
 import { auth } from "@/auth";
-import { canExportBusinessData } from "@/lib/permissions";
 import { parseSelectedExportIds } from "@/lib/customers/bulk";
+import {
+  customerMatchesSegment,
+  getCustomerFilterSegments,
+  type CustomerSegment,
+} from "@/lib/customers/segments";
+import { canExportBusinessData } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { resolveBusinessCustomerAudienceContexts } from "@/lib/server/customers/audience-context";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +62,9 @@ export async function GET(
       name: true,
       slug: true,
       isActive: true,
+      loyaltyMode: true,
+      rewardName: true,
+      rewardThreshold: true,
     },
   });
 
@@ -88,12 +97,20 @@ export async function GET(
     );
   }
 
-  const selectedIds = parseSelectedExportIds(
-    new URL(request.url).searchParams.get("ids")
-  );
-  const requestedSelection = new URL(request.url).searchParams.has("ids");
+  const url = new URL(request.url);
+  const selectedIds = parseSelectedExportIds(url.searchParams.get("ids"));
+  const requestedSelection = url.searchParams.has("ids");
   if (requestedSelection && !selectedIds) {
     return Response.json({ error: "Invalid selected customers" }, { status: 400 });
+  }
+
+  const availableSegments = getCustomerFilterSegments(business.loyaltyMode);
+  const requestedSegment = url.searchParams.get("segment");
+  const segment = availableSegments.includes(requestedSegment as CustomerSegment)
+    ? (requestedSegment as CustomerSegment)
+    : null;
+  if (requestedSegment && !segment) {
+    return Response.json({ error: "Invalid customer segment" }, { status: 400 });
   }
 
   if (selectedIds) {
@@ -105,32 +122,70 @@ export async function GET(
     }
   }
 
-  const customers = await prisma.customer.findMany({
-    where: {
-      businessId: business.id,
-      ...(selectedIds ? { id: { in: selectedIds } } : {}),
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    select: {
-      firstName: true,
-      lastName: true,
-      phone: true,
-      customerCode: true,
-      balance: true,
-      lifetimeEarned: true,
-      lifetimeRedeemed: true,
-      isActive: true,
-      createdAt: true,
-      _count: {
-        select: {
-          redemptions: true,
-          transactions: true,
+  const [customers, activeRewards] = await Promise.all([
+    prisma.customer.findMany({
+      where: {
+        businessId: business.id,
+        ...(selectedIds ? { id: { in: selectedIds } } : {}),
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        customerCode: true,
+        balance: true,
+        lifetimeEarned: true,
+        lifetimeRedeemed: true,
+        isActive: true,
+        createdAt: true,
+        transactions: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+        _count: {
+          select: {
+            redemptions: true,
+            transactions: true,
+          },
         },
       },
-    },
-  });
+    }),
+    segment
+      ? prisma.reward.findMany({
+          where: { businessId: business.id, isActive: true },
+          select: { id: true, name: true, cost: true, isActive: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const audienceContexts = segment
+    ? await resolveBusinessCustomerAudienceContexts({
+        business,
+        customers,
+        catalogueRewards: activeRewards,
+      })
+    : new Map();
+
+  const exportedCustomers = segment
+    ? customers.filter((customer) =>
+        customerMatchesSegment(
+          segment,
+          {
+            isActive: customer.isActive,
+            createdAt: customer.createdAt,
+            lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+            lifetimeEarned: customer.lifetimeEarned,
+            rewardThreshold: business.rewardThreshold,
+          },
+          audienceContexts.get(customer.id) ?? {},
+        ),
+      )
+    : customers;
 
   const headers = [
     "الاسم الأول",
@@ -146,7 +201,7 @@ export async function GET(
     "تاريخ التسجيل",
   ];
 
-  const rows = customers.map((customer) => [
+  const rows = exportedCustomers.map((customer) => [
     customer.firstName,
     customer.lastName ?? "",
     customer.phone,

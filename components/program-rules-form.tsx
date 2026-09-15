@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ProgramRulesBusiness } from "@/components/business-settings-form";
@@ -56,11 +56,13 @@ export function ProgramRulesForm({
   action,
 }: Props) {
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
-  const fieldHelp = loyaltyProgrammeFieldHelp(business.loyaltyMode, language);
+  const [selectedLoyaltyMode, setSelectedLoyaltyMode] = useState(
+    business.loyaltyMode,
+  );
+  const fieldHelp = loyaltyProgrammeFieldHelp(selectedLoyaltyMode, language);
   const helpByField: Record<string, string | undefined> = {
     loyaltyProgramName: fieldHelp.loyaltyProgramName,
     unitName: fieldHelp.unitName,
-    earnAmount: fieldHelp.earnAmount,
     rewardName: fieldHelp.rewardName,
     rewardThreshold: fieldHelp.rewardThreshold,
   };
@@ -134,12 +136,6 @@ export function ProgramRulesForm({
       t("اسم الوحدة", "Unit name"),
       business.unitName,
       STANDARD_CARD_UNIT_LABEL_MAX_LENGTH,
-    ],
-    [
-      "earnAmount",
-      t("قيمة الإضافة", "Earn amount"),
-      business.earnAmount,
-      undefined,
     ],
     ["rewardName", t("اسم المكافأة", "Reward name"), business.rewardName, 100],
     [
@@ -223,22 +219,10 @@ export function ProgramRulesForm({
             ) : (
               <input
                 name={name}
-                type={
-                  name === "earnAmount" || name === "rewardThreshold"
-                    ? "number"
-                    : "text"
-                }
-                min={
-                  name === "earnAmount" || name === "rewardThreshold"
-                    ? 1
-                    : undefined
-                }
+                type={name === "rewardThreshold" ? "number" : "text"}
+                min={name === "rewardThreshold" ? 1 : undefined}
                 defaultValue={value}
-                required={[
-                  "earnAmount",
-                  "rewardName",
-                  "rewardThreshold",
-                ].includes(name)}
+                required={["rewardName", "rewardThreshold"].includes(name)}
                 maxLength={maxLength}
                 className={inputClass}
               />
@@ -267,7 +251,12 @@ export function ProgramRulesForm({
           <span className="mb-2 block">{t("نظام الولاء", "Loyalty mode")}</span>
           <select
             name="loyaltyMode"
-            defaultValue={business.loyaltyMode}
+            value={selectedLoyaltyMode}
+            onChange={(event) =>
+              setSelectedLoyaltyMode(
+                event.target.value as typeof business.loyaltyMode,
+              )
+            }
             className={inputClass}
           >
             <option value="VISITS">{t("زيارات / أختام", "Visits")}</option>
@@ -280,6 +269,41 @@ export function ProgramRulesForm({
             {fieldHelp.loyaltyMode}
           </span>
         </label>
+        {selectedLoyaltyMode === "POINTS" ? (
+          <label className="text-sm font-medium text-foreground-muted">
+            <span className="mb-2 block">{t("قيمة الإضافة", "Earn amount")}</span>
+            <input
+              name="earnAmount"
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              defaultValue={business.loyaltyMode === "POINTS" ? business.earnAmount : 1}
+              required
+              className={inputClass}
+            />
+            {fieldHelp.earnAmount ? (
+              <span className="mt-2 block text-xs leading-5 text-foreground-subtle">
+                {fieldHelp.earnAmount}
+              </span>
+            ) : null}
+          </label>
+        ) : (
+          <>
+            <input type="hidden" name="earnAmount" value="1" />
+            <div className="rounded-[var(--lf-radius-input)] border border-primary/10 bg-primary-subtle/40 px-4 py-3 text-sm leading-6 text-primary">
+              {selectedLoyaltyMode === "VISITS"
+                ? t(
+                    "كل عملية كسب تسجل زيارة واحدة. لا توجد قيمة إضافة قابلة للتعديل.",
+                    "Each earn operation records exactly one visit. There is no configurable earn amount.",
+                  )
+                : t(
+                    "الرصيد يزيد بقيمة البيع المسجلة في كل عملية، بوحدات عملة صحيحة فقط.",
+                    "Balance increases by the recorded sale value for each operation, using whole currency units only.",
+                  )}
+            </div>
+          </>
+        )}
         <label className="text-sm font-medium text-foreground-muted">
           <span className="mb-2 block">{t("نوع المكافأة", "Reward type")}</span>
           <select
