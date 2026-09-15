@@ -47,6 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           prefix="phase-h-uat-handoff:${GITHUB_RUN_ID}:"
+          request_id="$GITHUB_RUN_ID"
           rm -f /tmp/phase-h-handoff/payload.json
           for attempt in $(seq 1 180); do
             body=$(curl -fsS \
@@ -58,7 +59,7 @@ jobs:
             if [ -n "$body" ]; then
               encoded="${body#${prefix}}"
               printf '%s' "$encoded" | base64 -d > /tmp/phase-h-handoff/payload.json
-              if jq -e --arg requestId "$GITHUB_RUN_ID" '.requestId == $requestId' /tmp/phase-h-handoff/payload.json >/dev/null 2>&1; then
+              if jq -e --arg requestId "$request_id" '.requestId == $requestId' /tmp/phase-h-handoff/payload.json >/dev/null 2>&1; then
                 exit 0
               fi
             fi
