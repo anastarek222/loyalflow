@@ -1,0 +1,382 @@
+name: Temporary Phase H Runtime MFA Enrollment UAT
+
+on:
+  push:
+    branches:
+      - agent/phase-h-runtime-uat-5c0c7164
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  phase-h-runtime-mfa-uat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      CI: "true"
+      TARGET_SHA: f85b4f5abcd3ef6c129c5f23826c349de69f1025
+      STAGING_UAT_BASE_URL: https://loyalflow-dhv01bm8y-anas-tarek.vercel.app
+      LOYALFLOW_ENVIRONMENT: staging
+      LOYALFLOW_STAGING_DATABASE: neondb
+      LOYALFLOW_STAGING_DATABASE_HOST: ep-steep-bar-au02osd6-pooler.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_PRODUCTION_DATABASE_HOST: ep-crimson-moon-au6bcbh1.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+      PR_NUMBER: "549"
+    steps:
+      - name: Generate ephemeral RSA handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/phase-h-handoff
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/phase-h-handoff/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/phase-h-handoff/private.pem -pubout -out /tmp/phase-h-handoff/public.pem
+
+      - name: Publish public handoff key artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-runtime-mfa-handoff-${{ github.run_id }}
+          path: /tmp/phase-h-handoff/public.pem
+          retention-days: 1
+
+      - name: Wait for OpenSSL encrypted handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="phase-h-runtime-mfa-handoff:${GITHUB_RUN_ID}:"
+          request_id="$GITHUB_RUN_ID"
+          rm -f /tmp/phase-h-handoff/payload.json
+          for attempt in $(seq 1 180); do
+            body=$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              | jq -r --arg prefix "$prefix" '[.[] | .body | select(startswith($prefix))] | last // empty')
+            if [ -n "$body" ]; then
+              encoded="${body#${prefix}}"
+              printf '%s' "$encoded" | base64 -d > /tmp/phase-h-handoff/payload.json
+              if jq -e --arg requestId "$request_id" '.requestId == $requestId and (.secrets | type == "object")' /tmp/phase-h-handoff/payload.json >/dev/null 2>&1; then
+                exit 0
+              fi
+            fi
+            sleep 2
+          done
+          echo "::error::Encrypted Phase H handoff was not received"
+          exit 1
+
+      - name: Decrypt handoff with OpenSSL OAEP SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in DATABASE_URL UAT_FIXTURE_PASSWORD VERCEL_SHARE_URL; do
+            out="/tmp/phase-h-handoff/${name}.clear"
+            : > "$out"
+            count=$(jq -r --arg name "$name" '.secrets[$name] | length // 0' /tmp/phase-h-handoff/payload.json)
+            test "$count" -ge 1
+            for index in $(seq 0 $((count - 1))); do
+              jq -r --arg name "$name" --argjson index "$index" '.secrets[$name][$index]' /tmp/phase-h-handoff/payload.json | base64 -d > /tmp/phase-h-handoff/part.enc
+              openssl pkeyutl -decrypt -inkey /tmp/phase-h-handoff/private.pem -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256 -in /tmp/phase-h-handoff/part.enc >> "$out"
+            done
+            value=$(cat "$out")
+            test -n "$value"
+            echo "::add-mask::$value"
+            {
+              echo "$name<<PHUATEOF"
+              cat "$out"
+              echo
+              echo "PHUATEOF"
+            } >> "$GITHUB_ENV"
+          done
+          rm -f /tmp/phase-h-handoff/payload.json /tmp/phase-h-handoff/private.pem /tmp/phase-h-handoff/part.enc /tmp/phase-h-handoff/*.clear
+          echo "OPENSSL_HANDOFF=PASS"
+
+      - name: Checkout exact product SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+
+      - name: Apply UAT-only runtime MFA enrollment proof patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          fixture_path = Path('scripts/prepare-final-uat-fixtures.ts')
+          fixture = fixture_path.read_text()
+          start_marker = '  const mfaRootSecret = process.env.AUTH_SECRET?.trim();'
+          start = fixture.find(start_marker)
+          if start < 0:
+              raise SystemExit('fixture MFA root-secret block start not found')
+          end_marker = '  `;\n'
+          end = fixture.find(end_marker, start)
+          if end < 0:
+              raise SystemExit('fixture MFA insert block end not found')
+          end += len(end_marker)
+          fixture = fixture[:start] + fixture[end:]
+          fixture_path.write_text(fixture)
+
+          test_path = Path('tests/browser/final-uat-u13.spec.ts')
+          test = test_path.read_text()
+          import_anchor = 'import { expect, test, type Page } from "@playwright/test";\n'
+          if import_anchor not in test:
+              raise SystemExit('test import anchor not found')
+          test = test.replace(
+              import_anchor,
+              import_anchor + '\nimport { generateTotpCode } from "../../lib/auth/super-admin-mfa";\n',
+              1,
+          )
+          login_start = test.find('async function login(page: Page, role:')
+          logout_start = test.find('\nasync function logout(page: Page)', login_start)
+          if login_start < 0 or logout_start < 0:
+              raise SystemExit('login helper boundaries not found')
+          replacement = r'''async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin") {
+            const email = uatEmail(role, fixture.runId);
+            const password = process.env.UAT_FIXTURE_PASSWORD!;
+
+            await page.goto("/login");
+            await page.getByLabel("Email address").fill(email);
+            await page.getByLabel("Password").fill(password);
+            await page.getByRole("button", { name: "Sign in" }).press("Enter");
+
+            if (role === "superadmin") {
+              await expect(page.getByTestId("login-mfa-setup-step")).toBeVisible({ timeout: 15_000 });
+              await Promise.all([
+                page.waitForURL(/\/mfa\/setup$/),
+                page.locator('a[href="/mfa/setup"]').click(),
+              ]);
+              await page.locator("#email").fill(email);
+              await page.locator("#password").fill(password);
+              await page.locator('button[type="submit"]').click();
+
+              const secretElement = page.locator("code").first();
+              await expect(secretElement).toBeVisible({ timeout: 15_000 });
+              const secret = (await secretElement.innerText()).trim();
+              expect(secret).toMatch(/^[A-Z2-7]+$/);
+              await page.locator("#code").fill(generateTotpCode(secret));
+              await Promise.all([
+                page.waitForURL(/\/login\?mfa=enabled$/),
+                page.locator('button[type="submit"]').click(),
+              ]);
+
+              await page.getByLabel("Email address").fill(email);
+              await page.getByLabel("Password").fill(password);
+              await page.getByRole("button", { name: "Sign in" }).press("Enter");
+              await expect(page.getByTestId("login-mfa-step")).toBeVisible({ timeout: 15_000 });
+              await page.locator("#mfaCode").fill(generateTotpCode(secret));
+              await page.getByRole("button", { name: /Verify|تحقق/ }).press("Enter");
+              await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+              return;
+            }
+
+            const expectedDestination = role === "staff-a"
+              ? new RegExp(`/businesses/${fixture.businessA}/scan$`)
+              : new RegExp(`/businesses/${fixture.businessA}$`);
+            await expect(page).toHaveURL(expectedDestination, { timeout: 15_000 });
+          }
+          '''
+          test = test[:login_start] + replacement + test[logout_start:]
+          test_path.write_text(test)
+          PY
+          echo "RUNTIME_MFA_PROOF_PATCH=APPLIED"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        id: deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Locate system Google Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || true)"
+          test -n "$chrome"
+          "$chrome" --version
+          echo "SYSTEM_CHROME=$chrome" >> "$GITHUB_ENV"
+
+      - name: Bootstrap protected Preview in persistent Chrome profile
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/phase-h-chrome-profile
+          mkdir -p /tmp/phase-h-chrome-profile
+          "$SYSTEM_CHROME" --headless=new --no-sandbox --disable-gpu --remote-debugging-address=127.0.0.1 --remote-debugging-port=9222 --user-data-dir=/tmp/phase-h-chrome-profile "$VERCEL_SHARE_URL" >/tmp/phase-h-chrome.out 2>/tmp/phase-h-chrome.err &
+          echo $! > /tmp/phase-h-chrome.pid
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:9222/json/version >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Export authenticated state over CDP
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
+          const context = browser.contexts()[0];
+          if (!context) throw new Error('No persistent Chrome context found');
+          const page = context.pages()[0] ?? await context.newPage();
+          for (let attempt = 0; attempt < 30; attempt++) {
+            const body = await page.locator('body').innerText().catch(() => '');
+            if (/Tanee|LoyalFlow|Start your free trial|Sign in|تاني/i.test(body)) break;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          const body = await page.locator('body').innerText();
+          if (!/Tanee|LoyalFlow|Start your free trial|Sign in|تاني/i.test(body)) throw new Error(`CDP auth failed: ${page.url()}`);
+          await context.storageState({ path: '/tmp/phase-h-vercel-state.json' });
+          console.log('CDP_PREVIEW_AUTH=PASS');
+          await browser.close();
+          NODE
+
+      - name: Stop bootstrap Chrome
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          test -f /tmp/phase-h-chrome.pid && kill "$(cat /tmp/phase-h-chrome.pid)" 2>/dev/null || true
+          pkill -f '/tmp/phase-h-chrome-profile' 2>/dev/null || true
+
+      - name: Invalid Public Card preflight before fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.launch({ executablePath: process.env.SYSTEM_CHROME, args: ['--no-sandbox'] });
+          const context = await browser.newContext({ storageState: '/tmp/phase-h-vercel-state.json' });
+          const page = await context.newPage();
+          const response = await page.goto(`${process.env.STAGING_UAT_BASE_URL}/card/not-a-valid-public-token`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          if (!response || response.status() !== 404) throw new Error(`Invalid-card gate failed: ${response?.status()}`);
+          const heading = (await page.locator('h1').first().innerText()).trim();
+          if (!/Card unavailable|البطاقة غير متاحة/.test(heading)) throw new Error(`Unexpected invalid-card heading: ${heading}`);
+          console.log('INVALID_PUBLIC_CARD_PREFLIGHT=PASS status=404');
+          await browser.close();
+          NODE
+
+      - name: Write system Chrome Playwright config
+        shell: bash
+        run: |
+          cat > phase-h.playwright.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests/browser', fullyParallel: false, forbidOnly: true, retries: 0, workers: 1, timeout: 120_000,
+            reporter: [['list'], ['html', { open: 'never' }]],
+            use: {
+              baseURL: process.env.STAGING_UAT_BASE_URL!, browserName: 'chromium',
+              launchOptions: { executablePath: process.env.SYSTEM_CHROME!, args: ['--no-sandbox'] },
+              storageState: '/tmp/phase-h-vercel-state.json', trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off', actionTimeout: 30_000,
+            },
+            projects: [
+              { name: 'desktop-chromium', grep: /@desktop/, use: { viewport: { width: 1440, height: 900 } } },
+              { name: 'tablet-chromium', grep: /@tablet/, use: { viewport: { width: 768, height: 1024 }, hasTouch: true } },
+              { name: 'mobile-chromium', grep: /@mobile/, use: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
+            ],
+          });
+          EOF
+
+      - name: Run desktop final UAT with isolated fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=/tmp/phase-h-desktop.json
+          npm run prepare:final-uat -- --base-url="$STAGING_UAT_BASE_URL" --manifest="$manifest" >/tmp/phase-h-desktop-prepare.log 2>&1
+          run_id=$(jq -r .runId "$manifest")
+          set +e
+          STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project=desktop-chromium
+          code=$?
+          set -e
+          npm run cleanup:final-uat -- --cleanup="$run_id" >/tmp/phase-h-desktop-cleanup.log 2>&1
+          echo "DESKTOP_CLEANUP=PASS"
+          exit "$code"
+
+      - name: Run tablet final UAT with isolated fixtures
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=/tmp/phase-h-tablet.json
+          npm run prepare:final-uat -- --base-url="$STAGING_UAT_BASE_URL" --manifest="$manifest" >/tmp/phase-h-tablet-prepare.log 2>&1
+          run_id=$(jq -r .runId "$manifest")
+          set +e
+          STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project=tablet-chromium
+          code=$?
+          set -e
+          npm run cleanup:final-uat -- --cleanup="$run_id" >/tmp/phase-h-tablet-cleanup.log 2>&1
+          echo "TABLET_CLEANUP=PASS"
+          exit "$code"
+
+      - name: Run mobile final UAT with isolated fixtures
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          manifest=/tmp/phase-h-mobile.json
+          npm run prepare:final-uat -- --base-url="$STAGING_UAT_BASE_URL" --manifest="$manifest" >/tmp/phase-h-mobile-prepare.log 2>&1
+          run_id=$(jq -r .runId "$manifest")
+          set +e
+          STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project=mobile-chromium
+          code=$?
+          set -e
+          npm run cleanup:final-uat -- --cleanup="$run_id" >/tmp/phase-h-mobile-cleanup.log 2>&1
+          echo "MOBILE_CLEANUP=PASS"
+          exit "$code"
+
+      - name: Emergency fixture cleanup
+        if: always() && steps.deps.outcome == 'success'
+        shell: bash
+        run: |
+          set +e
+          for manifest in /tmp/phase-h-desktop.json /tmp/phase-h-tablet.json /tmp/phase-h-mobile.json; do
+            if [ -f "$manifest" ]; then
+              run_id=$(jq -r .runId "$manifest" 2>/dev/null)
+              test -n "$run_id" && test "$run_id" != "null" && npm run cleanup:final-uat -- --cleanup="$run_id" >/dev/null 2>&1 || true
+            fi
+          done
+          echo "EMERGENCY_CLEANUP_ATTEMPTED=YES"
+
+      - name: Verify final UAT fixture count is zero
+        if: always() && steps.deps.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import pg from 'pg';
+          const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+          await client.connect();
+          const result = await client.query('SELECT count(*)::int AS count FROM "Business" WHERE name LIKE $1', ['LoyalFlow final UAT %']);
+          await client.end();
+          const count = result.rows[0]?.count ?? -1;
+          console.log(`FINAL_UAT_FIXTURE_COUNT=${count}`);
+          if (count !== 0) throw new Error(`Final UAT fixture cleanup incomplete: ${count} businesses remain`);
+          NODE
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-runtime-mfa-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+            /tmp/phase-h-*-prepare.log
+            /tmp/phase-h-*-cleanup.log
+            /tmp/phase-h-chrome.err
+          if-no-files-found: ignore
+          retention-days: 7
