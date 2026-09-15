@@ -23,6 +23,7 @@ import {
   getCustomerSegmentWhere,
   type CustomerSegment,
 } from "@/lib/customers/segments";
+import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
 import { canExportBusinessData, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getBusinessTheme } from "@/lib/theme";
@@ -266,15 +267,20 @@ export default async function ReportsPage({
     ? { branchId: reportScope.branchId }
     : {};
 
+  const segmentCustomerIds = segment
+    ? await resolveBusinessCustomerIdsForSegment({
+        business,
+        segment,
+        now: today,
+      })
+    : null;
+
   const customerWhere: Prisma.CustomerWhereInput = {
     businessId: business.id,
-    ...(segment
-      ? getCustomerSegmentWhere(
-          segment,
-          business.rewardThreshold,
-          undefined,
-          business.earnAmount,
-        )
+    ...(segmentCustomerIds
+      ? {
+          id: { in: segmentCustomerIds },
+        }
       : {}),
   };
 

@@ -7,6 +7,7 @@ import { getRequestBaseUrl } from "@/lib/app-url";
 import { canApplyPublicReferral } from "@/lib/customers/public-membership-policy";
 import { isPublicCardToken } from "@/lib/cards/public-token";
 import { isOfferEligible } from "@/lib/offers/eligibility";
+import { resolveBusinessCustomerAudienceContext } from "@/lib/server/customers/audience-context";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getCustomerExperienceTheme } from "@/lib/theme";
@@ -171,6 +172,13 @@ export default async function PublicCardPage({
     `/card/${encodeURIComponent(token)}?lang=${nextLanguage}${showWelcome ? "&welcome=1" : ""}`;
 
   const theme = getCustomerExperienceTheme(business);
+  const audienceNow = new Date();
+  const segmentContext = await resolveBusinessCustomerAudienceContext({
+    business,
+    customer,
+    catalogueRewards: business.rewards,
+    now: audienceNow,
+  });
   const publicOffers = business.offers.filter((offer) =>
     isOfferEligible(
       offer,
@@ -182,6 +190,8 @@ export default async function PublicCardPage({
         lastActivityAt: customer.transactions[0]?.createdAt ?? null,
       },
       { id: business.id, rewardThreshold: business.rewardThreshold },
+      audienceNow,
+      segmentContext,
     ),
   );
 

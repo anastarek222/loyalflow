@@ -81,16 +81,14 @@ export default async function BusinessWhatsAppSettingsPage({
     newRewardMessage: automation.newRewardMessage,
     newOfferMessage: automation.newOfferMessage,
   };
-  const automaticTemplateReadiness = await getBusinessWhatsAppAutomaticReadiness(
-    prisma,
-    {
+  const automaticTemplateReadiness =
+    await getBusinessWhatsAppAutomaticReadiness(prisma, {
       businessId: business.id,
       wabaId: credential?.wabaId ?? null,
       language: business.cardDefaultLanguage,
       messages,
       automation,
-    },
-  );
+    });
 
   const language = normalizeLanguage(currentUser?.language);
   const locale = getLanguageLocale(language);
@@ -137,20 +135,35 @@ export default async function BusinessWhatsAppSettingsPage({
           "WhatsApp was connected to this business successfully.",
         )
       : query.whatsapp === "disconnected"
-        ? t("تم فصل WhatsApp عن النشاط.", "WhatsApp was disconnected from this business.")
+        ? t(
+            "تم فصل WhatsApp عن النشاط.",
+            "WhatsApp was disconnected from this business.",
+          )
         : query.whatsappAutomation === "saved"
           ? t(
               "تم حفظ إعدادات الرسائل التلقائية بدون حذف النصوص المتوقفة.",
               "Automation settings were saved without deleting copy for disabled events.",
             )
           : query.whatsappTemplate === "approved"
-            ? t("Meta تؤكد أن القالب معتمد.", "Meta confirms that the template is approved.")
+            ? t(
+                "Meta تؤكد أن القالب معتمد.",
+                "Meta confirms that the template is approved.",
+              )
             : query.whatsappTemplate === "pending"
-              ? t("تم إرسال القالب إلى Meta وهو قيد المراجعة.", "The template is submitted to Meta and is pending review.")
+              ? t(
+                  "تم إرسال القالب إلى Meta وهو قيد المراجعة.",
+                  "The template is submitted to Meta and is pending review.",
+                )
               : query.whatsappTemplate === "rejected"
-                ? t("Meta رفضت القالب الحالي. الإرسال التلقائي لهذا الحدث متوقف.", "Meta rejected the current template. Automatic delivery for this event is blocked.")
+                ? t(
+                    "Meta رفضت القالب الحالي. الإرسال التلقائي لهذا الحدث متوقف.",
+                    "Meta rejected the current template. Automatic delivery for this event is blocked.",
+                  )
                 : query.whatsappTemplate === "unknown"
-                  ? t("تمت مزامنة القالب لكن Meta أعادت حالة غير معروفة؛ الإرسال متوقف احتياطيًا.", "The template synced but Meta returned an unknown state; delivery remains fail-closed.")
+                  ? t(
+                      "تمت مزامنة القالب لكن Meta أعادت حالة غير معروفة؛ الإرسال متوقف احتياطيًا.",
+                      "The template synced but Meta returned an unknown state; delivery remains fail-closed.",
+                    )
                   : null;
 
   const errorMessage =
@@ -191,12 +204,18 @@ export default async function BusinessWhatsAppSettingsPage({
                       "The Meta operation could not be completed. Tanee did not invent or locally approve a provider state.",
                     )
                   : query.whatsappTemplate === "invalid"
-                    ? t("طلب القالب غير صالح.", "The template request is invalid.")
+                    ? t(
+                        "طلب القالب غير صالح.",
+                        "The template request is invalid.",
+                      )
                     : null;
 
   const connectionTitle =
     automation.paused && credential
-      ? t("WhatsApp متصل — الأتمتة متوقفة", "WhatsApp connected — automations paused")
+      ? t(
+          "WhatsApp متصل — الأتمتة متوقفة",
+          "WhatsApp connected — automations paused",
+        )
       : connectionReadiness.state === "READY"
         ? t("WhatsApp جاهز", "WhatsApp ready")
         : connectionReadiness.state === "NOT_CONNECTED"
@@ -282,7 +301,7 @@ export default async function BusinessWhatsAppSettingsPage({
       messageName: "newRewardMessage",
       enabled: automation.newRewardEnabled,
       message: automation.newRewardMessage,
-      producerReady: false,
+      producerReady: true,
     },
     {
       event: "NEW_OFFER" as const,
@@ -291,10 +310,12 @@ export default async function BusinessWhatsAppSettingsPage({
       messageName: "newOfferMessage",
       enabled: automation.newOfferEnabled,
       message: automation.newOfferMessage,
-      producerReady: false,
+      producerReady: true,
     },
   ];
-  const bindingByEvent = new Map(bindings.map((binding) => [binding.event, binding]));
+  const bindingByEvent = new Map(
+    bindings.map((binding) => [binding.event, binding]),
+  );
 
   return (
     <main
@@ -345,7 +366,9 @@ export default async function BusinessWhatsAppSettingsPage({
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-black text-foreground">{connectionTitle}</p>
+              <p className="text-sm font-black text-foreground">
+                {connectionTitle}
+              </p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-foreground-muted">
                 {connectionDescription}
               </p>
@@ -412,7 +435,9 @@ export default async function BusinessWhatsAppSettingsPage({
             </p>
           ) : null}
 
-          {providerReadiness.providerReady && senderReady && !automaticTemplateReadiness.ready ? (
+          {providerReadiness.providerReady &&
+          senderReady &&
+          !automaticTemplateReadiness.ready ? (
             <div className="mt-5 rounded-xl border border-warning/30 bg-warning-subtle p-4 text-sm leading-6 text-foreground">
               <p className="font-black">
                 {automaticTemplateReadiness.hasEnabledMessages
@@ -445,7 +470,10 @@ export default async function BusinessWhatsAppSettingsPage({
             </p>
           ) : null}
 
-          <details className="mt-6 rounded-xl border border-border bg-surface-subtle p-4" data-whatsapp-advanced-setup>
+          <details
+            className="mt-6 rounded-xl border border-border bg-surface-subtle p-4"
+            data-whatsapp-advanced-setup
+          >
             <summary className="cursor-pointer text-sm font-bold text-foreground">
               {t("إعداد متقدم", "Advanced setup")}
             </summary>
@@ -551,19 +579,13 @@ export default async function BusinessWhatsAppSettingsPage({
                 key={row.event}
                 className="rounded-xl border border-border p-4"
                 data-whatsapp-automation-event={row.event}
-                data-whatsapp-producer-ready={row.producerReady ? "true" : "false"}
+                data-whatsapp-producer-ready={
+                  row.producerReady ? "true" : "false"
+                }
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-black text-foreground">{row.title}</p>
-                    {!row.producerReady ? (
-                      <p className="mt-1 text-xs leading-5 text-warning">
-                        {t(
-                          "يمكن تجهيز النص والمفتاح الآن؛ تشغيل حدث الإنشاء نفسه ينتظر WA-5 sync gate.",
-                          "You can prepare the copy and switch now; the creation-event producer remains gated until WA-5 sync.",
-                        )}
-                      </p>
-                    ) : null}
                   </div>
                   <label className="flex items-center gap-2 text-xs font-bold text-foreground">
                     <input
@@ -616,28 +638,36 @@ export default async function BusinessWhatsAppSettingsPage({
             {automationRows.map((row) => {
               const message = row.message?.trim() ?? "";
               const binding = bindingByEvent.get(row.event);
-              const currentHash = message ? hashBusinessWhatsAppTemplate(message) : null;
+              const currentHash = message
+                ? hashBusinessWhatsAppTemplate(message)
+                : null;
               const bindingMatchesCurrent = Boolean(
                 currentHash &&
-                  credential?.wabaId &&
-                  binding?.wabaId === credential.wabaId &&
-                  binding.contentSha256 === currentHash,
+                credential?.wabaId &&
+                binding?.wabaId === credential.wabaId &&
+                binding.contentSha256 === currentHash,
               );
               const providerStatus = bindingMatchesCurrent
-                ? binding?.approvalStatus ?? "NOT_SUBMITTED"
+                ? (binding?.approvalStatus ?? "NOT_SUBMITTED")
                 : binding
                   ? "STALE"
                   : "NOT_SUBMITTED";
 
               return (
-                <div key={row.event} className="rounded-xl border border-border p-4">
+                <div
+                  key={row.event}
+                  className="rounded-xl border border-border p-4"
+                >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-black text-foreground">{row.title}</p>
                       <p className="mt-1 text-xs text-foreground-muted">
                         {message
                           ? `${t("حالة Meta", "Meta status")}: ${providerStatus}`
-                          : t("لا يوجد نص حالي لإرساله إلى Meta.", "There is no current copy to submit to Meta.")}
+                          : t(
+                              "لا يوجد نص حالي لإرساله إلى Meta.",
+                              "There is no current copy to submit to Meta.",
+                            )}
                       </p>
                       {bindingMatchesCurrent && binding ? (
                         <p className="mt-1 break-all font-mono text-[11px] text-foreground-subtle">
@@ -646,8 +676,13 @@ export default async function BusinessWhatsAppSettingsPage({
                       ) : null}
                     </div>
 
-                    {message && credential?.wabaId && providerReadiness.providerReady ? (
-                      <form action={manageTemplate} className="flex flex-wrap gap-2">
+                    {message &&
+                    credential?.wabaId &&
+                    providerReadiness.providerReady ? (
+                      <form
+                        action={manageTemplate}
+                        className="flex flex-wrap gap-2"
+                      >
                         <input type="hidden" name="event" value={row.event} />
                         <button
                           type="submit"

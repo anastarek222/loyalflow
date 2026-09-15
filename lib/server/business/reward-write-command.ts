@@ -8,6 +8,7 @@ import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
+import { enqueueCustomerMessagePublicationJobs } from "@/lib/server/integrations/customer-messaging";
 import { normalizeRewardInput } from "@/lib/rewards/catalog";
 
 export type RewardWriteActor = Readonly<{
@@ -28,7 +29,12 @@ type RewardWriteFailure = Readonly<{
     | "PLAN_LIMIT";
 }>;
 
-export type RewardWriteCommandResult = Readonly<{ ok: true }> | RewardWriteFailure;
+export type RewardWriteCommandResult =
+  | Readonly<{
+      ok: true;
+      integrationJobIds: readonly string[];
+    }>
+  | RewardWriteFailure;
 
 /**
  * Authoritative non-financial Reward creation boundary.
@@ -84,20 +90,14 @@ export async function createRewardCommand(input: {
       return { ok: false, reason: "PLAN_FEATURE" } as const;
     }
     if (
-      !isWithinPlanLimit(
-        business.plan,
-        "REWARDS",
-        rewardCount,
-        1,
-        planLimits,
-      )
+      !isWithinPlanLimit(business.plan, "REWARDS", rewardCount, 1, planLimits)
     ) {
       return { ok: false, reason: "PLAN_LIMIT" } as const;
     }
 
     const reward = await transaction.reward.create({
       data: { ...input.reward, businessId: input.businessId },
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
       data: {
@@ -109,7 +109,20 @@ export async function createRewardCommand(input: {
       },
     });
 
-    return { ok: true } as const;
+    const notificationJobs = await enqueueCustomerMessagePublicationJobs(
+      transaction,
+      {
+        businessId: input.businessId,
+        event: "NEW_REWARD",
+        rewardId: reward.id,
+        publicationKey: `reward:${reward.id}:created`,
+      },
+    );
+
+    return {
+      ok: true,
+      integrationJobIds: notificationJobs.map((job) => job.id),
+    } as const;
   });
 }
 
@@ -155,7 +168,7 @@ export async function updateRewardCommand(input: {
       },
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobIds: [] } as const;
   });
 }
 
@@ -180,7 +193,7 @@ export async function setRewardStatusCommand(input: {
 
     const existingReward = await transaction.reward.findFirst({
       where: { id: input.rewardId, businessId: input.businessId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!existingReward) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
@@ -189,7 +202,7 @@ export async function setRewardStatusCommand(input: {
     const reward = await transaction.reward.update({
       where: { id: existingReward.id },
       data: { isActive: input.isActive },
-      select: { name: true },
+      select: { id: true, name: true, isActive: true, updatedAt: true },
     });
     await transaction.businessActivity.create({
       data: {
@@ -203,6 +216,19 @@ export async function setRewardStatusCommand(input: {
       },
     });
 
-    return { ok: true } as const;
+    const notificationJobs =
+      !existingReward.isActive && reward.isActive
+        ? await enqueueCustomerMessagePublicationJobs(transaction, {
+            businessId: input.businessId,
+            event: "NEW_REWARD",
+            rewardId: reward.id,
+            publicationKey: `reward:${reward.id}:activated:${reward.updatedAt.getTime()}`,
+          })
+        : [];
+
+    return {
+      ok: true,
+      integrationJobIds: notificationJobs.map((job) => job.id),
+    } as const;
   });
 }

@@ -16,8 +16,8 @@ test("TC6.10 atomically couples a successful redemption with one durable Sheets 
   assert.match(command, /enqueueIntegrationJob\(transaction/);
   assert.match(command, /loyalty-redemption:\$\{input\.idempotencyKey\}/);
   assert.ok(
-    command.indexOf("recordRewardRedemption(transaction") <
-      command.indexOf("enqueueIntegrationJob(transaction"),
+    command.lastIndexOf("recordRewardRedemption(transaction") <
+      command.lastIndexOf("enqueueIntegrationJob(transaction"),
   );
   assert.match(command, /integrationJobId: sheetsJob\.id/);
   assert.match(command, /integrationJobIds,/);
@@ -28,10 +28,14 @@ test("TC6.10 atomically couples a successful redemption with one durable Sheets 
 });
 
 test("TC6.10 does not enqueue blocked or insufficient-balance redemptions", () => {
-  const expiredReturn = command.indexOf('return { ok: false, reason: "REWARD_EXPIRED" }');
-  const redemption = command.indexOf("recordRewardRedemption(transaction");
-  const insufficientReturn = command.indexOf('return { ok: false, reason: "INSUFFICIENT_BALANCE" }');
-  const enqueue = command.indexOf("enqueueIntegrationJob(transaction");
+  const expiredReturn = command.indexOf(
+    'return { ok: false, reason: "REWARD_EXPIRED" }',
+  );
+  const redemption = command.lastIndexOf("recordRewardRedemption(transaction");
+  const insufficientReturn = command.indexOf(
+    'return { ok: false, reason: "INSUFFICIENT_BALANCE" }',
+  );
+  const enqueue = command.lastIndexOf("enqueueIntegrationJob(transaction");
   assert.ok(expiredReturn >= 0 && expiredReturn < redemption);
   assert.ok(insufficientReturn > redemption && insufficientReturn < enqueue);
 });

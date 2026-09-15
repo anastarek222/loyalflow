@@ -9,6 +9,7 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
+import { enqueueCustomerMessagePublicationJobs } from "@/lib/server/integrations/customer-messaging";
 
 export type OfferWriteActor = Readonly<{
   id: string;
@@ -28,7 +29,20 @@ type OfferWriteFailure = Readonly<{
     | "PLAN_LIMIT";
 }>;
 
-export type OfferWriteCommandResult = Readonly<{ ok: true }> | OfferWriteFailure;
+export type OfferWriteCommandResult =
+  | Readonly<{
+      ok: true;
+      integrationJobIds: readonly string[];
+    }>
+  | OfferWriteFailure;
+
+function offerNotificationAvailableAt(
+  offer: Readonly<{ validFrom: Date | null; validUntil: Date | null }>,
+  now: Date,
+) {
+  if (offer.validUntil && offer.validUntil < now) return null;
+  return offer.validFrom && offer.validFrom > now ? offer.validFrom : now;
+}
 
 /**
  * Authoritative non-financial Offer creation boundary.
@@ -84,20 +98,19 @@ export async function createOfferCommand(input: {
       return { ok: false, reason: "PLAN_FEATURE" } as const;
     }
     if (
-      !isWithinPlanLimit(
-        business.plan,
-        "OFFERS",
-        offerCount,
-        1,
-        planLimits,
-      )
+      !isWithinPlanLimit(business.plan, "OFFERS", offerCount, 1, planLimits)
     ) {
       return { ok: false, reason: "PLAN_LIMIT" } as const;
     }
 
     const offer = await transaction.offer.create({
       data: { ...input.offer, businessId: input.businessId },
-      select: { name: true },
+      select: {
+        id: true,
+        name: true,
+        validFrom: true,
+        validUntil: true,
+      },
     });
     await transaction.businessActivity.create({
       data: {
@@ -109,7 +122,22 @@ export async function createOfferCommand(input: {
       },
     });
 
-    return { ok: true } as const;
+    const now = new Date();
+    const availableAt = offerNotificationAvailableAt(offer, now);
+    const notificationJobs = availableAt
+      ? await enqueueCustomerMessagePublicationJobs(transaction, {
+          businessId: input.businessId,
+          event: "NEW_OFFER",
+          offerId: offer.id,
+          publicationKey: `offer:${offer.id}:created`,
+          availableAt,
+        })
+      : [];
+
+    return {
+      ok: true,
+      integrationJobIds: notificationJobs.map((job) => job.id),
+    } as const;
   });
 }
 
@@ -155,7 +183,7 @@ export async function updateOfferCommand(input: {
       },
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobIds: [] } as const;
   });
 }
 
@@ -180,7 +208,7 @@ export async function setOfferStatusCommand(input: {
 
     const existingOffer = await transaction.offer.findFirst({
       where: { id: input.offerId, businessId: input.businessId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!existingOffer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
@@ -189,7 +217,14 @@ export async function setOfferStatusCommand(input: {
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: { isActive: input.isActive },
-      select: { name: true },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        validFrom: true,
+        validUntil: true,
+        updatedAt: true,
+      },
     });
     await transaction.businessActivity.create({
       data: {
@@ -203,6 +238,22 @@ export async function setOfferStatusCommand(input: {
       },
     });
 
-    return { ok: true } as const;
+    const now = new Date();
+    const availableAt = offerNotificationAvailableAt(offer, now);
+    const notificationJobs =
+      !existingOffer.isActive && offer.isActive && availableAt
+        ? await enqueueCustomerMessagePublicationJobs(transaction, {
+            businessId: input.businessId,
+            event: "NEW_OFFER",
+            offerId: offer.id,
+            publicationKey: `offer:${offer.id}:activated:${offer.updatedAt.getTime()}`,
+            availableAt,
+          })
+        : [];
+
+    return {
+      ok: true,
+      integrationJobIds: notificationJobs.map((job) => job.id),
+    } as const;
   });
 }
