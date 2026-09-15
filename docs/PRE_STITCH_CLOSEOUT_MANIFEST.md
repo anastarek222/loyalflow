@@ -127,6 +127,16 @@ Focused evidence: commit `d6727b3d73d3a23e259904b49364ad7021bf92fd`; 26/26 activ
 
 Focused evidence: `docs/product/ROLE_PERMISSION_MATRIX.md` plus the Phase C role, tenant, navigation, and server-boundary regression suite. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
 
+### Subscription / Trial / entitlement matrix
+
+- [x] Pending, Trialing, Active, Past Due, Suspended, Canceled, and Expired operation policies are documented from runtime authority.
+- [x] Plan feature and default capacity boundaries are documented from the canonical entitlement catalog.
+- [x] Role, tenant, lifecycle, plan, capacity, and provider gates remain additive.
+- [x] Trial authority is 14 days from the first successful Launch.
+- [x] Stale seven-day Trial wording was removed from non-Marketing integration/product audit contracts.
+
+Focused evidence: `docs/product/SUBSCRIPTION_ENTITLEMENT_MATRIX.md` and `tests/phase-d-subscription-entitlement-matrix.test.ts`. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+
 ### Source / release governance
 
 - [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
