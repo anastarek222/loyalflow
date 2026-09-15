@@ -23,7 +23,7 @@ import {
 } from "react";
 
 import type { SupportedLocale } from "@/lib/i18n/config";
-import { cn } from "@/lib/utils";
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 
 type SupportChannel = Readonly<{
   kind: "email" | "whatsapp" | "phone";
@@ -36,7 +36,13 @@ type ContactSalesExperienceProps = {
   supportChannels: ReadonlyArray<SupportChannel>;
 };
 
-type MeetingMethod = "phone" | "whatsapp" | "google-meet";
+type MeetingMethod =
+  | "phone"
+  | "whatsapp"
+  | "google-meet"
+  | "zoom"
+  | "teams"
+  | "ringcentral";
 
 type MethodIcon = ComponentType<{
   size?: number;
@@ -129,13 +135,19 @@ const copy = {
     earliestNote: "Earliest booking: tomorrow",
     methodsTitle: "Preferred meeting method",
     methodsBody:
-      "Choose one of the three practical meeting options. Final call or meeting details are confirmed after availability is checked.",
+      "Choose your preferred meeting option. Final call or meeting details are confirmed after availability is checked.",
     methodPhone: "Phone call",
     methodPhoneBody: "We call the number you provide.",
     methodWhatsapp: "WhatsApp call",
     methodWhatsappBody: "Use your WhatsApp number for the call.",
     methodGoogle: "Google Meet",
     methodGoogleBody: "Receive a Google Meet link after confirmation.",
+    methodZoom: "Zoom Meeting",
+    methodZoomBody: "Receive a Zoom link after confirmation.",
+    methodTeams: "Microsoft Teams",
+    methodTeamsBody: "Receive a Teams link after confirmation.",
+    methodRingCentral: "RingCentral",
+    methodRingCentralBody: "Use RingCentral after confirmation.",
     name: "Your name",
     business: "Business name",
     email: "Business email",
@@ -199,13 +211,19 @@ const copy = {
     earliestNote: "أقرب حجز متاح: بكرة",
     methodsTitle: "طريقة الاجتماع المفضلة",
     methodsBody:
-      "اختار واحدة من 3 طرق واضحة للاجتماع. تفاصيل المكالمة أو الرابط بتتأكد بعد مراجعة التوفر.",
+      "اختار طريقة الاجتماع المفضلة. تفاصيل المكالمة أو الرابط بتتأكد بعد مراجعة التوفر.",
     methodPhone: "مكالمة تليفون",
     methodPhoneBody: "نتصل على الرقم اللي هتكتبه.",
     methodWhatsapp: "مكالمة WhatsApp",
     methodWhatsappBody: "نستخدم رقم WhatsApp الخاص بيك للمكالمة.",
     methodGoogle: "Google Meet",
     methodGoogleBody: "يوصلك رابط Google Meet بعد التأكيد.",
+    methodZoom: "Zoom Meeting",
+    methodZoomBody: "يوصلك رابط Zoom بعد التأكيد.",
+    methodTeams: "Microsoft Teams",
+    methodTeamsBody: "يوصلك رابط Teams بعد التأكيد.",
+    methodRingCentral: "RingCentral",
+    methodRingCentralBody: "يتم استخدام RingCentral بعد التأكيد.",
     name: "اسمك",
     business: "اسم النشاط",
     email: "إيميل العمل",
@@ -249,9 +267,12 @@ const copy = {
 } as const;
 
 const meetingMethodIds: MeetingMethod[] = [
+  "google-meet",
+  "zoom",
+  "teams",
+  "ringcentral",
   "phone",
   "whatsapp",
-  "google-meet",
 ];
 
 export function ContactSalesExperience({
@@ -293,6 +314,21 @@ export function ContactSalesExperience({
     "google-meet": {
       label: content.methodGoogle,
       body: content.methodGoogleBody,
+      icon: Video,
+    },
+    zoom: {
+      label: content.methodZoom,
+      body: content.methodZoomBody,
+      icon: Video,
+    },
+    teams: {
+      label: content.methodTeams,
+      body: content.methodTeamsBody,
+      icon: Video,
+    },
+    ringcentral: {
+      label: content.methodRingCentral,
+      body: content.methodRingCentralBody,
       icon: Video,
     },
   };
@@ -354,13 +390,13 @@ export function ContactSalesExperience({
     <>
       <section className="mx-auto w-full max-w-[1240px] px-5 pb-10 pt-12 text-center sm:px-8 md:pb-14 md:pt-16 lg:px-10">
         <p className="inline-flex items-center rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm">
-          {content.eyebrow}
+          <MarketingBrandText text={content.eyebrow} />
         </p>
         <h1 className="mx-auto mt-6 max-w-4xl text-balance font-[var(--font-marketing-editorial)] text-[36px] font-normal leading-[1.15] tracking-tight text-foreground md:text-5xl lg:text-[58px]">
-          {content.title}
+          <MarketingBrandText text={content.title} />
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-foreground-muted md:text-lg">
-          {content.body}
+          <MarketingBrandText text={content.body} />
         </p>
       </section>
 
@@ -378,13 +414,13 @@ export function ContactSalesExperience({
               <CalendarDays size={22} aria-hidden="true" />
             </span>
             <h2 className="mt-7 font-[var(--font-marketing-editorial)] text-2xl font-semibold tracking-tight">
-              {content.routeMeeting}
+              <MarketingBrandText text={content.routeMeeting} />
             </h2>
             <p className="mt-3 flex-1 text-sm leading-7 text-white/80">
-              {content.routeMeetingBody}
+              <MarketingBrandText text={content.routeMeetingBody} />
             </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold">
-              {content.explore}
+              <MarketingBrandText text={content.explore} />
               <ArrowRight
                 size={17}
                 aria-hidden="true"
@@ -404,13 +440,13 @@ export function ContactSalesExperience({
               <WhatsAppIcon size={22} aria-hidden="true" />
             </span>
             <h2 className="mt-7 font-[var(--font-marketing-editorial)] text-2xl font-semibold tracking-tight text-foreground">
-              {content.routeWhatsapp}
+              <MarketingBrandText text={content.routeWhatsapp} />
             </h2>
             <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
-              {content.routeWhatsappBody}
+              <MarketingBrandText text={content.routeWhatsappBody} />
             </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary">
-              {content.explore}
+              <MarketingBrandText text={content.explore} />
               <ArrowRight
                 size={17}
                 aria-hidden="true"
@@ -427,13 +463,13 @@ export function ContactSalesExperience({
               <Phone size={22} aria-hidden="true" />
             </span>
             <h2 className="mt-7 font-[var(--font-marketing-editorial)] text-2xl font-semibold tracking-tight text-foreground">
-              {content.routeDirect}
+              <MarketingBrandText text={content.routeDirect} />
             </h2>
             <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
-              {content.routeDirectBody}
+              <MarketingBrandText text={content.routeDirectBody} />
             </p>
             <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-primary">
-              {content.explore}
+              <MarketingBrandText text={content.explore} />
               <ArrowRight
                 size={17}
                 aria-hidden="true"
@@ -452,18 +488,18 @@ export function ContactSalesExperience({
         <div className="mx-auto grid w-full max-w-[1120px] gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-              {content.bookingEyebrow}
+              <MarketingBrandText text={content.bookingEyebrow} />
             </p>
             <h2 className="mt-4 max-w-lg font-[var(--font-marketing-editorial)] text-3xl font-normal leading-[1.2] tracking-tight text-foreground md:text-4xl">
-              {content.bookingTitle}
+              <MarketingBrandText text={content.bookingTitle} />
             </h2>
             <p className="mt-4 max-w-lg text-sm leading-7 text-foreground-muted md:text-base">
-              {content.bookingBody}
+              <MarketingBrandText text={content.bookingBody} />
             </p>
             <div className="mt-7 grid gap-3 text-sm text-foreground-muted">
               <div className="flex items-center gap-3">
                 <CheckCircle2 size={18} aria-hidden="true" className="text-primary" />
-                <span>{content.noAccount}</span>
+                <span><MarketingBrandText text={content.noAccount} /></span>
               </div>
               <div className="flex items-center gap-3">
                 <Globe2 size={18} aria-hidden="true" className="text-primary" />
@@ -631,59 +667,26 @@ export function ContactSalesExperience({
               </label>
             </div>
 
-            <fieldset className="mt-7">
-              <legend className="text-sm font-bold text-foreground">
-                {content.methodsTitle}
-              </legend>
-              <p className="mt-1 text-xs leading-5 text-foreground-muted">
-                {content.methodsBody}
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-                {meetingMethodIds.map((methodId) => {
-                  const method = methodCopy[methodId];
-                  const Icon = method.icon;
-                  const selected = selectedMethod === methodId;
-                  return (
-                    <label
-                      key={methodId}
-                      className={cn(
-                        "flex min-h-28 cursor-pointer flex-col items-center gap-2 rounded-xl border p-3 text-center transition-colors sm:min-h-32 sm:p-4",
-                        selected
-                          ? "border-primary bg-[var(--lf-primary-soft)]"
-                          : "border-border bg-surface hover:border-primary/35",
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="meetingMethod"
-                        value={methodId}
-                        checked={selected}
-                        onChange={() => setSelectedMethod(methodId)}
-                        className="sr-only"
-                      />
-                      <span
-                        className={cn(
-                          "flex size-10 shrink-0 items-center justify-center rounded-xl border",
-                          selected
-                            ? "border-primary/20 bg-primary text-[var(--lf-primary-foreground)]"
-                            : "border-border bg-[var(--lf-marketing-canvas)] text-primary",
-                        )}
-                      >
-                        <Icon size={18} aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-xs font-bold leading-5 text-foreground sm:text-sm">
-                          {method.label}
-                        </span>
-                        <span className="mt-1 hidden text-xs leading-5 text-foreground-muted sm:block">
-                          {method.body}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
+            <label className="mt-7 grid gap-2 text-sm font-bold text-foreground">
+              <span>{content.methodsTitle}</span>
+              <span className="text-xs font-normal leading-5 text-foreground-muted">
+                <MarketingBrandText text={content.methodsBody} />
+              </span>
+              <select
+                name="meetingMethod"
+                value={selectedMethod}
+                onChange={(event) =>
+                  setSelectedMethod(event.target.value as MeetingMethod)
+                }
+                className="min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm font-semibold text-foreground outline-none transition-colors focus:border-primary"
+              >
+                {meetingMethodIds.map((methodId) => (
+                  <option key={methodId} value={methodId}>
+                    {methodCopy[methodId].label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label className="mt-6 grid gap-2 text-sm font-semibold text-foreground">
               <span>{content.notes}</span>
@@ -699,11 +702,11 @@ export function ContactSalesExperience({
               type="submit"
               className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors hover:bg-primary-hover sm:w-auto"
             >
-              {content.request}
+              <MarketingBrandText text={content.request} />
               <ArrowRight size={17} aria-hidden="true" className="rtl:-scale-x-100" />
             </button>
             <p className="mt-3 max-w-2xl text-xs leading-5 text-foreground-subtle">
-              {content.requestNote}
+              <MarketingBrandText text={content.requestNote} />
             </p>
 
             {requestDraft ? (
@@ -719,9 +722,9 @@ export function ContactSalesExperience({
                     className="mt-0.5 shrink-0 text-primary"
                   />
                   <div>
-                    <p className="font-bold text-foreground">{content.readyTitle}</p>
+                    <p className="font-bold text-foreground"><MarketingBrandText text={content.readyTitle} /></p>
                     <p className="mt-1 text-sm leading-6 text-foreground-muted">
-                      {content.readyBody}
+                      <MarketingBrandText text={content.readyBody} />
                     </p>
                   </div>
                 </div>
@@ -732,7 +735,7 @@ export function ContactSalesExperience({
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-[var(--lf-primary-foreground)]"
                     >
                       <Mail size={17} aria-hidden="true" />
-                      {content.sendEmail}
+                      <MarketingBrandText text={content.sendEmail} />
                     </a>
                   ) : null}
                   {requestDraft.whatsappHref ? (
@@ -743,7 +746,7 @@ export function ContactSalesExperience({
                       className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-bold text-foreground hover:border-primary/40 hover:text-primary"
                     >
                       <WhatsAppIcon size={17} aria-hidden="true" />
-                      {content.sendWhatsapp}
+                      <MarketingBrandText text={content.sendWhatsapp} />
                     </a>
                   ) : null}
                 </div>
@@ -755,13 +758,13 @@ export function ContactSalesExperience({
 
       <section className="mx-auto w-full max-w-[1120px] px-5 py-16 sm:px-8 md:py-20 lg:px-10">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-          {content.directEyebrow}
+          <MarketingBrandText text={content.directEyebrow} />
         </p>
         <h2 className="mt-3 font-[var(--font-marketing-editorial)] text-3xl font-normal tracking-tight text-foreground md:text-4xl">
-          {content.directTitle}
+          <MarketingBrandText text={content.directTitle} />
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-muted md:text-base">
-          {content.directBody}
+          <MarketingBrandText text={content.directBody} />
         </p>
 
         <div className="mt-7 grid gap-4 md:grid-cols-3">
@@ -806,10 +809,10 @@ export function ContactSalesExperience({
             </span>
             <div>
               <h2 className="font-[var(--font-marketing-editorial)] text-xl font-semibold tracking-tight text-foreground">
-                {content.existingTitle}
+                <MarketingBrandText text={content.existingTitle} />
               </h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-foreground-muted">
-                {content.existingBody}
+                <MarketingBrandText text={content.existingBody} />
               </p>
             </div>
           </div>
@@ -817,7 +820,7 @@ export function ContactSalesExperience({
             href="/login"
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border border-border bg-[var(--lf-marketing-canvas)] px-4 text-sm font-bold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
           >
-            {content.signIn}
+            <MarketingBrandText text={content.signIn} />
           </Link>
         </aside>
       </section>

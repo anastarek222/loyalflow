@@ -48,8 +48,12 @@ for (const locale of ["en", "ar"] as const) {
       const bookingSection = page.locator("#book-meeting");
       await expect(bookingSection).toBeVisible();
       await expect(bookingSection).toHaveAttribute("tabindex", "-1");
-      await expect(page.locator('input[name="meetingMethod"]')).toHaveCount(3);
-      await expectSameRow(page.locator("#book-meeting fieldset > div > label"));
+      const meetingMethod = page.locator('select[name="meetingMethod"]');
+      await expect(meetingMethod).toBeVisible();
+      await expect(meetingMethod.locator("option")).toHaveCount(6);
+      await expect(meetingMethod.locator('option[value="google-meet"]')).toHaveCount(1);
+      await expect(meetingMethod.locator('option[value="zoom"]')).toHaveCount(1);
+      await expect(meetingMethod.locator('option[value="phone"]')).toHaveCount(1);
 
       const meetingDate = page.getByTestId("meeting-date");
       await expect(meetingDate).toBeVisible();
@@ -94,7 +98,7 @@ for (const locale of ["en", "ar"] as const) {
       await page.keyboard.press("Escape");
       await expect(panel).toBeHidden();
 
-      if ((page.viewportSize()?.width ?? 1440) < 1280) {
+      if ((page.viewportSize()?.width ?? 1440) < 1440) {
         const mobileMenuButton = page.locator(
           'button[aria-controls="marketing-mobile-menu"]',
         );

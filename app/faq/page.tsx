@@ -2,6 +2,7 @@ import { ChevronDown, Mail, MessageCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { Alexandria, Libre_Bodoni } from "next/font/google";
 
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
@@ -86,15 +87,15 @@ export default async function FaqPage() {
             className="size-1.5 rounded-full bg-primary"
             aria-hidden="true"
           />
-          {copy("marketing.faq.pageEyebrow")}
+          <MarketingBrandText text={copy("marketing.faq.pageEyebrow")} />
         </p>
         <h1
           className={`${editorialClass} mx-auto mb-5 mt-6 max-w-3xl text-balance ${locale === "en" ? "text-[32px] leading-[1.25] md:text-5xl lg:text-[54px]" : "text-[30px] leading-[1.4] md:text-5xl lg:text-[52px]"}`}
         >
-          {copy("marketing.faq.pageTitle")}
+          <MarketingBrandText text={copy("marketing.faq.pageTitle")} />
         </h1>
         <p className="mx-auto max-w-xl text-base leading-[1.7] text-foreground-muted md:text-lg">
-          {copy("marketing.faq.pageBody")}
+          <MarketingBrandText text={copy("marketing.faq.pageBody")} />
         </p>
       </section>
 
@@ -110,7 +111,7 @@ export default async function FaqPage() {
                 id={group.id}
                 className="min-w-0 text-xl font-semibold leading-normal md:text-2xl"
               >
-                {copy(group.title)}
+                <MarketingBrandText text={copy(group.title)} />
               </h2>
             </div>
             <div className="space-y-3">
@@ -130,7 +131,7 @@ export default async function FaqPage() {
                     </span>
                   </summary>
                   <p className="mt-2 border-t border-border pt-4 text-base leading-[1.7] text-foreground-muted">
-                    {copy(`marketing.faq.item${item}Answer`)}
+                    <MarketingBrandText text={copy(`marketing.faq.item${item}Answer`)} />
                   </p>
                 </details>
               ))}
@@ -149,10 +150,10 @@ export default async function FaqPage() {
               id="faq-contact"
               className={`${editorialClass} text-2xl leading-normal`}
             >
-              {copy("marketing.faq.contactTitle")}
+              <MarketingBrandText text={copy("marketing.faq.contactTitle")} />
             </h2>
             <p className="mt-2 text-base leading-relaxed text-foreground-muted">
-              {copy("marketing.faq.contactBody")}
+              <MarketingBrandText text={copy("marketing.faq.contactBody")} />
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-center">

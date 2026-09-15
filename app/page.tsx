@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { ProductPreview } from "@/components/marketing/product-preview";
@@ -237,17 +238,17 @@ export default async function HomePage() {
         <div className="mx-auto grid w-full max-w-[1240px] items-center gap-12 px-5 py-16 sm:px-8 sm:py-24 lg:min-h-[calc(100svh-4.5rem)] lg:grid-cols-2 lg:px-10 lg:py-28">
           <div className="lf-marketing-reveal">
             <h1 className="max-w-3xl text-[clamp(2.35rem,5vw,4rem)] font-semibold leading-[1.12] tracking-[-0.025em] text-foreground">
-              {copy("marketing.home.heroTitle")}
+              <MarketingBrandText text={copy("marketing.home.heroTitle")} />
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-foreground-muted sm:text-lg sm:leading-9">
-              {copy("marketing.home.heroBody")}
+              <MarketingBrandText text={copy("marketing.home.heroBody")} />
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/get-started"
                 className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] focus-visible:ring-offset-2"
               >
-                {copy("marketing.primaryCta")}
+                <MarketingBrandText text={copy("marketing.primaryCta")} />
                 <ArrowUpRight
                   size={18}
                   className="rtl:-scale-x-100"
@@ -258,11 +259,11 @@ export default async function HomePage() {
                 href="/how-it-works"
                 className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-border-strong bg-transparent px-7 py-3 font-bold text-foreground transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
               >
-                {copy("marketing.secondaryCta")}
+                <MarketingBrandText text={copy("marketing.secondaryCta")} />
               </Link>
             </div>
             <p className="mt-5 text-sm leading-6 text-foreground-subtle">
-              {copy("marketing.home.trialNote")}
+              <MarketingBrandText text={copy("marketing.home.trialNote")} />
             </p>
           </div>
           <div className="lf-marketing-reveal lf-marketing-delay-1">
@@ -288,24 +289,24 @@ export default async function HomePage() {
         <div className="mx-auto grid w-full max-w-[1240px] gap-12 lg:grid-cols-2 lg:gap-0">
           <article className="lg:border-e lg:border-white/15 lg:pe-16">
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.home.problemEyebrow")}
+              <MarketingBrandText text={copy("marketing.home.problemEyebrow")} />
             </p>
             <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
-              {copy("marketing.home.problemTitle")}
+              <MarketingBrandText text={copy("marketing.home.problemTitle")} />
             </h2>
             <p className="mt-5 max-w-xl text-base leading-8 text-[#c7bfba]">
-              {copy("marketing.home.problemBody")}
+              <MarketingBrandText text={copy("marketing.home.problemBody")} />
             </p>
           </article>
           <article className="lg:ps-16">
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.home.solutionEyebrow")}
+              <MarketingBrandText text={copy("marketing.home.solutionEyebrow")} />
             </p>
             <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-4xl">
-              {copy("marketing.home.solutionTitle")}
+              <MarketingBrandText text={copy("marketing.home.solutionTitle")} />
             </h2>
             <p className="mt-5 max-w-xl text-base leading-8 text-[#c7bfba]">
-              {copy("marketing.home.solutionBody")}
+              <MarketingBrandText text={copy("marketing.home.solutionBody")} />
             </p>
           </article>
         </div>
@@ -317,7 +318,7 @@ export default async function HomePage() {
       >
         <div className="mx-auto w-full max-w-[1240px] text-center">
           <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            {copy("marketing.home.relationshipTitle")}
+            <MarketingBrandText text={copy("marketing.home.relationshipTitle")} />
           </h2>
           <ol className="relative mt-12 grid grid-cols-1 gap-8 sm:grid-cols-5 sm:gap-4">
             {relationship.map(([Icon, key], index) => (
@@ -329,7 +330,7 @@ export default async function HomePage() {
                   <Icon size={20} aria-hidden="true" />
                 </span>
                 <span className="text-sm font-bold text-foreground-muted">
-                  {copy(key)}
+                  <MarketingBrandText text={copy(key)} />
                 </span>
                 {index < relationship.length - 1 ? (
                   <span className="absolute top-6 hidden h-px w-[calc(100%-3rem)] bg-border ltr:left-[calc(50%+1.5rem)] rtl:right-[calc(50%+1.5rem)] sm:block" />
@@ -347,10 +348,10 @@ export default async function HomePage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-              {copy("marketing.home.journeyTitle")}
+              <MarketingBrandText text={copy("marketing.home.journeyTitle")} />
             </h2>
             <p className="mt-5 text-base leading-8 text-foreground-muted sm:text-lg">
-              {copy("marketing.home.journeyBody")}
+              <MarketingBrandText text={copy("marketing.home.journeyBody")} />
             </p>
           </div>
           <div className="mt-16 space-y-16 lg:space-y-24">
@@ -364,10 +365,10 @@ export default async function HomePage() {
                     {copy("marketing.home.stepLabel")} {index + 1}
                   </p>
                   <h3 className="mt-4 text-2xl font-semibold leading-tight sm:text-3xl">
-                    {copy(titleKey)}
+                    <MarketingBrandText text={copy(titleKey)} />
                   </h3>
                   <p className="mt-4 max-w-xl text-base leading-8 text-foreground-muted">
-                    {copy(bodyKey)}
+                    <MarketingBrandText text={copy(bodyKey)} />
                   </p>
                 </div>
                 <ProofCard
@@ -390,20 +391,20 @@ export default async function HomePage() {
         <div className="mx-auto grid w-full max-w-[1240px] gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-20">
           <div>
             <h2 className="text-3xl font-semibold leading-tight sm:text-5xl">
-              {copy("marketing.features.title")}
+              <MarketingBrandText text={copy("marketing.features.title")} />
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-foreground-muted">
-              {copy("marketing.features.body")}
+              <MarketingBrandText text={copy("marketing.features.body")} />
             </p>
             <div className="mt-9 grid gap-x-8 gap-y-7 sm:grid-cols-2">
               {essentials.map(([Icon, titleKey, bodyKey]) => (
                 <article key={titleKey}>
                   <Icon size={21} className="text-primary" aria-hidden="true" />
                   <h3 className="mt-3 font-bold text-foreground">
-                    {copy(titleKey)}
+                    <MarketingBrandText text={copy(titleKey)} />
                   </h3>
                   <p className="mt-2 text-sm leading-7 text-foreground-muted">
-                    {copy(bodyKey)}
+                    <MarketingBrandText text={copy(bodyKey)} />
                   </p>
                 </article>
               ))}
@@ -430,10 +431,10 @@ export default async function HomePage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="max-w-3xl">
             <h2 className="text-3xl font-semibold leading-tight sm:text-5xl">
-              {copy("marketing.home.benefitsTitle")}
+              <MarketingBrandText text={copy("marketing.home.benefitsTitle")} />
             </h2>
             <p className="mt-5 text-base leading-8 text-foreground-muted">
-              {copy("marketing.home.benefitsBody")}
+              <MarketingBrandText text={copy("marketing.home.benefitsBody")} />
             </p>
           </div>
           <div className="mt-12 grid gap-x-12 lg:grid-cols-2">
@@ -450,7 +451,7 @@ export default async function HomePage() {
                 <div>
                   <h3 className="font-bold">{copy(titleKey)}</h3>
                   <p className="mt-2 text-sm leading-7 text-foreground-muted">
-                    {copy(bodyKey)}
+                    <MarketingBrandText text={copy(bodyKey)} />
                   </p>
                 </div>
               </article>
@@ -466,10 +467,10 @@ export default async function HomePage() {
         <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
             <h2 className="text-3xl font-semibold leading-tight sm:text-4xl">
-              {copy("marketing.industriesTitle")}
+              <MarketingBrandText text={copy("marketing.industriesTitle")} />
             </h2>
             <p className="mt-4 text-base leading-8 text-foreground-muted">
-              {copy("marketing.home.industriesBody")}
+              <MarketingBrandText text={copy("marketing.home.industriesBody")} />
             </p>
           </div>
           <ul className="flex max-w-xl flex-wrap gap-3">
@@ -479,7 +480,7 @@ export default async function HomePage() {
                 className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 text-sm font-bold text-foreground-muted"
               >
                 <Icon size={17} className="text-primary" aria-hidden="true" />
-                {copy(key)}
+                <MarketingBrandText text={copy(key)} />
               </li>
             ))}
           </ul>
@@ -490,13 +491,13 @@ export default async function HomePage() {
         <div className="mx-auto w-full max-w-[1240px] rounded-3xl border border-white/10 bg-white/[0.035] px-5 py-12 sm:px-10 lg:px-14 lg:py-16">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-primary">
-              {copy("marketing.home.outcomesEyebrow")}
+              <MarketingBrandText text={copy("marketing.home.outcomesEyebrow")} />
             </p>
             <h2 className="mt-4 text-3xl font-semibold leading-tight sm:text-5xl">
-              {copy("marketing.home.outcomesTitle")}
+              <MarketingBrandText text={copy("marketing.home.outcomesTitle")} />
             </h2>
             <p className="mt-5 text-base leading-8 text-[#c7bfba]">
-              {copy("marketing.home.outcomesBody")}
+              <MarketingBrandText text={copy("marketing.home.outcomesBody")} />
             </p>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -513,7 +514,7 @@ export default async function HomePage() {
                 </div>
                 <h3 className="mt-7 text-lg font-bold">{copy(titleKey)}</h3>
                 <p className="mt-3 text-sm leading-7 text-[#c7bfba]">
-                  {copy(bodyKey)}
+                  <MarketingBrandText text={copy(bodyKey)} />
                 </p>
               </article>
             ))}
@@ -528,17 +529,17 @@ export default async function HomePage() {
         <div className="mx-auto grid w-full max-w-[1240px] gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div>
             <h2 className="text-3xl font-semibold leading-tight sm:text-5xl">
-              {copy("marketing.home.ownershipTitle")}
+              <MarketingBrandText text={copy("marketing.home.ownershipTitle")} />
             </h2>
             <p className="mt-5 max-w-2xl text-base leading-8 text-foreground-muted">
-              {copy("marketing.home.ownershipBody")}
+              <MarketingBrandText text={copy("marketing.home.ownershipBody")} />
             </p>
           </div>
           <Link
             href="/features"
             className="inline-flex min-h-12 items-center gap-2 font-bold text-primary underline-offset-4 hover:underline lg:justify-self-end"
           >
-            {copy("marketing.home.securityLink")}
+            <MarketingBrandText text={copy("marketing.home.securityLink")} />
             <ArrowUpRight
               size={18}
               className="rtl:-scale-x-100"
@@ -554,7 +555,7 @@ export default async function HomePage() {
       >
         <div className="mx-auto w-full max-w-[1240px]">
           <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-5xl">
-            {copy("marketing.faqTitle")}
+            <MarketingBrandText text={copy("marketing.faqTitle")} />
           </h2>
           <div className="mt-12 grid items-start gap-3 lg:grid-cols-2">
             {faq.map(([questionKey, answerKey]) => (
@@ -572,7 +573,7 @@ export default async function HomePage() {
                   </span>
                 </summary>
                 <p className="border-t border-border pb-5 pt-4 text-sm leading-7 text-foreground-muted">
-                  {copy(answerKey)}
+                  <MarketingBrandText text={copy(answerKey)} />
                 </p>
               </details>
             ))}
@@ -583,16 +584,16 @@ export default async function HomePage() {
       <section className="bg-[#171717] px-5 py-20 text-center text-[#fff9f5] sm:px-8 lg:py-32">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-3xl font-semibold leading-tight sm:text-5xl">
-            {copy("marketing.home.finalTitle")}
+            <MarketingBrandText text={copy("marketing.home.finalTitle")} />
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#c7bfba]">
-            {copy("marketing.home.finalBody")}
+            <MarketingBrandText text={copy("marketing.home.finalBody")} />
           </p>
           <Link
             href="/get-started"
             className="mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-primary px-8 py-3 font-bold text-[#171717] transition hover:bg-primary-hover"
           >
-            {copy("marketing.primaryCta")}
+            <MarketingBrandText text={copy("marketing.primaryCta")} />
             <ArrowUpRight
               size={18}
               className="rtl:-scale-x-100"
@@ -600,7 +601,7 @@ export default async function HomePage() {
             />
           </Link>
           <p className="mt-4 text-sm text-[#c7bfba]">
-            {copy("marketing.home.trialNote")}
+            <MarketingBrandText text={copy("marketing.home.trialNote")} />
           </p>
         </div>
       </section>

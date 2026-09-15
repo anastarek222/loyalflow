@@ -104,3 +104,50 @@ test("marketing language controls offer only the alternate locale", () => {
   assert.match(header, /<LanguageSwitcher locale=\{locale\} alternateOnly \/>/);
   assert.match(footer, /<LanguageSwitcher locale=\{locale\} alternateOnly \/>/);
 });
+
+
+test("all public marketing routes inherit the canonical header, footer, and brand renderer", () => {
+  const routes = [
+    "app/page.tsx",
+    "app/features/page.tsx",
+    "app/pricing/page.tsx",
+    "app/how-it-works/page.tsx",
+    "app/about/page.tsx",
+    "app/faq/page.tsx",
+    "app/contact/page.tsx",
+    "app/security/page.tsx",
+    "app/privacy/page.tsx",
+    "app/terms/page.tsx",
+    "app/data-deletion/page.tsx",
+    "app/demo/page.tsx",
+    "app/get-started/page.tsx",
+  ];
+
+  for (const route of routes) {
+    const routeSource = source(route);
+    if (route === "app/terms/page.tsx") {
+      assert.match(routeSource, /<LegalDocumentPage/);
+    } else {
+      assert.match(routeSource, /<MarketingHeader/);
+      assert.match(routeSource, /<MarketingFooter/);
+    }
+  }
+
+  const legalDocument = source(
+    "components/marketing/legal-document-page.tsx",
+  );
+  assert.match(legalDocument, /<MarketingHeader/);
+  assert.match(legalDocument, /<MarketingFooter/);
+
+  const brandRenderer = source(
+    "components/marketing/marketing-brand-text.tsx",
+  );
+  const header = source("components/marketing/marketing-header.tsx");
+  const footer = source("components/marketing/marketing-footer.tsx");
+
+  assert.match(brandRenderer, /split\(\/\(Tanee\)\/g\)/);
+  assert.match(brandRenderer, /wordmarkSize="compact"/);
+  assert.match(header, /<MarketingBrandText text=\{item\.label\}/);
+  assert.match(footer, /<MarketingBrandText text="Tanee"/);
+  assert.match(footer, /marketing\.footerRights/);
+});

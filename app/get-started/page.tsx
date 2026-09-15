@@ -1,12 +1,12 @@
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { MarketingThemeSwitcher } from "@/components/marketing/marketing-theme-switcher";
-import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
+import { MarketingFooter } from "@/components/marketing/marketing-footer";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { PublicTrialForm } from "@/components/public-trial-form";
 import { PUBLIC_ACQUISITION_MODE } from "@/lib/acquisition/public-mode";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
-import { MARKETING_THEME_BOOTSTRAP } from "@/lib/marketing/theme";
+import { getPublicMarketingNavigation } from "@/lib/marketing/public-navigation";
 import { buildPublicSocialMetadata } from "@/lib/seo/public-social-metadata";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -44,51 +44,39 @@ export default async function GetStartedPage() {
     <main
       lang={locale}
       dir={direction}
-      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] px-4 py-8 text-foreground [overflow-wrap:anywhere] sm:px-6"
+      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] text-foreground [overflow-wrap:anywhere]"
     >
-      <script dangerouslySetInnerHTML={{ __html: MARKETING_THEME_BOOTSTRAP }} />
+      <MarketingHeader
+        locale={locale}
+        brand={translate(locale, "common.brand")}
+        signIn={translate(locale, "auth.signIn")}
+        primaryCta={translate(locale, "marketing.primaryCta")}
+        menuLabel={translate(locale, "marketing.menuOpen")}
+        closeLabel={translate(locale, "marketing.menuClose")}
+        navigation={getPublicMarketingNavigation(locale)}
+      />
       <div
         data-acquisition-mode={PUBLIC_ACQUISITION_MODE}
-        className="mx-auto w-full max-w-5xl"
+        className="mx-auto w-full max-w-5xl px-4 sm:px-6"
       >
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
-          <Link href="/" className="inline-flex min-h-11 items-center">
-            <PlatformBrandIdentity
-              locale={locale}
-              fallback="sparkles"
-              fallbackText={translate(locale, "common.brand")}
-              markClassName="flex size-9 items-center justify-center rounded-xl bg-primary text-[18px] text-white"
-              markImageClassName="p-1"
-              wordmarkClassName="h-7 w-auto max-w-40"
-              wordmarkSize="marketing"
-              themeAdaptiveWordmark
-              textClassName="text-xl"
-            />
-          </Link>
-          <div className="flex items-center gap-2">
-            <MarketingThemeSwitcher locale={locale} />
-            <LanguageSwitcher locale={locale} />
-          </div>
-        </header>
-
         <section className="py-12 sm:py-16">
           <p className="text-sm font-black uppercase tracking-[0.12em] text-primary">
-            {translate(locale, "conversion.eyebrow")}
+            <MarketingBrandText text={translate(locale, "conversion.eyebrow")} />
           </p>
           <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">
-            {translate(locale, "conversion.title")}
+            <MarketingBrandText text={translate(locale, "conversion.title")} />
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-foreground-muted sm:text-lg">
-            {translate(locale, "conversion.body")}
+            <MarketingBrandText text={translate(locale, "conversion.body")} />
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             <article className="flex flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
               <h2 className="text-xl font-black">
-                {translate(locale, "conversion.invitedTitle")}
+                <MarketingBrandText text={translate(locale, "conversion.invitedTitle")} />
               </h2>
               <p className="mt-3 text-sm leading-7 text-foreground-muted">
-                {translate(locale, "conversion.invitedBody")}
+                <MarketingBrandText text={translate(locale, "conversion.invitedBody")} />
               </p>
               <div className="mt-6">
                 <PublicTrialForm
@@ -100,16 +88,16 @@ export default async function GetStartedPage() {
 
             <article className="flex min-h-64 flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 sm:p-8">
               <h2 className="text-xl font-black">
-                {translate(locale, "conversion.existingTitle")}
+                <MarketingBrandText text={translate(locale, "conversion.existingTitle")} />
               </h2>
               <p className="mt-3 flex-1 text-sm leading-7 text-foreground-muted">
-                {translate(locale, "conversion.existingBody")}
+                <MarketingBrandText text={translate(locale, "conversion.existingBody")} />
               </p>
               <Link
                 href="/login"
                 className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-semibold text-white hover:bg-primary-hover"
               >
-                {translate(locale, "conversion.existingCta")}
+                <MarketingBrandText text={translate(locale, "conversion.existingCta")} />
               </Link>
             </article>
           </div>
@@ -119,17 +107,18 @@ export default async function GetStartedPage() {
             data-secure-setup-continuation="email-only"
             className="mt-6 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-sm text-foreground-muted"
           >
-            {translate(locale, "conversion.noSignup")}
+            <MarketingBrandText text={translate(locale, "conversion.noSignup")} />
           </div>
 
           <Link
             href="/"
             className="mt-8 inline-flex text-sm font-semibold text-primary hover:underline"
           >
-            {translate(locale, "conversion.backHome")}
+            <MarketingBrandText text={translate(locale, "conversion.backHome")} />
           </Link>
         </section>
       </div>
+      <MarketingFooter locale={locale} />
     </main>
   );
 }

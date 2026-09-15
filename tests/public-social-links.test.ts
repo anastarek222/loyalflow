@@ -23,17 +23,17 @@ test("approved Owner social identity resolves to public profile links", () => {
       {
         kind: "instagram",
         label: "Instagram",
-        href: "https://www.instagram.com/loyalty.programme/",
+        href: "https://www.instagram.com/taneeloyalty",
       },
       {
         kind: "facebook",
         label: "Facebook",
-        href: "https://facebook.com/Loyalty.Programe",
+        href: "https://facebook.com/tanee.loyalty",
       },
       {
         kind: "linkedin",
         label: "LinkedIn",
-        href: "https://www.linkedin.com/in/loyalty-programme-47590b431",
+        href: "https://www.linkedin.com/in/tanee-loayalty-05b493432",
       },
     ],
   );

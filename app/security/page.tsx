@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Alexandria, Libre_Bodoni } from "next/font/google";
 
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
@@ -131,15 +132,15 @@ export default async function SecurityPage() {
       <section className="mx-auto max-w-[1240px] px-5 pb-6 pt-12 text-center md:px-8 md:pb-8 md:pt-16">
         <p className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-1.5 text-xs font-semibold text-primary shadow-sm">
           <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
-          {content.eyebrow}
+          <MarketingBrandText text={content.eyebrow} />
         </p>
         <h1
           className={`${editorialClass} mx-auto mb-4 mt-6 max-w-3xl text-balance ${locale === "en" ? "text-[34px] leading-[1.2] md:text-5xl lg:text-[54px]" : "text-[30px] leading-[1.4] md:text-5xl lg:text-[48px]"}`}
         >
-          {content.title}
+          <MarketingBrandText text={content.title} />
         </h1>
         <p className="mx-auto max-w-2xl text-base leading-[1.8] text-foreground-muted md:text-lg">
-          {content.body}
+          <MarketingBrandText text={content.body} />
         </p>
       </section>
 
@@ -156,7 +157,7 @@ export default async function SecurityPage() {
                 {card.title}
               </h2>
               <p className="mt-4 text-sm leading-[1.8] text-foreground-muted md:text-base">
-                {card.body}
+                <MarketingBrandText text={card.body} />
               </p>
               {index === 2 ? (
                 <div className="mt-5 flex flex-col gap-2 text-sm font-medium text-primary">
@@ -197,10 +198,10 @@ export default async function SecurityPage() {
               id="security-contact"
               className={`${locale === "en" ? editorialClass : "font-semibold"} text-lg leading-[1.4] md:text-xl`}
             >
-              {content.contactTitle}
+              <MarketingBrandText text={content.contactTitle} />
             </h2>
             <p className="mt-1 text-sm text-foreground-muted">
-              {content.contactBody}
+              <MarketingBrandText text={content.contactBody} />
             </p>
           </div>
           <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row sm:justify-center">
