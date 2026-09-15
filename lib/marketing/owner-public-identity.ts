@@ -7,8 +7,8 @@ export const OWNER_PUBLIC_IDENTITY = {
     phoneDisplay: "01212312746",
   },
   social: {
-    instagram: "https://www.instagram.com/loyalty.programme/",
-    facebook: "https://facebook.com/Loyalty.Programe",
-    linkedin: "https://www.linkedin.com/in/loyalty-programme-47590b431",
+    instagram: "https://www.instagram.com/taneeloyalty",
+    facebook: "https://facebook.com/tanee.loyalty",
+    linkedin: "https://www.linkedin.com/in/tanee-loayalty-05b493432",
   },
 } as const;
