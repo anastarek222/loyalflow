@@ -176,8 +176,6 @@ const copy = {
       "The Tanee team received your details and will reply with availability and the final meeting details.",
     requestError:
       "We couldn’t send your request right now. Please try again or use the direct contact options below.",
-    sendEmail: "Send by email",
-    sendWhatsapp: "Send on WhatsApp",
     directEyebrow: "Direct contact",
     directTitle: "Prefer to speak right away?",
     directBody:
@@ -255,8 +253,6 @@ const copy = {
       "فريق Tanee استلم بياناتك وهيرد عليك بالتوفر وتفاصيل الاجتماع النهائية.",
     requestError:
       "مقدرناش نبعت الطلب دلوقتي. جرّب مرة تانية أو استخدم وسائل التواصل المباشر الموجودة تحت.",
-    sendEmail: "ابعت بالإيميل",
-    sendWhatsapp: "ابعت على WhatsApp",
     directEyebrow: "تواصل مباشر",
     directTitle: "تفضّل تتكلم دلوقتي؟",
     directBody:
