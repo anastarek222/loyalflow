@@ -47,7 +47,7 @@ test("Meta provider failure log never serializes arbitrary provider payload fiel
 
   try {
     logWhatsAppMetaProviderFailure({
-      operation: "create-template",
+      operation: "send-message",
       httpStatus: 400,
       payload: {
         error: {
@@ -70,7 +70,7 @@ test("Meta provider failure log never serializes arbitrary provider payload fiel
   assert.equal(calls.length, 1);
   const serialized = calls[0].map(String).join(" ");
   assert.match(serialized, /whatsapp-meta-template-provider/);
-  assert.match(serialized, /create-template/);
+  assert.match(serialized, /send-message/);
   assert.match(serialized, /400/);
   assert.match(serialized, /2494010/);
   assert.doesNotMatch(serialized, /SUPER_SECRET_TOKEN/);
