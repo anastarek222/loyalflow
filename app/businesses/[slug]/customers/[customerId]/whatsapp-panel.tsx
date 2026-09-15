@@ -157,8 +157,8 @@ export default async function CustomerWhatsAppPanel({
               )
             : query.success === "whatsapp-not-ready"
               ? t(
-                  "إرسال واتساب غير جاهز لهذا النوع: راجع اتصال المرسل واعتماد القالب الحالي.",
-                  "WhatsApp delivery is not ready for this message: check the sender connection and current template approval.",
+                  "إرسال واتساب غير جاهز لهذا النوع: راجع اتصال المرسل واعتماد الرسالة الحالية.",
+                  "WhatsApp delivery is not ready for this message: check the connection and current message approval.",
                 )
               : query.success === "whatsapp-invalid"
                 ? t(
@@ -195,10 +195,10 @@ export default async function CustomerWhatsAppPanel({
             </p>
           </div>
           <Link
-            href={`/businesses/${business.slug}/whatsapp-history?customerId=${encodeURIComponent(customer.id)}`}
+            href={`/businesses/${business.slug}/messages?customerId=${encodeURIComponent(customer.id)}`}
             className="rounded-[var(--lf-radius-input)] border border-border px-4 py-2 text-sm font-bold text-foreground"
           >
-            {t("سجل واتساب", "WhatsApp history")}
+            {t("عرض الرسائل", "View messages")}
           </Link>
         </div>
 
@@ -288,8 +288,8 @@ export default async function CustomerWhatsAppPanel({
         {canSend && eligible && manualReadiness.readyEvents.length === 0 ? (
           <p className="mt-5 border-t border-border pt-4 text-sm font-semibold text-warning">
             {t(
-              "الإرسال اليدوي غير جاهز: أكمل اتصال المرسل واعتماد قوالب Meta الحالية من إعدادات واتساب.",
-              "Manual delivery is not ready: complete the sender connection and approve the current Meta templates in WhatsApp settings.",
+              "الإرسال اليدوي غير جاهز: أكمل اتصال WhatsApp واعتماد الرسائل الحالية من إعدادات واتساب.",
+              "Manual delivery is not ready: complete the WhatsApp connection and approve the current messages in WhatsApp settings.",
             )}
           </p>
         ) : null}

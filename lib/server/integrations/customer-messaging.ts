@@ -57,14 +57,25 @@ export type CustomerMessagePayload = Readonly<{
   deliveryMode?: CustomerMessageDeliveryMode;
   balance?: number;
   rewardName?: string;
+  rewardId?: string;
+  offerId?: string;
 }>;
+
+function isOptionalBoundedIdentifier(value: unknown) {
+  return (
+    value === undefined ||
+    (typeof value === "string" &&
+      value.trim().length >= 1 &&
+      value.length <= 200)
+  );
+}
 
 export function isCustomerMessagePayload(
   value: unknown,
 ): value is CustomerMessagePayload {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
-  return (
+  const validShape =
     candidate.version === 1 &&
     typeof candidate.customerId === "string" &&
     typeof candidate.event === "string" &&
@@ -72,9 +83,19 @@ export function isCustomerMessagePayload(
     (candidate.deliveryMode === undefined ||
       candidate.deliveryMode === "AUTOMATIC" ||
       candidate.deliveryMode === "MANUAL") &&
-    (candidate.balance === undefined || typeof candidate.balance === "number") &&
-    (candidate.rewardName === undefined || typeof candidate.rewardName === "string")
-  );
+    (candidate.balance === undefined ||
+      typeof candidate.balance === "number") &&
+    (candidate.rewardName === undefined ||
+      typeof candidate.rewardName === "string") &&
+    isOptionalBoundedIdentifier(candidate.rewardId) &&
+    isOptionalBoundedIdentifier(candidate.offerId);
+
+  if (!validShape) return false;
+  if (candidate.event === "NEW_REWARD")
+    return typeof candidate.rewardId === "string";
+  if (candidate.event === "NEW_OFFER")
+    return typeof candidate.offerId === "string";
+  return candidate.rewardId === undefined && candidate.offerId === undefined;
 }
 
 async function findEligibleCustomer(
@@ -138,6 +159,74 @@ export async function enqueueCustomerMessageJob(
     idempotencyKey: `customer-message:${input.event.toLowerCase()}:${input.eventKey}`,
     payload,
   });
+}
+
+type CustomerMessagePublication =
+  | Readonly<{
+      event: "NEW_REWARD";
+      rewardId: string;
+    }>
+  | Readonly<{
+      event: "NEW_OFFER";
+      offerId: string;
+    }>;
+
+/**
+ * Materializes one durable delivery candidate per currently opted-in active
+ * customer. The worker revalidates the published Reward/Offer and, for Offers,
+ * the authoritative audience and visibility window immediately before send.
+ */
+export async function enqueueCustomerMessagePublicationJobs(
+  transaction: Prisma.TransactionClient,
+  input: Readonly<{
+    businessId: string;
+    publicationKey: string;
+    availableAt?: Date;
+  }> &
+    CustomerMessagePublication,
+) {
+  const automationEnabled = await isBusinessWhatsAppAutomationEnabled(
+    transaction,
+    {
+      businessId: input.businessId,
+      event: input.event,
+    },
+  );
+  if (!automationEnabled) return [];
+
+  const customers = await transaction.customer.findMany({
+    where: {
+      businessId: input.businessId,
+      isActive: true,
+      whatsappOptInAt: { not: null },
+      whatsappOptedOutAt: null,
+    },
+    select: { id: true },
+    orderBy: { id: "asc" },
+  });
+
+  const jobs = [];
+  for (const customer of customers) {
+    const payload: CustomerMessagePayload = {
+      version: 1,
+      event: input.event,
+      customerId: customer.id,
+      ...(input.event === "NEW_REWARD"
+        ? { rewardId: input.rewardId }
+        : { offerId: input.offerId }),
+    };
+    jobs.push(
+      await enqueueIntegrationJob(transaction, {
+        businessId: input.businessId,
+        kind: "WHATSAPP_CUSTOMER_NOTIFICATION",
+        idempotencyKey: `customer-message:${input.event.toLowerCase()}:${input.publicationKey}:${customer.id}`,
+        payload,
+        ...(input.availableAt ? { availableAt: input.availableAt } : {}),
+      }),
+    );
+  }
+
+  return jobs;
 }
 
 /**

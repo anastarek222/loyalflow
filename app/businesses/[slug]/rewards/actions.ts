@@ -5,17 +5,18 @@ import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import {
-  normalizeRewardInput,
-  rewardInputSchema,
-} from "@/lib/rewards/catalog";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
+import { normalizeRewardInput, rewardInputSchema } from "@/lib/rewards/catalog";
 import {
   createRewardCommand,
   setRewardStatusCommand,
   updateRewardCommand,
   type RewardWriteCommandResult,
 } from "@/lib/server/business/reward-write-command";
-import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
+import {
+  actionBooleanSchema,
+  opaqueIdSchema,
+} from "@/lib/validation/action-input";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -65,10 +66,7 @@ function rewardCommandError(result: RewardWriteCommandResult) {
   }
 }
 
-export async function createRewardAction(
-  slug: string,
-  formData: FormData
-) {
+export async function createRewardAction(slug: string, formData: FormData) {
   const { business, session } = await getRewardManagementContext(slug);
   const parsed = rewardInputSchema.safeParse({
     name: formData.get("name"),
@@ -76,8 +74,7 @@ export async function createRewardAction(
     type: formData.get("type"),
     code: formData.get("code") || undefined,
     cost: formData.get("cost"),
-    expiresAfterDays:
-      formData.get("expiresAfterDays") || undefined,
+    expiresAfterDays: formData.get("expiresAfterDays") || undefined,
   });
 
   if (!parsed.success) {
@@ -89,7 +86,9 @@ export async function createRewardAction(
       "EXPAND",
     )
   ) {
-    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/rewards?error=subscription-restricted`,
+    );
   }
   if (!hasFeatureEntitlement(business.plan, "REWARDS")) {
     redirect(`/businesses/${business.slug}/rewards?error=plan-feature`);
@@ -98,7 +97,9 @@ export async function createRewardAction(
     prisma.reward.count({ where: { businessId: business.id } }),
     getEffectivePlanLimits(business.plan),
   ]);
-  if (!isWithinPlanLimit(business.plan, "REWARDS", rewardCount, 1, planLimits)) {
+  if (
+    !isWithinPlanLimit(business.plan, "REWARDS", rewardCount, 1, planLimits)
+  ) {
     redirect(`/businesses/${business.slug}/rewards?error=plan-limit`);
   }
 
@@ -107,19 +108,23 @@ export async function createRewardAction(
     reward: normalizeRewardInput(parsed.data),
     actor: session.user,
   });
-  const error = rewardCommandError(result);
-  if (error) {
-    redirect(`/businesses/${business.slug}/rewards?error=${error}`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${business.slug}/rewards?error=${rewardCommandError(result)}`,
+    );
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateRewardPaths(business.slug);
-  redirect(`/businesses/${business.slug}/rewards?success=created`);
+  redirect(
+    `/businesses/${business.slug}/rewards?success=created&queued=${result.integrationJobIds.length}`,
+  );
 }
 
 export async function updateRewardAction(
   slug: string,
   rewardId: string,
-  formData: FormData
+  formData: FormData,
 ) {
   const { business, session } = await getRewardManagementContext(slug);
   const parsedRewardId = opaqueIdSchema.safeParse(rewardId);
@@ -129,8 +134,7 @@ export async function updateRewardAction(
     type: formData.get("type"),
     code: formData.get("code") || undefined,
     cost: formData.get("cost"),
-    expiresAfterDays:
-      formData.get("expiresAfterDays") || undefined,
+    expiresAfterDays: formData.get("expiresAfterDays") || undefined,
   });
 
   if (!parsed.success || !parsedRewardId.success) {
@@ -142,7 +146,9 @@ export async function updateRewardAction(
       "OPERATE",
     )
   ) {
-    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/rewards?error=subscription-restricted`,
+    );
   }
 
   const existingReward = await prisma.reward.findFirst({
@@ -159,11 +165,13 @@ export async function updateRewardAction(
     reward: normalizeRewardInput(parsed.data),
     actor: session.user,
   });
-  const error = rewardCommandError(result);
-  if (error) {
-    redirect(`/businesses/${business.slug}/rewards?error=${error}`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${business.slug}/rewards?error=${rewardCommandError(result)}`,
+    );
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=updated`);
 }
@@ -171,7 +179,7 @@ export async function updateRewardAction(
 export async function toggleRewardStatusAction(
   slug: string,
   rewardId: string,
-  isActive: boolean
+  isActive: boolean,
 ) {
   const { business, session } = await getRewardManagementContext(slug);
   const parsedRewardId = opaqueIdSchema.safeParse(rewardId);
@@ -186,7 +194,9 @@ export async function toggleRewardStatusAction(
       "OPERATE",
     )
   ) {
-    redirect(`/businesses/${business.slug}/rewards?error=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/rewards?error=subscription-restricted`,
+    );
   }
 
   const existingReward = await prisma.reward.findFirst({
@@ -203,11 +213,15 @@ export async function toggleRewardStatusAction(
     isActive: parsedStatus.data,
     actor: session.user,
   });
-  const error = rewardCommandError(result);
-  if (error) {
-    redirect(`/businesses/${business.slug}/rewards?error=${error}`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${business.slug}/rewards?error=${rewardCommandError(result)}`,
+    );
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateRewardPaths(business.slug);
-  redirect(`/businesses/${business.slug}/rewards?success=updated`);
+  redirect(
+    `/businesses/${business.slug}/rewards?success=updated&queued=${result.integrationJobIds.length}`,
+  );
 }
