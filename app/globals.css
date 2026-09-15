@@ -153,6 +153,15 @@
   --lf-focus: #ff6652;
 }
 
+.lf-marketing-surface [data-platform-brand-wordmark-size="compact"] {
+  display: block;
+  block-size: 0.9em;
+  inline-size: auto;
+  max-block-size: 0.9em;
+  max-inline-size: 4em;
+  object-fit: contain;
+}
+
 .lf-marketing-surface [data-platform-brand-wordmark-size="marketing"] {
   display: block;
   block-size: 1.75rem;
