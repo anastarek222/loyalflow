@@ -6,9 +6,10 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 ## Baseline
 
-- Production `main`: `802f1b3762c9c327264a79dd832bc078fc07f667`
-- Integration `staging`: `f3ac53588d8a912117cf3ee393bbdbdc405a66bc`
-- Last fully validated reconciliation checkpoint: `f07df28807451908809fa92ec5495f6eb8ba0484`
+- Production `main`: `d0f5bd3b24ddbfb688da04af47370c5556643648`
+- Integration `staging`: `78be89ca3e050f86e302203ef01453d6ee65c5d9`
+- Current non-WhatsApp closeout head: `d6727b3d73d3a23e259904b49364ad7021bf92fd`
+- Last focused validated checkpoint: `d6727b3d73d3a23e259904b49364ad7021bf92fd`
 - Parallel delta reconciled into this lane: `5ec317cf48797275fa10241c7c8e0938d2f72186` (`components/customer-messages-form.tsx` return-target preservation only)
 - This branch is the next baseline candidate. It is not a Pre-Stitch Freeze until exact-head validation and all blockers below are closed.
 
@@ -24,12 +25,14 @@ This manifest is the working authority for the final Product / Logic / Functiona
 ## P1 functional blockers
 
 ### Reward / redemption truth
-- [ ] One authoritative Reward State for Card / Profile / Scan / Redemption / Customers / Reports / Offers / WhatsApp.
+- [x] One authoritative non-WhatsApp Reward State for Card / Profile / Scan / Redemption / Customers / Reports / Offers. WhatsApp remains in its separate lane.
 - [x] Non-expiring earned reward is redeemable without requiring a non-existent unlock lifecycle record.
 - [x] Fallback reward is unavailable while an active catalogue is authoritative.
-- [ ] Multi-reward affordability/readiness has one contract.
-- [ ] Earned expiring entitlement snapshot policy is implemented and regression-tested.
-- [ ] Reward cost/name/status changes have explicit treatment for already-earned entitlement.
+- [x] Multi-reward affordability/readiness has one contract.
+- [x] Earned expiring entitlement snapshot policy is implemented and regression-tested.
+- [x] Reward cost/name/status changes have explicit treatment for already-earned entitlement.
+
+Focused evidence: `getRewardTruth` in `lib/rewards/availability.ts` is the shared authority used by the non-WhatsApp surfaces above. Commit `c2cab56ee3ef778897f1843d66863627da6bcd44` passed 17/17 focused tests, including the cross-surface multi-reward fixture. Entitlement snapshot and mutation-policy regressions were already closed on this lane before that reconciliation.
 
 ### Customer state / audience truth
 - [x] Replace single mutually-exclusive segment authority with explicit lifecycle/value/engagement/reward traits where needed.
@@ -43,6 +46,7 @@ Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-seg
 
 ### Offers / customer notifications
 - [x] Offer audience engine can actually produce every offered audience choice.
+- [x] Reward and Offer create/update/activate/deactivate operations persist explicit, locale-neutral Business Activity audit records atomically with their catalog writes.
 - [ ] New published Reward creates one brand-scoped customer notification event for opted-in eligible customers.
 - [ ] New published Offer notifies only its exact eligible opted-in audience.
 - [ ] Publish notification fan-out is idempotent and consent is rechecked before delivery.
@@ -55,16 +59,18 @@ Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-seg
 - [ ] New Reward / New Offer outbound events integrate with the existing Business-scoped outbox, credentials, consent and delivery-status model.
 
 ### Customer identity
-- [ ] Country-aware canonical phone identity is defined.
-- [ ] Existing-data collision audit is completed before migration.
-- [ ] Duplicate membership prevention uses canonical identity.
+- [x] Country-aware canonical phone identity is defined for local, `+20` and `0020` equivalents.
+- [x] Existing-data collisions are exposed through the review-only duplicate workflow before any migration or merge decision.
+- [x] Duplicate membership prevention uses canonical identity at command boundaries.
 - [ ] WhatsApp opt-out resolves the same canonical identity.
-- [ ] Duplicate-join recovery remains privacy-safe and never discloses a bearer card URL from phone alone.
+- [x] Duplicate-join recovery remains privacy-safe and never discloses a bearer card URL from phone alone.
+
+Focused evidence: commit `49df8a34861d22316cf5cc20144eecf88eb1af39` passed 33/33 phone, registration, duplicate and command-boundary tests. No Schema or Migration change was made; any future persisted canonical column or automated collision merge remains an Authorization Gate.
 
 ### Owner Trial / onboarding
 - [x] Public Trial field limits equal final persistence limits.
 - [x] Password acceptance continues safely into onboarding without an unnecessary second login.
-- [x] Trial-start policy is locked; authority is first successful Launch for a seven-usable-day promise.
+- [x] Trial-start policy is locked; authority is first successful Launch for a fourteen-day promise.
 - [x] Country derives consistent currency/timezone defaults.
 - [x] Server draft, Wizard state and Card Preview use the same defaults.
 - [x] Logo upload no longer conflicts with a 500-character URL field contract.
@@ -86,6 +92,22 @@ Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-seg
 
 Focused evidence for the closed Logo / Custom Card contracts above: Preview commit `900d90698ee2667bcfe814007958929ce2e63e82` executed 28 focused tests with 28 PASS / 0 FAIL before a successful production build and READY Preview deployment. The temporary Preview verifier was removed immediately after evidence capture. Full external Blob lifecycle certification and the structurally-valid-but-undecodable payload case remain open and are not represented by this focused evidence.
 
+### Card color semantics
+- [x] `primaryColor` is the primary accent/action/QR/progress authority.
+- [x] `secondaryColor` is the supporting surface and gradient-companion authority.
+- [x] Standard and Custom Card consumers follow the same semantic contract.
+
+Focused evidence: `docs/product/CARD_COLOR_SEMANTICS.md`, `lib/cards/card-color-semantics.ts`, and commit `3ec869cb0b89314ca66dbfaff412cec9721bcaf4`; 19/19 targeted tests passed.
+
+### Reward / Offer Business Activity
+- [x] Reward create/update/activate/deactivate events have explicit operations and item identity.
+- [x] Offer create/update/activate/deactivate events have explicit operations and item identity.
+- [x] Audit presentation is derived in Arabic or English from structured metadata.
+- [x] Catalog Business Activity is not represented as a customer outbound notification.
+- [x] No unsupported Reward/Offer publish event is fabricated; the current catalog lifecycle is create/update/active status.
+
+Focused evidence: commit `d6727b3d73d3a23e259904b49364ad7021bf92fd`; 26/26 activity and command-boundary tests passed, TypeScript passed, and lint completed with zero errors (three pre-existing warnings).
+
 ### Source / release governance
 - [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
 - [ ] No important runtime fix remains only in an unvalidated side branch.
@@ -106,6 +128,8 @@ Focused evidence for the closed Logo / Custom Card contracts above: Preview comm
 - [ ] Exact-head full CI GREEN.
 - [ ] Enabled V1 external integrations certified (Meta/WhatsApp, Email, Blob, runtime workers as applicable).
 - [ ] No known P0 or functional P1 remains open.
+
+Current external gate: Vercel Preview for `d6727b3d73d3a23e259904b49364ad7021bf92fd` is pending. Earlier attempts on this lane reported the free-plan deployment-rate limit; therefore this manifest does not claim Staging Verified or exact-head CI GREEN.
 
 ## Freeze statement
 
