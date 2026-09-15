@@ -46,7 +46,7 @@ export function extractWhatsAppMetaProviderErrorDetails(
 }
 
 export function logWhatsAppMetaProviderFailure(input: {
-  operation: "fetch-template" | "create-template";
+  operation: "fetch-template" | "create-template" | "send-message";
   httpStatus: number;
   payload: unknown;
 }) {
