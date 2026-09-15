@@ -64,7 +64,7 @@ test("Home follows the supplied Stitch narrative without placeholder routes", ()
     "marketing.home.ownershipTitle",
     "marketing.home.finalTitle",
   ]) {
-    assert.match(home, new RegExp(key.replaceAll(".", "\.")));
+    assert.match(home, new RegExp(key.replaceAll(".", "\\.")));
   }
 
   assert.doesNotMatch(home, /href=["']#["']/);
