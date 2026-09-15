@@ -148,7 +148,7 @@ export default async function SecurityPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {content.cards.map((card, index) => (
             <article
-              key=<MarketingBrandText text={card.title} />
+              key={card.title}
               className="flex min-w-0 flex-col items-start rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-7"
             >
               <h2
