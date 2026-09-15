@@ -11,6 +11,7 @@ import {
   MANUAL_CUSTOMER_MESSAGE_EVENTS,
   type ManualCustomerMessageEvent,
 } from "@/lib/server/integrations/customer-messaging";
+import { rebindCustomerWhatsAppConsent } from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { getBusinessWhatsAppManualReadiness } from "@/lib/server/integrations/whatsapp-manual-readiness";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -21,6 +22,76 @@ const requestIdSchema = z.string().uuid();
 
 function customerPath(slug: string, customerId: string, result: string) {
   return `/businesses/${slug}/customers/${customerId}?success=${result}`;
+}
+
+export async function confirmCustomerWhatsAppPhoneAction(
+  slug: string,
+  customerId: string,
+) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const business = await prisma.business.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      subscriptionLifecycleState: true,
+    },
+  });
+  if (!business) redirect("/businesses");
+  if (
+    !canAccessBusiness(session.user, business.id) ||
+    !canPerform(session.user, business.id, "CUSTOMERS_EDIT")
+  ) {
+    redirect(`/businesses/${business.slug}/customers/${customerId}`);
+  }
+  if (
+    !canPerformSubscriptionOperation(
+      business.subscriptionLifecycleState,
+      "OPERATE",
+    )
+  ) {
+    redirect(
+      customerPath(
+        business.slug,
+        customerId,
+        "whatsapp-subscription-restricted",
+      ),
+    );
+  }
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, businessId: business.id },
+    select: {
+      id: true,
+      phone: true,
+      whatsappOptedOutAt: true,
+    },
+  });
+  if (!customer) redirect(`/businesses/${business.slug}/customers`);
+
+  // STOP remains authoritative. Rebinding is only for a customer who has
+  // explicitly consented to the current number and is not opted out.
+  if (customer.whatsappOptedOutAt) {
+    redirect(customerPath(business.slug, customer.id, "whatsapp-ineligible"));
+  }
+
+  await prisma.$transaction((transaction) =>
+    rebindCustomerWhatsAppConsent(transaction, {
+      businessId: business.id,
+      customerId: customer.id,
+      whatsappPhoneE164: customer.phone,
+      changedAt: new Date(),
+    }),
+  );
+
+  revalidatePath(`/businesses/${business.slug}/customers/${customer.id}`);
+  revalidatePath(`/businesses/${business.slug}/whatsapp-history`);
+  revalidatePath(`/businesses/${business.slug}/messages`);
+  redirect(
+    customerPath(business.slug, customer.id, "whatsapp-consent-confirmed"),
+  );
 }
 
 export async function sendManualCustomerWhatsAppAction(
