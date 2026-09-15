@@ -35,7 +35,7 @@ test("meeting request UI keeps tomorrow-first Cairo booking with compact provide
   }
 
   assert.match(experience, /<select[\s\S]*name="meetingMethod"/);
-  assert.doesNotMatch(experience, /input[\s\S]*name="meetingMethod"/);
+  assert.doesNotMatch(experience, /<input[^>]*name="meetingMethod"/);
   assert.match(experience, /BOOKING_TIME_ZONE = "Africa\/Cairo"/);
   assert.match(experience, /getBookingDateIso\(1\)/);
   assert.match(experience, /min=\{minimumBookingDate\}/);
