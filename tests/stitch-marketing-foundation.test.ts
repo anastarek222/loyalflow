@@ -125,9 +125,19 @@ test("all public marketing routes inherit the canonical header, footer, and bran
 
   for (const route of routes) {
     const routeSource = source(route);
-    assert.match(routeSource, /<MarketingHeader/);
-    assert.match(routeSource, /<MarketingFooter/);
+    if (route === "app/terms/page.tsx") {
+      assert.match(routeSource, /<LegalDocumentPage/);
+    } else {
+      assert.match(routeSource, /<MarketingHeader/);
+      assert.match(routeSource, /<MarketingFooter/);
+    }
   }
+
+  const legalDocument = source(
+    "components/marketing/legal-document-page.tsx",
+  );
+  assert.match(legalDocument, /<MarketingHeader/);
+  assert.match(legalDocument, /<MarketingFooter/);
 
   const brandRenderer = source(
     "components/marketing/marketing-brand-text.tsx",
