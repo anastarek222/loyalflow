@@ -33,12 +33,12 @@ jobs:
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/phase-h-handoff/private.pem >/dev/null 2>&1
           openssl pkey -in /tmp/phase-h-handoff/private.pem -pubout -out /tmp/phase-h-handoff/public.pem
 
-      - name: Publish public handoff key
-        shell: bash
-        run: |
-          set -euo pipefail
-          encoded=$(base64 -w0 /tmp/phase-h-handoff/public.pem)
-          echo "PHASE_H_PUBLIC_KEY_B64=${encoded}"
+      - name: Publish public handoff key artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-uat-handoff-${{ github.run_id }}
+          path: /tmp/phase-h-handoff/public.pem
+          retention-days: 1
 
       - name: Wait for encrypted handoff
         env:
