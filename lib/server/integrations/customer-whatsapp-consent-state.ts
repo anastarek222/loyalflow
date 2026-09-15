@@ -45,6 +45,41 @@ export async function persistCustomerWhatsAppPhone(
   `;
 }
 
+export async function invalidateCustomerWhatsAppConsentForPhoneChange(
+  client: Prisma.TransactionClient,
+  input: Readonly<{ businessId: string; customerId: string }>,
+) {
+  return client.$executeRaw`
+    UPDATE "Customer"
+    SET
+      "whatsappPhoneE164" = NULL,
+      "whatsappOptInAt" = NULL,
+      "whatsappOptedOutAt" = NULL
+    WHERE "businessId" = ${input.businessId}
+      AND "id" = ${input.customerId}
+  `;
+}
+
+export async function rebindCustomerWhatsAppConsent(
+  client: Prisma.TransactionClient,
+  input: Readonly<{
+    businessId: string;
+    customerId: string;
+    whatsappPhoneE164: string;
+    changedAt: Date;
+  }>,
+) {
+  return client.$executeRaw`
+    UPDATE "Customer"
+    SET
+      "whatsappPhoneE164" = ${input.whatsappPhoneE164},
+      "whatsappOptInAt" = ${input.changedAt},
+      "whatsappOptedOutAt" = NULL
+    WHERE "businessId" = ${input.businessId}
+      AND "id" = ${input.customerId}
+  `;
+}
+
 export async function setCustomerWhatsAppConsent(
   client: Prisma.TransactionClient,
   input: Readonly<{

@@ -10,7 +10,10 @@ import { getBusinessWhatsAppManualReadiness } from "@/lib/server/integrations/wh
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { sendManualCustomerWhatsAppAction } from "./whatsapp-actions";
+import {
+  confirmCustomerWhatsAppPhoneAction,
+  sendManualCustomerWhatsAppAction,
+} from "./whatsapp-actions";
 
 type Props = {
   params: Promise<{ slug: string; customerId: string }>;
@@ -59,6 +62,7 @@ export default async function CustomerWhatsAppPanel({
       id: true,
       firstName: true,
       lastName: true,
+      phone: true,
       isActive: true,
       balance: true,
       whatsappPhoneE164: true,
@@ -88,11 +92,19 @@ export default async function CustomerWhatsAppPanel({
   const locale = getLanguageLocale(language);
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const canSend = canPerform(session.user, business.id, "CUSTOMERS_EDIT");
+  const whatsappPhoneMatchesCustomer =
+    Boolean(customer.whatsappPhoneE164) &&
+    customer.whatsappPhoneE164 === customer.phone;
   const eligible =
     customer.isActive &&
-    Boolean(customer.whatsappPhoneE164) &&
+    whatsappPhoneMatchesCustomer &&
     Boolean(customer.whatsappOptInAt) &&
     !customer.whatsappOptedOutAt;
+  const canReconfirmConsent =
+    canSend &&
+    customer.isActive &&
+    !customer.whatsappOptedOutAt &&
+    (!whatsappPhoneMatchesCustomer || !customer.whatsappOptInAt);
   const availability = getRewardAvailability({
     customerActive: customer.isActive,
     balance: customer.balance,
@@ -108,6 +120,11 @@ export default async function CustomerWhatsAppPanel({
     business.slug,
     customer.id,
   );
+  const confirmConsentAction = confirmCustomerWhatsAppPhoneAction.bind(
+    null,
+    business.slug,
+    customer.id,
+  );
 
   const eligibilityCopy = !customer.isActive
     ? t(
@@ -119,20 +136,25 @@ export default async function CustomerWhatsAppPanel({
           "العميل أوقف رسائل واتساب. لا يمكن تجاوز STOP يدويًا.",
           "The customer opted out of WhatsApp. STOP cannot be overridden manually.",
         )
-      : !customer.whatsappOptInAt
+      : customer.whatsappPhoneE164 && !whatsappPhoneMatchesCustomer
         ? t(
-            "لا توجد موافقة صريحة على واتساب بعد.",
-            "There is no explicit WhatsApp consent yet.",
+            "رقم العميل اتغير. لازم تأكيد موافقة واتساب للرقم الحالي قبل الإرسال.",
+            "The customer phone changed. Reconfirm WhatsApp consent for the current number before sending.",
           )
-        : !customer.whatsappPhoneE164
+        : !customer.whatsappOptInAt
           ? t(
-              "رقم واتساب يحتاج تصحيحًا قبل الإرسال.",
-              "The WhatsApp phone needs correction before delivery.",
+              "لا توجد موافقة صريحة على واتساب للرقم الحالي بعد.",
+              "There is no explicit WhatsApp consent for the current number yet.",
             )
-          : t(
-              "العميل مؤهل لإرسال واتساب اليدوي.",
-              "The customer is eligible for manual WhatsApp delivery.",
-            );
+          : !customer.whatsappPhoneE164
+            ? t(
+                "رقم واتساب يحتاج تأكيدًا قبل الإرسال.",
+                "The WhatsApp phone needs confirmation before delivery.",
+              )
+            : t(
+                "العميل مؤهل لإرسال واتساب اليدوي.",
+                "The customer is eligible for manual WhatsApp delivery.",
+              );
 
   const feedback =
     query.success === "whatsapp-scheduled"
@@ -140,32 +162,37 @@ export default async function CustomerWhatsAppPanel({
           "تمت إضافة محاولة واتساب إلى طابور التوصيل.",
           "The WhatsApp delivery attempt was queued.",
         )
-      : query.success === "whatsapp-ineligible"
+      : query.success === "whatsapp-consent-confirmed"
         ? t(
-            "لم تُرسل الرسالة لأن حالة العميل لم تعد مؤهلة.",
-            "The message was not queued because the customer is no longer eligible.",
+            "تم ربط موافقة واتساب بالرقم الحالي للعميل.",
+            "WhatsApp consent is now bound to the customer's current phone number.",
           )
-        : query.success === "whatsapp-reward-not-ready"
+        : query.success === "whatsapp-ineligible"
           ? t(
-              "لم تُرسل رسالة المكافأة لأن Reward Ready لم يعد متحققًا.",
-              "The reward message was not queued because Reward Ready is no longer true.",
+              "لم تُرسل الرسالة لأن حالة العميل لم تعد مؤهلة.",
+              "The message was not queued because the customer is no longer eligible.",
             )
-          : query.success === "whatsapp-subscription-restricted"
+          : query.success === "whatsapp-reward-not-ready"
             ? t(
-                "حالة الاشتراك الحالية تمنع محاولة إرسال جديدة.",
-                "The current subscription state blocks a new delivery attempt.",
+                "لم تُرسل رسالة المكافأة لأن Reward Ready لم يعد متحققًا.",
+                "The reward message was not queued because Reward Ready is no longer true.",
               )
-            : query.success === "whatsapp-not-ready"
+            : query.success === "whatsapp-subscription-restricted"
               ? t(
-                  "إرسال واتساب غير جاهز لهذا النوع: راجع اتصال المرسل واعتماد القالب الحالي.",
-                  "WhatsApp delivery is not ready for this message: check the sender connection and current template approval.",
+                  "حالة الاشتراك الحالية تمنع محاولة إرسال جديدة.",
+                  "The current subscription state blocks a new delivery attempt.",
                 )
-              : query.success === "whatsapp-invalid"
+              : query.success === "whatsapp-not-ready"
                 ? t(
-                    "تعذر إنشاء محاولة واتساب بسبب بيانات غير صالحة.",
-                    "The WhatsApp attempt could not be created because the request was invalid.",
+                    "إرسال واتساب غير جاهز لهذا النوع: راجع اتصال المرسل واعتماد القالب الحالي.",
+                    "WhatsApp delivery is not ready for this message: check the sender connection and current template approval.",
                   )
-                : null;
+                : query.success === "whatsapp-invalid"
+                  ? t(
+                      "تعذر إنشاء محاولة واتساب بسبب بيانات غير صالحة.",
+                      "The WhatsApp attempt could not be created because the request was invalid.",
+                    )
+                  : null;
 
   const latestStatus = latest
     ? (latest.providerDeliveryStatus ?? latest.status)
@@ -208,6 +235,28 @@ export default async function CustomerWhatsAppPanel({
           </div>
         ) : null}
 
+        {canReconfirmConsent ? (
+          <div className="mt-4 rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle p-4">
+            <p className="text-sm font-semibold text-foreground">
+              {t(
+                "استخدم التأكيد ده فقط بعد ما العميل يوافق صراحةً على استقبال رسائل واتساب على رقمه الحالي.",
+                "Use this only after the customer explicitly agreed to receive WhatsApp messages at their current phone number.",
+              )}
+            </p>
+            <form action={confirmConsentAction} className="mt-3">
+              <button
+                type="submit"
+                className="rounded-[var(--lf-radius-input)] bg-success px-4 py-2 text-sm font-bold text-white"
+              >
+                {t(
+                  "تأكيد موافقة العميل للرقم الحالي",
+                  "Confirm customer consent for current phone",
+                )}
+              </button>
+            </form>
+          </div>
+        ) : null}
+
         <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
             <p className="text-sm font-black text-foreground">
@@ -230,15 +279,6 @@ export default async function CustomerWhatsAppPanel({
               </p>
             )}
           </div>
-
-          {!customer.whatsappPhoneE164 && canSend ? (
-            <a
-              href="#customer-details"
-              className="rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-2 text-center text-sm font-bold text-foreground"
-            >
-              {t("تصحيح الرقم", "Fix phone")}
-            </a>
-          ) : null}
         </div>
 
         {canSend && eligible && manualReadiness.readyEvents.length > 0 ? (

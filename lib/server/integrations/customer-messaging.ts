@@ -81,16 +81,24 @@ async function findEligibleCustomer(
   transaction: Prisma.TransactionClient,
   input: Readonly<{ businessId: string; customerId: string }>,
 ) {
-  return transaction.customer.findFirst({
+  const customer = await transaction.customer.findFirst({
     where: {
       id: input.customerId,
       businessId: input.businessId,
       isActive: true,
+      whatsappPhoneE164: { not: null },
       whatsappOptInAt: { not: null },
       whatsappOptedOutAt: null,
     },
-    select: { id: true },
+    select: {
+      id: true,
+      phone: true,
+      whatsappPhoneE164: true,
+    },
   });
+
+  if (!customer || customer.phone !== customer.whatsappPhoneE164) return null;
+  return customer;
 }
 
 /**
