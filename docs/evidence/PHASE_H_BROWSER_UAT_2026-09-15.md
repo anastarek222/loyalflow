@@ -6,17 +6,18 @@ Status: `PARTIAL / BLOCKED`
 
 - Branch: `fix/reward-truth-core`
 - Pull request: `#549`
-- GitHub commit under test: `1bb36bd9e2841d46801d30b24e2bb7c69b06b0e0`
-- Vercel deployment: `dpl_8hXCAqed3TbC6D1eyyj1hf3B22cP`
-- Preview URL: `https://loyalflow-6eo40660c-anas-tarek.vercel.app`
-- Environment: protected Vercel Preview / Staging database only
-- Deployment state at verification: `READY`
+- GitHub commit under browser test: `5c0c716446fece9f17868ab9e92053cb34ee6c09`
+- Vercel deployment: `dpl_F6KfN276bqnqQNtQfcyHWhmXGrRM`
+- Preview URL: `https://loyalflow-5d8cd6ne8-anas-tarek.vercel.app`
+- Deployment state: `READY`
+- External browser run: GitHub Actions run `34967292840`
+- Browser: Playwright Chromium on GitHub-hosted Ubuntu runner
 
-No Production alias, Production data, schema, migration, secret, environment variable, provider, or WhatsApp implementation was changed.
+No Production alias, Production data, schema, migration, secret/environment setting, provider, or WhatsApp implementation was changed.
 
 ## Previously completed browser evidence
 
-The earlier Phase H browser pass already established the following and was not repeated unnecessarily in this follow-up:
+The earlier Phase H pass remains valid for these already-executed surfaces and was not repeated unnecessarily:
 
 | Scenario | Result | Evidence |
 | --- | --- | --- |
@@ -24,50 +25,72 @@ The earlier Phase H browser pass already established the following and was not r
 | Acquisition | PASS | `/get-started` rendered the supported business-start surface. |
 | Authentication entry | PASS | `/login` rendered the login surface. |
 | Protected direct route | PASS | Anonymous protected-route access redirected to `/login`. |
-| Arabic direction | PASS | Arabic switch produced RTL direction and no desktop horizontal overflow in the prior browser pass. |
+| Arabic / RTL | PASS | Arabic switch produced RTL direction and no desktop horizontal overflow in the prior browser pass. |
 
-The prior invalid Public Card failure was HTTP 500 caused by Prisma `P2022` for missing `Customer.whatsappOptInAt`.
+## Staging database verification — read-only
 
-## Current database verification — read-only
-
-The staging Neon target was verified read-only before attempting the follow-up browser run:
+The designated Staging Neon target was re-verified after the external browser run:
 
 - Neon project: `loyalflow-staging` (`divine-fog-40741793`)
-- Branch ID: `br-wispy-morning-aub14jdr`
+- Branch: `main` (`br-wispy-morning-aub14jdr`)
 - Database: `neondb`
-- Migration `20260901113000_add_automatic_customer_messaging`: applied
-- `Customer.whatsappOptInAt`: present
-- `Business.whatsappRedeemedMessage`: present
-- `IntegrationJob.payload`: present
-- Total businesses observed: `2`
-- Final-UAT businesses matching `loyalflow-final-uat-*`: `0`
+- Migration `20260901113000_add_automatic_customer_messaging`: **applied**
+- `Customer.whatsappOptInAt`: **present**
+- Final-UAT business fixtures remaining: **0**
 
-The migration was **not** re-applied. No `prisma db push`, schema write, migration write, or database mutation was executed during this follow-up.
+The migration was not re-applied. No `prisma db push`, schema write, migration write, or manual database mutation was executed.
 
-## Current browser attempt
+## External Browser preflight
 
-A real Playwright + Chromium runtime was discovered in the execution environment and a browser navigation was attempted against the exact protected Preview.
+The earlier local execution environment had browser egress blocked, so a temporary GitHub Actions runner was used solely to obtain real external Chromium evidence without changing the application or Vercel environment.
 
-Result: `BLOCKED` before the application could be reached. Chromium returned `net::ERR_BLOCKED_BY_ADMINISTRATOR` for outbound HTTPS navigation. A control navigation to `https://example.com` returned the same browser-level error, proving this is an execution-environment egress restriction rather than a Tanee route failure.
+The runner:
 
-The Vercel deployment itself remains `READY` and is confirmed to correspond exactly to commit `1bb36bd9e2841d46801d30b24e2bb7c69b06b0e0`. Vercel protected-URL fetches reached the Preview protection redirect, but that is not counted as Browser UAT and does not prove the invalid-card application response.
+1. checked out exact product SHA `5c0c716446fece9f17868ab9e92053cb34ee6c09`;
+2. installed Playwright Chromium;
+3. authenticated to the exact protected Preview using a short-lived encrypted handoff;
+4. opened the Preview successfully in Chromium;
+5. tested `/card/not-a-valid-public-token` **before any fixture creation**.
 
-Therefore `/card/not-a-valid-public-token` could not be re-certified as 404/not-found in a real browser during this follow-up.
+Result:
+
+| Scenario | Result | Evidence |
+| --- | --- | --- |
+| Protected Preview browser access | PASS | External Chromium authenticated and reached the exact Preview. |
+| Invalid Public Card | **FAIL** | Expected HTTP `404`; actual HTTP `500`. |
+
+The GitHub Actions error was: `Invalid Public Card expected 404, received 500`.
+
+## Runtime evidence
+
+Vercel runtime logs for the same deployment and request at `2026-09-15T12:12:25Z` report Prisma `P2022` from `prisma.customer.findUnique()`:
+
+- model: `Customer`
+- missing runtime column: `Customer.whatsappOptInAt`
+- response: HTTP `500`
+
+This conflicts with the designated Staging Neon target, where the migration is applied and the column is present. Therefore the protected Preview is not operating against the verified Staging database state expected by this Phase H run.
+
+This is a Preview database-target/schema-drift gate. It is not valid to hide it by changing the Public Card query because fixture-backed UAT would then create fixtures in the verified Staging database while the Preview would continue reading a different/stale database target.
+
+Changing `DATABASE_URL`, Vercel Environment Variables, Secrets, Schema, or migrations is explicitly outside the authorization for this Phase H run, so execution stops at this gate.
 
 ## Fixture gate and cleanup
 
-The required precondition for staging fixture creation was not met because the invalid Public Card route could not be browser-certified first. Consequently:
+The required invalid-card preflight failed before fixture creation. Consequently:
 
-- `scripts/prepare-final-uat-fixtures.ts` was **not executed**.
-- Final UAT fixtures created in this follow-up: `0`.
-- No disposable UAT credentials were generated or printed.
-- No fixture-backed Owner, Manager, Staff, Viewer, Super Admin, Customer, Scan, Reward, redemption, tenant-isolation, subscription-restricted, mobile, or permission-denied journeys were executed in this follow-up.
-- Cleanup command was not required because no fixtures were created; the read-only fixture count remained `0` before the browser attempt.
+- `scripts/prepare-final-uat-fixtures.ts` was **not executed** in the external run.
+- Final UAT fixtures created: **0**.
+- Desktop, tablet, and mobile fixture-backed UAT steps were skipped.
+- The workflow's emergency cleanup step executed successfully.
+- Read-only Neon verification after the run confirmed final-UAT fixture count remains **0**.
+
+The following journeys therefore remain unexecuted in the current external run: Customer join/profile, Scan, reward availability/redemption, Owner, Manager, Staff, Viewer, Super Admin, permission-denied, subscription-restricted, tenant isolation, and fixture-backed mobile/RTL coverage.
 
 ## Certification outcome
 
 Phase H remains `PARTIAL / BLOCKED`.
 
-The previous schema blocker is resolved at the staging database. The remaining blocker is the current execution environment: real Chromium exists, but its outbound network access is administratively blocked, preventing browser access to the protected Preview. No application workaround was introduced to bypass the tool/environment restriction.
+The browser tooling blocker is resolved: a real external Chromium browser reached the exact Preview. The remaining blocker is now proven to be the Preview runtime database target/state: the Preview still returns Prisma `P2022` for a column that exists in the designated Staging Neon database.
 
-To close Phase H, run the same exact Preview (or a newer Preview mapped to the current branch HEAD) from a browser-capable environment with outbound HTTPS access, verify the invalid public token returns the required not-found behavior, then run the official final-UAT fixture script on Staging, execute the remaining role/reward/mobile/isolation journeys, and run the official cleanup regardless of the UAT result.
+To continue Phase H, the Preview runtime must first be pointed at the already-migrated designated Staging database (or its actual Preview database must be brought to the already-approved migration state) under a separately authorized Environment/Database gate. After that, rerun the invalid-card preflight; only when it returns `404` should the official staging fixtures be created and the remaining browser journeys executed, followed by official cleanup regardless of result.
