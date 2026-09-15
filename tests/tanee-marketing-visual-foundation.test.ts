@@ -57,6 +57,8 @@ test("Tanee public marketing routes share the clean responsive visual authority"
   assert.doesNotMatch(marketing, /backdrop-blur|blur-3xl/);
   assert.doesNotMatch(marketing, /linear-gradient|radial-gradient/);
   assert.doesNotMatch(marketing, /Sparkles/);
-  assert.match(routes[5], /PlatformBrandIdentity/);
+  assert.match(routes[5], /MarketingHeader/);
+  assert.match(routes[5], /MarketingFooter/);
+  assert.match(routes[5], /MarketingBrandText/);
   assert.doesNotMatch(routes[4], /block truncate/);
 });
