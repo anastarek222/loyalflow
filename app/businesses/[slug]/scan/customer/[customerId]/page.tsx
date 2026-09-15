@@ -180,6 +180,7 @@ export default async function ScanCustomerPage({
   const knownErrors: ScanOperationError[] = [
     "invalid",
     "permission",
+    "subscription-restricted",
     "reward-unavailable",
     "insufficient-balance",
     "conflict",

@@ -9,6 +9,7 @@ export type ScanOperationSuccess = "earned" | "reward-ready" | "redeemed";
 export type ScanOperationError =
   | "invalid"
   | "permission"
+  | "subscription-restricted"
   | "reward-unavailable"
   | "insufficient-balance"
   | "conflict"

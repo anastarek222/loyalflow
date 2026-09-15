@@ -137,6 +137,15 @@ Focused evidence: `docs/product/ROLE_PERMISSION_MATRIX.md` plus the Phase C role
 
 Focused evidence: `docs/product/SUBSCRIPTION_ENTITLEMENT_MATRIX.md` and `tests/phase-d-subscription-entitlement-matrix.test.ts`. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
 
+### Functional state sweep
+
+- [x] Customers, Rewards, Offers, Reports, Scan, Card, Custom Card, Team, and Settings have bounded empty/loading/success/failure behavior.
+- [x] Permission, subscription, stale/conflict, not-found, and provider/runtime-unavailable outcomes remain explicit where applicable.
+- [x] Scan earn/redeem subscription rejection now reports the true reason in Arabic and English while preserving transaction enforcement.
+- [x] No dead-end or misleading CTA was introduced; final visual treatment remains owned by Stitch.
+
+Focused evidence: `docs/product/FUNCTIONAL_STATE_SWEEP.md` and `tests/phase-e-loyalty-subscription-feedback.test.ts`; the focused financial/subscription set passed 30/30 and TypeScript passed. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+
 ### Source / release governance
 
 - [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
