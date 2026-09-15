@@ -187,7 +187,7 @@ Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-
 - [ ] Enabled V1 external integrations certified (Meta/WhatsApp, Email, Blob, runtime workers as applicable).
 - [ ] No known P0 or functional P1 remains open.
 
-Current external gate: Vercel Preview for `d6727b3d73d3a23e259904b49364ad7021bf92fd` is pending. Earlier attempts on this lane reported the free-plan deployment-rate limit; therefore this manifest does not claim Staging Verified or exact-head CI GREEN.
+Phase H evidence: protected Vercel Preview deployment `dpl_8X2pVyRMu5U4JggLzjLZiMWam6LH` is `READY` for exact GitHub commit `71e4941aeda78988c43bc9e35f0a1be7196c5d1d`. Public marketing/acquisition, login entry, anonymous protected-route rejection, and Arabic RTL browser checks passed. Public Card failed with HTTP 500 because the connected Preview database is missing `Customer.whatsappOptInAt`; fixture-backed role, Customer, Reward, Offer, entitlement, and mobile journeys therefore remain explicitly blocked. See `docs/evidence/PHASE_H_BROWSER_UAT_2026-09-15.md`. This manifest does not claim Staging Verified or exact-head CI GREEN.
 
 ## Freeze statement
 
