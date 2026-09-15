@@ -155,6 +155,16 @@ Focused evidence: `docs/product/FUNCTIONAL_STATE_SWEEP.md` and `tests/phase-e-lo
 
 Focused evidence: `docs/product/CROSS_SURFACE_SCENARIO_CERTIFICATION.md`; the combined deterministic suite passed 31/31 at `d39f448f5514b5aa586b97310561bad2e23cdf1f`. Functional certification is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
 
+### Reward regression final matrix
+
+- [x] Fallback-only, catalog-only, and multiple-active-reward behavior is covered.
+- [x] Non-expiring, expiring active, expired, and redeemed entitlement behavior is covered.
+- [x] Reward cost/name/type/code/expiry and status mutation policy is covered.
+- [x] Last-active-reward fallback behavior and below/equal/above cost boundaries are covered.
+- [x] Historical earned-entitlement snapshots remain consistent through redemption side effects.
+
+Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-reward-regression-matrix.test.ts`. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+
 ### Source / release governance
 
 - [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
