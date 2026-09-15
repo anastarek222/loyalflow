@@ -14,6 +14,7 @@ import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/busines
 import { getBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 import { isWhatsAppAutomationEventEnabled } from "@/lib/server/integrations/whatsapp-automation-policy";
 import { decryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
+import { logWhatsAppMetaProviderFailure } from "@/lib/server/integrations/whatsapp-meta-provider-diagnostics";
 import { renderWhatsAppTemplateParameters } from "@/lib/whatsapp-templates";
 
 type WhatsAppDeliveryResult =
@@ -343,6 +344,19 @@ export async function sendWhatsAppCustomerNotificationSafely(
         ? { status: "success", providerMessageId }
         : { status: "success" };
     }
+
+    let responsePayload: unknown = null;
+    try {
+      responsePayload = await response.json();
+    } catch {
+      // Diagnostics are best-effort. Never log raw response text.
+    }
+    logWhatsAppMetaProviderFailure({
+      operation: "send-message",
+      httpStatus: response.status,
+      payload: responsePayload,
+    });
+
     const retryable = response.status === 429 || response.status >= 500;
     return {
       status: "failure",
