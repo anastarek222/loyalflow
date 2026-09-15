@@ -153,12 +153,29 @@
   --lf-focus: #ff6652;
 }
 
+.lf-marketing-surface [data-marketing-inline-wordmark] {
+  position: relative;
+  display: inline-block;
+  block-size: 0.9em;
+  inline-size: 3.515625em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lf-marketing-surface [data-marketing-inline-wordmark] > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+}
+
 .lf-marketing-surface [data-platform-brand-wordmark-size="compact"] {
   display: block;
-  block-size: 0.9em;
-  inline-size: auto;
-  max-block-size: 0.9em;
-  max-inline-size: 4em;
+  block-size: 100%;
+  inline-size: 100%;
+  max-block-size: 100%;
+  max-inline-size: 100%;
   object-fit: contain;
 }
 
