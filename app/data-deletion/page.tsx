@@ -136,7 +136,7 @@ export default async function DataDeletionPage() {
       <section className="px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto w-full max-w-4xl divide-y divide-border rounded-[var(--lf-radius-card)] border border-border bg-white px-5 sm:px-8">
           {content.sections.map((section) => (
-            <article key=<MarketingBrandText text={section.title} /> className="py-7 sm:py-8">
+            <article key={section.title} className="py-7 sm:py-8">
               <h2 className="text-xl font-black">{section.title}</h2>
               <p className="mt-3 whitespace-pre-line text-sm leading-8 text-foreground-muted sm:text-base">
                 <MarketingBrandText text={section.body} />
