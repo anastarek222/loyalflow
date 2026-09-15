@@ -10,15 +10,28 @@ test("Stage 13 reward type options follow the authenticated AR/EN locale in crea
   const rewards = source("app/businesses/[slug]/rewards/page.tsx");
 
   assert.match(rewards, /GIFT: language === "AR" \? "هدية" : "Gift"/);
-  assert.match(rewards, /PROMO_CODE: language === "AR" \? "كود ترويجي" : "Promo code"/);
+  assert.match(
+    rewards,
+    /PROMO_CODE: language === "AR" \? "كود ترويجي" : "Promo code"/,
+  );
   assert.match(rewards, /DISCOUNT: language === "AR" \? "خصم" : "Discount"/);
-  assert.match(rewards, /CUSTOM: language === "AR" \? "مكافأة مخصصة" : "Custom reward"/);
+  assert.match(
+    rewards,
+    /CUSTOM: language === "AR" \? "مكافأة مخصصة" : "Custom reward"/,
+  );
 
   for (const type of ["GIFT", "PROMO_CODE", "DISCOUNT", "CUSTOM"] as const) {
     const localizedOptions = rewards.match(
-      new RegExp(`<option value="${type}">\\{rewardType\\("${type}", language\\)\\}<\\/option>`, "g"),
+      new RegExp(
+        `<option value="${type}">\\s*\\{rewardType\\("${type}", language\\)\\}\\s*<\\/option>`,
+        "g",
+      ),
     );
-    assert.equal(localizedOptions?.length, 2, `${type} should be localized in create and edit forms`);
+    assert.equal(
+      localizedOptions?.length,
+      2,
+      `${type} should be localized in create and edit forms`,
+    );
   }
 });
 
@@ -31,5 +44,8 @@ test("Stage 13 reward type localization preserves reward values and action bound
   assert.match(rewards, /defaultValue="GIFT"/);
   assert.match(rewards, /defaultValue=\{reward\.type\}/);
   assert.doesNotMatch(rewards, /<option value="GIFT">Gift<\/option>/);
-  assert.doesNotMatch(rewards, /<option value="PROMO_CODE">Promo code<\/option>/);
+  assert.doesNotMatch(
+    rewards,
+    /<option value="PROMO_CODE">Promo code<\/option>/,
+  );
 });

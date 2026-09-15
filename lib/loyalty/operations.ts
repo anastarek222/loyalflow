@@ -19,7 +19,9 @@ export function getEarnDetails({
   const amount =
     loyaltyMode === "SALES_AMOUNT"
       ? saleAmount
-      : earnAmount;
+      : loyaltyMode === "VISITS"
+        ? 1
+        : earnAmount;
 
   if (
     typeof amount !== "number" ||
@@ -30,15 +32,20 @@ export function getEarnDetails({
   }
 
   const isSale = loyaltyMode === "SALES_AMOUNT";
+  const isVisit = loyaltyMode === "VISITS";
 
   return {
     amount,
     transactionNote: isSale
       ? `Sale recorded: ${amount} ${unitName}`
-      : "Loyalty credit added",
+      : isVisit
+        ? "Visit recorded"
+        : "Loyalty credit added",
     activityDescription: isSale
       ? `Recorded sale amount ${amount} ${unitName}`
-      : `Added ${amount} loyalty credit`,
+      : isVisit
+        ? "Recorded 1 visit"
+        : `Added ${amount} loyalty credit`,
   };
 }
 

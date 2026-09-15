@@ -20,6 +20,7 @@ type DistributedRateLimitRuntime = {
   token?: string;
   fetchImpl?: typeof fetch;
   environment?: string;
+  vercelEnvironment?: string;
 };
 
 const buckets = new Map<string, RateLimitBucket>();
@@ -46,8 +47,8 @@ function pruneExpiredBuckets(now: number) {
 }
 
 /**
- * Process-local fallback for development/test and for non-security-sensitive
- * compatibility paths that have not moved to the distributed limiter yet.
+ * Process-local fallback for development/test and protected Preview runtime
+ * paths that are not backed by the production distributed limiter.
  */
 export function rateLimit(
   key: string,
@@ -97,16 +98,30 @@ function getDistributedRuntime(
     token: runtime.token ?? process.env.UPSTASH_REDIS_REST_TOKEN?.trim(),
     fetchImpl: runtime.fetchImpl ?? fetch,
     environment: runtime.environment ?? process.env.NODE_ENV,
+    vercelEnvironment:
+      runtime.vercelEnvironment ?? process.env.VERCEL_ENV?.trim().toLowerCase(),
   };
+}
+
+function isProductionRuntime(
+  runtime: ReturnType<typeof getDistributedRuntime>,
+) {
+  // Vercel Preview runs optimized Next.js output with NODE_ENV=production.
+  // VERCEL_ENV is the deployment-level truth and must take precedence so a
+  // protected Preview is not mistaken for live Production. Production keeps
+  // the fail-closed distributed limiter contract.
+  if (runtime.vercelEnvironment === "production") return true;
+  if (runtime.vercelEnvironment === "preview") return false;
+  return runtime.environment === "production";
 }
 
 /**
  * Distributed fixed-window limiter backed by Upstash Redis REST.
  *
- * In production the limiter fails closed when credentials are absent or the
- * distributed store is unavailable. Development and test retain the local
- * fallback so contributors do not need external infrastructure for ordinary
- * verification runs.
+ * In Production the limiter fails closed when credentials are absent or the
+ * distributed store is unavailable. Development, test, and protected Vercel
+ * Preview retain the process-local fallback so non-production verification is
+ * not blocked solely because Preview has NODE_ENV=production.
  */
 export async function distributedRateLimit(
   key: string,
@@ -114,7 +129,7 @@ export async function distributedRateLimit(
   runtime: DistributedRateLimitRuntime = {},
 ): Promise<RateLimitResult> {
   const resolved = getDistributedRuntime(runtime);
-  const isProduction = resolved.environment === "production";
+  const isProduction = isProductionRuntime(resolved);
 
   if (!resolved.url || !resolved.token) {
     if (!isProduction) return rateLimit(key, options);

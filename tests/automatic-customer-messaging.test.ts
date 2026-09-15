@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   AUTOMATIC_CUSTOMER_MESSAGE_EVENTS,
   enqueueCustomerMessageJob,
+  enqueueCustomerMessagePublicationJobs,
   isCustomerMessagePayload,
 } from "../lib/server/integrations/customer-messaging";
 import { operationPresentationPath } from "../lib/loyalty/operation-origin";
@@ -69,6 +70,7 @@ test("accepts only bounded versioned customer message payloads", () => {
       version: 1,
       event: "NEW_REWARD",
       customerId: "customer_1",
+      rewardId: "reward_1",
       rewardName: "Free coffee",
     }),
     true,
@@ -78,6 +80,7 @@ test("accepts only bounded versioned customer message payloads", () => {
       version: 1,
       event: "NEW_OFFER",
       customerId: "customer_1",
+      offerId: "offer_1",
     }),
     true,
   );
@@ -105,6 +108,69 @@ test("accepts only bounded versioned customer message payloads", () => {
       balance: "5",
     }),
     false,
+  );
+  assert.equal(
+    isCustomerMessagePayload({
+      version: 1,
+      event: "NEW_REWARD",
+      customerId: "customer_1",
+    }),
+    false,
+  );
+  assert.equal(
+    isCustomerMessagePayload({
+      version: 1,
+      event: "WELCOME",
+      customerId: "customer_1",
+      offerId: "offer_1",
+    }),
+    false,
+  );
+});
+
+test("publish producers create one durable idempotent candidate per opted-in customer", async () => {
+  const upserts: Array<Record<string, unknown>> = [];
+  const transaction = {
+    $queryRaw: async () => [automationRow({ newOfferEnabled: true })],
+    customer: {
+      findMany: async () => [{ id: "customer_1" }, { id: "customer_2" }],
+    },
+    integrationJob: {
+      upsert: async (input: Record<string, unknown>) => {
+        upserts.push(input);
+        return { id: `job_${upserts.length}` };
+      },
+    },
+  };
+
+  const jobs = await enqueueCustomerMessagePublicationJobs(
+    transaction as never,
+    {
+      businessId: "business_1",
+      event: "NEW_OFFER",
+      offerId: "offer_1",
+      publicationKey: "offer:offer_1:created",
+      availableAt: new Date("2026-09-13T00:00:00.000Z"),
+    },
+  );
+
+  assert.deepEqual(
+    jobs.map((job) => job.id),
+    ["job_1", "job_2"],
+  );
+  assert.equal(upserts.length, 2);
+  assert.deepEqual(
+    (upserts[0] as { create: Record<string, unknown> }).create.payload,
+    {
+      version: 1,
+      event: "NEW_OFFER",
+      customerId: "customer_1",
+      offerId: "offer_1",
+    },
+  );
+  assert.equal(
+    (upserts[1] as { create: Record<string, unknown> }).create.idempotencyKey,
+    "customer-message:new_offer:offer:offer_1:created:customer_2",
   );
 });
 
@@ -399,7 +465,7 @@ test("Meta approval remains provider-owned while event toggles remain Owner-owne
   );
 });
 
-test("New Reward and New Offer are prepared in settings but their producers stay WA-5 gated", () => {
+test("New Reward and New Offer producers are enabled after the WA-5 audience gate", () => {
   const pageSource = readFileSync(
     "app/businesses/[slug]/settings/whatsapp/page.tsx",
     "utf8",
@@ -407,8 +473,51 @@ test("New Reward and New Offer are prepared in settings but their producers stay
 
   assert.match(pageSource, /event: "NEW_REWARD"/);
   assert.match(pageSource, /event: "NEW_OFFER"/);
-  assert.match(pageSource, /producerReady: false/g);
-  assert.match(pageSource, /WA-5 sync/);
+  assert.doesNotMatch(pageSource, /producerReady: false/);
+  assert.doesNotMatch(pageSource, /WA-5 sync/);
+});
+
+test("WA-5 publishes only on create or inactive-to-active transitions and rechecks delivery truth", () => {
+  const rewardCommand = readFileSync(
+    "lib/server/business/reward-write-command.ts",
+    "utf8",
+  );
+  const offerCommand = readFileSync(
+    "lib/server/business/offer-write-command.ts",
+    "utf8",
+  );
+  const rewardActions = readFileSync(
+    "app/businesses/[slug]/rewards/actions.ts",
+    "utf8",
+  );
+  const offerActions = readFileSync(
+    "app/businesses/[slug]/offers/actions.ts",
+    "utf8",
+  );
+  const sender = readFileSync(
+    "lib/server/integrations/whatsapp-cloud.ts",
+    "utf8",
+  );
+
+  assert.match(rewardCommand, /event: "NEW_REWARD"/);
+  assert.match(offerCommand, /event: "NEW_OFFER"/);
+  assert.match(rewardCommand, /!existingReward\.isActive && reward\.isActive/);
+  assert.match(offerCommand, /!existingOffer\.isActive && offer\.isActive/);
+  assert.match(offerCommand, /offerNotificationAvailableAt/);
+  assert.match(
+    rewardActions,
+    /scheduleIntegrationJobs\(result\.integrationJobIds\)/,
+  );
+  assert.match(
+    offerActions,
+    /scheduleIntegrationJobs\(result\.integrationJobIds\)/,
+  );
+  assert.match(sender, /payload\.event === "NEW_REWARD"[\s\S]*isActive: true/);
+  assert.match(
+    sender,
+    /payload\.event === "NEW_OFFER"[\s\S]*isOfferEligible\(/,
+  );
+  assert.match(sender, /resolveBusinessCustomerAudienceContext\(/);
 });
 
 test("manual customer-profile WhatsApp actions require customer edit permission", () => {

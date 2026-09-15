@@ -115,7 +115,7 @@ export function getProgramRulesUpdate(
     rewardCode: value.rewardCode || null,
     rewardDescription: value.rewardDescription || null,
     rewardThreshold: value.rewardThreshold,
-    earnAmount: value.earnAmount,
+    earnAmount: value.loyaltyMode === "POINTS" ? value.earnAmount : 1,
   };
 }
 

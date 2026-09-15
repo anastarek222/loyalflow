@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { getEffectivePlanLimits } from "@/lib/entitlements-server";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
 import { parseOfferFormInput } from "@/lib/offers/form-input";
 import { canManageBusiness } from "@/lib/permissions";
@@ -93,13 +94,17 @@ export async function createOfferAction(slug: string, formData: FormData) {
     offer: normalizeOfferInput(parsed.data),
     actor: session.user,
   });
-  const error = offerCommandError(result);
-  if (error) {
-    redirect(`/businesses/${business.slug}/offers?error=${error}`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${business.slug}/offers?error=${offerCommandError(result)}`,
+    );
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateOfferPaths(business.slug);
-  redirect(`/businesses/${business.slug}/offers?success=created`);
+  redirect(
+    `/businesses/${business.slug}/offers?success=created&queued=${result.integrationJobIds.length}`,
+  );
 }
 
 export async function updateOfferAction(
@@ -138,11 +143,13 @@ export async function updateOfferAction(
     offer: normalizeOfferInput(parsed.data),
     actor: session.user,
   });
-  const error = offerCommandError(result);
-  if (error) {
-    redirect(`/businesses/${business.slug}/offers?error=${error}`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${business.slug}/offers?error=${offerCommandError(result)}`,
+    );
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=updated`);
 }
@@ -184,11 +191,15 @@ export async function toggleOfferStatusAction(
     isActive: parsedStatus.data,
     actor: session.user,
   });
-  const error = offerCommandError(result);
-  if (error) {
-    redirect(`/businesses/${business.slug}/offers?error=${error}`);
+  if (!result.ok) {
+    redirect(
+      `/businesses/${business.slug}/offers?error=${offerCommandError(result)}`,
+    );
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateOfferPaths(business.slug);
-  redirect(`/businesses/${business.slug}/offers?success=updated`);
+  redirect(
+    `/businesses/${business.slug}/offers?success=updated&queued=${result.integrationJobIds.length}`,
+  );
 }

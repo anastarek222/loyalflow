@@ -36,7 +36,7 @@ import {
 
 type Props = {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ success?: string; error?: string }>;
+  searchParams: Promise<{ success?: string; error?: string; queued?: string }>;
 };
 
 type Language = "AR" | "EN";
@@ -68,11 +68,15 @@ function getEligibilityLabel(
 ) {
   if (value === "VIP") return language === "AR" ? "عملاء VIP" : "VIP customers";
   if (value === "SEGMENT") {
-    const knownSegment = customerSegments.find((candidate) => candidate === segment);
+    const knownSegment = customerSegments.find(
+      (candidate) => candidate === segment,
+    );
     const segmentLabel = knownSegment
       ? getCustomerSegmentLabel(knownSegment, language)
       : segment;
-    return language === "AR" ? `شريحة: ${segmentLabel}` : `Segment: ${segmentLabel}`;
+    return language === "AR"
+      ? `شريحة: ${segmentLabel}`
+      : `Segment: ${segmentLabel}`;
   }
   return language === "AR" ? "كل العملاء النشطين" : "All active customers";
 }
@@ -83,6 +87,9 @@ export default async function OffersPage({ params, searchParams }: Props) {
 
   const { slug } = await params;
   const query = await searchParams;
+  const queuedCount = /^\d+$/.test(query.queued ?? "")
+    ? Number(query.queued)
+    : null;
   const [user, business] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -143,6 +150,11 @@ export default async function OffersPage({ params, searchParams }: Props) {
         >
           <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
           {language === "AR" ? "تم حفظ العرض." : "Offer saved."}
+          {queuedCount !== null
+            ? language === "AR"
+              ? ` تم تجهيز ${queuedCount} رسالة WhatsApp، وسيُعاد فحص الجمهور قبل الإرسال.`
+              : ` ${queuedCount} WhatsApp deliveries were queued; audience eligibility will be rechecked before send.`
+            : null}
         </p>
       ) : null}
       {query.error ? (
@@ -151,7 +163,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
           className="rounded-[var(--lf-radius-input)] border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"
         >
           {query.error === "subscription-restricted"
-              ? language === "AR"
+            ? language === "AR"
               ? "لا تسمح حالة الاشتراك الحالية بإنشاء عرض أو تغيير بياناته أو حالته. تظل العروض والبيانات الحالية متاحة للقراءة."
               : "The current subscription state does not allow creating or changing an offer. Existing offers and data remain readable."
             : language === "AR"
