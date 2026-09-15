@@ -76,6 +76,9 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   const header = source("components/marketing/marketing-header.tsx");
   const footer = source("components/marketing/marketing-footer.tsx");
   const styles = source("app/globals.css");
+  const brandRenderer = source(
+    "components/marketing/marketing-brand-text.tsx",
+  );
 
   assert.match(identity, /data-platform-brand-wordmark-size/);
   assert.match(header, /showMark=\{false\}/);
