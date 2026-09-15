@@ -35,5 +35,5 @@ test("meeting form submits once without forcing the visitor into mail or WhatsAp
   assert.match(experience, /ابعت طلب الاجتماع/);
   assert.doesNotMatch(experience, /Send by email|ابعت بالإيميل/);
   assert.doesNotMatch(experience, /Send on WhatsApp|ابعت على WhatsApp/);
-  assert.doesNotMatch(experience, /emailHref|whatsappHref/);
+  assert.doesNotMatch(experience, /requestDraft|setRequestDraft|emailHref:/);
 });
