@@ -1,8 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildCatalogAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
@@ -30,7 +27,8 @@ type RewardWriteFailure = Readonly<{
     | "ACTIVE_ENTITLEMENTS";
 }>;
 
-export type RewardWriteCommandResult = Readonly<{ ok: true }> | RewardWriteFailure;
+export type RewardWriteCommandResult =
+  Readonly<{ ok: true }> | RewardWriteFailure;
 
 async function hasLiveRewardEntitlements(
   transaction: Prisma.TransactionClient,
@@ -105,29 +103,24 @@ export async function createRewardCommand(input: {
       return { ok: false, reason: "PLAN_FEATURE" } as const;
     }
     if (
-      !isWithinPlanLimit(
-        business.plan,
-        "REWARDS",
-        rewardCount,
-        1,
-        planLimits,
-      )
+      !isWithinPlanLimit(business.plan, "REWARDS", rewardCount, 1, planLimits)
     ) {
       return { ok: false, reason: "PLAN_LIMIT" } as const;
     }
 
     const reward = await transaction.reward.create({
       data: { ...input.reward, businessId: input.businessId },
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "REWARD_CREATED",
-        description: `تم إنشاء المكافأة ${reward.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "REWARD",
+        operation: "CREATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: reward,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;
@@ -188,16 +181,17 @@ export async function updateRewardCommand(input: {
     const reward = await transaction.reward.update({
       where: { id: existingReward.id },
       data: input.reward,
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "REWARD_UPDATED",
-        description: `تم تحديث المكافأة ${reward.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "REWARD",
+        operation: "UPDATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: reward,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;
@@ -246,18 +240,17 @@ export async function setRewardStatusCommand(input: {
     const reward = await transaction.reward.update({
       where: { id: existingReward.id },
       data: { isActive: input.isActive },
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "REWARD_STATUS_CHANGED",
-        description: input.isActive
-          ? `تم تفعيل المكافأة ${reward.name}`
-          : `تم إيقاف المكافأة ${reward.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "REWARD",
+        operation: input.isActive ? "ACTIVATE" : "DEACTIVATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: reward,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;

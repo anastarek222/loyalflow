@@ -22,7 +22,9 @@ test("TC5 Offer actions keep presentation preflight and delegate persisted write
 });
 
 test("TC5 Offer creation rechecks persisted lifecycle, plan feature and limit before write", () => {
-  const entitlement = command.indexOf("await canBusinessPerformSubscriptionOperation");
+  const entitlement = command.indexOf(
+    "await canBusinessPerformSubscriptionOperation",
+  );
   const businessRead = command.indexOf("transaction.business.findUnique");
   const feature = command.indexOf("hasFeatureEntitlement(business.plan");
   const limit = command.indexOf("isWithinPlanLimit(");
@@ -42,8 +44,12 @@ test("TC5 Offer creation rechecks persisted lifecycle, plan feature and limit be
 });
 
 test("TC5 Offer update and status writes preserve tenant ownership inside the transaction", () => {
-  const updateStart = command.indexOf("export async function updateOfferCommand");
-  const statusStart = command.indexOf("export async function setOfferStatusCommand");
+  const updateStart = command.indexOf(
+    "export async function updateOfferCommand",
+  );
+  const statusStart = command.indexOf(
+    "export async function setOfferStatusCommand",
+  );
   assert.ok(updateStart >= 0 && statusStart > updateStart);
 
   for (const slice of [
@@ -66,9 +72,14 @@ test("TC5 Offer update and status writes preserve tenant ownership inside the tr
 
 test("TC5 Offer commands keep the domain write and audit atomic", () => {
   assert.match(command, /prisma\.\$transaction/);
-  assert.match(command, /type: "OFFER_CREATED"/);
-  assert.match(command, /type: "OFFER_UPDATED"/);
-  assert.match(command, /type: "OFFER_STATUS_CHANGED"/);
+  assert.match(command, /entity: "OFFER"/);
+  assert.match(command, /operation: "CREATE"/);
+  assert.match(command, /operation: "UPDATE"/);
+  assert.match(
+    command,
+    /operation: input\.isActive \? "ACTIVATE" : "DEACTIVATE"/,
+  );
+  assert.match(command, /buildCatalogAuditActivity/);
   assert.match(command, /transaction\.businessActivity\.create/);
   assert.doesNotMatch(command, /stripe|checkout|webhook|process\.env/i);
 });

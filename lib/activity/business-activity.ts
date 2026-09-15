@@ -9,16 +9,10 @@ import type { ActivityRequestContext } from "@/lib/activity/request-context";
 
 export const STRUCTURED_ACTIVITY_PRESENTATION_VERSION = "R9_V1";
 
-export function activityRequestMetadata(
-  context: ActivityRequestContext,
-) {
+export function activityRequestMetadata(context: ActivityRequestContext) {
   return {
-    ...(context.deviceName
-      ? { deviceName: context.deviceName }
-      : {}),
-    ...(context.ipAddress
-      ? { ipAddress: context.ipAddress }
-      : {}),
+    ...(context.deviceName ? { deviceName: context.deviceName } : {}),
+    ...(context.ipAddress ? { ipAddress: context.ipAddress } : {}),
   };
 }
 
@@ -33,10 +27,7 @@ type ActivityActor = {
  * administrator is deliberately not tenant-scoped, so its identity is kept
  * as a server-derived metadata snapshot instead of violating that relation.
  */
-export function activityActorFields(
-  actor: ActivityActor,
-  businessId: string,
-) {
+export function activityActorFields(actor: ActivityActor, businessId: string) {
   if (actor.businessId === businessId) {
     return { createdById: actor.id };
   }
@@ -62,10 +53,7 @@ type BranchAuditOperation =
   | "ASSIGN_STAFF"
   | "REMOVE_STAFF";
 
-const branchActivityTypes: Record<
-  BranchAuditOperation,
-  ActivityType
-> = {
+const branchActivityTypes: Record<BranchAuditOperation, ActivityType> = {
   CREATE: "BRANCH_CREATED",
   UPDATE: "BRANCH_UPDATED",
   ACTIVATE: "BRANCH_ACTIVATED",
@@ -85,9 +73,7 @@ type BranchAuditInput = {
   assignedUser?: { id: string; email: string };
 };
 
-export function buildBranchAuditActivity(
-  input: BranchAuditInput,
-) {
+export function buildBranchAuditActivity(input: BranchAuditInput) {
   const actor = {
     id: input.actorId,
     businessId: input.actorBusinessId,
@@ -111,9 +97,7 @@ export function buildBranchAuditActivity(
   return {
     type,
     description: `${type} branchName=${input.branch.name}${
-      input.assignedUser
-        ? ` assignedUserEmail=${input.assignedUser.email}`
-        : ""
+      input.assignedUser ? ` assignedUserEmail=${input.assignedUser.email}` : ""
     }`,
     businessId: input.businessId,
     branchId: input.branch.id,
@@ -238,3 +222,57 @@ export function buildFinancialActivityMetadata(
 }
 
 export const branchActivityTypeValues = Object.values(branchActivityTypes);
+
+type CatalogAuditOperation = "CREATE" | "UPDATE" | "ACTIVATE" | "DEACTIVATE";
+type CatalogAuditEntity = "REWARD" | "OFFER";
+
+const catalogActivityTypes: Record<
+  CatalogAuditEntity,
+  Record<CatalogAuditOperation, ActivityType>
+> = {
+  REWARD: {
+    CREATE: "REWARD_CREATED",
+    UPDATE: "REWARD_UPDATED",
+    ACTIVATE: "REWARD_STATUS_CHANGED",
+    DEACTIVATE: "REWARD_STATUS_CHANGED",
+  },
+  OFFER: {
+    CREATE: "OFFER_CREATED",
+    UPDATE: "OFFER_UPDATED",
+    ACTIVATE: "OFFER_STATUS_CHANGED",
+    DEACTIVATE: "OFFER_STATUS_CHANGED",
+  },
+};
+
+/**
+ * Locale-neutral Business Activity record for Reward and Offer catalog writes.
+ * These audit records are deliberately separate from customer notifications.
+ */
+export function buildCatalogAuditActivity(input: {
+  entity: CatalogAuditEntity;
+  operation: CatalogAuditOperation;
+  businessId: string;
+  actor: ActivityActor;
+  item: { id: string; name: string };
+  activityContext: ActivityRequestContext;
+}) {
+  const type = catalogActivityTypes[input.entity][input.operation];
+  const metadata = {
+    ...actorMetadata(input.actor, input.businessId),
+    presentationVersion: STRUCTURED_ACTIVITY_PRESENTATION_VERSION,
+    presentationKind: "CATALOG_AUDIT",
+    entity: input.entity,
+    operation: input.operation,
+    itemId: input.item.id,
+    itemName: input.item.name,
+  };
+
+  return {
+    type,
+    description: `${type} itemName=${input.item.name}`,
+    businessId: input.businessId,
+    ...activityActorFields(input.actor, input.businessId),
+    metadata,
+    ...activityRequestMetadata(input.activityContext),
+  };
+}

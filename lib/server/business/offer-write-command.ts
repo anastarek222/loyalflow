@@ -1,7 +1,4 @@
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildCatalogAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
@@ -34,7 +31,8 @@ type OfferWriteFailure = Readonly<{
     | "INVALID_AUDIENCE";
 }>;
 
-export type OfferWriteCommandResult = Readonly<{ ok: true }> | OfferWriteFailure;
+export type OfferWriteCommandResult =
+  Readonly<{ ok: true }> | OfferWriteFailure;
 
 type OfferAudienceValidationClient = Pick<typeof prisma, "customerTag">;
 type OfferAudienceValidationInput = Pick<
@@ -132,29 +130,24 @@ export async function createOfferCommand(input: {
       return { ok: false, reason: "INVALID_AUDIENCE" } as const;
     }
     if (
-      !isWithinPlanLimit(
-        business.plan,
-        "OFFERS",
-        offerCount,
-        1,
-        planLimits,
-      )
+      !isWithinPlanLimit(business.plan, "OFFERS", offerCount, 1, planLimits)
     ) {
       return { ok: false, reason: "PLAN_LIMIT" } as const;
     }
 
     const offer = await transaction.offer.create({
       data: { ...input.offer, businessId: input.businessId },
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_CREATED",
-        description: `تم إنشاء العرض ${offer.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "OFFER",
+        operation: "CREATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: offer,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;
@@ -210,16 +203,17 @@ export async function updateOfferCommand(input: {
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: input.offer,
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_UPDATED",
-        description: `تم تحديث العرض ${offer.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "OFFER",
+        operation: "UPDATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: offer,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;
@@ -276,18 +270,17 @@ export async function setOfferStatusCommand(input: {
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: { isActive: input.isActive },
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_STATUS_CHANGED",
-        description: input.isActive
-          ? `تم تفعيل العرض ${offer.name}`
-          : `تم إيقاف العرض ${offer.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "OFFER",
+        operation: input.isActive ? "ACTIVATE" : "DEACTIVATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: offer,
+        activityContext,
+      }),
     });
 
     return { ok: true } as const;
