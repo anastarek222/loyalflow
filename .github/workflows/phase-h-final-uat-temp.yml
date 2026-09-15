@@ -1,0 +1,255 @@
+name: Temporary Phase H Final Browser UAT
+
+on:
+  push:
+    branches:
+      - agent/phase-h-final-uat-f85b4f5
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  phase-h-final-browser-uat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      CI: "true"
+      TARGET_SHA: f85b4f5abcd3ef6c129c5f23826c349de69f1025
+      STAGING_UAT_BASE_URL: https://loyalflow-dhv01bm8y-anas-tarek.vercel.app
+      LOYALFLOW_ENVIRONMENT: staging
+      LOYALFLOW_STAGING_DATABASE: neondb
+      LOYALFLOW_STAGING_DATABASE_HOST: ep-steep-bar-au02osd6.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_PRODUCTION_DATABASE_HOST: ep-crimson-moon-au6bcbh1.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
+      PR_NUMBER: "549"
+    steps:
+      - name: Generate ephemeral handoff key
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/phase-h-handoff
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/phase-h-handoff/private.pem >/dev/null 2>&1
+          openssl pkey -in /tmp/phase-h-handoff/private.pem -pubout -out /tmp/phase-h-handoff/public.pem
+          printf '%s\n' "$GITHUB_RUN_ID" > /tmp/phase-h-handoff/request-id
+
+      - name: Publish public handoff key
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-final-uat-handoff-${{ github.run_id }}
+          path: |
+            /tmp/phase-h-handoff/public.pem
+            /tmp/phase-h-handoff/request-id
+          retention-days: 1
+
+      - name: Wait for encrypted handoff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="phase-h-final-uat-handoff:${GITHUB_RUN_ID}:"
+          rm -f /tmp/phase-h-handoff/payload.json
+          for attempt in $(seq 1 180); do
+            body=$(curl -fsS \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              | jq -r --arg prefix "$prefix" '[.[] | .body | select(startswith($prefix))] | last // empty')
+            if [ -n "$body" ]; then
+              encoded="${body#${prefix}}"
+              printf '%s' "$encoded" | base64 -d > /tmp/phase-h-handoff/payload.json
+              if jq -e --arg requestId "$GITHUB_RUN_ID" '.requestId == $requestId' /tmp/phase-h-handoff/payload.json >/dev/null 2>&1; then
+                exit 0
+              fi
+            fi
+            sleep 2
+          done
+          echo "::error::Encrypted Phase H final-UAT handoff was not received"
+          exit 1
+
+      - name: Decrypt ephemeral handoff
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const payload = JSON.parse(fs.readFileSync('/tmp/phase-h-handoff/payload.json', 'utf8'));
+          const privateKey = fs.readFileSync('/tmp/phase-h-handoff/private.pem', 'utf8');
+          const key = crypto.privateDecrypt(
+            { key: privateKey, oaepHash: 'sha256', padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+            Buffer.from(payload.key, 'base64'),
+          );
+          const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(payload.iv, 'base64'));
+          decipher.setAuthTag(Buffer.from(payload.tag, 'base64'));
+          const clear = Buffer.concat([
+            decipher.update(Buffer.from(payload.data, 'base64')),
+            decipher.final(),
+          ]);
+          const values = JSON.parse(clear.toString('utf8'));
+          for (const name of ['DATABASE_URL', 'UAT_FIXTURE_PASSWORD', 'VERCEL_SHARE_URL']) {
+            if (!values[name]) throw new Error(`${name} missing from encrypted handoff`);
+            process.stdout.write(`::add-mask::${values[name]}\n`);
+            fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<PHUATEOF\n${values[name]}\nPHUATEOF\n`);
+          }
+          NODE
+          rm -f /tmp/phase-h-handoff/payload.json /tmp/phase-h-handoff/private.pem
+
+      - name: Checkout exact product SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Authenticate protected exact Preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.launch();
+          const context = await browser.newContext();
+          const page = await context.newPage();
+          const response = await page.goto(process.env.VERCEL_SHARE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          if (!response) throw new Error('Protected Preview did not return a response');
+          await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+          const actual = new URL(page.url());
+          const expected = new URL(process.env.STAGING_UAT_BASE_URL);
+          if (actual.hostname !== expected.hostname) {
+            throw new Error(`Preview authentication landed on unexpected host: ${actual.hostname}`);
+          }
+          await context.storageState({ path: '/tmp/phase-h-vercel-state.json' });
+          await browser.close();
+          NODE
+
+      - name: Invalid Public Card preflight before fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.launch();
+          const context = await browser.newContext({ storageState: '/tmp/phase-h-vercel-state.json' });
+          const page = await context.newPage();
+          const response = await page.goto(`${process.env.STAGING_UAT_BASE_URL}/card/not-a-valid-public-token`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          if (!response) throw new Error('Invalid Public Card returned no response');
+          if (response.status() !== 404) throw new Error(`Invalid Public Card expected 404, received ${response.status()}`);
+          const heading = (await page.locator('h1').first().innerText()).trim();
+          if (!/Card unavailable|البطاقة غير متاحة/.test(heading)) {
+            throw new Error(`Invalid Public Card rendered unexpected heading: ${heading}`);
+          }
+          console.log('INVALID_PUBLIC_CARD_PREFLIGHT=PASS status=404');
+          await browser.close();
+          NODE
+
+      - name: Write temporary authenticated Playwright config
+        shell: bash
+        run: |
+          cat > phase-h.playwright.config.ts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          const baseURL = process.env.STAGING_UAT_BASE_URL!;
+          export default defineConfig({
+            testDir: './tests/browser',
+            fullyParallel: false,
+            forbidOnly: true,
+            retries: 0,
+            workers: 1,
+            timeout: 75_000,
+            reporter: [['list'], ['html', { open: 'never' }]],
+            use: {
+              baseURL,
+              storageState: '/tmp/phase-h-vercel-state.json',
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+              actionTimeout: 30_000,
+            },
+            projects: [
+              { name: 'desktop-chromium', grep: /@desktop/, use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } } },
+              { name: 'tablet-chromium', grep: /@tablet/, use: { browserName: 'chromium', viewport: { width: 768, height: 1024 }, hasTouch: true } },
+              { name: 'mobile-chromium', grep: /@mobile/, use: { browserName: 'chromium', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } },
+            ],
+          });
+          EOF
+
+      - name: Run final UAT across desktop tablet mobile
+        id: browser_uat
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/phase-h-runs
+          for project in desktop-chromium tablet-chromium mobile-chromium; do
+            manifest="/tmp/phase-h-${project}.json"
+            echo "PREPARE_${project}=START"
+            npm run prepare:final-uat -- --base-url="$STAGING_UAT_BASE_URL" --manifest="$manifest"
+            run_id=$(jq -r .runId "$manifest")
+            printf '%s\n' "$run_id" > "/tmp/phase-h-runs/${project}.run"
+            echo "RUN_${project}=START"
+            set +e
+            STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project="$project"
+            test_code=$?
+            set -e
+            echo "CLEANUP_${project}=START"
+            set +e
+            npm run cleanup:final-uat -- --cleanup="$run_id"
+            cleanup_code=$?
+            set -e
+            rm -f "/tmp/phase-h-runs/${project}.run"
+            if [ "$cleanup_code" -ne 0 ]; then
+              echo "::error::${project} fixture cleanup failed"
+              exit "$cleanup_code"
+            fi
+            echo "CLEANUP_${project}=PASS"
+            if [ "$test_code" -ne 0 ]; then
+              echo "::error::${project} browser UAT failed"
+              exit "$test_code"
+            fi
+            echo "UAT_${project}=PASS"
+          done
+
+      - name: Emergency fixture cleanup
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          if [ -d /tmp/phase-h-runs ]; then
+            for run_file in /tmp/phase-h-runs/*.run; do
+              [ -f "$run_file" ] || continue
+              run_id=$(cat "$run_file")
+              if [ -n "$run_id" ]; then
+                npm run cleanup:final-uat -- --cleanup="$run_id" >/dev/null 2>&1 || true
+              fi
+            done
+          fi
+          echo "EMERGENCY_CLEANUP_ATTEMPTED=YES"
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-h-final-browser-evidence-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
