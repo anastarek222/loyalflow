@@ -167,12 +167,15 @@ const copy = {
     notes: "Anything we should know?",
     notesPlaceholder:
       "Optional — tell us about your business, locations, team or what you want to solve.",
-    request: "Prepare meeting request",
+    request: "Send meeting request",
+    sending: "Sending your request…",
     requestNote:
-      "This currently prepares the verified request details for sending. Automatic admin delivery will only be enabled after the notification provider is connected safely.",
-    readyTitle: "Your meeting request is ready.",
+      "Your meeting request is sent securely to the Tanee team. We’ll contact you after availability is reviewed.",
+    readyTitle: "Your meeting request was sent.",
     readyBody:
-      "Send it to Tanee by email or WhatsApp. We’ll reply with availability and the final meeting details.",
+      "The Tanee team received your details and will reply with availability and the final meeting details.",
+    requestError:
+      "We couldn’t send your request right now. Please try again or use the direct contact options below.",
     sendEmail: "Send by email",
     sendWhatsapp: "Send on WhatsApp",
     directEyebrow: "Direct contact",
@@ -243,12 +246,15 @@ const copy = {
     notes: "في حاجة تحب نعرفها قبل الاجتماع؟",
     notesPlaceholder:
       "اختياري — قول لنا عن نشاطك أو الفروع أو الفريق أو المشكلة اللي عايز تحلها.",
-    request: "جهّز طلب الاجتماع",
+    request: "ابعت طلب الاجتماع",
+    sending: "جاري إرسال الطلب…",
     requestNote:
-      "الخطوة دي حاليًا بتجهّز بيانات الطلب المراجعة للإرسال. التوصيل التلقائي للإدارة هيتفعّل فقط بعد ربط مزوّد الإشعارات بشكل آمن.",
-    readyTitle: "طلب الاجتماع جاهز.",
+      "طلب الاجتماع بيتبعت بأمان مباشرة لفريق Tanee، وهنتواصل معاك بعد مراجعة التوفر.",
+    readyTitle: "طلب الاجتماع اتبعت.",
     readyBody:
-      "ابعت الطلب لـTanee على الإيميل أو WhatsApp، وهنرد عليك بالتوفر وتفاصيل الاجتماع النهائية.",
+      "فريق Tanee استلم بياناتك وهيرد عليك بالتوفر وتفاصيل الاجتماع النهائية.",
+    requestError:
+      "مقدرناش نبعت الطلب دلوقتي. جرّب مرة تانية أو استخدم وسائل التواصل المباشر الموجودة تحت.",
     sendEmail: "ابعت بالإيميل",
     sendWhatsapp: "ابعت على WhatsApp",
     directEyebrow: "تواصل مباشر",
@@ -283,11 +289,10 @@ export function ContactSalesExperience({
   const minimumBookingDate = getBookingDateIso(1);
   const [selectedMethod, setSelectedMethod] =
     useState<MeetingMethod>("google-meet");
-  const [requestDraft, setRequestDraft] = useState<{
-    emailHref: string | null;
-    whatsappHref: string | null;
-  } | null>(null);
-  const requestActionsRef = useRef<HTMLDivElement>(null);
+  const [submissionState, setSubmissionState] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
+  const requestStatusRef = useRef<HTMLDivElement>(null);
 
   const channels = useMemo(
     () =>
@@ -336,50 +341,33 @@ export function ContactSalesExperience({
   const directHref = channels.phone?.href ?? channels.email?.href ?? "#contact-options";
   const whatsappHref = channels.whatsapp?.href ?? "#contact-options";
 
-  const onRequestMeeting = (event: FormEvent<HTMLFormElement>) => {
+  const onRequestMeeting = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const value = (name: string) => String(data.get(name) ?? "").trim();
-    const preferredDate = value("preferredDate");
-    const preferredTime = value("preferredTime");
+    setSubmissionState("sending");
 
-    if (preferredDate < minimumBookingDate) return;
-    if (!BOOKING_TIME_SLOTS.includes(preferredTime as (typeof BOOKING_TIME_SLOTS)[number])) {
-      return;
+    const data = new FormData(event.currentTarget);
+    const payload = Object.fromEntries(
+      Array.from(data.entries(), ([key, value]) => [key, String(value).trim()]),
+    );
+
+    try {
+      const response = await fetch("/api/marketing/meeting-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...payload,
+          locale,
+          meetingMethod: selectedMethod,
+        }),
+      });
+      if (!response.ok) throw new Error("MEETING_REQUEST_FAILED");
+      setSubmissionState("success");
+    } catch {
+      setSubmissionState("error");
     }
 
-    const method = methodCopy[selectedMethod].label;
-    const lines = [
-      locale === "en" ? "Tanee meeting request" : "طلب اجتماع مع Tanee",
-      "",
-      `${content.name}: ${value("name")}`,
-      `${content.business}: ${value("business")}`,
-      `${content.email}: ${value("email")}`,
-      `${content.phone}: ${value("phone")}`,
-      `${content.country}: ${value("country")}`,
-      `${content.purpose}: ${value("purpose")}`,
-      `${content.preferredDate}: ${preferredDate}`,
-      `${content.preferredTime}: ${preferredTime}`,
-      `${content.timezone}: ${BOOKING_TIME_ZONE}`,
-      `${content.methodsTitle}: ${method}`,
-      `${content.notes}: ${value("notes") || "—"}`,
-    ];
-    const message = lines.join("\n");
-    const subject =
-      locale === "en"
-        ? `Tanee meeting request — ${value("business")}`
-        : `طلب اجتماع مع Tanee — ${value("business")}`;
-
-    setRequestDraft({
-      emailHref: channels.email
-        ? `${channels.email.href}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
-        : null,
-      whatsappHref: channels.whatsapp
-        ? `${channels.whatsapp.href}?text=${encodeURIComponent(message)}`
-        : null,
-    });
     requestAnimationFrame(() =>
-      requestActionsRef.current?.scrollIntoView({
+      requestStatusRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       }),
@@ -516,6 +504,14 @@ export function ContactSalesExperience({
             onSubmit={onRequestMeeting}
             className="rounded-2xl border border-border bg-[var(--lf-marketing-canvas)] p-5 shadow-sm sm:p-7"
           >
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="absolute -start-[9999px] size-px opacity-0"
+            />
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-semibold text-foreground">
                 <span>{content.name}</span>
@@ -700,19 +696,23 @@ export function ContactSalesExperience({
 
             <button
               type="submit"
+              disabled={submissionState === "sending"}
               className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors hover:bg-primary-hover sm:w-auto"
             >
-              <MarketingBrandText text={content.request} />
+              <MarketingBrandText
+                text={submissionState === "sending" ? content.sending : content.request}
+              />
               <ArrowRight size={17} aria-hidden="true" className="rtl:-scale-x-100" />
             </button>
             <p className="mt-3 max-w-2xl text-xs leading-5 text-foreground-subtle">
               <MarketingBrandText text={content.requestNote} />
             </p>
 
-            {requestDraft ? (
+            {submissionState === "success" ? (
               <div
-                ref={requestActionsRef}
+                ref={requestStatusRef}
                 role="status"
+                data-testid="meeting-request-success"
                 className="mt-6 rounded-xl border border-primary/25 bg-[var(--lf-primary-soft)] p-5"
               >
                 <div className="flex items-start gap-3">
@@ -722,34 +722,23 @@ export function ContactSalesExperience({
                     className="mt-0.5 shrink-0 text-primary"
                   />
                   <div>
-                    <p className="font-bold text-foreground"><MarketingBrandText text={content.readyTitle} /></p>
+                    <p className="font-bold text-foreground">
+                      <MarketingBrandText text={content.readyTitle} />
+                    </p>
                     <p className="mt-1 text-sm leading-6 text-foreground-muted">
                       <MarketingBrandText text={content.readyBody} />
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  {requestDraft.emailHref ? (
-                    <a
-                      href={requestDraft.emailHref}
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-[var(--lf-primary-foreground)]"
-                    >
-                      <Mail size={17} aria-hidden="true" />
-                      <MarketingBrandText text={content.sendEmail} />
-                    </a>
-                  ) : null}
-                  {requestDraft.whatsappHref ? (
-                    <a
-                      href={requestDraft.whatsappHref}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-bold text-foreground hover:border-primary/40 hover:text-primary"
-                    >
-                      <WhatsAppIcon size={17} aria-hidden="true" />
-                      <MarketingBrandText text={content.sendWhatsapp} />
-                    </a>
-                  ) : null}
-                </div>
+              </div>
+            ) : submissionState === "error" ? (
+              <div
+                ref={requestStatusRef}
+                role="alert"
+                data-testid="meeting-request-error"
+                className="mt-6 rounded-xl border border-danger/30 bg-danger/10 p-5 text-sm font-semibold leading-6 text-danger"
+              >
+                <MarketingBrandText text={content.requestError} />
               </div>
             ) : null}
           </form>
