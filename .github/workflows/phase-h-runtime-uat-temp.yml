@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  issues: write
+  issues: read
   pull-requests: read
 
 jobs:
@@ -34,17 +34,11 @@ jobs:
           openssl pkey -in /tmp/phase-h-handoff/private.pem -pubout -out /tmp/phase-h-handoff/public.pem
 
       - name: Publish public handoff key
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           encoded=$(base64 -w0 /tmp/phase-h-handoff/public.pem)
-          body="phase-h-uat-public-key:${GITHUB_RUN_ID}:${encoded}"
-          gh api --method POST \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-            -f body="$body" >/dev/null
+          echo "PHASE_H_PUBLIC_KEY_B64=${encoded}"
 
       - name: Wait for encrypted handoff
         env:
