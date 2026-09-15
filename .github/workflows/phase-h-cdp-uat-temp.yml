@@ -1,4 +1,4 @@
-name: Temporary Phase H CDP Browser UAT
+name: Temporary Phase H OpenSSL CDP UAT
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  phase-h-cdp-browser-uat:
+  phase-h-openssl-cdp-uat:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -25,7 +25,7 @@ jobs:
       LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
       PR_NUMBER: "549"
     steps:
-      - name: Generate ephemeral handoff key
+      - name: Generate ephemeral RSA handoff key
         shell: bash
         run: |
           set -euo pipefail
@@ -36,17 +36,17 @@ jobs:
       - name: Publish public handoff key artifact
         uses: actions/upload-artifact@v4
         with:
-          name: phase-h-cdp-handoff-${{ github.run_id }}
+          name: phase-h-openssl-handoff-${{ github.run_id }}
           path: /tmp/phase-h-handoff/public.pem
           retention-days: 1
 
-      - name: Wait for encrypted handoff
+      - name: Wait for OpenSSL encrypted handoff
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          prefix="phase-h-cdp-handoff:${GITHUB_RUN_ID}:"
+          prefix="phase-h-openssl-handoff:${GITHUB_RUN_ID}:"
           request_id="$GITHUB_RUN_ID"
           rm -f /tmp/phase-h-handoff/payload.json
           for attempt in $(seq 1 180); do
@@ -59,7 +59,7 @@ jobs:
             if [ -n "$body" ]; then
               encoded="${body#${prefix}}"
               printf '%s' "$encoded" | base64 -d > /tmp/phase-h-handoff/payload.json
-              if jq -e --arg requestId "$request_id" '.requestId == $requestId' /tmp/phase-h-handoff/payload.json >/dev/null 2>&1; then
+              if jq -e --arg requestId "$request_id" '.requestId == $requestId and (.secrets | type == "object")' /tmp/phase-h-handoff/payload.json >/dev/null 2>&1; then
                 exit 0
               fi
             fi
@@ -68,33 +68,40 @@ jobs:
           echo "::error::Encrypted Phase H handoff was not received"
           exit 1
 
-      - name: Decrypt ephemeral handoff
+      - name: Decrypt handoff with OpenSSL OAEP SHA256
         shell: bash
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const fs = require('fs');
-          const crypto = require('crypto');
-          const payload = JSON.parse(fs.readFileSync('/tmp/phase-h-handoff/payload.json', 'utf8'));
-          const privateKey = fs.readFileSync('/tmp/phase-h-handoff/private.pem', 'utf8');
-          const key = crypto.privateDecrypt(
-            { key: privateKey, oaepHash: 'sha256', padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
-            Buffer.from(payload.key, 'base64'),
-          );
-          const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(payload.iv, 'base64'));
-          decipher.setAuthTag(Buffer.from(payload.tag, 'base64'));
-          const clear = Buffer.concat([
-            decipher.update(Buffer.from(payload.data, 'base64')),
-            decipher.final(),
-          ]);
-          const values = JSON.parse(clear.toString('utf8'));
-          for (const name of ['DATABASE_URL', 'UAT_FIXTURE_PASSWORD', 'VERCEL_SHARE_URL']) {
-            if (!values[name]) throw new Error(`${name} missing from encrypted handoff`);
-            process.stdout.write(`::add-mask::${values[name]}\n`);
-            fs.appendFileSync(process.env.GITHUB_ENV, `${name}<<PHUATEOF\n${values[name]}\nPHUATEOF\n`);
-          }
-          NODE
-          rm -f /tmp/phase-h-handoff/payload.json /tmp/phase-h-handoff/private.pem
+          for name in DATABASE_URL UAT_FIXTURE_PASSWORD VERCEL_SHARE_URL; do
+            out="/tmp/phase-h-handoff/${name}.clear"
+            : > "$out"
+            count=$(jq -r --arg name "$name" '.secrets[$name] | length // 0' /tmp/phase-h-handoff/payload.json)
+            if [ "$count" -lt 1 ]; then
+              echo "::error::$name is missing from encrypted handoff"
+              exit 1
+            fi
+            for index in $(seq 0 $((count - 1))); do
+              jq -r --arg name "$name" --argjson index "$index" '.secrets[$name][$index]' /tmp/phase-h-handoff/payload.json \
+                | base64 -d > /tmp/phase-h-handoff/part.enc
+              openssl pkeyutl -decrypt \
+                -inkey /tmp/phase-h-handoff/private.pem \
+                -pkeyopt rsa_padding_mode:oaep \
+                -pkeyopt rsa_oaep_md:sha256 \
+                -pkeyopt rsa_mgf1_md:sha256 \
+                -in /tmp/phase-h-handoff/part.enc >> "$out"
+            done
+            value=$(cat "$out")
+            test -n "$value"
+            echo "::add-mask::$value"
+            {
+              echo "$name<<PHUATEOF"
+              cat "$out"
+              echo
+              echo "PHUATEOF"
+            } >> "$GITHUB_ENV"
+          done
+          rm -f /tmp/phase-h-handoff/payload.json /tmp/phase-h-handoff/private.pem /tmp/phase-h-handoff/part.enc /tmp/phase-h-handoff/*.clear
+          echo "OPENSSL_HANDOFF=PASS"
 
       - name: Checkout exact product SHA
         uses: actions/checkout@v4
@@ -114,6 +121,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        id: deps
         run: pnpm install --frozen-lockfile
 
       - name: Locate system Google Chrome
@@ -158,9 +166,13 @@ jobs:
           const contexts = browser.contexts();
           if (!contexts.length) throw new Error('No persistent Chrome context found');
           const context = contexts[0];
-          let page = context.pages()[0] ?? await context.newPage();
-          await page.goto(process.env.VERCEL_SHARE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-          await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+          const page = context.pages()[0] ?? await context.newPage();
+          for (let attempt = 0; attempt < 30; attempt++) {
+            await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
+            const body = await page.locator('body').innerText().catch(() => '');
+            if (/Tanee|LoyalFlow|Start your free trial|Sign in|تاني/i.test(body)) break;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
           const body = await page.locator('body').innerText();
           if (!/Tanee|LoyalFlow|Start your free trial|Sign in|تاني/i.test(body)) {
             throw new Error(`CDP Preview bootstrap did not render app; final host=${new URL(page.url()).hostname}`);
@@ -178,7 +190,7 @@ jobs:
           if [ -f /tmp/phase-h-chrome.pid ]; then kill "$(cat /tmp/phase-h-chrome.pid)" 2>/dev/null || true; fi
           pkill -f '/tmp/phase-h-chrome-profile' 2>/dev/null || true
 
-      - name: Invalid Public Card preflight in fresh browser before fixtures
+      - name: Invalid Public Card preflight before fixtures
         shell: bash
         run: |
           set -euo pipefail
@@ -283,7 +295,7 @@ jobs:
           exit "$code"
 
       - name: Emergency fixture cleanup
-        if: always()
+        if: always() && steps.deps.outcome == 'success'
         shell: bash
         run: |
           set +e
@@ -298,7 +310,7 @@ jobs:
           echo "EMERGENCY_CLEANUP_ATTEMPTED=YES"
 
       - name: Verify final UAT fixture count is zero
-        if: always()
+        if: always() && steps.deps.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -317,7 +329,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-h-cdp-browser-evidence-${{ github.run_id }}
+          name: phase-h-openssl-cdp-evidence-${{ github.run_id }}
           path: |
             playwright-report/
             test-results/
