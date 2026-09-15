@@ -146,6 +146,15 @@ Focused evidence: `docs/product/SUBSCRIPTION_ENTITLEMENT_MATRIX.md` and `tests/p
 
 Focused evidence: `docs/product/FUNCTIONAL_STATE_SWEEP.md` and `tests/phase-e-loyalty-subscription-feedback.test.ts`; the focused financial/subscription set passed 30/30 and TypeScript passed. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
 
+### Cross-surface scenario certification
+
+- [x] Reward truth is consistent across Public Card, Customer Profile, Scan, server redemption, Customers, Reports, and Offers.
+- [x] Below/equal/above cost, fallback, catalog, expiring, non-expiring, expired, redeemed, and multiple-reward states are covered.
+- [x] The deterministic ten-customer audience fixture reconciles Customers, Reports, Export, and Offers.
+- [x] VIP, At Risk, Reward Ready, High Spender, Frequent Visitor, refund/void/promotion, and tenant tag semantics are covered.
+
+Focused evidence: `docs/product/CROSS_SURFACE_SCENARIO_CERTIFICATION.md`; the combined deterministic suite passed 31/31 at `d39f448f5514b5aa586b97310561bad2e23cdf1f`. Functional certification is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+
 ### Source / release governance
 
 - [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
