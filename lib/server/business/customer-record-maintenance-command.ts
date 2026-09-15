@@ -6,6 +6,7 @@ import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { normalizePhoneE164 } from "@/lib/customers/phone";
 import prisma from "@/lib/prisma";
+import { invalidateCustomerWhatsAppConsentForPhoneChange } from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerRecordMaintenanceActor = Readonly<{
@@ -72,7 +73,7 @@ export async function updateCustomerRecordCommand(input: {
 
     const customer = await transaction.customer.findFirst({
       where: { id: input.customerId, businessId: input.businessId },
-      select: { id: true },
+      select: { id: true, phone: true },
     });
     if (!customer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
@@ -90,6 +91,8 @@ export async function updateCustomerRecordCommand(input: {
       return { ok: false, reason: "DUPLICATE" } as const;
     }
 
+    const phoneChanged = customer.phone !== phone;
+
     await transaction.customer.update({
       where: { id: customer.id },
       data: {
@@ -98,6 +101,13 @@ export async function updateCustomerRecordCommand(input: {
         phone,
       },
     });
+
+    if (phoneChanged) {
+      await invalidateCustomerWhatsAppConsentForPhoneChange(transaction, {
+        businessId: input.businessId,
+        customerId: customer.id,
+      });
+    }
 
     const updatedCustomerName = [input.firstName, input.lastName]
       .filter(Boolean)
