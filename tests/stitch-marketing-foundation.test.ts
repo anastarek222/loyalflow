@@ -76,14 +76,19 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   const header = source("components/marketing/marketing-header.tsx");
   const footer = source("components/marketing/marketing-footer.tsx");
   const styles = source("app/globals.css");
+  const brandRenderer = source(
+    "components/marketing/marketing-brand-text.tsx",
+  );
 
   assert.match(identity, /data-platform-brand-wordmark-size/);
   assert.match(header, /showMark=\{false\}/);
   assert.match(header, /wordmarkSize="marketing"/);
   assert.match(footer, /wordmarkSize="marketing-footer"/);
   assert.match(styles, /wordmark-size="compact"/);
+  assert.match(brandRenderer, /data-marketing-inline-wordmark/);
+  assert.match(styles, /inline-size:\s*3\.515625em/);
   assert.match(styles, /block-size:\s*0\.9em/);
-  assert.match(styles, /max-inline-size:\s*4em/);
+  assert.match(styles, /wordmark-size="compact"[\s\S]*?block-size:\s*100%/);
   assert.match(styles, /wordmark-size="marketing"/);
   assert.match(styles, /block-size:\s*1\.75rem/);
   assert.match(header, /themeAdaptiveWordmark/);

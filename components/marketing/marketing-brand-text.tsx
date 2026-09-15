@@ -21,8 +21,9 @@ export function MarketingBrandText({
           <span
             key={`brand-${index}`}
             dir="ltr"
+            data-marketing-inline-wordmark=""
             className={cn(
-              "mx-[0.08em] inline-flex translate-y-[0.08em] align-baseline leading-none",
+              "mx-[0.08em] inline-block align-[-0.08em] leading-none",
               className,
             )}
           >
@@ -30,7 +31,7 @@ export function MarketingBrandText({
               showMark={false}
               themeAdaptiveWordmark
               fallbackText="Tanee"
-              wordmarkClassName="h-[0.9em] w-auto max-w-none"
+              wordmarkClassName="h-full w-full max-w-none"
               wordmarkSize="compact"
             />
           </span>
