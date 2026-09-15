@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  issues: read
+  issues: write
   pull-requests: read
 
 jobs:
@@ -16,10 +16,13 @@ jobs:
     timeout-minutes: 55
     env:
       CI: "true"
-      TARGET_SHA: 5c0c716446fece9f17868ab9e92053cb34ee6c09
-      STAGING_UAT_BASE_URL: https://loyalflow-5d8cd6ne8-anas-tarek.vercel.app
+      TARGET_SHA: f85b4f5abcd3ef6c129c5f23826c349de69f1025
+      STAGING_UAT_BASE_URL: https://loyalflow-dhv01bm8y-anas-tarek.vercel.app
       LOYALFLOW_ENVIRONMENT: staging
       LOYALFLOW_STAGING_DATABASE: neondb
+      LOYALFLOW_STAGING_DATABASE_HOST: ep-steep-bar-au02osd6-pooler.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_PRODUCTION_DATABASE_HOST: ep-crimson-moon-au6bcbh1.c-10.us-east-1.aws.neon.tech
+      LOYALFLOW_ALLOW_STAGING_FIXTURE: I_UNDERSTAND_STAGING_FIXTURE
       PR_NUMBER: "549"
     steps:
       - name: Generate ephemeral handoff key
@@ -29,16 +32,19 @@ jobs:
           mkdir -p /tmp/phase-h-handoff
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/phase-h-handoff/private.pem >/dev/null 2>&1
           openssl pkey -in /tmp/phase-h-handoff/private.pem -pubout -out /tmp/phase-h-handoff/public.pem
-          printf '%s\n' "$GITHUB_RUN_ID" > /tmp/phase-h-handoff/request-id
 
       - name: Publish public handoff key
-        uses: actions/upload-artifact@v4
-        with:
-          name: phase-h-uat-handoff-${{ github.run_id }}
-          path: |
-            /tmp/phase-h-handoff/public.pem
-            /tmp/phase-h-handoff/request-id
-          retention-days: 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          encoded=$(base64 -w0 /tmp/phase-h-handoff/public.pem)
+          body="phase-h-uat-public-key:${GITHUB_RUN_ID}:${encoded}"
+          gh api --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            -f body="$body" >/dev/null
 
       - name: Wait for encrypted handoff
         env:
@@ -132,9 +138,7 @@ jobs:
           await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
           const actual = new URL(page.url());
           const expected = new URL(process.env.STAGING_UAT_BASE_URL);
-          if (actual.hostname !== expected.hostname) {
-            throw new Error(`Preview authentication landed on unexpected host: ${actual.hostname}`);
-          }
+          if (actual.hostname !== expected.hostname) throw new Error(`Preview authentication landed on unexpected host: ${actual.hostname}`);
           await context.storageState({ path: '/tmp/phase-h-vercel-state.json' });
           await browser.close();
           NODE
@@ -152,9 +156,7 @@ jobs:
           if (!response) throw new Error('Invalid Public Card returned no response');
           if (response.status() !== 404) throw new Error(`Invalid Public Card expected 404, received ${response.status()}`);
           const heading = (await page.locator('h1').first().innerText()).trim();
-          if (!/Card unavailable|البطاقة غير متاحة/.test(heading)) {
-            throw new Error(`Invalid Public Card rendered unexpected heading: ${heading}`);
-          }
+          if (!/Card unavailable|البطاقة غير متاحة/.test(heading)) throw new Error(`Invalid Public Card rendered unexpected heading: ${heading}`);
           console.log('INVALID_PUBLIC_CARD_PREFLIGHT=PASS status=404');
           await browser.close();
           NODE
@@ -202,8 +204,9 @@ jobs:
           STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project=desktop-chromium
           code=$?
           set -e
+          cleanup_code=0
           npm run cleanup:final-uat -- --cleanup="$run_id" >/tmp/phase-h-desktop-cleanup.log 2>&1 || cleanup_code=$?
-          if [ "${cleanup_code:-0}" -ne 0 ]; then echo "::error::Desktop fixture cleanup failed"; exit "$cleanup_code"; fi
+          if [ "$cleanup_code" -ne 0 ]; then echo "::error::Desktop fixture cleanup failed"; exit "$cleanup_code"; fi
           echo "DESKTOP_CLEANUP=PASS"
           exit "$code"
 
@@ -221,8 +224,9 @@ jobs:
           STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project=tablet-chromium
           code=$?
           set -e
+          cleanup_code=0
           npm run cleanup:final-uat -- --cleanup="$run_id" >/tmp/phase-h-tablet-cleanup.log 2>&1 || cleanup_code=$?
-          if [ "${cleanup_code:-0}" -ne 0 ]; then echo "::error::Tablet fixture cleanup failed"; exit "$cleanup_code"; fi
+          if [ "$cleanup_code" -ne 0 ]; then echo "::error::Tablet fixture cleanup failed"; exit "$cleanup_code"; fi
           echo "TABLET_CLEANUP=PASS"
           exit "$code"
 
@@ -240,8 +244,9 @@ jobs:
           STAGING_UAT_MANIFEST_PATH="$manifest" pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=phase-h.playwright.config.ts --project=mobile-chromium
           code=$?
           set -e
+          cleanup_code=0
           npm run cleanup:final-uat -- --cleanup="$run_id" >/tmp/phase-h-mobile-cleanup.log 2>&1 || cleanup_code=$?
-          if [ "${cleanup_code:-0}" -ne 0 ]; then echo "::error::Mobile fixture cleanup failed"; exit "$cleanup_code"; fi
+          if [ "$cleanup_code" -ne 0 ]; then echo "::error::Mobile fixture cleanup failed"; exit "$cleanup_code"; fi
           echo "MOBILE_CLEANUP=PASS"
           exit "$code"
 
