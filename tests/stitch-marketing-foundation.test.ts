@@ -81,6 +81,9 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   assert.match(header, /showMark=\{false\}/);
   assert.match(header, /wordmarkSize="marketing"/);
   assert.match(footer, /wordmarkSize="marketing-footer"/);
+  assert.match(styles, /wordmark-size="compact"/);
+  assert.match(styles, /block-size:\s*0\.9em/);
+  assert.match(styles, /max-inline-size:\s*4em/);
   assert.match(styles, /wordmark-size="marketing"/);
   assert.match(styles, /block-size:\s*1\.75rem/);
   assert.match(header, /themeAdaptiveWordmark/);
