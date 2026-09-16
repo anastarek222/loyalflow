@@ -255,7 +255,12 @@ test.describe
     // Remote exact-SHA UAT reuses one prepared manifest across Chromium and
     // WebKit. Keep that shared runtime check mutation-free; the disposable PR
     // database executes and cleans the complete launch receipt below.
-    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;
+    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+    test.skip(
+      true,
+      "The complete Owner launch and direct re-entry receipt requires the disposable PR database; remote exact-SHA UAT only verifies the shared mutation-free runtime.",
+    );
+  }
 
     for (const step of [3, 4]) {
       await page.getByRole("button", { name: "Next", exact: true }).click();

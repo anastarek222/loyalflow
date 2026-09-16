@@ -35,9 +35,13 @@ test("Pilot receipt stays isolated and cleanup owns the launched Business", () =
   const fixtures = source("scripts/prepare-final-uat-fixtures.ts");
 
   assert.match(
-    browser,
-    /if \(process\.env\.STAGING_UAT_MANIFEST_PATH\?\.trim\(\)\) return/,
-  );
+  browser,
+  /if \(process\.env\.STAGING_UAT_MANIFEST_PATH\?\.trim\(\)\) \{[\s\S]*?test\.skip\(/,
+);
+assert.doesNotMatch(
+  browser,
+  /if \(process\.env\.STAGING_UAT_MANIFEST_PATH\?\.trim\(\)\) return/,
+);
   assert.match(fixtures, /"pending-owner"/);
   assert.match(fixtures, /function ownerOnboardingBusiness\(run: string\)/);
   assert.match(fixtures, /slug: `loyalflow-final-uat-o-\$\{run\}`/);
