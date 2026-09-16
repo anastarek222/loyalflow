@@ -47,10 +47,13 @@ test("U5 compresses onboarding after core operational readiness", () => {
 });
 
 test("U5 keeps incomplete WhatsApp setup visible to business settings managers", () => {
-  assert.match(businessDashboard, /getBusinessWhatsAppCredential/);
+  assert.match(businessDashboard, /getBusinessWhatsAppProductReadiness/);
   assert.match(businessDashboard, /id: "whatsapp-setup"/);
   assert.match(businessDashboard, /settings\/whatsapp/);
-  assert.match(businessDashboard, /canManageSettings && !whatsappCredential/);
+  assert.match(
+    businessDashboard,
+    /canManageSettings && !whatsappReadiness\?\.deliveryReady/,
+  );
 });
 
 test("U5 keeps staff clear of owner-only setup and configuration actions", () => {
