@@ -5,6 +5,7 @@ import type {
 
 import "./globals.css";
 import "./loyalflow-theme-aliases.css";
+import "./frontend-foundation.css";
 import { cookies } from "next/headers";
 import { Alexandria, Geist } from "next/font/google";
 import { Suspense } from "react";
