@@ -173,8 +173,10 @@ Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-
 
 - [x] One authoritative Pre-Stitch candidate head exists after the active #549/#571 delta was reconciled.
 - [x] No important #571 runtime fix remains only in the side branch; its six-file delta is fully contained in PR #549.
-- [ ] Browser scenarios cannot silently early-return and pass without exercising required assertions.
+- [x] Browser scenarios cannot silently early-return and pass without exercising required assertions.
 - [ ] Closeout docs and runbooks describe the same current source and lifecycle behavior.
+
+Browser-truth evidence: commit `4f98f89b597df3a358c4cb03d2bb3ece1d210e7b` replaced the affected Owner onboarding and Custom Card silent early returns with explicit Playwright `test.skip(...)` boundaries, and `7fd90db63f1ee9e670a9d085ccc3fab3b65482ba` normalized the scoped checks. The affected source-contract tests passed, scoped ESLint passed, and both temporary apply workflows removed themselves after producing the durable branch commits. No database, migration, Production, provider, or secret mutation was performed by this focused verification.
 
 ## Required final certification
 
