@@ -24,6 +24,19 @@
   text-transform: none;
 }
 
+/* Theme-adaptive identity assets outside the marketing-only theme scope. */
+[data-platform-brand-wordmark-theme="dark"] {
+  display: none;
+}
+
+.dark [data-platform-brand-wordmark-theme="light"] {
+  display: none;
+}
+
+.dark [data-platform-brand-wordmark-theme="dark"] {
+  display: block;
+}
+
 /* Keep product chrome on the current Tanee terracotta identity. */
 .lf-brand-mark {
   background: linear-gradient(
