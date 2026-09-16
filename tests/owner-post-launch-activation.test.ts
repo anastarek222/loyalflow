@@ -21,6 +21,12 @@ test("successful Owner launch continues into the first-customer activation path"
   assert.match(launchSuccessPage, /canManageBusiness\(user, business\.id\)/);
   assert.match(launchSuccessPage, /<PrimaryBusinessJoinQr/);
   assert.match(launchSuccessPage, /sheetSync=pending/);
+  assert.match(launchSuccessPage, /data-whatsapp-post-launch-setup/);
+  assert.match(launchSuccessPage, /getBusinessWhatsAppCredential/);
+  assert.match(
+    launchSuccessPage,
+    /\/businesses\/\$\{business\.slug\}\/settings\/whatsapp/,
+  );
   assert.match(joinQr, /businessJoinPath\(slug\)/);
   assert.match(joinQr, /<CopyLinkButton/);
   assert.match(joinQr, /Open join page/);
