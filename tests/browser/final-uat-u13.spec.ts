@@ -567,7 +567,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     ).toBeVisible();
     await expect(
       actions.getByRole("button", { name: "Add to Home Screen", exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(
       0,
     );
