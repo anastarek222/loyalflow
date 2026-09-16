@@ -268,11 +268,12 @@ test.describe
     }
 
     await page.getByRole("button", { name: "Launch", exact: true }).click();
-    await expect(
-      page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`), {
-      timeout: 30_000,
-    });
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`),
+      {
+        timeout: 30_000,
+      },
+    );
     await expect(
       page.locator("#app-content").getByRole("heading", { level: 1 }),
     ).toHaveCount(1);
@@ -296,7 +297,7 @@ test.describe
     await expect(page).not.toHaveURL(/\/onboarding$/);
   });
 
-  test("public Trial request sends a secure email link once and launches a persisted 14-day Trial", async ({
+  test("public Trial request sends a secure email link once and launches a persisted 14-day Trial @owner-onboarding-desktop", async ({
     page,
   }) => {
     test.setTimeout(150_000);
@@ -333,8 +334,12 @@ test.describe
     const deliveredEmail = await waitForCapturedAuthEmail(ownerEmail);
     expect(deliveredEmail.from).toBe("Tanee <noreply@gettanee.com>");
     expect(deliveredEmail.subject).toBe("Complete your Tanee business setup");
-    expect(deliveredEmail.text).toContain("This secure link expires in 24 hours");
-    expect(deliveredEmail.text).toContain(`${TRIAL_DURATION_DAYS}-day trial starts`);
+    expect(deliveredEmail.text).toContain(
+      "This secure link expires in 24 hours",
+    );
+    expect(deliveredEmail.text).toContain(
+      `${TRIAL_DURATION_DAYS}-day trial starts`,
+    );
 
     const linkMatch = deliveredEmail.text.match(
       /https?:\/\/[^\s]+\/accept-owner-invitation\?token=[^\s]+/,
@@ -343,7 +348,9 @@ test.describe
     const invitationUrl = new URL(linkMatch![0]);
     const secureInvitationPath = `${invitationUrl.pathname}${invitationUrl.search}`;
     expect(invitationUrl.pathname).toBe("/accept-owner-invitation");
-    expect(invitationUrl.searchParams.get("token")?.length).toBeGreaterThanOrEqual(20);
+    expect(
+      invitationUrl.searchParams.get("token")?.length,
+    ).toBeGreaterThanOrEqual(20);
 
     await page.goto(secureInvitationPath);
     await page
@@ -358,7 +365,9 @@ test.describe
     await expect(page).toHaveURL(/\/onboarding$/, {
       timeout: 20_000,
     });
-    await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
+    await expect(page.getByPlaceholder("Business name")).toHaveValue(
+      businessName,
+    );
 
     // Replay the exact delivered token and prove redemption is single-use.
     await page.goto(secureInvitationPath);
@@ -371,14 +380,19 @@ test.describe
     await page
       .getByRole("button", { name: "Continue setup", exact: true })
       .click();
-    await expect(page).toHaveURL(/\/accept-owner-invitation\?error=invalid-token$/, {
-      timeout: 20_000,
-    });
+    await expect(page).toHaveURL(
+      /\/accept-owner-invitation\?error=invalid-token$/,
+      {
+        timeout: 20_000,
+      },
+    );
 
     // The accepted Owner session remains authoritative after a rejected token replay.
     await page.goto("/onboarding");
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
-    await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
+    await expect(page.getByPlaceholder("Business name")).toHaveValue(
+      businessName,
+    );
 
     for (const step of [2, 3, 4]) {
       await page.getByRole("button", { name: "Next", exact: true }).click();
@@ -389,11 +403,12 @@ test.describe
     }
 
     await page.getByRole("button", { name: "Launch", exact: true }).click();
-    await expect(
-      page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`), {
-      timeout: 30_000,
-    });
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`),
+      {
+        timeout: 30_000,
+      },
+    );
 
     await withDisposableFixtureDatabase(async (prisma) => {
       const invitation = await prisma.ownerInvitation.findUniqueOrThrow({
