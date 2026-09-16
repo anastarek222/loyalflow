@@ -61,8 +61,7 @@ jobs:
               "super-admin desktop coverage",
           )
 
-          marker = '''  test("staff operates Scan in Arabic on mobile with branch context and no reports access @mobile", async ({ page }) => {
-          '''
+          marker = '  test("staff operates Scan in Arabic on mobile with branch context and no reports access @mobile", async ({ page }) => {\n'
           staff_desktop = '''  test("staff operates Scan on desktop with branch context and no reports access @desktop", async ({ page }) => {
             await login(page, "staff-a");
             await page.goto(`/businesses/${fixture.businessA}/scan`);
@@ -89,8 +88,7 @@ jobs:
               "staff desktop journey",
           )
 
-          customer_marker = '''  test("public enrollment and English/Arabic public cards are responsive and private @mobile", async ({ page }) => {
-          '''
+          customer_marker = '  test("public enrollment and English/Arabic public cards are responsive and private @mobile", async ({ page }) => {\n'
           customer_desktop = '''  test("customer can join and use the public card on desktop @desktop", async ({ page }) => {
             await page.goto(`/join/${fixture.businessA}`);
             await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
@@ -129,40 +127,30 @@ jobs:
               "owner acquisition desktop tag",
           )
 
-          config_marker = '''    {
-              name: "owner-onboarding-chromium",
-              grep: /@owner-onboarding/,
-              use: { browserName: "chromium", viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
-            },
+          config = Path("playwright.config.ts")
+          text = config.read_text()
+          next_project = '    {\n      name: "owner-onboarding-webkit",'
+          if text.count(next_project) != 1:
+              raise SystemExit(f"playwright.config.ts: expected owner WebKit insertion marker once, found {text.count(next_project)}")
+          desktop_project = '''    {
+            name: "owner-onboarding-desktop",
+            grep: /@owner-onboarding-desktop/,
+            use: { browserName: "chromium", viewport: { width: 1440, height: 900 } },
+          },
           '''
-          config_replacement = config_marker + '''    {
-              name: "owner-onboarding-desktop",
-              grep: /@owner-onboarding-desktop/,
-              use: { browserName: "chromium", viewport: { width: 1440, height: 900 } },
-            },
-          '''
-          replace_once(
-              "playwright.config.ts",
-              config_marker,
-              config_replacement,
-              "owner desktop Playwright project",
-          )
+          config.write_text(text.replace(next_project, desktop_project + next_project, 1))
+          print("owner desktop Playwright project: updated")
 
-          workflow_old = '''          if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
-            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
-          fi
-          '''
-          workflow_new = '''          if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
-            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
-            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop
-          fi
-          '''
-          replace_once(
-              ".github/workflows/staging-pr-validation.yml",
-              workflow_old,
-              workflow_new,
-              "owner desktop CI receipt",
-          )
+          workflow = Path(".github/workflows/staging-pr-validation.yml")
+          text = workflow.read_text()
+          owner_command = "            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium\n"
+          desktop_command = "            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop\n"
+          if text.count(owner_command) != 1:
+              raise SystemExit(f"staging workflow: expected owner Chromium command once, found {text.count(owner_command)}")
+          if desktop_command in text:
+              raise SystemExit("staging workflow: desktop owner command already present")
+          workflow.write_text(text.replace(owner_command, owner_command + desktop_command, 1))
+          print("owner desktop CI receipt: updated")
 
           contract = Path("tests/pilot-owner-onboarding-receipt.test.ts")
           text = contract.read_text()
@@ -175,7 +163,7 @@ jobs:
           journey_contract = Path("tests/pre-stitch-browser-journey-matrix.test.ts")
           if journey_contract.exists():
               raise SystemExit("journey matrix contract already exists")
-          journey_contract.write_text('''import assert from "node:assert/strict";
+          journey_contract.write_text(r'''import assert from "node:assert/strict";
           import { readFileSync } from "node:fs";
           import test from "node:test";
 
