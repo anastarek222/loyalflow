@@ -80,12 +80,6 @@ export default async function RootLayout({
         geist.variable,
         arabicSans.variable,
       )}
-      style={
-        {
-          "--lf-font-arabic":
-            "var(--font-arabic), 'Noto Sans Arabic', Arial, sans-serif",
-        } as React.CSSProperties
-      }
     >
       <body className="flex min-h-full flex-col overflow-x-clip">
         <Suspense fallback={null}>
