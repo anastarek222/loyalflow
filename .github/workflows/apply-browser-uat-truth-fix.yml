@@ -42,13 +42,30 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          def replace_once(path: str, old: str, new: str) -> None:
+          def replace_once(path: str, old: str, new: str, label: str) -> None:
               file = Path(path)
               text = file.read_text()
               count = text.count(old)
+              print(f"{label}: {count} match(es)")
               if count != 1:
-                  raise SystemExit(f"{path}: expected exactly one match, found {count}")
+                  raise SystemExit(f"{path}: {label}: expected exactly one match, found {count}")
               file.write_text(text.replace(old, new, 1))
+
+          def replace_section(path: str, start_marker: str, end_marker: str, transform, label: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              start = text.find(start_marker)
+              if start < 0:
+                  raise SystemExit(f"{path}: {label}: start marker not found")
+              end = text.find(end_marker, start)
+              if end < 0:
+                  raise SystemExit(f"{path}: {label}: end marker not found")
+              section = text[start:end]
+              updated = transform(section)
+              if updated == section:
+                  raise SystemExit(f"{path}: {label}: section was not changed")
+              file.write_text(text[:start] + updated + text[end:])
+              print(f"{label}: updated")
 
           replace_once(
               "tests/browser/owner-onboarding-mobile.spec.ts",
@@ -60,90 +77,94 @@ jobs:
               );
             }
           ''',
+              "owner remote boundary",
           )
 
-          replace_once(
-              "tests/browser/pilot-custom-card.spec.ts",
-              '''    if (await notConfigured.count()) {
-              await expect(notConfigured).toBeVisible();
-              return;
-            }
-          ''',
-              '''    if (await notConfigured.count()) {
-              await expect(notConfigured).toBeVisible();
+          def explicit_not_configured_skip(section: str) -> str:
+              old = "      await expect(notConfigured).toBeVisible();\n      return;\n"
+              new = '''      await expect(notConfigured).toBeVisible();
               test.skip(
                 true,
                 "The bounded publish lifecycle requires Vercel Blob to be configured for this runtime.",
               );
-            }
-          ''',
+          '''
+              if section.count(old) != 1:
+                  raise SystemExit(f"custom card not-configured block: expected one silent return, found {section.count(old)}")
+              return section.replace(old, new, 1)
+
+          replace_section(
+              "tests/browser/pilot-custom-card.spec.ts",
+              "    if (await notConfigured.count()) {",
+              '    const frontInput = page.getByLabel("Front artwork", { exact: true });',
+              explicit_not_configured_skip,
+              "custom card Blob-not-configured boundary",
           )
 
-          replace_once(
-              "tests/browser/pilot-custom-card.spec.ts",
-              '''    if (!canCleanUploadedBlobArtwork()) {
-              test.info().annotations.push({
-                type: "bounded-runtime",
-                description:
-                  "Blob is configured on the application, but this runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
-              });
-              return;
-            }
-          ''',
-              '''    if (!canCleanUploadedBlobArtwork()) {
-              test.info().annotations.push({
-                type: "bounded-runtime",
-                description:
-                  "Blob is configured on the application, but this runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
-              });
-              test.skip(
+          def explicit_cleanup_skip(section: str) -> str:
+              old = "      return;\n"
+              new = '''      test.skip(
                 true,
                 "Valid upload/publish requires a runner Blob cleanup credential so immutable UAT artwork can be cleaned.",
               );
-            }
-          ''',
+          '''
+              if section.count(old) != 1:
+                  raise SystemExit(f"custom card cleanup block: expected one silent return, found {section.count(old)}")
+              return section.replace(old, new, 1)
+
+          replace_section(
+              "tests/browser/pilot-custom-card.spec.ts",
+              "    if (!canCleanUploadedBlobArtwork()) {",
+              '    await page.getByLabel("Front artwork", { exact: true }).setInputFiles({',
+              explicit_cleanup_skip,
+              "custom card cleanup-credential boundary",
           )
 
-          replace_once(
-              "tests/pilot-owner-onboarding-receipt.test.ts",
-              '''  assert.match(
-              browser,
-              /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) return/,
-            );
-          ''',
-              '''  assert.match(
-              browser,
-              /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) \\{[\\s\\S]*?test\\.skip\\(/,
-            );
-            assert.doesNotMatch(
-              browser,
-              /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) return/,
-            );
-          ''',
-          )
+          owner_contract = Path("tests/pilot-owner-onboarding-receipt.test.ts")
+          text = owner_contract.read_text()
+          needle = "STAGING_UAT_MANIFEST_PATH"
+          anchor = text.find(needle)
+          if anchor < 0:
+              raise SystemExit("owner contract: staging manifest assertion not found")
+          block_start = text.rfind("  assert.match(\n", 0, anchor)
+          block_end = text.find('  assert.match(fixtures, /"pending-owner"/);', anchor)
+          if block_start < 0 or block_end < 0:
+              raise SystemExit("owner contract: could not bound old manifest assertion")
+          replacement = '''  assert.match(
+            browser,
+            /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) \\{[\\s\\S]*?test\\.skip\\(/,
+          );
+          assert.doesNotMatch(
+            browser,
+            /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) return/,
+          );
+          '''
+          owner_contract.write_text(text[:block_start] + replacement + text[block_end:])
+          print("owner contract: updated")
 
-          replace_once(
-              "tests/pilot-custom-card-receipt.test.ts",
-              "  assert.match(browser, /canCleanUploadedBlobArtwork/);\n",
-              '''  assert.match(browser, /canCleanUploadedBlobArtwork/);
-            assert.match(
-              browser,
-              /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*test\\.skip\\(/,
-            );
-            assert.doesNotMatch(
-              browser,
-              /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*return;/,
-            );
-            assert.match(
-              browser,
-              /if \\(!canCleanUploadedBlobArtwork\\(\\)\\) \\{[\\s\\S]*?type: "bounded-runtime"[\\s\\S]*?test\\.skip\\(/,
-            );
-            assert.doesNotMatch(
-              browser,
-              /type: "bounded-runtime"[\\s\\S]*?\\}\\);\\s*return;/,
-            );
-          ''',
-          )
+          custom_contract = Path("tests/pilot-custom-card-receipt.test.ts")
+          text = custom_contract.read_text()
+          marker = "  assert.match(browser, /canCleanUploadedBlobArtwork/);\n"
+          if text.count(marker) != 1:
+              raise SystemExit(f"custom card contract: expected one marker, found {text.count(marker)}")
+          assertions = '''  assert.match(
+            browser,
+            /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*test\\.skip\\(/,
+          );
+          assert.doesNotMatch(
+            browser,
+            /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*return;/,
+          );
+          assert.match(
+            browser,
+            /if \\(!canCleanUploadedBlobArtwork\\(\\)\\) \\{[\\s\\S]*?type: "bounded-runtime"[\\s\\S]*?test\\.skip\\(/,
+          );
+          assert.doesNotMatch(
+            browser,
+            /type: "bounded-runtime"[\\s\\S]*?\\}\\);\\s*return;/,
+          );
+          '''
+          custom_contract.write_text(text.replace(marker, marker + assertions, 1))
+          print("custom card contract: updated")
           PY
 
           git diff --check
