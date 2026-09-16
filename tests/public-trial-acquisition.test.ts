@@ -7,7 +7,12 @@ import {
   createPublicTrialIdentityKey,
   parsePublicTrialInput,
 } from "@/lib/acquisition/public-trial";
+import { resolveEffectiveSubscriptionLifecycleState } from "@/lib/billing/subscription-trial-runtime";
 import { BUSINESS_NAME_MAX_LENGTH } from "@/lib/business/field-limits";
+import {
+  createTrialWindow,
+  TRIAL_DURATION_DAYS,
+} from "@loyalflow/domain/billing/trial-core";
 
 const root = process.cwd();
 const source = (file: string) => readFileSync(path.join(root, file), "utf8");
@@ -142,8 +147,34 @@ test("public Trial UI collects only the acquisition contract and exposes all saf
   assert.doesNotMatch(page, /href=["']\/accept-owner-invitation/);
 });
 
-test("public Trial starts its seven usable days at first successful Launch", () => {
+test("public Trial starts 14 usable days at first successful Launch and expires at the exact boundary", () => {
   const onboarding = source("app/onboarding/actions.ts");
+  const launchedAt = new Date("2026-09-17T10:00:00.000Z");
+  const trialWindow = createTrialWindow(launchedAt);
+
+  assert.equal(TRIAL_DURATION_DAYS, 14);
+  assert.equal(trialWindow.trialStartedAt.getTime(), launchedAt.getTime());
+  assert.equal(trialWindow.trialEndsAt.toISOString(), "2026-10-01T10:00:00.000Z");
+  assert.equal(
+    resolveEffectiveSubscriptionLifecycleState(
+      {
+        subscriptionLifecycleState: "TRIALING",
+        trialEndsAt: trialWindow.trialEndsAt,
+      },
+      { now: new Date("2026-10-01T09:59:59.999Z") },
+    ),
+    "TRIALING",
+  );
+  assert.equal(
+    resolveEffectiveSubscriptionLifecycleState(
+      {
+        subscriptionLifecycleState: "TRIALING",
+        trialEndsAt: trialWindow.trialEndsAt,
+      },
+      { now: new Date("2026-10-01T10:00:00.000Z") },
+    ),
+    "EXPIRED",
+  );
 
   assert.match(onboarding, /const launchedAt = new Date\(\)/);
   assert.match(onboarding, /createTrialWindow\(launchedAt\)/);
