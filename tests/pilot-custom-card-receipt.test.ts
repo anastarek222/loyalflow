@@ -17,21 +17,21 @@ test("Pilot Custom Card receipt covers safe failure and the bounded publish jour
   assert.match(browser, /cardDesign=published/);
   assert.match(browser, /canCleanUploadedBlobArtwork/);
   assert.match(
-  browser,
-  /if \(await notConfigured\.count\(\)\) \{\s*await expect\(notConfigured\)\.toBeVisible\(\);\s*test\.skip\(/,
-);
-assert.doesNotMatch(
-  browser,
-  /if \(await notConfigured\.count\(\)\) \{\s*await expect\(notConfigured\)\.toBeVisible\(\);\s*return;/,
-);
-assert.match(
-  browser,
-  /if \(!canCleanUploadedBlobArtwork\(\)\) \{[\s\S]*?type: "bounded-runtime"[\s\S]*?test\.skip\(/,
-);
-assert.doesNotMatch(
-  browser,
-  /type: "bounded-runtime"[\s\S]*?\}\);\s*return;/,
-);
+    browser,
+    /if \(await notConfigured\.count\(\)\) \{\s*await expect\(notConfigured\)\.toBeVisible\(\);\s*test\.skip\(/,
+  );
+  assert.doesNotMatch(
+    browser,
+    /if \(await notConfigured\.count\(\)\) \{\s*await expect\(notConfigured\)\.toBeVisible\(\);\s*return;/,
+  );
+  assert.match(
+    browser,
+    /if \(!canCleanUploadedBlobArtwork\(\)\) \{[\s\S]*?type: "bounded-runtime"[\s\S]*?test\.skip\(/,
+  );
+  assert.doesNotMatch(
+    browser,
+    /type: "bounded-runtime"[\s\S]*?\}\);\s*return;/,
+  );
   assert.match(browser, /custom-card-front/);
   assert.match(browser, /custom-card-back/);
   assert.match(browser, /expectedReactDevelopmentCspNoise/);
