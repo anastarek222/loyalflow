@@ -77,7 +77,7 @@ export async function confirmCustomerWhatsAppPhoneAction(
     redirect(customerPath(business.slug, customer.id, "whatsapp-ineligible"));
   }
 
-  await prisma.$transaction((transaction) =>
+  const updatedCount = await prisma.$transaction((transaction) =>
     rebindCustomerWhatsAppConsent(transaction, {
       businessId: business.id,
       customerId: customer.id,
@@ -85,6 +85,10 @@ export async function confirmCustomerWhatsAppPhoneAction(
       changedAt: new Date(),
     }),
   );
+
+  if (updatedCount !== 1) {
+    redirect(customerPath(business.slug, customer.id, "whatsapp-ineligible"));
+  }
 
   revalidatePath(`/businesses/${business.slug}/customers/${customer.id}`);
   revalidatePath(`/businesses/${business.slug}/whatsapp-history`);

@@ -53,8 +53,7 @@ export async function invalidateCustomerWhatsAppConsentForPhoneChange(
     UPDATE "Customer"
     SET
       "whatsappPhoneE164" = NULL,
-      "whatsappOptInAt" = NULL,
-      "whatsappOptedOutAt" = NULL
+      "whatsappOptInAt" = NULL
     WHERE "businessId" = ${input.businessId}
       AND "id" = ${input.customerId}
   `;
@@ -73,10 +72,12 @@ export async function rebindCustomerWhatsAppConsent(
     UPDATE "Customer"
     SET
       "whatsappPhoneE164" = ${input.whatsappPhoneE164},
-      "whatsappOptInAt" = ${input.changedAt},
-      "whatsappOptedOutAt" = NULL
+      "whatsappOptInAt" = ${input.changedAt}
     WHERE "businessId" = ${input.businessId}
       AND "id" = ${input.customerId}
+      AND "phone" = ${input.whatsappPhoneE164}
+      AND "isActive" = TRUE
+      AND "whatsappOptedOutAt" IS NULL
   `;
 }
 

@@ -21,8 +21,14 @@ test("customer phone changes invalidate the old WhatsApp recipient and consent",
   );
   assert.match(
     consentState,
-    /"whatsappPhoneE164" = NULL[\s\S]*"whatsappOptInAt" = NULL[\s\S]*"whatsappOptedOutAt" = NULL/,
+    /"whatsappPhoneE164" = NULL[\s\S]*"whatsappOptInAt" = NULL/,
   );
+  const invalidate = consentState
+    .split(
+      "export async function invalidateCustomerWhatsAppConsentForPhoneChange",
+    )[1]
+    .split("export async function rebindCustomerWhatsAppConsent")[0];
+  assert.doesNotMatch(invalidate, /"whatsappOptedOutAt"\s*=/);
 });
 
 test("explicit reconfirmation binds fresh consent to the current phone", () => {
@@ -39,8 +45,16 @@ test("explicit reconfirmation binds fresh consent to the current phone", () => {
   assert.match(consentState, /rebindCustomerWhatsAppConsent/);
   assert.match(
     consentState,
-    /"whatsappPhoneE164" = \$\{input\.whatsappPhoneE164\}[\s\S]*"whatsappOptInAt" = \$\{input\.changedAt\}[\s\S]*"whatsappOptedOutAt" = NULL/,
+    /"whatsappPhoneE164" = \$\{input\.whatsappPhoneE164\}[\s\S]*"whatsappOptInAt" = \$\{input\.changedAt\}/,
   );
+  const rebind = consentState
+    .split("export async function rebindCustomerWhatsAppConsent")[1]
+    .split("export async function setCustomerWhatsAppConsent")[0];
+  assert.doesNotMatch(rebind, /"whatsappOptedOutAt"\s*=/);
+  assert.match(rebind, /AND "whatsappOptedOutAt" IS NULL/);
+  assert.match(rebind, /AND "phone" = \$\{input\.whatsappPhoneE164\}/);
+  assert.match(rebind, /AND "isActive" = TRUE/);
+  assert.match(actions, /if \(updatedCount !== 1\)/);
   assert.match(actions, /whatsappPhoneE164: customer\.phone/);
   assert.match(actions, /if \(customer\.whatsappOptedOutAt\)/);
   assert.match(panel, /Confirm customer consent for current phone/);
@@ -57,14 +71,8 @@ test("message enqueue rejects stale consent bound to a different phone", () => {
   );
 
   assert.match(messaging, /whatsappPhoneE164: \{ not: null \}/);
-  assert.match(
-    messaging,
-    /customer\.phone !== customer\.whatsappPhoneE164/,
-  );
-  assert.match(
-    panel,
-    /customer\.whatsappPhoneE164 === customer\.phone/,
-  );
+  assert.match(messaging, /customer\.phone !== customer\.whatsappPhoneE164/);
+  assert.match(panel, /customer\.whatsappPhoneE164 === customer\.phone/);
   assert.match(
     panel,
     /The customer phone changed\. Reconfirm WhatsApp consent for the current number before sending\./,
