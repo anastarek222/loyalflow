@@ -5,8 +5,16 @@
  * can normalize shared visual behaviour without forcing page-by-page patches.
  */
 
-/* Arabic copy must not inherit Latin uppercase/tracking treatments. */
-.lf-marketing-surface:lang(ar) :where(.uppercase, [class*="tracking-"]) {
+:root {
+  --lf-font-arabic: var(--font-arabic), "Noto Sans Arabic", Arial, sans-serif;
+}
+
+/*
+ * Arabic interface copy must not inherit Latin uppercase/tracking treatments.
+ * The document locale is authoritative, so this also fixes page-specific
+ * tracking utilities without requiring a patch in every route.
+ */
+:lang(ar) :where(.uppercase, [class*="tracking-"]) {
   letter-spacing: 0;
   text-transform: none;
 }
