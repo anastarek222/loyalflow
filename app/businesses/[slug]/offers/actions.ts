@@ -28,6 +28,7 @@ import {
   opaqueIdSchema,
 } from "@/lib/validation/action-input";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -154,6 +155,8 @@ export async function createOfferAction(slug: string, formData: FormData) {
   if (error) {
     redirect(`/businesses/${business.slug}/offers?error=${error}`);
   }
+
+  if (result.ok) scheduleIntegrationJobs(result.integrationJobIds);
 
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=created`);
