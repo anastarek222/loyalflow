@@ -26,6 +26,7 @@ export function InlineTaneeName({
       <span>Tan</span>
       <span
         data-inline-tanee-ee=""
+        data-preserve-latin-tracking=""
         className={cn(
           "relative inline-block pe-[0.12em] text-primary",
           accentClassName,
