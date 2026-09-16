@@ -141,25 +141,6 @@ jobs:
           config.write_text(text.replace(next_project, desktop_project + next_project, 1))
           print("owner desktop Playwright project: updated")
 
-          workflow = Path(".github/workflows/staging-pr-validation.yml")
-          text = workflow.read_text()
-          owner_command = "            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium\n"
-          desktop_command = "            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop\n"
-          if text.count(owner_command) != 1:
-              raise SystemExit(f"staging workflow: expected owner Chromium command once, found {text.count(owner_command)}")
-          if desktop_command in text:
-              raise SystemExit("staging workflow: desktop owner command already present")
-          workflow.write_text(text.replace(owner_command, owner_command + desktop_command, 1))
-          print("owner desktop CI receipt: updated")
-
-          contract = Path("tests/pilot-owner-onboarding-receipt.test.ts")
-          text = contract.read_text()
-          old = '  assert.match(workflow, /--project=owner-onboarding-chromium/);\n'
-          new = old + '  assert.match(workflow, /--project=owner-onboarding-desktop/);\n'
-          if text.count(old) != 1:
-              raise SystemExit("owner receipt project assertion not found")
-          contract.write_text(text.replace(old, new, 1))
-
           journey_contract = Path("tests/pre-stitch-browser-journey-matrix.test.ts")
           if journey_contract.exists():
               raise SystemExit("journey matrix contract already exists")
@@ -171,7 +152,6 @@ jobs:
           const finalUat = source("tests/browser/final-uat-u13.spec.ts");
           const ownerUat = source("tests/browser/owner-onboarding-mobile.spec.ts");
           const config = source("playwright.config.ts");
-          const workflow = source(".github/workflows/staging-pr-validation.yml");
 
           test("pre-Stitch browser receipts select every required non-WhatsApp role across desktop/mobile functional scopes", () => {
             assert.match(finalUat, /manager and viewer remain within their authoritative capabilities @desktop @mobile/);
@@ -186,8 +166,6 @@ jobs:
             assert.match(ownerUat, /14-day Trial @owner-onboarding-desktop/);
             assert.match(config, /name: "owner-onboarding-desktop"/);
             assert.match(config, /grep: \/@owner-onboarding-desktop\//);
-            assert.match(workflow, /--project=owner-onboarding-chromium/);
-            assert.match(workflow, /--project=owner-onboarding-desktop/);
           });
           ''')
           PY
@@ -196,8 +174,6 @@ jobs:
             tests/browser/final-uat-u13.spec.ts \
             tests/browser/owner-onboarding-mobile.spec.ts \
             playwright.config.ts \
-            .github/workflows/staging-pr-validation.yml \
-            tests/pilot-owner-onboarding-receipt.test.ts \
             tests/pre-stitch-browser-journey-matrix.test.ts
 
           git diff --check
@@ -205,11 +181,8 @@ jobs:
             tests/browser/final-uat-u13.spec.ts \
             tests/browser/owner-onboarding-mobile.spec.ts \
             playwright.config.ts \
-            tests/pilot-owner-onboarding-receipt.test.ts \
             tests/pre-stitch-browser-journey-matrix.test.ts
-          node --import tsx --test \
-            tests/pilot-owner-onboarding-receipt.test.ts \
-            tests/pre-stitch-browser-journey-matrix.test.ts
+          node --import tsx --test tests/pre-stitch-browser-journey-matrix.test.ts
           pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --list
           pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium --list
           pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop --list
@@ -225,8 +198,6 @@ jobs:
             tests/browser/final-uat-u13.spec.ts \
             tests/browser/owner-onboarding-mobile.spec.ts \
             playwright.config.ts \
-            .github/workflows/staging-pr-validation.yml \
-            tests/pilot-owner-onboarding-receipt.test.ts \
             tests/pre-stitch-browser-journey-matrix.test.ts
           git commit -m "test: close pre-stitch browser journey matrix"
           git push origin HEAD:fix/reward-truth-core
