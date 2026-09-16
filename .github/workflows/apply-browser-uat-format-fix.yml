@@ -1,0 +1,168 @@
+name: Normalize browser UAT truth formatting
+
+on:
+  push:
+    branches: [fix/reward-truth-core]
+    paths: [.github/workflows/apply-browser-uat-format-fix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/reward-truth-core
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Normalize scoped formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one formatting match, found {count}")
+              file.write_text(text.replace(old, new, 1))
+
+          owner_reason = "The complete Owner launch and direct re-entry receipt requires the disposable PR database; remote exact-SHA UAT only verifies the shared mutation-free runtime."
+          replace_once(
+              "tests/browser/owner-onboarding-mobile.spec.ts",
+              "    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {\n"
+              "    test.skip(\n"
+              "      true,\n"
+              f"      \"{owner_reason}\",\n"
+              "    );\n"
+              "  }\n",
+              "    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {\n"
+              "      test.skip(\n"
+              "        true,\n"
+              f"        \"{owner_reason}\",\n"
+              "      );\n"
+              "    }\n",
+          )
+
+          blob_reason = "The bounded publish lifecycle requires Vercel Blob to be configured for this runtime."
+          replace_once(
+              "tests/browser/pilot-custom-card.spec.ts",
+              "    if (await notConfigured.count()) {\n"
+              "      await expect(notConfigured).toBeVisible();\n"
+              "    test.skip(\n"
+              "      true,\n"
+              f"      \"{blob_reason}\",\n"
+              "    );\n"
+              "    }\n",
+              "    if (await notConfigured.count()) {\n"
+              "      await expect(notConfigured).toBeVisible();\n"
+              "      test.skip(\n"
+              "        true,\n"
+              f"        \"{blob_reason}\",\n"
+              "      );\n"
+              "    }\n",
+          )
+
+          cleanup_reason = "Valid upload/publish requires a runner Blob cleanup credential so immutable UAT artwork can be cleaned."
+          replace_once(
+              "tests/browser/pilot-custom-card.spec.ts",
+              "      test.skip(\n"
+              "      true,\n"
+              f"      \"{cleanup_reason}\",\n"
+              "    );\n"
+              "    }\n",
+              "      test.skip(\n"
+              "        true,\n"
+              f"        \"{cleanup_reason}\",\n"
+              "      );\n"
+              "    }\n",
+          )
+
+          owner_contract = Path("tests/pilot-owner-onboarding-receipt.test.ts")
+          text = owner_contract.read_text()
+          start = text.find("  assert.match(\n  browser,\n  /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH")
+          end = text.find('  assert.match(fixtures, /"pending-owner"/);', start)
+          if start < 0 or end < 0:
+              raise SystemExit("owner contract malformed block not found")
+          block = (
+              "  assert.match(\n"
+              "    browser,\n"
+              "    /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) \\{[\\s\\S]*?test\\.skip\\(/,\n"
+              "  );\n"
+              "  assert.doesNotMatch(\n"
+              "    browser,\n"
+              "    /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) return/,\n"
+              "  );\n"
+          )
+          owner_contract.write_text(text[:start] + block + text[end:])
+
+          custom_contract = Path("tests/pilot-custom-card-receipt.test.ts")
+          text = custom_contract.read_text()
+          start = text.find("  assert.match(\n  browser,\n  /if \\(await notConfigured")
+          end = text.find("  assert.match(browser, /custom-card-front/);", start)
+          if start < 0 or end < 0:
+              raise SystemExit("custom card contract malformed block not found")
+          block = (
+              "  assert.match(\n"
+              "    browser,\n"
+              "    /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*test\\.skip\\(/,\n"
+              "  );\n"
+              "  assert.doesNotMatch(\n"
+              "    browser,\n"
+              "    /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*return;/,\n"
+              "  );\n"
+              "  assert.match(\n"
+              "    browser,\n"
+              "    /if \\(!canCleanUploadedBlobArtwork\\(\\)\\) \\{[\\s\\S]*?type: \"bounded-runtime\"[\\s\\S]*?test\\.skip\\(/,\n"
+              "  );\n"
+              "  assert.doesNotMatch(\n"
+              "    browser,\n"
+              "    /type: \"bounded-runtime\"[\\s\\S]*?\\}\\);\\s*return;/,\n"
+              "  );\n"
+          )
+          custom_contract.write_text(text[:start] + block + text[end:])
+          PY
+
+          git diff --check
+          pnpm exec eslint \
+            tests/browser/owner-onboarding-mobile.spec.ts \
+            tests/browser/pilot-custom-card.spec.ts \
+            tests/pilot-owner-onboarding-receipt.test.ts \
+            tests/pilot-custom-card-receipt.test.ts
+          node --import tsx --test \
+            tests/pilot-owner-onboarding-receipt.test.ts \
+            tests/pilot-custom-card-receipt.test.ts
+
+      - name: Commit formatting and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-browser-uat-format-fix.yml
+          git add \
+            tests/browser/owner-onboarding-mobile.spec.ts \
+            tests/browser/pilot-custom-card.spec.ts \
+            tests/pilot-owner-onboarding-receipt.test.ts \
+            tests/pilot-custom-card-receipt.test.ts
+          git commit -m "style: normalize browser UAT truth checks"
+          git push origin HEAD:fix/reward-truth-core
