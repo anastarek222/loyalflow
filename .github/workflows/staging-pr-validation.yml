@@ -54,12 +54,12 @@ jobs:
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/onboarding/|components/owner-onboarding-wizard\.tsx$|components/onboarding/|lib/onboarding/|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/fixtures\.ts$|tests/browser/owner-onboarding-mobile\.spec\.ts$|playwright\.config\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "owner-onboarding=true" >> "$GITHUB_OUTPUT"
           else
             echo "owner-onboarding=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -Eq '^(app/businesses/\[slug\]/(scan|customers|rewards|offers|campaigns|recovery|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|reward|offer|public-card)|lib/(loyalty|rewards|offers|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$)' /tmp/loyalflow-pr-files.txt; then
+          if grep -Eq '^(app/businesses/\[slug\]/(scan|customers|rewards|offers|campaigns|recovery|reports)/|app/(join|card)/|components/(loyalty-card|standard-loyalty-card|customer|scan|reward|offer|public-card)|lib/(loyalty|rewards|offers|server/business/)|scripts/prepare-final-uat-fixtures\.ts$|tests/browser/(fixtures|final-uat-u13\.spec)\.ts$|playwright\.config\.ts$)' /tmp/loyalflow-pr-files.txt; then
             echo "loyalty-core=true" >> "$GITHUB_OUTPUT"
           else
             echo "loyalty-core=false" >> "$GITHUB_OUTPUT"
@@ -143,6 +143,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p test-results/browser-matrix
           node scripts/ci-rate-limit-server.mjs &
           rate_limit_pid=$!
           trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
@@ -156,21 +157,31 @@ jobs:
             fi
             sleep 0.25
           done
-          pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/pr-smoke-desktop.xml pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium --reporter=list,junit
           if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
-            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium
-            pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop
+            PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-mobile.xml pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium --reporter=list,junit
+            PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-desktop.xml pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop --reporter=list,junit
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
-            pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium
+            PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/roles-desktop.xml pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --reporter=list,junit
+            PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/super-admin-tablet.xml pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=tablet-chromium --reporter=list,junit
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-mobile }}" == "true" ]]; then
-            pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium
+            PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/roles-mobile.xml pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=mobile-chromium --reporter=list,junit
           fi
           if [[ "${{ steps.browser-smoke.outputs.custom-card }}" == "true" ]]; then
             pnpm exec playwright test tests/browser/pilot-custom-card.spec.ts --config=playwright.config.ts --project=desktop-chromium
             pnpm exec playwright test tests/browser/pilot-custom-card.spec.ts --config=playwright.config.ts --project=mobile-chromium
           fi
+
+      - name: Upload browser runtime receipts
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-runtime-receipts
+          path: test-results/browser-matrix/*.xml
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"
