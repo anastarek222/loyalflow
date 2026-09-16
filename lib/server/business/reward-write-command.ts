@@ -7,6 +7,7 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 import { normalizeRewardInput } from "@/lib/rewards/catalog";
+import { enqueueCustomerMessageAudienceJobs } from "@/lib/server/integrations/customer-messaging";
 
 export type RewardWriteActor = Readonly<{
   id: string;
@@ -28,7 +29,7 @@ type RewardWriteFailure = Readonly<{
 }>;
 
 export type RewardWriteCommandResult =
-  Readonly<{ ok: true }> | RewardWriteFailure;
+  Readonly<{ ok: true; integrationJobIds: string[] }> | RewardWriteFailure;
 
 async function hasLiveRewardEntitlements(
   transaction: Prisma.TransactionClient,
@@ -123,7 +124,17 @@ export async function createRewardCommand(input: {
       }),
     });
 
-    return { ok: true } as const;
+    const messageJobs = await enqueueCustomerMessageAudienceJobs(transaction, {
+      businessId: input.businessId,
+      event: "NEW_REWARD",
+      eventKey: reward.id,
+      rewardName: reward.name,
+    });
+
+    return {
+      ok: true,
+      integrationJobIds: messageJobs.map((job) => job.id),
+    } as const;
   });
 }
 
@@ -194,7 +205,7 @@ export async function updateRewardCommand(input: {
       }),
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobIds: [] } as const;
   });
 }
 
@@ -253,6 +264,6 @@ export async function setRewardStatusCommand(input: {
       }),
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobIds: [] } as const;
   });
 }
