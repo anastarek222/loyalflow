@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ManualWhatsAppSendButton } from "@/components/manual-whatsapp-send-button";
 
 import { auth } from "@/auth";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
@@ -7,6 +8,7 @@ import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import { getLatestWhatsAppMessageForCustomer } from "@/lib/server/integrations/whatsapp-message-history";
 import { getBusinessWhatsAppManualReadiness } from "@/lib/server/integrations/whatsapp-manual-readiness";
+import { renderWhatsAppTemplate } from "@/lib/whatsapp-templates";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -34,7 +36,9 @@ export default async function CustomerWhatsAppPanel({
       where: { slug },
       select: {
         id: true,
+        name: true,
         slug: true,
+        unitName: true,
         rewardName: true,
         rewardThreshold: true,
         whatsappWelcomeMessage: true,
@@ -63,6 +67,7 @@ export default async function CustomerWhatsAppPanel({
       firstName: true,
       lastName: true,
       phone: true,
+      publicToken: true,
       isActive: true,
       balance: true,
       whatsappPhoneE164: true,
@@ -120,6 +125,21 @@ export default async function CustomerWhatsAppPanel({
     business.slug,
     customer.id,
   );
+  const customerName = [customer.firstName, customer.lastName]
+    .filter(Boolean)
+    .join(" ");
+  const maskedPhone = customer.phone.replace(/.(?=.{4})/g, "•");
+  const previewContext = {
+    customer: customerName,
+    business: business.name,
+    balance: customer.balance,
+    unit: business.unitName,
+    reward:
+      availability.affordableRewards[0]?.name ??
+      availability.defaultReward.name,
+    remaining: availability.remaining,
+    cardLink: `${process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? ""}/card/${customer.publicToken}`,
+  };
   const confirmConsentAction = confirmCustomerWhatsAppPhoneAction.bind(
     null,
     business.slug,
@@ -284,43 +304,16 @@ export default async function CustomerWhatsAppPanel({
         {canSend && eligible && manualReadiness.readyEvents.length > 0 ? (
           <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
             {manualReadiness.isEventReady("WELCOME") ? (
-              <form action={sendAction}>
-                <input type="hidden" name="event" value="WELCOME" />
-                <input type="hidden" name="requestId" value={randomUUID()} />
-                <button
-                  type="submit"
-                  className="rounded-[var(--lf-radius-input)] bg-success px-4 py-2 text-sm font-bold text-white"
-                >
-                  {t("إرسال ترحيب", "Send welcome")}
-                </button>
-              </form>
+              <ManualWhatsAppSendButton action={sendAction} event="WELCOME" requestId={randomUUID()} label={t("إرسال ترحيب", "Send welcome")} customerName={customerName} maskedPhone={maskedPhone} preview={renderWhatsAppTemplate(business.whatsappWelcomeMessage ?? "", previewContext)} language={language} tone="success" />
             ) : null}
 
             {manualReadiness.isEventReady("BALANCE_UPDATED") ? (
-              <form action={sendAction}>
-                <input type="hidden" name="event" value="BALANCE_UPDATED" />
-                <input type="hidden" name="requestId" value={randomUUID()} />
-                <button
-                  type="submit"
-                  className="rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-bold text-white"
-                >
-                  {t("إرسال تحديث الرصيد", "Send balance update")}
-                </button>
-              </form>
+              <ManualWhatsAppSendButton action={sendAction} event="BALANCE_UPDATED" requestId={randomUUID()} label={t("إرسال تحديث الرصيد", "Send balance update")} customerName={customerName} maskedPhone={maskedPhone} preview={renderWhatsAppTemplate(business.whatsappBalanceMessage ?? "", previewContext)} language={language} />
             ) : null}
 
             {availability.rewardReady &&
             manualReadiness.isEventReady("REWARD_READY") ? (
-              <form action={sendAction}>
-                <input type="hidden" name="event" value="REWARD_READY" />
-                <input type="hidden" name="requestId" value={randomUUID()} />
-                <button
-                  type="submit"
-                  className="rounded-[var(--lf-radius-input)] bg-warning-subtle px-4 py-2 text-sm font-bold text-foreground"
-                >
-                  {t("إرسال Reward Ready", "Send Reward Ready")}
-                </button>
-              </form>
+              <ManualWhatsAppSendButton action={sendAction} event="REWARD_READY" requestId={randomUUID()} label={t("إرسال Reward Ready", "Send Reward Ready")} customerName={customerName} maskedPhone={maskedPhone} preview={renderWhatsAppTemplate(business.whatsappRewardMessage ?? "", previewContext)} language={language} tone="warning" />
             ) : null}
           </div>
         ) : null}
