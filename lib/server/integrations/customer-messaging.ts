@@ -26,6 +26,7 @@ export const MANUAL_CUSTOMER_MESSAGE_EVENTS = [
   "WELCOME",
   "BALANCE_UPDATED",
   "REWARD_READY",
+  "REWARD_REDEEMED",
 ] as const;
 
 export type AutomaticCustomerMessageEvent =
