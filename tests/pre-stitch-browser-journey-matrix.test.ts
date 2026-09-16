@@ -60,10 +60,14 @@ test("staging PR validation persists auditable runtime receipts for the required
     );
   }
   assert.match(workflow, /--project=tablet-chromium --reporter=list,junit/);
+  assert.match(workflow, /- name: Verify browser runtime receipts/);
+  assert.match(workflow, /\[\[ ! -s "\$receipt" \]\]/);
+  assert.match(workflow, /grep -Eq '<testcase\[ >\]' "\$receipt"/);
   assert.match(workflow, /uses: actions\/upload-artifact@v4/);
   assert.match(
     workflow,
     /if: always\(\) && steps\.browser-smoke\.outputs\.run == 'true'/,
   );
   assert.match(workflow, /path: test-results\/browser-matrix\/\*\.xml/);
+  assert.match(workflow, /if-no-files-found: error/);
 });
