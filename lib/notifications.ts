@@ -20,6 +20,10 @@ type CreateBusinessNotificationInput = {
   userId?: string | null;
 };
 
+// Generic business notifications are in-app persistence only. This helper
+// deliberately does not dispatch email, SMS, WhatsApp, push, or any external
+// provider delivery. Delivery-channel integrations own their own contracts.
+//
 // Notification.isRead is a legacy, non-authoritative column. Per-user read
 // state is derived from NotificationReadState and NotificationItemRead.
 export async function createBusinessNotification(
