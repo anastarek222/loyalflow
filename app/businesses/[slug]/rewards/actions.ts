@@ -17,6 +17,7 @@ import {
 } from "@/lib/server/business/reward-write-command";
 import { actionBooleanSchema, opaqueIdSchema } from "@/lib/validation/action-input";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -113,6 +114,8 @@ export async function createRewardAction(
   if (error) {
     redirect(`/businesses/${business.slug}/rewards?error=${error}`);
   }
+
+  if (result.ok) scheduleIntegrationJobs(result.integrationJobIds);
 
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=created`);
