@@ -4,7 +4,7 @@ import { normalizeLanguage } from "@/lib/i18n";
 import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getTrialState } from "@loyalflow/domain/billing/trial-core";
-import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getBusinessWhatsAppProductReadiness } from "@/lib/server/integrations/business-whatsapp-product-readiness";
 import { ArrowRight, CheckCircle2, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -82,6 +82,11 @@ export default async function OwnerLaunchSuccessPage({
         name: true,
         slug: true,
         trialEndsAt: true,
+        cardDefaultLanguage: true,
+        whatsappWelcomeMessage: true,
+        whatsappBalanceMessage: true,
+        whatsappRewardMessage: true,
+        whatsappRedeemedMessage: true,
       },
     }),
     prisma.user.findUnique({
@@ -95,9 +100,16 @@ export default async function OwnerLaunchSuccessPage({
   if (!canManageBusiness(user, business.id))
     redirect(`/businesses/${business.slug}`);
 
-  const whatsappCredential = await getBusinessWhatsAppCredential(
+  const whatsappReadiness = await getBusinessWhatsAppProductReadiness(
     prisma,
-    business.id,
+    {
+      businessId: business.id,
+      language: business.cardDefaultLanguage,
+      whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+      whatsappBalanceMessage: business.whatsappBalanceMessage,
+      whatsappRewardMessage: business.whatsappRewardMessage,
+      whatsappRedeemedMessage: business.whatsappRedeemedMessage,
+    },
   );
 
   const language = normalizeLanguage(user.language);
@@ -157,7 +169,7 @@ export default async function OwnerLaunchSuccessPage({
           </p>
         </section>
 
-        {!whatsappCredential ? (
+        {!whatsappReadiness.deliveryReady ? (
           <section
             className="mb-6 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-5 sm:p-6"
             data-whatsapp-post-launch-setup
