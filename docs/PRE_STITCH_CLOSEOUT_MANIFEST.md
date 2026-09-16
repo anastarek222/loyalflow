@@ -6,12 +6,12 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 ## Baseline
 
-- Production `main`: `d0f5bd3b24ddbfb688da04af47370c5556643648`
-- Integration `staging`: `78be89ca3e050f86e302203ef01453d6ee65c5d9`
-- Current non-WhatsApp closeout head: `d6727b3d73d3a23e259904b49364ad7021bf92fd`
-- Last focused validated checkpoint: `d6727b3d73d3a23e259904b49364ad7021bf92fd`
-- Parallel delta reconciled into this lane: `5ec317cf48797275fa10241c7c8e0938d2f72186` (`components/customer-messages-form.tsx` return-target preservation only)
-- This branch is the next baseline candidate. It is not a Pre-Stitch Freeze until exact-head validation and all blockers below are closed.
+- Production `main`: `75ee9fb1c4bd4561f58b3a902eb9f6eb49ee3482`
+- Integration `staging`: `5deae918d67e9236e249c82b3cd3df221c47391f`
+- Authoritative Product Core candidate: PR #549 at `0745dde273758f09adff72267fb521603656b23f`.
+- Last exact-head validated checkpoint: `0745dde273758f09adff72267fb521603656b23f` (Staging PR Validation #1024 and Vercel Preview passed).
+- PR #571 at `5449004e01a5c2f08f52d8afe6721bd6484b8ee7` is fully subsumed by the PR #549 tree. A virtual merge produces the unchanged PR #549 tree `5dcbc2187f08d0483349c53a09ae190cd0313412`; PR #571 must not be merged after PR #549 merely to preserve commit ancestry.
+- PR #549 remains Draft and unmerged. Exact-head CI is green, but deployed Staging runtime, Production, real-business UAT, and external-provider certification remain separate gates.
 
 ## Execution rules
 
@@ -57,20 +57,24 @@ Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-seg
 
 ### WhatsApp truth
 
-- [ ] Automatic reward context uses the same Reward State as Card/manual messaging.
+- [x] Automatic reward context uses the same Reward State as Card/manual messaging.
 - [ ] Manual and Meta template parsing use one token parser/validator.
 - [ ] Owner-editable first-run message defaults follow the approved Product requirement without creating duplicate manual/automatic copy sources.
 - [ ] New Reward / New Offer outbound events integrate with the existing Business-scoped outbox, credentials, consent and delivery-status model.
+
+Code-level evidence for the closed Reward context item is `tests/whatsapp-reward-truth-integration.test.ts`. This does not certify Meta templates, provider delivery/read receipts, controlled provider failure, recovery, or Real Closed Beta.
 
 ### Customer identity
 
 - [x] Country-aware canonical phone identity is defined for local, `+20` and `0020` equivalents.
 - [x] Existing-data collisions are exposed through the review-only duplicate workflow before any migration or merge decision.
 - [x] Duplicate membership prevention uses canonical identity at command boundaries.
-- [ ] WhatsApp opt-out resolves the same canonical identity.
+- [x] WhatsApp opt-out resolves the same canonical identity.
 - [x] Duplicate-join recovery remains privacy-safe and never discloses a bearer card URL from phone alone.
 
 Focused evidence: commit `49df8a34861d22316cf5cc20144eecf88eb1af39` passed 33/33 phone, registration, duplicate and command-boundary tests. No Schema or Migration change was made; any future persisted canonical column or automated collision merge remains an Authorization Gate.
+
+Current-phone and STOP evidence is additionally locked by `tests/whatsapp-consent-state.test.ts`, `tests/whatsapp-consent-optout.test.ts`, and `tests/customer-whatsapp-phone-consent-policy.test.ts` at the validated PR #549 checkpoint. Phone changes invalidate stale bindings and opt-in without clearing `whatsappOptedOutAt`; reconfirmation is restricted to the active customer's current phone and cannot override STOP.
 
 ### Owner Trial / onboarding
 
@@ -167,8 +171,8 @@ Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-
 
 ### Source / release governance
 
-- [ ] One authoritative Pre-Stitch source head exists after every active parallel delta is reconciled.
-- [ ] No important runtime fix remains only in an unvalidated side branch.
+- [x] One authoritative Pre-Stitch candidate head exists after the active #549/#571 delta was reconciled.
+- [x] No important #571 runtime fix remains only in the side branch; its six-file delta is fully contained in PR #549.
 - [ ] Browser scenarios cannot silently early-return and pass without exercising required assertions.
 - [ ] Closeout docs and runbooks describe the same current source and lifecycle behavior.
 
@@ -180,14 +184,16 @@ Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-
 - [ ] Viewer journey PASS — desktop and mobile.
 - [ ] Customer journey PASS — desktop and mobile.
 - [ ] Super Admin journey PASS.
-- [ ] Subscription/entitlement matrix PASS.
-- [ ] Cross-surface Reward/Offer/Audience scenario suite PASS.
-- [ ] Disposable migrations and upgrade path PASS.
-- [ ] Exact-head full CI GREEN.
+- [x] Subscription/entitlement matrix PASS on the exact PR #549 head.
+- [x] Cross-surface Reward/Offer/Audience scenario suite PASS on the exact PR #549 head.
+- [x] Disposable migrations and upgrade path PASS in Staging PR Validation #1024.
+- [x] Exact-head full CI GREEN for `0745dde273758f09adff72267fb521603656b23f`.
 - [ ] Enabled V1 external integrations certified (Meta/WhatsApp, Email, Blob, runtime workers as applicable).
 - [ ] No known P0 or functional P1 remains open.
 
 Phase H evidence: protected Vercel Preview deployment `dpl_8X2pVyRMu5U4JggLzjLZiMWam6LH` is `READY` for exact GitHub commit `71e4941aeda78988c43bc9e35f0a1be7196c5d1d`. Public marketing/acquisition, login entry, anonymous protected-route rejection, and Arabic RTL browser checks passed. Public Card failed with HTTP 500 because the connected Preview database is missing `Customer.whatsappOptInAt`; fixture-backed role, Customer, Reward, Offer, entitlement, and mobile journeys therefore remain explicitly blocked. See `docs/evidence/PHASE_H_BROWSER_UAT_2026-09-15.md`. This manifest does not claim Staging Verified or exact-head CI GREEN.
+
+Superseding source-validation checkpoint: PR #549 at `0745dde273758f09adff72267fb521603656b23f` passed Staging PR Validation #1024, including immutable migration validation, destructive SQL scan, Prisma validation, migration deployment to disposable PostgreSQL, focused entitlement tests, the full test suite, typecheck, workspace validation, lint, production build, desktop/mobile browser smoke, and whitespace checks. Vercel Preview also passed. This supersedes the earlier statement that exact-head CI is not green; it does **not** supersede the historical deployed-Preview database failure and does not claim deployed Staging runtime verification, Production verification, real-business UAT, Blob certification, Email certification, Meta certification, or Real Closed Beta.
 
 ## Freeze statement
 
