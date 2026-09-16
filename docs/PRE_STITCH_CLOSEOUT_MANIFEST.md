@@ -8,8 +8,8 @@ This manifest is the working authority for the final Product / Logic / Functiona
 
 - Production `main`: `75ee9fb1c4bd4561f58b3a902eb9f6eb49ee3482`
 - Integration `staging`: `5deae918d67e9236e249c82b3cd3df221c47391f`
-- Authoritative Product Core candidate: PR #549 at `0745dde273758f09adff72267fb521603656b23f`.
-- Last exact-head validated checkpoint: `0745dde273758f09adff72267fb521603656b23f` (Staging PR Validation #1024 and Vercel Preview passed).
+- Authoritative Product Core candidate: PR #549. Its reconciled runtime/code checkpoint is `0745dde273758f09adff72267fb521603656b23f`; later documentation-only authority updates do not change that product tree.
+- Last validated runtime/code checkpoint: `0745dde273758f09adff72267fb521603656b23f` (Staging PR Validation #1024 and Vercel Preview passed). Current exact-head status is recorded by the PR checks rather than embedded as a self-referential commit SHA in this file.
 - PR #571 at `5449004e01a5c2f08f52d8afe6721bd6484b8ee7` is fully subsumed by the PR #549 tree. A virtual merge produces the unchanged PR #549 tree `5dcbc2187f08d0483349c53a09ae190cd0313412`; PR #571 must not be merged after PR #549 merely to preserve commit ancestry.
 - PR #549 remains Draft and unmerged. Exact-head CI is green, but deployed Staging runtime, Production, real-business UAT, and external-provider certification remain separate gates.
 
@@ -187,7 +187,7 @@ Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-
 - [x] Subscription/entitlement matrix PASS on the exact PR #549 head.
 - [x] Cross-surface Reward/Offer/Audience scenario suite PASS on the exact PR #549 head.
 - [x] Disposable migrations and upgrade path PASS in Staging PR Validation #1024.
-- [x] Exact-head full CI GREEN for `0745dde273758f09adff72267fb521603656b23f`.
+- [x] Current PR exact-head full CI GREEN; the immutable run and SHA are recorded in PR #549 checks.
 - [ ] Enabled V1 external integrations certified (Meta/WhatsApp, Email, Blob, runtime workers as applicable).
 - [ ] No known P0 or functional P1 remains open.
 
