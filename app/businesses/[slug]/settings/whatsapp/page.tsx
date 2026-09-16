@@ -12,6 +12,10 @@ import {
 } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import { getWhatsAppEmbeddedSignupReadiness } from "@/lib/server/integrations/whatsapp-embedded-signup";
 import {
+  getSuggestedWhatsAppTemplate,
+  renderWhatsAppTemplate,
+} from "@/lib/whatsapp-templates";
+import {
   getBusinessWhatsAppConnectionReadiness,
   getWhatsAppProviderReadiness,
 } from "@/lib/server/integrations/whatsapp-readiness";
@@ -49,6 +53,8 @@ export default async function BusinessWhatsAppSettingsPage({
       id: true,
       slug: true,
       name: true,
+      unitName: true,
+      rewardName: true,
       cardDefaultLanguage: true,
       whatsappWelcomeMessage: true,
       whatsappBalanceMessage: true,
@@ -245,7 +251,9 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "welcomeEnabled",
       messageName: "whatsappWelcomeMessage",
       enabled: automation.welcomeEnabled,
-      message: business.whatsappWelcomeMessage,
+      message:
+        business.whatsappWelcomeMessage ??
+        getSuggestedWhatsAppTemplate(business.cardDefaultLanguage, "WELCOME"),
       producerReady: true,
     },
     {
@@ -254,7 +262,12 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "balanceUpdatedEnabled",
       messageName: "whatsappBalanceMessage",
       enabled: automation.balanceUpdatedEnabled,
-      message: business.whatsappBalanceMessage,
+      message:
+        business.whatsappBalanceMessage ??
+        getSuggestedWhatsAppTemplate(
+          business.cardDefaultLanguage,
+          "BALANCE_UPDATED",
+        ),
       producerReady: true,
     },
     {
@@ -263,7 +276,12 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "rewardReadyEnabled",
       messageName: "whatsappRewardMessage",
       enabled: automation.rewardReadyEnabled,
-      message: business.whatsappRewardMessage,
+      message:
+        business.whatsappRewardMessage ??
+        getSuggestedWhatsAppTemplate(
+          business.cardDefaultLanguage,
+          "REWARD_READY",
+        ),
       producerReady: true,
     },
     {
@@ -272,7 +290,12 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "rewardRedeemedEnabled",
       messageName: "whatsappRedeemedMessage",
       enabled: automation.rewardRedeemedEnabled,
-      message: business.whatsappRedeemedMessage,
+      message:
+        business.whatsappRedeemedMessage ??
+        getSuggestedWhatsAppTemplate(
+          business.cardDefaultLanguage,
+          "REWARD_REDEEMED",
+        ),
       producerReady: true,
     },
     {
@@ -281,7 +304,12 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "newRewardEnabled",
       messageName: "newRewardMessage",
       enabled: automation.newRewardEnabled,
-      message: automation.newRewardMessage,
+      message:
+        automation.newRewardMessage ??
+        getSuggestedWhatsAppTemplate(
+          business.cardDefaultLanguage,
+          "NEW_REWARD",
+        ),
       producerReady: false,
     },
     {
@@ -290,7 +318,12 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "newOfferEnabled",
       messageName: "newOfferMessage",
       enabled: automation.newOfferEnabled,
-      message: automation.newOfferMessage,
+      message:
+        automation.newOfferMessage ??
+        getSuggestedWhatsAppTemplate(
+          business.cardDefaultLanguage,
+          "NEW_OFFER",
+        ),
       producerReady: false,
     },
   ];
@@ -586,6 +619,22 @@ export default async function BusinessWhatsAppSettingsPage({
                   )}
                   className="mt-3 w-full rounded-xl border border-border px-4 py-3 text-sm leading-6"
                 />
+                <details className="mt-3 rounded-xl bg-surface-subtle p-3">
+                  <summary className="cursor-pointer text-xs font-bold text-primary">
+                    {t("معاينة ببيانات تجريبية", "Preview with sample data")}
+                  </summary>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground-muted" dir="auto">
+                    {renderWhatsAppTemplate(row.message ?? "", {
+                      customer: t("أحمد", "Alex"),
+                      business: business.name,
+                      balance: 8,
+                      unit: business.unitName ?? t("نقاط", "points"),
+                      reward: business.rewardName ?? t("مكافأة", "Reward"),
+                      remaining: 2,
+                      cardLink: "https://gettanee.com/card/example",
+                    })}
+                  </p>
+                </details>
               </div>
             ))}
 
