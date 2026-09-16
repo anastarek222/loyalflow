@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { expect, test } from "@playwright/test";
+import { TRIAL_DURATION_DAYS } from "@loyalflow/domain/billing/trial-core";
 
 import { PrismaClient } from "@/generated/prisma/client";
 import { generateTotpCode } from "@/lib/auth/super-admin-mfa";
@@ -254,19 +255,25 @@ test.describe
     // Remote exact-SHA UAT reuses one prepared manifest across Chromium and
     // WebKit. Keep that shared runtime check mutation-free; the disposable PR
     // database executes and cleans the complete launch receipt below.
-    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;
+    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+      test.skip(
+        true,
+        "The complete Owner launch and direct re-entry receipt requires the disposable PR database; remote exact-SHA UAT only verifies the shared mutation-free runtime.",
+      );
+    }
 
-    for (const step of [3, 4, 5, 6]) {
+    for (const step of [3, 4]) {
       await page.getByRole("button", { name: "Next", exact: true }).click();
       await expect(form).toHaveAttribute("data-owner-step", String(step));
     }
 
     await page.getByRole("button", { name: "Launch", exact: true }).click();
-    await expect(
-      page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
-      timeout: 30_000,
-    });
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`),
+      {
+        timeout: 30_000,
+      },
+    );
     await expect(
       page.locator("#app-content").getByRole("heading", { level: 1 }),
     ).toHaveCount(1);
@@ -290,7 +297,7 @@ test.describe
     await expect(page).not.toHaveURL(/\/onboarding$/);
   });
 
-  test("public Trial request sends a secure email link once and launches a persisted seven-day Trial", async ({
+  test("public Trial request sends a secure email link once and launches a persisted 14-day Trial @owner-onboarding-desktop", async ({
     page,
   }) => {
     test.setTimeout(150_000);
@@ -327,8 +334,12 @@ test.describe
     const deliveredEmail = await waitForCapturedAuthEmail(ownerEmail);
     expect(deliveredEmail.from).toBe("Tanee <noreply@gettanee.com>");
     expect(deliveredEmail.subject).toBe("Complete your Tanee business setup");
-    expect(deliveredEmail.text).toContain("This secure link expires in 24 hours");
-    expect(deliveredEmail.text).toContain("seven-day trial starts");
+    expect(deliveredEmail.text).toContain(
+      "This secure link expires in 24 hours",
+    );
+    expect(deliveredEmail.text).toContain(
+      `${TRIAL_DURATION_DAYS}-day trial starts`,
+    );
 
     const linkMatch = deliveredEmail.text.match(
       /https?:\/\/[^\s]+\/accept-owner-invitation\?token=[^\s]+/,
@@ -337,7 +348,9 @@ test.describe
     const invitationUrl = new URL(linkMatch![0]);
     const secureInvitationPath = `${invitationUrl.pathname}${invitationUrl.search}`;
     expect(invitationUrl.pathname).toBe("/accept-owner-invitation");
-    expect(invitationUrl.searchParams.get("token")?.length).toBeGreaterThanOrEqual(20);
+    expect(
+      invitationUrl.searchParams.get("token")?.length,
+    ).toBeGreaterThanOrEqual(20);
 
     await page.goto(secureInvitationPath);
     await page
@@ -352,7 +365,9 @@ test.describe
     await expect(page).toHaveURL(/\/onboarding$/, {
       timeout: 20_000,
     });
-    await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
+    await expect(page.getByPlaceholder("Business name")).toHaveValue(
+      businessName,
+    );
 
     // Replay the exact delivered token and prove redemption is single-use.
     await page.goto(secureInvitationPath);
@@ -365,16 +380,21 @@ test.describe
     await page
       .getByRole("button", { name: "Continue setup", exact: true })
       .click();
-    await expect(page).toHaveURL(/\/accept-owner-invitation\?error=invalid-token$/, {
-      timeout: 20_000,
-    });
+    await expect(page).toHaveURL(
+      /\/accept-owner-invitation\?error=invalid-token$/,
+      {
+        timeout: 20_000,
+      },
+    );
 
     // The accepted Owner session remains authoritative after a rejected token replay.
     await page.goto("/onboarding");
     await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
-    await expect(page.getByPlaceholder("Business name")).toHaveValue(businessName);
+    await expect(page.getByPlaceholder("Business name")).toHaveValue(
+      businessName,
+    );
 
-    for (const step of [2, 3, 4, 5, 6]) {
+    for (const step of [2, 3, 4]) {
       await page.getByRole("button", { name: "Next", exact: true }).click();
       await expect(page.locator("form[data-owner-step]")).toHaveAttribute(
         "data-owner-step",
@@ -383,11 +403,12 @@ test.describe
     }
 
     await page.getByRole("button", { name: "Launch", exact: true }).click();
-    await expect(
-      page,
-    ).toHaveURL(new RegExp(`/businesses/${businessSlug}(?:\\?.*)?$`), {
-      timeout: 30_000,
-    });
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${businessSlug}/launch-success(?:\\?.*)?$`),
+      {
+        timeout: 30_000,
+      },
+    );
 
     await withDisposableFixtureDatabase(async (prisma) => {
       const invitation = await prisma.ownerInvitation.findUniqueOrThrow({
@@ -413,7 +434,7 @@ test.describe
       );
       expect(
         business.trialEndsAt!.getTime() - business.trialStartedAt!.getTime(),
-      ).toBe(7 * 24 * 60 * 60 * 1000);
+      ).toBe(TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000);
     });
   });
 

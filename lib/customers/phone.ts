@@ -120,3 +120,28 @@ export function normalizePhone(value: string) {
   const normalized = normalizeNumerals(value).replace(/[^\d+]/g, "");
   return normalized.replace(/(?!^)\+/g, "");
 }
+
+/**
+ * Returns the canonical identity plus formats that may exist in historical
+ * rows. New writes always persist the canonical E.164 value; these aliases
+ * only prevent an older equivalent row from being duplicated.
+ */
+export function equivalentPhoneIdentities(
+  value: string,
+  defaultCountry?: string | null,
+) {
+  const canonical = normalizePhoneE164(value, defaultCountry);
+  if (!canonical) {
+    const legacy = normalizePhone(value);
+    return legacy ? [legacy] : [];
+  }
+
+  const digits = canonical.slice(1);
+  const variants = new Set([canonical, digits, `00${digits}`]);
+  const country = resolveCountry(defaultCountry);
+  const callingCode = country ? getCountryCallingCode(country) : null;
+  if (callingCode && digits.startsWith(callingCode)) {
+    variants.add(`0${digits.slice(callingCode.length)}`);
+  }
+  return [...variants];
+}

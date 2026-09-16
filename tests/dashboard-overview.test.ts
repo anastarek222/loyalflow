@@ -46,6 +46,16 @@ test("U5 compresses onboarding after core operational readiness", () => {
   assert.match(businessDashboard, /shouldShowOnboardingChecklist\(onboarding\.coreReady\)/);
 });
 
+test("U5 keeps incomplete WhatsApp setup visible to business settings managers", () => {
+  assert.match(businessDashboard, /getBusinessWhatsAppProductReadiness/);
+  assert.match(businessDashboard, /id: "whatsapp-setup"/);
+  assert.match(businessDashboard, /settings\/whatsapp/);
+  assert.match(
+    businessDashboard,
+    /canManageSettings && !whatsappReadiness\?\.deliveryReady/,
+  );
+});
+
 test("U5 keeps staff clear of owner-only setup and configuration actions", () => {
   const staffActions = getBusinessDashboardActions("north-star", { ...noCapabilities, canScan: true });
   assert.equal(staffActions.some((action) => ["settings", "team", "branches", "campaigns"].includes(action.id)), false);

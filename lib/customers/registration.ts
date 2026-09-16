@@ -54,11 +54,13 @@ export function parseCustomerRegistration(
 export async function generateCustomerCode(
   client: CustomerCodeLookup,
   businessId: string,
-  slug: string
+  slug: string,
 ) {
   const prefix =
-    slug.replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase() ||
-    "CUS";
+    slug
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 3)
+      .toUpperCase() || "CUS";
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const suffix = randomBytes(3).toString("hex").toUpperCase();

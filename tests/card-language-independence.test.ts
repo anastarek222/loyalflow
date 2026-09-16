@@ -6,16 +6,14 @@ import test from "node:test";
 const root = process.cwd();
 const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 
-test("canonical loyalty card ignores dashboard locale for card rendering", () => {
+test("canonical loyalty card honors requested presentation language", () => {
   const card = source("components/loyalty-card.tsx");
 
-  assert.match(card, /export const CARD_PRESENTATION_LANGUAGE = "EN" as const/);
-  assert.match(card, /language: CARD_PRESENTATION_LANGUAGE/);
+  assert.match(card, /const language = props\.language \?\? "EN"/);
+  assert.match(card, /language,\n  };/);
   assert.match(card, /props=\{cardProps\}/);
-  assert.match(
-    card,
-    /data-card-presentation-language=\{CARD_PRESENTATION_LANGUAGE\}/,
-  );
+  assert.match(card, /data-card-presentation-language=\{language\}/);
+  assert.doesNotMatch(card, /CARD_PRESENTATION_LANGUAGE/);
 });
 
 test("customer-provided card values keep bidi-safe rendering", () => {
@@ -46,6 +44,9 @@ test("public and admin preview render through canonical LoyaltyCard authority", 
   );
   const preview = source("components/loyalty-card-preview.tsx");
 
-  assert.match(publicViewer, /<LoyaltyCard/);
+  assert.match(
+    publicViewer,
+    /<LoyaltyCard \{\.\.\.cardProps\} language=\{language\} side=\{side\} \/>/,
+  );
   assert.match(preview, /<LoyaltyCard/);
 });

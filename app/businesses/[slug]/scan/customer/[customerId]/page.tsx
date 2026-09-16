@@ -22,10 +22,7 @@ import {
   earnActionLabel,
   formatLoyaltyAmount,
 } from "@/lib/loyalty/presentation";
-import {
-  getRedeemableCatalogueRewards,
-  getRewardAvailability,
-} from "@/lib/rewards/availability";
+import { getRewardTruth } from "@/lib/rewards/availability";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { scanUiCopy } from "@/lib/scan/copy";
@@ -77,6 +74,7 @@ export default async function ScanCustomerPage({
       cardStyle: true,
       fontFamily: true,
       id: true,
+      timezone: true,
       staffAttributionEnabled: true,
       staffAttributionRequired: true,
       rewardThreshold: true,
@@ -105,6 +103,9 @@ export default async function ScanCustomerPage({
     businessId: business.id,
     actor: session.user,
   });
+  const branchAssignmentBlocked =
+    operationContextOptions.branchRequired &&
+    operationContextOptions.branches.length === 0;
   const operationContextFields = (disabled: boolean, idPrefix: string) => (
     <LoyaltyOperationContextFields
       branches={operationContextOptions.branches}
@@ -113,7 +114,7 @@ export default async function ScanCustomerPage({
       staffAttributionEnabled={business.staffAttributionEnabled}
       staffAttributionRequired={business.staffAttributionRequired}
       idPrefix={idPrefix}
-      disabled={disabled}
+      disabled={disabled || branchAssignmentBlocked}
       language={language}
     />
   );
@@ -169,6 +170,7 @@ export default async function ScanCustomerPage({
   const dateFormatter = new Intl.DateTimeFormat(getLanguageLocale(language), {
     dateStyle: "short",
     timeStyle: "short",
+    timeZone: business.timezone ?? "UTC",
   });
   const success =
     query.success === "earned" || query.success === "redeemed"
@@ -178,6 +180,7 @@ export default async function ScanCustomerPage({
   const knownErrors: ScanOperationError[] = [
     "invalid",
     "permission",
+    "subscription-restricted",
     "reward-unavailable",
     "insufficient-balance",
     "conflict",
@@ -215,7 +218,7 @@ export default async function ScanCustomerPage({
     currency: customer.business.currency,
     earnAmount: customer.business.earnAmount,
   } as const;
-  const rewardAvailability = getRewardAvailability({
+  const rewardAvailability = getRewardTruth({
     customerActive: customer.isActive,
     balance: customer.balance,
     rewardThreshold: business.rewardThreshold,
@@ -224,13 +227,9 @@ export default async function ScanCustomerPage({
       cost: business.rewardThreshold,
     },
     catalogueRewards: business.rewards,
-  });
-  const redeemableRewards = getRedeemableCatalogueRewards({
-    customerActive: customer.isActive,
-    balance: customer.balance,
-    catalogueRewards: rewardAvailability.activeCatalogueRewards,
     rewardUnlocks: customer.rewardUnlocks,
   });
+  const redeemableRewards = rewardAvailability.redeemableRewards;
 
   return (
     <main className="min-h-full bg-[radial-gradient(circle_at_top,var(--lf-primary-soft),transparent_34rem)] py-6 sm:py-10">
@@ -296,7 +295,9 @@ export default async function ScanCustomerPage({
                 href={scanCustomerPath}
                 className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] border border-border-strong bg-surface px-6 text-center font-semibold text-foreground-muted hover:bg-surface-subtle"
               >
-                {rewardJustUnlocked ? copy.redeemReward : copy.performAnotherOperation}
+                {rewardJustUnlocked
+                  ? copy.redeemReward
+                  : copy.performAnotherOperation}
               </Link>
               <Link
                 href={`/businesses/${slug}/customers/${customer.id}`}
@@ -384,7 +385,10 @@ export default async function ScanCustomerPage({
                       <input
                         name="saleAmount"
                         type="number"
-                        inputMode="decimal"
+                        inputMode="numeric"
+                        min={1}
+                        step={1}
+                        required
                         placeholder={copy.saleAmountPlaceholder}
                         aria-label={copy.saleAmountPlaceholder}
                         className="mb-4 min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 font-semibold"
@@ -397,7 +401,10 @@ export default async function ScanCustomerPage({
                       value={randomUUID()}
                     />
                     <input type="hidden" name="operationOrigin" value="SCAN" />
-                    <ScanActionButton language={language}>
+                    <ScanActionButton
+                      language={language}
+                      disabled={branchAssignmentBlocked}
+                    >
                       {earnActionLabel(loyaltyPresentation)}
                     </ScanActionButton>
                   </form>
@@ -463,7 +470,10 @@ export default async function ScanCustomerPage({
                                 !canRedeem,
                                 `scan-redeem-${reward.id}`,
                               )}
-                              <ScanActionButton language={language}>
+                              <ScanActionButton
+                                language={language}
+                                disabled={branchAssignmentBlocked}
+                              >
                                 {copy.redeemReward}
                               </ScanActionButton>
                             </form>

@@ -22,7 +22,9 @@ test("TC5 Reward actions keep presentation preflight and delegate persisted writ
 });
 
 test("TC5 Reward creation rechecks persisted lifecycle, plan feature and limit before write", () => {
-  const entitlement = command.indexOf("await canBusinessPerformSubscriptionOperation");
+  const entitlement = command.indexOf(
+    "await canBusinessPerformSubscriptionOperation",
+  );
   const businessRead = command.indexOf("transaction.business.findUnique");
   const feature = command.indexOf("hasFeatureEntitlement(business.plan");
   const limit = command.indexOf("isWithinPlanLimit(");
@@ -42,8 +44,12 @@ test("TC5 Reward creation rechecks persisted lifecycle, plan feature and limit b
 });
 
 test("TC5 Reward update and status writes preserve tenant ownership inside the transaction", () => {
-  const updateStart = command.indexOf("export async function updateRewardCommand");
-  const statusStart = command.indexOf("export async function setRewardStatusCommand");
+  const updateStart = command.indexOf(
+    "export async function updateRewardCommand",
+  );
+  const statusStart = command.indexOf(
+    "export async function setRewardStatusCommand",
+  );
   assert.ok(updateStart >= 0 && statusStart > updateStart);
 
   for (const slice of [
@@ -66,9 +72,14 @@ test("TC5 Reward update and status writes preserve tenant ownership inside the t
 
 test("TC5 Reward commands keep the domain write and audit atomic", () => {
   assert.match(command, /prisma\.\$transaction/);
-  assert.match(command, /type: "REWARD_CREATED"/);
-  assert.match(command, /type: "REWARD_UPDATED"/);
-  assert.match(command, /type: "REWARD_STATUS_CHANGED"/);
+  assert.match(command, /entity: "REWARD"/);
+  assert.match(command, /operation: "CREATE"/);
+  assert.match(command, /operation: "UPDATE"/);
+  assert.match(
+    command,
+    /operation: input\.isActive \? "ACTIVATE" : "DEACTIVATE"/,
+  );
+  assert.match(command, /buildCatalogAuditActivity/);
   assert.match(command, /transaction\.businessActivity\.create/);
   assert.doesNotMatch(command, /stripe|checkout|webhook|process\.env/i);
 });

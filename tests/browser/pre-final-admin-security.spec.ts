@@ -3,6 +3,8 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { deflateSync } from "node:zlib";
 
+import { generateTotpCode } from "../../lib/auth/super-admin-mfa";
+import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 import {
   cleanupBrowserUat,
   prepareBrowserUat,
@@ -23,6 +25,12 @@ async function login(
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
+  if (role === "superadmin") {
+    await expect(page.getByTestId("login-mfa-step")).toBeVisible();
+    const mfaCode = page.locator("#mfaCode");
+    await mfaCode.fill(generateTotpCode(UAT_SUPER_ADMIN_MFA_SECRET));
+    await mfaCode.press("Enter");
+  }
   await expect(page).toHaveURL(
     role === "superadmin"
       ? /\/dashboard$/

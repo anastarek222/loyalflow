@@ -4,7 +4,11 @@ import { auth } from "@/auth";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
 import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
-import { canAccessBusiness, canPerform, type Capability } from "@/lib/permissions";
+import {
+  canAccessBusiness,
+  canPerform,
+  type Capability,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
   setCustomerRecordStatusCommand,

@@ -1,14 +1,20 @@
-import {
-  activityActorFields,
-  activityRequestMetadata,
-} from "@/lib/activity/business-activity";
+import { buildCatalogAuditActivity } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { hasFeatureEntitlement, isWithinPlanLimit } from "@/lib/entitlements";
 import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
+import {
+  getOfferTagAudienceId,
+  isOfferCurrentlyValid,
+  isOfferSegment,
+  isOfferAudienceSelectorForLoyaltyMode,
+} from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
+import type { LoyaltyMode } from "@/generated/prisma/client";
+import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
+import { enqueueCustomerMessageAudienceJobs } from "@/lib/server/integrations/customer-messaging";
 
 export type OfferWriteActor = Readonly<{
   id: string;
@@ -25,17 +31,51 @@ type OfferWriteFailure = Readonly<{
     | "TARGET_NOT_FOUND"
     | "SUBSCRIPTION_RESTRICTED"
     | "PLAN_FEATURE"
-    | "PLAN_LIMIT";
+    | "PLAN_LIMIT"
+    | "INVALID_AUDIENCE";
 }>;
 
-export type OfferWriteCommandResult = Readonly<{ ok: true }> | OfferWriteFailure;
+export type OfferWriteCommandResult =
+  Readonly<{ ok: true; integrationJobIds: string[] }> | OfferWriteFailure;
+
+type OfferAudienceValidationClient = Pick<typeof prisma, "customerTag">;
+type OfferAudienceValidationInput = Pick<
+  NormalizedOfferInput,
+  "eligibility" | "segment"
+>;
+
+async function hasValidOfferAudience(
+  client: OfferAudienceValidationClient,
+  businessId: string,
+  loyaltyMode: LoyaltyMode,
+  offer: OfferAudienceValidationInput,
+) {
+  if (offer.eligibility !== "SEGMENT") {
+    return offer.segment === null;
+  }
+  if (
+    !offer.segment ||
+    !isOfferAudienceSelectorForLoyaltyMode(offer.segment, loyaltyMode)
+  ) {
+    return false;
+  }
+
+  const tagId = getOfferTagAudienceId(offer.segment);
+  if (!tagId) return true;
+
+  const tag = await client.customerTag.findFirst({
+    where: { id: tagId, businessId },
+    select: { id: true },
+  });
+  return Boolean(tag);
+}
 
 /**
  * Authoritative non-financial Offer creation boundary.
  *
  * The caller keeps authentication, tenant authorization, input parsing,
  * presentation preflight, redirects and revalidation. This command owns the
- * persisted subscription/plan checks and the atomic Offer + audit write.
+ * persisted subscription/plan/audience checks and the atomic Offer + audit write.
  */
 export async function createOfferCommand(input: {
   businessId: string;
@@ -59,7 +99,12 @@ export async function createOfferCommand(input: {
 
     const business = await transaction.business.findUnique({
       where: { id: input.businessId },
-      select: { plan: true },
+      select: {
+        plan: true,
+        loyaltyMode: true,
+        rewardThreshold: true,
+        rewardName: true,
+      },
     });
     if (!business) {
       return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
@@ -84,32 +129,81 @@ export async function createOfferCommand(input: {
       return { ok: false, reason: "PLAN_FEATURE" } as const;
     }
     if (
-      !isWithinPlanLimit(
-        business.plan,
-        "OFFERS",
-        offerCount,
-        1,
-        planLimits,
-      )
+      !(await hasValidOfferAudience(
+        transaction,
+        input.businessId,
+        business.loyaltyMode,
+        input.offer,
+      ))
+    ) {
+      return { ok: false, reason: "INVALID_AUDIENCE" } as const;
+    }
+    if (
+      !isWithinPlanLimit(business.plan, "OFFERS", offerCount, 1, planLimits)
     ) {
       return { ok: false, reason: "PLAN_LIMIT" } as const;
     }
 
     const offer = await transaction.offer.create({
       data: { ...input.offer, businessId: input.businessId },
-      select: { name: true },
-    });
-    await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_CREATED",
-        description: `تم إنشاء العرض ${offer.name}`,
-        businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        validFrom: true,
+        validUntil: true,
+        eligibility: true,
+        segment: true,
       },
     });
+    await transaction.businessActivity.create({
+      data: buildCatalogAuditActivity({
+        entity: "OFFER",
+        operation: "CREATE",
+        businessId: input.businessId,
+        actor: input.actor,
+        item: offer,
+        activityContext,
+      }),
+    });
 
-    return { ok: true } as const;
+    let audienceIds: string[] | undefined;
+    if (offer.eligibility === "VIP") {
+      audienceIds = await resolveBusinessCustomerIdsForSegment({
+        business: { id: input.businessId, ...business },
+        segment: "VIP",
+      });
+    } else if (offer.eligibility === "SEGMENT") {
+      const tagId = getOfferTagAudienceId(offer.segment);
+      if (tagId) {
+        const assignments = await transaction.customerTagAssignment.findMany({
+          where: { businessId: input.businessId, tagId },
+          select: { customerId: true },
+        });
+        audienceIds = assignments.map((assignment) => assignment.customerId);
+      } else if (isOfferSegment(offer.segment)) {
+        audienceIds = await resolveBusinessCustomerIdsForSegment({
+          business: { id: input.businessId, ...business },
+          segment: offer.segment,
+        });
+      } else {
+        audienceIds = [];
+      }
+    }
+
+    const messageJobs = isOfferCurrentlyValid(offer)
+      ? await enqueueCustomerMessageAudienceJobs(transaction, {
+          businessId: input.businessId,
+          event: "NEW_OFFER",
+          eventKey: offer.id,
+          ...(audienceIds ? { customerIds: audienceIds } : {}),
+        })
+      : [];
+
+    return {
+      ok: true,
+      integrationJobIds: messageJobs.map((job) => job.id),
+    } as const;
   });
 }
 
@@ -132,30 +226,50 @@ export async function updateOfferCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
-    const existingOffer = await transaction.offer.findFirst({
-      where: { id: input.offerId, businessId: input.businessId },
-      select: { id: true },
-    });
+    const [business, existingOffer] = await Promise.all([
+      transaction.business.findUnique({
+        where: { id: input.businessId },
+        select: { loyaltyMode: true },
+      }),
+      transaction.offer.findFirst({
+        where: { id: input.offerId, businessId: input.businessId },
+        select: { id: true },
+      }),
+    ]);
+    if (!business) {
+      return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
+    }
     if (!existingOffer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
+    if (
+      !(await hasValidOfferAudience(
+        transaction,
+        input.businessId,
+        business.loyaltyMode,
+        input.offer,
+      ))
+    ) {
+      return { ok: false, reason: "INVALID_AUDIENCE" } as const;
     }
 
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: input.offer,
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_UPDATED",
-        description: `تم تحديث العرض ${offer.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "OFFER",
+        operation: "UPDATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: offer,
+        activityContext,
+      }),
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobIds: [] } as const;
   });
 }
 
@@ -178,31 +292,50 @@ export async function setOfferStatusCommand(input: {
       return { ok: false, reason: "SUBSCRIPTION_RESTRICTED" } as const;
     }
 
-    const existingOffer = await transaction.offer.findFirst({
-      where: { id: input.offerId, businessId: input.businessId },
-      select: { id: true },
-    });
+    const [business, existingOffer] = await Promise.all([
+      transaction.business.findUnique({
+        where: { id: input.businessId },
+        select: { loyaltyMode: true },
+      }),
+      transaction.offer.findFirst({
+        where: { id: input.offerId, businessId: input.businessId },
+        select: { id: true, eligibility: true, segment: true },
+      }),
+    ]);
+    if (!business) {
+      return { ok: false, reason: "BUSINESS_NOT_FOUND" } as const;
+    }
     if (!existingOffer) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
+    if (
+      input.isActive &&
+      !(await hasValidOfferAudience(
+        transaction,
+        input.businessId,
+        business.loyaltyMode,
+        existingOffer,
+      ))
+    ) {
+      return { ok: false, reason: "INVALID_AUDIENCE" } as const;
     }
 
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: { isActive: input.isActive },
-      select: { name: true },
+      select: { id: true, name: true },
     });
     await transaction.businessActivity.create({
-      data: {
-        type: "OFFER_STATUS_CHANGED",
-        description: input.isActive
-          ? `تم تفعيل العرض ${offer.name}`
-          : `تم إيقاف العرض ${offer.name}`,
+      data: buildCatalogAuditActivity({
+        entity: "OFFER",
+        operation: input.isActive ? "ACTIVATE" : "DEACTIVATE",
         businessId: input.businessId,
-        ...activityActorFields(input.actor, input.businessId),
-        ...activityRequestMetadata(activityContext),
-      },
+        actor: input.actor,
+        item: offer,
+        activityContext,
+      }),
     });
 
-    return { ok: true } as const;
+    return { ok: true, integrationJobIds: [] } as const;
   });
 }

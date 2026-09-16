@@ -1,8 +1,11 @@
 import type { PublicMembershipRegistration } from "@loyalflow/contracts/customers/public-membership";
 
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
-import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
+import {
+  equivalentPhoneIdentities,
+  normalizePhoneE164,
+} from "@/lib/customers/phone";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -23,11 +26,7 @@ import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 type PublicMembershipFailure = Readonly<{
   ok: false;
-  reason:
-    | "BUSINESS_UNAVAILABLE"
-    | "DUPLICATE"
-    | "INVALID_PHONE"
-    | "PLAN_LIMIT";
+  reason: "BUSINESS_UNAVAILABLE" | "DUPLICATE" | "INVALID_PHONE" | "PLAN_LIMIT";
 }>;
 
 export type PublicMembershipCommandResult =
@@ -40,6 +39,11 @@ export type PublicMembershipCommandResult =
 
 /**
  * Authoritative public membership persistence boundary.
+ *
+ * The public Server Action keeps transport validation, rate limiting,
+ * presentation preflight, redirects, revalidation and post-commit integrations.
+ * This command owns the serializable tenant/customer/referral write transaction
+ * and atomically records durable integration jobs for the committed membership.
  */
 export async function createPublicMembershipCommand(input: {
   businessId: string;
@@ -76,13 +80,10 @@ export async function createPublicMembershipCommand(input: {
       if (!phone) {
         return { ok: false, reason: "INVALID_PHONE" } as const;
       }
-
-      const existingCustomer = await transaction.customer.findUnique({
+      const existingCustomer = await transaction.customer.findFirst({
         where: {
-          businessId_phone: {
-            businessId: input.businessId,
-            phone,
-          },
+          businessId: input.businessId,
+          phone: { in: equivalentPhoneIdentities(phone, business.country) },
         },
         select: { id: true },
       });
@@ -103,7 +104,10 @@ export async function createPublicMembershipCommand(input: {
         }),
         transaction.customer.count({ where: { businessId: input.businessId } }),
       ]);
-      const planLimits = configurationToPlanLimits(configuration, business.plan);
+      const planLimits = configurationToPlanLimits(
+        configuration,
+        business.plan,
+      );
       if (
         !canCreatePublicMembership(business.plan, customerCount, planLimits)
       ) {

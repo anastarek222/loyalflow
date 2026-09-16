@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { generateTotpCode } from "../../lib/auth/super-admin-mfa";
+import { UAT_SUPER_ADMIN_MFA_SECRET } from "./fixture-mfa";
 import {
   cleanupBrowserUat,
   prepareBrowserUat,
@@ -10,45 +12,49 @@ import {
 let fixture: BrowserUatFixture;
 let manifestPath: string;
 const invalidPublicCardPath = "/card/not-a-valid-public-token";
-const expectedInvalidPublicCard404 = "Failed to load resource: the server responded with a status of 404 (Not Found)";
+const expectedInvalidPublicCard404 =
+  "Failed to load resource: the server responded with a status of 404 (Not Found)";
 const expectedReactDevelopmentSuspenseFallback =
   "The server could not finish this Suspense boundary, likely due to an error during server rendering. Switched to client rendering.";
 
 function applicationNavigation(page: Page) {
-  return page.getByRole("complementary", { name: "Primary navigation", exact: true });
+  return page.getByRole("complementary", {
+    name: "Primary navigation",
+    exact: true,
+  });
 }
 
 async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
-  const copy = language === "AR"
-    ? {
-        scannerStatus: "حالة ماسح QR",
-        scannerInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
-        scannerStarting: "جارٍ تشغيل الكاميرا...",
-        scannerReady: "الكاميرا جاهزة لمسح رمز QR.",
-        scannerFeedback:
-          /^(?:وجّه الكاميرا ناحية QR الخاص بالعميل.|جارٍ تشغيل الكاميرا...|الكاميرا جاهزة لمسح رمز QR.|تشغيل الكاميرا على الهاتف يحتاج رابط HTTPS.|الكاميرا غير متاحة على هذا الجهاز.|تم رفض إذن الكاميرا.|تعذر تشغيل الماسح الآن.)/,
-        searchLabel: "البحث عن عميل",
-        openCustomer: "فتح العميل",
-      }
-    : {
-        scannerStatus: "QR scanner status",
-        scannerInstruction: "Point the camera at the customer QR code.",
-        scannerStarting: "Starting camera...",
-        scannerReady: "Camera ready to scan a QR code.",
-        scannerFeedback:
-          /^(?:Point the camera at the customer QR code.|Starting camera...|Camera ready to scan a QR code.|Camera access on mobile requires an HTTPS link.|The camera is unavailable on this device.|Camera permission was denied.|The scanner could not start.)/,
-        searchLabel: "Find a customer",
-        openCustomer: "Open customer",
-      };
+  const copy =
+    language === "AR"
+      ? {
+          scannerStatus: "حالة ماسح QR",
+          scannerInstruction: "وجّه الكاميرا ناحية QR الخاص بالعميل.",
+          scannerStarting: "جارٍ تشغيل الكاميرا...",
+          scannerReady: "الكاميرا جاهزة لمسح رمز QR.",
+          scannerFeedback:
+            /^(?:وجّه الكاميرا ناحية QR الخاص بالعميل.|جارٍ تشغيل الكاميرا...|الكاميرا جاهزة لمسح رمز QR.|تشغيل الكاميرا على الهاتف يحتاج رابط HTTPS.|الكاميرا غير متاحة على هذا الجهاز.|تم رفض إذن الكاميرا.|تعذر تشغيل الماسح الآن.)/,
+          searchLabel: "البحث عن عميل",
+          openCustomer: "فتح العميل",
+        }
+      : {
+          scannerStatus: "QR scanner status",
+          scannerInstruction: "Point the camera at the customer QR code.",
+          scannerStarting: "Starting camera...",
+          scannerReady: "Camera ready to scan a QR code.",
+          scannerFeedback:
+            /^(?:Point the camera at the customer QR code.|Starting camera...|Camera ready to scan a QR code.|Camera access on mobile requires an HTTPS link.|The camera is unavailable on this device.|Camera permission was denied.|The scanner could not start.)/,
+          searchLabel: "Find a customer",
+          openCustomer: "Open customer",
+        };
 
-  await expect(
-    page.getByLabel(copy.scannerStatus, { exact: true }),
-  ).toHaveText(copy.scannerFeedback);
+  await expect(page.getByLabel(copy.scannerStatus, { exact: true })).toHaveText(
+    copy.scannerFeedback,
+  );
+  await page.getByTestId("scan-customer-search").locator("summary").click();
   await page
-    .getByTestId("scan-customer-search")
-    .locator("summary")
-    .click();
-  await page.getByRole("textbox", { name: copy.searchLabel, exact: true }).fill(fixture.activeCustomer.customerCode);
+    .getByRole("textbox", { name: copy.searchLabel, exact: true })
+    .fill(fixture.activeCustomer.customerCode);
 
   const customerResult = page.getByRole("link", {
     name: `${copy.openCustomer}: Final UAT active`,
@@ -60,16 +66,25 @@ async function openCustomerFromScanSearch(page: Page, language: "EN" | "AR") {
     { timeout: 20_000 },
   );
   await Promise.all([
-    page.waitForURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}$`), { timeout: 15_000 }),
+    page.waitForURL(
+      new RegExp(`/scan/customer/${fixture.activeCustomer.id}$`),
+      { timeout: 15_000 },
+    ),
     customerResult.click(),
   ]);
 }
 
 function scanOperationTerminalUrl(customerId: string) {
-  return new RegExp(`/scan/customer/${customerId}\\?(?:success=(?:earned(?:&rewardReady=1)?|redeemed)|error=(?:invalid|permission|reward-unavailable|insufficient-balance|conflict|invalid-branch|invalid-staff|generic))$`);
+  return new RegExp(
+    `/scan/customer/${customerId}\\?(?:success=(?:earned(?:&rewardReady=1)?|redeemed)|error=(?:invalid|permission|reward-unavailable|insufficient-balance|conflict|invalid-branch|invalid-staff|generic))$`,
+  );
 }
 
-function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) {
+function currentScanBalance(
+  page: Page,
+  language: "EN" | "AR",
+  balance: number,
+) {
   const label = language === "AR" ? "الرصيد الحالي" : "Current balance";
   const formattedBalance = new Intl.NumberFormat(
     language === "AR" ? "ar-EG" : "en-US",
@@ -80,20 +95,27 @@ function currentScanBalance(page: Page, language: "EN" | "AR", balance: number) 
     .filter({ hasText: `${formattedBalance} Points` });
 }
 
-async function login(page: Page, role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin") {
+async function login(
+  page: Page,
+  role: "owner-a" | "manager-a" | "staff-a" | "viewer-a" | "superadmin",
+) {
   await page.goto("/login");
   await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in" }).press("Enter");
-  const expectedDestination = role === "superadmin"
-    ? /\/dashboard$/
-    : role === "staff-a"
-      ? new RegExp(`/businesses/${fixture.businessA}/scan$`)
-      : new RegExp(`/businesses/${fixture.businessA}$`);
-  await expect(page).toHaveURL(
-    expectedDestination,
-    { timeout: 15_000 },
-  );
+  if (role === "superadmin") {
+    await expect(page.getByTestId("login-mfa-step")).toBeVisible();
+    const mfaCode = page.locator("#mfaCode");
+    await mfaCode.fill(generateTotpCode(UAT_SUPER_ADMIN_MFA_SECRET));
+    await mfaCode.press("Enter");
+  }
+  const expectedDestination =
+    role === "superadmin"
+      ? /\/dashboard$/
+      : role === "staff-a"
+        ? new RegExp(`/businesses/${fixture.businessA}/scan$`)
+        : new RegExp(`/businesses/${fixture.businessA}$`);
+  await expect(page).toHaveURL(expectedDestination, { timeout: 15_000 });
 }
 
 async function logout(page: Page) {
@@ -106,12 +128,20 @@ async function logout(page: Page) {
 }
 
 async function assertViewportSafety(page: Page) {
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+      ),
+    )
+    .toBe(true);
 }
 
 async function assertAuthenticatedViewportSafety(page: Page) {
   await assertViewportSafety(page);
-  await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+  await expect(
+    page.locator("#app-content").getByRole("heading", { level: 1 }),
+  ).toHaveCount(1);
 }
 
 async function resetDisposableRateLimits() {
@@ -136,7 +166,8 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
   });
 
   test.afterAll(async () => {
-    if (fixture && manifestPath) await cleanupBrowserUat(fixture.runId, manifestPath);
+    if (fixture && manifestPath)
+      await cleanupBrowserUat(fixture.runId, manifestPath);
   });
 
   test.beforeEach(async ({ page }) => {
@@ -146,7 +177,8 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
       const isExpectedReactDevelopmentSuspenseFallback =
         !process.env.STAGING_UAT_BASE_URL &&
         error.message === expectedReactDevelopmentSuspenseFallback;
-      if (!isExpectedReactDevelopmentSuspenseFallback) errors.push(error.message);
+      if (!isExpectedReactDevelopmentSuspenseFallback)
+        errors.push(error.message);
     });
     page.on("console", (message) => {
       const isExpectedInvalidPublicCard404 =
@@ -157,13 +189,19 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
       const isExpectedVercelToolbarCspNoise =
         message.type() === "error" &&
         Boolean(process.env.STAGING_UAT_BASE_URL) &&
-        message.text().includes("https://vercel.live/_next-live/feedback/feedback.js") &&
+        message
+          .text()
+          .includes("https://vercel.live/_next-live/feedback/feedback.js") &&
         message.text().includes("Content Security Policy");
       const isExpectedReactDevelopmentCspNoise =
         message.type() === "error" &&
         !process.env.STAGING_UAT_BASE_URL &&
-        message.text().includes("eval() is not supported in this environment") &&
-        message.text().includes("React will never use eval() in production mode");
+        message
+          .text()
+          .includes("eval() is not supported in this environment") &&
+        message
+          .text()
+          .includes("React will never use eval() in production mode");
       const isExpectedReactDevelopmentSuspenseFallback =
         message.type() === "error" &&
         !process.env.STAGING_UAT_BASE_URL &&
@@ -184,10 +222,14 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
   });
 
   test.afterEach(async ({ page }) => {
-    expect((page as Page & { uatErrors?: string[] }).uatErrors ?? []).toEqual([]);
+    expect((page as Page & { uatErrors?: string[] }).uatErrors ?? []).toEqual(
+      [],
+    );
   });
 
-  test("authentication, owner navigation, reports, and exact-once Scan earn/redeem @desktop", async ({ page }) => {
+  test("authentication, owner navigation, reports, and exact-once Scan earn/redeem @desktop", async ({
+    page,
+  }) => {
     test.setTimeout(120_000);
     await page.goto("/businesses/forbidden/scan");
     await expect(page).toHaveURL(/\/login$/);
@@ -201,28 +243,60 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     ).toBeVisible();
 
     await login(page, "owner-a");
-    await expect(page.locator("[data-app-language='EN']")).toHaveAttribute("dir", "ltr");
+    await expect(page.locator("[data-app-language='EN']")).toHaveAttribute(
+      "dir",
+      "ltr",
+    );
     await assertAuthenticatedViewportSafety(page);
     await page.goto(`/businesses/${fixture.businessA}`);
     const navigation = applicationNavigation(page);
-    await expect(navigation.getByRole("link", { name: "Home", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Scan", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Customers", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Activity", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Reports", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("button", { name: "Advanced tools", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Rewards", exact: true })).toHaveCount(0);
-    await expect(navigation.getByRole("link", { name: "Offers", exact: true })).toHaveCount(0);
-    await expect(navigation.getByRole("link", { name: "Campaigns", exact: true })).toHaveCount(0);
-    await expect(navigation.getByRole("link", { name: "Recovery", exact: true })).toHaveCount(0);
+    await expect(
+      navigation.getByRole("link", { name: "Home", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Scan", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Customers", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Activity", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Reports", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("button", { name: "Advanced tools", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Rewards", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      navigation.getByRole("link", { name: "Offers", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      navigation.getByRole("link", { name: "Campaigns", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      navigation.getByRole("link", { name: "Recovery", exact: true }),
+    ).toHaveCount(0);
 
     // Simple mode reduces presentation only: the owner retains authorization for growth pages.
     await page.goto(`/businesses/${fixture.businessA}/rewards`);
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}`);
-    await page.getByRole("button", { name: "Account menu", exact: true }).click();
-    const experienceMode = page.getByRole("group", { name: "Experience mode", exact: true });
-    await expect(experienceMode.getByRole("button", { name: "Simple", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page
+      .getByRole("button", { name: "Account menu", exact: true })
+      .click();
+    const experienceMode = page.getByRole("group", {
+      name: "Experience mode",
+      exact: true,
+    });
+    await expect(
+      experienceMode.getByRole("button", { name: "Simple", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
     const advancedMode = experienceMode.getByRole("button", {
       name: "Advanced",
       exact: true,
@@ -231,111 +305,290 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(advancedMode).toHaveAttribute("aria-pressed", "true", {
       timeout: 15_000,
     });
-    await expect(navigation.getByRole("heading", { name: "Growth", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("heading", { name: "Analytics", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("heading", { name: "Administration", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Rewards", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Offers", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Campaigns", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Recovery", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Reports", exact: true })).toBeVisible();
-    await expect(navigation.getByRole("link", { name: "Team", exact: true })).toBeVisible();
+    await expect(
+      navigation.getByRole("heading", { name: "Growth", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("heading", { name: "Analytics", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("heading", { name: "Administration", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Rewards", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Offers", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Campaigns", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Recovery", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Reports", exact: true }),
+    ).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Team", exact: true }),
+    ).toBeVisible();
 
-    await navigation.getByRole("link", { name: "Rewards", exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}/rewards$`));
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await navigation
+      .getByRole("link", { name: "Rewards", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${fixture.businessA}/rewards$`),
+    );
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     for (const path of ["offers", "campaigns", "recovery"]) {
       await page.goto(`/businesses/${fixture.businessA}/${path}`);
-      await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+      await expect(
+        page.locator("#app-content").getByRole("heading", { level: 1 }),
+      ).toHaveCount(1);
     }
 
-    await page.goto(`/businesses/${fixture.businessA}/reports?from=2026-07-20&to=2026-07-24`);
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await page.goto(
+      `/businesses/${fixture.businessA}/reports?from=2026-07-20&to=2026-07-24`,
+    );
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     await expect(page.locator("text=/NaN|Infinity/")).toHaveCount(0);
     await assertAuthenticatedViewportSafety(page);
 
     await page.goto(`/businesses/${fixture.businessA}/scan`);
     await openCustomerFromScanSearch(page, "EN");
     await expect(currentScanBalance(page, "EN", 4)).toBeVisible();
-    await page.getByLabel(/Branch/i).selectOption({ label: "Final UAT A Branch One" });
-    await page.getByRole("button", { name: "Record visit", exact: true }).click();
-    await expect(page).toHaveURL(scanOperationTerminalUrl(fixture.activeCustomer.id), { timeout: 15_000 });
-    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned&rewardReady=1$`));
+    await page
+      .getByLabel(/Branch/i)
+      .selectOption({ label: "Final UAT A Branch One" });
+    await page
+      .getByRole("button", { name: "Record visit", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      scanOperationTerminalUrl(fixture.activeCustomer.id),
+      { timeout: 15_000 },
+    );
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/scan/customer/${fixture.activeCustomer.id}\\?success=earned&rewardReady=1$`,
+      ),
+    );
     await expect(page.getByRole("status")).toBeVisible();
     await expect(currentScanBalance(page, "EN", 5)).toBeVisible();
     await page.reload();
     await expect(currentScanBalance(page, "EN", 5)).toBeVisible();
 
-    await page.goto(`/businesses/${fixture.businessA}/scan/customer/${fixture.vipCustomer.id}`);
-    const activeReward = page.getByRole("region", { name: "Final UAT active reward", exact: true });
+    await page.goto(
+      `/businesses/${fixture.businessA}/scan/customer/${fixture.vipCustomer.id}`,
+    );
+    const activeReward = page.getByRole("region", {
+      name: "Final UAT active reward",
+      exact: true,
+    });
     await expect(activeReward).toHaveCount(1);
     const rewardBranch = activeReward.getByLabel("Branch", { exact: true });
     await rewardBranch.selectOption({ label: "Final UAT A Branch One" });
     await expect(rewardBranch).toHaveValue(fixture.staffBranchId);
-    await activeReward.getByRole("button", { name: "Redeem reward", exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.vipCustomer.id}\\?success=redeemed$`), { timeout: 15_000 });
+    await activeReward
+      .getByRole("button", { name: "Redeem reward", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/scan/customer/${fixture.vipCustomer.id}\\?success=redeemed$`,
+      ),
+      { timeout: 15_000 },
+    );
     await expect(page.getByRole("status")).toBeVisible();
-    await expect(page.getByRole("link", { name: "📷 Scan next customer", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "📷 Scan next customer", exact: true }),
+    ).toBeVisible();
   });
 
-  test("manager and viewer remain within their authoritative capabilities @desktop", async ({ page }) => {
+  test("manager and viewer remain within their authoritative capabilities @desktop @mobile", async ({
+    page,
+  }) => {
     await login(page, "manager-a");
     await page.goto(`/businesses/${fixture.businessA}/customers`);
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/users`);
-    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${fixture.businessA}$`),
+    );
     await page.evaluate(
       (url) => window.location.assign(url),
       `/businesses/${fixture.businessB}/customers`,
     );
-    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${fixture.businessA}$`),
+    );
 
     await logout(page);
     await login(page, "viewer-a");
     await page.goto(`/businesses/${fixture.businessA}/reports`);
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/scan`);
-    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
-    await expect(applicationNavigation(page).getByRole("link", { name: "Team", exact: true })).toHaveCount(0);
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${fixture.businessA}$`),
+    );
+    await expect(
+      applicationNavigation(page).getByRole("link", {
+        name: "Team",
+        exact: true,
+      }),
+    ).toHaveCount(0);
   });
 
-  test("super admin has explicit global and business context @tablet", async ({ page }) => {
+  test("super admin has explicit global and business context @desktop @tablet", async ({
+    page,
+  }) => {
     await login(page, "superadmin");
     await page.goto("/businesses");
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
-    const businessCard = page.locator(`a[href="/businesses/${fixture.businessA}"]`);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
+    const businessCard = page.locator(
+      `a[href="/businesses/${fixture.businessA}"]`,
+    );
     await expect(businessCard).toHaveCount(1);
-    await expect(businessCard).toContainText("LoyalFlow final UAT Business A VISITS");
+    await expect(businessCard).toContainText(
+      "LoyalFlow final UAT Business A VISITS",
+    );
     await businessCard.click();
-    await expect(page.getByRole("banner").locator("[data-current-business-context='true']")).toBeVisible();
+    await expect(
+      page
+        .getByRole("banner")
+        .locator("[data-current-business-context='true']"),
+    ).toBeVisible();
     await page.goto(`/businesses/${fixture.businessA}/users`);
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     await assertAuthenticatedViewportSafety(page);
   });
 
-  test("staff operates Scan in Arabic on mobile with branch context and no reports access @mobile", async ({ page }) => {
+  test("staff operates Scan on desktop with branch context and no reports access @desktop", async ({
+    page,
+  }) => {
     await login(page, "staff-a");
-    await expect(page.locator("[data-app-language='AR']")).toHaveAttribute("dir", "rtl");
     await page.goto(`/businesses/${fixture.businessA}/scan`);
-    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
     await openCustomerFromScanSearch(page, "AR");
-    await expect(currentScanBalance(page, "AR", 4)).toBeVisible();
-    const branch = page.getByLabel(/الفرع/);
+    const branch = page.locator("#scan-earn-operation-branch");
     await branch.selectOption({ label: "Final UAT A Branch One" });
     await expect(branch).toHaveValue(fixture.staffBranchId);
-    await page.getByRole("button", { name: "تسجيل زيارة", exact: true }).click();
-    await expect(page).toHaveURL(scanOperationTerminalUrl(fixture.activeCustomer.id), { timeout: 15_000 });
-    await expect(page).toHaveURL(new RegExp(`/scan/customer/${fixture.activeCustomer.id}\\?success=earned&rewardReady=1$`));
+    await page
+      .getByRole("button", { name: "تسجيل زيارة", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      scanOperationTerminalUrl(fixture.activeCustomer.id),
+      {
+        timeout: 15_000,
+      },
+    );
+    await expect(page.getByRole("status")).toBeVisible();
+    await page.goto(`/businesses/${fixture.businessA}/reports`);
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${fixture.businessA}$`),
+    );
+    await assertAuthenticatedViewportSafety(page);
+  });
+
+  test("staff operates Scan in Arabic on mobile with branch context and no reports access @mobile", async ({
+    page,
+  }) => {
+    await login(page, "staff-a");
+    await expect(page.locator("[data-app-language='AR']")).toHaveAttribute(
+      "dir",
+      "rtl",
+    );
+    await page.goto(`/businesses/${fixture.businessA}/scan`);
+    await expect(
+      page.locator("#app-content").getByRole("heading", { level: 1 }),
+    ).toHaveCount(1);
+    await openCustomerFromScanSearch(page, "AR");
+    await expect(currentScanBalance(page, "AR", 4)).toBeVisible();
+    const branch = page.locator("#scan-earn-operation-branch");
+    await branch.selectOption({ label: "Final UAT A Branch One" });
+    await expect(branch).toHaveValue(fixture.staffBranchId);
+    await page
+      .getByRole("button", { name: "تسجيل زيارة", exact: true })
+      .click();
+    await expect(page).toHaveURL(
+      scanOperationTerminalUrl(fixture.activeCustomer.id),
+      { timeout: 15_000 },
+    );
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/scan/customer/${fixture.activeCustomer.id}\\?success=earned&rewardReady=1$`,
+      ),
+    );
     await expect(page.getByRole("status")).toBeVisible();
     await expect(currentScanBalance(page, "AR", 5)).toBeVisible();
     await page.reload();
     await expect(currentScanBalance(page, "AR", 5)).toBeVisible();
     await page.goto(`/businesses/${fixture.businessA}/reports`);
-    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/businesses/${fixture.businessA}$`),
+    );
     await assertAuthenticatedViewportSafety(page);
   });
 
-  test("public enrollment and English/Arabic public cards are responsive and private @mobile", async ({ page }) => {
+  test("customer can join and use the public card on desktop @desktop", async ({
+    page,
+  }) => {
+    await page.goto(`/join/${fixture.businessA}`);
+    await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
+    await page.getByLabel("First name").fill("Desktop Browser UAT");
+    await page.getByLabel("Phone number").fill(fixture.publicEnrollmentPhone);
+    await page
+      .getByRole("button", { name: "Create digital card", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/card\/[^/?#]+\?welcome=1$/, {
+      timeout: 20_000,
+    });
+    const actions = page.getByRole("region", {
+      name: "Share card",
+      exact: true,
+    });
+    await expect(
+      actions.getByRole("button", { name: "Share card", exact: true }),
+    ).toBeVisible();
+    await expect(
+      actions.getByRole("button", { name: "Copy link", exact: true }),
+    ).toBeVisible();
+    await expect(
+      actions.getByRole("button", { name: "Add to Home Screen", exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(
+      0,
+    );
+    await assertViewportSafety(page);
+
+    await page.goto(`/card/${fixture.activeCustomer.publicToken}`);
+    await expect(
+      page.getByText("Final UAT active", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /loyalty card front/i }),
+    ).toBeVisible();
+    await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(
+      0,
+    );
+    await assertViewportSafety(page);
+  });
+
+  test("public enrollment and English/Arabic public cards are responsive and private @mobile", async ({
+    page,
+  }) => {
     await page.addInitScript(() => {
       Object.defineProperty(navigator, "userAgent", {
         configurable: true,
@@ -346,7 +599,9 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
     await page.getByLabel("First name").fill("Browser UAT");
     await page.getByLabel("Phone number").fill(fixture.publicEnrollmentPhone);
-    await page.getByRole("button", { name: "Create digital card", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Create digital card", exact: true })
+      .click();
     await expect(page).toHaveURL(/\/card\/[^/?#]+\?welcome=1$/, {
       timeout: 20_000,
     });
@@ -354,24 +609,57 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
       name: "Share card",
       exact: true,
     });
-    await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
-    await expect(englishCardActions.getByRole("button", { name: "Share card", exact: true })).toBeVisible();
-    await expect(englishCardActions.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
-    await expect(englishCardActions.getByRole("button", { name: "Add to Home Screen", exact: true })).toBeVisible();
-    await englishCardActions.getByRole("button", { name: "Add to Home Screen", exact: true }).click();
-    const installHelp = page.getByRole("dialog", { name: "Add card to Home Screen", exact: true });
+    await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(
+      0,
+    );
+    await expect(
+      englishCardActions.getByRole("button", {
+        name: "Share card",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      englishCardActions.getByRole("button", {
+        name: "Copy link",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      englishCardActions.getByRole("button", {
+        name: "Add to Home Screen",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await englishCardActions
+      .getByRole("button", { name: "Add to Home Screen", exact: true })
+      .click();
+    const installHelp = page.getByRole("dialog", {
+      name: "Add card to Home Screen",
+      exact: true,
+    });
     await expect(installHelp).toBeVisible();
-    await installHelp.getByRole("button", { name: "Close", exact: true }).click();
+    await installHelp
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
     await expect(installHelp).toHaveCount(0);
 
     await page.goto(`/card/${fixture.activeCustomer.publicToken}`);
     await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
-    await expect(page.getByText("Final UAT active", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Final UAT active", { exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole("img", { name: /loyalty card front/i }),
     ).toBeVisible();
-    await expect(englishCardActions.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
-    await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(0);
+    await expect(
+      englishCardActions.getByRole("button", {
+        name: "Copy link",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText(/Private final UAT fixture note/)).toHaveCount(
+      0,
+    );
     await assertViewportSafety(page);
 
     await page.emulateMedia({ reducedMotion: "reduce" });
@@ -384,7 +672,12 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
       name: "مشاركة الكارت",
       exact: true,
     });
-    await expect(arabicCardActions.getByRole("button", { name: "نسخ الرابط", exact: true })).toBeVisible();
+    await expect(
+      arabicCardActions.getByRole("button", {
+        name: "نسخ الرابط",
+        exact: true,
+      }),
+    ).toBeVisible();
     await assertViewportSafety(page);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
@@ -395,6 +688,11 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     await expect(unavailableHeading).toBeVisible();
     await expect(unavailableHeading).toContainText("البطاقة غير متاحة");
     await expect(unavailableHeading).toContainText("Card unavailable");
-    await expect(page.getByText("This loyalty card is unavailable or the link is no longer valid.", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(
+        "This loyalty card is unavailable or the link is no longer valid.",
+        { exact: true },
+      ),
+    ).toBeVisible();
   });
 });

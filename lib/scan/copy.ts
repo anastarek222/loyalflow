@@ -75,6 +75,8 @@ const dictionary = {
     operationErrors: {
       invalid: "تحقق من البيانات المدخلة ثم حاول مرة أخرى.",
       permission: "ليس لديك صلاحية لتنفيذ هذه العملية.",
+      "subscription-restricted":
+        "حالة الاشتراك الحالية لا تسمح بتنفيذ عمليات الولاء. لم يتم تغيير الرصيد.",
       "reward-unavailable": "هذه المكافأة غير متاحة للاستبدال الآن.",
       "insufficient-balance": "رصيد العميل غير كافٍ لاستبدال هذه المكافأة.",
       conflict: "تعذر إكمال العملية بأمان. راجع النشاط قبل المحاولة مرة أخرى.",
@@ -181,6 +183,8 @@ const dictionary = {
     operationErrors: {
       invalid: "Check the entered details and try again.",
       permission: "You do not have permission to perform this operation.",
+      "subscription-restricted":
+        "The current subscription state does not allow loyalty operations. The balance was not changed.",
       "reward-unavailable": "This reward is not available to redeem right now.",
       "insufficient-balance":
         "This customer does not have enough balance for this reward.",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+import { getSuggestedWhatsAppTemplate } from "@/lib/whatsapp-templates";
 
 type Props = {
   language: "AR" | "EN";
@@ -48,17 +49,20 @@ export function CustomerMessagesForm({
     [
       "whatsappWelcomeMessage",
       t("رسالة الترحيب", "Welcome message"),
-      messages.whatsappWelcomeMessage,
+      messages.whatsappWelcomeMessage ||
+        getSuggestedWhatsAppTemplate(language, "WELCOME"),
     ],
     [
       "whatsappBalanceMessage",
       t("رسالة تحديث الرصيد", "Balance update message"),
-      messages.whatsappBalanceMessage,
+      messages.whatsappBalanceMessage ||
+        getSuggestedWhatsAppTemplate(language, "BALANCE_UPDATED"),
     ],
     [
       "whatsappRewardMessage",
       t("رسالة المكافأة", "Reward message"),
-      messages.whatsappRewardMessage,
+      messages.whatsappRewardMessage ||
+        getSuggestedWhatsAppTemplate(language, "REWARD_READY"),
     ],
   ] as const;
 
@@ -106,6 +110,12 @@ export function CustomerMessagesForm({
         {t(
           "سيب أي رسالة فاضية لو مش عايز الحالة دي تبعت تلقائيًا. تفعيل الإرسال التلقائي وحالة موافقة Meta تتم إدارتهم من الإعدادات ← واتساب.",
           "Leave a message blank to disable automatic delivery for that case. Automatic delivery readiness and Meta approval are managed in Settings → WhatsApp.",
+        )}
+      </p>
+      <p className="mt-2 text-xs font-semibold text-success">
+        {t(
+          "لو الرسالة لم تُحفظ من قبل، يظهر قالب مقترح جاهز ويمكن تعديله قبل الحفظ.",
+          "When no copy has been saved yet, a ready suggested draft appears and can be edited before saving.",
         )}
       </p>
       <div className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/10 bg-primary-subtle/50 p-4 text-sm text-primary">

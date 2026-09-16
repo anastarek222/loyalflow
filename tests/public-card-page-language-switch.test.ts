@@ -6,7 +6,7 @@ import test from "node:test";
 const root = process.cwd();
 const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 
-test("public card page can switch AR/EN chrome independently from card presentation", () => {
+test("public card page can switch AR/EN chrome and card presentation together", () => {
   const page = source("app/card/[token]/page.tsx");
   const card = source("components/loyalty-card.tsx");
 
@@ -24,8 +24,9 @@ test("public card page can switch AR/EN chrome independently from card presentat
 
   assert.match(page, /defaultLanguage:\s*business\.cardDefaultLanguage/);
   assert.match(page, /<PublicLoyaltyCardViewer[\s\S]*?language=\{language\}/);
-  assert.match(card, /export const CARD_PRESENTATION_LANGUAGE = "EN" as const/);
-  assert.match(card, /language: CARD_PRESENTATION_LANGUAGE/);
+  assert.match(card, /const language = props\.language \?\? "EN"/);
+  assert.match(card, /language,\n  };/);
+  assert.doesNotMatch(card, /CARD_PRESENTATION_LANGUAGE/);
 });
 
 test("public page language switch preserves authored offer and reward text", () => {

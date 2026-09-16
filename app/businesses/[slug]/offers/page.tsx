@@ -15,16 +15,24 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { GrowthShell } from "@/components/growth/growth-shell";
+import { canViewCustomerNotesTags } from "@/lib/customers/feature-access";
 import {
   customerSegments,
+  getCustomerFilterSegments,
   getCustomerSegmentLabel,
+  type CustomerSegment,
 } from "@/lib/customers/segments";
 import {
   getExperienceModeCookieName,
   resolveExperienceMode,
 } from "@/lib/experience-mode";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
-import { isOfferCurrentlyValid } from "@/lib/offers/eligibility";
+import { formatOfferDateInput } from "@/lib/offers/date-window";
+import {
+  encodeOfferTagAudience,
+  getOfferTagAudienceId,
+  isOfferCurrentlyValid,
+} from "@/lib/offers/eligibility";
 import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 
@@ -41,6 +49,11 @@ type Props = {
 
 type Language = "AR" | "EN";
 
+type OfferAudienceTag = {
+  id: string;
+  name: string;
+};
+
 type OfferFormValue = {
   name: string;
   description: string | null;
@@ -50,11 +63,11 @@ type OfferFormValue = {
   segment: string | null;
 };
 
-function formatDate(value: Date | null, language: Language) {
+function formatDate(value: Date | null, language: Language, timeZone: string) {
   return value
     ? new Intl.DateTimeFormat(getLanguageLocale(language), {
         dateStyle: "medium",
-        timeZone: "Africa/Cairo",
+        timeZone,
       }).format(value)
     : language === "AR"
       ? "بدون حد"
@@ -65,9 +78,19 @@ function getEligibilityLabel(
   value: string,
   segment: string | null,
   language: Language,
+  audienceTags: readonly OfferAudienceTag[],
 ) {
   if (value === "VIP") return language === "AR" ? "عملاء VIP" : "VIP customers";
   if (value === "SEGMENT") {
+    const tagId = getOfferTagAudienceId(segment);
+    if (tagId) {
+      const tagName = audienceTags.find((tag) => tag.id === tagId)?.name;
+      if (!tagName) {
+        return language === "AR" ? "جمهور مخصص غير متاح" : "Custom audience unavailable";
+      }
+      return language === "AR" ? `وسم: ${tagName}` : `Tag: ${tagName}`;
+    }
+
     const knownSegment = customerSegments.find((candidate) => candidate === segment);
     const segmentLabel = knownSegment
       ? getCustomerSegmentLabel(knownSegment, language)
@@ -94,6 +117,9 @@ export default async function OffersPage({ params, searchParams }: Props) {
         id: true,
         slug: true,
         name: true,
+        timezone: true,
+        loyaltyMode: true,
+        plan: true,
         offers: { orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }] },
       },
     }),
@@ -103,7 +129,21 @@ export default async function OffersPage({ params, searchParams }: Props) {
   if (!canAccessBusiness(session.user, business.id)) redirect("/dashboard");
 
   const manage = canManageBusiness(session.user, business.id);
+  const canViewTagAudiences = canViewCustomerNotesTags(
+    session.user,
+    business.id,
+    business.plan,
+  );
+  const audienceTags = canViewTagAudiences
+    ? await prisma.customerTag.findMany({
+        where: { businessId: business.id },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      })
+    : [];
+  const audienceSegments = getCustomerFilterSegments(business.loyaltyMode);
   const language = normalizeLanguage(user?.language);
+  const timeZone = business.timezone ?? "UTC";
   const mode = resolveExperienceMode(
     (await cookies()).get(getExperienceModeCookieName(session.user.id))?.value,
     user?.role ?? session.user.role,
@@ -255,6 +295,9 @@ export default async function OffersPage({ params, searchParams }: Props) {
             <OfferForm
               action={createOfferAction.bind(null, business.slug)}
               language={language}
+              timeZone={timeZone}
+              audienceTags={audienceTags}
+              audienceSegments={audienceSegments}
             />
           </div>
         </details>
@@ -336,6 +379,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                         offer.eligibility,
                         offer.segment,
                         language,
+                        audienceTags,
                       )}
                     />
                     <InfoItem
@@ -343,7 +387,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                       label={
                         language === "AR" ? "فترة الظهور" : "Visibility window"
                       }
-                      value={`${formatDate(offer.validFrom, language)} — ${formatDate(offer.validUntil, language)}`}
+                      value={`${formatDate(offer.validFrom, language, timeZone)} — ${formatDate(offer.validUntil, language, timeZone)}`}
                     />
                   </div>
 
@@ -411,7 +455,10 @@ export default async function OffersPage({ params, searchParams }: Props) {
                               offer.id,
                             )}
                             language={language}
+                            timeZone={timeZone}
                             offer={offer}
+                            audienceTags={audienceTags}
+                            audienceSegments={audienceSegments}
                           />
                         </div>
                       </div>
@@ -500,10 +547,16 @@ function Empty({ language }: { language: Language }) {
 function OfferForm({
   action,
   language,
+  timeZone,
+  audienceTags,
+  audienceSegments,
   offer,
 }: {
   action: (data: FormData) => void;
   language: Language;
+  timeZone: string;
+  audienceTags: readonly OfferAudienceTag[];
+  audienceSegments: readonly CustomerSegment[];
   offer?: OfferFormValue;
 }) {
   const label = (ar: string, en: string) => (language === "AR" ? ar : en);
@@ -534,7 +587,9 @@ function OfferForm({
               {label("كل العملاء النشطين", "All active customers")}
             </option>
             <option value="VIP">VIP</option>
-            <option value="SEGMENT">{label("شريحة", "Segment")}</option>
+            <option value="SEGMENT">
+              {label("شريحة أو وسم", "Segment or tag")}
+            </option>
           </select>
         </label>
       </div>
@@ -554,7 +609,7 @@ function OfferForm({
           <input
             name="validFrom"
             type="date"
-            defaultValue={offer?.validFrom?.toISOString().slice(0, 10)}
+            defaultValue={formatOfferDateInput(offer?.validFrom ?? null, timeZone)}
             className={fieldClass}
           />
         </label>
@@ -563,23 +618,34 @@ function OfferForm({
           <input
             name="validUntil"
             type="date"
-            defaultValue={offer?.validUntil?.toISOString().slice(0, 10)}
+            defaultValue={formatOfferDateInput(offer?.validUntil ?? null, timeZone)}
             className={fieldClass}
           />
         </label>
         <label className="text-sm font-bold text-foreground-muted sm:col-span-2 lg:col-span-1">
-          {label("الشريحة (عند الاختيار)", "Segment (when selected)")}
+          {label("الجمهور (عند الاختيار)", "Audience (when selected)")}
           <select
             name="segment"
             defaultValue={offer?.segment ?? ""}
             className={fieldClass}
           >
             <option value="">—</option>
-            {customerSegments.map((segment) => (
-              <option key={segment} value={segment}>
-                {getCustomerSegmentLabel(segment, language)}
-              </option>
-            ))}
+            <optgroup label={label("الشرائح", "Segments")}>
+              {audienceSegments.map((segment) => (
+                <option key={segment} value={segment}>
+                  {getCustomerSegmentLabel(segment, language)}
+                </option>
+              ))}
+            </optgroup>
+            {audienceTags.length > 0 ? (
+              <optgroup label={label("الوسوم", "Tags")}>
+                {audienceTags.map((tag) => (
+                  <option key={tag.id} value={encodeOfferTagAudience(tag.id)}>
+                    {tag.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </select>
         </label>
       </div>

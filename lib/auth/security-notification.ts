@@ -3,7 +3,8 @@ export type SecurityNotificationEvent =
   | "PASSWORD_RESET"
   | "SESSIONS_REVOKED"
   | "MFA_ENABLED"
-  | "MFA_RECOVERY_CODE_USED";
+  | "MFA_RECOVERY_CODE_USED"
+  | "LEGAL_TERMS_PRIVACY_ACCEPTED";
 
 type SecurityNotificationCopy = {
   title: string;
@@ -31,6 +32,10 @@ const EN_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
     title: "MFA recovery code used",
     message: "A one-time MFA recovery code was used to sign in to your Super Admin account.",
   },
+  LEGAL_TERMS_PRIVACY_ACCEPTED: {
+    title: "Terms and Privacy accepted",
+    message: "You accepted Tanee's published Terms and Privacy Policy.",
+  },
 };
 
 const AR_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
@@ -53,6 +58,10 @@ const AR_COPY: Record<SecurityNotificationEvent, SecurityNotificationCopy> = {
   MFA_RECOVERY_CODE_USED: {
     title: "تم استخدام رمز استرداد MFA",
     message: "تم استخدام رمز استرداد MFA لمرة واحدة لتسجيل الدخول إلى حساب Super Admin الخاص بك.",
+  },
+  LEGAL_TERMS_PRIVACY_ACCEPTED: {
+    title: "تمت الموافقة على الشروط والخصوصية",
+    message: "وافقت على شروط تاني وسياسة الخصوصية المنشورتين.",
   },
 };
 
@@ -78,6 +87,7 @@ type NotificationStore = {
         title: string;
         message: string;
         metadata?: Record<string, string>;
+        createdAt?: Date;
       };
     }): Promise<unknown>;
   };
@@ -89,6 +99,7 @@ export async function recordSecurityNotification(
     userId: string;
     event: SecurityNotificationEvent;
     metadata?: Record<string, string>;
+    createdAt?: Date;
   },
 ) {
   const copy = EN_COPY[input.event];
@@ -100,6 +111,7 @@ export async function recordSecurityNotification(
       title: copy.title,
       message: copy.message,
       ...(input.metadata ? { metadata: input.metadata } : {}),
+      ...(input.createdAt ? { createdAt: input.createdAt } : {}),
     },
   });
 }

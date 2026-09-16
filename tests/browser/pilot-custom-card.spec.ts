@@ -175,7 +175,10 @@ test.describe.serial("Pilot Custom Card browser receipt", () => {
 
     if (await notConfigured.count()) {
       await expect(notConfigured).toBeVisible();
-      return;
+      test.skip(
+        true,
+        "The bounded publish lifecycle requires Vercel Blob to be configured for this runtime.",
+      );
     }
 
     const frontInput = page.getByLabel("Front artwork", { exact: true });
@@ -209,7 +212,10 @@ test.describe.serial("Pilot Custom Card browser receipt", () => {
         description:
           "Blob is configured on the application, but this runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
       });
-      return;
+      test.skip(
+        true,
+        "Valid upload/publish requires a runner Blob cleanup credential so immutable UAT artwork can be cleaned.",
+      );
     }
 
     await page.getByLabel("Front artwork", { exact: true }).setInputFiles({

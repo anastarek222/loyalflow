@@ -53,6 +53,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { getBusinessWhatsAppProductReadiness } from "@/lib/server/integrations/business-whatsapp-product-readiness";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -120,6 +121,7 @@ function copy(language: "AR" | "EN") {
         unread: "تنبيهات غير مقروءة",
         useNotifications: "راجعها من زر الإشعارات في الشريط العلوي.",
         setup: "الإعداد الأساسي غير مكتمل",
+        whatsappSetup: "ربط WhatsApp غير مكتمل",
         setupDescription: "أكمل الإعداد لتجهيز النشاط للتشغيل.",
         customers: "العملاء",
         activeCustomers: "عميل نشط",
@@ -186,6 +188,7 @@ function copy(language: "AR" | "EN") {
         useNotifications:
           "Review them from the notification control in the top bar.",
         setup: "Core setup is incomplete",
+        whatsappSetup: "WhatsApp setup is incomplete",
         setupDescription:
           "Complete setup to prepare this business for daily operations.",
         customers: "Customers",
@@ -610,6 +613,16 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   });
   const showOnboarding =
     shouldShowOnboardingChecklist(onboarding.coreReady) && canManageSettings;
+  const whatsappReadiness = canManageSettings
+    ? await getBusinessWhatsAppProductReadiness(prisma, {
+        businessId: business.id,
+        language: business.cardDefaultLanguage,
+        whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+        whatsappBalanceMessage: business.whatsappBalanceMessage,
+        whatsappRewardMessage: business.whatsappRewardMessage,
+        whatsappRedeemedMessage: business.whatsappRedeemedMessage,
+      })
+    : null;
   const businessContext = [
     business.industry,
     [business.city, business.country].filter(Boolean).join(", "),
@@ -629,6 +642,13 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
       ? { id: "unread", label: dictionary.unread, count: unreadCount }
       : null,
     !onboarding.coreReady ? { id: "setup", label: dictionary.setup } : null,
+    canManageSettings && !whatsappReadiness?.deliveryReady
+      ? {
+          id: "whatsapp-setup",
+          label: dictionary.whatsappSetup,
+          href: `/businesses/${business.slug}/settings/whatsapp`,
+        }
+      : null,
   ].filter(Boolean) as {
     id: string;
     label: string;

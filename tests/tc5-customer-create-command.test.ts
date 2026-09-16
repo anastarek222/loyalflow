@@ -36,7 +36,7 @@ test("TC5 Customer creation action keeps presentation checks and delegates the a
 test("TC5 Customer creation command rechecks persisted lifecycle, duplicate and plan limit before write", () => {
   const businessRead = command.indexOf("transaction.business.findUnique");
   const entitlement = command.indexOf("await canBusinessPerformSubscriptionOperation");
-  const duplicate = command.indexOf("transaction.customer.findUnique");
+  const duplicate = command.indexOf("transaction.customer.findFirst");
   const configuration = command.indexOf("transaction.planConfiguration.findUnique");
   const count = command.indexOf("transaction.customer.count");
   const limit = command.indexOf("isWithinPlanLimit(");
@@ -64,6 +64,7 @@ test("TC5 Customer creation command rechecks persisted lifecycle, duplicate and 
   assert.match(command, /"DUPLICATE"/);
   assert.match(command, /"PLAN_LIMIT"/);
   assert.match(command, /"SUBSCRIPTION_RESTRICTED"/);
+  assert.match(command, /equivalentPhoneIdentities/);
 });
 
 test("TC5 Customer creation keeps the customer write and activity audit atomic", () => {

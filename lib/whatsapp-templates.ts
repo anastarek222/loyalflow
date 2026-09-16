@@ -7,6 +7,47 @@ export const DEFAULT_WHATSAPP_TEMPLATES = {
   reward: "",
 } as const;
 
+export const SUGGESTED_WHATSAPP_TEMPLATES = {
+  AR: {
+    WELCOME:
+      "أهلًا {customer} 👋 تم تسجيلك في برنامج الولاء الخاص بـ {business}. رصيدك الحالي: {balance} {unit}. كارتك: {card_link}",
+    BALANCE_UPDATED:
+      "أهلًا {customer}، تم تحديث رصيدك لدى {business}. رصيدك الحالي: {balance} {unit}. متبقي لك {remaining} للوصول إلى المكافأة. {card_link}",
+    REWARD_READY:
+      "مبروك يا {customer} 🎉 مكافأتك أصبحت جاهزة لدى {business}: {reward}. اعرض كارتك عند الزيارة للاستبدال: {card_link}",
+    REWARD_REDEEMED:
+      "تم استخدام مكافأتك بنجاح لدى {business}: {reward}. رصيدك الحالي: {balance} {unit}. شكرًا لزيارتك ❤️",
+    NEW_REWARD:
+      "يوجد مكافأة جديدة من {business} 🎁 {reward}. تابع رصيدك ومكافآتك من هنا: {card_link}",
+    NEW_OFFER:
+      "عرض جديد من {business} ✨ افتح كارتك لمعرفة تفاصيل العرض: {card_link}",
+  },
+  EN: {
+    WELCOME:
+      "Hi {customer} 👋 You are now enrolled in {business}'s loyalty programme. Your current balance is {balance} {unit}. Your card: {card_link}",
+    BALANCE_UPDATED:
+      "Hi {customer}, your balance at {business} was updated. You now have {balance} {unit}, with {remaining} remaining until your reward. {card_link}",
+    REWARD_READY:
+      "Congratulations {customer} 🎉 Your reward is ready at {business}: {reward}. Show your card on your next visit to redeem it: {card_link}",
+    REWARD_REDEEMED:
+      "Your reward was redeemed successfully at {business}: {reward}. Your current balance is {balance} {unit}. Thank you for visiting ❤️",
+    NEW_REWARD:
+      "A new reward is available from {business} 🎁 {reward}. Follow your balance and rewards here: {card_link}",
+    NEW_OFFER:
+      "A new offer is available from {business} ✨ Open your card to view the offer: {card_link}",
+  },
+} as const;
+
+export type SuggestedWhatsAppTemplateEvent =
+  keyof (typeof SUGGESTED_WHATSAPP_TEMPLATES)["EN"];
+
+export function getSuggestedWhatsAppTemplate(
+  language: "AR" | "EN",
+  event: SuggestedWhatsAppTemplateEvent,
+) {
+  return SUGGESTED_WHATSAPP_TEMPLATES[language][event];
+}
+
 type WhatsAppTemplateContext = {
   customer: string;
   business: string;

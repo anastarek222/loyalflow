@@ -3,43 +3,137 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 
-import { getRedeemableCatalogueRewards, getRewardAvailability } from "@/lib/rewards/availability";
+import {
+  getRedeemableCatalogueRewards,
+  getRewardAvailability,
+  getRewardTruth,
+} from "@/lib/rewards/availability";
 import { isRewardUnlockActionable } from "@/lib/rewards/expiration";
 
 const fallbackReward = { name: "Fallback", cost: 10 };
-const availability = (overrides: Partial<Parameters<typeof getRewardAvailability>[0]> = {}) =>
-  getRewardAvailability({ customerActive: true, balance: 0, rewardThreshold: 10, fallbackReward, catalogueRewards: [], ...overrides });
+const availability = (
+  overrides: Partial<Parameters<typeof getRewardAvailability>[0]> = {},
+) =>
+  getRewardAvailability({
+    customerActive: true,
+    balance: 0,
+    rewardThreshold: 10,
+    fallbackReward,
+    catalogueRewards: [],
+    ...overrides,
+  });
 
 test("uses fallback only when no active catalogue rewards exist", () => {
   assert.equal(availability().source, "FALLBACK");
-  assert.equal(availability({ catalogueRewards: [{ id: "inactive", name: "Inactive", cost: 1, isActive: false }] }).source, "FALLBACK");
-  assert.equal(availability({ catalogueRewards: [{ id: "active", name: "Active", cost: 12, isActive: true }] }).source, "CATALOGUE");
+  assert.equal(
+    availability({
+      catalogueRewards: [
+        { id: "inactive", name: "Inactive", cost: 1, isActive: false },
+      ],
+    }).source,
+    "FALLBACK",
+  );
+  assert.equal(
+    availability({
+      catalogueRewards: [
+        { id: "active", name: "Active", cost: 12, isActive: true },
+      ],
+    }).source,
+    "CATALOGUE",
+  );
 });
 
 test("orders active catalogue rewards deterministically without mutating inputs", () => {
-  const rewards = [{ id: "b", name: "B", cost: 5, isActive: true }, { id: "a", name: "A", cost: 5, isActive: true }, { id: "low", name: "Low", cost: 3, isActive: true }];
+  const rewards = [
+    { id: "b", name: "B", cost: 5, isActive: true },
+    { id: "a", name: "A", cost: 5, isActive: true },
+    { id: "low", name: "Low", cost: 3, isActive: true },
+  ];
   const result = availability({ catalogueRewards: rewards });
   assert.equal(result.defaultReward.id, "low");
-  assert.deepEqual(rewards.map((reward) => reward.id), ["b", "a", "low"]);
-  assert.deepEqual(availability({ catalogueRewards: rewards.slice(0, 2) }).activeCatalogueRewards.map((reward) => reward.id), ["a", "b"]);
+  assert.deepEqual(
+    rewards.map((reward) => reward.id),
+    ["b", "a", "low"],
+  );
+  assert.deepEqual(
+    availability({
+      catalogueRewards: rewards.slice(0, 2),
+    }).activeCatalogueRewards.map((reward) => reward.id),
+    ["a", "b"],
+  );
 });
 
 test("uses catalogue affordability rather than the fallback threshold", () => {
-  const expensive = availability({ balance: 10, catalogueRewards: [{ id: "cost-20", name: "Twenty", cost: 20, isActive: true }] });
+  const expensive = availability({
+    balance: 10,
+    catalogueRewards: [
+      { id: "cost-20", name: "Twenty", cost: 20, isActive: true },
+    ],
+  });
   assert.equal(expensive.rewardReady, false);
   assert.equal(expensive.targetCost, 20);
-  const cheap = availability({ balance: 5, catalogueRewards: [{ id: "cost-5", name: "Five", cost: 5, isActive: true }] });
+  const cheap = availability({
+    balance: 5,
+    catalogueRewards: [{ id: "cost-5", name: "Five", cost: 5, isActive: true }],
+  });
   assert.equal(cheap.rewardReady, true);
   assert.equal(cheap.targetCost, 5);
-  assert.equal(availability({ balance: 6, catalogueRewards: [{ id: "cost-5", name: "Five", cost: 5, isActive: true }] }).rewardReady, true);
-  assert.equal(availability({ customerActive: false, balance: 20, catalogueRewards: [{ id: "cost-5", name: "Five", cost: 5, isActive: true }] }).rewardReady, false);
+  assert.equal(
+    availability({
+      balance: 6,
+      catalogueRewards: [
+        { id: "cost-5", name: "Five", cost: 5, isActive: true },
+      ],
+    }).rewardReady,
+    true,
+  );
+  assert.equal(
+    availability({
+      customerActive: false,
+      balance: 20,
+      catalogueRewards: [
+        { id: "cost-5", name: "Five", cost: 5, isActive: true },
+      ],
+    }).rewardReady,
+    false,
+  );
 });
 
 test("catalogue and fallback card metadata remain internally consistent", () => {
-  const catalogue = availability({ catalogueRewards: [{ id: "catalogue", name: "Catalogue reward", cost: 5, isActive: true, type: "PROMO_CODE", code: "SAVE5", description: "Catalogue description" }] });
+  const catalogue = availability({
+    catalogueRewards: [
+      {
+        id: "catalogue",
+        name: "Catalogue reward",
+        cost: 5,
+        isActive: true,
+        type: "PROMO_CODE",
+        code: "SAVE5",
+        description: "Catalogue description",
+      },
+    ],
+  });
   assert.equal(catalogue.source, "CATALOGUE");
-  assert.deepEqual(catalogue.defaultReward, { id: "catalogue", name: "Catalogue reward", cost: 5, isActive: true, type: "PROMO_CODE", code: "SAVE5", description: "Catalogue description" });
-  const fallback = availability({ catalogueRewards: [{ id: "inactive", name: "Ignored", cost: 1, isActive: false, type: "GIFT" }] });
+  assert.deepEqual(catalogue.defaultReward, {
+    id: "catalogue",
+    name: "Catalogue reward",
+    cost: 5,
+    isActive: true,
+    type: "PROMO_CODE",
+    code: "SAVE5",
+    description: "Catalogue description",
+  });
+  const fallback = availability({
+    catalogueRewards: [
+      {
+        id: "inactive",
+        name: "Ignored",
+        cost: 1,
+        isActive: false,
+        type: "GIFT",
+      },
+    ],
+  });
   assert.equal(fallback.source, "FALLBACK");
   assert.equal(fallback.defaultReward.name, "Fallback");
   assert.equal(fallback.targetCost, 10);
@@ -47,56 +141,209 @@ test("catalogue and fallback card metadata remain internally consistent", () => 
 
 test("scanner actionability is a pure display predicate", () => {
   const now = new Date("2026-08-04T12:00:00Z");
-  const input = { rewardActive: true, redeemedAt: null, expiredAt: null, expiresAt: new Date("2026-08-05T12:00:00Z"), now };
+  const input = {
+    rewardActive: true,
+    redeemedAt: null,
+    expiredAt: null,
+    expiresAt: new Date("2026-08-05T12:00:00Z"),
+    now,
+  };
   assert.equal(isRewardUnlockActionable({ ...input, redeemedAt: now }), false);
   assert.equal(isRewardUnlockActionable({ ...input, expiredAt: now }), false);
-  assert.equal(isRewardUnlockActionable({ ...input, expiresAt: new Date("2026-08-03T12:00:00Z") }), false);
-  assert.equal(isRewardUnlockActionable({ ...input, rewardActive: false }), false);
+  assert.equal(
+    isRewardUnlockActionable({
+      ...input,
+      expiresAt: new Date("2026-08-03T12:00:00Z"),
+    }),
+    false,
+  );
+  assert.equal(
+    isRewardUnlockActionable({ ...input, rewardActive: false }),
+    false,
+  );
   assert.equal(isRewardUnlockActionable(input), true);
 });
 
 test("keeps all affordable catalogue alternatives while using the cheapest target for progress", () => {
-  const result = availability({ balance: 8, catalogueRewards: [{ id: "five", name: "Five", cost: 5, isActive: true }, { id: "eight", name: "Eight", cost: 8, isActive: true }, { id: "ten", name: "Ten", cost: 10, isActive: true }] });
+  const result = availability({
+    balance: 8,
+    catalogueRewards: [
+      { id: "five", name: "Five", cost: 5, isActive: true },
+      { id: "eight", name: "Eight", cost: 8, isActive: true },
+      { id: "ten", name: "Ten", cost: 10, isActive: true },
+    ],
+  });
   assert.equal(result.targetCost, 5);
   assert.equal(result.progress, 100);
-  assert.deepEqual(result.affordableRewards.map((reward) => reward.id), ["five", "eight"]);
+  assert.deepEqual(
+    result.affordableRewards.map((reward) => reward.id),
+    ["five", "eight"],
+  );
 });
 
 test("redeems affordable non-expiring catalogue rewards without requiring an unlock row", () => {
   const now = new Date("2026-08-04T12:00:00Z");
   const rewards = [
-    { id: "non-expiring", name: "Always available", cost: 5, isActive: true, expiresAfterDays: null },
-    { id: "expiring", name: "Seven days", cost: 5, isActive: true, expiresAfterDays: 7 },
+    {
+      id: "non-expiring",
+      name: "Always available",
+      cost: 5,
+      isActive: true,
+      expiresAfterDays: null,
+    },
+    {
+      id: "expiring",
+      name: "Seven days",
+      cost: 5,
+      isActive: true,
+      expiresAfterDays: 7,
+    },
   ];
   const redeemableIds = (customerActive: boolean, expiresAt?: Date) =>
     getRedeemableCatalogueRewards({
       customerActive,
       balance: 5,
       catalogueRewards: rewards,
-      rewardUnlocks: expiresAt ? [{ rewardId: "expiring", expiresAt, redeemedAt: null, expiredAt: null }] : [],
+      rewardUnlocks: expiresAt
+        ? [
+            {
+              rewardId: "expiring",
+              expiresAt,
+              redeemedAt: null,
+              expiredAt: null,
+            },
+          ]
+        : [],
       now,
     }).map((reward) => reward.id);
 
   assert.deepEqual(redeemableIds(true), ["non-expiring"]);
-  assert.deepEqual(redeemableIds(true, new Date("2026-08-05T12:00:00Z")), ["expiring", "non-expiring"]);
+  assert.deepEqual(redeemableIds(true, new Date("2026-08-05T12:00:00Z")), [
+    "expiring",
+    "non-expiring",
+  ]);
   assert.deepEqual(redeemableIds(true, now), ["non-expiring"]);
   assert.deepEqual(redeemableIds(false), []);
 });
 
+test("uses one multi-reward truth for affordability, redemption, default display, and progress", () => {
+  const now = new Date("2026-08-04T12:00:00Z");
+  const result = getRewardTruth({
+    customerActive: true,
+    balance: 8,
+    rewardThreshold: 99,
+    fallbackReward,
+    catalogueRewards: [
+      {
+        id: "expired-five",
+        name: "Expired five",
+        cost: 5,
+        isActive: true,
+        expiresAfterDays: 7,
+      },
+      {
+        id: "six",
+        name: "Six",
+        cost: 6,
+        isActive: true,
+        expiresAfterDays: null,
+      },
+      {
+        id: "eight",
+        name: "Eight",
+        cost: 8,
+        isActive: true,
+        expiresAfterDays: 7,
+      },
+      {
+        id: "ten",
+        name: "Ten",
+        cost: 10,
+        isActive: true,
+        expiresAfterDays: null,
+      },
+      {
+        id: "inactive",
+        name: "Inactive",
+        cost: 1,
+        isActive: false,
+        expiresAfterDays: null,
+      },
+    ],
+    rewardUnlocks: [
+      {
+        rewardId: "expired-five",
+        expiresAt: now,
+        redeemedAt: null,
+        expiredAt: null,
+      },
+      {
+        rewardId: "eight",
+        expiresAt: new Date("2026-08-05T12:00:00Z"),
+        redeemedAt: null,
+        expiredAt: null,
+      },
+    ],
+    now,
+  });
+
+  assert.equal(result.source, "CATALOGUE");
+  assert.equal(result.defaultReward.id, "expired-five");
+  assert.deepEqual(
+    result.affordableRewards.map((reward) => reward.id),
+    ["expired-five", "six", "eight"],
+  );
+  assert.deepEqual(
+    result.redeemableRewards.map((reward) => reward.id),
+    ["six", "eight"],
+  );
+  assert.equal(result.rewardReady, true);
+  assert.equal(result.targetCost, 5);
+  assert.equal(result.remaining, 0);
+  assert.equal(result.progress, 100);
+});
+
 test("availability surfaces keep canonical reward semantics and scanner filters unusable unlocks", () => {
   const root = process.cwd();
-  for (const file of ["app/businesses/[slug]/customers/page.tsx", "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx", "app/businesses/[slug]/campaigns/page.tsx", "app/businesses/[slug]/recovery/page.tsx", "app/card/[token]/page.tsx"]) {
-    assert.match(readFileSync(join(root, file), "utf8"), /getRewardAvailability/);
+  for (const file of [
+    "app/businesses/[slug]/customers/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
+    "app/businesses/[slug]/campaigns/page.tsx",
+    "app/businesses/[slug]/recovery/page.tsx",
+    "app/card/[token]/page.tsx",
+  ]) {
+    assert.match(
+      readFileSync(join(root, file), "utf8"),
+      /getReward(?:Availability|Truth)/,
+    );
   }
-  const dashboard = readFileSync(join(root, "app/businesses/[slug]/page.tsx"), "utf8");
+  const dashboard = readFileSync(
+    join(root, "app/businesses/[slug]/page.tsx"),
+    "utf8",
+  );
   assert.match(dashboard, /getBusinessRewardTargetCost/);
-  const scanner = readFileSync(join(root, "app/businesses/[slug]/scan/customer/[customerId]/page.tsx"), "utf8");
-  assert.match(scanner, /getRedeemableCatalogueRewards/);
+  const scanner = readFileSync(
+    join(root, "app/businesses/[slug]/scan/customer/[customerId]/page.tsx"),
+    "utf8",
+  );
+  assert.match(scanner, /getRewardTruth/);
   assert.match(scanner, /redeemableRewards/);
 });
 
 test("redemption action blocks the legacy fallback while an active catalogue reward exists", () => {
-  const action = readFileSync(join(process.cwd(), "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts"), "utf8");
-  assert.match(action, /rewards:\s*\{[\s\S]*?where:\s*\{\s*isActive:\s*true\s*\}/);
-  assert.match(action, /if\s*\(\s*!rewardId\s*&&\s*business\.rewards\.length\s*>\s*0\s*\)/);
+  const action = readFileSync(
+    join(
+      process.cwd(),
+      "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts",
+    ),
+    "utf8",
+  );
+  assert.match(
+    action,
+    /rewards:\s*\{[\s\S]*?where:\s*\{\s*isActive:\s*true\s*\}/,
+  );
+  assert.match(
+    action,
+    /if\s*\(\s*!rewardId\s*&&\s*business\.rewards\.length\s*>\s*0\s*\)/,
+  );
 });

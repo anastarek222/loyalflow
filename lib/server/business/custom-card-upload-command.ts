@@ -10,6 +10,8 @@ import {
   validateCustomCardUploadPair,
 } from "@/lib/cards/custom-card-upload-validation";
 import prisma from "@/lib/prisma";
+import { validateDecodableCustomCardArtworkPair } from "@/lib/server/cards/custom-card-image-decode";
+import { getCustomCardArtworkDimensions } from "@/lib/cards/custom-card-geometry";
 
 export type CustomCardUploadCommandResult =
   | Readonly<{
@@ -49,6 +51,18 @@ export async function uploadCustomCardDraftCommand(input: {
     input.back,
   );
   if (!validation.ok) return validation;
+
+  const expected = await getCustomCardArtworkDimensions(validation.front);
+  if (
+    !expected ||
+    !(await validateDecodableCustomCardArtworkPair(
+      validation.front,
+      validation.back,
+      expected,
+    ))
+  ) {
+    return { ok: false, reason: "UNREADABLE_IMAGE" };
+  }
 
   if (
     !(await canBusinessPerformSubscriptionOperation(

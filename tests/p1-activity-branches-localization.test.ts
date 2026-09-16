@@ -27,13 +27,22 @@ test("P1 Activity owns bilingual material copy and language-aware activity label
     ["مسح الفلاتر", "Clear filters"],
     ["لا توجد عمليات مسجلة", "No activities recorded"],
   ] as const) {
-    assert.ok(activity.includes(pair[0]), `missing Activity Arabic copy: ${pair[0]}`);
-    assert.ok(activity.includes(pair[1]), `missing Activity English copy: ${pair[1]}`);
+    assert.ok(
+      activity.includes(pair[0]),
+      `missing Activity Arabic copy: ${pair[0]}`,
+    );
+    assert.ok(
+      activity.includes(pair[1]),
+      `missing Activity English copy: ${pair[1]}`,
+    );
   }
   assert.match(activity, /getActivityLabel\(type, language\)/);
   assert.match(activity, /getActivityDescription\(activity, language\)/);
   assert.match(activity, /localizeActivityDescription/);
-  assert.match(presentation, /const activityLabelCatalog: Record<AppLanguage/);
+  assert.match(
+    presentation,
+    /const activityLabelCatalog: Record<\s*AppLanguage/,
+  );
   assert.match(presentation, /export function getActivityDescription/);
   assert.match(presentation, /EN:\s*\{/);
   assert.match(presentation, /Customer created/);
@@ -48,15 +57,24 @@ test("P1 Branches owns bilingual material controls, notices, confirmations and a
     ["إزالة الإسناد", "Remove assignment"],
     ["لا توجد فروع بعد", "No branches yet"],
   ] as const) {
-    assert.ok(branches.includes(pair[0]), `missing Branches Arabic copy: ${pair[0]}`);
-    assert.ok(branches.includes(pair[1]), `missing Branches English copy: ${pair[1]}`);
+    assert.ok(
+      branches.includes(pair[0]),
+      `missing Branches Arabic copy: ${pair[0]}`,
+    );
+    assert.ok(
+      branches.includes(pair[1]),
+      `missing Branches English copy: ${pair[1]}`,
+    );
   }
   assert.match(branches, /confirmation=\{branch\.isActive[\s\S]*?Deactivate/);
   assert.match(branches, /subscription-restricted/);
 });
 
 test("P1 localization remains presentation-only around canonical route authority", () => {
-  assert.match(activity, /canPerform\(session\.user, business\.id, ["']REPORTS_VIEW["']\)/);
+  assert.match(
+    activity,
+    /canPerform\(session\.user, business\.id, ["']REPORTS_VIEW["']\)/,
+  );
   assert.match(activity, /businessId: business\.id/);
   assert.match(branches, /canManageBranches\(session\.user, business\.id\)/);
   for (const action of [

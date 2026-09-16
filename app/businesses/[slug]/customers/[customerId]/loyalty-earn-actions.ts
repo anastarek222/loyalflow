@@ -20,6 +20,7 @@ import {
   isFinancialOperationContextError,
 } from "@/lib/loyalty/transactions";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
 import { executeLoyaltyEarnCommand } from "@/lib/server/business/loyalty-earn-command";
 import { rateLimit } from "@/lib/utils/rate-limiter";
@@ -114,6 +115,23 @@ export async function addLoyaltyCommandAction(
       }),
     );
   }
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
+      "OPERATE",
+    ))
+  ) {
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customerId,
+        { error: "subscription-restricted" },
+        "subscription-restricted",
+      ),
+    );
+  }
 
   const customer = await prisma.customer.findFirst({
     where: {
@@ -127,7 +145,10 @@ export async function addLoyaltyCommandAction(
 
   const activityContext = await getActivityRequestContext();
   const branchId = getOptionalOperationId(formData, "branchId");
-  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
+  const attributedStaffId = getOptionalOperationId(
+    formData,
+    "attributedStaffId",
+  );
 
   let saleAmount: number | undefined;
   if (business.loyaltyMode === "SALES_AMOUNT") {
@@ -136,7 +157,13 @@ export async function addLoyaltyCommandAction(
     });
     if (!parsedSale.success) {
       redirect(
-        operationPath(origin, slug, customer.id, { error: "invalid" }, "sale-invalid"),
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "invalid" },
+          "sale-invalid",
+        ),
       );
     }
     saleAmount = parsedSale.data.saleAmount;
@@ -154,7 +181,13 @@ export async function addLoyaltyCommandAction(
   );
   if (!parsedOperation.success) {
     redirect(
-      operationPath(origin, slug, customer.id, { error: "invalid" }, "earned-invalid"),
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "invalid" },
+        "earned-invalid",
+      ),
     );
   }
   const idempotencyKey = parsedOperation.data;
@@ -178,7 +211,8 @@ export async function addLoyaltyCommandAction(
 
   if (completedOperation) {
     const baseAmount =
-      completedOperation.promotionApplication?.baseAmount ?? completedOperation.amount;
+      completedOperation.promotionApplication?.baseAmount ??
+      completedOperation.amount;
     if (
       completedOperation.customerId !== customer.id ||
       completedOperation.type !== "EARN" ||
@@ -187,7 +221,13 @@ export async function addLoyaltyCommandAction(
       baseAmount !== amount
     ) {
       redirect(
-        operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-conflict"),
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "earned-conflict",
+        ),
       );
     }
     redirect(operationPath(origin, slug, customer.id, { success: "earned" }));
@@ -205,7 +245,13 @@ export async function addLoyaltyCommandAction(
   });
   if (!rapidEarnLimit.allowed) {
     redirect(
-      operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-too-soon"),
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "conflict" },
+        "earned-too-soon",
+      ),
     );
   }
 
@@ -215,7 +261,13 @@ export async function addLoyaltyCommandAction(
   });
   if (recentDuplicateEarn) {
     redirect(
-      operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-too-soon"),
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "conflict" },
+        "earned-too-soon",
+      ),
     );
   }
 
@@ -240,7 +292,13 @@ export async function addLoyaltyCommandAction(
   } catch (error) {
     if (isFinancialOperationConflictError(error)) {
       redirect(
-        operationPath(origin, slug, customer.id, { error: "conflict" }, "earned-conflict"),
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "earned-conflict",
+        ),
       );
     }
     if (isFinancialOperationContextError(error) && origin === "SCAN") {

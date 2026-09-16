@@ -19,6 +19,7 @@ import {
   type ScanOperationError,
 } from "@/lib/loyalty/operation-origin";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
 import { rateLimit } from "@/lib/utils/rate-limiter";
 import { scheduleIntegrationJobs } from "@/lib/integration-job-scheduler";
@@ -115,21 +116,103 @@ export async function redeemRewardCommandAction(
       }),
     );
   }
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
+      "OPERATE",
+    ))
+  ) {
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customerId,
+        { error: "subscription-restricted" },
+        "subscription-restricted",
+      ),
+    );
+  }
 
   const customer = await prisma.customer.findFirst({
-    where: { id: parsedCustomerId.data, businessId: business.id, isActive: true },
+    where: {
+      id: parsedCustomerId.data,
+      businessId: business.id,
+      isActive: true,
+    },
     select: { id: true, publicToken: true },
   });
   if (!customer) redirect(`/businesses/${slug}/customers`);
 
   const parsedRewardId = rewardId ? opaqueIdSchema.safeParse(rewardId) : null;
   if (parsedRewardId && !parsedRewardId.success) {
-    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "reward-unavailable" },
+        "reward-unavailable",
+      ),
+    );
+  }
+
+  const parsedOperation = financialOperationSchema.safeParse(
+    formData?.get("operationId"),
+  );
+  if (!parsedOperation.success) {
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "invalid" },
+        "redemption-invalid",
+      ),
+    );
+  }
+  const idempotencyKey = parsedOperation.data;
+  const requestedRewardId = parsedRewardId?.success
+    ? parsedRewardId.data
+    : null;
+
+  const completedOperation = await prisma.loyaltyTransaction.findUnique({
+    where: {
+      businessId_idempotencyKey: { businessId: business.id, idempotencyKey },
+    },
+    select: {
+      customerId: true,
+      type: true,
+      rewardRedemption: { select: { rewardId: true } },
+    },
+  });
+
+  if (completedOperation) {
+    if (
+      completedOperation.customerId !== customer.id ||
+      completedOperation.type !== "REDEEM" ||
+      completedOperation.rewardRedemption?.rewardId !== requestedRewardId
+    ) {
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "redemption-conflict",
+        ),
+      );
+    }
+    redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
   }
 
   const selectedReward = parsedRewardId?.success
     ? await prisma.reward.findFirst({
-        where: { id: parsedRewardId.data, businessId: business.id, isActive: true },
+        where: {
+          id: parsedRewardId.data,
+          businessId: business.id,
+          isActive: true,
+        },
         select: {
           id: true,
           name: true,
@@ -143,7 +226,15 @@ export async function redeemRewardCommandAction(
     : null;
 
   if (rewardId && !selectedReward) {
-    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "reward-unavailable" },
+        "reward-unavailable",
+      ),
+    );
   }
 
   const rewardName = selectedReward?.name ?? business.rewardName;
@@ -154,41 +245,24 @@ export async function redeemRewardCommandAction(
   );
   const cost = selectedReward?.cost ?? business.rewardThreshold;
 
-  const parsedOperation = financialOperationSchema.safeParse(formData?.get("operationId"));
-  if (!parsedOperation.success) {
-    redirect(operationPath(origin, slug, customer.id, { error: "invalid" }, "redemption-invalid"));
-  }
-  const idempotencyKey = parsedOperation.data;
-  const branchId = getOptionalOperationId(formData, "branchId");
-  const attributedStaffId = getOptionalOperationId(formData, "attributedStaffId");
-  const activityContext = await getActivityRequestContext();
-
-  const completedOperation = await prisma.loyaltyTransaction.findUnique({
-    where: { businessId_idempotencyKey: { businessId: business.id, idempotencyKey } },
-    select: {
-      customerId: true,
-      type: true,
-      amount: true,
-      rewardRedemption: { select: { rewardId: true, cost: true } },
-    },
-  });
-
-  if (completedOperation) {
-    if (
-      completedOperation.customerId !== customer.id ||
-      completedOperation.type !== "REDEEM" ||
-      completedOperation.amount !== -cost ||
-      completedOperation.rewardRedemption?.rewardId !== (selectedReward?.id ?? null) ||
-      completedOperation.rewardRedemption?.cost !== cost
-    ) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
-    }
-    redirect(operationPath(origin, slug, customer.id, { success: "redeemed" }));
-  }
-
   if (!rewardId && business.rewards.length > 0) {
-    redirect(operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-unavailable"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "reward-unavailable" },
+        "reward-unavailable",
+      ),
+    );
   }
+
+  const branchId = getOptionalOperationId(formData, "branchId");
+  const attributedStaffId = getOptionalOperationId(
+    formData,
+    "attributedStaffId",
+  );
+  const activityContext = await getActivityRequestContext();
 
   const rapidInput = {
     businessId: business.id,
@@ -201,14 +275,30 @@ export async function redeemRewardCommandAction(
     windowMs: RAPID_EARN_WINDOW_MS,
   });
   if (!rapidLimit.allowed) {
-    redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redeemed-too-soon"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "conflict" },
+        "redeemed-too-soon",
+      ),
+    );
   }
   const recentDuplicate = await prisma.loyaltyTransaction.findFirst({
     where: getRapidRedemptionWhere(rapidInput),
     select: { id: true },
   });
   if (recentDuplicate) {
-    redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redeemed-too-soon"));
+    redirect(
+      operationPath(
+        origin,
+        slug,
+        customer.id,
+        { error: "conflict" },
+        "redeemed-too-soon",
+      ),
+    );
   }
 
   let result;
@@ -230,10 +320,22 @@ export async function redeemRewardCommandAction(
     });
   } catch (error) {
     if (isFinancialOperationConflictError(error)) {
-      redirect(operationPath(origin, slug, customer.id, { error: "conflict" }, "redemption-conflict"));
+      redirect(
+        operationPath(
+          origin,
+          slug,
+          customer.id,
+          { error: "conflict" },
+          "redemption-conflict",
+        ),
+      );
     }
     if (isFinancialOperationContextError(error) && origin === "SCAN") {
-      redirect(operationPath(origin, slug, customer.id, { error: scanContextError(error.reason) }));
+      redirect(
+        operationPath(origin, slug, customer.id, {
+          error: scanContextError(error.reason),
+        }),
+      );
     }
     throw error;
   }
@@ -241,8 +343,20 @@ export async function redeemRewardCommandAction(
   if (!result.ok) {
     redirect(
       result.reason === "REWARD_EXPIRED"
-        ? operationPath(origin, slug, customer.id, { error: "reward-unavailable" }, "reward-expired")
-        : operationPath(origin, slug, customer.id, { error: "insufficient-balance" }, "not-enough"),
+        ? operationPath(
+            origin,
+            slug,
+            customer.id,
+            { error: "reward-unavailable" },
+            "reward-expired",
+          )
+        : operationPath(
+            origin,
+            slug,
+            customer.id,
+            { error: "insufficient-balance" },
+            "not-enough",
+          ),
     );
   }
 

@@ -2,6 +2,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import {
+  createOwnerInvitationToken,
+  hashOwnerInvitationToken,
+  parseOwnerInvitationLegalAcceptance,
+} from "@/lib/auth/owner-invitation";
 import { translate } from "@/lib/i18n/catalog";
 
 const root = process.cwd();
@@ -46,7 +51,11 @@ test("owner invitation delivery uses shared Resend delivery and a 24-hour link",
   assert.match(delivery, /purpose:\s*"owner-invitation"/);
   assert.match(delivery, /\/accept-owner-invitation\?token=/);
   assert.match(delivery, /expires in 24 hours/i);
-  assert.match(delivery, /seven-day trial starts/i);
+  assert.match(
+    delivery,
+    /import \{ TRIAL_DURATION_DAYS \} from "@loyalflow\/domain\/billing\/trial-core"/,
+  );
+  assert.match(delivery, /\$\{TRIAL_DURATION_DAYS\}-day trial starts/i);
   assert.match(delivery, /Complete your .* business setup/);
   assert.match(transport, /process\.env\.RESEND_API_KEY/);
   assert.match(transport, /resolveTaneeAuthEmailSender\(\)/);
@@ -55,4 +64,52 @@ test("owner invitation delivery uses shared Resend delivery and a 24-hour link",
   assert.match(action, /sendOwnerInvitationEmail/);
   assert.match(action, /token:\s*invitation\.token/);
   assert.doesNotMatch(action, /token:\s*invitation\.tokenHash/);
+});
+
+test("public Trial consent is bound to the published legal effective date", () => {
+  const page = source("app/get-started/page.tsx");
+  const form = source("components/public-trial-form.tsx");
+  const action = source("app/get-started/actions.ts");
+  const runtime = source("lib/auth/owner-invitation-runtime.ts");
+
+  assert.match(page, /getPublicLegalProfile/);
+  assert.match(page, /legalPublished=\{legalProfile\.isPublished\}/);
+  assert.match(page, /legalEffectiveDate=\{legalProfile\.effectiveDate\}/);
+  assert.match(form, /name="legalEffectiveDate"/);
+  assert.match(form, /disabled=\{!legalPublished\}/);
+  assert.match(action, /getPublicLegalProfile/);
+  assert.match(action, /status: "legal-unavailable"/);
+  assert.match(action, /status: "legal-updated"/);
+  assert.match(action, /submittedEffectiveDate !== legalProfile\.effectiveDate/);
+  assert.match(action, /createOwnerInvitationToken\(acceptedAt/);
+  assert.match(runtime, /LEGAL_TERMS_PRIVACY_ACCEPTED/);
+  assert.match(runtime, /effectiveDate:/);
+  assert.match(runtime, /acceptedAt:/);
+});
+
+test("legal acceptance snapshot round-trips inside the hashed invitation token", () => {
+  const acceptedAt = new Date("2026-09-14T00:15:30.000Z");
+  const invitation = createOwnerInvitationToken(acceptedAt, {
+    effectiveDate: "2026-09-01",
+    acceptedAt,
+  });
+
+  assert.ok(invitation.token.length <= 256);
+  assert.deepEqual(parseOwnerInvitationLegalAcceptance(invitation.token), {
+    effectiveDate: "2026-09-01",
+    acceptedAt,
+  });
+  assert.equal(hashOwnerInvitationToken(invitation.token), invitation.tokenHash);
+  assert.notEqual(
+    hashOwnerInvitationToken(`${invitation.token}tampered`),
+    invitation.tokenHash,
+  );
+});
+
+test("legacy invitation tokens remain compatible and carry no invented legal acceptance", () => {
+  const invitation = createOwnerInvitationToken(
+    new Date("2026-09-14T00:15:30.000Z"),
+  );
+
+  assert.equal(parseOwnerInvitationLegalAcceptance(invitation.token), null);
 });

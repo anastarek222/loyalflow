@@ -101,6 +101,10 @@ export default async function RewardsPage({ params, searchParams }: Props) {
               ? language === "AR"
               ? "لا تسمح حالة الاشتراك الحالية بإنشاء مكافأة أو تغيير بياناتها أو حالتها. تظل المكافآت والبيانات الحالية متاحة للقراءة."
               : "The current subscription state does not allow creating or changing a reward. Existing rewards and data remain readable."
+            : query.error === "active-entitlements"
+              ? language === "AR"
+                ? "لا يمكن تغيير اسم أو تكلفة أو نوع أو صلاحية المكافأة أو إيقافها بينما توجد مكافآت مكتسبة وسارية للعملاء. انتظر الاستبدال أو انتهاء الصلاحية؛ ويمكنك تعديل الوصف الآن."
+                : "This reward cannot be renamed, repriced, retyped, have its expiry changed, or be deactivated while customers hold live earned entitlements. Wait for redemption or expiry; the description can still be edited."
             : language === "AR"
               ? "تعذر حفظ المكافأة. راجع البيانات وحاول مرة أخرى."
               : "We could not save this reward. Review the details and try again."}

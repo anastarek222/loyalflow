@@ -3,7 +3,9 @@ import { PrimaryBusinessJoinQr } from "@/components/primary-business-join-qr";
 import { normalizeLanguage } from "@/lib/i18n";
 import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { CheckCircle2 } from "lucide-react";
+import { getTrialState } from "@loyalflow/domain/billing/trial-core";
+import { getBusinessWhatsAppProductReadiness } from "@/lib/server/integrations/business-whatsapp-product-readiness";
+import { ArrowRight, CheckCircle2, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -19,9 +21,21 @@ function copy(language: "AR" | "EN") {
         title: "برنامج الولاء جاهز",
         description:
           "ابدأ من هنا: استخدم كود QR أو رابط الانضمام لإضافة أول عميل أو لتجربة رحلة الانضمام بنفسك.",
-        nextTitle: "أول خطوة تشغيلية",
+        trialTitle: "الفترة التجريبية بدأت عند الإطلاق",
+        trialActive: (days: number) =>
+          `لديك ${days} يومًا متبقيًا في الفترة التجريبية الحالية ذات 14 يومًا.`,
+        trialExpired: "انتهت الفترة التجريبية الحالية.",
+        nextTitle: "أول رحلة تشغيلية",
         nextDescription:
-          "افتح صفحة الانضمام من القسم التالي وسجّل أول عميل تجريبي. بعد التأكد أن الرحلة صحيحة، انتقل إلى لوحة النشاط.",
+          "اختبر مسار الانضمام أولًا، ثم افتح قائمة العملاء للتأكد من إنشاء العضوية والوصول إلى ملف العميل وكارته قبل الانتقال للاستخدام اليومي.",
+        firstCustomerTitle: "بعد تسجيل أول عميل",
+        firstCustomerDescription:
+          "افتح العملاء، ادخل إلى ملف العميل، وتأكد من أن العضوية والكارت والرصيد الابتدائي يظهرون بشكل صحيح.",
+        customers: "فتح العملاء",
+        whatsappTitle: "كمّل ربط WhatsApp",
+        whatsappDescription:
+          "اربط رقم النشاط من خلال Meta. هنفضل مظهرين الخطوة دي كإعداد معلّق لحد ما يتم تسجيل اتصال الرقم بالنشاط.",
+        whatsappAction: "ربط WhatsApp",
         dashboard: "الانتقال إلى لوحة النشاط",
       }
     : {
@@ -29,9 +43,21 @@ function copy(language: "AR" | "EN") {
         title: "Your loyalty programme is ready",
         description:
           "Start here: use the Join QR or Join Link to add your first customer or test the joining journey yourself.",
-        nextTitle: "Your first operational step",
+        trialTitle: "Your trial started at launch",
+        trialActive: (days: number) =>
+          `You have ${days} day${days === 1 ? "" : "s"} remaining in the current 14-day trial.`,
+        trialExpired: "The current trial has ended.",
+        nextTitle: "Your first operational journey",
         nextDescription:
-          "Open the join page below and register your first test customer. Once the journey looks right, continue to the business dashboard.",
+          "Test the joining flow first, then open Customers to confirm the membership was created and the customer profile and card are available before moving into daily use.",
+        firstCustomerTitle: "After your first customer joins",
+        firstCustomerDescription:
+          "Open Customers, enter the customer profile, and confirm the membership, card, and opening balance are correct.",
+        customers: "Open customers",
+        whatsappTitle: "Finish connecting WhatsApp",
+        whatsappDescription:
+          "Connect the business number through Meta. This stays visible as pending setup until the number connection is saved for this business.",
+        whatsappAction: "Connect WhatsApp",
         dashboard: "Continue to business dashboard",
       };
 }
@@ -51,7 +77,17 @@ export default async function OwnerLaunchSuccessPage({
   const [business, user] = await Promise.all([
     prisma.business.findUnique({
       where: { slug },
-      select: { id: true, name: true, slug: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        trialEndsAt: true,
+        cardDefaultLanguage: true,
+        whatsappWelcomeMessage: true,
+        whatsappBalanceMessage: true,
+        whatsappRewardMessage: true,
+        whatsappRedeemedMessage: true,
+      },
     }),
     prisma.user.findUnique({
       where: { id: session.user.id },
@@ -64,6 +100,18 @@ export default async function OwnerLaunchSuccessPage({
   if (!canManageBusiness(user, business.id))
     redirect(`/businesses/${business.slug}`);
 
+  const whatsappReadiness = await getBusinessWhatsAppProductReadiness(
+    prisma,
+    {
+      businessId: business.id,
+      language: business.cardDefaultLanguage,
+      whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+      whatsappBalanceMessage: business.whatsappBalanceMessage,
+      whatsappRewardMessage: business.whatsappRewardMessage,
+      whatsappRedeemedMessage: business.whatsappRedeemedMessage,
+    },
+  );
+
   const language = normalizeLanguage(user.language);
   const dictionary = copy(language);
   const query = await searchParams;
@@ -71,6 +119,8 @@ export default async function OwnerLaunchSuccessPage({
   const dashboardHref = sheetSyncPending
     ? `/businesses/${business.slug}?sheetSync=pending`
     : `/businesses/${business.slug}`;
+  const customersHref = `/businesses/${business.slug}/customers`;
+  const trialState = getTrialState({ trialEndsAt: business.trialEndsAt });
 
   return (
     <main
@@ -97,6 +147,19 @@ export default async function OwnerLaunchSuccessPage({
           </div>
         </section>
 
+        {trialState.daysRemaining !== null ? (
+          <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 sm:p-6">
+            <h2 className="text-base font-black text-foreground">
+              {dictionary.trialTitle}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">
+              {trialState.isTrialExpired
+                ? dictionary.trialExpired
+                : dictionary.trialActive(trialState.daysRemaining)}
+            </p>
+          </section>
+        ) : null}
+
         <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 sm:p-6">
           <h2 className="text-lg font-black text-foreground">
             {dictionary.nextTitle}
@@ -106,11 +169,62 @@ export default async function OwnerLaunchSuccessPage({
           </p>
         </section>
 
+        {!whatsappReadiness.deliveryReady ? (
+          <section
+            className="mb-6 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-5 sm:p-6"
+            data-whatsapp-post-launch-setup
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-success text-white">
+                <MessageCircle className="size-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-black text-foreground">
+                  {dictionary.whatsappTitle}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-foreground-muted">
+                  {dictionary.whatsappDescription}
+                </p>
+                <Link
+                  href={`/businesses/${business.slug}/settings/whatsapp`}
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-success px-4 text-sm font-bold text-white transition hover:opacity-90"
+                >
+                  {dictionary.whatsappAction}
+                  <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <PrimaryBusinessJoinQr
           businessName={business.name}
           slug={business.slug}
           language={language}
         />
+
+        <section className="mb-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle text-foreground">
+              <Users className="size-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h2 className="text-base font-black text-foreground">
+                {dictionary.firstCustomerTitle}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-foreground-muted">
+                {dictionary.firstCustomerDescription}
+              </p>
+              <Link
+                href={customersHref}
+                className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover"
+              >
+                {dictionary.customers}
+                <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </section>
 
         <div className="flex justify-end">
           <Link

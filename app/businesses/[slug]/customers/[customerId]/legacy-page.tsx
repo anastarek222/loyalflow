@@ -16,10 +16,7 @@ import {
   canViewCustomerNotesTags,
 } from "@/lib/customers/feature-access";
 import { getAvailableRewardOptions } from "@/lib/rewards/catalog";
-import {
-  getRedeemableCatalogueRewards,
-  getRewardAvailability,
-} from "@/lib/rewards/availability";
+import { getRewardTruth } from "@/lib/rewards/availability";
 import { getRewardUnlockLifecycleState } from "@/lib/rewards/expiration";
 import { buildCustomerTimeline } from "@/lib/customers/timeline";
 import { publicCustomCardArtworkUrl } from "@/lib/cards/custom-card-storage";
@@ -312,7 +309,7 @@ export default async function CustomerDetailsPage({
     code: business.rewardCode,
     cost: business.rewardThreshold,
   });
-  const canonicalAvailability = getRewardAvailability({
+  const canonicalAvailability = getRewardTruth({
     customerActive: customer.isActive,
     balance: customer.balance,
     rewardThreshold: business.rewardThreshold,
@@ -321,18 +318,14 @@ export default async function CustomerDetailsPage({
       cost: business.rewardThreshold,
     },
     catalogueRewards: business.rewards,
+    rewardUnlocks: customer.rewardUnlocks,
   });
 
   const rewardUnlocksByRewardId = new Map(
     customer.rewardUnlocks.map((unlock) => [unlock.rewardId, unlock]),
   );
   const redeemableCatalogueRewardIds = new Set(
-    getRedeemableCatalogueRewards({
-      customerActive: customer.isActive,
-      balance: customer.balance,
-      catalogueRewards: canonicalAvailability.activeCatalogueRewards,
-      rewardUnlocks: customer.rewardUnlocks,
-    }).map((reward) => reward.id),
+    canonicalAvailability.redeemableRewards.map((reward) => reward.id),
   );
 
   const rewardStates = availableRewards.map((reward) => {

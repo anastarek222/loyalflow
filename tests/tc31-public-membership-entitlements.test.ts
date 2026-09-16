@@ -45,9 +45,15 @@ test("TC3.1 command enforces effective limits inside the authoritative write tra
   const action = source("app/join/[slug]/actions.ts");
 
   assert.match(command, /transaction\.planConfiguration\.findUnique/);
-  assert.match(command, /configurationToPlanLimits\(configuration, business\.plan\)/);
+  assert.match(
+    command,
+    /configurationToPlanLimits\(\s*configuration,\s*business\.plan,?\s*\)/,
+  );
   assert.match(command, /transaction\.customer\.count/);
-  assert.match(command, /canCreatePublicMembership\(business\.plan, customerCount, planLimits\)/);
+  assert.match(
+    command,
+    /canCreatePublicMembership\(business\.plan, customerCount, planLimits\)/,
+  );
   assert.match(command, /reason:\s*"PLAN_LIMIT"/);
   assert.match(command, /transaction\.customer\.create/);
   assert.match(command, /isolationLevel:\s*"Serializable"/);

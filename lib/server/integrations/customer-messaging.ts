@@ -26,6 +26,7 @@ export const MANUAL_CUSTOMER_MESSAGE_EVENTS = [
   "WELCOME",
   "BALANCE_UPDATED",
   "REWARD_READY",
+  "REWARD_REDEEMED",
 ] as const;
 
 export type AutomaticCustomerMessageEvent =
@@ -81,16 +82,24 @@ async function findEligibleCustomer(
   transaction: Prisma.TransactionClient,
   input: Readonly<{ businessId: string; customerId: string }>,
 ) {
-  return transaction.customer.findFirst({
+  const customer = await transaction.customer.findFirst({
     where: {
       id: input.customerId,
       businessId: input.businessId,
       isActive: true,
+      whatsappPhoneE164: { not: null },
       whatsappOptInAt: { not: null },
       whatsappOptedOutAt: null,
     },
-    select: { id: true },
+    select: {
+      id: true,
+      phone: true,
+      whatsappPhoneE164: true,
+    },
   });
+
+  if (!customer || customer.phone !== customer.whatsappPhoneE164) return null;
+  return customer;
 }
 
 /**
@@ -175,4 +184,58 @@ export async function enqueueManualCustomerMessageJob(
     idempotencyKey: `customer-message:manual:${input.event.toLowerCase()}:${input.requestId}`,
     payload,
   });
+}
+
+/**
+ * Bounded business-wide producer for catalogue announcements. It deliberately
+ * receives an optional authoritative audience instead of re-deriving Offer
+ * segmentation inside the messaging layer.
+ */
+export async function enqueueCustomerMessageAudienceJobs(
+  transaction: Prisma.TransactionClient,
+  input: Readonly<{
+    businessId: string;
+    event: "NEW_REWARD" | "NEW_OFFER";
+    eventKey: string;
+    rewardName?: string;
+    customerIds?: readonly string[];
+  }>,
+) {
+  const automationEnabled = await isBusinessWhatsAppAutomationEnabled(
+    transaction,
+    { businessId: input.businessId, event: input.event },
+  );
+  if (!automationEnabled) return [];
+
+  const customers = await transaction.customer.findMany({
+    where: {
+      businessId: input.businessId,
+      isActive: true,
+      whatsappPhoneE164: { not: null },
+      whatsappOptInAt: { not: null },
+      whatsappOptedOutAt: null,
+      ...(input.customerIds ? { id: { in: [...input.customerIds] } } : {}),
+    },
+    select: { id: true, phone: true, whatsappPhoneE164: true },
+    orderBy: { id: "asc" },
+  });
+
+  const jobs = [];
+  for (const customer of customers) {
+    if (customer.phone !== customer.whatsappPhoneE164) continue;
+    const job = await enqueueIntegrationJob(transaction, {
+      businessId: input.businessId,
+      kind: "WHATSAPP_CUSTOMER_NOTIFICATION",
+      idempotencyKey: `customer-message:${input.event.toLowerCase()}:${input.eventKey}:${customer.id}`,
+      payload: {
+        version: 1,
+        event: input.event,
+        customerId: customer.id,
+        ...(input.rewardName ? { rewardName: input.rewardName } : {}),
+      } satisfies CustomerMessagePayload,
+    });
+    jobs.push(job);
+  }
+
+  return jobs;
 }

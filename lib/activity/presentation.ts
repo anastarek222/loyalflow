@@ -3,20 +3,117 @@ import type { AppLanguage } from "@/lib/i18n";
 import { STRUCTURED_ACTIVITY_PRESENTATION_VERSION } from "@/lib/activity/business-activity";
 
 export const activityTypes = [
-  "CUSTOMER_CREATED", "CUSTOMER_UPDATED", "CUSTOMER_DEACTIVATED", "CUSTOMER_REACTIVATED", "CUSTOMER_TAG_ASSIGNED", "CUSTOMER_TAG_REMOVED", "CUSTOMER_NOTE_CREATED", "CUSTOMER_NOTE_UPDATED", "LOYALTY_EARNED", "REWARD_REDEEMED", "REWARD_UNLOCKED", "REWARD_EXPIRED", "REWARD_REDEMPTION_BLOCKED", "REFERRAL_RECORDED", "BALANCE_ADJUSTED", "BUSINESS_SETTINGS_UPDATED", "USER_CREATED", "USER_STATUS_CHANGED", "USER_PASSWORD_CHANGED", "USER_EXPERIENCE_ACCESS_UPDATED", "REWARD_CREATED", "REWARD_UPDATED", "REWARD_STATUS_CHANGED", "OFFER_CREATED", "OFFER_UPDATED", "OFFER_STATUS_CHANGED", "BRANCH_CREATED", "BRANCH_UPDATED", "BRANCH_ACTIVATED", "BRANCH_DEACTIVATED", "BRANCH_STAFF_ASSIGNED", "BRANCH_STAFF_REMOVED",
+  "CUSTOMER_CREATED",
+  "CUSTOMER_UPDATED",
+  "CUSTOMER_DEACTIVATED",
+  "CUSTOMER_REACTIVATED",
+  "CUSTOMER_TAG_ASSIGNED",
+  "CUSTOMER_TAG_REMOVED",
+  "CUSTOMER_NOTE_CREATED",
+  "CUSTOMER_NOTE_UPDATED",
+  "LOYALTY_EARNED",
+  "REWARD_REDEEMED",
+  "REWARD_UNLOCKED",
+  "REWARD_EXPIRED",
+  "REWARD_REDEMPTION_BLOCKED",
+  "REFERRAL_RECORDED",
+  "BALANCE_ADJUSTED",
+  "BUSINESS_SETTINGS_UPDATED",
+  "USER_CREATED",
+  "USER_STATUS_CHANGED",
+  "USER_PASSWORD_CHANGED",
+  "USER_EXPERIENCE_ACCESS_UPDATED",
+  "REWARD_CREATED",
+  "REWARD_UPDATED",
+  "REWARD_STATUS_CHANGED",
+  "OFFER_CREATED",
+  "OFFER_UPDATED",
+  "OFFER_STATUS_CHANGED",
+  "BRANCH_CREATED",
+  "BRANCH_UPDATED",
+  "BRANCH_ACTIVATED",
+  "BRANCH_DEACTIVATED",
+  "BRANCH_STAFF_ASSIGNED",
+  "BRANCH_STAFF_REMOVED",
 ] as const satisfies readonly ActivityType[];
 
-const activityLabelCatalog: Record<AppLanguage, Record<ActivityType, string>> = {
+const activityLabelCatalog: Record<
+  AppLanguage,
+  Record<ActivityType, string>
+> = {
   AR: {
-    CUSTOMER_CREATED: "إنشاء عميل", CUSTOMER_UPDATED: "تحديث بيانات عميل", CUSTOMER_DEACTIVATED: "إيقاف عميل", CUSTOMER_REACTIVATED: "إعادة تفعيل عميل", CUSTOMER_TAG_ASSIGNED: "إضافة وسم للعميل", CUSTOMER_TAG_REMOVED: "إزالة وسم من العميل", CUSTOMER_NOTE_CREATED: "إضافة ملاحظة للعميل", CUSTOMER_NOTE_UPDATED: "تحديث ملاحظة العميل", LOYALTY_EARNED: "إضافة رصيد ولاء", REWARD_REDEEMED: "استبدال مكافأة", REWARD_UNLOCKED: "فتح مكافأة", REWARD_EXPIRED: "انتهاء صلاحية مكافأة", REWARD_REDEMPTION_BLOCKED: "تعذر استبدال مكافأة", REFERRAL_RECORDED: "تسجيل إحالة", BALANCE_ADJUSTED: "تعديل رصيد", BUSINESS_SETTINGS_UPDATED: "تحديث إعدادات النشاط", USER_CREATED: "إنشاء مستخدم", USER_STATUS_CHANGED: "تغيير حالة مستخدم", USER_PASSWORD_CHANGED: "تغيير كلمة المرور", USER_EXPERIENCE_ACCESS_UPDATED: "تحديث وصول الواجهة", REWARD_CREATED: "إنشاء مكافأة", REWARD_UPDATED: "تحديث مكافأة", REWARD_STATUS_CHANGED: "تغيير حالة مكافأة", OFFER_CREATED: "إنشاء عرض", OFFER_UPDATED: "تحديث عرض", OFFER_STATUS_CHANGED: "تغيير حالة عرض", BRANCH_CREATED: "إنشاء فرع", BRANCH_UPDATED: "تحديث فرع", BRANCH_ACTIVATED: "تفعيل فرع", BRANCH_DEACTIVATED: "إيقاف فرع", BRANCH_STAFF_ASSIGNED: "إسناد موظف إلى فرع", BRANCH_STAFF_REMOVED: "إزالة إسناد موظف من فرع",
+    CUSTOMER_CREATED: "إنشاء عميل",
+    CUSTOMER_UPDATED: "تحديث بيانات عميل",
+    CUSTOMER_DEACTIVATED: "إيقاف عميل",
+    CUSTOMER_REACTIVATED: "إعادة تفعيل عميل",
+    CUSTOMER_TAG_ASSIGNED: "إضافة وسم للعميل",
+    CUSTOMER_TAG_REMOVED: "إزالة وسم من العميل",
+    CUSTOMER_NOTE_CREATED: "إضافة ملاحظة للعميل",
+    CUSTOMER_NOTE_UPDATED: "تحديث ملاحظة العميل",
+    LOYALTY_EARNED: "إضافة رصيد ولاء",
+    REWARD_REDEEMED: "استبدال مكافأة",
+    REWARD_UNLOCKED: "فتح مكافأة",
+    REWARD_EXPIRED: "انتهاء صلاحية مكافأة",
+    REWARD_REDEMPTION_BLOCKED: "تعذر استبدال مكافأة",
+    REFERRAL_RECORDED: "تسجيل إحالة",
+    BALANCE_ADJUSTED: "تعديل رصيد",
+    BUSINESS_SETTINGS_UPDATED: "تحديث إعدادات النشاط",
+    USER_CREATED: "إنشاء مستخدم",
+    USER_STATUS_CHANGED: "تغيير حالة مستخدم",
+    USER_PASSWORD_CHANGED: "تغيير كلمة المرور",
+    USER_EXPERIENCE_ACCESS_UPDATED: "تحديث وصول الواجهة",
+    REWARD_CREATED: "إنشاء مكافأة",
+    REWARD_UPDATED: "تحديث مكافأة",
+    REWARD_STATUS_CHANGED: "تغيير حالة مكافأة",
+    OFFER_CREATED: "إنشاء عرض",
+    OFFER_UPDATED: "تحديث عرض",
+    OFFER_STATUS_CHANGED: "تغيير حالة عرض",
+    BRANCH_CREATED: "إنشاء فرع",
+    BRANCH_UPDATED: "تحديث فرع",
+    BRANCH_ACTIVATED: "تفعيل فرع",
+    BRANCH_DEACTIVATED: "إيقاف فرع",
+    BRANCH_STAFF_ASSIGNED: "إسناد موظف إلى فرع",
+    BRANCH_STAFF_REMOVED: "إزالة إسناد موظف من فرع",
   },
   EN: {
-    CUSTOMER_CREATED: "Customer created", CUSTOMER_UPDATED: "Customer updated", CUSTOMER_DEACTIVATED: "Customer deactivated", CUSTOMER_REACTIVATED: "Customer reactivated", CUSTOMER_TAG_ASSIGNED: "Customer tag added", CUSTOMER_TAG_REMOVED: "Customer tag removed", CUSTOMER_NOTE_CREATED: "Customer note added", CUSTOMER_NOTE_UPDATED: "Customer note updated", LOYALTY_EARNED: "Loyalty credit added", REWARD_REDEEMED: "Reward redeemed", REWARD_UNLOCKED: "Reward unlocked", REWARD_EXPIRED: "Reward expired", REWARD_REDEMPTION_BLOCKED: "Reward redemption blocked", REFERRAL_RECORDED: "Referral recorded", BALANCE_ADJUSTED: "Balance adjusted", BUSINESS_SETTINGS_UPDATED: "Business settings updated", USER_CREATED: "User created", USER_STATUS_CHANGED: "User status changed", USER_PASSWORD_CHANGED: "Password changed", USER_EXPERIENCE_ACCESS_UPDATED: "Experience access updated", REWARD_CREATED: "Reward created", REWARD_UPDATED: "Reward updated", REWARD_STATUS_CHANGED: "Reward status changed", OFFER_CREATED: "Offer created", OFFER_UPDATED: "Offer updated", OFFER_STATUS_CHANGED: "Offer status changed", BRANCH_CREATED: "Branch created", BRANCH_UPDATED: "Branch updated", BRANCH_ACTIVATED: "Branch activated", BRANCH_DEACTIVATED: "Branch deactivated", BRANCH_STAFF_ASSIGNED: "Staff assigned to branch", BRANCH_STAFF_REMOVED: "Staff removed from branch",
+    CUSTOMER_CREATED: "Customer created",
+    CUSTOMER_UPDATED: "Customer updated",
+    CUSTOMER_DEACTIVATED: "Customer deactivated",
+    CUSTOMER_REACTIVATED: "Customer reactivated",
+    CUSTOMER_TAG_ASSIGNED: "Customer tag added",
+    CUSTOMER_TAG_REMOVED: "Customer tag removed",
+    CUSTOMER_NOTE_CREATED: "Customer note added",
+    CUSTOMER_NOTE_UPDATED: "Customer note updated",
+    LOYALTY_EARNED: "Loyalty credit added",
+    REWARD_REDEEMED: "Reward redeemed",
+    REWARD_UNLOCKED: "Reward unlocked",
+    REWARD_EXPIRED: "Reward expired",
+    REWARD_REDEMPTION_BLOCKED: "Reward redemption blocked",
+    REFERRAL_RECORDED: "Referral recorded",
+    BALANCE_ADJUSTED: "Balance adjusted",
+    BUSINESS_SETTINGS_UPDATED: "Business settings updated",
+    USER_CREATED: "User created",
+    USER_STATUS_CHANGED: "User status changed",
+    USER_PASSWORD_CHANGED: "Password changed",
+    USER_EXPERIENCE_ACCESS_UPDATED: "Experience access updated",
+    REWARD_CREATED: "Reward created",
+    REWARD_UPDATED: "Reward updated",
+    REWARD_STATUS_CHANGED: "Reward status changed",
+    OFFER_CREATED: "Offer created",
+    OFFER_UPDATED: "Offer updated",
+    OFFER_STATUS_CHANGED: "Offer status changed",
+    BRANCH_CREATED: "Branch created",
+    BRANCH_UPDATED: "Branch updated",
+    BRANCH_ACTIVATED: "Branch activated",
+    BRANCH_DEACTIVATED: "Branch deactivated",
+    BRANCH_STAFF_ASSIGNED: "Staff assigned to branch",
+    BRANCH_STAFF_REMOVED: "Staff removed from branch",
   },
 };
 
 /** Compatibility export for legacy Arabic-only callers. */
-export const activityLabels: Record<ActivityType, string> = activityLabelCatalog.AR;
+export const activityLabels: Record<ActivityType, string> =
+  activityLabelCatalog.AR;
 
 export function getActivityLabel(type: ActivityType, language: AppLanguage) {
   return activityLabelCatalog[language][type];
@@ -24,23 +121,59 @@ export function getActivityLabel(type: ActivityType, language: AppLanguage) {
 
 export function getActivityBadgeClass(type: ActivityType) {
   switch (type) {
-    case "CUSTOMER_CREATED": case "CUSTOMER_REACTIVATED": case "CUSTOMER_TAG_ASSIGNED": case "CUSTOMER_NOTE_CREATED": case "LOYALTY_EARNED": case "REWARD_UNLOCKED": case "REFERRAL_RECORDED": case "BRANCH_CREATED": case "BRANCH_ACTIVATED": case "BRANCH_STAFF_ASSIGNED": case "REWARD_CREATED": case "OFFER_CREATED": return "bg-emerald-100 text-emerald-700";
-    case "CUSTOMER_DEACTIVATED": case "CUSTOMER_TAG_REMOVED": case "REWARD_EXPIRED": case "REWARD_REDEMPTION_BLOCKED": case "BRANCH_DEACTIVATED": return "bg-red-100 text-red-700";
-    case "CUSTOMER_UPDATED": case "CUSTOMER_NOTE_UPDATED": case "REWARD_REDEEMED": case "BALANCE_ADJUSTED": case "BRANCH_UPDATED": case "BRANCH_STAFF_REMOVED": case "REWARD_UPDATED": case "REWARD_STATUS_CHANGED": case "OFFER_UPDATED": case "OFFER_STATUS_CHANGED": return "bg-amber-100 text-amber-700";
-    case "BUSINESS_SETTINGS_UPDATED": case "USER_CREATED": case "USER_STATUS_CHANGED": case "USER_PASSWORD_CHANGED": case "USER_EXPERIENCE_ACCESS_UPDATED": return "bg-violet-100 text-violet-700";
+    case "CUSTOMER_CREATED":
+    case "CUSTOMER_REACTIVATED":
+    case "CUSTOMER_TAG_ASSIGNED":
+    case "CUSTOMER_NOTE_CREATED":
+    case "LOYALTY_EARNED":
+    case "REWARD_UNLOCKED":
+    case "REFERRAL_RECORDED":
+    case "BRANCH_CREATED":
+    case "BRANCH_ACTIVATED":
+    case "BRANCH_STAFF_ASSIGNED":
+    case "REWARD_CREATED":
+    case "OFFER_CREATED":
+      return "bg-emerald-100 text-emerald-700";
+    case "CUSTOMER_DEACTIVATED":
+    case "CUSTOMER_TAG_REMOVED":
+    case "REWARD_EXPIRED":
+    case "REWARD_REDEMPTION_BLOCKED":
+    case "BRANCH_DEACTIVATED":
+      return "bg-red-100 text-red-700";
+    case "CUSTOMER_UPDATED":
+    case "CUSTOMER_NOTE_UPDATED":
+    case "REWARD_REDEEMED":
+    case "BALANCE_ADJUSTED":
+    case "BRANCH_UPDATED":
+    case "BRANCH_STAFF_REMOVED":
+    case "REWARD_UPDATED":
+    case "REWARD_STATUS_CHANGED":
+    case "OFFER_UPDATED":
+    case "OFFER_STATUS_CHANGED":
+      return "bg-amber-100 text-amber-700";
+    case "BUSINESS_SETTINGS_UPDATED":
+    case "USER_CREATED":
+    case "USER_STATUS_CHANGED":
+    case "USER_PASSWORD_CHANGED":
+    case "USER_EXPERIENCE_ACCESS_UPDATED":
+      return "bg-violet-100 text-violet-700";
   }
 }
 
 export function getActivityMetadataString(metadata: unknown, key: string) {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return undefined;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
+    return undefined;
   const value = (metadata as Record<string, unknown>)[key];
   return typeof value === "string" ? value : undefined;
 }
 
 export function getActivityMetadataNumber(metadata: unknown, key: string) {
-  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return undefined;
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
+    return undefined;
   const value = (metadata as Record<string, unknown>)[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
 }
 
 function getRoleLabel(role: string | undefined, language: AppLanguage) {
@@ -83,13 +216,17 @@ function localizeLegacyActivityDescription(
       return match ? `Updated customer information for ${match[1]}` : value;
     }
     case "CUSTOMER_REACTIVATED":
-      if (value === "تم إعادة تفعيل حساب العميل") return "Reactivated customer account";
+      if (value === "تم إعادة تفعيل حساب العميل")
+        return "Reactivated customer account";
       if (value === "تمت إعادة تفعيل العميل عبر عملية جماعية") {
         return "Reactivated customer through a bulk action";
       }
       return value;
     case "CUSTOMER_DEACTIVATED":
-      if (value === "تم إيقاف حساب العميل" || value === "تم تعطيل حساب العميل") {
+      if (
+        value === "تم إيقاف حساب العميل" ||
+        value === "تم تعطيل حساب العميل"
+      ) {
         return "Deactivated customer account";
       }
       if (
@@ -103,7 +240,9 @@ function localizeLegacyActivityDescription(
       const direct = /^تمت إضافة وسم العميل: (.+)$/.exec(value);
       if (direct) return `Added customer tag: ${direct[1]}`;
       const bulk = /^تمت إضافة وسم العميل عبر عملية جماعية: (.+)$/.exec(value);
-      return bulk ? `Added customer tag through a bulk action: ${bulk[1]}` : value;
+      return bulk
+        ? `Added customer tag through a bulk action: ${bulk[1]}`
+        : value;
     }
     case "CUSTOMER_TAG_REMOVED": {
       const direct = /^تمت إزالة وسم العميل: (.+)$/.exec(value);
@@ -122,7 +261,8 @@ function localizeLegacyActivityDescription(
         ? "Updated an internal customer note"
         : value;
     case "REFERRAL_RECORDED": {
-      if (value === "تم تسجيل إحالة عميل جديد") return "Recorded a new customer referral";
+      if (value === "تم تسجيل إحالة عميل جديد")
+        return "Recorded a new customer referral";
       const match = /^تم تسجيل إحالة جديدة للعميل (.+)$/.exec(value);
       return match ? `Recorded a new referral for customer ${match[1]}` : value;
     }
@@ -136,7 +276,9 @@ function localizeLegacyActivityDescription(
     }
     case "REWARD_REDEMPTION_BLOCKED": {
       const match = /^تم رفض استبدال (.+) لانتهاء الصلاحية$/.exec(value);
-      return match ? `Blocked redemption of ${match[1]} because it expired` : value;
+      return match
+        ? `Blocked redemption of ${match[1]} because it expired`
+        : value;
     }
     case "REWARD_CREATED": {
       const match = /^تم إنشاء المكافأة (.+)$/.exec(value);
@@ -174,13 +316,18 @@ function localizeLegacyActivityDescription(
         "تم تحديث قوالب رسائل العملاء": "Updated customer message templates",
         "تم تحديث إعدادات التشغيل": "Updated operations settings",
         "تم تحديث تصميم بطاقة الولاء": "Updated loyalty card design",
-        "تم تحديث بيانات التواصل وشروط الكارت": "Updated digital card contact details and terms",
-        "تم تحديث بيانات التواصل وشروط الكارت الرقمي": "Updated digital card contact details and terms",
-        "تم السماح لمالك النشاط بتصدير البيانات": "Allowed the business owner to export data",
-        "تم إيقاف صلاحية تصدير البيانات عن مالك النشاط": "Revoked the business owner's data export permission",
+        "تم تحديث بيانات التواصل وشروط الكارت":
+          "Updated digital card contact details and terms",
+        "تم تحديث بيانات التواصل وشروط الكارت الرقمي":
+          "Updated digital card contact details and terms",
+        "تم السماح لمالك النشاط بتصدير البيانات":
+          "Allowed the business owner to export data",
+        "تم إيقاف صلاحية تصدير البيانات عن مالك النشاط":
+          "Revoked the business owner's data export permission",
       };
       if (value in exactDescriptions) return exactDescriptions[value];
-      const published = /^تم نشر نسخة جديدة من تصميم بطاقة الولاء \((.+)\)$/.exec(value);
+      const published =
+        /^تم نشر نسخة جديدة من تصميم بطاقة الولاء \((.+)\)$/.exec(value);
       return published
         ? `Published a new loyalty card design version (${published[1]})`
         : value;
@@ -210,7 +357,10 @@ export function getActivityDescription(
   const operation = getActivityMetadataString(activity.metadata, "operation");
 
   if (kind === "BRANCH_AUDIT") {
-    const branchName = getActivityMetadataString(activity.metadata, "branchName");
+    const branchName = getActivityMetadataString(
+      activity.metadata,
+      "branchName",
+    );
     if (!branchName) return activity.description;
     const assignedUserEmail = getActivityMetadataString(
       activity.metadata,
@@ -219,21 +369,33 @@ export function getActivityDescription(
 
     if (language === "AR") {
       switch (operation) {
-        case "CREATE": return `تم إنشاء الفرع ${branchName}`;
-        case "UPDATE": return `تم تحديث بيانات الفرع ${branchName}`;
-        case "ACTIVATE": return `تم تفعيل الفرع ${branchName}`;
-        case "DEACTIVATE": return `تم إيقاف الفرع ${branchName}`;
-        case "ASSIGN_STAFF": return `تم إسناد موظف إلى الفرع ${branchName}${assignedUserEmail ? ` للموظف ${assignedUserEmail}` : ""}`;
-        case "REMOVE_STAFF": return `تمت إزالة إسناد موظف من الفرع ${branchName}${assignedUserEmail ? ` للموظف ${assignedUserEmail}` : ""}`;
+        case "CREATE":
+          return `تم إنشاء الفرع ${branchName}`;
+        case "UPDATE":
+          return `تم تحديث بيانات الفرع ${branchName}`;
+        case "ACTIVATE":
+          return `تم تفعيل الفرع ${branchName}`;
+        case "DEACTIVATE":
+          return `تم إيقاف الفرع ${branchName}`;
+        case "ASSIGN_STAFF":
+          return `تم إسناد موظف إلى الفرع ${branchName}${assignedUserEmail ? ` للموظف ${assignedUserEmail}` : ""}`;
+        case "REMOVE_STAFF":
+          return `تمت إزالة إسناد موظف من الفرع ${branchName}${assignedUserEmail ? ` للموظف ${assignedUserEmail}` : ""}`;
       }
     } else {
       switch (operation) {
-        case "CREATE": return `Created branch ${branchName}`;
-        case "UPDATE": return `Updated branch ${branchName}`;
-        case "ACTIVATE": return `Activated branch ${branchName}`;
-        case "DEACTIVATE": return `Deactivated branch ${branchName}`;
-        case "ASSIGN_STAFF": return `Assigned staff to branch ${branchName}${assignedUserEmail ? ` for ${assignedUserEmail}` : ""}`;
-        case "REMOVE_STAFF": return `Removed staff assignment from branch ${branchName}${assignedUserEmail ? ` for ${assignedUserEmail}` : ""}`;
+        case "CREATE":
+          return `Created branch ${branchName}`;
+        case "UPDATE":
+          return `Updated branch ${branchName}`;
+        case "ACTIVATE":
+          return `Activated branch ${branchName}`;
+        case "DEACTIVATE":
+          return `Deactivated branch ${branchName}`;
+        case "ASSIGN_STAFF":
+          return `Assigned staff to branch ${branchName}${assignedUserEmail ? ` for ${assignedUserEmail}` : ""}`;
+        case "REMOVE_STAFF":
+          return `Removed staff assignment from branch ${branchName}${assignedUserEmail ? ` for ${assignedUserEmail}` : ""}`;
       }
     }
   }
@@ -252,19 +414,29 @@ export function getActivityDescription(
 
     if (language === "AR") {
       switch (operation) {
-        case "CREATE": return `تم إنشاء حساب ${roleLabel} للبريد ${targetUserEmail}`;
-        case "ACTIVATE": return `تم إعادة تفعيل الحساب ${targetUserEmail}`;
-        case "DEACTIVATE": return `تم إيقاف الحساب ${targetUserEmail}`;
-        case "PASSWORD_CHANGE": return `تم تغيير كلمة المرور للحساب ${targetUserEmail}`;
-        case "EXPERIENCE_ACCESS_UPDATE": return `تم تحديث وصول الواجهة للحساب ${targetUserEmail}`;
+        case "CREATE":
+          return `تم إنشاء حساب ${roleLabel} للبريد ${targetUserEmail}`;
+        case "ACTIVATE":
+          return `تم إعادة تفعيل الحساب ${targetUserEmail}`;
+        case "DEACTIVATE":
+          return `تم إيقاف الحساب ${targetUserEmail}`;
+        case "PASSWORD_CHANGE":
+          return `تم تغيير كلمة المرور للحساب ${targetUserEmail}`;
+        case "EXPERIENCE_ACCESS_UPDATE":
+          return `تم تحديث وصول الواجهة للحساب ${targetUserEmail}`;
       }
     } else {
       switch (operation) {
-        case "CREATE": return `Created ${roleLabel} account for ${targetUserEmail}`;
-        case "ACTIVATE": return `Reactivated account ${targetUserEmail}`;
-        case "DEACTIVATE": return `Deactivated account ${targetUserEmail}`;
-        case "PASSWORD_CHANGE": return `Changed password for ${targetUserEmail}`;
-        case "EXPERIENCE_ACCESS_UPDATE": return `Updated experience access for ${targetUserEmail}`;
+        case "CREATE":
+          return `Created ${roleLabel} account for ${targetUserEmail}`;
+        case "ACTIVATE":
+          return `Reactivated account ${targetUserEmail}`;
+        case "DEACTIVATE":
+          return `Deactivated account ${targetUserEmail}`;
+        case "PASSWORD_CHANGE":
+          return `Changed password for ${targetUserEmail}`;
+        case "EXPERIENCE_ACCESS_UPDATE":
+          return `Updated experience access for ${targetUserEmail}`;
       }
     }
   }
@@ -285,7 +457,10 @@ export function getActivityDescription(
       if (amount === undefined || !loyaltyMode || !unitName) {
         return activity.description;
       }
-      const saleAmount = getActivityMetadataNumber(activity.metadata, "saleAmount");
+      const saleAmount = getActivityMetadataNumber(
+        activity.metadata,
+        "saleAmount",
+      );
       const displayedAmount = saleAmount ?? amount;
       return loyaltyMode === "SALES_AMOUNT"
         ? language === "AR"
@@ -297,7 +472,10 @@ export function getActivityDescription(
     }
 
     if (financialType === "REWARD_REDEEMED") {
-      const rewardName = getActivityMetadataString(activity.metadata, "rewardName");
+      const rewardName = getActivityMetadataString(
+        activity.metadata,
+        "rewardName",
+      );
       const cost = getActivityMetadataNumber(activity.metadata, "cost");
       if (!rewardName || cost === undefined) return activity.description;
       return language === "AR"
@@ -316,6 +494,47 @@ export function getActivityDescription(
       return language === "AR"
         ? `تم تعديل الرصيد بمقدار ${displayedAmount}. السبب: ${reason}`
         : `Adjusted balance by ${displayedAmount}. Reason: ${reason}`;
+    }
+  }
+
+  if (kind === "CATALOG_AUDIT") {
+    const entity = getActivityMetadataString(activity.metadata, "entity");
+    const itemName = getActivityMetadataString(activity.metadata, "itemName");
+    if (!itemName || (entity !== "REWARD" && entity !== "OFFER")) {
+      return activity.description;
+    }
+
+    const noun =
+      language === "AR"
+        ? entity === "REWARD"
+          ? "المكافأة"
+          : "العرض"
+        : entity === "REWARD"
+          ? "reward"
+          : "offer";
+
+    if (language === "AR") {
+      switch (operation) {
+        case "CREATE":
+          return `تم إنشاء ${noun} ${itemName}`;
+        case "UPDATE":
+          return `تم تحديث ${noun} ${itemName}`;
+        case "ACTIVATE":
+          return `تم تفعيل ${noun} ${itemName}`;
+        case "DEACTIVATE":
+          return `تم إيقاف ${noun} ${itemName}`;
+      }
+    } else {
+      switch (operation) {
+        case "CREATE":
+          return `Created ${noun} ${itemName}`;
+        case "UPDATE":
+          return `Updated ${noun} ${itemName}`;
+        case "ACTIVATE":
+          return `Activated ${noun} ${itemName}`;
+        case "DEACTIVATE":
+          return `Deactivated ${noun} ${itemName}`;
+      }
     }
   }
 

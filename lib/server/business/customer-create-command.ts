@@ -5,8 +5,11 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
-import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
+import {
+  equivalentPhoneIdentities,
+  normalizePhoneE164,
+} from "@/lib/customers/phone";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -94,13 +97,10 @@ export async function createCustomerCommand(input: {
     if (!phone) {
       return { ok: false, reason: "INVALID_PHONE" } as const;
     }
-
-    const existingCustomer = await transaction.customer.findUnique({
+    const existingCustomer = await transaction.customer.findFirst({
       where: {
-        businessId_phone: {
-          businessId: input.businessId,
-          phone,
-        },
+        businessId: input.businessId,
+        phone: { in: equivalentPhoneIdentities(phone, business.country) },
       },
       select: { id: true },
     });

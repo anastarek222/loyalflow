@@ -59,6 +59,7 @@ async function getBulkCustomerContext(slug: string) {
       slug: true,
       plan: true,
       subscriptionLifecycleState: true,
+      country: true,
     },
   });
   if (!business) redirect("/businesses");
@@ -320,5 +321,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   revalidatePath(`/card/${createdCustomer.publicToken}`);
   revalidatePath("/dashboard");
 
-  redirect(`/businesses/${slug}/customers/${createdCustomer.id}?success=created`);
+  redirect(
+    `/businesses/${slug}/customers/${createdCustomer.id}?success=created`,
+  );
 }

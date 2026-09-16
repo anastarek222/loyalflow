@@ -545,7 +545,7 @@ export function StandardCardSetup({
                 })}
               </div>
               <p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
-                {t("اللون الأساسي", "Primary colour")}
+                {t("اللون الأساسي — لون التمييز", "Primary colour — accent")}
               </p>
               <div className="mt-2 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
                 <label className="text-xs font-bold text-foreground-muted">
@@ -619,7 +619,7 @@ export function StandardCardSetup({
                 })}
               </div>
               <p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-foreground-muted">
-                {t("اللون الثانوي", "Secondary colour")}
+                {t("اللون الثانوي — سطح مساعد", "Secondary colour — supporting surface")}
               </p>
               <div className="mt-2 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end">
                 <label className="text-xs font-bold text-foreground-muted">
