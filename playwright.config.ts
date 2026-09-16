@@ -93,6 +93,7 @@ export default defineConfig({
     {
       name: "owner-onboarding-chromium",
       grep: /@owner-onboarding/,
+      grepInvert: /@owner-onboarding-desktop/,
       use: {
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
