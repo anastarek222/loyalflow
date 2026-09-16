@@ -324,7 +324,7 @@ export default async function BusinessWhatsAppSettingsPage({
           business.cardDefaultLanguage,
           "NEW_OFFER",
         ),
-      producerReady: false,
+      producerReady: true,
     },
   ];
   const bindingByEvent = new Map(bindings.map((binding) => [binding.event, binding]));
