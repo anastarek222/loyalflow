@@ -1,0 +1,177 @@
+name: Apply browser UAT truth fix
+
+on:
+  push:
+    branches: [fix/reward-truth-core]
+    paths: [.github/workflows/apply-browser-uat-truth-fix.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v6
+        with:
+          ref: fix/reward-truth-core
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Make bounded browser receipts explicit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected exactly one match, found {count}")
+              file.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              "tests/browser/owner-onboarding-mobile.spec.ts",
+              "    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) return;\n",
+              '''    if (process.env.STAGING_UAT_MANIFEST_PATH?.trim()) {
+              test.skip(
+                true,
+                "The complete Owner launch and direct re-entry receipt requires the disposable PR database; remote exact-SHA UAT only verifies the shared mutation-free runtime.",
+              );
+            }
+          ''',
+          )
+
+          replace_once(
+              "tests/browser/pilot-custom-card.spec.ts",
+              '''    if (await notConfigured.count()) {
+              await expect(notConfigured).toBeVisible();
+              return;
+            }
+          ''',
+              '''    if (await notConfigured.count()) {
+              await expect(notConfigured).toBeVisible();
+              test.skip(
+                true,
+                "The bounded publish lifecycle requires Vercel Blob to be configured for this runtime.",
+              );
+            }
+          ''',
+          )
+
+          replace_once(
+              "tests/browser/pilot-custom-card.spec.ts",
+              '''    if (!canCleanUploadedBlobArtwork()) {
+              test.info().annotations.push({
+                type: "bounded-runtime",
+                description:
+                  "Blob is configured on the application, but this runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
+              });
+              return;
+            }
+          ''',
+              '''    if (!canCleanUploadedBlobArtwork()) {
+              test.info().annotations.push({
+                type: "bounded-runtime",
+                description:
+                  "Blob is configured on the application, but this runner has no Blob cleanup credential; valid upload/publish is intentionally not mutated.",
+              });
+              test.skip(
+                true,
+                "Valid upload/publish requires a runner Blob cleanup credential so immutable UAT artwork can be cleaned.",
+              );
+            }
+          ''',
+          )
+
+          replace_once(
+              "tests/pilot-owner-onboarding-receipt.test.ts",
+              '''  assert.match(
+              browser,
+              /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) return/,
+            );
+          ''',
+              '''  assert.match(
+              browser,
+              /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) \\{[\\s\\S]*?test\\.skip\\(/,
+            );
+            assert.doesNotMatch(
+              browser,
+              /if \\(process\\.env\\.STAGING_UAT_MANIFEST_PATH\\?\\.trim\\(\\)\\) return/,
+            );
+          ''',
+          )
+
+          replace_once(
+              "tests/pilot-custom-card-receipt.test.ts",
+              "  assert.match(browser, /canCleanUploadedBlobArtwork/);\n",
+              '''  assert.match(browser, /canCleanUploadedBlobArtwork/);
+            assert.match(
+              browser,
+              /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*test\\.skip\\(/,
+            );
+            assert.doesNotMatch(
+              browser,
+              /if \\(await notConfigured\\.count\\(\\)\\) \\{\\s*await expect\\(notConfigured\\)\\.toBeVisible\\(\\);\\s*return;/,
+            );
+            assert.match(
+              browser,
+              /if \\(!canCleanUploadedBlobArtwork\\(\\)\\) \\{[\\s\\S]*?type: "bounded-runtime"[\\s\\S]*?test\\.skip\\(/,
+            );
+            assert.doesNotMatch(
+              browser,
+              /type: "bounded-runtime"[\\s\\S]*?\\}\\);\\s*return;/,
+            );
+          ''',
+          )
+          PY
+
+          git diff --check
+          git diff -- \
+            tests/browser/owner-onboarding-mobile.spec.ts \
+            tests/browser/pilot-custom-card.spec.ts \
+            tests/pilot-owner-onboarding-receipt.test.ts \
+            tests/pilot-custom-card-receipt.test.ts
+
+      - name: Run affected source-contract tests
+        env:
+          NODE_ENV: test
+        run: >-
+          node --import tsx --test
+          tests/pilot-owner-onboarding-receipt.test.ts
+          tests/pilot-custom-card-receipt.test.ts
+
+      - name: Commit scoped fix and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-browser-uat-truth-fix.yml
+          git add \
+            tests/browser/owner-onboarding-mobile.spec.ts \
+            tests/browser/pilot-custom-card.spec.ts \
+            tests/pilot-owner-onboarding-receipt.test.ts \
+            tests/pilot-custom-card-receipt.test.ts
+          git commit -m "test: make browser UAT skips explicit"
+          git push origin HEAD:fix/reward-truth-core
