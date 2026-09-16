@@ -16,14 +16,11 @@ export type WhatsAppOptOutRequest = Readonly<{
 }>;
 
 export type WhatsAppDeliveryStatus =
-  | "SENT"
-  | "DELIVERED"
-  | "READ"
-  | "FAILED"
-  | "OTHER";
+  "SENT" | "DELIVERED" | "READ" | "FAILED" | "OTHER";
 
 export type WhatsAppDeliveryStatusEvent = Readonly<{
   providerMessageId: string;
+  phoneNumberId: string;
   status: WhatsAppDeliveryStatus;
   timestamp: Date | null;
 }>;
@@ -86,9 +83,9 @@ export function verifyWhatsAppWebhookChallenge(input: {
 }) {
   return Boolean(
     input.verifyToken &&
-      input.mode === "subscribe" &&
-      input.challenge &&
-      input.token === input.verifyToken,
+    input.mode === "subscribe" &&
+    input.challenge &&
+    input.token === input.verifyToken,
   );
 }
 
@@ -106,13 +103,16 @@ export function verifyWhatsAppWebhookSignature(input: {
     .update(input.rawBody, "utf8")
     .digest();
   const received = Buffer.from(receivedHex, "hex");
-  return received.length === expected.length && timingSafeEqual(received, expected);
+  return (
+    received.length === expected.length && timingSafeEqual(received, expected)
+  );
 }
 
 export function extractWhatsAppOptOutRequests(
   payload: unknown,
 ): WhatsAppOptOutRequest[] {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return [];
+  if (!payload || typeof payload !== "object" || Array.isArray(payload))
+    return [];
   const entries = (payload as { entry?: unknown }).entry;
   if (!Array.isArray(entries)) return [];
 
@@ -125,31 +125,42 @@ export function extractWhatsAppOptOutRequests(
     if (!Array.isArray(changes)) continue;
 
     for (const change of changes) {
-      if (!change || typeof change !== "object" || Array.isArray(change)) continue;
+      if (!change || typeof change !== "object" || Array.isArray(change))
+        continue;
       const value = (change as { value?: unknown }).value;
       if (!value || typeof value !== "object" || Array.isArray(value)) continue;
 
       const metadata = (value as { metadata?: unknown }).metadata;
-      if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) continue;
-      const phoneNumberIdValue = (metadata as { phone_number_id?: unknown }).phone_number_id;
-      if (typeof phoneNumberIdValue !== "string" || !phoneNumberIdValue.trim()) continue;
+      if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
+        continue;
+      const phoneNumberIdValue = (metadata as { phone_number_id?: unknown })
+        .phone_number_id;
+      if (typeof phoneNumberIdValue !== "string" || !phoneNumberIdValue.trim())
+        continue;
       const phoneNumberId = phoneNumberIdValue.trim();
 
       const messages = (value as { messages?: unknown }).messages;
       if (!Array.isArray(messages)) continue;
 
       for (const message of messages) {
-        if (!message || typeof message !== "object" || Array.isArray(message)) continue;
+        if (!message || typeof message !== "object" || Array.isArray(message))
+          continue;
         const candidate = message as {
           id?: unknown;
           from?: unknown;
           type?: unknown;
           text?: unknown;
         };
-        if (candidate.type !== "text" || typeof candidate.from !== "string") continue;
+        if (candidate.type !== "text" || typeof candidate.from !== "string")
+          continue;
         const senderPhone = normalizeInboundPhone(candidate.from);
         if (!senderPhone) continue;
-        if (!candidate.text || typeof candidate.text !== "object" || Array.isArray(candidate.text)) continue;
+        if (
+          !candidate.text ||
+          typeof candidate.text !== "object" ||
+          Array.isArray(candidate.text)
+        )
+          continue;
         const body = (candidate.text as { body?: unknown }).body;
         if (typeof body !== "string") continue;
         const keyword = normalizeOptOutKeyword(body);
@@ -170,7 +181,8 @@ export function extractWhatsAppOptOutRequests(
 export function extractWhatsAppDeliveryStatusEvents(
   payload: unknown,
 ): WhatsAppDeliveryStatusEvent[] {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return [];
+  if (!payload || typeof payload !== "object" || Array.isArray(payload))
+    return [];
   const entries = (payload as { entry?: unknown }).entry;
   if (!Array.isArray(entries)) return [];
 
@@ -183,14 +195,36 @@ export function extractWhatsAppDeliveryStatusEvents(
     if (!Array.isArray(changes)) continue;
 
     for (const change of changes) {
-      if (!change || typeof change !== "object" || Array.isArray(change)) continue;
+      if (!change || typeof change !== "object" || Array.isArray(change))
+        continue;
       const value = (change as { value?: unknown }).value;
       if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+      const metadata = (value as { metadata?: unknown }).metadata;
+      if (
+        !metadata ||
+        typeof metadata !== "object" ||
+        Array.isArray(metadata)
+      ) {
+        continue;
+      }
+      const phoneNumberIdValue = (metadata as { phone_number_id?: unknown })
+        .phone_number_id;
+      if (
+        typeof phoneNumberIdValue !== "string" ||
+        !/^\d{5,30}$/.test(phoneNumberIdValue.trim())
+      ) {
+        continue;
+      }
+      const phoneNumberId = phoneNumberIdValue.trim();
       const statuses = (value as { statuses?: unknown }).statuses;
       if (!Array.isArray(statuses)) continue;
 
       for (const statusValue of statuses) {
-        if (!statusValue || typeof statusValue !== "object" || Array.isArray(statusValue)) {
+        if (
+          !statusValue ||
+          typeof statusValue !== "object" ||
+          Array.isArray(statusValue)
+        ) {
           continue;
         }
         const candidate = statusValue as {
@@ -199,13 +233,14 @@ export function extractWhatsAppDeliveryStatusEvents(
           timestamp?: unknown;
         };
         const providerMessageId = normalizeProviderMessageId(candidate.id);
-        if (!providerMessageId || typeof candidate.status !== "string") continue;
+        if (!providerMessageId || typeof candidate.status !== "string")
+          continue;
         const status = mapWhatsAppDeliveryStatus(candidate.status);
         const timestamp = parseWhatsAppStatusTimestamp(candidate.timestamp);
-        const dedupeKey = `${providerMessageId}:${status}:${timestamp?.toISOString() ?? ""}`;
+        const dedupeKey = `${phoneNumberId}:${providerMessageId}:${status}:${timestamp?.toISOString() ?? ""}`;
         if (seen.has(dedupeKey)) continue;
         seen.add(dedupeKey);
-        events.push({ providerMessageId, status, timestamp });
+        events.push({ providerMessageId, phoneNumberId, status, timestamp });
       }
     }
   }
@@ -238,7 +273,8 @@ export function summarizeWhatsAppWebhookStatuses(
     if (!Array.isArray(changes)) continue;
 
     for (const change of changes) {
-      if (!change || typeof change !== "object" || Array.isArray(change)) continue;
+      if (!change || typeof change !== "object" || Array.isArray(change))
+        continue;
       const value = (change as { value?: unknown }).value;
       if (!value || typeof value !== "object" || Array.isArray(value)) continue;
       const statuses = (value as { statuses?: unknown }).statuses;

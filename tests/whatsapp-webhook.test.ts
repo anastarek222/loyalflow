@@ -19,6 +19,7 @@ const rawBody = JSON.stringify({
       changes: [
         {
           value: {
+            metadata: { phone_number_id: "222222" },
             statuses: [
               { id: "wamid.1", status: "sent" },
               { id: "wamid.2", status: "delivered" },
@@ -119,9 +120,14 @@ test("WhatsApp delivery status intake extracts bounded provider ids, mapped stat
         changes: [
           {
             value: {
+              metadata: { phone_number_id: "222222" },
               statuses: [
                 { id: " wamid.sent ", status: "sent", timestamp: "1788448200" },
-                { id: "wamid.delivered", status: "delivered", timestamp: 1788448201 },
+                {
+                  id: "wamid.delivered",
+                  status: "delivered",
+                  timestamp: 1788448201,
+                },
                 { id: "wamid.read", status: "read", timestamp: "1788448202" },
                 { id: "wamid.failed", status: "failed", timestamp: "bad" },
                 { id: "wamid.other", status: "warning" },
@@ -138,21 +144,34 @@ test("WhatsApp delivery status intake extracts bounded provider ids, mapped stat
   assert.deepEqual(extractWhatsAppDeliveryStatusEvents(payload), [
     {
       providerMessageId: "wamid.sent",
+      phoneNumberId: "222222",
       status: "SENT",
       timestamp: new Date(1788448200 * 1000),
     },
     {
       providerMessageId: "wamid.delivered",
+      phoneNumberId: "222222",
       status: "DELIVERED",
       timestamp: new Date(1788448201 * 1000),
     },
     {
       providerMessageId: "wamid.read",
+      phoneNumberId: "222222",
       status: "READ",
       timestamp: new Date(1788448202 * 1000),
     },
-    { providerMessageId: "wamid.failed", status: "FAILED", timestamp: null },
-    { providerMessageId: "wamid.other", status: "OTHER", timestamp: null },
+    {
+      providerMessageId: "wamid.failed",
+      phoneNumberId: "222222",
+      status: "FAILED",
+      timestamp: null,
+    },
+    {
+      providerMessageId: "wamid.other",
+      phoneNumberId: "222222",
+      status: "OTHER",
+      timestamp: null,
+    },
   ]);
 });
 
@@ -177,19 +196,31 @@ test("WhatsApp provider acceptance and webhook delivery states are durably corre
     join(process.cwd(), "app/api/webhooks/whatsapp/route.ts"),
     "utf8",
   );
-  const schema = readFileSync(join(process.cwd(), "prisma/schema.prisma"), "utf8");
+  const schema = readFileSync(
+    join(process.cwd(), "prisma/schema.prisma"),
+    "utf8",
+  );
 
   assert.match(cloud, /extractWhatsAppProviderMessageId/);
   assert.match(cloud, /await response\.json\(\)/);
   assert.match(worker, /providerMessageId: result\.providerMessageId/);
   assert.match(outbox, /providerDeliveryStatus: "ACCEPTED"/);
   assert.match(schema, /providerMessageId\s+String\?/);
-  assert.match(schema, /providerDeliveryStatus\s+IntegrationProviderDeliveryStatus\?/);
+  assert.match(schema, /providerPhoneNumberId\s+String\?/);
+  assert.match(schema, /providerWabaId\s+String\?/);
+  assert.match(
+    schema,
+    /providerDeliveryStatus\s+IntegrationProviderDeliveryStatus\?/,
+  );
   assert.match(schema, /providerStatusAt\s+DateTime\?/);
   assert.match(persistence, /kind: "WHATSAPP_CUSTOMER_NOTIFICATION"/);
+  assert.match(persistence, /providerPhoneNumberId: event\.phoneNumberId/);
   assert.match(persistence, /SENT: \["OTHER", "ACCEPTED"\]/);
   assert.match(persistence, /DELIVERED: \["OTHER", "ACCEPTED", "SENT"\]/);
-  assert.match(persistence, /READ: \["OTHER", "ACCEPTED", "SENT", "DELIVERED"\]/);
+  assert.match(
+    persistence,
+    /READ: \["OTHER", "ACCEPTED", "SENT", "DELIVERED"\]/,
+  );
   assert.match(persistence, /FAILED: \["OTHER", "ACCEPTED", "SENT"\]/);
   assert.match(route, /persistWhatsAppDeliveryStatusFromWebhook\(payload\)/);
   assert.match(route, /persistedStatusCount/);
@@ -207,7 +238,8 @@ test("WhatsApp webhook route is fail-closed and verifies signature before JSON p
   assert.match(route, /x-hub-signature-256/);
   assert.match(route, /verifyWhatsAppWebhookSignature/);
   assert.ok(
-    route.indexOf("verifyWhatsAppWebhookSignature") < route.indexOf("JSON.parse(rawBody)"),
+    route.indexOf("verifyWhatsAppWebhookSignature") <
+      route.indexOf("JSON.parse(rawBody)"),
   );
   assert.match(route, /status: 401/);
   assert.match(route, /status: 503/);

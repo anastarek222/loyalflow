@@ -89,10 +89,7 @@ export async function claimIntegrationJob(
       id: jobId,
       status: { in: ["PENDING", "FAILED", "PROCESSING"] },
       availableAt: { lte: input.now },
-      OR: [
-        { leaseExpiresAt: null },
-        { leaseExpiresAt: { lte: input.now } },
-      ],
+      OR: [{ leaseExpiresAt: null }, { leaseExpiresAt: { lte: input.now } }],
     },
     data: {
       status: "PROCESSING",
@@ -115,9 +112,18 @@ export async function completeIntegrationJob(
     workerId: string;
     completedAt: Date;
     providerMessageId?: string;
+    providerPhoneNumberId?: string;
+    providerWabaId?: string;
   }>,
 ) {
   const providerMessageId = input.providerMessageId?.trim();
+  const providerPhoneNumberId = input.providerPhoneNumberId?.trim();
+  const providerWabaId = input.providerWabaId?.trim();
+  if (providerMessageId && (!providerPhoneNumberId || !providerWabaId)) {
+    throw new Error(
+      "Accepted WhatsApp messages require their provider sender identity.",
+    );
+  }
   return transaction.integrationJob.updateMany({
     where: {
       id: requireBoundedIdentifier(input.jobId, "jobId"),
@@ -133,6 +139,8 @@ export async function completeIntegrationJob(
       ...(providerMessageId
         ? {
             providerMessageId,
+            providerPhoneNumberId,
+            providerWabaId,
             providerDeliveryStatus: "ACCEPTED" as const,
             providerStatusAt: input.completedAt,
           }

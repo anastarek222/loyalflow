@@ -11,7 +11,10 @@ const embeddedSignupButtonSource = readFileSync(
   "components/whatsapp-embedded-signup-button.tsx",
   "utf8",
 );
-const onboardingActionSource = readFileSync("app/onboarding/actions.ts", "utf8");
+const onboardingActionSource = readFileSync(
+  "app/onboarding/actions.ts",
+  "utf8",
+);
 
 test("Owner onboarding exposes Embedded Signup only through server readiness and the existing launch action", () => {
   assert.match(
@@ -31,10 +34,7 @@ test("Owner onboarding exposes Embedded Signup only through server readiness and
     /process\.env\.WHATSAPP_GRAPH_API_VERSION\?\.trim\(\) \?\? ""/,
   );
   assert.match(ownerWhatsAppSource, /action=\{launchAction\}/);
-  assert.match(
-    ownerWhatsAppSource,
-    /enabled=\{embeddedSignupReady\}/,
-  );
+  assert.match(ownerWhatsAppSource, /enabled=\{embeddedSignupReady\}/);
   assert.match(
     onboardingPageSource,
     /embeddedSignupReady=\{embeddedSignupReadiness\.ready\}/,
@@ -44,7 +44,7 @@ test("Owner onboarding exposes Embedded Signup only through server readiness and
 test("Owner Embedded Signup preserves the wizard FormData and overlays only Meta completion fields before launch", () => {
   assert.match(
     ownerWhatsAppSource,
-    /document\.querySelector<HTMLFormElement>\("form\[data-owner-step\]"\)/,
+    /document\.querySelector<HTMLFormElement>\(\s*"form\[data-owner-step\]",?\s*\)/,
   );
   assert.match(
     ownerWhatsAppSource,
@@ -61,7 +61,10 @@ test("Owner Embedded Signup preserves the wizard FormData and overlays only Meta
     "formData.set(key, value);",
     overlayLoop,
   );
-  const launch = embeddedSignupButtonSource.indexOf("await action(formData);", overlaySet);
+  const launch = embeddedSignupButtonSource.indexOf(
+    "await action(formData);",
+    overlaySet,
+  );
 
   assert.ok(baseFormData >= 0);
   assert.ok(overlayLoop > baseFormData);
@@ -93,8 +96,13 @@ test("Owner launch completes Meta signup server-side and persists encrypted cred
   const encrypt = onboardingActionSource.indexOf(
     "encryptBusinessWhatsAppAccessToken(whatsappConnection.accessToken)",
   );
-  const transaction = onboardingActionSource.indexOf("prisma.$transaction(async (tx) =>");
-  const businessCreate = onboardingActionSource.indexOf("tx.business.create({", transaction);
+  const transaction = onboardingActionSource.indexOf(
+    "prisma.$transaction(async (tx) =>",
+  );
+  const businessCreate = onboardingActionSource.indexOf(
+    "tx.business.create({",
+    transaction,
+  );
   const credentialUpsert = onboardingActionSource.indexOf(
     "await upsertBusinessWhatsAppCredential(tx, {",
     businessCreate,

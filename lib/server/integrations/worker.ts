@@ -11,7 +11,12 @@ import { sendWhatsAppCustomerNotificationSafely } from "@/lib/server/integration
 const LEASE_DURATION_MS = 5 * 60 * 1000;
 
 type IntegrationDeliveryResult =
-  | Readonly<{ status: "success"; providerMessageId?: string }>
+  | Readonly<{
+      status: "success";
+      providerMessageId?: string;
+      providerPhoneNumberId?: string;
+      providerWabaId?: string;
+    }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
 
 async function deliverClaimedJob(claimed: {
@@ -55,7 +60,11 @@ export async function processIntegrationJob(jobId: string, deliveryId: string) {
       workerId,
       completedAt: finishedAt,
       ...(result.providerMessageId
-        ? { providerMessageId: result.providerMessageId }
+        ? {
+            providerMessageId: result.providerMessageId,
+            providerPhoneNumberId: result.providerPhoneNumberId,
+            providerWabaId: result.providerWabaId,
+          }
         : {}),
     });
     if (completed.count !== 1)

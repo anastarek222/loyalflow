@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { scheduleIntegrationJob } from "@/lib/integration-job-scheduler";
 import { canAccessBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -39,7 +39,6 @@ async function recoverableBusiness(slug: string) {
     select: {
       id: true,
       slug: true,
-      subscriptionLifecycleState: true,
     },
   });
   if (!business) redirect("/businesses");
@@ -47,10 +46,11 @@ async function recoverableBusiness(slug: string) {
     redirect(`/businesses/${business.slug}/customers`);
   }
   if (
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
     redirect(
       `/businesses/${business.slug}/whatsapp-history?recovery=subscription-restricted`,

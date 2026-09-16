@@ -85,6 +85,7 @@ const REVIEWED_MIGRATIONS = [
   "20260907120000_add_business_whatsapp_template_bindings",
   "20260911120000_add_whatsapp_automation_controls",
   "20260911183000_add_customer_whatsapp_consent_state",
+  "20260916220000_harden_whatsapp_sender_isolation",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;
@@ -109,7 +110,7 @@ const verificationTransactionOptions = {
 } as const;
 
 async function withVerificationTransaction<T>(
-  operation: (transaction: Prisma.TransactionClient) => Promise<T>
+  operation: (transaction: Prisma.TransactionClient) => Promise<T>,
 ) {
   return prisma.$transaction(operation, verificationTransactionOptions);
 }
@@ -124,10 +125,7 @@ function daysAgo(days: number) {
   return date;
 }
 
-async function createFixtureBusiness(
-  label: string,
-  loyaltyMode: LoyaltyMode
-) {
+async function createFixtureBusiness(label: string, loyaltyMode: LoyaltyMode) {
   const business = await prisma.business.create({
     data: {
       name: `LoyalFlow verification ${label}`,
@@ -148,7 +146,7 @@ async function createCustomer(
   businessId: string,
   customerCode: string,
   phone: string,
-  createdAt = new Date()
+  createdAt = new Date(),
 ) {
   return prisma.customer.create({
     data: {
@@ -170,7 +168,7 @@ async function verifyMigrationHistory() {
   assert.equal(
     identity[0]?.database,
     "loyalflow_test",
-    "Refusing to run outside the explicit loyalflow_test database."
+    "Refusing to run outside the explicit loyalflow_test database.",
   );
 
   const applied = await prisma.$queryRaw<
@@ -181,7 +179,7 @@ async function verifyMigrationHistory() {
 
   assert.ok(
     JSON.stringify(migrationNames) === JSON.stringify(REVIEWED_MIGRATIONS),
-    "Migration history must exactly match the reviewed migration history."
+    "Migration history must exactly match the reviewed migration history.",
   );
 }
 
@@ -190,7 +188,7 @@ async function verifyCustomerCreationAndSelfSignup() {
   const staffCreated = await createCustomer(
     business.id,
     `STAFF-${runId}`,
-    "+201000000001"
+    "+201000000001",
   );
 
   assert.equal(staffCreated.businessId, business.id);
@@ -205,7 +203,7 @@ async function verifyCustomerCreationAndSelfSignup() {
   const customerCode = await generateCustomerCode(
     prisma,
     business.id,
-    business.slug
+    business.slug,
   );
   const joined = await withVerificationTransaction(async (transaction) => {
     const customer = await transaction.customer.create({
@@ -230,7 +228,10 @@ async function verifyCustomerCreationAndSelfSignup() {
     return customer;
   });
 
-  assert.ok(joined.publicToken, "Self-signed customer must have a public token.");
+  assert.ok(
+    joined.publicToken,
+    "Self-signed customer must have a public token.",
+  );
   assert.equal(
     await prisma.businessActivity.count({
       where: {
@@ -239,7 +240,7 @@ async function verifyCustomerCreationAndSelfSignup() {
         type: "CUSTOMER_CREATED",
       },
     }),
-    1
+    1,
   );
 
   return { business, joined };
@@ -252,7 +253,7 @@ async function verifyLoyaltyAndTenantIsolation() {
   const customer = await createCustomer(
     visits.id,
     `VISIT-${runId}`,
-    "+201000000010"
+    "+201000000010",
   );
 
   const earnedBalance = await withVerificationTransaction((transaction) =>
@@ -265,28 +266,29 @@ async function verifyLoyaltyAndTenantIsolation() {
       unitName: visits.unitName,
       transactionNote: "Verification visit earn",
       activityDescription: "Verification visit earn",
-    })
+    }),
   );
   assert.equal(earnedBalance, 5);
 
-  const blockedCrossTenantEarn = await withVerificationTransaction((transaction) =>
-    recordLoyaltyEarn(transaction, {
-      customerId: customer.id,
-      businessId: points.id,
-      createdById: undefined,
-      amount: 1,
-      sourceLoyaltyMode: "POINTS",
-      unitName: points.unitName,
-      transactionNote: "Cross tenant verification",
-      activityDescription: "Cross tenant verification",
-    })
+  const blockedCrossTenantEarn = await withVerificationTransaction(
+    (transaction) =>
+      recordLoyaltyEarn(transaction, {
+        customerId: customer.id,
+        businessId: points.id,
+        createdById: undefined,
+        amount: 1,
+        sourceLoyaltyMode: "POINTS",
+        unitName: points.unitName,
+        transactionNote: "Cross tenant verification",
+        activityDescription: "Cross tenant verification",
+      }),
   );
   assert.equal(blockedCrossTenantEarn, null);
 
   const pointsCustomer = await createCustomer(
     points.id,
     `POINT-${runId}`,
-    "+201000000011"
+    "+201000000011",
   );
   const pointsBalance = await withVerificationTransaction((transaction) =>
     recordLoyaltyEarn(transaction, {
@@ -298,14 +300,14 @@ async function verifyLoyaltyAndTenantIsolation() {
       unitName: points.unitName,
       transactionNote: "Verification points earn",
       activityDescription: "Verification points earn",
-    })
+    }),
   );
   assert.equal(pointsBalance, 3);
 
   const salesCustomer = await createCustomer(
     sales.id,
     `SALE-${runId}`,
-    "+201000000012"
+    "+201000000012",
   );
   const salesBalance = await withVerificationTransaction((transaction) =>
     recordLoyaltyEarn(transaction, {
@@ -318,7 +320,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       saleAmount: 250,
       transactionNote: "Verification sale earn",
       activityDescription: "Verification sale earn",
-    })
+    }),
   );
   assert.equal(salesBalance, 250);
 
@@ -340,7 +342,7 @@ async function verifyLoyaltyAndTenantIsolation() {
       direction: "SUBTRACT",
       amount: 1,
       reason: "Verification adjustment",
-    })
+    }),
   );
   assert.equal(adjustmentBalance, 4);
 
@@ -349,7 +351,7 @@ async function verifyLoyaltyAndTenantIsolation() {
 
 async function verifyRewardsAndRedemption(
   businessId: string,
-  customerId: string
+  customerId: string,
 ) {
   const reward = await prisma.reward.create({
     data: {
@@ -382,7 +384,7 @@ async function verifyRewardsAndRedemption(
       rewardName: activeReward.name,
       rewardLabel: `${activeReward.name} — ${activeReward.code}`,
       rewardId: activeReward.id,
-    })
+    }),
   );
   assert.equal(redemptionBalance, 0);
 
@@ -401,7 +403,7 @@ async function verifyRewardsAndRedemption(
       where: { id: reward.id, businessId, isActive: true },
     }),
     null,
-    "Inactive rewards must not satisfy the server action's selection predicate."
+    "Inactive rewards must not satisfy the server action's selection predicate.",
   );
 
   const fallbackBusiness = await createFixtureBusiness("legacy", "POINTS");
@@ -426,7 +428,7 @@ async function verifyRewardsAndRedemption(
 
 async function verifyTimelineSegmentationAndRetention(
   businessId: string,
-  customerId: string
+  customerId: string,
 ) {
   const transactions = await prisma.loyaltyTransaction.findMany({
     where: { businessId, customerId },
@@ -456,7 +458,7 @@ async function verifyTimelineSegmentationAndRetention(
     businessId,
     `RISK-${runId}`,
     "+201000000013",
-    daysAgo(90)
+    daysAgo(90),
   );
   await prisma.loyaltyTransaction.create({
     data: {
@@ -490,9 +492,9 @@ async function verifyTimelineSegmentationAndRetention(
         lifetimeEarned: currentCustomer.lifetimeEarned,
         rewardThreshold: 5,
       },
-      now
+      now,
     ),
-    "NEW"
+    "NEW",
   );
 
   const retention = calculateRetentionScore({
@@ -527,7 +529,7 @@ async function main() {
   await verifyTimelineSegmentationAndRetention(visits.id, customer.id);
 
   console.log(
-    "PASS: loyalflow_test migration history and isolated database verification completed."
+    "PASS: loyalflow_test migration history and isolated database verification completed.",
   );
 }
 

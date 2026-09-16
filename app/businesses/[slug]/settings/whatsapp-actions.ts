@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
@@ -11,6 +11,7 @@ import {
 import { upsertBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
 import {
   completeWhatsAppEmbeddedSignup,
+  verifyWhatsAppBusinessConnection,
   WhatsAppEmbeddedSignupError,
 } from "@/lib/server/integrations/whatsapp-embedded-signup";
 import { encryptBusinessWhatsAppAccessToken } from "@/lib/server/integrations/whatsapp-credential-crypto";
@@ -57,7 +58,8 @@ const embeddedSignupSchema = z
       context.addIssue({
         code: "custom",
         path: ["phoneNumberId"],
-        message: "Coexistence phone number ID must be valid when Meta supplies one.",
+        message:
+          "Coexistence phone number ID must be valid when Meta supplies one.",
       });
     }
   });
@@ -96,7 +98,6 @@ async function managedBusiness(slug: string) {
     select: {
       id: true,
       slug: true,
-      subscriptionLifecycleState: true,
     },
   });
   if (!business) redirect("/businesses");
@@ -110,12 +111,15 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
 ) {
   const business = await managedBusiness(slug);
   if (
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`,
+    );
   }
 
   const parsed = embeddedSignupSchema.safeParse({
@@ -125,7 +129,9 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
     wabaId: formData.get("wabaId") ?? "",
   });
   if (!parsed.success) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=embedded-invalid`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=embedded-invalid`,
+    );
   }
 
   try {
@@ -145,7 +151,9 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
       error.reason === "NOT_CONFIGURED"
         ? "embedded-not-configured"
         : "embedded-failed";
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=${status}`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=${status}`,
+    );
   }
 
   revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
@@ -162,16 +170,21 @@ export async function updateBusinessWhatsAppConnectionAction(
   if (intent === "disconnect") {
     await deleteBusinessWhatsAppCredential(prisma, business.id);
     revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=disconnected`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=disconnected`,
+    );
   }
 
   if (
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`,
+    );
   }
 
   const parsed = connectionSchema.safeParse({
@@ -183,15 +196,27 @@ export async function updateBusinessWhatsAppConnectionAction(
     redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=invalid`);
   }
 
-  const accessTokenCiphertext = encryptBusinessWhatsAppAccessToken(
-    parsed.data.accessToken,
-  );
-  await upsertBusinessWhatsAppCredential(prisma, {
-    businessId: business.id,
-    phoneNumberId: parsed.data.phoneNumberId,
-    wabaId: parsed.data.wabaId,
-    accessTokenCiphertext,
-  });
+  try {
+    const connection = await verifyWhatsAppBusinessConnection({
+      accessToken: parsed.data.accessToken,
+      mode: "STANDARD",
+      phoneNumberId: parsed.data.phoneNumberId,
+      wabaId: parsed.data.wabaId,
+    });
+    const accessTokenCiphertext = encryptBusinessWhatsAppAccessToken(
+      parsed.data.accessToken,
+    );
+    await upsertBusinessWhatsAppCredential(prisma, {
+      businessId: business.id,
+      phoneNumberId: connection.phoneNumberId,
+      wabaId: connection.wabaId,
+      accessTokenCiphertext,
+    });
+  } catch {
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=advanced-verification-failed`,
+    );
+  }
 
   revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
   redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=connected`);
@@ -203,12 +228,15 @@ export async function updateBusinessWhatsAppAutomationAction(
 ) {
   const business = await managedBusiness(slug);
   if (
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=subscription-restricted`,
+    );
   }
 
   const checked = (key: string) => formData.get(key) === "on";
@@ -228,7 +256,9 @@ export async function updateBusinessWhatsAppAutomationAction(
     newOfferEnabled: checked("newOfferEnabled"),
   });
   if (!parsed.success) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=invalid`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=invalid`,
+    );
   }
 
   const copy = parsed.data;
@@ -257,7 +287,9 @@ export async function updateBusinessWhatsAppAutomationAction(
   });
 
   revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
-  redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=saved`);
+  redirect(
+    `/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=saved`,
+  );
 }
 
 export async function manageBusinessWhatsAppTemplateAction(
@@ -267,18 +299,25 @@ export async function manageBusinessWhatsAppTemplateAction(
   const business = await managedBusiness(slug);
   const event = automaticEventSchema.safeParse(formData.get("event"));
   const intent = formData.get("intent");
-  if (!event.success || (intent !== "submit-template" && intent !== "refresh-template")) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappTemplate=invalid`);
+  if (
+    !event.success ||
+    (intent !== "submit-template" && intent !== "refresh-template")
+  ) {
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsappTemplate=invalid`,
+    );
   }
 
   if (
-    intent === "submit-template" &&
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsapp=subscription-restricted`,
+    );
   }
 
   const result =
@@ -288,7 +327,9 @@ export async function manageBusinessWhatsAppTemplateAction(
 
   revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
   if (result.status === "failure") {
-    redirect(`/businesses/${business.slug}/settings/whatsapp?whatsappTemplate=provider-error`);
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsappTemplate=provider-error`,
+    );
   }
 
   redirect(

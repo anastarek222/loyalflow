@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   completeWhatsAppEmbeddedSignup,
   getWhatsAppEmbeddedSignupReadiness,
+  verifyWhatsAppBusinessConnection,
   WhatsAppEmbeddedSignupError,
 } from "@/lib/server/integrations/whatsapp-embedded-signup";
 
@@ -17,15 +18,21 @@ const configuredEnv = {
 
 function successfulProviderFetch(phoneIds = ["222222"]) {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
-  const fetchImpl = async (input: string | URL | Request, init?: RequestInit) => {
+  const fetchImpl = async (
+    input: string | URL | Request,
+    init?: RequestInit,
+  ) => {
     const url = String(input);
     calls.push({ url, init });
 
     if (url.endsWith("/oauth/access_token")) {
-      return new Response(JSON.stringify({ access_token: "user-access-token-1234567890" }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ access_token: "user-access-token-1234567890" }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
     }
     if (url.includes("/111111/phone_numbers")) {
       return new Response(
@@ -83,10 +90,16 @@ test("standard embedded signup exchanges the code, verifies the selected phone, 
     accessToken: "user-access-token-1234567890",
   });
   assert.equal(calls.length, 3);
-  assert.equal(calls[0]?.url, "https://graph.facebook.com/v22.0/oauth/access_token");
+  assert.equal(
+    calls[0]?.url,
+    "https://graph.facebook.com/v22.0/oauth/access_token",
+  );
   assert.equal(calls[0]?.init?.method, "POST");
   assert.match(String(calls[0]?.init?.body), /client_id=123456789/);
-  assert.match(String(calls[0]?.init?.body), /code=embedded-authorization-code-123456789/);
+  assert.match(
+    String(calls[0]?.init?.body),
+    /code=embedded-authorization-code-123456789/,
+  );
   assert.equal(calls[1]?.url.includes("/111111/phone_numbers?fields=id"), true);
   assert.equal(calls[2]?.url.endsWith("/111111/subscribed_apps"), true);
   assert.equal(calls[2]?.init?.method, "POST");
@@ -176,9 +189,12 @@ test("embedded signup never returns a connection unless Meta app subscription su
   const fetchImpl = async () => {
     call += 1;
     if (call === 1) {
-      return new Response(JSON.stringify({ access_token: "user-access-token-1234567890" }), {
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({ access_token: "user-access-token-1234567890" }),
+        {
+          status: 200,
+        },
+      );
     }
     if (call === 2) {
       return new Response(JSON.stringify({ data: [{ id: "222222" }] }), {
@@ -202,6 +218,33 @@ test("embedded signup never returns a connection unless Meta app subscription su
       error instanceof WhatsAppEmbeddedSignupError &&
       error.reason === "SUBSCRIPTION_FAILED",
   );
+});
+
+test("advanced setup verifies WABA ownership, selected phone, and app subscription", async () => {
+  const { calls, fetchImpl } = successfulProviderFetch();
+
+  const result = await verifyWhatsAppBusinessConnection(
+    {
+      accessToken: "advanced-system-token-1234567890",
+      mode: "STANDARD",
+      wabaId: "111111",
+      phoneNumberId: "222222",
+    },
+    { fetchImpl, env: configuredEnv },
+  );
+
+  assert.deepEqual(result, {
+    wabaId: "111111",
+    phoneNumberId: "222222",
+    accessToken: "advanced-system-token-1234567890",
+  });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0]?.url.includes("/111111/phone_numbers?fields=id"), true);
+  assert.equal(
+    (calls[0]?.init?.headers as Record<string, string>).authorization,
+    "Bearer advanced-system-token-1234567890",
+  );
+  assert.equal(calls[1]?.url.endsWith("/111111/subscribed_apps"), true);
 });
 
 test("Connect WhatsApp client keeps provider tokens server-only and supports standard plus coexistence completion shapes", () => {
@@ -234,6 +277,11 @@ test("Connect WhatsApp client keeps provider tokens server-only and supports sta
   assert.match(source, /sessionInfoVersion: "3"/);
   assert.match(actionSource, /z\.enum\(\["STANDARD", "COEXISTENCE"\]\)/);
   assert.match(actionSource, /value\.mode === "STANDARD"/);
+  assert.match(actionSource, /verifyWhatsAppBusinessConnection/);
+  assert.ok(
+    actionSource.indexOf("await verifyWhatsAppBusinessConnection") <
+      actionSource.lastIndexOf("await upsertBusinessWhatsAppCredential"),
+  );
   assert.match(envExample, /NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_FLOW=""/);
   assert.doesNotMatch(source, /accessToken|access_token/);
   assert.doesNotMatch(source, /localStorage|sessionStorage/);

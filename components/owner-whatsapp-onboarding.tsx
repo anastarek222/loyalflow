@@ -23,25 +23,37 @@ export function OwnerWhatsAppOnboarding({
   const isArabic = locale === "ar";
 
   useEffect(() => {
-    const form = document.querySelector<HTMLFormElement>("form[data-owner-step]");
+    // prettier-ignore -- keep the selector literal stable for the onboarding contract test.
+    const form = document.querySelector<HTMLFormElement>(
+      "form[data-owner-step]",
+    );
     if (!form) return;
 
     const sync = () => setVisible(form.dataset.ownerStep === "6");
     sync();
     const observer = new MutationObserver(sync);
-    observer.observe(form, { attributes: true, attributeFilter: ["data-owner-step"] });
+    observer.observe(form, {
+      attributes: true,
+      attributeFilter: ["data-owner-step"],
+    });
     return () => observer.disconnect();
   }, []);
 
   if (!visible) return null;
 
   return (
-    <section className="mx-auto mt-4 max-w-6xl rounded-3xl border border-border/80 bg-white p-5 shadow-sm sm:p-6">
-      <p className="text-xs font-black uppercase tracking-[0.12em] text-primary">
+    <section className="mx-auto mt-4 max-w-6xl rounded-3xl border border-border/80 bg-surface p-5 shadow-sm sm:p-6">
+      <p
+        className={`text-xs font-black text-primary ${
+          isArabic ? "tracking-normal" : "uppercase tracking-[0.12em]"
+        }`}
+      >
         {isArabic ? "اختياري" : "Optional"}
       </p>
       <h2 className="mt-2 text-lg font-black text-foreground">
-        {isArabic ? "اربط WhatsApp قبل الإطلاق" : "Connect WhatsApp before launch"}
+        {isArabic
+          ? "اربط WhatsApp قبل الإطلاق"
+          : "Connect WhatsApp before launch"}
       </h2>
       <p className="mt-1 max-w-3xl text-sm leading-6 text-foreground-muted">
         {isArabic
@@ -58,7 +70,10 @@ export function OwnerWhatsAppOnboarding({
           enabled={embeddedSignupReady}
           action={launchAction}
           getActionFormData={() => {
-            const form = document.querySelector<HTMLFormElement>("form[data-owner-step]");
+            // prettier-ignore -- keep the selector literal stable for the onboarding contract test.
+            const form = document.querySelector<HTMLFormElement>(
+              "form[data-owner-step]",
+            );
             return form ? new FormData(form) : new FormData();
           }}
         />
