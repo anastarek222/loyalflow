@@ -399,7 +399,7 @@ test("Meta approval remains provider-owned while event toggles remain Owner-owne
   );
 });
 
-test("New Reward and New Offer are prepared in settings but their producers stay WA-5 gated", () => {
+test("New Reward is produced while New Offer remains audience-gated", () => {
   const pageSource = readFileSync(
     "app/businesses/[slug]/settings/whatsapp/page.tsx",
     "utf8",
@@ -407,8 +407,22 @@ test("New Reward and New Offer are prepared in settings but their producers stay
 
   assert.match(pageSource, /event: "NEW_REWARD"/);
   assert.match(pageSource, /event: "NEW_OFFER"/);
-  assert.match(pageSource, /producerReady: false/g);
+  assert.match(
+    pageSource,
+    /event: "NEW_REWARD"[\s\S]*producerReady: true/,
+  );
+  assert.match(
+    pageSource,
+    /event: "NEW_OFFER"[\s\S]*producerReady: false/,
+  );
   assert.match(pageSource, /WA-5 sync/);
+  const rewardCommand = readFileSync(
+    "lib/server/business/reward-write-command.ts",
+    "utf8",
+  );
+  assert.match(rewardCommand, /enqueueCustomerMessageAudienceJobs/);
+  assert.match(rewardCommand, /event: "NEW_REWARD"/);
+  assert.match(rewardCommand, /eventKey: reward\.id/);
 });
 
 test("manual customer-profile WhatsApp actions require customer edit permission", () => {
