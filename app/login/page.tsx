@@ -3,7 +3,6 @@ import {
   ArrowRight,
   CheckCircle2,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -11,6 +10,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { getPasswordChangeCopy } from "@/lib/auth/password-change-copy";
 import { normalizeLanguage } from "@/lib/i18n";
 import { translate } from "@/lib/i18n/catalog";
@@ -70,21 +70,26 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       dir={direction}
       className="relative min-h-screen overflow-hidden bg-[var(--lf-marketing-canvas)] text-foreground"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgb(224_231_255/0.8),transparent_32%),radial-gradient(circle_at_90%_85%,rgb(219_234_254/0.65),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgb(255_102_82/0.12),transparent_32%),radial-gradient(circle_at_90%_85%,rgb(168_71_36/0.08),transparent_28%)]" />
       <div className="relative mx-auto grid min-h-screen w-full max-w-7xl lg:grid-cols-[minmax(0,1.05fr)_minmax(28rem,0.95fr)]">
         <aside className="hidden flex-col justify-between p-10 lg:flex xl:p-14">
           <Link
             href="/"
-            className="inline-flex w-fit items-center gap-3 text-xl font-black tracking-tight"
+            aria-label="Tanee"
+            className="inline-flex min-h-11 w-fit items-center rounded-[var(--lf-radius-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
           >
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-white shadow-[0_10px_24px_rgb(79_70_229/0.24)]">
-              <Sparkles size={19} aria-hidden="true" />
-            </span>
-            {translate(locale, "common.brand")}
+            <PlatformBrandIdentity
+              locale={locale}
+              showMark={false}
+              themeAdaptiveWordmark
+              wordmarkClassName="h-7 w-auto max-w-36"
+              wordmarkSize="marketing"
+              textClassName="text-xl font-black text-foreground"
+            />
           </Link>
 
           <div className="max-w-xl py-12">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-white/70 px-3 py-1.5 text-xs font-black text-primary shadow-sm backdrop-blur">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-surface-raised px-3 py-1.5 text-xs font-black text-primary shadow-sm">
               <ShieldCheck size={15} aria-hidden="true" />
               {translate(locale, "auth.protectedAccess")}
             </div>
@@ -119,7 +124,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </p>
         </aside>
 
-        <section className="flex min-h-screen flex-col bg-white/78 px-4 py-5 backdrop-blur-sm sm:px-8 lg:bg-white/72 lg:px-12 lg:py-8 xl:px-16">
+        <section className="flex min-h-screen flex-col bg-surface-raised px-4 py-5 sm:px-8 lg:px-12 lg:py-8 xl:px-16">
           <header className="flex items-center justify-between gap-4">
             <Link
               href="/"
@@ -128,15 +133,25 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <BackArrow size={17} aria-hidden="true" />
               {translate(locale, "auth.backHome")}
             </Link>
-            <LanguageSwitcher locale={locale} />
+            <LanguageSwitcher locale={locale} alternateOnly />
           </header>
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
             <div className="mb-8 lg:hidden">
-              <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-primary text-white shadow-[0_10px_24px_rgb(79_70_229/0.24)]">
-                <Sparkles size={21} aria-hidden="true" />
-              </div>
-              <p className="font-black">{translate(locale, "common.brand")}</p>
+              <Link
+                href="/"
+                aria-label="Tanee"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
+              >
+                <PlatformBrandIdentity
+                  locale={locale}
+                  showMark={false}
+                  themeAdaptiveWordmark
+                  wordmarkClassName="h-7 w-auto max-w-36"
+                  wordmarkSize="marketing"
+                  textClassName="text-lg font-black text-foreground"
+                />
+              </Link>
             </div>
 
             <p className="text-xs font-black uppercase tracking-[0.14em] text-primary">
@@ -159,7 +174,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </p>
             ))}
 
-            <div className="mt-8 rounded-3xl border border-border/80 bg-white p-5 shadow-[0_24px_60px_rgb(15_23_42/0.1)] sm:p-7">
+            <div className="mt-8 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-[var(--lf-shadow-overlay)] sm:p-7">
               <LoginForm
                 locale={locale}
                 initialError={includesValue(params.error, "invalid")}
