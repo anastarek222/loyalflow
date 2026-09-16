@@ -12,12 +12,13 @@ test("frontend foundation loads stable Arabic typography and dark-capable browse
 
   assert.match(layout, /Alexandria/);
   assert.match(layout, /--font-arabic/);
-  assert.match(layout, /--lf-font-arabic/);
   assert.match(layout, /colorScheme:\s*["']light dark["']/);
   assert.match(layout, /frontend-foundation\.css/);
 
-  assert.match(foundation, /\.lf-marketing-surface:lang\(ar\)/);
+  assert.match(foundation, /--lf-font-arabic:\s*var\(--font-arabic\)/);
+  assert.match(foundation, /:lang\(ar\)/);
   assert.match(foundation, /letter-spacing:\s*0/);
+  assert.match(foundation, /text-transform:\s*none/);
   assert.match(foundation, /\.dark\s*\{/);
   assert.match(foundation, /--lf-surface:/);
   assert.match(foundation, /\.dark \.lf-topbar/);
