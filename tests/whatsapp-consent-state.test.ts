@@ -75,16 +75,22 @@ test("WA-6 schema and migration are additive, tenant-scoped and collision-safe",
   );
   assert.doesNotMatch(migration, /UPDATE\s+"Customer"/i);
 
-  assert.equal(manifest.migrationCount, 56);
-  const latest = manifest.migrations.at(-1);
-  assert.equal(latest?.order, 56);
-  assert.equal(latest?.name, "20260911183000_add_customer_whatsapp_consent_state");
+  assert.equal(manifest.migrationCount, 57);
+  const consentMigration = manifest.migrations.find(
+    (entry) =>
+      entry.name === "20260911183000_add_customer_whatsapp_consent_state",
+  );
+  assert.equal(consentMigration?.order, 56);
   assert.equal(
-    latest?.path,
+    consentMigration?.name,
+    "20260911183000_add_customer_whatsapp_consent_state",
+  );
+  assert.equal(
+    consentMigration?.path,
     "prisma/migrations/20260911183000_add_customer_whatsapp_consent_state/migration.sql",
   );
   assert.equal(
-    latest?.sha256,
+    consentMigration?.sha256,
     "d1686fdafdfe64507ad2b01dabf85183c493232ac2bda3d89f757b61a02a7a97",
   );
 });
@@ -101,7 +107,10 @@ test("STOP uses canonical tenant-scoped identity and preserves opt-in history", 
 
   assert.match(source, /const canonicalPhone = `\+\$\{request\.senderPhone\}`/);
   assert.match(source, /customer\."whatsappPhoneE164" = \$\{canonicalPhone\}/);
-  assert.match(source, /credential\."phoneNumberId" = \$\{request\.phoneNumberId\}/);
+  assert.match(
+    source,
+    /credential\."phoneNumberId" = \$\{request\.phoneNumberId\}/,
+  );
   assert.match(source, /customer\."whatsappOptedOutAt" IS NULL/);
   assert.match(source, /setCustomerWhatsAppConsent\(transaction/);
   assert.doesNotMatch(source, /data:\s*\{\s*whatsappOptInAt:\s*null/);
@@ -151,8 +160,17 @@ test("customer creation surfaces share the canonical phone authority", () => {
   );
   const publicAction = readFileSync("app/join/[slug]/actions.ts", "utf8");
 
-  assert.match(createCommand, /normalizePhoneE164\(input\.customer\.phone, business\.country\)/);
+  assert.match(
+    createCommand,
+    /normalizePhoneE164\(input\.customer\.phone, business\.country\)/,
+  );
   assert.match(createCommand, /persistCustomerWhatsAppPhone\(transaction/);
-  assert.match(staffAction, /parseCustomerRegistration\([\s\S]*business\.country/);
-  assert.match(publicAction, /parseCustomerRegistration\([\s\S]*business\.country/);
+  assert.match(
+    staffAction,
+    /parseCustomerRegistration\([\s\S]*business\.country/,
+  );
+  assert.match(
+    publicAction,
+    /parseCustomerRegistration\([\s\S]*business\.country/,
+  );
 });

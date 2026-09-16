@@ -1,4 +1,5 @@
 import { normalizePhoneE164, phoneDigits } from "@/lib/customers/phone";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
 import {
@@ -18,7 +19,12 @@ import { logWhatsAppMetaProviderFailure } from "@/lib/server/integrations/whatsa
 import { renderWhatsAppTemplateParameters } from "@/lib/whatsapp-templates";
 
 type WhatsAppDeliveryResult =
-  | Readonly<{ status: "success"; providerMessageId?: string }>
+  | Readonly<{
+      status: "success";
+      providerMessageId?: string;
+      providerPhoneNumberId?: string;
+      providerWabaId?: string;
+    }>
   | Readonly<{ status: "failure"; reason: string; retryable: boolean }>;
 
 function customerName(firstName: string, lastName: string | null) {
@@ -53,7 +59,8 @@ function getOwnerMessageTemplate(
 }
 
 export function extractWhatsAppProviderMessageId(payload: unknown) {
-  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  if (!payload || typeof payload !== "object" || Array.isArray(payload))
+    return null;
   const messages = (payload as { messages?: unknown }).messages;
   if (!Array.isArray(messages) || messages.length < 1) return null;
   const first = messages[0];
@@ -84,6 +91,24 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
   const payload = payloadValue;
+
+  // The job may have been queued while the Business was entitled and claimed
+  // after its trial or subscription ended. Provider delivery is the final
+  // irreversible boundary, so entitlement must be read live here rather than
+  // trusted from enqueue time or a caller-owned snapshot.
+  if (
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      businessId,
+      "OPERATE",
+    ))
+  ) {
+    return {
+      status: "failure",
+      reason: "WHATSAPP_SUBSCRIPTION_RESTRICTED",
+      retryable: false,
+    };
+  }
 
   if (!isAutomaticCustomerMessageEvent(payload.event)) {
     return {
@@ -147,11 +172,7 @@ export async function sendWhatsAppCustomerNotificationSafely(
     },
   });
 
-  if (
-    !customer ||
-    !customer.whatsappOptInAt ||
-    customer.whatsappOptedOutAt
-  ) {
+  if (!customer || !customer.whatsappOptInAt || customer.whatsappOptedOutAt) {
     return { status: "success" };
   }
 
@@ -226,8 +247,7 @@ export async function sendWhatsAppCustomerNotificationSafely(
     };
   }
   if (
-    binding.contentSha256 !==
-    hashBusinessWhatsAppTemplate(ownerMessageTemplate)
+    binding.contentSha256 !== hashBusinessWhatsAppTemplate(ownerMessageTemplate)
   ) {
     return {
       status: "failure",
@@ -339,9 +359,15 @@ export async function sendWhatsAppCustomerNotificationSafely(
         // API acceptance is authoritative. Missing observability metadata must
         // never turn an accepted send into a retry that can duplicate a message.
       }
-      const providerMessageId = extractWhatsAppProviderMessageId(responsePayload);
+      const providerMessageId =
+        extractWhatsAppProviderMessageId(responsePayload);
       return providerMessageId
-        ? { status: "success", providerMessageId }
+        ? {
+            status: "success",
+            providerMessageId,
+            providerPhoneNumberId: phoneNumberId,
+            providerWabaId: businessCredential.wabaId,
+          }
         : { status: "success" };
     }
 

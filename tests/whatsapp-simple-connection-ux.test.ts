@@ -14,6 +14,10 @@ const component = readFileSync(
   "components/whatsapp-embedded-signup-button.tsx",
   "utf8",
 );
+const onboarding = readFileSync(
+  "components/owner-whatsapp-onboarding.tsx",
+  "utf8",
+);
 
 test("Owner sees Connect WhatsApp as the primary path and technical fields only as advanced setup", () => {
   const connectButton = page.indexOf("<WhatsAppEmbeddedSignupButton");
@@ -28,7 +32,10 @@ test("Owner sees Connect WhatsApp as the primary path and technical fields only 
   assert.ok(phoneField > advancedSetup);
   assert.ok(tokenField > advancedSetup);
   assert.match(page, /The official connection flow is built into Tanee/);
-  assert.match(page, /Use these fields only for support or advanced manual setup/);
+  assert.match(
+    page,
+    /Use these fields only for support or advanced manual setup/,
+  );
   assert.doesNotMatch(page, /missingProviderConfig\.join/);
 });
 
@@ -47,4 +54,16 @@ test("manual credential setup remains available only as an explicit advanced fal
   assert.match(page, /<details[^>]*data-whatsapp-advanced-setup/);
   assert.match(page, /The normal path is Connect WhatsApp above/);
   assert.match(page, /updateBusinessWhatsAppConnectionAction/);
+});
+
+test("Arabic WhatsApp UI localizes provider states and avoids Latin-only styling", () => {
+  assert.match(page, /APPROVED: \["معتمد", "Approved"\]/);
+  assert.match(page, /STALE: \["النص تغيّر ويحتاج إعادة إرسال"/);
+  assert.match(page, /NOT_SUBMITTED: \["لم يُرسل إلى Meta"/);
+  assert.match(page, /title: t\("الترحيب", "Welcome"\)/);
+  assert.match(page, /t\("الأتمتة", "Automations"\)/);
+  assert.match(page, /t\("قوالب Meta", "Meta Templates"\)/);
+  assert.match(page, /language === "AR" \? "tracking-normal"/);
+  assert.match(onboarding, /bg-surface/);
+  assert.doesNotMatch(onboarding, /bg-white/);
 });

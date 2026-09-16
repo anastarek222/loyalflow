@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
-import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { scheduleIntegrationJob } from "@/lib/integration-job-scheduler";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
@@ -36,7 +36,6 @@ export async function confirmCustomerWhatsAppPhoneAction(
     select: {
       id: true,
       slug: true,
-      subscriptionLifecycleState: true,
     },
   });
   if (!business) redirect("/businesses");
@@ -47,10 +46,11 @@ export async function confirmCustomerWhatsAppPhoneAction(
     redirect(`/businesses/${business.slug}/customers/${customerId}`);
   }
   if (
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
     redirect(
       customerPath(
@@ -123,7 +123,6 @@ export async function sendManualCustomerWhatsAppAction(
     select: {
       id: true,
       slug: true,
-      subscriptionLifecycleState: true,
       rewardThreshold: true,
       rewardName: true,
       cardDefaultLanguage: true,
@@ -145,10 +144,11 @@ export async function sendManualCustomerWhatsAppAction(
     redirect(`/businesses/${business.slug}/customers/${customerId}`);
   }
   if (
-    !canPerformSubscriptionOperation(
-      business.subscriptionLifecycleState,
+    !(await canBusinessPerformSubscriptionOperation(
+      prisma,
+      business.id,
       "OPERATE",
-    )
+    ))
   ) {
     redirect(
       customerPath(

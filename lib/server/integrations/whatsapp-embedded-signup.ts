@@ -85,11 +85,13 @@ function providerSuccess(payload: unknown) {
   return success === true || success === "true";
 }
 
-function resolvePhoneNumberId(input: Readonly<{
-  mode: WhatsAppEmbeddedSignupMode;
-  requestedPhoneNumberId?: string;
-  phoneIds: readonly string[];
-}>) {
+function resolvePhoneNumberId(
+  input: Readonly<{
+    mode: WhatsAppEmbeddedSignupMode;
+    requestedPhoneNumberId?: string;
+    phoneIds: readonly string[];
+  }>,
+) {
   const requested = input.requestedPhoneNumberId?.trim();
   if (requested) {
     if (!input.phoneIds.includes(requested)) {
@@ -126,9 +128,7 @@ export async function completeWhatsAppEmbeddedSignup(
   }> = {},
 ) {
   const fetchImpl = dependencies.fetchImpl ?? fetch;
-  const config = requireEmbeddedSignupConfig(
-    dependencies.env ?? process.env,
-  );
+  const config = requireEmbeddedSignupConfig(dependencies.env ?? process.env);
   const graphOrigin = `https://graph.facebook.com/${encodeURIComponent(config.graphVersion)}`;
 
   const tokenBody = new URLSearchParams({
@@ -146,6 +146,43 @@ export async function completeWhatsAppEmbeddedSignup(
   });
   const tokenPayload = await readProviderJson(tokenResponse);
   const accessToken = tokenResponse.ok ? getAccessToken(tokenPayload) : null;
+  if (!accessToken) {
+    throw new WhatsAppEmbeddedSignupError("TOKEN_EXCHANGE_FAILED");
+  }
+
+  return verifyWhatsAppBusinessConnection(
+    {
+      accessToken,
+      mode: input.mode,
+      wabaId: input.wabaId,
+      phoneNumberId: input.phoneNumberId,
+    },
+    dependencies,
+  );
+}
+
+/**
+ * Verifies a server-held token against Meta before any tenant credential is
+ * persisted. This is shared by Embedded Signup and the support-only advanced
+ * setup path so browser-supplied WABA/phone identifiers are never trusted on
+ * shape alone.
+ */
+export async function verifyWhatsAppBusinessConnection(
+  input: Readonly<{
+    accessToken: string;
+    mode: WhatsAppEmbeddedSignupMode;
+    wabaId: string;
+    phoneNumberId?: string;
+  }>,
+  dependencies: Readonly<{
+    fetchImpl?: typeof fetch;
+    env?: EmbeddedSignupEnvironment;
+  }> = {},
+) {
+  const fetchImpl = dependencies.fetchImpl ?? fetch;
+  const config = requireEmbeddedSignupConfig(dependencies.env ?? process.env);
+  const graphOrigin = `https://graph.facebook.com/${encodeURIComponent(config.graphVersion)}`;
+  const accessToken = input.accessToken.trim();
   if (!accessToken) {
     throw new WhatsAppEmbeddedSignupError("TOKEN_EXCHANGE_FAILED");
   }

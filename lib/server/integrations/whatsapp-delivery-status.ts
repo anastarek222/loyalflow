@@ -4,9 +4,7 @@ import {
   type WhatsAppDeliveryStatus,
 } from "@/lib/server/integrations/whatsapp-webhook";
 
-type PersistedWhatsAppDeliveryStatus =
-  | "ACCEPTED"
-  | WhatsAppDeliveryStatus;
+type PersistedWhatsAppDeliveryStatus = "ACCEPTED" | WhatsAppDeliveryStatus;
 
 const ALLOWED_PREVIOUS_STATUSES: Readonly<
   Record<WhatsAppDeliveryStatus, readonly PersistedWhatsAppDeliveryStatus[]>
@@ -29,16 +27,21 @@ export function allowedPreviousWhatsAppDeliveryStatuses(
  * execution status. Delivery webhooks are observability signals only: they can
  * never requeue or resend a customer notification.
  */
-export async function persistWhatsAppDeliveryStatusFromWebhook(payload: unknown) {
+export async function persistWhatsAppDeliveryStatusFromWebhook(
+  payload: unknown,
+) {
   const events = extractWhatsAppDeliveryStatusEvents(payload);
   let persistedStatusCount = 0;
 
   for (const event of events) {
-    const allowedPrevious = allowedPreviousWhatsAppDeliveryStatuses(event.status);
+    const allowedPrevious = allowedPreviousWhatsAppDeliveryStatuses(
+      event.status,
+    );
     const updated = await prisma.integrationJob.updateMany({
       where: {
         kind: "WHATSAPP_CUSTOMER_NOTIFICATION",
         providerMessageId: event.providerMessageId,
+        providerPhoneNumberId: event.phoneNumberId,
         OR: [
           { providerDeliveryStatus: null },
           ...(allowedPrevious.length

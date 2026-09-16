@@ -168,6 +168,8 @@ model IntegrationJob {
   lastErrorCode            String?
   completedAt              DateTime?
   providerMessageId        String?
+  providerPhoneNumberId    String?
+  providerWabaId           String?
   providerDeliveryStatus   IntegrationProviderDeliveryStatus?
   providerStatusAt         DateTime?
   createdAt                DateTime                         @default(now())
@@ -178,6 +180,7 @@ model IntegrationJob {
   @@index([status, availableAt, leaseExpiresAt])
   @@index([businessId, status, createdAt])
   @@index([providerMessageId])
+  @@unique([providerPhoneNumberId, providerMessageId])
 }
 
 enum CardDesignMode {
