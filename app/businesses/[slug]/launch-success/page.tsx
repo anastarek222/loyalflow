@@ -4,7 +4,8 @@ import { normalizeLanguage } from "@/lib/i18n";
 import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getTrialState } from "@loyalflow/domain/billing/trial-core";
-import { ArrowRight, CheckCircle2, Users } from "lucide-react";
+import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { ArrowRight, CheckCircle2, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -31,6 +32,10 @@ function copy(language: "AR" | "EN") {
         firstCustomerDescription:
           "افتح العملاء، ادخل إلى ملف العميل، وتأكد من أن العضوية والكارت والرصيد الابتدائي يظهرون بشكل صحيح.",
         customers: "فتح العملاء",
+        whatsappTitle: "كمّل ربط WhatsApp",
+        whatsappDescription:
+          "اربط رقم النشاط من خلال Meta. هنفضل مظهرين الخطوة دي كإعداد معلّق لحد ما يتم تسجيل اتصال الرقم بالنشاط.",
+        whatsappAction: "ربط WhatsApp",
         dashboard: "الانتقال إلى لوحة النشاط",
       }
     : {
@@ -49,6 +54,10 @@ function copy(language: "AR" | "EN") {
         firstCustomerDescription:
           "Open Customers, enter the customer profile, and confirm the membership, card, and opening balance are correct.",
         customers: "Open customers",
+        whatsappTitle: "Finish connecting WhatsApp",
+        whatsappDescription:
+          "Connect the business number through Meta. This stays visible as pending setup until the number connection is saved for this business.",
+        whatsappAction: "Connect WhatsApp",
         dashboard: "Continue to business dashboard",
       };
 }
@@ -85,6 +94,11 @@ export default async function OwnerLaunchSuccessPage({
   if (!user || !canAccessBusiness(user, business.id)) redirect("/dashboard");
   if (!canManageBusiness(user, business.id))
     redirect(`/businesses/${business.slug}`);
+
+  const whatsappCredential = await getBusinessWhatsAppCredential(
+    prisma,
+    business.id,
+  );
 
   const language = normalizeLanguage(user.language);
   const dictionary = copy(language);
@@ -142,6 +156,34 @@ export default async function OwnerLaunchSuccessPage({
             {dictionary.nextDescription}
           </p>
         </section>
+
+        {!whatsappCredential ? (
+          <section
+            className="mb-6 rounded-[var(--lf-radius-card)] border border-success/30 bg-success-subtle p-5 sm:p-6"
+            data-whatsapp-post-launch-setup
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-success text-white">
+                <MessageCircle className="size-5" aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-black text-foreground">
+                  {dictionary.whatsappTitle}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-foreground-muted">
+                  {dictionary.whatsappDescription}
+                </p>
+                <Link
+                  href={`/businesses/${business.slug}/settings/whatsapp`}
+                  className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-success px-4 text-sm font-bold text-white transition hover:opacity-90"
+                >
+                  {dictionary.whatsappAction}
+                  <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <PrimaryBusinessJoinQr
           businessName={business.name}
