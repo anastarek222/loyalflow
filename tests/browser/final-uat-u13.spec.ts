@@ -482,7 +482,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
       page.locator("#app-content").getByRole("heading", { level: 1 }),
     ).toHaveCount(1);
     await openCustomerFromScanSearch(page, "AR");
-    const branch = page.getByLabel(/الفرع/);
+    const branch = page.locator("#scan-earn-operation-branch");
     await branch.selectOption({ label: "Final UAT A Branch One" });
     await expect(branch).toHaveValue(fixture.staffBranchId);
     await page
@@ -516,7 +516,7 @@ test.describe.serial("U13 final Chromium browser UAT", () => {
     ).toHaveCount(1);
     await openCustomerFromScanSearch(page, "AR");
     await expect(currentScanBalance(page, "AR", 4)).toBeVisible();
-    const branch = page.getByLabel(/الفرع/);
+    const branch = page.locator("#scan-earn-operation-branch");
     await branch.selectOption({ label: "Final UAT A Branch One" });
     await expect(branch).toHaveValue(fixture.staffBranchId);
     await page
