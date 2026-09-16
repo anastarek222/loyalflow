@@ -53,7 +53,7 @@ import {
   canPerform,
 } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { getBusinessWhatsAppCredential } from "@/lib/server/integrations/business-whatsapp-credentials";
+import { getBusinessWhatsAppProductReadiness } from "@/lib/server/integrations/business-whatsapp-product-readiness";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -613,8 +613,15 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
   });
   const showOnboarding =
     shouldShowOnboardingChecklist(onboarding.coreReady) && canManageSettings;
-  const whatsappCredential = canManageSettings
-    ? await getBusinessWhatsAppCredential(prisma, business.id)
+  const whatsappReadiness = canManageSettings
+    ? await getBusinessWhatsAppProductReadiness(prisma, {
+        businessId: business.id,
+        language: business.cardDefaultLanguage,
+        whatsappWelcomeMessage: business.whatsappWelcomeMessage,
+        whatsappBalanceMessage: business.whatsappBalanceMessage,
+        whatsappRewardMessage: business.whatsappRewardMessage,
+        whatsappRedeemedMessage: business.whatsappRedeemedMessage,
+      })
     : null;
   const businessContext = [
     business.industry,
@@ -635,7 +642,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
       ? { id: "unread", label: dictionary.unread, count: unreadCount }
       : null,
     !onboarding.coreReady ? { id: "setup", label: dictionary.setup } : null,
-    canManageSettings && !whatsappCredential
+    canManageSettings && !whatsappReadiness?.deliveryReady
       ? {
           id: "whatsapp-setup",
           label: dictionary.whatsappSetup,
