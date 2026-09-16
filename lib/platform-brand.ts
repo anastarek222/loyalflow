@@ -1,6 +1,6 @@
 export const platformBrand = {
   name: "Tanee",
-  nameAr: "تاني",
+  nameAr: "Tanee",
   shortName: "Tanee",
   iconMark: "ee",
   assets: {
