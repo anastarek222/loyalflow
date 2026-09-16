@@ -310,7 +310,7 @@ export default async function BusinessWhatsAppSettingsPage({
           business.cardDefaultLanguage,
           "NEW_REWARD",
         ),
-      producerReady: false,
+      producerReady: true,
     },
     {
       event: "NEW_OFFER" as const,
