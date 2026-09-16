@@ -11,10 +11,10 @@
 
 /*
  * Arabic interface copy must not inherit Latin uppercase/tracking treatments.
- * The document locale is authoritative, so this also fixes page-specific
- * tracking utilities without requiring a patch in every route.
+ * Explicit Latin/numeric treatments can opt out with data-preserve-latin-tracking.
  */
-:lang(ar) :where(.uppercase, [class*="tracking-"]) {
+:lang(ar)
+  :where(.uppercase, [class*="tracking-"]):not([data-preserve-latin-tracking]) {
   letter-spacing: 0;
   text-transform: none;
 }
