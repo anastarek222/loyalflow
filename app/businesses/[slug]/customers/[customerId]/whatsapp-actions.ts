@@ -202,6 +202,19 @@ export async function sendManualCustomerWhatsAppAction(
       availability.affordableRewards[0]?.name ??
       availability.defaultReward.name;
   }
+  if (parsed.data.event === "REWARD_REDEEMED") {
+    const latestRedemption = await prisma.rewardRedemption.findFirst({
+      where: { businessId: business.id, customerId: customer.id },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { rewardName: true },
+    });
+    if (!latestRedemption) {
+      redirect(
+        customerPath(business.slug, customer.id, "whatsapp-reward-not-ready"),
+      );
+    }
+    rewardName = latestRedemption.rewardName;
+  }
 
   const job = await prisma.$transaction((transaction) =>
     enqueueManualCustomerMessageJob(transaction, {
