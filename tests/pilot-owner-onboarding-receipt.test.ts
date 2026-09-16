@@ -55,4 +55,5 @@ test("Owner onboarding browser receipt runs only for relevant PR slices", () => 
   assert.match(workflow, /steps\.browser-smoke\.outputs\.owner-onboarding/);
   assert.match(workflow, /tests\/browser\/owner-onboarding-mobile\.spec\.ts/);
   assert.match(workflow, /--project=owner-onboarding-chromium/);
+  assert.match(workflow, /--project=owner-onboarding-desktop/);
 });
