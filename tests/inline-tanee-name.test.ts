@@ -11,6 +11,7 @@ test("inline Tanee references stay as text instead of embedding the full wordmar
   const marketingBrandText = source(
     "components/marketing/marketing-brand-text.tsx",
   );
+  const sidebar = source("components/app-sidebar.tsx");
 
   assert.match(inlineName, /data-inline-tanee-name/);
   assert.match(inlineName, /data-inline-tanee-ee/);
@@ -21,6 +22,7 @@ test("inline Tanee references stay as text instead of embedding the full wordmar
 
   assert.match(marketingBrandText, /InlineTaneeName/);
   assert.doesNotMatch(marketingBrandText, /PlatformBrandIdentity|inline-wordmark/);
+  assert.match(sidebar, /InlineTaneeName/);
 });
 
 test("Tanee brand name remains English in every locale", () => {
