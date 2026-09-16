@@ -31,11 +31,17 @@ test("Reward-ready earn stays visually explicit and points staff toward redempti
   assert.match(scanPage, /rewardJustUnlocked[\s\S]*?copy\.rewardReadySuccess/);
   assert.match(
     scanPage,
-    /rewardJustUnlocked \? copy\.redeemReward : copy\.performAnotherOperation/,
+    /rewardJustUnlocked\s*\?\s*copy\.redeemReward\s*:\s*copy\.performAnotherOperation/,
   );
   assert.match(feedback, /searchParams\.get\("rewardReady"\) === "1"/);
-  assert.match(scanCopy, /rewardReadySuccess: "🎁 تمت إضافة الولاء والمكافأة جاهزة للاستبدال"/);
-  assert.match(scanCopy, /rewardReadySuccess: "🎁 Loyalty added and the reward is ready to redeem"/);
+  assert.match(
+    scanCopy,
+    /rewardReadySuccess: "🎁 تمت إضافة الولاء والمكافأة جاهزة للاستبدال"/,
+  );
+  assert.match(
+    scanCopy,
+    /rewardReadySuccess: "🎁 Loyalty added and the reward is ready to redeem"/,
+  );
 });
 
 test("Sound and haptics require an explicit, versioned local preference", () => {

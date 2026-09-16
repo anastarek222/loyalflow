@@ -5,7 +5,7 @@ import test from "node:test";
 
 const root = process.cwd();
 const page = readFileSync(
-  join(root, "app/businesses/[slug]/customers/[customerId]/page.tsx"),
+  join(root, "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx"),
   "utf8",
 );
 

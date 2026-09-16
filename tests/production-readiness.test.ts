@@ -219,12 +219,24 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 54);
+  assert.equal(committedMigrations.length, 56);
   assert.ok(
     committedMigrations.includes(
       "20260907120000_add_business_whatsapp_template_bindings",
     ),
     "Business WhatsApp Meta template bindings must be part of the reviewed migration history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260911120000_add_whatsapp_automation_controls",
+    ),
+    "WhatsApp automation controls must be part of the reviewed migration history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260911183000_add_customer_whatsapp_consent_state",
+    ),
+    "Customer WhatsApp consent state must be part of the reviewed migration history.",
   );
   assert.ok(
     committedMigrations.includes(

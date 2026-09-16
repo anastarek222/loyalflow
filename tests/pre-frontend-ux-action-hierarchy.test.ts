@@ -56,7 +56,9 @@ test("Scan keeps camera scanning first and alternate customer search after it", 
 });
 
 test("Customer Profile prioritizes the permitted operational quick action on mobile", () => {
-  const page = read("app/businesses/[slug]/customers/[customerId]/page.tsx");
+  const page = read(
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
+  );
   const layout = read("app/businesses/[slug]/customers/[customerId]/layout.tsx");
   const hierarchy = read(
     "app/businesses/[slug]/customers/[customerId]/customer-profile-ux.css",

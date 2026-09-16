@@ -22,7 +22,10 @@ const redeemAction = source(
 );
 
 test("Z9 merchant daily operations starts from a permission-gated scan workspace", () => {
-  assert.match(scanPage, /canPerform\(session\.user, business\.id, "LOYALTY_EARN"\)/);
+  assert.match(
+    scanPage,
+    /canPerform\(session\.user, business\.id, "LOYALTY_EARN"\)/,
+  );
   assert.match(scanPage, /<QrScanner businessId=\{business\.id\}/);
   assert.match(scanPage, /<ScanCustomerSearch businessId=\{business\.id\}/);
 
@@ -36,14 +39,23 @@ test("Z9 merchant daily operations starts from a permission-gated scan workspace
 
 test("Z9 QR and manual customer lookup stay authenticated, tenant-scoped and active-only", () => {
   assert.match(resolveRoute, /const session = await auth\(\)/);
-  assert.match(resolveRoute, /canPerform\(session\.user, parsed\.data\.businessId, "LOYALTY_EARN"\)/);
-  assert.match(resolveRoute, /customer\.businessId !== parsed\.data\.businessId/);
+  assert.match(
+    resolveRoute,
+    /canPerform\(session\.user, parsed\.data\.businessId, "LOYALTY_EARN"\)/,
+  );
+  assert.match(
+    resolveRoute,
+    /customer\.businessId !== parsed\.data\.businessId/,
+  );
   assert.match(resolveRoute, /!customer\.isActive/);
   assert.match(resolveRoute, /!customer\.business\.isActive/);
   assert.match(resolveRoute, /rateLimit\(/);
 
   assert.match(searchRoute, /const session = await auth\(\)/);
-  assert.match(searchRoute, /canPerform\(session\.user, parsed\.data\.businessId, "LOYALTY_EARN"\)/);
+  assert.match(
+    searchRoute,
+    /canPerform\(session\.user, parsed\.data\.businessId, "LOYALTY_EARN"\)/,
+  );
   assert.match(searchRoute, /businessId: business\.id/);
   assert.match(searchRoute, /isActive: true/);
   assert.match(searchRoute, /maskCustomerPhone\(customer\.phone\)/);
@@ -51,9 +63,18 @@ test("Z9 QR and manual customer lookup stay authenticated, tenant-scoped and act
 });
 
 test("Z9 customer scan workspace exposes the bounded Earn and Redeem loop", () => {
-  assert.match(customerWorkspace, /canPerform\(session\.user, business\.id, "LOYALTY_EARN"\)/);
-  assert.match(customerWorkspace, /canPerform\(session\.user, business\.id, "LOYALTY_REDEEM"\)/);
-  assert.match(customerWorkspace, /where: \{ id: customerId, businessId: business\.id \}/);
+  assert.match(
+    customerWorkspace,
+    /canPerform\(session\.user, business\.id, "LOYALTY_EARN"\)/,
+  );
+  assert.match(
+    customerWorkspace,
+    /canPerform\(session\.user, business\.id, "LOYALTY_REDEEM"\)/,
+  );
+  assert.match(
+    customerWorkspace,
+    /where: \{ id: customerId, businessId: business\.id \}/,
+  );
   assert.match(customerWorkspace, /form action=\{earnAction\}/);
   assert.match(customerWorkspace, /name="operationOrigin" value="SCAN"/);
   assert.match(customerWorkspace, /name="operationId"/);
@@ -65,7 +86,10 @@ test("Z9 customer scan workspace exposes the bounded Earn and Redeem loop", () =
 
 test("Z9 Earn writer remains tenant-safe, active-customer-only and idempotent", () => {
   assert.match(earnAction, /canAccessBusiness\(session\.user, business\.id\)/);
-  assert.match(earnAction, /canPerform\(session\.user, business\.id, "LOYALTY_EARN"\)/);
+  assert.match(
+    earnAction,
+    /canPerform\(session\.user, business\.id, "LOYALTY_EARN"\)/,
+  );
   assert.match(earnAction, /businessId: business\.id,\s*isActive: true/);
   assert.match(earnAction, /financialOperationSchema\.safeParse/);
   assert.match(earnAction, /businessId_idempotencyKey/);
@@ -78,10 +102,19 @@ test("Z9 Earn writer remains tenant-safe, active-customer-only and idempotent", 
 });
 
 test("Z9 Redeem writer remains tenant-safe, reward-safe and idempotent", () => {
-  assert.match(redeemAction, /canAccessBusiness\(session\.user, business\.id\)/);
-  assert.match(redeemAction, /canPerform\(session\.user, business\.id, "LOYALTY_REDEEM"\)/);
-  assert.match(redeemAction, /businessId: business\.id, isActive: true/);
-  assert.match(redeemAction, /businessId: business\.id, isActive: true \}/);
+  assert.match(
+    redeemAction,
+    /canAccessBusiness\(session\.user, business\.id\)/,
+  );
+  assert.match(
+    redeemAction,
+    /canPerform\(session\.user, business\.id, "LOYALTY_REDEEM"\)/,
+  );
+  assert.match(redeemAction, /businessId:\s*business\.id,\s*isActive:\s*true/);
+  assert.match(
+    redeemAction,
+    /businessId:\s*business\.id,\s*isActive:\s*true,?\s*\}/,
+  );
   assert.match(redeemAction, /financialOperationSchema\.safeParse/);
   assert.match(redeemAction, /businessId_idempotencyKey/);
   assert.match(redeemAction, /getRapidRedemptionRateLimitKey/);
@@ -94,12 +127,27 @@ test("Z9 Redeem writer remains tenant-safe, reward-safe and idempotent", () => {
 
 test("Z9 successful financial operations refresh merchant and customer surfaces", () => {
   for (const action of [earnAction, redeemAction]) {
-    assert.match(action, /revalidatePath\(`\/businesses\/\$\{slug\}\/customers\/\$\{customerId\}`\)/);
-    assert.match(action, /revalidatePath\(`\/businesses\/\$\{slug\}\/scan\/customer\/\$\{customerId\}`\)/);
-    assert.match(action, /revalidatePath\(`\/businesses\/\$\{slug\}\/reports`\)/);
-    assert.match(action, /revalidatePath\(`\/businesses\/\$\{slug\}\/activity`\)/);
+    assert.match(
+      action,
+      /revalidatePath\(`\/businesses\/\$\{slug\}\/customers\/\$\{customerId\}`\)/,
+    );
+    assert.match(
+      action,
+      /revalidatePath\(`\/businesses\/\$\{slug\}\/scan\/customer\/\$\{customerId\}`\)/,
+    );
+    assert.match(
+      action,
+      /revalidatePath\(`\/businesses\/\$\{slug\}\/reports`\)/,
+    );
+    assert.match(
+      action,
+      /revalidatePath\(`\/businesses\/\$\{slug\}\/activity`\)/,
+    );
     assert.match(action, /revalidatePath\(`\/card\/\$\{publicToken\}`\)/);
     assert.match(action, /revalidatePath\("\/dashboard"\)/);
-    assert.match(action, /scheduleIntegrationJobs\(result\.integrationJobIds\)/);
+    assert.match(
+      action,
+      /scheduleIntegrationJobs\(result\.integrationJobIds\)/,
+    );
   }
 });

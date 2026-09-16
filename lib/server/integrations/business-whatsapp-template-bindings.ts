@@ -5,6 +5,8 @@ import {
   AUTOMATIC_CUSTOMER_MESSAGE_EVENTS,
   type AutomaticCustomerMessageEvent,
 } from "@/lib/server/integrations/customer-messaging";
+import type { BusinessWhatsAppAutomationControls } from "@/lib/server/integrations/whatsapp-automation-policy";
+import { isWhatsAppAutomationEventSelected } from "@/lib/server/integrations/whatsapp-automation-policy";
 
 export const WHATSAPP_TEMPLATE_APPROVAL_STATUSES = [
   "PENDING",
@@ -37,19 +39,28 @@ export type OwnerAutomaticMessages = Readonly<{
   whatsappWelcomeMessage: string | null;
   whatsappBalanceMessage: string | null;
   whatsappRewardMessage: string | null;
+  whatsappRedeemedMessage: string | null;
+  newRewardMessage: string | null;
+  newOfferMessage: string | null;
 }>;
 
 export function ownerMessageForAutomaticEvent(
   event: AutomaticCustomerMessageEvent,
   messages: OwnerAutomaticMessages,
 ) {
-  return (
+  const value =
     event === "WELCOME"
       ? messages.whatsappWelcomeMessage
       : event === "BALANCE_UPDATED"
         ? messages.whatsappBalanceMessage
-        : messages.whatsappRewardMessage
-  )?.trim() ?? "";
+        : event === "REWARD_READY"
+          ? messages.whatsappRewardMessage
+          : event === "REWARD_REDEEMED"
+            ? messages.whatsappRedeemedMessage
+            : event === "NEW_REWARD"
+              ? messages.newRewardMessage
+              : messages.newOfferMessage;
+  return value?.trim() ?? "";
 }
 
 export function hashBusinessWhatsAppTemplate(template: string) {
@@ -121,24 +132,33 @@ export async function getBusinessWhatsAppAutomaticReadiness(
     wabaId: string | null;
     language: "AR" | "EN";
     messages: OwnerAutomaticMessages;
+    automation: BusinessWhatsAppAutomationControls;
   }>,
 ) {
-  const enabledEvents = AUTOMATIC_CUSTOMER_MESSAGE_EVENTS.filter(
+  const selectedEvents = AUTOMATIC_CUSTOMER_MESSAGE_EVENTS.filter((event) =>
+    isWhatsAppAutomationEventSelected(input.automation, event),
+  );
+  const configuredEvents = selectedEvents.filter(
     (event) => ownerMessageForAutomaticEvent(event, input.messages).length > 0,
   );
+  const missingCopyEvents = selectedEvents.filter(
+    (event) => ownerMessageForAutomaticEvent(event, input.messages).length === 0,
+  );
 
-  if (enabledEvents.length === 0) {
+  if (selectedEvents.length === 0) {
     return {
       ready: false,
       hasEnabledMessages: false,
+      selectedEvents: [] as AutomaticCustomerMessageEvent[],
       enabledEvents: [] as AutomaticCustomerMessageEvent[],
+      missingCopyEvents: [] as AutomaticCustomerMessageEvent[],
       blockedEvents: [] as AutomaticCustomerMessageEvent[],
     } as const;
   }
 
   const bindings = await getBusinessWhatsAppTemplateBindings(client, input);
   const bindingByEvent = new Map(bindings.map((binding) => [binding.event, binding]));
-  const blockedEvents = enabledEvents.filter((event) => {
+  const blockedEvents = configuredEvents.filter((event) => {
     const binding = bindingByEvent.get(event);
     if (!input.wabaId || !binding || binding.wabaId !== input.wabaId) return true;
     if (binding.approvalStatus !== "APPROVED") return true;
@@ -155,9 +175,11 @@ export async function getBusinessWhatsAppAutomaticReadiness(
   });
 
   return {
-    ready: blockedEvents.length === 0,
+    ready: missingCopyEvents.length === 0 && blockedEvents.length === 0,
     hasEnabledMessages: true,
-    enabledEvents,
+    selectedEvents,
+    enabledEvents: input.automation.paused ? [] : configuredEvents,
+    missingCopyEvents,
     blockedEvents,
   } as const;
 }

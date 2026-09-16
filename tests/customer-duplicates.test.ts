@@ -9,15 +9,17 @@ import { canPerform } from "../lib/permissions";
 
 const createdAt = new Date("2026-01-01T00:00:00.000Z");
 
-function customer(overrides: Partial<{
-  id: string;
-  businessId: string;
-  phone: string;
-  customerCode: string;
-  email: string | null;
-  createdAt: Date;
-  country: string | null;
-}> = {}) {
+function customer(
+  overrides: Partial<{
+    id: string;
+    businessId: string;
+    phone: string;
+    customerCode: string;
+    email: string | null;
+    createdAt: Date;
+    country: string | null;
+  }> = {},
+) {
   return {
     id: "customer-1",
     businessId: "business-a",
@@ -37,33 +39,59 @@ test("detects same-phone candidates after safe normalization", () => {
     customer({ id: "two", phone: "201000000001", customerCode: "CUS-002" }),
   ]);
 
-  assert.deepEqual(groups.map((group) => group.reason), ["NORMALIZED_PHONE"]);
-  assert.deepEqual(groups[0]?.customers.map((item) => item.id), ["one", "two"]);
+  assert.deepEqual(
+    groups.map((group) => group.reason),
+    ["NORMALIZED_PHONE"],
+  );
+  assert.deepEqual(
+    groups[0]?.customers.map((item) => item.id),
+    ["one", "two"],
+  );
 });
 
 test("collision audit matches local and international forms using business country", () => {
   const groups = findDuplicateCustomerGroups([
     customer({ id: "local", phone: "01000000001", country: "Egypt" }),
-    customer({ id: "international", phone: "+201000000001", customerCode: "CUS-002", country: "Egypt" }),
+    customer({
+      id: "international",
+      phone: "+201000000001",
+      customerCode: "CUS-002",
+      country: "Egypt",
+    }),
   ]);
 
-  assert.deepEqual(groups.map((group) => group.reason), ["NORMALIZED_PHONE"]);
+  assert.deepEqual(
+    groups.map((group) => group.reason),
+    ["NORMALIZED_PHONE"],
+  );
 });
 
 test("supports normalized email matching only when a persisted email is available", () => {
   const groups = findDuplicateCustomerGroups([
     customer({ id: "one", email: "VIP@Example.test" }),
-    customer({ id: "two", phone: "+201000000002", customerCode: "CUS-002", email: " vip@example.test " }),
+    customer({
+      id: "two",
+      phone: "+201000000002",
+      customerCode: "CUS-002",
+      email: " vip@example.test ",
+    }),
   ]);
 
-  assert.deepEqual(groups.map((group) => group.reason), ["NORMALIZED_EMAIL"]);
+  assert.deepEqual(
+    groups.map((group) => group.reason),
+    ["NORMALIZED_EMAIL"],
+  );
 });
 
 test("avoids false positives for different values and isolates businesses", () => {
   const groups = findDuplicateCustomerGroups([
     customer({ id: "one", phone: "+201000000001" }),
     customer({ id: "two", phone: "+201000000002", customerCode: "CUS-002" }),
-    customer({ id: "other-tenant", businessId: "business-b", customerCode: "CUS-003" }),
+    customer({
+      id: "other-tenant",
+      businessId: "business-b",
+      customerCode: "CUS-003",
+    }),
   ]);
 
   assert.equal(groups.length, 0);
@@ -83,8 +111,36 @@ test("read-only merge preview selects the oldest candidate but cannot execute", 
 });
 
 test("duplicate review is restricted to tenant customer editors", () => {
-  assert.equal(canPerform({ role: "OWNER", businessId: "business-a" }, "business-a", "CUSTOMERS_EDIT"), true);
-  assert.equal(canPerform({ role: "MANAGER", businessId: "business-a" }, "business-a", "CUSTOMERS_EDIT"), true);
-  assert.equal(canPerform({ role: "VIEWER", businessId: "business-a" }, "business-a", "CUSTOMERS_EDIT"), false);
-  assert.equal(canPerform({ role: "OWNER", businessId: "business-a" }, "business-b", "CUSTOMERS_EDIT"), false);
+  assert.equal(
+    canPerform(
+      { role: "OWNER", businessId: "business-a" },
+      "business-a",
+      "CUSTOMERS_EDIT",
+    ),
+    true,
+  );
+  assert.equal(
+    canPerform(
+      { role: "MANAGER", businessId: "business-a" },
+      "business-a",
+      "CUSTOMERS_EDIT",
+    ),
+    true,
+  );
+  assert.equal(
+    canPerform(
+      { role: "VIEWER", businessId: "business-a" },
+      "business-a",
+      "CUSTOMERS_EDIT",
+    ),
+    false,
+  );
+  assert.equal(
+    canPerform(
+      { role: "OWNER", businessId: "business-a" },
+      "business-b",
+      "CUSTOMERS_EDIT",
+    ),
+    false,
+  );
 });

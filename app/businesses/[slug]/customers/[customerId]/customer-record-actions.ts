@@ -2,10 +2,14 @@
 
 import { auth } from "@/auth";
 import { canPerformSubscriptionOperation } from "@loyalflow/domain/billing/subscription-lifecycle";
+import { normalizePhoneE164 } from "@/lib/customers/phone";
 import { scheduleBusinessGoogleSheetsSync } from "@/lib/google-sheets-sync-scheduler";
-import { canAccessBusiness, canPerform, type Capability } from "@/lib/permissions";
+import {
+  canAccessBusiness,
+  canPerform,
+  type Capability,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
-import { normalizePhone } from "@/lib/customers/phone";
 import {
   setCustomerRecordStatusCommand,
   updateCustomerRecordCommand,
@@ -37,7 +41,11 @@ async function getManagementContext(
 
   const business = await prisma.business.findUnique({
     where: { slug },
-    select: { id: true, subscriptionLifecycleState: true, country: true },
+    select: {
+      id: true,
+      country: true,
+      subscriptionLifecycleState: true,
+    },
   });
   if (!business) redirect("/businesses");
   if (!canAccessBusiness(session.user, business.id)) redirect("/dashboard");
@@ -99,8 +107,8 @@ export async function updateCustomerRecordCommandAction(
     );
   }
 
-  const phone = normalizePhone(parsed.data.phone, business.country);
-  if (!/^\+?\d{8,15}$/.test(phone)) {
+  const phone = normalizePhoneE164(parsed.data.phone, business.country);
+  if (!phone) {
     redirect(`/businesses/${slug}/customers/${customerId}?error=phone`);
   }
 
@@ -128,6 +136,9 @@ export async function updateCustomerRecordCommandAction(
     }
     if (mutation.reason === "DUPLICATE") {
       redirect(`/businesses/${slug}/customers/${customerId}?error=duplicate`);
+    }
+    if (mutation.reason === "INVALID_PHONE") {
+      redirect(`/businesses/${slug}/customers/${customerId}?error=phone`);
     }
     redirect(`/businesses/${slug}/customers`);
   }

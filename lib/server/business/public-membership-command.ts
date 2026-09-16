@@ -2,7 +2,10 @@ import type { PublicMembershipRegistration } from "@loyalflow/contracts/customer
 
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { createPublicCardToken } from "@/lib/customers/public-card-token";
-import { equivalentPhoneIdentities, normalizePhone } from "@/lib/customers/phone";
+import {
+  equivalentPhoneIdentities,
+  normalizePhoneE164,
+} from "@/lib/customers/phone";
 import {
   generateCustomerCode,
   getCustomerDisplayName,
@@ -15,11 +18,15 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { canRecordReferral } from "@/lib/referrals/code";
 import { enqueueCustomerMessageJob } from "@/lib/server/integrations/customer-messaging";
+import {
+  persistCustomerWhatsAppPhone,
+  setCustomerWhatsAppConsent,
+} from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 type PublicMembershipFailure = Readonly<{
   ok: false;
-  reason: "BUSINESS_UNAVAILABLE" | "DUPLICATE" | "PLAN_LIMIT";
+  reason: "BUSINESS_UNAVAILABLE" | "DUPLICATE" | "INVALID_PHONE" | "PLAN_LIMIT";
 }>;
 
 export type PublicMembershipCommandResult =
@@ -69,11 +76,14 @@ export async function createPublicMembershipCommand(input: {
         return { ok: false, reason: "BUSINESS_UNAVAILABLE" } as const;
       }
 
-      const canonicalPhone = normalizePhone(input.customer.phone, business.country);
+      const phone = normalizePhoneE164(input.customer.phone, business.country);
+      if (!phone) {
+        return { ok: false, reason: "INVALID_PHONE" } as const;
+      }
       const existingCustomer = await transaction.customer.findFirst({
         where: {
           businessId: input.businessId,
-          phone: { in: equivalentPhoneIdentities(canonicalPhone, business.country) },
+          phone: { in: equivalentPhoneIdentities(phone, business.country) },
         },
         select: { id: true },
       });
@@ -94,7 +104,10 @@ export async function createPublicMembershipCommand(input: {
         }),
         transaction.customer.count({ where: { businessId: input.businessId } }),
       ]);
-      const planLimits = configurationToPlanLimits(configuration, business.plan);
+      const planLimits = configurationToPlanLimits(
+        configuration,
+        business.plan,
+      );
       if (
         !canCreatePublicMembership(business.plan, customerCount, planLimits)
       ) {
@@ -110,7 +123,7 @@ export async function createPublicMembershipCommand(input: {
         data: {
           firstName: input.customer.firstName,
           lastName: input.customer.lastName || null,
-          phone: canonicalPhone,
+          phone,
           customerCode,
           businessId: input.businessId,
           publicToken: createPublicCardToken(),
@@ -118,6 +131,19 @@ export async function createPublicMembershipCommand(input: {
         },
         select: { id: true, publicToken: true },
       });
+      await persistCustomerWhatsAppPhone(transaction, {
+        businessId: input.businessId,
+        customerId: createdCustomer.id,
+        whatsappPhoneE164: phone,
+      });
+      if (input.whatsappOptIn) {
+        await setCustomerWhatsAppConsent(transaction, {
+          businessId: input.businessId,
+          customerId: createdCustomer.id,
+          consent: "OPT_IN",
+          changedAt: new Date(),
+        });
+      }
 
       const activity = await transaction.businessActivity.create({
         data: {

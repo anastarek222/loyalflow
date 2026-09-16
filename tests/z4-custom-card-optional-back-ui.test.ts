@@ -7,16 +7,17 @@ function source(path: string) {
 }
 
 const manager = source("components/custom-card-artwork-manager.tsx");
+const uploadForm = source("components/custom-card-upload-form.tsx");
 const uploadAction = source(
   "app/businesses/[slug]/program/custom-card-upload-action.ts",
 );
 const input = source("lib/cards/card-design-input.ts");
 
 test("Z4 upload UI requires Front and Back in the same draft", () => {
-  assert.match(manager, /Front artwork · required/);
-  assert.match(manager, /Back artwork · required/);
-  assert.match(manager, /required[\s\S]*?name="customCardFrontFile"/);
-  assert.match(manager, /required[\s\S]*?name="customCardBackFile"/);
+  assert.match(uploadForm, /Front artwork · required/);
+  assert.match(uploadForm, /Back artwork · required/);
+  assert.match(uploadForm, /required[\s\S]*?name="customCardFrontFile"/);
+  assert.match(uploadForm, /required[\s\S]*?name="customCardBackFile"/);
   assert.match(manager, /Maximum 4 MB total across Front \+ Back/);
   assert.match(manager, /Tanee never generates either side in Custom\s+mode/);
   assert.match(manager, /1\.586:1/);

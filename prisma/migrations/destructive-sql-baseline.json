@@ -2,7 +2,7 @@
   "version": 1,
   "algorithm": "sha256",
   "description": "Reviewed historical destructive SQL statements. New or changed matches require explicit review.",
-  "entryCount": 30,
+  "entryCount": 31,
   "entries": [
     {
       "path": "prisma/migrations/20260713182630_add_owner_export_permission/migration.sql",
@@ -213,6 +213,13 @@
       "operation": "UPDATE_DATA",
       "statement": "UPDATE \"Business\" SET \"subscriptionLifecycleState\" = CASE WHEN \"paymentStatus\" = 'PAID' THEN 'ACTIVE'::\"SubscriptionLifecycleState\" WHEN \"paymentStatus\" = 'DUE' THEN 'ACTIVE'::\"SubscriptionLifecycleState\" WHEN \"paymentStatus\" = 'OVERDUE' THEN 'PAST_DUE'::\"SubscriptionLifecycleState\" WHEN \"paymentStatus\" = 'SUSPENDED' THEN 'SUSPENDED'::\"SubscriptionLifecycleState\" ELSE 'TRIALING'::\"SubscriptionLifecycleState\" END;",
       "sha256": "965a3ce7990245330058276dbe35966243bdd90d854936b2b27c3cba8504fb00"
+    },
+    {
+      "path": "prisma/migrations/20260911120000_add_whatsapp_automation_controls/migration.sql",
+      "line": 35,
+      "operation": "DROP_CONSTRAINT",
+      "statement": "ALTER TABLE \"BusinessWhatsAppTemplateBinding\" DROP CONSTRAINT \"BusinessWhatsAppTemplateBinding_event_check\";",
+      "sha256": "dd1ba7c4eb0b6c290e6e2141bbcb16d374a5106f64a5d45a2f165926e065ebd2"
     }
   ]
 }

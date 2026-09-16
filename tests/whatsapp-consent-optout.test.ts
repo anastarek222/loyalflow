@@ -61,16 +61,21 @@ test("opt-out parsing rejects invalid senders and deduplicates provider message 
   assert.equal(extractWhatsAppOptOutRequests(payload).length, 1);
 });
 
-test("webhook consent boundary clears persisted consent and keeps integrations durable", () => {
+test("webhook consent boundary records opt-out while preserving consent history and durable integrations", () => {
   const consentSource = source("lib/server/integrations/whatsapp-consent.ts");
   const routeSource = source("app/api/webhooks/whatsapp/route.ts");
   const workerSource = source("lib/server/integrations/whatsapp-cloud.ts");
 
-  assert.match(consentSource, /whatsappOptInAt:\s*\{\s*not:\s*null\s*\}/);
-  assert.match(consentSource, /data:\s*\{\s*whatsappOptInAt:\s*null\s*\}/);
+  assert.match(consentSource, /customer\."whatsappOptInAt" IS NOT NULL/);
+  assert.match(consentSource, /customer\."whatsappOptedOutAt" IS NULL/);
+  assert.match(consentSource, /setCustomerWhatsAppConsent\(transaction/);
+  assert.doesNotMatch(consentSource, /whatsappOptInAt:\s*null/);
   assert.match(consentSource, /WHATSAPP_INBOUND_OPTOUT/);
   assert.match(consentSource, /enqueueIntegrationJob/);
   assert.match(consentSource, /scheduleIntegrationJobs\(integrationJobIds\)/);
   assert.match(routeSource, /revokeWhatsAppConsentFromWebhook\(payload\)/);
-  assert.match(workerSource, /!customer\.whatsappOptInAt/);
+  assert.match(
+    workerSource,
+    /!customer\.whatsappOptInAt\s*\|\|\s*customer\.whatsappOptedOutAt/,
+  );
 });

@@ -233,8 +233,8 @@ export async function createCustomerAction(slug: string, formData: FormData) {
       id: true,
       slug: true,
       plan: true,
-      subscriptionLifecycleState: true,
       country: true,
+      subscriptionLifecycleState: true,
     },
   });
 
@@ -321,5 +321,7 @@ export async function createCustomerAction(slug: string, formData: FormData) {
   revalidatePath(`/card/${createdCustomer.publicToken}`);
   revalidatePath("/dashboard");
 
-  redirect(`/businesses/${slug}/customers/${createdCustomer.id}?success=created`);
+  redirect(
+    `/businesses/${slug}/customers/${createdCustomer.id}?success=created`,
+  );
 }

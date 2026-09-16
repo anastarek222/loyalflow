@@ -3,20 +3,24 @@ import test from "node:test";
 import {
   getCustomerDisplayName,
   normalizePhone,
+  normalizePhoneE164,
   parseCustomerRegistration,
 } from "@/lib/customers/registration";
 
 test("normalizes Arabic separators while retaining an international prefix", () => {
-  assert.equal(
-    normalizePhone("+20 (100) 000-0000"),
-    "+201000000000"
-  );
+  assert.equal(normalizePhone("+20 (100) 000-0000"), "+201000000000");
 });
 
 test("canonicalizes equivalent Egyptian local and international phone forms", () => {
-  assert.equal(normalizePhone("0100 000 0000", "Egypt"), "+201000000000");
-  assert.equal(normalizePhone("0020 100 000 0000", "Egypt"), "+201000000000");
-  assert.equal(normalizePhone("+20 100 000 0000", "Egypt"), "+201000000000");
+  assert.equal(normalizePhoneE164("0100 000 0000", "Egypt"), "+201000000000");
+  assert.equal(
+    normalizePhoneE164("0020 100 000 0000", "Egypt"),
+    "+201000000000",
+  );
+  assert.equal(
+    normalizePhoneE164("+20 100 000 0000", "Egypt"),
+    "+201000000000",
+  );
 });
 
 test("rejects malformed customer registration input", () => {
@@ -26,7 +30,7 @@ test("rejects malformed customer registration input", () => {
       lastName: null,
       phone: "invalid",
     }),
-    null
+    null,
   );
 });
 

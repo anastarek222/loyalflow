@@ -15,7 +15,7 @@ const redemptionAction = source(
   "app/businesses/[slug]/customers/[customerId]/redemption-reversal-actions.ts",
 );
 const customerPage = source(
-  "app/businesses/[slug]/customers/[customerId]/page.tsx",
+  "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
 );
 
 test("TC4.7 guards new financial reversals after idempotent replay and before writes", () => {

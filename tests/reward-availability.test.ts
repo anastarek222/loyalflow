@@ -307,7 +307,7 @@ test("availability surfaces keep canonical reward semantics and scanner filters 
   const root = process.cwd();
   for (const file of [
     "app/businesses/[slug]/customers/page.tsx",
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
     "app/businesses/[slug]/campaigns/page.tsx",
     "app/businesses/[slug]/recovery/page.tsx",
     "app/card/[token]/page.tsx",

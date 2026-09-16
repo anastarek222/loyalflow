@@ -4,8 +4,12 @@ import {
 } from "@/lib/activity/business-activity";
 import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
-import { equivalentPhoneIdentities, normalizePhone } from "@/lib/customers/phone";
+import {
+  equivalentPhoneIdentities,
+  normalizePhoneE164,
+} from "@/lib/customers/phone";
 import prisma from "@/lib/prisma";
+import { invalidateCustomerWhatsAppConsentForPhoneChange } from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 
 export type CustomerRecordMaintenanceActor = Readonly<{
@@ -16,7 +20,11 @@ export type CustomerRecordMaintenanceActor = Readonly<{
 
 type CustomerRecordMaintenanceFailure = Readonly<{
   ok: false;
-  reason: "DUPLICATE" | "SUBSCRIPTION_RESTRICTED" | "TARGET_NOT_FOUND";
+  reason:
+    | "DUPLICATE"
+    | "INVALID_PHONE"
+    | "SUBSCRIPTION_RESTRICTED"
+    | "TARGET_NOT_FOUND";
 }>;
 
 export type CustomerRecordMaintenanceResult =
@@ -57,20 +65,27 @@ export async function updateCustomerRecordCommand(input: {
       where: { id: input.businessId },
       select: { country: true },
     });
-    const customer = await transaction.customer.findFirst({
-      where: { id: input.customerId, businessId: input.businessId },
-      select: { id: true },
-    });
-    if (!business || !customer) {
+    if (!business) {
       return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
     }
 
-    const canonicalPhone = normalizePhone(input.phone, business.country);
+    const phone = normalizePhoneE164(input.phone, business.country);
+    if (!phone) {
+      return { ok: false, reason: "INVALID_PHONE" } as const;
+    }
+
+    const customer = await transaction.customer.findFirst({
+      where: { id: input.customerId, businessId: input.businessId },
+      select: { id: true, phone: true },
+    });
+    if (!customer) {
+      return { ok: false, reason: "TARGET_NOT_FOUND" } as const;
+    }
 
     const duplicateCustomer = await transaction.customer.findFirst({
       where: {
         businessId: input.businessId,
-        phone: { in: equivalentPhoneIdentities(canonicalPhone, business.country) },
+        phone: { in: equivalentPhoneIdentities(phone, business.country) },
         id: { not: customer.id },
       },
       select: { id: true },
@@ -79,14 +94,23 @@ export async function updateCustomerRecordCommand(input: {
       return { ok: false, reason: "DUPLICATE" } as const;
     }
 
+    const phoneChanged = customer.phone !== phone;
+
     await transaction.customer.update({
       where: { id: customer.id },
       data: {
         firstName: input.firstName,
         lastName: input.lastName || null,
-        phone: canonicalPhone,
+        phone,
       },
     });
+
+    if (phoneChanged) {
+      await invalidateCustomerWhatsAppConsentForPhoneChange(transaction, {
+        businessId: input.businessId,
+        customerId: customer.id,
+      });
+    }
 
     const updatedCustomerName = [input.firstName, input.lastName]
       .filter(Boolean)

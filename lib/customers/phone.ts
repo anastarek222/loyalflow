@@ -1,37 +1,147 @@
-import { COUNTRY_OPTIONS } from "@/lib/onboarding/countries";
+import countries from "world-countries";
 
-function countryDialCode(countryName?: string | null) {
-  if (!countryName) return null;
-  return COUNTRY_OPTIONS.find((country) => country.name === countryName)?.dialCode ?? null;
+type CountryRecord = (typeof countries)[number];
+
+const MIN_E164_DIGITS = 8;
+const MAX_E164_DIGITS = 15;
+
+const ARABIC_INDIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+const EASTERN_ARABIC_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
+
+function normalizeNumerals(value: string) {
+  return Array.from(value, (character) => {
+    const arabicIndicIndex = ARABIC_INDIC_DIGITS.indexOf(character);
+    if (arabicIndicIndex >= 0) return String(arabicIndicIndex);
+
+    const easternArabicIndex = EASTERN_ARABIC_DIGITS.indexOf(character);
+    if (easternArabicIndex >= 0) return String(easternArabicIndex);
+
+    return character;
+  }).join("");
 }
 
-/** Canonical persisted customer identity: E.164-like digits with one leading +. */
-export function normalizePhone(value: string, countryName?: string | null) {
-  const cleaned = value.trim().replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "");
-  if (!cleaned) return "";
-  if (cleaned.startsWith("+")) return `+${cleaned.slice(1).replace(/\D/g, "")}`;
-  if (cleaned.startsWith("00")) return `+${cleaned.slice(2).replace(/^0+/, "")}`;
+function normalizeCountryKey(value: string) {
+  return value.trim().toLocaleLowerCase("en");
+}
 
-  const dialCode = countryDialCode(countryName);
-  if (dialCode && dialCode !== "—") {
-    const digits = cleaned.replace(/^0+/, "");
-    const dialDigits = dialCode.replace(/^\+/, "");
-    return `+${digits.startsWith(dialDigits) ? digits : `${dialDigits}${digits}`}`;
+function countryMatches(country: CountryRecord, value: string) {
+  const key = normalizeCountryKey(value);
+  const aliases = [
+    country.cca2,
+    country.cca3,
+    country.name.common,
+    country.name.official,
+    ...country.altSpellings,
+  ];
+
+  return aliases.some((alias) => normalizeCountryKey(alias) === key);
+}
+
+function resolveCountry(value?: string | null) {
+  if (!value?.trim()) return null;
+  return countries.find((country) => countryMatches(country, value)) ?? null;
+}
+
+function getCountryCallingCode(country: CountryRecord) {
+  const root = country.idd.root?.replace(/\D/g, "") ?? "";
+  const suffixes = country.idd.suffixes ?? [];
+  if (!root) return null;
+
+  // NANP countries share +1. US and Canada use +1 directly; territories have
+  // one explicit suffix in world-countries and can therefore be resolved.
+  if (root === "1" && (country.cca2 === "US" || country.cca2 === "CA")) {
+    return root;
   }
 
-  return cleaned;
+  if (suffixes.length === 0) return root;
+  if (suffixes.length === 1) return `${root}${suffixes[0]}`;
+
+  // Multiple possible international prefixes are ambiguous. Require the user
+  // to enter an explicit +E.164 number rather than guessing.
+  return null;
 }
 
-export function equivalentPhoneIdentities(value: string, countryName?: string | null) {
-  const canonical = normalizePhone(value, countryName);
-  if (!/^\+\d{8,15}$/.test(canonical)) return [canonical];
+function asE164(digits: string) {
+  if (
+    digits.length < MIN_E164_DIGITS ||
+    digits.length > MAX_E164_DIGITS ||
+    digits.startsWith("0")
+  ) {
+    return null;
+  }
+
+  return `+${digits}`;
+}
+
+export function phoneDigits(value: string) {
+  return normalizeNumerals(value).replace(/\D/g, "");
+}
+
+export function normalizePhoneE164(
+  value: string,
+  defaultCountry?: string | null,
+) {
+  const normalized = normalizeNumerals(value).trim();
+  if (!normalized) return null;
+
+  if (normalized.startsWith("+")) {
+    return asE164(normalized.slice(1).replace(/\D/g, ""));
+  }
+
+  if (normalized.startsWith("00")) {
+    return asE164(normalized.slice(2).replace(/\D/g, ""));
+  }
+
+  const country = resolveCountry(defaultCountry);
+  if (!country) return null;
+
+  const callingCode = getCountryCallingCode(country);
+  if (!callingCode) return null;
+
+  const digits = phoneDigits(normalized);
+  if (!digits) return null;
+
+  // Accept a country-code-prefixed value without a plus, otherwise treat it
+  // as a national number and remove one common trunk zero before prefixing.
+  if (digits.startsWith(callingCode)) {
+    return asE164(digits);
+  }
+
+  const nationalNumber = digits.startsWith("0") ? digits.slice(1) : digits;
+  return asE164(`${callingCode}${nationalNumber}`);
+}
+
+/**
+ * Compatibility sanitizer for non-WhatsApp call sites that still need the
+ * historical cleaned representation. New customer writes should use
+ * normalizePhoneE164 so the persisted value is canonical.
+ */
+export function normalizePhone(value: string) {
+  const normalized = normalizeNumerals(value).replace(/[^\d+]/g, "");
+  return normalized.replace(/(?!^)\+/g, "");
+}
+
+/**
+ * Returns the canonical identity plus formats that may exist in historical
+ * rows. New writes always persist the canonical E.164 value; these aliases
+ * only prevent an older equivalent row from being duplicated.
+ */
+export function equivalentPhoneIdentities(
+  value: string,
+  defaultCountry?: string | null,
+) {
+  const canonical = normalizePhoneE164(value, defaultCountry);
+  if (!canonical) {
+    const legacy = normalizePhone(value);
+    return legacy ? [legacy] : [];
+  }
 
   const digits = canonical.slice(1);
   const variants = new Set([canonical, digits, `00${digits}`]);
-  const dialCode = countryDialCode(countryName);
-  const dialDigits = dialCode?.replace(/^\+/, "");
-  if (dialDigits && digits.startsWith(dialDigits)) {
-    variants.add(`0${digits.slice(dialDigits.length)}`);
+  const country = resolveCountry(defaultCountry);
+  const callingCode = country ? getCountryCallingCode(country) : null;
+  if (callingCode && digits.startsWith(callingCode)) {
+    variants.add(`0${digits.slice(callingCode.length)}`);
   }
   return [...variants];
 }

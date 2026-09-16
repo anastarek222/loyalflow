@@ -22,7 +22,7 @@ const noteCommand = source(
   "lib/server/business/customer-note-write-command.ts",
 );
 const customerPage = source(
-  "app/businesses/[slug]/customers/[customerId]/page.tsx",
+  "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
 );
 
 test("TC4.10 guards customer profile and note maintenance as OPERATE", () => {

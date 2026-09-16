@@ -83,6 +83,8 @@ const REVIEWED_MIGRATIONS = [
   "20260903171000_add_whatsapp_delivery_status",
   "20260905120000_add_public_trial_acquisition_identity",
   "20260907120000_add_business_whatsapp_template_bindings",
+  "20260911120000_add_whatsapp_automation_controls",
+  "20260911183000_add_customer_whatsapp_consent_state",
 ] as const;
 
 const connectionString = process.env.DATABASE_URL;

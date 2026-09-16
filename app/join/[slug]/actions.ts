@@ -36,8 +36,8 @@ export async function joinBusinessAction(slug: string, formData: FormData) {
       slug: true,
       isActive: true,
       plan: true,
-      subscriptionLifecycleState: true,
       country: true,
+      subscriptionLifecycleState: true,
     },
   });
 

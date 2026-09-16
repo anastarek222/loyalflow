@@ -57,7 +57,7 @@ test("TC5 compatibility facade has no remaining legacy Customer Detail fallback"
 
 test("TC5 customer and scan surfaces continue through the compatibility facade", () => {
   const customerPage = source(
-    "app/businesses/[slug]/customers/[customerId]/page.tsx",
+    "app/businesses/[slug]/customers/[customerId]/legacy-page.tsx",
   );
   const scanPage = source(
     "app/businesses/[slug]/scan/customer/[customerId]/page.tsx",

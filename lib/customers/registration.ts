@@ -4,9 +4,9 @@ import type {
   PublicMembershipRegistrationInput,
 } from "@loyalflow/contracts/customers/public-membership";
 import { z } from "zod";
-import { normalizePhone } from "@/lib/customers/phone";
+import { normalizePhoneE164 } from "@/lib/customers/phone";
 
-export { normalizePhone } from "@/lib/customers/phone";
+export { normalizePhone, normalizePhoneE164 } from "@/lib/customers/phone";
 
 export const customerRegistrationSchema = z.object({
   firstName: z.string().trim().min(2).max(50),
@@ -30,7 +30,7 @@ type CustomerCodeLookup = {
 
 export function parseCustomerRegistration(
   value: PublicMembershipRegistrationInput,
-  countryName?: string | null,
+  defaultCountry?: string | null,
 ): PublicMembershipRegistration | null {
   const parsed = customerRegistrationSchema.safeParse({
     firstName: value.firstName,
@@ -42,11 +42,8 @@ export function parseCustomerRegistration(
     return null;
   }
 
-  const phone = normalizePhone(parsed.data.phone, countryName);
-
-  if (!/^\+?\d{8,15}$/.test(phone)) {
-    return null;
-  }
+  const phone = normalizePhoneE164(parsed.data.phone, defaultCountry);
+  if (!phone) return null;
 
   return {
     ...parsed.data,
@@ -57,11 +54,13 @@ export function parseCustomerRegistration(
 export async function generateCustomerCode(
   client: CustomerCodeLookup,
   businessId: string,
-  slug: string
+  slug: string,
 ) {
   const prefix =
-    slug.replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase() ||
-    "CUS";
+    slug
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 3)
+      .toUpperCase() || "CUS";
 
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const suffix = randomBytes(3).toString("hex").toUpperCase();

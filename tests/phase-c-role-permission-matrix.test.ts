@@ -79,7 +79,10 @@ test("Phase C source authority keeps tenant roles exact and rejects cross-tenant
 test("Phase C critical routes pair presentation visibility with server authorization", () => {
   const files = {
     navigation: source("lib/app-shell-navigation.ts"),
-    customer: source("app/businesses/[slug]/customers/[customerId]/page.tsx"),
+    customer: [
+      source("app/businesses/[slug]/customers/[customerId]/page.tsx"),
+      source("app/businesses/[slug]/customers/[customerId]/legacy-page.tsx"),
+    ].join("\n"),
     earn: source(
       "app/businesses/[slug]/customers/[customerId]/loyalty-earn-actions.ts",
     ),
