@@ -6,7 +6,7 @@ import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
-import { getLatestWhatsAppMessageForCustomer } from "@/lib/server/integrations/whatsapp-message-history";
+import { getWhatsAppMessageHistoryPage } from "@/lib/server/integrations/whatsapp-message-history";
 import { getBusinessWhatsAppManualReadiness } from "@/lib/server/integrations/whatsapp-manual-readiness";
 import { renderWhatsAppTemplate } from "@/lib/whatsapp-templates";
 import Link from "next/link";
@@ -77,9 +77,16 @@ export default async function CustomerWhatsAppPanel({
   });
   if (!customer) notFound();
 
-  const latest = await getLatestWhatsAppMessageForCustomer({
+  const history = await getWhatsAppMessageHistoryPage({
     businessId: business.id,
     customerId: customer.id,
+    pageSize: 5,
+  });
+  const latest = history.entries[0] ?? null;
+  const latestRedemption = await prisma.rewardRedemption.findFirst({
+    where: { businessId: business.id, customerId: customer.id },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { rewardName: true },
   });
   const manualReadiness = await getBusinessWhatsAppManualReadiness(prisma, {
     businessId: business.id,
@@ -301,6 +308,22 @@ export default async function CustomerWhatsAppPanel({
           </div>
         </div>
 
+        {history.entries.length > 0 ? (
+          <div className="mt-4 grid gap-2 border-t border-border pt-4" data-whatsapp-customer-timeline>
+            {history.entries.map((entry) => (
+              <div key={entry.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-subtle px-3 py-2 text-xs">
+                <span className="font-bold text-foreground">
+                  {entry.payload.event.replaceAll("_", " ")}
+                  {entry.payload.deliveryMode === "MANUAL" ? ` · ${t("يدوي", "Manual")}` : ` · ${t("تلقائي", "Automatic")}`}
+                </span>
+                <span className="text-foreground-muted">
+                  {entry.providerDeliveryStatus ?? entry.status} · {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(entry.createdAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         {canSend && eligible && manualReadiness.readyEvents.length > 0 ? (
           <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
             {manualReadiness.isEventReady("WELCOME") ? (
@@ -314,6 +337,24 @@ export default async function CustomerWhatsAppPanel({
             {availability.rewardReady &&
             manualReadiness.isEventReady("REWARD_READY") ? (
               <ManualWhatsAppSendButton action={sendAction} event="REWARD_READY" requestId={randomUUID()} label={t("إرسال Reward Ready", "Send Reward Ready")} customerName={customerName} maskedPhone={maskedPhone} preview={renderWhatsAppTemplate(business.whatsappRewardMessage ?? "", previewContext)} language={language} tone="warning" />
+            ) : null}
+
+            {latestRedemption &&
+            manualReadiness.isEventReady("REWARD_REDEEMED") ? (
+              <ManualWhatsAppSendButton
+                action={sendAction}
+                event="REWARD_REDEEMED"
+                requestId={randomUUID()}
+                label={t("إرسال تأكيد الاستبدال", "Send redemption confirmation")}
+                customerName={customerName}
+                maskedPhone={maskedPhone}
+                preview={renderWhatsAppTemplate(
+                  business.whatsappRedeemedMessage ?? "",
+                  { ...previewContext, reward: latestRedemption.rewardName },
+                )}
+                language={language}
+                tone="success"
+              />
             ) : null}
           </div>
         ) : null}
