@@ -152,6 +152,9 @@ export async function redeemOwnerInvitationWithStore(
     invitation.source === "PUBLIC_TRIAL"
       ? parseOwnerInvitationLegalAcceptance(input.token)
       : null;
+  if (invitation.source === "PUBLIC_TRIAL" && !legalAcceptance) {
+    return { status: "invalid_or_expired" };
+  }
   if (legalAcceptance && legalAcceptance.acceptedAt > now) {
     return { status: "invalid_or_expired" };
   }
