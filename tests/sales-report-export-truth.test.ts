@@ -12,6 +12,7 @@ const source = (file: string) => fs.readFileSync(path.join(root, file), "utf8");
 const transactions = source("lib/loyalty/transactions.ts");
 const reportPage = source("app/businesses/[slug]/reports/page.tsx");
 const exportRoute = source("app/businesses/[slug]/reports/export/route.ts");
+const currencySafety = source("lib/business/currency-change-safety.ts");
 
 test("sales amount preserves recorded sale separately from promotional loyalty credit", () => {
   const sale = getEarnDetails({
@@ -43,7 +44,6 @@ test("reports aggregate actual recorded sales from saleAmount", () => {
 test("CSV export exposes loyalty movement and recorded-sale truth as separate fields", () => {
   assert.match(exportRoute, /amount: true,/);
   assert.match(exportRoute, /saleAmount: true,/);
-  assert.match(exportRoute, /currencyAtEarn: true,/);
 
   assert.match(exportRoute, /"قيمة حركة الولاء"/);
   assert.match(exportRoute, /"وحدة حركة الولاء"/);
@@ -56,7 +56,14 @@ test("CSV export exposes loyalty movement and recorded-sale truth as separate fi
   );
   assert.match(
     exportRoute,
-    /transaction\.saleAmount === null \? "" : \(transaction\.currencyAtEarn \?\? ""\)/,
+    /transaction\.saleAmount === null \? "" : \(business\.currency \?\? ""\)/,
+  );
+});
+
+test("recorded-sale currency stays authoritative because historical Sales Amount blocks currency changes", () => {
+  assert.match(
+    currencySafety,
+    /input\.hasHistoricalSalesAmount &&\s*isBusinessCurrencyChange\(/,
   );
 });
 
