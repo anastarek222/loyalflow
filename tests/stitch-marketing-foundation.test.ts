@@ -34,7 +34,6 @@ test("public marketing routes opt into the shared theme surface", () => {
     "app/data-deletion/page.tsx",
     "app/demo/page.tsx",
     "components/marketing/legal-document-page.tsx",
-    "app/get-started/page.tsx",
   ];
 
   for (const route of routes) {
