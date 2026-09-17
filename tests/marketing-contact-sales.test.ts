@@ -62,10 +62,11 @@ test("shared Marketing header exposes smart mobile navigation and booking launch
   );
 
   assert.match(header, /data-header-visible=\{isHeaderVisible/);
+  assert.match(header, /max-width: 1365px/);
   assert.match(header, /currentY > previousY \+ 4/);
   assert.match(header, /currentY < previousY - 2/);
   assert.match(header, /-translate-y-full/);
-  assert.match(header, /min-\[1440px\]:translate-y-0/);
+  assert.match(header, /min-\[1366px\]:translate-y-0/);
   assert.match(header, /fixed inset-x-0 top-0/);
   assert.match(header, /fixed inset-y-0 right-0/);
   assert.match(header, /text-\[var\(--lf-foreground-muted\)\]/);
