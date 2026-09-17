@@ -14,7 +14,7 @@ test("Z13 keeps platform shell brand values in one web-owned authority", () => {
   const appleIcon = source("app/apple-icon.tsx");
 
   assert.match(brand, /name:\s*"Tanee"/);
-  assert.match(brand, /nameAr:\s*"تاني"/);
+  assert.match(brand, /nameAr:\s*"Tanee"/);
   assert.match(brand, /iconMark:\s*"ee"/);
   assert.match(brand, /iconGradientStart:\s*"#FF6652"/);
   assert.match(brand, /iconGradientEnd:\s*"#A84724"/);
