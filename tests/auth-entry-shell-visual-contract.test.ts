@@ -8,6 +8,7 @@ function source(relativePath: string) {
 
 const migratedRoutes = [
   "app/verify-email/page.tsx",
+  "app/verify-email/resend/page.tsx",
   "app/forgot-password/page.tsx",
   "app/reset-password/page.tsx",
   "app/mfa/setup/page.tsx",
