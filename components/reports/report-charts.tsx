@@ -49,7 +49,7 @@ export function ReportCharts({ language, unitName, trends }: Props) {
         aria-label={copy.trends}
         className={`${chartClassNames.empty} rounded-[var(--lf-radius-card)] border border-dashed border-border bg-surface-subtle p-8 text-center`}
       >
-        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-primary-soft text-primary">
+        <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-[var(--lf-primary-soft)] text-primary">
           <ChartNoAxesCombined className="size-6" aria-hidden="true" />
         </span>
         <p className="mt-4 font-black text-foreground">{copy.noData}</p>
@@ -157,7 +157,7 @@ function ChartHeader({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[var(--lf-primary-soft)] text-primary">
         <Icon className="size-4" aria-hidden="true" />
       </span>
       <div>
