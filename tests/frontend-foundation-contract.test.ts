@@ -68,3 +68,21 @@ test("dashboard and report chart surfaces use dark-capable semantic colors", () 
   assert.match(reports, /bg-\[var\(--lf-primary-soft\)\]/);
   assert.doesNotMatch(reports, /\bbg-primary-soft\b/);
 });
+
+test("semantic Tailwind color utilities resolve through the Tanee token authority", () => {
+  const aliases = source("app/loyalflow-theme-aliases.css");
+
+  for (const mapping of [
+    "--color-foreground-muted: var(--lf-foreground-muted)",
+    "--color-foreground-subtle: var(--lf-foreground-subtle)",
+    "--color-inverse: var(--lf-inverse)",
+    "--color-primary-soft: var(--lf-primary-soft)",
+    "--color-primary-subtle: var(--lf-primary-soft)",
+    "--color-success-subtle: var(--lf-success-subtle)",
+    "--color-warning-subtle: var(--lf-warning-subtle)",
+    "--color-danger-subtle: var(--lf-danger-subtle)",
+    "--color-info-subtle: var(--lf-info-subtle)",
+  ]) {
+    assert.ok(aliases.includes(mapping), `missing semantic color bridge: ${mapping}`);
+  }
+});
