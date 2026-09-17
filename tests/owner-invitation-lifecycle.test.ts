@@ -119,9 +119,45 @@ test("expired invitation cannot create an owner", async () => {
   assert.equal(ownerCreated, false);
 });
 
-test("public trial redemption prefills normalized identity and business onboarding data", async () => {
+test("public trial redemption requires a bound legal acceptance snapshot", async () => {
   const now = new Date("2026-09-05T12:00:00.000Z");
   const generated = createOwnerInvitationToken(now);
+  let ownerCreated = false;
+
+  const result = await redeemOwnerInvitationWithStore(
+    { token: generated.token, passwordHash: "hash", now },
+    {
+      findInvitationByTokenHash: async () => ({
+        id: generated.id,
+        firstName: "Mona",
+        lastName: "Ali",
+        email: "mona@example.test",
+        phone: "+201001234567",
+        businessName: "Mona Coffee",
+        country: "Egypt",
+        source: "PUBLIC_TRIAL",
+        tokenHash: generated.tokenHash,
+        expiresAt: generated.expiresAt,
+        usedAt: null,
+      }),
+      findUserByEmail: async () => null,
+      consumeAndCreateOwner: async () => {
+        ownerCreated = true;
+        return { status: "success" as const, userId: "owner-public" };
+      },
+    },
+  );
+
+  assert.deepEqual(result, { status: "invalid_or_expired" });
+  assert.equal(ownerCreated, false);
+});
+
+test("public trial redemption prefills normalized identity and business onboarding data", async () => {
+  const now = new Date("2026-09-05T12:00:00.000Z");
+  const generated = createOwnerInvitationToken(now, {
+    effectiveDate: "2026-09-01",
+    acceptedAt: now,
+  });
   const createdOwners: Array<
     Parameters<
         Parameters<
