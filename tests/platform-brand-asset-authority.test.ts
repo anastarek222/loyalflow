@@ -15,7 +15,7 @@ test("platform brand assets use the approved English Tanee wordmark", () => {
   });
   assert.equal(platformBrand.iconMark, "ee");
   assert.equal(platformBrand.name, "Tanee");
-  assert.equal(platformBrand.nameAr, "تاني");
+  assert.equal(platformBrand.nameAr, "Tanee");
 });
 
 test("shared brand identity renderer owns mark and English wordmark fallbacks", () => {
