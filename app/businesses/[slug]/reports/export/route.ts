@@ -9,6 +9,7 @@ import { canExportBusinessData } from "@/lib/permissions";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import {
   formatLoyaltyNumber,
+  loyaltyCurrency,
   operationalUnitLabel,
 } from "@/lib/loyalty/presentation";
 import prisma from "@/lib/prisma";
@@ -189,7 +190,7 @@ export async function GET(request: Request, context: ExportRouteContext) {
         ? ""
         : formatLoyaltyNumber(transaction.saleAmount, "AR");
     const recordedSaleCurrency =
-      transaction.saleAmount === null ? "" : (business.currency ?? "");
+      transaction.saleAmount === null ? "" : loyaltyCurrency(business.currency);
 
     return [
       dateFormatter.format(transaction.createdAt),
