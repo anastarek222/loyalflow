@@ -1,206 +1,271 @@
 # Tanee / LoyalFlow — Pre-Stitch Closeout Manifest
 
-Status: ACTIVE
+Status: **ACTIVE — GLOBAL FREEZE BLOCKED**
 
-This manifest is the working authority for the final Product / Logic / Functional UX / Integration closeout before Stitch. It must not be interpreted as Production authorization.
+Last reconciled: 2026-09-17
 
-## Baseline
+This document is the current authority for Product / Logic / Functional UX / Integration closeout before Stitch. It is **not** Production authorization. Production remains untouched unless the Owner explicitly authorizes a separate Production release step.
 
-- Production `main`: `75ee9fb1c4bd4561f58b3a902eb9f6eb49ee3482`
-- Integration `staging`: `5deae918d67e9236e249c82b3cd3df221c47391f`
-- Authoritative Product Core candidate: PR #549. Its reconciled runtime/code checkpoint is `0745dde273758f09adff72267fb521603656b23f`; later documentation-only authority updates do not change that product tree.
-- Last validated runtime/code checkpoint: `0745dde273758f09adff72267fb521603656b23f` (Staging PR Validation #1024 and Vercel Preview passed). Current exact-head status is recorded by the PR checks rather than embedded as a self-referential commit SHA in this file.
-- PR #571 at `5449004e01a5c2f08f52d8afe6721bd6484b8ee7` is fully subsumed by the PR #549 tree. A virtual merge produces the unchanged PR #549 tree `5dcbc2187f08d0483349c53a09ae190cd0313412`; PR #571 must not be merged after PR #549 merely to preserve commit ancestry.
-- PR #549 remains Draft and unmerged. Exact-head CI is green, but deployed Staging runtime, Production, real-business UAT, and external-provider certification remain separate gates.
+## 1. Current release authorities
 
-## Execution rules
+- Production/default branch `main`: `75ee9fb1c4bd4561f58b3a902eb9f6eb49ee3482`.
+- Integration branch `staging`: `7bf51c1f08d2c132cce17cb39ae45b9cfc436e8d`.
+- Current Staging Vercel deployment: `dpl_vBuC3rgjb8AUc15ko21ekGAcuzSn`.
+- Exact Staging deployment state: `READY`; Vercel commit status is `success`.
+- Exact Staging runtime has served `GET /` with HTTP 200 and has no warning/error/fatal runtime logs observed after this deployment.
+- Direct exact-SHA `/api/health/live` and authenticated browser UAT remain protected by Vercel Deployment Protection and must use the repository's secure encrypted handoff workflow rather than weakening protection.
 
-1. Prove the current gap before changing runtime behavior.
-2. Fix shared sources of truth before page-local symptoms.
-3. Do not duplicate already-fixed behavior from stacked Draft PRs.
-4. Preserve tenant isolation, permission enforcement, financial locking/idempotency, and existing safe subscription boundaries.
-5. No merge to `staging` or `main`, and no Production/provider mutation, without explicit Owner authorization.
-6. Each functional batch requires focused regression plus exact-head evidence.
+### Main / Staging reconciliation gate
 
-## P1 functional blockers
+`main` and `staging` are currently diverged, not ancestor/descendant:
 
-### Reward / redemption truth
+- `staging` has 360 commits not in `main`.
+- `main` has 163 commits not in `staging`.
+- merge base: `e09f92c54bb52d9fba32e43c488ca54c56a69b82`.
 
-- [x] One authoritative non-WhatsApp Reward State for Card / Profile / Scan / Redemption / Customers / Reports / Offers. WhatsApp remains in its separate lane.
-- [x] Non-expiring earned reward is redeemable without requiring a non-existent unlock lifecycle record.
-- [x] Fallback reward is unavailable while an active catalogue is authoritative.
-- [x] Multi-reward affordability/readiness has one contract.
-- [x] Earned expiring entitlement snapshot policy is implemented and regression-tested.
-- [x] Reward cost/name/status changes have explicit treatment for already-earned entitlement.
+Therefore **GLOBAL PRE-STITCH FREEZE MUST NOT be declared yet**. The active frontend lane on `main` must freeze first, then one reconciled final release candidate must be built and re-certified. Do not directly merge `main` into `staging` or `staging` into `main` merely to remove the divergence counter.
 
-Focused evidence: `getRewardTruth` in `lib/rewards/availability.ts` is the shared authority used by the non-WhatsApp surfaces above. Commit `c2cab56ee3ef778897f1843d66863627da6bcd44` passed 17/17 focused tests, including the cross-surface multi-reward fixture. Entitlement snapshot and mutation-policy regressions were already closed on this lane before that reconciliation.
+## 2. Current source / CI authority
 
-### Customer state / audience truth
+The current Staging source tree includes the merged legal-acceptance fix from PR #579 and the Meta Embedded Signup / WhatsApp staging fixes from PR #580.
 
-- [x] Replace single mutually-exclusive segment authority with explicit lifecycle/value/engagement/reward traits where needed.
-- [x] Reward Ready is identical in Customers, Reports, Exports and Offers. Messaging remains tracked in the separate WhatsApp lane.
-- [x] High Spender uses qualifying monetary behavior, not generic lifetime loyalty credit.
-- [x] Frequent Visitor uses qualifying operation frequency, not generic lifetime loyalty credit.
-- [x] VIP/value and At-Risk/activity can coexist.
-- [x] Refund/void/promotion effects on audience metrics are explicitly defined and tested.
+Current-tree validation evidence from PR #580 is green:
 
-Focused evidence: `tests/customer-audience-context.test.ts`, `tests/customer-segments.test.ts`, `tests/offer-eligibility.test.ts`, and the ten-customer reconciliation fixture in `tests/customer-audience-cross-surface.test.ts`. Exact branch commit `a2dd5809d7cc7808dfc18ac7a37d88d4b0c42bc4` passed 34/34 focused assertions; its full exact-head gate is tracked below.
+- immutable migration manifest: PASS
+- destructive migration scan: PASS
+- Prisma validation: PASS
+- disposable PostgreSQL migration rehearsal: PASS
+- focused subscription tests: PASS
+- full test suite: **2003 / 2003 PASS**
+- TypeScript: PASS
+- workspace boundaries: PASS
+- lint: PASS
+- production-style build: PASS
+- Chromium browser smoke: PASS
+- browser runtime receipts: PASS
+- patch whitespace: PASS
 
-### Offers / customer notifications
+The merge commit `7bf51c1...` has the same source tree as the validated PR #580 head; its additional commit is merge metadata only.
 
-- [x] Offer audience engine can actually produce every offered audience choice.
-- [x] Reward and Offer create/update/activate/deactivate operations persist explicit, locale-neutral Business Activity audit records atomically with their catalog writes.
-- [ ] New published Reward creates one brand-scoped customer notification event for opted-in eligible customers.
-- [ ] New published Offer notifies only its exact eligible opted-in audience.
-- [ ] Publish notification fan-out is idempotent and consent is rechecked before delivery.
-- [ ] Owner has visible queued/skipped/delivery summary evidence.
+`Slice D Exact-SHA Runtime UAT` is intentionally separate from normal PR CI. It runs only through the dedicated trigger branch and encrypted handoff containing the Staging database access, disposable UAT password, and Vercel automation bypass secret. A normal `skipped` result is not a failure and is not runtime certification.
 
-### WhatsApp truth
+## 3. Staging database / data integrity
 
-- [x] Automatic reward context uses the same Reward State as Card/manual messaging.
-- [ ] Manual and Meta template parsing use one token parser/validator.
-- [ ] Owner-editable first-run message defaults follow the approved Product requirement without creating duplicate manual/automatic copy sources.
-- [ ] New Reward / New Offer outbound events integrate with the existing Business-scoped outbox, credentials, consent and delivery-status model.
+Read-only verification against the dedicated Neon Staging project currently shows:
 
-Code-level evidence for the closed Reward context item is `tests/whatsapp-reward-truth-integration.test.ts`. This does not certify Meta templates, provider delivery/read receipts, controlled provider failure, recovery, or Real Closed Beta.
+- Prisma migration rows: 57
+- unfinished migrations: 0
+- rolled-back migrations: 0
+- tenant-scope mismatches across ledger/customer/redemption/unlock/reversal relationships: 0
+- tenant users without a Business: 0
+- Super Admin users incorrectly attached to a Business: 0
+- branch-assignment Business mismatches: 0
+- orphan branches / branch assignments: 0
+- customer balance reconciliation mismatches: 0
+- lifetime earned reconciliation mismatches: 0
+- lifetime redeemed reconciliation mismatches: 0
+- invalid financial type/amount/reversal rows: 0
+- duplicate Business-scoped loyalty idempotency keys: 0
+- broken redemption-to-ledger links: 0
+- broken redemption-to-unlock links: 0
+- active stalled queries over 30 seconds: 0
+- held database locks at inspection time: 0
+- malformed used-before-created Owner Invitation timestamps: 0
+- malformed Password Reset timestamps: 0
+- malformed Email Verification timestamps: 0
 
-### Customer identity
+Role topology at inspection time is also clean: one global Super Admin with no Business and two Business-scoped Owners.
 
-- [x] Country-aware canonical phone identity is defined for local, `+20` and `0020` equivalents.
-- [x] Existing-data collisions are exposed through the review-only duplicate workflow before any migration or merge decision.
-- [x] Duplicate membership prevention uses canonical identity at command boundaries.
-- [x] WhatsApp opt-out resolves the same canonical identity.
-- [x] Duplicate-join recovery remains privacy-safe and never discloses a bearer card URL from phone alone.
+## 4. Owner Trial / Email
 
-Focused evidence: commit `49df8a34861d22316cf5cc20144eecf88eb1af39` passed 33/33 phone, registration, duplicate and command-boundary tests. No Schema or Migration change was made; any future persisted canonical column or automated collision merge remains an Authorization Gate.
+### Closed in source
 
-Current-phone and STOP evidence is additionally locked by `tests/whatsapp-consent-state.test.ts`, `tests/whatsapp-consent-optout.test.ts`, and `tests/customer-whatsapp-phone-consent-policy.test.ts` at the validated PR #549 checkpoint. Phone changes invalidate stale bindings and opt-in without clearing `whatsappOptedOutAt`; reconfirmation is restricted to the active customer's current phone and cannot override STOP.
+- Public Trial request parsing requires explicit Terms acceptance.
+- Trial issuance binds acceptance to the currently published legal effective date.
+- `PUBLIC_TRIAL` redemption now fails closed unless the invitation token carries a valid bound legal acceptance snapshot.
+- Invitation tokens remain single-use / expiring according to the existing auth contract.
+- Auth-email delivery remains fail-closed and uses the Resend delivery boundary in real runtime.
+- CI's loopback email sink is reachable only when both `CI=true` and the private disposable harness flag are present.
+- Auth email idempotency keys do not expose the email address or raw token.
 
-### Owner Trial / onboarding
+### Trial duration authority
 
-- [x] Public Trial field limits equal final persistence limits.
-- [x] Password acceptance continues safely into onboarding without an unnecessary second login.
-- [x] Trial-start policy is locked; authority is first successful Launch for a fourteen-day promise.
-- [x] Country derives consistent currency/timezone defaults.
-- [x] Server draft, Wizard state and Card Preview use the same defaults.
-- [x] Logo upload no longer conflicts with a 500-character URL field contract.
-- [x] Post-Launch first action exposes Join QR/link and first-customer path.
+Current Product authority is:
 
-### Sales Amount
+`TRIAL_DURATION_DAYS = 14`
 
-- [x] Sales Amount operation records actual transaction amount.
-- [x] Historical Sales Amount currency cannot be silently relabeled through normal Business Profile settings.
-- [x] Currency choices use one source list across creation/onboarding/settings.
-- [x] Decimal policy is explicitly locked: whole-unit V1.
+The Trial window is fourteen days. Older seven-day references are historical evidence only and are not current Product authority.
 
-### Custom Card
+### Open external/runtime gates
 
-- [x] Structurally valid but undecodable image payloads are rejected.
-- [x] Missing Blob object has a clean explicit response contract.
-- [x] Provider/auth/storage failure is distinguished from not-found.
-- [x] Corrupt/unreadable stored artwork has a defined response contract.
-- [x] Oversized request behavior is friendly even when framework limits trigger before the action.
-- [x] Version listing is paginated beyond the first 100 objects.
+Public Trial runtime is currently blocked by legal publication configuration. A legal profile is considered published only when all five values are valid:
 
-Focused evidence for the closed Logo / Custom Card contracts above: Preview commit `900d90698ee2667bcfe814007958929ce2e63e82` executed 28 focused tests with 28 PASS / 0 FAIL before a successful production build and READY Preview deployment. The temporary Preview verifier was removed immediately after evidence capture. Full external Blob lifecycle certification and the structurally-valid-but-undecodable payload case remain open and are not represented by this focused evidence.
+- `NEXT_PUBLIC_LEGAL_PUBLICATION_STATUS=published`
+- `NEXT_PUBLIC_LEGAL_ENTITY_NAME`
+- `NEXT_PUBLIC_LEGAL_COUNTRY`
+- `NEXT_PUBLIC_LEGAL_CONTACT_EMAIL`
+- `NEXT_PUBLIC_LEGAL_EFFECTIVE_DATE` in `YYYY-MM-DD`
 
-### Card color semantics
+No placeholder legal identity should be invented to clear this gate. Until the approved legal identity/effective date are supplied, `/get-started` must remain fail-closed.
 
-- [x] `primaryColor` is the primary accent/action/QR/progress authority.
-- [x] `secondaryColor` is the supporting surface and gradient-companion authority.
-- [x] Standard and Custom Card consumers follow the same semantic contract.
+Email provider delivery also remains **OPEN for the current final candidate**. Source/tests are green, but this closeout does not claim a fresh controlled external provider-delivery receipt for the current exact Staging release.
 
-Focused evidence: `docs/product/CARD_COLOR_SEMANTICS.md`, `lib/cards/card-color-semantics.ts`, and commit `3ec869cb0b89314ca66dbfaff412cec9721bcaf4`; 19/19 targeted tests passed.
+## 5. WhatsApp V1
 
-### Reward / Offer Business Activity
+### Closed in source / CI
 
-- [x] Reward create/update/activate/deactivate events have explicit operations and item identity.
-- [x] Offer create/update/activate/deactivate events have explicit operations and item identity.
-- [x] Audit presentation is derived in Arabic or English from structured metadata.
-- [x] Catalog Business Activity is not represented as a customer outbound notification.
-- [x] No unsupported Reward/Offer publish event is fabricated; the current catalog lifecycle is create/update/active status.
+The current Staging source contains the Business-scoped WhatsApp V1 architecture and six customer-message events:
 
-Focused evidence: commit `d6727b3d73d3a23e259904b49364ad7021bf92fd`; 26/26 activity and command-boundary tests passed, TypeScript passed, and lint completed with zero errors (three pre-existing warnings).
+- Welcome
+- Balance Updated
+- Reward Ready
+- Reward Redeemed
+- New Reward
+- New Offer
 
-### Roles / permissions final matrix
+Current source enforces:
 
-- [x] Owner, Manager, Staff, Viewer, and Super Admin capabilities are documented from the canonical source authority.
-- [x] Dashboard, Customers, Customer Profile, Scan, Earn, Redeem, Adjust, Rewards, Offers, Reports, Export, Team, Settings, Card, Custom Card, and Plans/subscription surfaces are mapped.
-- [x] Navigation visibility and direct route/action/API enforcement remain separate requirements.
-- [x] Non-Super-Admin capability grants remain tenant-scoped; Super Admin restrictions remain additive where explicitly required.
+- Business-scoped credentials and sender identity
+- explicit customer consent
+- STOP / opt-out authority
+- current-phone consent binding
+- invalidation of stale consent after a customer phone change
+- atomic current-phone reconfirmation that cannot override STOP
+- durable Business-scoped outbox jobs
+- queue idempotency and worker leases
+- per-event automation controls and Global Pause
+- provider-owned template approval state
+- Business-scoped product readiness
+- manual and automatic delivery through the same durable delivery authority
+- Meta Embedded Signup client-origin validation
+- CSP / popup policy required for the official Meta SDK without making the application frameable
 
-Focused evidence: `docs/product/ROLE_PERMISSION_MATRIX.md` plus the Phase C role, tenant, navigation, and server-boundary regression suite. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+The obsolete phone-consent PR #571 was closed without merge because its core consent-state implementation is already present in current Staging, while current Staging additionally contains newer entitlement and Reward Redeemed handling.
 
-### Subscription / Trial / entitlement matrix
+### Current Staging provider state
 
-- [x] Pending, Trialing, Active, Past Due, Suspended, Canceled, and Expired operation policies are documented from runtime authority.
-- [x] Plan feature and default capacity boundaries are documented from the canonical entitlement catalog.
-- [x] Role, tenant, lifecycle, plan, capacity, and provider gates remain additive.
-- [x] Trial authority is 14 days from the first successful Launch.
-- [x] Stale seven-day Trial wording was removed from non-Marketing integration/product audit contracts.
+Read-only Staging data currently shows:
 
-Focused evidence: `docs/product/SUBSCRIPTION_ENTITLEMENT_MATRIX.md` and `tests/phase-d-subscription-entitlement-matrix.test.ts`. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+- connected `BusinessWhatsAppCredential` rows: **0**
+- current approved template bindings: **3**
+- approved bindings are Arabic `WELCOME`, `BALANCE_UPDATED`, and `REWARD_READY`
+- no current connected WABA/sender credential
 
-### Functional state sweep
+Therefore WhatsApp provider certification remains **OPEN / BLOCKED on reconnect and live provider evidence**. A complete gate requires the intended Staging sender to be connected and real provider evidence for accepted send plus lifecycle/webhook processing. Historical 401/provider failures are not current exact-head success evidence.
 
-- [x] Customers, Rewards, Offers, Reports, Scan, Card, Custom Card, Team, and Settings have bounded empty/loading/success/failure behavior.
-- [x] Permission, subscription, stale/conflict, not-found, and provider/runtime-unavailable outcomes remain explicit where applicable.
-- [x] Scan earn/redeem subscription rejection now reports the true reason in Arabic and English while preserving transaction enforcement.
-- [x] No dead-end or misleading CTA was introduced; final visual treatment remains owned by Stitch.
+## 6. Workers / Queue / Outbox
 
-Focused evidence: `docs/product/FUNCTIONAL_STATE_SWEEP.md` and `tests/phase-e-loyalty-subscription-feedback.test.ts`; the focused financial/subscription set passed 30/30 and TypeScript passed. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+Current source uses Vercel Queue for integration wake-ups and PostgreSQL as the durable job authority.
 
-### Cross-surface scenario certification
+Source/CI authority includes:
 
-- [x] Reward truth is consistent across Public Card, Customer Profile, Scan, server redemption, Customers, Reports, and Offers.
-- [x] Below/equal/above cost, fallback, catalog, expiring, non-expiring, expired, redeemed, and multiple-reward states are covered.
-- [x] The deterministic ten-customer audience fixture reconciles Customers, Reports, Export, and Offers.
-- [x] VIP, At Risk, Reward Ready, High Spender, Frequent Visitor, refund/void/promotion, and tenant tag semantics are covered.
+- job-id-only queue messages
+- queue idempotency key derived from job ID
+- atomic PostgreSQL claim lease
+- bounded retry policy with maximum three attempts
+- non-retryable failures terminate as `DEAD`
+- bounded stranded-job reconciliation
+- bounded recovery heartbeat without an immortal scheduling chain
 
-Focused evidence: `docs/product/CROSS_SURFACE_SCENARIO_CERTIFICATION.md`; the combined deterministic suite passed 31/31 at `d39f448f5514b5aa586b97310561bad2e23cdf1f`. Functional certification is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+Current Staging durable state is clean:
 
-### Reward regression final matrix
+- `PENDING`: 0
+- `FAILED`: 0
+- `PROCESSING`: 0
+- currently eligible stranded jobs: 0
 
-- [x] Fallback-only, catalog-only, and multiple-active-reward behavior is covered.
-- [x] Non-expiring, expiring active, expired, and redeemed entitlement behavior is covered.
-- [x] Reward cost/name/type/code/expiry and status mutation policy is covered.
-- [x] Last-active-reward fallback behavior and below/equal/above cost boundaries are covered.
-- [x] Historical earned-entitlement snapshots remain consistent through redemption side effects.
+Historical Staging runtime proves the queue worker has executed real Google Sheets and WhatsApp jobs, including fail-closed non-retryable outcomes. The current exact `7bf51c1...` deployment has not yet produced a new queue-callback execution receipt, so **exact-head Queue execution remains OPEN even though source/CI/durable state are clean**.
 
-Focused evidence: `docs/product/REWARD_REGRESSION_MATRIX.md` and `tests/phase-g-reward-regression-matrix.test.ts`. Functional implementation is `CLOSED`; browser and Staging evidence remain required for `VERIFIED`.
+## 7. Google Sheets
 
-### Source / release governance
+Google Sheets integration is source-safe and fail-closed, but current Staging runtime is not fully configured.
 
-- [x] One authoritative Pre-Stitch candidate head exists after the active #549/#571 delta was reconciled.
-- [x] No important #571 runtime fix remains only in the side branch; its six-file delta is fully contained in PR #549.
-- [x] Browser scenarios cannot silently early-return and pass without exercising required assertions.
-- [ ] Closeout docs and runbooks describe the same current source and lifecycle behavior.
+Current observed failure is `MISSING_SPREADSHEET_ID`, referring to the global runtime `GOOGLE_SPREADSHEET_ID` configuration required by the integration. This is an environment readiness blocker, not a data-corruption finding.
 
-Browser-truth evidence: commit `4f98f89b597df3a358c4cb03d2bb3ece1d210e7b` replaced the affected Owner onboarding and Custom Card silent early returns with explicit Playwright `test.skip(...)` boundaries, and `7fd90db63f1ee9e670a9d085ccc3fab3b65482ba` normalized the scoped checks. The affected source-contract tests passed, scoped ESLint passed, and both temporary apply workflows removed themselves after producing the durable branch commits. No database, migration, Production, provider, or secret mutation was performed by this focused verification.
+Current status: **BLOCKED ON ENVIRONMENT CONFIGURATION** if Google Sheets is intended to be enabled for the final Staging candidate.
 
-## Required final certification
+## 8. Custom Card / Vercel Blob
 
-- [ ] Owner journey PASS — desktop and mobile.
-- [ ] Manager journey PASS — desktop and mobile.
-- [ ] Staff journey PASS — desktop and mobile.
-- [ ] Viewer journey PASS — desktop and mobile.
-- [ ] Customer journey PASS — desktop and mobile.
-- [ ] Super Admin journey PASS.
-- [x] Subscription/entitlement matrix PASS on the exact PR #549 head.
-- [x] Cross-surface Reward/Offer/Audience scenario suite PASS on the exact PR #549 head.
-- [x] Disposable migrations and upgrade path PASS in Staging PR Validation #1024.
-- [x] Current PR exact-head full CI GREEN; the immutable run and SHA are recorded in PR #549 checks.
-- [ ] Enabled V1 external integrations certified (Meta/WhatsApp, Email, Blob, runtime workers as applicable).
-- [ ] No known P0 or functional P1 remains open.
+Current source / CI covers:
 
-Phase H evidence: protected Vercel Preview deployment `dpl_8X2pVyRMu5U4JggLzjLZiMWam6LH` is `READY` for exact GitHub commit `71e4941aeda78988c43bc9e35f0a1be7196c5d1d`. Public marketing/acquisition, login entry, anonymous protected-route rejection, and Arabic RTL browser checks passed. Public Card failed with HTTP 500 because the connected Preview database is missing `Customer.whatsappOptInAt`; fixture-backed role, Customer, Reward, Offer, entitlement, and mobile journeys therefore remain explicitly blocked. See `docs/evidence/PHASE_H_BROWSER_UAT_2026-09-15.md`. This manifest does not claim Staging Verified or exact-head CI GREEN.
+- private Custom Card Blob storage
+- tenant-scoped paths
+- bounded Front + Back upload size
+- strict image-container validation
+- private readback
+- explicit not-found versus provider/auth/storage failure behavior
+- paginated retained-artwork listing
 
-Superseding source-validation checkpoint: PR #549 at `0745dde273758f09adff72267fb521603656b23f` passed Staging PR Validation #1024, including immutable migration validation, destructive SQL scan, Prisma validation, migration deployment to disposable PostgreSQL, focused entitlement tests, the full test suite, typecheck, workspace validation, lint, production build, desktop/mobile browser smoke, and whitespace checks. Vercel Preview also passed. This supersedes the earlier statement that exact-head CI is not green; it does **not** supersede the historical deployed-Preview database failure and does not claim deployed Staging runtime verification, Production verification, real-business UAT, Blob certification, Email certification, Meta certification, or Real Closed Beta.
+Current Staging data contains a real managed Vercel Blob Front + Back pair for an enabled Custom Card Business.
+
+Historical non-Production external certification is also closed and preserved in prior evidence: an isolated private Preview Blob object was uploaded, read through the actual Product readback helper, and deleted; cleanup was verified and the final safe diagnostic removed the mutating certification route.
+
+The current exact `7bf51c1...` protected deployment has not repeated an HTTP Blob readback because ordinary tooling is stopped by Vercel Deployment Protection. This distinction must remain explicit:
+
+- live non-Production Blob capability: **previously certified PASS**
+- current source / CI: **PASS**
+- current exact-SHA protected HTTP readback: **not repeated in this closeout**
+
+## 9. Roles / permissions / tenant isolation
+
+Source authority covers Super Admin, Owner, Manager, Staff, and Viewer separately from UI visibility.
+
+Current read-only Staging data confirms no detected cross-Business topology mismatch in users, branches, assignments, loyalty ledger, rewards, redemptions, unlocks, or reversals.
+
+Normal CI browser smoke is green, but a final authenticated multi-role exact-SHA Staging UAT must use the secure handoff workflow before this gate is marked fully runtime-certified on the final reconciled release candidate.
+
+## 10. PR / branch governance
+
+The following stale or evidence-only PRs have been closed without merge because their purpose is complete or their source is superseded:
+
+- #571 — phone-bound WhatsApp consent fix; superseded by current Staging source
+- #544 — validation-only reconciled WhatsApp candidate
+- #539 — temporary authenticated UAT-only runner
+- #519 — validation-only Blob isolation certification
+- #511 — validation-only WhatsApp first-run certification
+- #496 — temporary Staging integration validation
+
+Do not automatically close or merge old Product candidate branches merely because they target an old Staging base. Some are diverged and may contain unique historical work; they require explicit reconciliation.
+
+Active `main` frontend work remains separate, including the current frontend-foundation lane. It must not be overwritten from Staging during backend closeout.
+
+## 11. Production / recovery gate
+
+Production has not been mutated by this closeout.
+
+Before any later Production launch, separately verify:
+
+- the final reconciled exact release SHA
+- Production database identity and migration status
+- Production backup / PITR availability and retention
+- restore authority and isolated restore rehearsal policy
+- Production environment and secret readiness
+- Production health/auth/tenant-isolation smoke
+- explicit Owner authorization to promote
+
+A Staging PASS is never implicit Production authorization.
+
+## 12. Remaining blockers before GLOBAL PRE-STITCH FREEZE
+
+The project may **not** yet be labeled `TANEE PRE-STITCH PRODUCT CLOSEOUT — COMPLETE`.
+
+The remaining release-level gates are:
+
+1. approve and configure the legal publication identity/effective date, then certify the real Public Trial runtime;
+2. obtain current controlled Email provider delivery evidence;
+3. reconnect the intended Staging WhatsApp sender and complete live provider lifecycle evidence;
+4. configure/certify Google Sheets if it is enabled for the final release scope;
+5. run secure exact-SHA authenticated multi-role Staging UAT through the encrypted handoff workflow;
+6. reconcile the diverged `main` and `staging` histories only after the active frontend lane freezes;
+7. build one final reconciled candidate SHA and rerun the complete exact-head source, CI, deployment, data, integration and browser gates;
+8. keep Production promotion as a separate explicit authorization after Production backup/PITR and preflight checks.
 
 ## Freeze statement
 
-Only after every required blocker and certification item above is closed may the project be labeled:
+Backend/Staging currently has strong source, CI, database-integrity, tenant-isolation and deployment evidence, with no known code-level P0 found in this closeout. That is **not** the same as a global freeze.
+
+Only after the remaining gates above are closed may the repository be labeled:
 
 `TANEE PRE-STITCH PRODUCT CLOSEOUT — COMPLETE`
 
-After that point Stitch may change presentation, responsive layout, identity, typography and visual hierarchy, but must not silently redefine routes, permissions, loyalty economics, customer identity, reward truth, audience truth, server behavior or the data model.
+After that point Stitch may change presentation, responsive layout, identity, typography and visual hierarchy, but must not silently redefine routes, permissions, loyalty economics, customer identity, reward truth, audience truth, integration contracts, server behavior or the data model.
