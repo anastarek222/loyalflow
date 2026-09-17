@@ -18,7 +18,10 @@ test("inline Tanee references stay as text instead of embedding the full wordmar
   assert.match(inlineName, />Tan</);
   assert.match(inlineName, />ee</);
   assert.match(inlineName, /text-primary/);
-  assert.doesNotMatch(inlineName, /<img|PlatformBrandIdentity|wordmark/);
+  assert.doesNotMatch(
+    inlineName,
+    /<img|<Image|PlatformBrandIdentity|data-marketing-inline-wordmark|\/brand\/[^"']*wordmark/i,
+  );
 
   assert.match(marketingBrandText, /InlineTaneeName/);
   assert.doesNotMatch(marketingBrandText, /PlatformBrandIdentity|inline-wordmark/);
