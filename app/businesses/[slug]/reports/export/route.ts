@@ -150,7 +150,6 @@ export async function GET(request: Request, context: ExportRouteContext) {
       type: true,
       amount: true,
       saleAmount: true,
-      currencyAtEarn: true,
       balanceAfter: true,
       createdAt: true,
       customer: {
@@ -190,7 +189,7 @@ export async function GET(request: Request, context: ExportRouteContext) {
         ? ""
         : formatLoyaltyNumber(transaction.saleAmount, "AR");
     const recordedSaleCurrency =
-      transaction.saleAmount === null ? "" : (transaction.currencyAtEarn ?? "");
+      transaction.saleAmount === null ? "" : (business.currency ?? "");
 
     return [
       dateFormatter.format(transaction.createdAt),
