@@ -10,6 +10,7 @@ export type PublicMarketingPath =
   | "/pricing"
   | "/about"
   | "/faq"
+  | "/security"
   | "/contact"
   | "/privacy"
   | "/terms";
