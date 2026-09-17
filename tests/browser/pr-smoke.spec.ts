@@ -163,6 +163,46 @@ test.describe.serial("PR browser smoke", () => {
     }
   });
 
+  test("marketing footer keeps usable link targets at 360px and 390px in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    for (const width of [360, 390] as const) {
+      await page.setViewportSize({ width, height: 844 });
+
+      for (const locale of ["en", "ar"] as const) {
+        await context.addCookies([
+          { name: "loyalflow_locale", value: locale, url: baseURL! },
+        ]);
+
+        const response = await page.goto("/faq");
+        expect(response?.status()).toBe(200);
+
+        const footer = page.getByTestId("marketing-footer");
+        await footer.scrollIntoViewIfNeeded();
+        await expect(footer).toBeVisible();
+        const navigation = footer.getByTestId("marketing-footer-navigation");
+        const links = navigation.getByRole("link");
+        await expect(links).toHaveCount(12);
+
+        const heights = await links.evaluateAll((nodes) =>
+          nodes.map((node) => Math.round(node.getBoundingClientRect().height)),
+        );
+        expect(Math.min(...heights)).toBeGreaterThanOrEqual(44);
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        ).toBe(true);
+        await expect(page.locator("main")).toHaveAttribute(
+          "dir",
+          locale === "ar" ? "rtl" : "ltr",
+        );
+      }
+    }
+  });
+
   test("Contact booking stays compact and three-across on a phone viewport @pr-smoke", async ({
     page,
     context,
