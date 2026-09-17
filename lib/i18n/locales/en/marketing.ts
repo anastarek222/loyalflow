@@ -8,7 +8,7 @@ export const marketingMessagesEn = {
     "Run loyalty, rewards, customers, and staff from one workspace.",
   "marketing.heroBody":
     "Tanee gives growing businesses one secure place to manage loyalty programs, customer activity, rewards, branches, teams, and reporting.",
-  "marketing.primaryCta": "Start your free trial",
+  "marketing.primaryCta": "Start your 14-day free trial",
   "marketing.trustLine":
     "Built for owners, staff, and customer-facing teams with tenant-safe access controls.",
   "marketing.featureOneTitle": "Operate loyalty daily",
@@ -136,7 +136,7 @@ export const marketingMessagesEn = {
   "marketing.features.ctaTitle":
     "Start with the setup path that fits your business.",
   "marketing.features.ctaBody":
-    "New business acquisition starts on the Tanee website through one secure seven-day Trial setup flow.",
+    "New business acquisition starts on the Tanee website through one secure 14-day Trial setup flow.",
   "marketing.pricing.metaTitle":
     "Tanee Pricing | Plans for growing businesses",
   "marketing.pricing.metaDescription":
@@ -158,7 +158,7 @@ export const marketingMessagesEn = {
   "marketing.pricing.cta": "Choose a setup path",
   "marketing.pricing.noteTitle": "Controlled beta, with no surprise checkout.",
   "marketing.pricing.noteBody":
-    "Create a workspace through the secure seven-day Trial flow or supported managed setup. Online subscription payment will be introduced only after the commercial plans are approved.",
+    "Create a workspace through the secure 14-day Trial flow or supported managed setup. Online subscription payment will be introduced only after the commercial plans are approved.",
   "marketing.about.metaTitle": "About Tanee | Clear loyalty operations",
   "marketing.about.metaDescription":
     "Learn why Tanee brings digital cards, customer activity, rewards, staff access, and reporting into one clear workspace.",
@@ -191,7 +191,7 @@ export const marketingMessagesEn = {
     "These answers describe the product and the controlled beta as they work today.",
   "marketing.faq.fourQuestion": "Can I join and pay online immediately?",
   "marketing.faq.fourAnswer":
-    "You can start the seven-day Trial online. Public subscription checkout remains off while the commercial contract is finalized.",
+    "You can start the 14-day Trial online. Public subscription checkout remains off while the commercial contract is finalized.",
   "marketing.faq.fiveQuestion": "Can the loyalty card match my brand?",
   "marketing.faq.fiveAnswer":
     "Yes. Standard cards support brand colours and identity. A complete Front and Back custom artwork pair can also be managed through the controlled Custom Card flow.",
@@ -266,7 +266,7 @@ export const marketingMessagesEn = {
     "These terms describe the current controlled-beta product model. Final operator identity, jurisdiction, commercial terms, and publication approval remain required before public launch.",
   "marketing.terms.accessTitle": "Controlled-beta access",
   "marketing.terms.accessBody":
-    "Tanee creates business workspaces through the secure seven-day Trial flow or supported managed setup. Public subscription checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
+    "Tanee creates business workspaces through the secure 14-day Trial flow or supported managed setup. Public subscription checkout is not active. Access may be limited, suspended, or withdrawn when required to protect the service, users, businesses, or customer data.",
   "marketing.terms.accountsTitle": "Account responsibility",
   "marketing.terms.accountsBody":
     "Users must provide accurate information, keep credentials and recovery material secure, use only their authorised role, and promptly report suspected compromise. Business owners are responsible for the users, branches, programme configuration, and customer-facing information they approve inside their workspace.",
