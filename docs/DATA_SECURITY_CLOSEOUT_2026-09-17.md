@@ -1,20 +1,22 @@
 # LoyalFlow Data / Security Closeout — 2026-09-17
 
-Status: `PR_HEAD_VERIFIED_FULL_UAT_OPEN`
+Status: `DATA_FIX_MERGED_FULL_UAT_OPEN`
 
-Base used for this record: `staging@9185cbc5907f6f38ea9f60ff476c926f2bc5db43`.
+Original review base: `staging@9185cbc5907f6f38ea9f60ff476c926f2bc5db43`.
+
+Post-merge Staging baseline: `staging@a8e177fc2de9366ae7382e46abd1bfc2976f66ab`.
 
 This is a current evidence overlay. It does **not** rewrite or replace the historical Beta/UAT records, and it does not turn prior `MANUAL UAT REQUIRED`, `PARTIAL`, `BLOCKED`, or deferred evidence into a pass.
 
 ## Scope
 
-This record closes the current Data / Security engineering review at the PR-head evidence level for PR #577 while keeping runtime and human-UAT claims separate.
+This record closes the current Data / Security engineering review for the recorded-sales export defect while keeping source/CI, merge, runtime, and human-UAT claims separate.
 
 PR #577: **Expose recorded sales truth in CSV exports**
 
-- PR state at closeout: **OPEN**, not merged.
-- Base: `staging@9185cbc5907f6f38ea9f60ff476c926f2bc5db43`.
+- PR state: **MERGED** into `staging` on 2026-09-17.
 - Verified PR head: `3fdafdfb51a08435ee4da730f28a7ad9276351f3`.
+- Merge commit: `a8e177fc2de9366ae7382e46abd1bfc2976f66ab`.
 - The change preserves the existing loyalty movement export and adds explicit recorded-sale amount/currency fields so CSV consumers can distinguish credited loyalty value from actual `saleAmount`.
 - Recorded-sale currency uses the canonical `loyaltyCurrency()` behavior. The existing sales-history currency-change guard remains the historical-currency protection; no nonexistent per-transaction currency field is claimed.
 - No schema or migration change is part of PR #577.
@@ -22,7 +24,7 @@ PR #577: **Expose recorded sales truth in CSV exports**
 
 ## Automated evidence on the exact PR head
 
-GitHub Actions `Staging PR Validation` run **#1071** (`35233952887`) completed successfully on `3fdafdfb51a08435ee4da730f28a7ad9276351f3`.
+GitHub Actions `Staging PR Validation` run **#1071** (`35233952887`) completed successfully on `3fdafdfb51a08435ee4da730f28a7ad9276351f3` before merge.
 
 The successful job includes:
 
@@ -40,11 +42,11 @@ The successful job includes:
 - browser smoke execution;
 - patch-whitespace validation.
 
-The browser smoke step **ran and passed**. It is recorded as browser-smoke evidence only; it is not classified as full role/tenant/mobile UAT.
+The browser smoke step **ran and passed** on the exact PR head. It is recorded as browser-smoke evidence only; it is not classified as full role/tenant/mobile UAT.
 
 ## Exact-SHA runtime UAT
 
-`Slice D Exact-SHA Runtime UAT` run **#773** (`35233952928`) for the same PR head completed with conclusion **SKIPPED**.
+`Slice D Exact-SHA Runtime UAT` run **#773** (`35233952928`) for the verified PR head completed with conclusion **SKIPPED**.
 
 Therefore:
 
@@ -55,11 +57,15 @@ Therefore:
 
 The current `docs/CONSOLIDATED_UAT_RUNBOOK.md` remains authoritative for those journeys. Its exit rule requires every applicable UAT row to be executed and passed, or explicitly excluded by a documented product decision. Historical rows that remain `MANUAL UAT REQUIRED` are not upgraded by CI or smoke evidence.
 
-## Preview/runtime observation
+## Merge and runtime observation
 
-The Vercel integration reported the preview for PR #577 as **Ready** on the verified head. Preview readiness is not a Staging or Production deployment claim.
+PR #577 is now part of `staging` through merge commit `a8e177fc2de9366ae7382e46abd1bfc2976f66ab`.
 
-A direct health sanity attempt against the protected preview was not accepted as health evidence because the preview access layer redirected to Vercel authentication. This closeout therefore does **not** claim preview health HTTP-200 evidence.
+That merge fact is **source-control evidence**, not runtime evidence. This closeout does not claim that the Staging alias, health endpoint, database state, or full browser/UAT matrix has been re-verified against the merge commit.
+
+The Vercel integration had previously reported the PR preview as **Ready** on the verified head. Preview readiness is not equivalent to Staging or Production verification.
+
+No manual Staging or Production deployment was initiated as part of this closeout. Any repository-integrated preview or branch deployment automation must be classified separately from an explicit deployment action and does not by itself satisfy the UAT gate.
 
 ## Tenant / authorization evidence boundary
 
@@ -77,8 +83,8 @@ Those assertions plus the successful full suite and browser smoke are accepted a
 
 Provider isolation for this closeout is **PASS at change-scope level**:
 
-- this closeout branch is documentation-only;
 - PR #577 does not modify WhatsApp/Meta/Stitch/provider implementation files;
+- this closeout PR is documentation-only;
 - no provider activation, credential, webhook, sender, or delivery change is authorized by this record.
 
 This statement does not roll back, reclassify, or re-verify provider work already present on the `staging` base.
@@ -93,24 +99,23 @@ In particular, this closeout does not reinterpret historical partial/blocked/man
 
 | Gate | Status | Evidence boundary |
 | --- | --- | --- |
-| PR #577 source/regression | **PASS on PR head** | head `3fdafdfb51a08435ee4da730f28a7ad9276351f3` |
+| PR #577 source/regression | **PASS** | verified head `3fdafdfb51a08435ee4da730f28a7ad9276351f3` |
 | Staging PR Validation | **PASS** | run #1071 / `35233952887` |
-| Browser smoke | **PASS** | executed inside run #1071 |
+| Browser smoke | **PASS on PR head** | executed inside run #1071 |
+| PR #577 merged to `staging` | **YES** | merge commit `a8e177fc2de9366ae7382e46abd1bfc2976f66ab` |
 | Exact-SHA Runtime UAT | **NOT VERIFIED** | run #773 was skipped |
 | Full role/tenant/mobile UAT | **NOT VERIFIED / OPEN** | governed UAT matrix not fully executed by this closeout |
-| Provider isolation | **PASS for change scope** | docs-only closeout; PR #577 provider-neutral |
-| PR #577 merged to `staging` | **NO** | PR remains open |
-| Merge of this closeout | **NOT PERFORMED** | requires separate authorization |
-| Deploy | **NOT PERFORMED** | no deployment authorized |
+| Provider isolation | **PASS for change scope** | PR #577 and closeout are provider-neutral |
+| Staging runtime verification after merge | **NOT VERIFIED** | merge/source-control evidence only |
+| Production deployment | **NOT PERFORMED** | no Production deployment authorized |
 | Production verification | **NOT PERFORMED** | Production is outside this evidence |
 
 ## Non-authorizations
 
 This record does not authorize or perform:
 
-- merge of PR #577 or this documentation branch;
-- Staging or Production deployment;
-- Production data changes;
+- Production deployment or Production data changes;
 - schema/migration changes;
 - provider activation or provider configuration changes;
-- synthetic/browser-smoke substitution for the governed full UAT matrix.
+- synthetic/browser-smoke substitution for the governed full UAT matrix;
+- automatic classification of branch/preview readiness as full Staging or Production verification.
