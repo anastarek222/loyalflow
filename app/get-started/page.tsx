@@ -44,7 +44,7 @@ export default async function GetStartedPage() {
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] px-4 py-8 text-foreground [overflow-wrap:anywhere] sm:px-6"
+      className="lf-marketing-surface min-h-screen overflow-x-clip bg-[var(--lf-marketing-canvas)] px-4 py-8 text-foreground [overflow-wrap:anywhere] sm:px-6"
     >
       <div
         data-acquisition-mode={PUBLIC_ACQUISITION_MODE}

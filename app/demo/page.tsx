@@ -1,3 +1,4 @@
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate } from "@/lib/i18n/catalog";
@@ -19,13 +20,13 @@ export default async function DemoPage() {
   const locale = await getMarketingRequestLocale();
   const direction = getLocaleDirection(locale);
   const navigation = getPublicMarketingNavigation(locale);
-  const title = locale === "ar" ? "عرض تاني" : "Tanee demo";
+  const title = locale === "ar" ? "عرض Tanee" : "Tanee demo";
 
   return (
     <main
       lang={locale}
       dir={direction}
-      className="min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
+      className="lf-marketing-surface min-h-screen bg-[var(--lf-marketing-canvas)] text-foreground"
     >
       <MarketingHeader
         locale={locale}
@@ -40,7 +41,7 @@ export default async function DemoPage() {
       <section className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
         <div className="mx-auto w-full max-w-5xl">
           <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-            {title}
+            <MarketingBrandText text={title} />
           </h1>
           <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-border bg-black shadow-[var(--lf-shadow-raised)]">
             <div className="aspect-video">
