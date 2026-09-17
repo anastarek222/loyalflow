@@ -134,7 +134,7 @@ test("all public marketing routes inherit the canonical header, footer, and bran
 
   for (const route of routes) {
     const routeSource = source(route);
-    if (route === "app/terms/page.tsx") {
+    if (route === "app/privacy/page.tsx" || route === "app/terms/page.tsx") {
       assert.match(routeSource, /<LegalDocumentPage/);
     } else {
       assert.match(routeSource, /<MarketingHeader/);
