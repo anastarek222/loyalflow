@@ -96,7 +96,7 @@ test("shared marketing navigation and footer keep one brand contract", () => {
   assert.match(footer, /dir="ltr"/);
   assert.match(footer, /<SocialBrandIcon kind=\{link\.kind\}/);
   assert.doesNotMatch(footer, /Camera|MessageCircle|Briefcase|Music2|Play/);
-  assert.match(marketingCatalog, /ARABIC_AGAIN_KEYS/);
+  assert.match(marketingCatalog, /ARABIC_BRAND_NAME_KEYS/);
   assert.match(marketingCatalog, /value\.split\("تاني"\)\.join\("Tanee"\)/);
   assert.match(marketingCatalog, /"marketing\.navAbout"/);
   assert.match(marketingCatalog, /"عن Tanee"/);
