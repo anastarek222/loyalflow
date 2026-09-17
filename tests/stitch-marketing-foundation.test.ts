@@ -34,6 +34,7 @@ test("public marketing routes opt into the shared theme surface", () => {
     "app/data-deletion/page.tsx",
     "app/demo/page.tsx",
     "components/marketing/legal-document-page.tsx",
+    "app/get-started/page.tsx",
   ];
 
   for (const route of routes) {
@@ -128,7 +129,6 @@ test("all public marketing routes inherit the canonical header, footer, and bran
     "app/terms/page.tsx",
     "app/data-deletion/page.tsx",
     "app/demo/page.tsx",
-    "app/get-started/page.tsx",
   ];
 
   for (const route of routes) {
