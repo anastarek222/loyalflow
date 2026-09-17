@@ -6,11 +6,38 @@ const arParity: Record<keyof typeof marketingMessagesEn, string> =
 const enParity: Record<keyof typeof marketingMessagesAr, string> =
   marketingMessagesEn;
 
-const ARABIC_AGAIN_KEYS = new Set<keyof typeof marketingMessagesEn>([
-  "marketing.home.heroTitle",
-  "marketing.home.problemTitle",
-  "marketing.home.finalTitle",
-  "marketing.faq.item9Question",
+const ARABIC_BRAND_NAME_KEYS = new Set<keyof typeof marketingMessagesEn>([
+  "marketing.metaTitle",
+  "marketing.heroBody",
+  "marketing.previewLabel",
+  "marketing.securityBody",
+  "marketing.faqTwoAnswer",
+  "marketing.faqThreeQuestion",
+  "marketing.features.metaTitle",
+  "marketing.features.metaDescription",
+  "marketing.features.ctaBody",
+  "marketing.pricing.metaTitle",
+  "marketing.about.metaTitle",
+  "marketing.about.metaDescription",
+  "marketing.about.eyebrow",
+  "marketing.about.body",
+  "marketing.contact.metaTitle",
+  "marketing.contact.metaDescription",
+  "marketing.contact.title",
+  "marketing.contact.setupBody",
+  "marketing.contact.noticeBody",
+  "marketing.privacy.metaTitle",
+  "marketing.privacy.metaDescription",
+  "marketing.privacy.title",
+  "marketing.privacy.dataBody",
+  "marketing.privacy.useBody",
+  "marketing.privacy.choicesBody",
+  "marketing.terms.metaTitle",
+  "marketing.terms.metaDescription",
+  "marketing.terms.title",
+  "marketing.terms.accessBody",
+  "marketing.terms.loyaltyBody",
+  "marketing.terms.useBody",
 ]);
 
 const normalizedArabicMarketing = Object.fromEntries(
@@ -19,10 +46,10 @@ const normalizedArabicMarketing = Object.fromEntries(
     if (key === "marketing.navAbout") {
       return [key, "عن Tanee"];
     }
-    if (ARABIC_AGAIN_KEYS.has(key)) {
-      return [key, value];
+    if (ARABIC_BRAND_NAME_KEYS.has(key)) {
+      return [key, value.split("تاني").join("Tanee")];
     }
-    return [key, value.split("تاني").join("Tanee")];
+    return [key, value];
   }),
 ) as Record<keyof typeof marketingMessagesEn, string>;
 
