@@ -18,6 +18,14 @@ const onboarding = readFileSync(
   "components/owner-whatsapp-onboarding.tsx",
   "utf8",
 );
+const historyPage = readFileSync(
+  "app/businesses/[slug]/whatsapp-history/page.tsx",
+  "utf8",
+);
+const settingsLayout = readFileSync(
+  "app/businesses/[slug]/settings/layout.tsx",
+  "utf8",
+);
 
 test("Owner sees Connect WhatsApp as the primary path and technical fields only as advanced setup", () => {
   const connectButton = page.indexOf("<WhatsAppEmbeddedSignupButton");
@@ -48,6 +56,8 @@ test("Embedded Signup posts only a code and Meta identifiers to the server actio
   assert.match(actions, /completeWhatsAppEmbeddedSignup\(parsed\.data\)/);
   assert.match(actions, /encryptBusinessWhatsAppAccessToken/);
   assert.match(actions, /upsertBusinessWhatsAppCredential/);
+  assert.match(component, /script\.onerror/);
+  assert.match(component, /The Meta connection window could not load/);
 });
 
 test("manual credential setup remains available only as an explicit advanced fallback", () => {
@@ -66,4 +76,12 @@ test("Arabic WhatsApp UI localizes provider states and avoids Latin-only styling
   assert.match(page, /language === "AR" \? "tracking-normal"/);
   assert.match(onboarding, /bg-surface/);
   assert.doesNotMatch(onboarding, /bg-white/);
+  assert.match(page, /t\("إيقاف مؤقت شامل", "Global Pause"\)/);
+  assert.match(page, /t\("مفعّل", "ON"\)/);
+  assert.match(page, /t\("متوقف", "OFF"\)/);
+  assert.match(settingsLayout, /t\("الإعدادات العامة", "General settings"\)/);
+  assert.match(historyPage, /WHATSAPP_HTTP_401/);
+  assert.match(historyPage, /WHATSAPP_HTTP_403/);
+  assert.match(historyPage, /إعادة نفس المحاولة/);
+  assert.match(historyPage, /إعادة الإرسال كمحاولة جديدة/);
 });

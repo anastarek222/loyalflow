@@ -69,7 +69,11 @@ function parseEmbeddedSignupEvent(raw: unknown): EmbeddedSignupResult | null {
     event?: unknown;
     data?: unknown;
   };
-  if (event.type !== "WA_EMBEDDED_SIGNUP" || !event.data || typeof event.data !== "object") {
+  if (
+    event.type !== "WA_EMBEDDED_SIGNUP" ||
+    !event.data ||
+    typeof event.data !== "object"
+  ) {
     return null;
   }
 
@@ -110,7 +114,8 @@ function parseEmbeddedSignupEvent(raw: unknown): EmbeddedSignupResult | null {
 }
 
 function getEmbeddedSignupExtras() {
-  const flow = process.env.NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_FLOW?.trim().toLowerCase();
+  const flow =
+    process.env.NEXT_PUBLIC_WHATSAPP_EMBEDDED_SIGNUP_FLOW?.trim().toLowerCase();
 
   if (flow === "coexistence") {
     return {
@@ -176,8 +181,16 @@ export function WhatsAppEmbeddedSignupButton({
     script.defer = true;
     script.crossOrigin = "anonymous";
     script.src = "https://connect.facebook.net/en_US/sdk.js";
+    script.onerror = () => {
+      setSdkReady(false);
+      setClientError(
+        language === "AR"
+          ? "تعذر تحميل نافذة Meta. عطّل مانع المحتوى لهذه الصفحة ثم حاول مرة أخرى."
+          : "The Meta connection window could not load. Disable content blocking for this page, then try again.",
+      );
+    };
     document.body.appendChild(script);
-  }, [appId, enabled, graphApiVersion]);
+  }, [appId, enabled, graphApiVersion, language]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -285,7 +298,10 @@ export function WhatsAppEmbeddedSignupButton({
           ? t("جارٍ ربط WhatsApp…", "Connecting WhatsApp…")
           : enabled
             ? t("ربط WhatsApp", "Connect WhatsApp")
-            : t("إعداد الربط قيد التجهيز", "Connection setup is being prepared")}
+            : t(
+                "إعداد الربط قيد التجهيز",
+                "Connection setup is being prepared",
+              )}
       </button>
       {clientError ? (
         <p role="alert" className="mt-2 text-sm font-semibold text-danger">
