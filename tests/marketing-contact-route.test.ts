@@ -21,14 +21,13 @@ test("Contact provides truthful beta access paths without invented channels", ()
 });
 
 test("Contact is discoverable from navigation, footer, and sitemap", () => {
-  assert.match(
-    source("lib/marketing/public-navigation.ts"),
-    /href: "\/contact"/,
-  );
-  assert.match(
-    source("components/marketing/marketing-footer.tsx"),
-    /href="\/contact"/,
-  );
+  const navigation = source("lib/marketing/public-navigation.ts");
+  const footer = source("components/marketing/marketing-footer.tsx");
+
+  assert.match(navigation, /href: "\/contact"/);
+  assert.match(navigation, /href: "\/contact"[\s\S]*?footerGroup: "brand"/);
+  assert.match(footer, /getPublicMarketingFooterNavigation\(locale\)/);
+  assert.match(footer, /navigation\.brand\.map/);
   assert.match(source("app/sitemap.ts"), /publicSiteUrl\("\/contact"\)/);
 });
 
