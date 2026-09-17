@@ -278,7 +278,7 @@ export default async function BusinessSalesKpis({
       description:
         "متبقية قبل الاستبدال",
       className:
-        "bg-foreground text-white ring-border",
+        "bg-foreground text-inverse ring-border",
     },
     {
       title:
@@ -307,7 +307,7 @@ export default async function BusinessSalesKpis({
   ];
 
   return (
-    <section className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm sm:mt-8 sm:p-8">
+    <section className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 shadow-sm sm:mt-8 sm:p-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p
@@ -332,7 +332,7 @@ export default async function BusinessSalesKpis({
 
         <Link
           href={`/businesses/${businessSlug}/reports`}
-          className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-center text-sm font-black text-white transition hover:bg-primary-subtle"
+          className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 text-center text-sm font-black text-inverse transition hover:bg-primary-subtle hover:text-primary"
         >
           فتح التقارير
         </Link>
@@ -412,7 +412,7 @@ export default async function BusinessSalesKpis({
                   <Link
                     key={customer.id}
                     href={`/businesses/${businessSlug}/customers/${customer.id}`}
-                    className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4 transition hover:border-primary/30 hover:bg-white"
+                    className="rounded-[var(--lf-radius-card)] border border-border bg-surface-subtle p-4 transition hover:border-primary/30 hover:bg-surface"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
@@ -428,7 +428,7 @@ export default async function BusinessSalesKpis({
                         </p>
                       </div>
 
-                      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-primary">
+                      <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-black text-primary">
                         {numberFormatter.format(
                           progress
                         )}
