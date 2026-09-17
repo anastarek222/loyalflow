@@ -36,7 +36,7 @@ test("Z13 keeps marketing and sign-in platform identity out of view hardcodes", 
   assert.match(home, /translate\(locale, "marketing\.metaDescription"\)/);
   assert.doesNotMatch(home, /["'`]LoyalFlow["'`]/);
 
-  assert.match(login, /translate\(locale, "common\.brand"\)/);
+  assert.match(login, /<PlatformBrandIdentity/);
   assert.doesNotMatch(login, /["'`]LoyalFlow["'`]/);
 });
 
