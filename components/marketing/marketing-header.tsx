@@ -200,7 +200,7 @@ export function MarketingHeader({
                 aria-modal="true"
                 aria-label={translate(locale, "marketing.mobileNavLabel")}
                 dir="ltr"
-                className="lf-marketing-surface fixed inset-y-0 right-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-l border-[var(--lf-border)] bg-[var(--lf-surface)] text-[var(--lf-foreground)] shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] min-[1440px]:hidden"
+                className="lf-marketing-surface fixed inset-y-0 end-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-1rem)] flex-col overflow-hidden border-s border-[var(--lf-border)] bg-[var(--lf-surface)] text-[var(--lf-foreground)] shadow-[var(--lf-shadow-overlay)] [overflow-wrap:anywhere] min-[1440px]:hidden"
               >
                 <div className="flex items-center justify-between gap-3 border-b border-[var(--lf-border)] px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
                   <Link href="/" onClick={() => setIsOpen(false)} className="inline-flex min-h-11 items-center">
