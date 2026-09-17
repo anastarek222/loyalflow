@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { getEarnDetails } from "../lib/loyalty/operations";
+import { loyaltyCurrency } from "../lib/loyalty/presentation";
 import { calculatePromotionBonus } from "../lib/promotions/engine";
 
 const root = process.cwd();
@@ -56,11 +57,13 @@ test("CSV export exposes loyalty movement and recorded-sale truth as separate fi
   );
   assert.match(
     exportRoute,
-    /transaction\.saleAmount === null \? "" : \(business\.currency \?\? ""\)/,
+    /transaction\.saleAmount === null \? "" : loyaltyCurrency\(business\.currency\)/,
   );
 });
 
-test("recorded-sale currency stays authoritative because historical Sales Amount blocks currency changes", () => {
+test("recorded-sale currency uses the canonical fallback and stays locked after sales history", () => {
+  assert.equal(loyaltyCurrency(null), "EGP");
+  assert.equal(loyaltyCurrency(" egp "), "EGP");
   assert.match(
     currencySafety,
     /input\.hasHistoricalSalesAmount &&\s*isBusinessCurrencyChange\(/,
