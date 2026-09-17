@@ -14,7 +14,7 @@ test("Z13 keeps platform shell brand values in one web-owned authority", () => {
   const appleIcon = source("app/apple-icon.tsx");
 
   assert.match(brand, /name:\s*"Tanee"/);
-  assert.match(brand, /nameAr:\s*"تاني"/);
+  assert.match(brand, /nameAr:\s*"Tanee"/);
   assert.match(brand, /iconMark:\s*"ee"/);
   assert.match(brand, /iconGradientStart:\s*"#FF6652"/);
   assert.match(brand, /iconGradientEnd:\s*"#A84724"/);
@@ -36,7 +36,7 @@ test("Z13 keeps marketing and sign-in platform identity out of view hardcodes", 
   assert.match(home, /translate\(locale, "marketing\.metaDescription"\)/);
   assert.doesNotMatch(home, /["'`]LoyalFlow["'`]/);
 
-  assert.match(login, /translate\(locale, "common\.brand"\)/);
+  assert.match(login, /<PlatformBrandIdentity/);
   assert.doesNotMatch(login, /["'`]LoyalFlow["'`]/);
 });
 

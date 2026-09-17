@@ -2,12 +2,13 @@ import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { OwnerOnboardingWizardV2 } from "@/components/owner-onboarding-wizard-v2";
 import { OwnerWhatsAppOnboarding } from "@/components/owner-whatsapp-onboarding";
+import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import prisma from "@/lib/prisma";
 import { getWhatsAppEmbeddedSignupReadiness } from "@/lib/server/integrations/whatsapp-embedded-signup";
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -64,21 +65,24 @@ export default async function OwnerOnboardingPage() {
     <main
       lang={locale}
       dir={direction}
-      className="relative min-h-screen overflow-hidden bg-[var(--lf-marketing-canvas)] px-4 pb-12 sm:px-6 lg:px-8"
+      className="relative min-h-screen overflow-hidden bg-[var(--lf-marketing-canvas)] px-4 pb-12 text-foreground sm:px-6 lg:px-8"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgb(224_231_255/0.72),transparent_28%),radial-gradient(circle_at_95%_35%,rgb(219_234_254/0.6),transparent_25%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgb(255_102_82/0.12),transparent_28%),radial-gradient(circle_at_95%_35%,rgb(168_71_36/0.08),transparent_25%)]" />
       <div className="relative mx-auto w-full max-w-6xl">
-        <header className="flex min-h-20 items-center justify-between gap-4 border-b border-white/80">
+        <header className="flex min-h-20 items-center justify-between gap-4 border-b border-border/80">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-foreground"
+            aria-label="Tanee"
+            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
           >
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-[0_8px_20px_rgb(79_70_229/0.22)]">
-              <Sparkles size={18} aria-hidden="true" />
-            </span>
-            <span className="text-lg sm:text-xl">
-              {translate(locale, "common.brand")}
-            </span>
+            <PlatformBrandIdentity
+              locale={locale}
+              showMark={false}
+              themeAdaptiveWordmark
+              wordmarkClassName="h-7 w-auto max-w-36"
+              wordmarkSize="marketing"
+              textClassName="text-xl font-black text-foreground"
+            />
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden items-center gap-2 text-xs font-bold text-foreground-subtle sm:inline-flex">
@@ -89,7 +93,7 @@ export default async function OwnerOnboardingPage() {
               />
               {translate(locale, "onboarding.privateNote")}
             </span>
-            <LanguageSwitcher locale={locale} />
+            <LanguageSwitcher locale={locale} alternateOnly />
           </div>
         </header>
 

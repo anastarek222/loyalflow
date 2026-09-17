@@ -23,7 +23,7 @@ export default function LanguageSwitcher({ language }: LanguageSwitcherProps) {
             : dictionary.switchToEnglish
         }
         title={dictionary.language}
-        className="inline-flex min-h-10 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm font-semibold text-foreground-muted transition hover:border-primary/30 hover:bg-surface-subtle hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
+        className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm font-semibold text-foreground-muted transition hover:border-primary/30 hover:bg-surface-subtle hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
       >
         <Languages size={16} aria-hidden="true" />
         <span dir="ltr">{nextLabel}</span>

@@ -36,7 +36,7 @@ export function PageHeader({
     >
       <div className="min-w-0 space-y-2.5">
         {eyebrow ? (
-          <div className="lf-type-supporting font-bold uppercase tracking-[0.08em] text-primary/75">
+          <div className="lf-type-supporting font-bold uppercase tracking-[0.08em] text-primary/75 rtl:normal-case rtl:tracking-normal">
             {eyebrow}
           </div>
         ) : null}

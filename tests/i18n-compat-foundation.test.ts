@@ -78,7 +78,7 @@ test("T005 login entrypoint reads the locale cookie and renders locale-aware dir
   assert.match(source, /cookieStore\.get\(LOCALE_COOKIE_NAME\)/);
   assert.match(source, /const direction = getLocaleDirection\(locale\)/);
   assert.match(source, /<main\s+lang=\{locale\}\s+dir=\{direction\}/);
-  assert.match(source, /<LanguageSwitcher locale=\{locale\} \/>/);
+  assert.match(source, /<LanguageSwitcher locale=\{locale\} alternateOnly \/>/);
   assert.match(source, /translate\(locale, "auth\.signIn"\)/);
   assert.match(source, /translate\(locale, "auth\.email"\)/);
   assert.match(source, /translate\(locale, "auth\.password"\)/);

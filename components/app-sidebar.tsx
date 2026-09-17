@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { InlineTaneeName } from "@/components/brand/inline-tanee-name";
 import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
 import {
   buildShellNavigation,
@@ -29,7 +30,6 @@ import {
   type ShellUser,
 } from "@/lib/app-shell-navigation";
 import type { ExperienceMode } from "@/lib/experience-mode";
-import { platformBrand } from "@/lib/platform-brand";
 
 type Props = {
   language: "AR" | "EN";
@@ -102,10 +102,10 @@ export default function AppSidebar({
             showWordmark={false}
           />
           <span>
-            <span className="block text-base font-black tracking-[-0.02em] text-foreground">
-              {platformBrand.name}
+            <span className="block text-base font-black tracking-[-0.02em] text-foreground rtl:tracking-normal">
+              <InlineTaneeName />
             </span>
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-subtle">
+            <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground-subtle rtl:normal-case rtl:tracking-normal">
               {platformWorkspace
                 ? language === "AR"
                   ? "إدارة المنصة"
@@ -122,7 +122,7 @@ export default function AppSidebar({
           className="mx-4 rounded-[var(--lf-radius-lg)] border border-primary/10 bg-[var(--lf-primary-soft)] px-4 py-3"
           data-current-business-context="true"
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/75">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/75 rtl:normal-case rtl:tracking-normal">
             {language === "AR" ? "النشاط الحالي" : "Current business"}
           </p>
           <p
@@ -138,7 +138,7 @@ export default function AppSidebar({
           className="mx-4 rounded-[var(--lf-radius-lg)] border border-primary/20 bg-[var(--lf-primary-soft)] px-4 py-3"
           data-platform-context="true"
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary rtl:normal-case rtl:tracking-normal">
             {language === "AR" ? "نطاق عالمي" : "Global scope"}
           </p>
           <p className="mt-1 text-sm font-bold text-foreground">
@@ -152,7 +152,9 @@ export default function AppSidebar({
         {groups.map((group) => (
           <section key={group.id} className="mb-6 last:mb-0">
             {group.label && (
-              <h2 className="lf-nav-group-label mb-2 px-3">{group.label}</h2>
+              <h2 className="lf-nav-group-label mb-2 px-3 rtl:normal-case rtl:tracking-normal">
+                {group.label}
+              </h2>
             )}
             <ul className="space-y-1.5">
               {group.items.map((entry) => {
@@ -194,15 +196,18 @@ export default function AppSidebar({
           </section>
         ))}
       </nav>
-      <div className="mx-5 border-t border-border/80 py-4 text-[11px] font-semibold text-foreground-subtle">
-        {platformBrand.name} ·{" "}
-        {platformWorkspace
-          ? language === "AR"
-            ? "إدارة منصة محمية"
-            : "Protected platform administration"
-          : language === "AR"
-            ? "مساحة عمل آمنة"
-            : "Secure workspace"}
+      <div className="mx-5 flex items-center gap-1 border-t border-border/80 py-4 text-[11px] font-semibold text-foreground-subtle">
+        <InlineTaneeName />
+        <span aria-hidden="true">·</span>
+        <span>
+          {platformWorkspace
+            ? language === "AR"
+              ? "إدارة منصة محمية"
+              : "Protected platform administration"
+            : language === "AR"
+              ? "مساحة عمل آمنة"
+              : "Secure workspace"}
+        </span>
       </div>
     </aside>
   );
