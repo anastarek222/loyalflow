@@ -121,6 +121,48 @@ test.describe.serial("PR browser smoke", () => {
     ).toHaveCount(0);
   });
 
+  test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+
+    for (const locale of ["en", "ar"] as const) {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+
+      const response = await page.goto("/faq");
+      expect(response?.status()).toBe(200);
+
+      const header = page.getByTestId("marketing-header");
+      const desktopNavigation = header.locator(":scope > div > nav");
+      const desktopActions = header.locator(":scope > div > div");
+      const menuButton = header.locator(
+        'button[aria-controls="marketing-mobile-menu"]',
+      );
+
+      await expect(desktopNavigation).toBeVisible();
+      await expect(desktopNavigation.getByRole("link")).toHaveCount(7);
+      await expect(desktopActions).toBeVisible();
+      await expect(menuButton).toBeHidden();
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => window.scrollTo(0, 900));
+      await expect(header).toHaveAttribute("data-header-visible", "true");
+      await expect(header).toBeVisible();
+    }
+  });
+
   test("Contact booking stays compact and three-across on a phone viewport @pr-smoke", async ({
     page,
     context,
