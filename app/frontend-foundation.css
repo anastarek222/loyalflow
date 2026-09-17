@@ -146,3 +146,50 @@
   -webkit-text-fill-color: var(--lf-foreground);
   box-shadow: 0 0 0 1000px var(--lf-surface) inset;
 }
+
+/* Owner onboarding is part of the product experience, not a light-only island. */
+form[data-owner-step] {
+  background-color: var(--lf-surface);
+  color: var(--lf-foreground);
+  box-shadow: var(--lf-shadow-raised);
+}
+
+form[data-owner-step] > div > aside {
+  background-color: color-mix(in srgb, var(--lf-surface-subtle) 72%, transparent);
+}
+
+form[data-owner-step] > div > aside [role="progressbar"] {
+  background-color: var(--lf-surface);
+}
+
+form[data-owner-step] > div > aside nav button[aria-current="step"] {
+  background-color: var(--lf-surface);
+  box-shadow: var(--lf-shadow-raised);
+}
+
+form[data-owner-step] > div > aside nav button:not([aria-current="step"]):hover {
+  background-color: var(--lf-primary-soft);
+}
+
+form[data-owner-step]
+  :is(input:not([type="color"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: var(--lf-border-strong);
+  background-color: var(--lf-surface);
+  color: var(--lf-foreground);
+}
+
+form[data-owner-step] .bg-primary.text-white {
+  color: var(--lf-primary-foreground);
+}
+
+[data-testid="owner-mobile-action-bar"] {
+  background-color: color-mix(in srgb, var(--lf-surface) 95%, transparent);
+  box-shadow: 0 -12px 30px color-mix(in srgb, var(--lf-foreground) 8%, transparent);
+}
+
+@media (min-width: 40rem) {
+  [data-testid="owner-mobile-action-bar"] {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
