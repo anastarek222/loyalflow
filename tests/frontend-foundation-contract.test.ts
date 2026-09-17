@@ -55,3 +55,16 @@ test("shared fallback states are bilingual instead of English-only", () => {
   assert.match(dialog, /جارٍ التنفيذ/);
   assert.match(table, /جارٍ تحميل الجدول/);
 });
+
+test("dashboard and report chart surfaces use dark-capable semantic colors", () => {
+  const dashboard = source("components/dashboard-charts.tsx");
+  const reports = source("components/reports/report-charts.tsx");
+
+  assert.match(dashboard, /border-border bg-surface/);
+  assert.match(dashboard, /bg-\[var\(--lf-primary-soft\)\]/);
+  assert.doesNotMatch(dashboard, /\bbg-white\b|\bbg-primary-subtle\b/);
+
+  assert.match(reports, /border-border bg-surface/);
+  assert.match(reports, /bg-\[var\(--lf-primary-soft\)\]/);
+  assert.doesNotMatch(reports, /\bbg-primary-soft\b/);
+});
