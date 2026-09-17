@@ -85,7 +85,8 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   assert.match(header, /wordmarkSize="marketing"/);
   assert.match(footer, /wordmarkSize="marketing-footer"/);
   assert.match(styles, /wordmark-size="compact"/);
-  assert.match(brandRenderer, /data-marketing-inline-wordmark/);
+  assert.match(brandRenderer, /InlineTaneeName/);
+  assert.doesNotMatch(brandRenderer, /data-marketing-inline-wordmark/);
   assert.match(styles, /inline-size:\s*3\.515625em/);
   assert.match(styles, /block-size:\s*0\.9em/);
   assert.match(styles, /wordmark-size="compact"[\s\S]*?block-size:\s*100%/);
@@ -154,7 +155,8 @@ test("all public marketing routes inherit the canonical header, footer, and bran
   const footer = source("components/marketing/marketing-footer.tsx");
 
   assert.match(brandRenderer, /split\(\/\(Tanee\)\/g\)/);
-  assert.match(brandRenderer, /wordmarkSize="compact"/);
+  assert.match(brandRenderer, /<InlineTaneeName/);
+  assert.doesNotMatch(brandRenderer, /wordmarkSize="compact"/);
   assert.match(header, /<MarketingBrandText text=\{item\.label\}/);
   assert.match(footer, /<MarketingBrandText text="Tanee"/);
   assert.match(footer, /marketing\.footerRights/);
