@@ -19,7 +19,7 @@ test("Stitch marketing theme stays isolated from authenticated product UI", () =
   assert.match(authority, /tanee-marketing-theme/);
   assert.match(
     source("components/marketing/marketing-header.tsx"),
-    /className="lf-marketing-surface fixed inset-y-0 right-0/,
+    /className="lf-marketing-surface fixed inset-y-0 end-0/,
   );
 });
 
