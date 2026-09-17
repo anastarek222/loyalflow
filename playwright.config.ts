@@ -44,6 +44,10 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   timeout: 75_000,
+  // Keep Playwright's disposable traces/screenshots separate from durable JUnit
+  // receipts. Playwright clears outputDir at the start of every invocation, and
+  // staging CI intentionally runs several projects sequentially.
+  outputDir: "playwright-output",
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
     baseURL,
@@ -93,6 +97,7 @@ export default defineConfig({
     {
       name: "owner-onboarding-chromium",
       grep: /@owner-onboarding/,
+      grepInvert: /@owner-onboarding-desktop/,
       use: {
         browserName: "chromium",
         viewport: { width: 390, height: 844 },
