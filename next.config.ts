@@ -15,7 +15,7 @@ const securityHeaders = [
   },
   {
     key: "Cross-Origin-Opener-Policy",
-    value: "same-origin",
+    value: "same-origin-allow-popups",
   },
   {
     key: "X-DNS-Prefetch-Control",
@@ -23,8 +23,7 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
-    value:
-      "camera=(self), microphone=(), geolocation=()",
+    value: "camera=(self), microphone=(), geolocation=()",
   },
 ];
 
@@ -75,16 +74,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-
-const previousHeaders =
-  nextConfig.headers;
+const previousHeaders = nextConfig.headers;
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${
-    process.env.NODE_ENV === "development"
-      ? " 'unsafe-eval'"
-      : ""
+  `script-src 'self' 'unsafe-inline' https://connect.facebook.net${
+    process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""
   }`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
@@ -96,15 +91,12 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-src 'none'",
+  "frame-src https://www.facebook.com https://web.facebook.com",
   "frame-ancestors 'none'",
 ].join("; ");
 
 nextConfig.headers = async () => {
-  const configuredHeaders =
-    previousHeaders
-      ? await previousHeaders()
-      : [];
+  const configuredHeaders = previousHeaders ? await previousHeaders() : [];
 
   return [
     ...configuredHeaders,
@@ -112,10 +104,8 @@ nextConfig.headers = async () => {
       source: "/:path*",
       headers: [
         {
-          key:
-            "Content-Security-Policy",
-          value:
-            contentSecurityPolicy,
+          key: "Content-Security-Policy",
+          value: contentSecurityPolicy,
         },
       ],
     },

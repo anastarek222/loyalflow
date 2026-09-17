@@ -477,7 +477,7 @@ export default async function BusinessWhatsAppSettingsPage({
           {automation.paused ? (
             <p className="mt-5 rounded-xl border border-warning/30 bg-warning-subtle p-4 text-sm font-semibold text-foreground">
               {t(
-                "Global Pause مفعّل. كل النصوص والاختيارات محفوظة، لكن لن تخرج رسائل تلقائية حتى تلغيه.",
+                "الإيقاف المؤقت الشامل مفعّل. كل النصوص والاختيارات محفوظة، لكن لن تخرج رسائل تلقائية حتى تلغيه.",
                 "Global Pause is on. All copy and selections are preserved, but no automatic messages will be sent until you turn it off.",
               )}
             </p>
@@ -594,7 +594,7 @@ export default async function BusinessWhatsAppSettingsPage({
           </h2>
           <p className="mt-2 text-sm leading-6 text-foreground-muted">
             {t(
-              "كل Event له مفتاح مستقل ونص مستقل. إيقاف المفتاح لا يحذف النص، وGlobal Pause لا يفصل WhatsApp ولا يمنع الرسائل اليدوية.",
+              "لكل حدث مفتاح مستقل ونص مستقل. إيقاف المفتاح لا يحذف النص، والإيقاف المؤقت الشامل لا يفصل WhatsApp ولا يمنع الرسائل اليدوية.",
               "Every event has its own switch and copy. Turning a switch off never deletes its copy, and Global Pause never disconnects WhatsApp or blocks manual messaging.",
             )}
           </p>
@@ -609,7 +609,7 @@ export default async function BusinessWhatsAppSettingsPage({
               />
               <span>
                 <span className="block text-sm font-black text-foreground">
-                  {t("Global Pause", "Global Pause")}
+                  {t("إيقاف مؤقت شامل", "Global Pause")}
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-foreground-muted">
                   {t(
@@ -648,7 +648,7 @@ export default async function BusinessWhatsAppSettingsPage({
                       defaultChecked={row.enabled}
                       className="h-4 w-4"
                     />
-                    {row.enabled ? t("ON", "ON") : t("OFF", "OFF")}
+                    {row.enabled ? t("مفعّل", "ON") : t("متوقف", "OFF")}
                   </label>
                 </div>
                 <textarea

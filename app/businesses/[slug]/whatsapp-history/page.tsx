@@ -58,7 +58,10 @@ const STATUS_LABELS: Record<
   DEAD: { ar: "يحتاج إجراء", en: "Action required" },
 };
 
-const SAFE_FAILURE_COPY: Record<string, Readonly<{ ar: string; en: string }>> = {
+const SAFE_FAILURE_COPY: Record<
+  string,
+  Readonly<{ ar: string; en: string }>
+> = {
   WHATSAPP_INVALID_PAYLOAD: {
     ar: "بيانات الرسالة غير صالحة.",
     en: "The message payload is invalid.",
@@ -111,6 +114,14 @@ const SAFE_FAILURE_COPY: Record<string, Readonly<{ ar: string; en: string }>> = 
     ar: "تعذر الوصول إلى مزود واتساب مؤقتًا.",
     en: "The WhatsApp provider could not be reached temporarily.",
   },
+  WHATSAPP_HTTP_401: {
+    ar: "انتهت صلاحية بيانات ربط واتساب أو أصبحت غير صالحة. أعد ربط WhatsApp من الإعدادات.",
+    en: "The WhatsApp connection credentials expired or became invalid. Reconnect WhatsApp from Settings.",
+  },
+  WHATSAPP_HTTP_403: {
+    ar: "لا يملك ربط واتساب الصلاحيات المطلوبة. راجع صلاحيات Meta ثم أعد الربط.",
+    en: "The WhatsApp connection is missing required permissions. Review Meta permissions, then reconnect.",
+  },
 };
 
 function recoveryMessage(
@@ -119,37 +130,63 @@ function recoveryMessage(
 ) {
   switch (value) {
     case "retry-scheduled":
-      return t("تمت جدولة إعادة المحاولة لنفس الرسالة.", "The same message was queued for retry.");
+      return t(
+        "تمت جدولة إعادة المحاولة لنفس الرسالة.",
+        "The same message was queued for retry.",
+      );
     case "resend-scheduled":
-      return t("تم إنشاء محاولة إرسال جديدة بأمان.", "A new delivery attempt was created safely.");
+      return t(
+        "تم إنشاء محاولة إرسال جديدة بأمان.",
+        "A new delivery attempt was created safely.",
+      );
     case "retry-unsafe":
       return t(
-        "لا يمكن استخدام Retry بعد قبول الرسالة لدى المزود. استخدم Resend إذا أردت محاولة جديدة.",
+        "لا يمكن إعادة نفس المحاولة بعد قبول الرسالة لدى المزود. استخدم إعادة الإرسال إذا أردت محاولة جديدة.",
         "Retry is not safe after provider acceptance. Use Resend for a new attempt.",
       );
     case "retry-conflict":
-      return t("تغيرت حالة الرسالة قبل إعادة المحاولة. حدّث الصفحة.", "The message state changed before retry. Refresh the page.");
+      return t(
+        "تغيرت حالة الرسالة قبل إعادة المحاولة. حدّث الصفحة.",
+        "The message state changed before retry. Refresh the page.",
+      );
     case "resend-in-flight":
-      return t("الرسالة ما زالت قيد التنفيذ؛ لا يمكن إنشاء نسخة موازية الآن.", "The message is still in flight; a parallel resend is not allowed.");
+      return t(
+        "الرسالة ما زالت قيد التنفيذ؛ لا يمكن إنشاء نسخة موازية الآن.",
+        "The message is still in flight; a parallel resend is not allowed.",
+      );
     case "resend-ineligible":
       return t(
         "الإرسال غير متاح الآن. راجع موافقة العميل ورقم واتساب وإعدادات الأتمتة.",
         "Delivery is not eligible now. Check consent, WhatsApp phone, and automation settings.",
       );
     case "subscription-restricted":
-      return t("حالة الاشتراك الحالية تمنع محاولة إرسال جديدة.", "The current subscription state blocks a new delivery attempt.");
+      return t(
+        "حالة الاشتراك الحالية تمنع محاولة إرسال جديدة.",
+        "The current subscription state blocks a new delivery attempt.",
+      );
     case "not-found":
-      return t("لم يتم العثور على الرسالة داخل هذا النشاط.", "The message was not found in this business.");
+      return t(
+        "لم يتم العثور على الرسالة داخل هذا النشاط.",
+        "The message was not found in this business.",
+      );
     case "invalid-payload":
     case "invalid":
-      return t("تعذر تنفيذ الطلب لأن بيانات الاسترداد غير صالحة.", "The recovery request could not be processed because its data is invalid.");
+      return t(
+        "تعذر تنفيذ الطلب لأن بيانات الاسترداد غير صالحة.",
+        "The recovery request could not be processed because its data is invalid.",
+      );
     default:
       return null;
   }
 }
 
 function canRecoverForRole(role: string) {
-  return role === "OWNER" || role === "MANAGER" || role === "STAFF" || role === "SUPER_ADMIN";
+  return (
+    role === "OWNER" ||
+    role === "MANAGER" ||
+    role === "STAFF" ||
+    role === "SUPER_ADMIN"
+  );
 }
 
 function eligibilityLabel(
@@ -171,9 +208,15 @@ function failureLabel(
   const mapped = SAFE_FAILURE_COPY[code];
   if (mapped) return t(mapped.ar, mapped.en);
   if (/^WHATSAPP_HTTP_\d{3}$/.test(code)) {
-    return t("رفض مزود واتساب محاولة الإرسال.", "The WhatsApp provider rejected the delivery attempt.");
+    return t(
+      "رفض مزود واتساب محاولة الإرسال.",
+      "The WhatsApp provider rejected the delivery attempt.",
+    );
   }
-  return t("تعذر إكمال محاولة الإرسال.", "The delivery attempt could not be completed.");
+  return t(
+    "تعذر إكمال محاولة الإرسال.",
+    "The delivery attempt could not be completed.",
+  );
 }
 
 function providerLabel(
@@ -198,7 +241,10 @@ function providerLabel(
   }
 }
 
-export default async function WhatsAppHistoryPage({ params, searchParams }: PageProps) {
+export default async function WhatsAppHistoryPage({
+  params,
+  searchParams,
+}: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -220,7 +266,8 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
   const t = (ar: string, en: string) => (language === "AR" ? ar : en);
   const status = parseWhatsAppHistoryStatus(query.status);
   const event = parseWhatsAppHistoryEvent(query.event);
-  const customerId = typeof query.customerId === "string" ? query.customerId.trim() : "";
+  const customerId =
+    typeof query.customerId === "string" ? query.customerId.trim() : "";
   const history = await getWhatsAppMessageHistoryPage({
     businessId: business.id,
     customerId: customerId || null,
@@ -278,11 +325,20 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
           </div>
         ) : null}
 
-        <form method="get" className="grid gap-3 rounded-[var(--lf-radius-card)] border border-border bg-white p-4 sm:grid-cols-[1fr_1fr_auto]">
-          {customerId ? <input type="hidden" name="customerId" value={customerId} /> : null}
+        <form
+          method="get"
+          className="grid gap-3 rounded-[var(--lf-radius-card)] border border-border bg-white p-4 sm:grid-cols-[1fr_1fr_auto]"
+        >
+          {customerId ? (
+            <input type="hidden" name="customerId" value={customerId} />
+          ) : null}
           <label className="grid gap-1 text-sm font-semibold text-foreground">
             {t("الحالة", "Status")}
-            <select name="status" defaultValue={status ?? ""} className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-white px-3">
+            <select
+              name="status"
+              defaultValue={status ?? ""}
+              className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-white px-3"
+            >
               <option value="">{t("كل الحالات", "All statuses")}</option>
               {WHATSAPP_HISTORY_STATUSES.map((value) => (
                 <option key={value} value={value}>
@@ -293,7 +349,11 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
           </label>
           <label className="grid gap-1 text-sm font-semibold text-foreground">
             {t("الحدث", "Event")}
-            <select name="event" defaultValue={event ?? ""} className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-white px-3">
+            <select
+              name="event"
+              defaultValue={event ?? ""}
+              className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-white px-3"
+            >
               <option value="">{t("كل الأحداث", "All events")}</option>
               {AUTOMATIC_CUSTOMER_MESSAGE_EVENTS.map((value) => (
                 <option key={value} value={value}>
@@ -302,7 +362,10 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
               ))}
             </select>
           </label>
-          <button type="submit" className="min-h-11 self-end rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white">
+          <button
+            type="submit"
+            className="min-h-11 self-end rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white"
+          >
             {t("تطبيق", "Apply")}
           </button>
         </form>
@@ -310,9 +373,15 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
         {customerId ? (
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <span className="font-semibold text-foreground-muted">
-              {t("السجل مفلتر للعميل الحالي.", "History is filtered to the current customer.")}
+              {t(
+                "السجل مفلتر للعميل الحالي.",
+                "History is filtered to the current customer.",
+              )}
             </span>
-            <Link href={`/businesses/${business.slug}/whatsapp-history`} className="font-bold text-primary hover:underline">
+            <Link
+              href={`/businesses/${business.slug}/whatsapp-history`}
+              className="font-bold text-primary hover:underline"
+            >
               {t("عرض كل الرسائل", "Show all messages")}
             </Link>
           </div>
@@ -321,7 +390,10 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
         <section className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white">
           {history.entries.length === 0 ? (
             <div className="p-8 text-center text-sm text-foreground-muted">
-              {t("لا توجد محاولات واتساب مطابقة لهذه الفلاتر.", "No WhatsApp delivery attempts match these filters.")}
+              {t(
+                "لا توجد محاولات واتساب مطابقة لهذه الفلاتر.",
+                "No WhatsApp delivery attempts match these filters.",
+              )}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -343,17 +415,25 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
                 const failure = failureLabel(entry.lastErrorCode, t);
                 const statusCopy = STATUS_LABELS[entry.status];
                 return (
-                  <article key={entry.id} className="grid gap-4 p-5 lg:grid-cols-[1.1fr_1fr_auto] lg:items-center">
+                  <article
+                    key={entry.id}
+                    className="grid gap-4 p-5 lg:grid-cols-[1.1fr_1fr_auto] lg:items-center"
+                  >
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-full border border-border px-2.5 py-1 text-xs font-black text-foreground">
-                          {t(EVENT_LABELS[entry.payload.event].ar, EVENT_LABELS[entry.payload.event].en)}
+                          {t(
+                            EVENT_LABELS[entry.payload.event].ar,
+                            EVENT_LABELS[entry.payload.event].en,
+                          )}
                         </span>
                         <span className="text-xs font-bold text-foreground-muted">
                           {t(statusCopy.ar, statusCopy.en)}
                         </span>
                         {providerState ? (
-                          <span className="text-xs font-bold text-primary">{providerState}</span>
+                          <span className="text-xs font-bold text-primary">
+                            {providerState}
+                          </span>
                         ) : null}
                       </div>
                       <Link
@@ -373,13 +453,22 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
                     </div>
 
                     <div className="space-y-1 text-sm">
-                      <p className={eligible ? "font-bold text-success" : "font-bold text-warning"}>
+                      <p
+                        className={
+                          eligible
+                            ? "font-bold text-success"
+                            : "font-bold text-warning"
+                        }
+                      >
                         {eligibilityLabel(entry, t)}
                       </p>
-                      {failure ? <p className="text-foreground-muted">{failure}</p> : null}
+                      {failure ? (
+                        <p className="text-foreground-muted">{failure}</p>
+                      ) : null}
                       {entry.providerMessageId ? (
                         <p className="break-all text-xs text-foreground-muted">
-                          {t("معرف المزود", "Provider ID")}: {entry.providerMessageId}
+                          {t("معرف المزود", "Provider ID")}:{" "}
+                          {entry.providerMessageId}
                         </p>
                       ) : null}
                     </div>
@@ -397,8 +486,11 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
                       {canRecover && safeRetry ? (
                         <form action={retryAction}>
                           <input type="hidden" name="jobId" value={entry.id} />
-                          <button type="submit" className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 text-sm font-bold text-foreground">
-                            {t("Retry نفس المحاولة", "Retry same attempt")}
+                          <button
+                            type="submit"
+                            className="rounded-[var(--lf-radius-input)] border border-border px-3 py-2 text-sm font-bold text-foreground"
+                          >
+                            {t("إعادة نفس المحاولة", "Retry same attempt")}
                           </button>
                         </form>
                       ) : null}
@@ -406,9 +498,19 @@ export default async function WhatsAppHistoryPage({ params, searchParams }: Page
                       {canRecover && canResend ? (
                         <form action={resendAction}>
                           <input type="hidden" name="jobId" value={entry.id} />
-                          <input type="hidden" name="requestId" value={randomUUID()} />
-                          <button type="submit" className="rounded-[var(--lf-radius-input)] bg-primary px-3 py-2 text-sm font-bold text-white">
-                            {t("Resend محاولة جديدة", "Resend as new attempt")}
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={randomUUID()}
+                          />
+                          <button
+                            type="submit"
+                            className="rounded-[var(--lf-radius-input)] bg-primary px-3 py-2 text-sm font-bold text-white"
+                          >
+                            {t(
+                              "إعادة الإرسال كمحاولة جديدة",
+                              "Resend as new attempt",
+                            )}
                           </button>
                         </form>
                       ) : null}

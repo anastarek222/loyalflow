@@ -170,6 +170,12 @@ test("deployment configuration retains security headers and safe migration comma
   assert.match(config, /Permissions-Policy/);
   assert.match(config, /Content-Security-Policy/);
   assert.match(config, /frame-ancestors 'none'/);
+  assert.match(config, /same-origin-allow-popups/);
+  assert.match(config, /script-src[^\n]*https:\/\/connect\.facebook\.net/);
+  assert.match(
+    config,
+    /frame-src https:\/\/www\.facebook\.com https:\/\/web\.facebook\.com/,
+  );
 
   assert.equal(
     packageJson.scripts["db:migrate:deploy"],
