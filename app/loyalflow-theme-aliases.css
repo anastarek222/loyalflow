@@ -5,6 +5,24 @@
  * primitives consume the compatibility names below, so keep those names as
  * aliases rather than a second independent palette.
  */
+@theme inline {
+  --color-foreground-muted: var(--lf-foreground-muted);
+  --color-foreground-subtle: var(--lf-foreground-subtle);
+  --color-inverse: var(--lf-inverse);
+  --color-divider: var(--lf-divider);
+  --color-primary-active: var(--lf-primary-active);
+  --color-primary-soft: var(--lf-primary-soft);
+  --color-primary-subtle: var(--lf-primary-soft);
+  --color-success-subtle: var(--lf-success-subtle);
+  --color-warning-subtle: var(--lf-warning-subtle);
+  --color-danger-subtle: var(--lf-danger-subtle);
+  --color-info-subtle: var(--lf-info-subtle);
+  --color-focus: var(--lf-focus);
+  --color-selection: var(--lf-selection);
+  --color-disabled: var(--lf-disabled);
+  --color-chart-grid: var(--lf-chart-grid);
+}
+
 :root {
   --lf-radius-input: var(--lf-radius-md);
 
