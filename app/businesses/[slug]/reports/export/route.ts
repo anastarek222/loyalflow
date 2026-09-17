@@ -9,6 +9,7 @@ import { canExportBusinessData } from "@/lib/permissions";
 import { hasFeatureEntitlement } from "@/lib/entitlements";
 import {
   formatLoyaltyNumber,
+  loyaltyCurrency,
   operationalUnitLabel,
 } from "@/lib/loyalty/presentation";
 import prisma from "@/lib/prisma";
@@ -149,6 +150,7 @@ export async function GET(request: Request, context: ExportRouteContext) {
     select: {
       type: true,
       amount: true,
+      saleAmount: true,
       balanceAfter: true,
       createdAt: true,
       customer: {
@@ -165,8 +167,10 @@ export async function GET(request: Request, context: ExportRouteContext) {
   const headers = [
     "التاريخ",
     "نوع الحركة",
-    "القيمة",
-    "الوحدة",
+    "قيمة حركة الولاء",
+    "وحدة حركة الولاء",
+    "قيمة البيع المسجلة",
+    "عملة البيع المسجلة",
     "الرصيد بعد الحركة",
     "كود العميل",
     "نفذها",
@@ -181,6 +185,13 @@ export async function GET(request: Request, context: ExportRouteContext) {
           .filter(Boolean)
           .join(" ")
       : "النظام أو مستخدم محذوف";
+    const recordedSaleAmount =
+      transaction.saleAmount === null
+        ? ""
+        : formatLoyaltyNumber(transaction.saleAmount, "AR");
+    const recordedSaleCurrency =
+      transaction.saleAmount === null ? "" : loyaltyCurrency(business.currency);
+
     return [
       dateFormatter.format(transaction.createdAt),
       getTransactionLabel(transaction.type),
@@ -191,6 +202,8 @@ export async function GET(request: Request, context: ExportRouteContext) {
         unitName: business.unitName,
         currency: business.currency,
       }),
+      recordedSaleAmount,
+      recordedSaleCurrency,
       formatLoyaltyNumber(transaction.balanceAfter, "AR"),
       transaction.customer.customerCode,
       employeeName,
