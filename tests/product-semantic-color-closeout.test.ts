@@ -78,3 +78,50 @@ test("Scanner routes use semantic control contrast while retaining scanner-speci
   assert.match(customer, /bg-primary[^"\n]*text-primary-foreground/);
   assert.doesNotMatch(customer, /bg-primary[^"\n]*text-white/);
 });
+
+
+test("Standard card setup keeps fixed colours inside preview and brand swatches only", () => {
+  const setup = source("components/standard-card-setup.tsx");
+  const fixedWhite = setup.match(/\bbg-white\b/g) ?? [];
+
+  assert.equal(fixedWhite.length, 1);
+  assert.match(
+    setup,
+    /rounded-lg border border-border bg-white font-black/,
+  );
+  assert.match(
+    setup,
+    /type="color"[\s\S]*?border border-border bg-surface p-1/,
+  );
+  assert.match(
+    setup,
+    /font-mono text-sm text-foreground uppercase/,
+  );
+  assert.match(
+    setup,
+    /select[\s\S]*?border border-border bg-surface px-3 py-3 text-foreground/,
+  );
+});
+
+test("Primary business join QR keeps white isolated to the generated QR image", () => {
+  const joinQr = source("components/primary-business-join-qr.tsx");
+  const fixedWhite = joinQr.match(/\bbg-white\b/g) ?? [];
+
+  assert.equal(fixedWhite.length, 1);
+  assert.match(joinQr, /aspect-square w-full max-w-56[\s\S]*?bg-white p-3/);
+  assert.match(joinQr, /border border-primary\/15 bg-surface shadow-sm/);
+  assert.match(joinQr, /bg-primary[\s\S]*?text-primary-foreground/);
+});
+
+test("QR scanner keeps fixed black and white inside the camera reader only", () => {
+  const scanner = source("components/qr-scanner.tsx");
+
+  assert.match(scanner, /bg-slate-950 p-2 shadow-inner/);
+  assert.match(scanner, /border border-white\/10 bg-white p-2/);
+  assert.doesNotMatch(scanner, /bg-primary[^"\n]*text-white/);
+  assert.doesNotMatch(scanner, /\btext-black\b/);
+  assert.match(
+    scanner,
+    /border border-border bg-surface px-4 text-foreground/,
+  );
+});
