@@ -165,22 +165,12 @@ test.describe.serial("Owner onboarding visual alignment @desktop @onboarding-vis
           expect(semanticColors.shell).not.toBe("rgba(0, 0, 0, 0)");
           expect(semanticColors.form).not.toBe("rgba(0, 0, 0, 0)");
 
-          const activeWordmarkTheme = theme === "dark" ? "dark" : "light";
-          const inactiveWordmarkTheme = theme === "dark" ? "light" : "dark";
-          const activeWordmark = page.locator(
-            `[data-platform-brand-wordmark-size="marketing"][data-platform-brand-wordmark-theme="${activeWordmarkTheme}"]`,
-          );
-          const inactiveWordmark = page.locator(
-            `[data-platform-brand-wordmark-size="marketing"][data-platform-brand-wordmark-theme="${inactiveWordmarkTheme}"]`,
-          );
-          await expect(activeWordmark).toBeVisible();
-          await expect(inactiveWordmark).toBeHidden();
-
-          const wordmarkBox = await activeWordmark.boundingBox();
-          expect(wordmarkBox).not.toBeNull();
-          expect(wordmarkBox!.height).toBeGreaterThanOrEqual(20);
-          expect(wordmarkBox!.height).toBeLessThanOrEqual(36);
-          expect(wordmarkBox!.width).toBeLessThanOrEqual(160);
+          const inlineBrand = brand.locator("[data-inline-tanee-name]");
+          await expect(inlineBrand).toBeVisible();
+          await expect(inlineBrand.locator("[data-inline-tanee-ee]")).toBeVisible();
+          await expect(
+            brand.locator("[data-platform-brand-wordmark-size]"),
+          ).toHaveCount(0);
 
           if (viewport.width < 1024) {
             await expect(mobileHeader).toBeVisible();
