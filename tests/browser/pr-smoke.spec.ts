@@ -16,36 +16,13 @@ test.setTimeout(180_000);
 
 async function signIn(
   page: Page,
-  role: "owner-a" | "owner-b" | "manager-a" | "viewer-a",
+  role: "owner-a" | "manager-a" | "viewer-a",
 ) {
-  const email =
-    role === "owner-b"
-      ? `lf-uat-final-owner-b-${fixture.runId}@example.test`
-      : uatEmail(role, fixture.runId);
-  const expectedBusiness =
-    role === "owner-b" ? fixture.businessB : fixture.businessA;
-
   await page.goto("/login");
-  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/businesses/${expectedBusiness}import { expect, test, type Page } from "@playwright/test";
-
-import {
-  cleanupBrowserUat,
-  prepareBrowserUat,
-  type BrowserUatFixture,
-  uatEmail,
-} from "./fixtures";
-
-let fixture: BrowserUatFixture;
-let manifestPath: string;
-
-// Webpack compiles each critical route on first use in disposable CI. Keep the
-// broader suite bounded while allowing this cold-start smoke file to finish.
-test.setTimeout(180_000);
-
-), {
+  await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
     timeout: 45_000,
   });
 }
@@ -141,12 +118,35 @@ test.describe.serial("PR browser smoke", () => {
     await page.setViewportSize({ width: 390, height: 844 });
 
     const scenarios = [
-      { role: "owner-a", language: "EN", dir: "ltr", openLabel: "Open full menu", closeLabel: "Close navigation" },
-      { role: "owner-b", language: "AR", dir: "rtl", openLabel: "فتح القائمة", closeLabel: "إغلاق القائمة" },
+      {
+        email: uatEmail("owner-a", fixture.runId),
+        business: fixture.businessA,
+        language: "EN",
+        dir: "ltr",
+        openLabel: "Open full menu",
+        closeLabel: "Close navigation",
+        drawerLabel: "Navigation menu",
+      },
+      {
+        email: "lf-uat-final-owner-b-" + fixture.runId + "@example.test",
+        business: fixture.businessB,
+        language: "AR",
+        dir: "rtl",
+        openLabel: "فتح القائمة",
+        closeLabel: "إغلاق القائمة",
+        drawerLabel: "قائمة التنقل",
+      },
     ] as const;
 
     for (const scenario of scenarios) {
-      await signIn(page, scenario.role);
+      await page.goto("/login");
+      await page.getByLabel("Email address").fill(scenario.email);
+      await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+      await page.getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(page).toHaveURL(
+        new RegExp("/businesses/" + scenario.business + "$"),
+        { timeout: 45_000 },
+      );
 
       const localizedShell = page.locator("[data-app-language]");
       await expect(localizedShell).toHaveAttribute("data-app-language", scenario.language);
@@ -162,7 +162,7 @@ test.describe.serial("PR browser smoke", () => {
       await openNavigation.click();
 
       const drawer = page.getByRole("dialog", {
-        name: scenario.language === "AR" ? "قائمة التنقل" : "Navigation menu",
+        name: scenario.drawerLabel,
         exact: true,
       });
       await expect(drawer).toBeVisible();
