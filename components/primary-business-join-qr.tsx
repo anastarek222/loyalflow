@@ -45,7 +45,7 @@ export async function PrimaryBusinessJoinQr({
     <section
       id="business-join"
       aria-labelledby="business-join-heading"
-      className="mb-8 scroll-mt-24 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-white shadow-sm"
+      className="mb-8 scroll-mt-24 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-surface shadow-sm"
       data-primary-business-join-qr
     >
       <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -82,11 +82,11 @@ export async function PrimaryBusinessJoinQr({
                 language={language}
                 label={t("نسخ رابط الانضمام", "Copy join link")}
                 copiedLabel={t("تم نسخ الرابط", "Join link copied")}
-                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary-hover"
               />
               <Link
                 href={joinPath}
-                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-bold text-foreground transition hover:border-primary/30 hover:text-primary"
               >
                 {t("فتح صفحة الانضمام", "Open join page")}
               </Link>
@@ -112,7 +112,7 @@ export async function PrimaryBusinessJoinQr({
               className="aspect-square w-full max-w-56 rounded-2xl border border-border bg-white p-3 shadow-sm"
             />
           ) : (
-            <div className="flex aspect-square w-full max-w-56 items-center justify-center rounded-2xl border border-dashed border-border bg-white p-5 text-center text-sm font-semibold text-foreground-muted">
+            <div className="flex aspect-square w-full max-w-56 items-center justify-center rounded-2xl border border-dashed border-border bg-surface p-5 text-center text-sm font-semibold text-foreground-muted">
               {t(
                 "تعذر إنشاء صورة QR الآن. رابط الانضمام بالأعلى ما زال متاحًا للنسخ والفتح.",
                 "The QR image could not be generated right now. The join link above is still available to copy or open.",
