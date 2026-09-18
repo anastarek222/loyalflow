@@ -70,18 +70,23 @@ async function setAuthenticatedLanguage(
     return;
   }
 
-  const switchForm = page.locator("form").filter({
-    has: page.locator(
-      `input[name="language"][value="${targetLanguage}"]`,
-    ),
-  });
+  const topbar = page.locator('[data-shell-topbar="true"]');
+  const targetInput = topbar.locator(
+    `input[name="language"][value="${targetLanguage}"]`,
+  );
+  await expect(targetInput).toHaveCount(1);
+
+  const switchForm = targetInput.locator("xpath=..");
+  const switchButton = switchForm.getByRole("button");
+  await expect(switchButton).toBeVisible();
+
   const currentUrl = new URL(page.url());
   const actionResponse = page.waitForResponse(
     (response) =>
       response.request().method() === "POST" &&
       new URL(response.url()).pathname === currentUrl.pathname,
   );
-  await switchForm.getByRole("button").click();
+  await switchButton.click();
   await actionResponse;
   await page.reload();
   await expect(shell).toHaveAttribute("data-app-language", targetLanguage, {
