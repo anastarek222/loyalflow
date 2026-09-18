@@ -514,3 +514,149 @@ for (const locale of ["en", "ar"] as const) {
     });
   }
 }
+
+const pricingCopy = {
+  en: {
+    title: "Simple plans. Clear pricing.",
+    plans: ["Starter", "Growth", "Scale"],
+    prices: ["899", "1,599", "2,799"],
+    included: "Everything you need to run a connected loyalty experience.",
+    faq: "Pricing questions",
+    final: "Find the right plan for your business.",
+    proofTrial: "14 days free",
+    proofPayment: "No payment required",
+    popular: "MOST POPULAR",
+    cta: "Start your free trial",
+  },
+  ar: {
+    title: "باقات واضحة تناسب مرحلة نمو نشاطك.",
+    plans: ["الأساسية", "الاحترافية", "المتقدمة"],
+    prices: ["899", "1,599", "2,799"],
+    included: "كل ما تحتاجه لإدارة تجربة ولاء مترابطة.",
+    faq: "أسئلة شائعة عن الأسعار",
+    final: "اختر الباقة المناسبة لنشاطك.",
+    proofTrial: "14 يومًا مجانًا",
+    proofPayment: "بدون دفع",
+    popular: "الأكثر اختيارًا",
+    cta: "ابدأ تجربتك المجانية",
+  },
+} as const;
+
+for (const locale of ["en", "ar"] as const) {
+  for (const theme of ["light", "dark"] as const) {
+    test(`Pricing ${locale} ${theme}: plans, truth and responsive composition @desktop @mobile`, async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+      await context.addInitScript(
+        (value) => localStorage.setItem("tanee-marketing-theme", value),
+        theme,
+      );
+
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+
+      const response = await page.goto("/pricing");
+      expect(response?.status()).toBe(200);
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-marketing-theme",
+        theme,
+      );
+
+      const hero = page.getByRole("heading", {
+        level: 1,
+        name: pricingCopy[locale].title,
+      });
+      await expect(hero).toBeVisible();
+      await expect(page.getByText(pricingCopy[locale].proofTrial, { exact: true })).toBeVisible();
+      await expect(page.getByText(pricingCopy[locale].proofPayment, { exact: true })).toBeVisible();
+
+      const planCards = page.locator("article").filter({
+        has: page.locator('a[href="/get-started"]'),
+      });
+      await expect(planCards).toHaveCount(3);
+
+      for (let index = 0; index < pricingCopy[locale].plans.length; index += 1) {
+        const plan = pricingCopy[locale].plans[index];
+        const card = planCards.filter({ hasText: plan }).first();
+        await expect(card).toBeVisible();
+        await expect(card.locator("h2")).toContainText(plan);
+        await expect(card).toContainText(pricingCopy[locale].prices[index]);
+        await expect(card.locator('a[href="/get-started"]')).toHaveText(
+          pricingCopy[locale].cta,
+        );
+      }
+
+      await expect(
+        page.getByText(pricingCopy[locale].popular, { exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.locator("h2").filter({ hasText: pricingCopy[locale].included }).first(),
+      ).toBeVisible();
+
+      const faqHeading = page
+        .locator("h2")
+        .filter({ hasText: pricingCopy[locale].faq })
+        .first();
+      await expect(faqHeading).toBeVisible();
+      const faqSection = faqHeading.locator("xpath=ancestor::section[1]");
+      const faqItems = faqSection.locator("details");
+      await expect(faqItems).toHaveCount(4);
+      await expect(faqItems.first()).toHaveAttribute("open", "");
+      await faqItems.nth(1).locator("summary").click();
+      await expect(faqItems.nth(1).locator("p")).toBeVisible();
+
+      const finalHeading = page
+        .locator("h2")
+        .filter({ hasText: pricingCopy[locale].final })
+        .first();
+      await expect(finalHeading).toBeVisible();
+      const finalSection = finalHeading.locator("xpath=ancestor::section[1]");
+      await expect(finalSection.locator('a[href="/get-started"]')).toBeVisible();
+
+      const boxes = await planCards.evaluateAll((cards) =>
+        cards.map((card) => {
+          const rect = card.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width };
+        }),
+      );
+      expect(boxes).toHaveLength(3);
+      const viewport = page.viewportSize();
+      expect(viewport).not.toBeNull();
+      if (viewport!.width >= 1024) {
+        expect(Math.max(...boxes.map((box) => box.y)) - Math.min(...boxes.map((box) => box.y))).toBeLessThan(80);
+        expect(new Set(boxes.map((box) => Math.round(box.width))).size).toBeLessThanOrEqual(2);
+      } else {
+        expect(boxes[1].y).toBeGreaterThan(boxes[0].y);
+        expect(boxes[2].y).toBeGreaterThan(boxes[1].y);
+      }
+
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => document.fonts.ready);
+      const project = test.info().project.name.startsWith("mobile")
+        ? "mobile"
+        : "desktop";
+      await page.screenshot({
+        path: test
+          .info()
+          .outputPath(`faq-pricing-${locale}-${theme}-${project}.png`),
+        fullPage: true,
+      });
+
+      expect(errors).toEqual([]);
+    });
+  }
+}
