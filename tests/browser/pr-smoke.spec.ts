@@ -916,6 +916,218 @@ test.describe.serial("PR browser smoke", () => {
     await signOut(page);
   });
 
+  test("Reports SIMPLE preserves summary scope and hides advanced analytics across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}/reports`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const workspace = page.locator('[data-reports-workspace="true"]');
+          await expect(workspace).toBeVisible();
+          await expect(workspace).toHaveAttribute("data-experience-mode", "SIMPLE");
+          await expect(
+            workspace.getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "التقارير والتحليلات" : "Reports & analytics",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const filters = workspace.locator('details[data-report-filters="true"]');
+          await expect(filters).toBeVisible();
+          await expect(filters).not.toHaveAttribute("open", "");
+          await filters.locator("summary").click();
+          await expect(
+            filters.getByLabel(locale === "ar" ? "شريحة العملاء" : "Customer segment", {
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(
+            filters.getByLabel(locale === "ar" ? "الفرع" : "Branch", {
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const summary = workspace.locator('[data-report-summary="true"]');
+          await expect(summary).toBeVisible();
+          await expect(summary.locator(":scope > article, :scope > a")).toHaveCount(4);
+
+          const ledger = workspace.locator(
+            'details[data-ledger-summary="gross-reversal-net"]',
+          );
+          await expect(ledger).toBeVisible();
+
+          await expect(
+            workspace.locator('[data-report-advanced-metrics="true"]'),
+          ).toBeHidden();
+          await expect(
+            workspace.locator('details[data-report-impact="true"]'),
+          ).toBeHidden();
+          await expect(
+            workspace.locator('[data-report-activity-mobile="cards"]'),
+          ).toBeHidden();
+          await expect(
+            workspace.locator('[data-report-activity-desktop="table"]'),
+          ).toBeHidden();
+
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-reports-simple-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Reports ADVANCED preserves filters, analytics disclosures and responsive activity @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "manager-a");
+    const route = `/businesses/${fixture.businessA}/reports`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const workspace = page.locator('[data-reports-workspace="true"]');
+          await expect(workspace).toBeVisible();
+          await expect(workspace).toHaveAttribute("data-experience-mode", "ADVANCED");
+          await expect(
+            workspace.getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "التقارير والتحليلات" : "Reports & analytics",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const filters = workspace.locator('details[data-report-filters="true"]');
+          await expect(filters).toBeVisible();
+          await filters.locator("summary").click();
+          await expect(
+            filters.getByLabel(locale === "ar" ? "الموظف المنسوب إليه" : "Attributed staff", {
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const advancedMetrics = workspace.locator(
+            '[data-report-advanced-metrics="true"]',
+          );
+          const advancedDisclosure = advancedMetrics.locator(
+            "xpath=ancestor::details[1]",
+          );
+          await expect(advancedDisclosure).toBeVisible();
+          await expect(advancedMetrics).toBeHidden();
+          await advancedDisclosure.locator("summary").click();
+          await expect(advancedMetrics).toBeVisible();
+
+          const impact = workspace.locator('details[data-report-impact="true"]');
+          await expect(impact).toBeVisible();
+          await impact.locator("summary").click();
+          await expect(
+            impact.getByRole("heading", {
+              level: 2,
+              name:
+                locale === "ar"
+                  ? "مؤشرات تشغيلية موثقة"
+                  : "Documented operational signals",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const mobileActivity = workspace.locator(
+            '[data-report-activity-mobile="cards"]',
+          );
+          const desktopActivity = workspace.locator(
+            '[data-report-activity-desktop="table"]',
+          );
+          const activityDisclosure = mobileActivity.locator(
+            "xpath=ancestor::details[1]",
+          );
+          await expect(activityDisclosure).toBeVisible();
+          await activityDisclosure.locator("summary").click();
+
+          if (viewport.width < 768) {
+            await expect(mobileActivity).toBeVisible();
+            await expect(desktopActivity).toBeHidden();
+          } else {
+            await expect(mobileActivity).toBeHidden();
+            await expect(desktopActivity).toBeVisible();
+            expect(await desktopActivity.locator("tbody tr").count()).toBeGreaterThan(0);
+          }
+
+          const summary = workspace.locator('[data-report-summary="true"]');
+          await expect(summary).toBeVisible();
+          await expect(summary.locator(":scope > article, :scope > a")).toHaveCount(4);
+
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-reports-advanced-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
     page,
   }) => {
