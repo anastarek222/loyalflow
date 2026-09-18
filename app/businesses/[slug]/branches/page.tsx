@@ -221,7 +221,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
 
                       <div className="mt-6 border-t border-border pt-5">
                         <h3 className="font-bold text-foreground">{t(language, "إسنادات الموظفين", "Staff assignments")}</h3>
-                        <p className="mt-1 text-sm text-slate-500">{t(language, "تُسند حسابات الموظفين النشطة فقط؛ المديرون والمشاهدون لا يحتاجون إسناد فرع.", "Only active staff accounts are assigned; managers and viewers do not require a branch assignment.")}</p>
+                        <p className="mt-1 text-sm text-foreground-subtle">{t(language, "تُسند حسابات الموظفين النشطة فقط؛ المديرون والمشاهدون لا يحتاجون إسناد فرع.", "Only active staff accounts are assigned; managers and viewers do not require a branch assignment.")}</p>
                         {branch.staffAssignments.length > 0 && (
                           <ul className="mt-4 space-y-2">
                             {branch.staffAssignments.map((assignment) => {
