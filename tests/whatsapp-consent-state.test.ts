@@ -144,7 +144,15 @@ test("enqueue and delivery boundaries both block opted-out automatic WhatsApp", 
   );
   assert.match(
     senderSource,
-    /customer\.whatsappPhoneE164\s*\?\s*normalizePhoneE164\(customer\.whatsappPhoneE164\)\s*:\s*normalizePhoneE164\(customer\.phone, customer\.business\.country\)/,
+    /customer\.whatsappPhoneE164\s*!==\s*customer\.phone/,
+  );
+  assert.match(
+    senderSource,
+    /normalizePhoneE164\(customer\.whatsappPhoneE164\)/,
+  );
+  assert.doesNotMatch(
+    senderSource,
+    /normalizePhoneE164\(customer\.phone, customer\.business\.country\)/,
   );
   assert.doesNotMatch(senderSource, /normalizeRecipientPhone/);
 });

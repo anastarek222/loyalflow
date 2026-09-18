@@ -7,8 +7,8 @@ const source = readFileSync(
   "utf8",
 );
 
-test("catalogue announcement fan-out is consent-safe and idempotent per customer", () => {
-  assert.match(source, /enqueueCustomerMessageAudienceJobs/);
+test("catalogue publication fan-out is consent-safe, phone-bound, and idempotent per customer", () => {
+  assert.match(source, /enqueueCustomerMessagePublicationJobs/);
   assert.match(source, /isBusinessWhatsAppAutomationEnabled/);
   assert.match(source, /whatsappOptInAt: \{ not: null \}/);
   assert.match(source, /whatsappOptedOutAt: null/);
@@ -17,4 +17,10 @@ test("catalogue announcement fan-out is consent-safe and idempotent per customer
     source,
     /input\.event\.toLowerCase\(\)[\s\S]*input\.eventKey[\s\S]*customer\.id/,
   );
+});
+
+test("publication payloads carry authoritative subject identities and optional schedules", () => {
+  assert.match(source, /rewardId: input\.rewardId/);
+  assert.match(source, /offerId: input\.offerId/);
+  assert.match(source, /availableAt: input\.availableAt/);
 });

@@ -7,7 +7,7 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 import { normalizeRewardInput } from "@/lib/rewards/catalog";
-import { enqueueCustomerMessageAudienceJobs } from "@/lib/server/integrations/customer-messaging";
+import { enqueueCustomerMessagePublicationJobs } from "@/lib/server/integrations/customer-messaging";
 
 export type RewardWriteActor = Readonly<{
   id: string;
@@ -111,7 +111,7 @@ export async function createRewardCommand(input: {
 
     const reward = await transaction.reward.create({
       data: { ...input.reward, businessId: input.businessId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, isActive: true },
     });
     await transaction.businessActivity.create({
       data: buildCatalogAuditActivity({
@@ -124,12 +124,14 @@ export async function createRewardCommand(input: {
       }),
     });
 
-    const messageJobs = await enqueueCustomerMessageAudienceJobs(transaction, {
-      businessId: input.businessId,
-      event: "NEW_REWARD",
-      eventKey: reward.id,
-      rewardName: reward.name,
-    });
+    const messageJobs = reward.isActive
+      ? await enqueueCustomerMessagePublicationJobs(transaction, {
+          businessId: input.businessId,
+          event: "NEW_REWARD",
+          rewardId: reward.id,
+          publicationKey: `reward:${reward.id}:created`,
+        })
+      : [];
 
     return {
       ok: true,
@@ -251,7 +253,7 @@ export async function setRewardStatusCommand(input: {
     const reward = await transaction.reward.update({
       where: { id: existingReward.id },
       data: { isActive: input.isActive },
-      select: { id: true, name: true },
+      select: { id: true, name: true, isActive: true, updatedAt: true },
     });
     await transaction.businessActivity.create({
       data: buildCatalogAuditActivity({
@@ -264,6 +266,19 @@ export async function setRewardStatusCommand(input: {
       }),
     });
 
-    return { ok: true, integrationJobIds: [] } as const;
+    const messageJobs =
+      !existingReward.isActive && reward.isActive
+        ? await enqueueCustomerMessagePublicationJobs(transaction, {
+            businessId: input.businessId,
+            event: "NEW_REWARD",
+            rewardId: reward.id,
+            publicationKey: `reward:${reward.id}:activated:${reward.updatedAt.getTime()}`,
+          })
+        : [];
+
+    return {
+      ok: true,
+      integrationJobIds: messageJobs.map((job) => job.id),
+    } as const;
   });
 }
