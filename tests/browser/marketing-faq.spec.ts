@@ -365,11 +365,16 @@ for (const viewport of [
           const footerActionsRect = await readShellRect(
             page.locator('[data-marketing-footer-actions="true"]'),
           );
-          const footerActionSlots = await readShellRects(
-            page.locator(
-              '[data-marketing-footer-theme-slot="true"], [data-marketing-footer-language-slot="true"], [data-marketing-footer-access-slot="true"]',
-            ),
-          );
+          const footerActionSlots = (
+            await readShellRects(
+              page.locator(
+                '[data-marketing-footer-theme-slot="true"], [data-marketing-footer-language-slot="true"], [data-marketing-footer-access-slot="true"]',
+              ),
+            )
+          ).map((rect) => ({
+            ...rect,
+            y: rect.y - footerActionsRect.y,
+          }));
           expect(footerActionSlots).toHaveLength(3);
 
           const current = {
