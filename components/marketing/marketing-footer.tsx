@@ -251,7 +251,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             </div>
             <div
               data-marketing-footer-language-slot="true"
-              className="flex w-20 shrink-0 items-center justify-center"
+              className="flex w-20 shrink-0 items-center justify-center [&_button]:w-full"
             >
               <LanguageSwitcher locale={locale} alternateOnly />
             </div>
