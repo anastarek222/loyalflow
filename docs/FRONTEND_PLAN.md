@@ -35,7 +35,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Pricing
 - [x] About
 - [x] FAQ
-- [ ] Contact
+- [x] Contact
 - [ ] Security/trust visual surfaces
 
 ### Product pages
