@@ -717,9 +717,15 @@ test.describe.serial("PR browser smoke", () => {
             ),
           ).toBeVisible();
           await expect(main.locator("#daily-loyalty")).toBeVisible();
-          await expect(
-            main.locator("[data-customer-activity-timeline]"),
-          ).toBeVisible();
+
+          const timeline = main.locator("[data-customer-activity-timeline]");
+          const timelineDisclosure = timeline.locator(
+            "xpath=ancestor::details[@data-operational-disclosure][1]",
+          );
+          await expect(timelineDisclosure).toBeVisible();
+          await expect(timeline).toBeHidden();
+          await timelineDisclosure.locator("summary").click();
+          await expect(timeline).toBeVisible();
 
           const cardDisclosure = main.locator(
             '#customer-card[data-operational-disclosure]',
@@ -841,9 +847,17 @@ test.describe.serial("PR browser smoke", () => {
             await expect(disclosure).toBeVisible();
           }
 
-          await expect(
-            main.locator("[data-customer-activity-timeline]"),
-          ).toBeVisible();
+          const timeline = main.locator(
+            "[data-customer-activity-timeline]",
+          );
+          const timelineDisclosure = timeline.locator(
+            "xpath=ancestor::details[@data-operational-disclosure][1]",
+          );
+          await expect(timelineDisclosure).toBeVisible();
+          await expect(timeline).toBeHidden();
+          await timelineDisclosure.locator("summary").click();
+          await expect(timeline).toBeVisible();
+
           const cardDisclosure = main.locator(
             '#customer-card[data-operational-disclosure]',
           );
