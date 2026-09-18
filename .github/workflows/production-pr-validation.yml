@@ -141,16 +141,35 @@ jobs:
             sleep 0.25
           done
           rm -rf visual-artifacts
-          mkdir -p visual-artifacts/saas-shell visual-artifacts/marketing-faq visual-artifacts/onboarding
+          mkdir -p visual-artifacts/saas-shell visual-artifacts/shared-ui visual-artifacts/marketing-faq visual-artifacts/onboarding
 
+          set +e
           pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          pr_smoke_status=$?
+          set -e
           find test-results -type f -name 'saas-shell-*.png' -exec cp {} visual-artifacts/saas-shell/ \;
+          find test-results -type f -name 'notification-centre-*.png' -exec cp {} visual-artifacts/shared-ui/ \;
+          if (( pr_smoke_status != 0 )); then
+            exit "$pr_smoke_status"
+          fi
 
+          set +e
           pnpm exec playwright test tests/browser/marketing-faq.spec.ts --config=playwright.config.ts --project=desktop-chromium --project=mobile-chromium
+          faq_status=$?
+          set -e
           find test-results -type f -name 'faq-*.png' -exec cp {} visual-artifacts/marketing-faq/ \;
+          if (( faq_status != 0 )); then
+            exit "$faq_status"
+          fi
 
+          set +e
           pnpm exec playwright test tests/browser/owner-onboarding-visual.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          onboarding_status=$?
+          set -e
           find test-results -type f -name 'onboarding-*.png' -exec cp {} visual-artifacts/onboarding/ \;
+          if (( onboarding_status != 0 )); then
+            exit "$onboarding_status"
+          fi
 
       - name: Save FAQ visual acceptance screenshots
         if: always() && steps.browser-smoke.outputs.run == 'true'
@@ -176,6 +195,15 @@ jobs:
         with:
           name: saas-shell-visual-screenshots
           path: visual-artifacts/saas-shell/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save shared UI visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ui-visual-screenshots
+          path: visual-artifacts/shared-ui/*.png
           if-no-files-found: ignore
           retention-days: 7
 
