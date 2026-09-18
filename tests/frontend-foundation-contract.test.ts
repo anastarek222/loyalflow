@@ -94,13 +94,13 @@ test("sales summary surfaces use product tokens without removing business accent
   assert.match(kpis, /border border-border bg-surface/);
   assert.match(kpis, /bg-foreground text-inverse/);
   assert.match(kpis, /hover:bg-surface/);
-  assert.match(kpis, /backgroundColor:\\s*primaryColor/);
-  assert.doesNotMatch(kpis, /\\bbg-white\\b|\\btext-white\\b/);
+  assert.match(kpis, /backgroundColor:\s*primaryColor/);
+  assert.doesNotMatch(kpis, /\bbg-white\b|\btext-white\b/);
 
   assert.match(progress, /border border-border bg-surface/);
   assert.match(progress, /bg-success-subtle/);
-  assert.match(progress, /rounded-\\[var\\(--lf-radius-input\\)\\] bg-surface p-4/);
-  assert.match(progress, /linear-gradient\\(135deg, \\${primaryColor\\}, #0f172a\\)/);
+  assert.match(progress, /rounded-\[var\(--lf-radius-input\)\] bg-surface p-4/);
+  assert.match(progress, /linear-gradient\(135deg, \$\{primaryColor\}, #0f172a\)/);
   assert.match(progress, /text-white/);
-  assert.doesNotMatch(progress, /border-white\\/10 bg-white/);
+  assert.doesNotMatch(progress, /border-white\/10 bg-white/);
 });
