@@ -115,13 +115,24 @@ export async function updateCustomerRecordCommand(input: {
     const updatedCustomerName = [input.firstName, input.lastName]
       .filter(Boolean)
       .join(" ");
+    const actorFields = activityActorFields(input.actor, input.businessId);
     const activity = await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_UPDATED",
         description: `تم تحديث بيانات العميل ${updatedCustomerName}`,
         businessId: input.businessId,
         customerId: customer.id,
-        ...activityActorFields(input.actor, input.businessId),
+        ...actorFields,
+        ...(
+          phoneChanged
+            ? {
+                metadata: {
+                  ...("metadata" in actorFields ? actorFields.metadata : {}),
+                  whatsappConsentAction: "INVALIDATED_PHONE_CHANGE",
+                },
+              }
+            : {}
+        ),
         ...activityRequestMetadata(activityContext),
       },
       select: { id: true },

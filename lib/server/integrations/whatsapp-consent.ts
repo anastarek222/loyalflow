@@ -43,7 +43,6 @@ async function findConsentTargets(
       AND customer."whatsappOptInAt" IS NOT NULL
       AND customer."whatsappOptedOutAt" IS NULL
       AND credential."phoneNumberId" = ${request.phoneNumberId}
-    LIMIT 50
   `;
 }
 
@@ -94,6 +93,8 @@ export async function revokeWhatsAppConsentFromWebhook(payload: unknown) {
             customerId: target.id,
             metadata: {
               source: "WHATSAPP_INBOUND_OPTOUT",
+              consentAction: "OPT_OUT",
+              providerPhoneNumberId: request.phoneNumberId,
               providerMessageId: request.providerMessageId,
             },
           },

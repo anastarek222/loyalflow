@@ -54,8 +54,13 @@ test("explicit reconfirmation binds fresh consent to the current phone", () => {
   assert.match(rebind, /AND "whatsappOptedOutAt" IS NULL/);
   assert.match(rebind, /AND "phone" = \$\{input\.whatsappPhoneE164\}/);
   assert.match(rebind, /AND "isActive" = TRUE/);
-  assert.match(actions, /if \(updatedCount !== 1\)/);
+  assert.match(actions, /if \(!integrationJobId\)/);
   assert.match(actions, /whatsappPhoneE164: customer\.phone/);
+  assert.match(actions, /WHATSAPP_CONSENT_RECONFIRM/);
+  assert.match(actions, /OPT_IN_CURRENT_PHONE/);
+  assert.match(actions, /businessActivity\.create/);
+  assert.match(actions, /whatsapp-consent-reconfirm:/);
+  assert.match(actions, /scheduleIntegrationJob\(integrationJobId\)/);
   assert.match(actions, /if \(customer\.whatsappOptedOutAt\)/);
   assert.match(panel, /Confirm customer consent for current phone/);
   assert.match(
@@ -77,4 +82,15 @@ test("message enqueue rejects stale consent bound to a different phone", () => {
     panel,
     /The customer phone changed\. Reconfirm WhatsApp consent for the current number before sending\./,
   );
+});
+
+test("customer creation and phone changes leave explicit consent audit evidence", () => {
+  const createCommand = source("lib/server/business/customer-create-command.ts");
+  const maintenance = source(
+    "lib/server/business/customer-record-maintenance-command.ts",
+  );
+
+  assert.match(createCommand, /whatsappConsentAction: input\.whatsappOptIn \? "OPT_IN" : "NOT_GRANTED"/);
+  assert.match(createCommand, /whatsappConsentSource: "CUSTOMER_REGISTRATION"/);
+  assert.match(maintenance, /whatsappConsentAction: "INVALIDATED_PHONE_CHANGE"/);
 });

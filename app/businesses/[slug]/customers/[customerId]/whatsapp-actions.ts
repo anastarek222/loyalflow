@@ -1,6 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
+import {
+  activityActorFields,
+  activityRequestMetadata,
+} from "@/lib/activity/business-activity";
+import { getActivityRequestContext } from "@/lib/activity/request-context";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { scheduleIntegrationJob } from "@/lib/integration-job-scheduler";
 import { canAccessBusiness, canPerform } from "@/lib/permissions";
@@ -13,6 +18,7 @@ import {
 } from "@/lib/server/integrations/customer-messaging";
 import { rebindCustomerWhatsAppConsent } from "@/lib/server/integrations/customer-whatsapp-consent-state";
 import { getBusinessWhatsAppManualReadiness } from "@/lib/server/integrations/whatsapp-manual-readiness";
+import { enqueueIntegrationJob } from "@/lib/server/integrations/outbox";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -77,19 +83,47 @@ export async function confirmCustomerWhatsAppPhoneAction(
     redirect(customerPath(business.slug, customer.id, "whatsapp-ineligible"));
   }
 
-  const updatedCount = await prisma.$transaction((transaction) =>
-    rebindCustomerWhatsAppConsent(transaction, {
+  const activityContext = await getActivityRequestContext();
+  const integrationJobId = await prisma.$transaction(async (transaction) => {
+    const updatedCount = await rebindCustomerWhatsAppConsent(transaction, {
       businessId: business.id,
       customerId: customer.id,
       whatsappPhoneE164: customer.phone,
       changedAt: new Date(),
-    }),
-  );
+    });
+    if (updatedCount !== 1) return null;
 
-  if (updatedCount !== 1) {
+    const actorFields = activityActorFields(session.user, business.id);
+    const activity = await transaction.businessActivity.create({
+      data: {
+        type: "CUSTOMER_UPDATED",
+        description: "تم تأكيد موافقة واتساب للرقم الحالي",
+        businessId: business.id,
+        customerId: customer.id,
+        ...actorFields,
+        metadata: {
+          ...("metadata" in actorFields ? actorFields.metadata : {}),
+          source: "WHATSAPP_CONSENT_RECONFIRM",
+          consentAction: "OPT_IN_CURRENT_PHONE",
+        },
+        ...activityRequestMetadata(activityContext),
+      },
+      select: { id: true },
+    });
+
+    const integrationJob = await enqueueIntegrationJob(transaction, {
+      businessId: business.id,
+      kind: "GOOGLE_SHEETS_BUSINESS_SYNC",
+      idempotencyKey: `whatsapp-consent-reconfirm:${activity.id}`,
+    });
+    return integrationJob.id;
+  });
+
+  if (!integrationJobId) {
     redirect(customerPath(business.slug, customer.id, "whatsapp-ineligible"));
   }
 
+  scheduleIntegrationJob(integrationJobId);
   revalidatePath(`/businesses/${business.slug}/customers/${customer.id}`);
   revalidatePath(`/businesses/${business.slug}/whatsapp-history`);
   revalidatePath(`/businesses/${business.slug}/messages`);

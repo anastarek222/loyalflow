@@ -60,17 +60,18 @@ export async function POST(request: Request) {
     return Response.json({ error: "INVALID_PAYLOAD" }, { status: 400 });
   }
 
-  const [
-    statuses,
-    optedOutCount,
-    persistedStatusCount,
-    templateStatusUpdatedCount,
-  ] = await Promise.all([
-    Promise.resolve(summarizeWhatsAppWebhookStatuses(payload)),
-    revokeWhatsAppConsentFromWebhook(payload),
-    persistWhatsAppDeliveryStatusFromWebhook(payload),
-    persistWhatsAppTemplateStatusFromWebhook(payload),
-  ]);
+  // Consent revocation is the privacy-critical mutation. Complete STOP first
+  // before non-consent delivery/template observability so a later handler
+  // failure cannot postpone the customer's opt-out. Meta retries remain safe
+  // because consent persistence is atomic and replay-idempotent.
+  const optedOutCount = await revokeWhatsAppConsentFromWebhook(payload);
+
+  const [statuses, persistedStatusCount, templateStatusUpdatedCount] =
+    await Promise.all([
+      Promise.resolve(summarizeWhatsAppWebhookStatuses(payload)),
+      persistWhatsAppDeliveryStatusFromWebhook(payload),
+      persistWhatsAppTemplateStatusFromWebhook(payload),
+    ]);
   logServerEvent("WHATSAPP_WEBHOOK_RECEIVED", {
     statusCount: statuses.total,
     sentCount: statuses.sent,

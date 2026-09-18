@@ -160,7 +160,9 @@ export function extractWhatsAppOptOutRequests(
 ): WhatsAppOptOutRequest[] {
   if (!payload || typeof payload !== "object" || Array.isArray(payload))
     return [];
-  const entries = (payload as { entry?: unknown }).entry;
+  const payloadRecord = payload as { object?: unknown; entry?: unknown };
+  if (payloadRecord.object !== "whatsapp_business_account") return [];
+  const entries = payloadRecord.entry;
   if (!Array.isArray(entries)) return [];
 
   const requests: WhatsAppOptOutRequest[] = [];
@@ -182,8 +184,12 @@ export function extractWhatsAppOptOutRequests(
         continue;
       const phoneNumberIdValue = (metadata as { phone_number_id?: unknown })
         .phone_number_id;
-      if (typeof phoneNumberIdValue !== "string" || !phoneNumberIdValue.trim())
+      if (
+        typeof phoneNumberIdValue !== "string" ||
+        !/^\d{5,30}$/.test(phoneNumberIdValue.trim())
+      ) {
         continue;
+      }
       const phoneNumberId = phoneNumberIdValue.trim();
 
       const messages = (value as { messages?: unknown }).messages;
@@ -230,7 +236,9 @@ export function extractWhatsAppDeliveryStatusEvents(
 ): WhatsAppDeliveryStatusEvent[] {
   if (!payload || typeof payload !== "object" || Array.isArray(payload))
     return [];
-  const entries = (payload as { entry?: unknown }).entry;
+  const payloadRecord = payload as { object?: unknown; entry?: unknown };
+  if (payloadRecord.object !== "whatsapp_business_account") return [];
+  const entries = payloadRecord.entry;
   if (!Array.isArray(entries)) return [];
 
   const events: WhatsAppDeliveryStatusEvent[] = [];
@@ -322,7 +330,9 @@ export function summarizeWhatsAppWebhookStatuses(
     return summary;
   }
 
-  const entries = (payload as { entry?: unknown }).entry;
+  const payloadRecord = payload as { object?: unknown; entry?: unknown };
+  if (payloadRecord.object !== "whatsapp_business_account") return summary;
+  const entries = payloadRecord.entry;
   if (!Array.isArray(entries)) return summary;
 
   for (const entry of entries) {
