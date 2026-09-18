@@ -13,7 +13,8 @@ import {
   type PublicSocialKind,
 } from "@/lib/marketing/public-social-links";
 
-const footerLinkClassName = "transition-colors hover:text-primary";
+const footerLinkClassName =
+  "inline-flex min-h-11 items-center rounded-lg text-start transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--lf-surface)]";
 const footerLinkActiveClassName = "font-semibold text-primary";
 
 function SocialBrandIcon({ kind }: { kind: PublicSocialKind }) {
@@ -73,6 +74,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
   return (
     <footer
       dir="ltr"
+      data-testid="marketing-footer"
       className="lf-marketing-surface border-t border-[var(--lf-border)] bg-[var(--lf-surface)] px-5 pb-8 pt-16 text-[var(--lf-foreground)] sm:px-8 lg:px-10 lg:pt-20"
     >
       <div className="mx-auto w-full max-w-[1440px]">
@@ -123,13 +125,14 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
 
           <nav
             aria-label={copy("marketing.primaryNavLabel")}
+            data-testid="marketing-footer-navigation"
             className="grid grid-cols-2 gap-x-6 gap-y-10 lg:col-span-8 lg:grid-cols-4"
           >
             <div dir={contentDirection}>
               <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lf-foreground)]">
                 {copy("marketing.footerProduct")}
               </h2>
-              <ul className="mt-5 space-y-3 text-sm text-[var(--lf-foreground-muted)]">
+              <ul className="mt-3 space-y-0 text-sm text-[var(--lf-foreground-muted)]">
                 {navigation.product.map((item) => (
                   <li key={item.href}>
                     <MarketingNavLink
@@ -147,7 +150,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
               <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lf-foreground)]">
                 <MarketingBrandText text="Tanee" />
               </h2>
-              <ul className="mt-5 space-y-3 text-sm text-[var(--lf-foreground-muted)]">
+              <ul className="mt-3 space-y-0 text-sm text-[var(--lf-foreground-muted)]">
                 {navigation.brand.map((item) => (
                   <li key={item.href}>
                     <MarketingNavLink
@@ -165,7 +168,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
               <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lf-foreground)]">
                 {copy("marketing.footerSupport")}
               </h2>
-              <ul className="mt-5 space-y-3 text-sm text-[var(--lf-foreground-muted)]">
+              <ul className="mt-3 space-y-0 text-sm text-[var(--lf-foreground-muted)]">
                 {navigation.support.map((item) => (
                   <li key={item.href}>
                     <MarketingNavLink
@@ -192,7 +195,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
               <h2 className="text-xs font-black uppercase tracking-[0.14em] text-[var(--lf-foreground)]">
                 {copy("marketing.footerLegal")}
               </h2>
-              <ul className="mt-5 space-y-3 text-sm text-[var(--lf-foreground-muted)]">
+              <ul className="mt-3 space-y-0 text-sm text-[var(--lf-foreground-muted)]">
                 <li>
                   <MarketingNavLink
                     href="/privacy"
