@@ -16,13 +16,36 @@ test.setTimeout(180_000);
 
 async function signIn(
   page: Page,
-  role: "owner-a" | "manager-a" | "viewer-a",
+  role: "owner-a" | "owner-b" | "manager-a" | "viewer-a",
 ) {
+  const email =
+    role === "owner-b"
+      ? `lf-uat-final-owner-b-${fixture.runId}@example.test`
+      : uatEmail(role, fixture.runId);
+  const expectedBusiness =
+    role === "owner-b" ? fixture.businessB : fixture.businessA;
+
   await page.goto("/login");
-  await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
+  await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
+  await expect(page).toHaveURL(new RegExp(`/businesses/${expectedBusiness}import { expect, test, type Page } from "@playwright/test";
+
+import {
+  cleanupBrowserUat,
+  prepareBrowserUat,
+  type BrowserUatFixture,
+  uatEmail,
+} from "./fixtures";
+
+let fixture: BrowserUatFixture;
+let manifestPath: string;
+
+// Webpack compiles each critical route on first use in disposable CI. Keep the
+// broader suite bounded while allowing this cold-start smoke file to finish.
+test.setTimeout(180_000);
+
+), {
     timeout: 45_000,
   });
 }
@@ -112,28 +135,26 @@ test.describe.serial("PR browser smoke", () => {
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
   });
-  test("mobile SaaS drawer keeps Tanee brand parity in both locales @desktop @pr-smoke", async ({
+  test("mobile SaaS drawer keeps Tanee brand parity in both authenticated languages @desktop @pr-smoke", async ({
     page,
-    context,
-    baseURL,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await signIn(page, "owner-a");
 
-    for (const locale of ["en", "ar"] as const) {
-      await context.addCookies([
-        { name: "loyalflow_locale", value: locale, url: baseURL! },
-      ]);
-      await page.goto(`/businesses/${fixture.businessA}`);
+    const scenarios = [
+      { role: "owner-a", language: "EN", dir: "ltr", openLabel: "Open full menu", closeLabel: "Close navigation" },
+      { role: "owner-b", language: "AR", dir: "rtl", openLabel: "فتح القائمة", closeLabel: "إغلاق القائمة" },
+    ] as const;
 
-      await expect(page.locator("html")).toHaveAttribute(
-        "dir",
-        locale === "ar" ? "rtl" : "ltr",
-      );
+    for (const scenario of scenarios) {
+      await signIn(page, scenario.role);
+
+      const localizedShell = page.locator("[data-app-language]");
+      await expect(localizedShell).toHaveAttribute("data-app-language", scenario.language);
+      await expect(localizedShell).toHaveAttribute("dir", scenario.dir);
 
       const openNavigation = page
         .getByRole("button", {
-          name: locale === "ar" ? "فتح القائمة" : "Open full menu",
+          name: scenario.openLabel,
           exact: true,
         })
         .last();
@@ -141,7 +162,7 @@ test.describe.serial("PR browser smoke", () => {
       await openNavigation.click();
 
       const drawer = page.getByRole("dialog", {
-        name: locale === "ar" ? "قائمة التنقل" : "Navigation menu",
+        name: scenario.language === "AR" ? "قائمة التنقل" : "Navigation menu",
         exact: true,
       });
       await expect(drawer).toBeVisible();
@@ -162,12 +183,14 @@ test.describe.serial("PR browser smoke", () => {
 
       await page
         .getByRole("button", {
-          name: locale === "ar" ? "إغلاق القائمة" : "Close navigation",
+          name: scenario.closeLabel,
           exact: true,
         })
         .last()
         .click();
       await expect(drawer).toBeHidden();
+
+      await signOut(page);
     }
   });
 
