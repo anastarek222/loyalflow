@@ -141,7 +141,7 @@ export default function MobileBottomNavigation({
         })}
         <button
           type="button"
-          aria-label={language === "AR" ? "فتح القائمة" : "Open full menu"}
+          aria-label={language === "AR" ? "فتح القائمة الكاملة" : "Open full menu"}
           onClick={() =>
             window.dispatchEvent(new CustomEvent("loyalflow:open-navigation"))
           }

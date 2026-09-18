@@ -112,6 +112,87 @@ test.describe.serial("PR browser smoke", () => {
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
   });
+  test("mobile SaaS drawer keeps Tanee brand parity in both locales @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, "owner-a");
+    await page.goto(`/businesses/${fixture.businessA}`);
+
+    async function assertDrawer(
+      locale: "en" | "ar",
+    ) {
+      const localeShell = page.locator("[data-app-language]").first();
+      await expect(localeShell).toHaveAttribute(
+        "data-app-language",
+        locale === "ar" ? "AR" : "EN",
+      );
+      await expect(localeShell).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+
+      const openNavigation = page.getByRole("banner").getByRole("button", {
+        name: locale === "ar" ? "فتح القائمة" : "Open navigation",
+        exact: true,
+      });
+      await expect(openNavigation).toBeVisible();
+      await expect(
+        page.getByRole("navigation", {
+          name: locale === "ar" ? "التنقل السريع" : "Quick navigation",
+          exact: true,
+        }).getByRole("button", {
+          name: locale === "ar" ? "فتح القائمة الكاملة" : "Open full menu",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await openNavigation.click();
+
+      const drawer = page.getByRole("dialog", {
+        name: locale === "ar" ? "قائمة التنقل" : "Navigation menu",
+        exact: true,
+      });
+      await expect(drawer).toBeVisible();
+
+      const brand = drawer.getByTestId("mobile-saas-brand");
+      const inlineBrand = brand.locator("[data-inline-tanee-name]");
+      await expect(inlineBrand).toBeVisible();
+      await expect(
+        brand.locator("[data-platform-brand-wordmark-size]"),
+      ).toHaveCount(0);
+
+      const brandBox = await inlineBrand.boundingBox();
+      expect(brandBox).not.toBeNull();
+      expect(brandBox!.height).toBeLessThanOrEqual(48);
+      expect(brandBox!.width).toBeLessThanOrEqual(160);
+      expect(
+        await drawer.evaluate((node) => node.scrollWidth <= node.clientWidth),
+      ).toBe(true);
+
+      await page
+        .getByRole("button", {
+          name: locale === "ar" ? "إغلاق القائمة" : "Close navigation",
+          exact: true,
+        })
+        .last()
+        .click();
+      await expect(drawer).toBeHidden();
+    }
+
+    await assertDrawer("en");
+
+    const switchToArabicForm = page.locator("form").filter({
+      has: page.locator('input[name="language"][value="AR"]'),
+    });
+    await switchToArabicForm.getByRole("button").click();
+    await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+      "data-app-language",
+      "AR",
+    );
+
+    await assertDrawer("ar");
+  });
+
   test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
     page,
     context,
