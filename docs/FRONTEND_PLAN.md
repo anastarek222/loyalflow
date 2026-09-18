@@ -39,7 +39,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Security/trust visual surfaces
 
 ### Product pages
-- [ ] Dashboard
+- [x] Dashboard
 - [ ] Customers
 - [ ] Customer detail
 - [ ] Reports
