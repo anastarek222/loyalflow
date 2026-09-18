@@ -109,6 +109,8 @@ test.describe.serial("Owner onboarding visual alignment @desktop @onboarding-vis
           await page.goto("/onboarding");
 
           const shell = page.getByTestId("owner-onboarding-shell");
+          const shellHeader = shell.locator("header").first();
+          const brand = page.getByTestId("owner-onboarding-brand");
           const form = page.locator("form[data-owner-step]");
           const mobileHeader = page.getByTestId("owner-mobile-step-header");
           const desktopRail = form.locator(":scope > div > aside");
@@ -117,6 +119,14 @@ test.describe.serial("Owner onboarding visual alignment @desktop @onboarding-vis
             "dir",
             locale === "ar" ? "rtl" : "ltr",
           );
+          await expect(brand).toBeVisible();
+          const headerBox = await shellHeader.boundingBox();
+          const brandBox = await brand.boundingBox();
+          expect(headerBox?.height ?? 0).toBeGreaterThan(0);
+          expect(headerBox?.height ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(96);
+          expect(brandBox?.height ?? 0).toBeGreaterThan(0);
+          expect(brandBox?.height ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(48);
+          expect(brandBox?.width ?? Number.POSITIVE_INFINITY).toBeLessThanOrEqual(160);
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
           if (theme === "dark") {
             await expect(page.locator("html")).toHaveClass(/\bdark\b/);
