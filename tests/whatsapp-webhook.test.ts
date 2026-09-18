@@ -129,7 +129,21 @@ test("WhatsApp delivery status intake extracts bounded provider ids, mapped stat
                   timestamp: 1788448201,
                 },
                 { id: "wamid.read", status: "read", timestamp: "1788448202" },
-                { id: "wamid.failed", status: "failed", timestamp: "bad" },
+                {
+                  id: "wamid.failed",
+                  status: "failed",
+                  timestamp: "bad",
+                  errors: [
+                    {
+                      code: 131026,
+                      title: "Message undeliverable",
+                      error_data: {
+                        details:
+                          "Recipient unavailable; Bearer secret-value access_token=also-secret EAAabcdefghijklmnopqrstuvwxyz",
+                      },
+                    },
+                  ],
+                },
                 { id: "wamid.other", status: "warning" },
                 { id: " ", status: "sent" },
                 { id: "wamid.sent", status: "sent", timestamp: "1788448200" },
@@ -147,30 +161,41 @@ test("WhatsApp delivery status intake extracts bounded provider ids, mapped stat
       phoneNumberId: "222222",
       status: "SENT",
       timestamp: new Date(1788448200 * 1000),
+      errorCode: null,
+      errorMessage: null,
     },
     {
       providerMessageId: "wamid.delivered",
       phoneNumberId: "222222",
       status: "DELIVERED",
       timestamp: new Date(1788448201 * 1000),
+      errorCode: null,
+      errorMessage: null,
     },
     {
       providerMessageId: "wamid.read",
       phoneNumberId: "222222",
       status: "READ",
       timestamp: new Date(1788448202 * 1000),
+      errorCode: null,
+      errorMessage: null,
     },
     {
       providerMessageId: "wamid.failed",
       phoneNumberId: "222222",
       status: "FAILED",
       timestamp: null,
+      errorCode: "131026",
+      errorMessage:
+        "Recipient unavailable; Bearer [REDACTED] access_token=[REDACTED] [REDACTED]",
     },
     {
       providerMessageId: "wamid.other",
       phoneNumberId: "222222",
       status: "OTHER",
       timestamp: null,
+      errorCode: null,
+      errorMessage: null,
     },
   ]);
 });
@@ -213,8 +238,12 @@ test("WhatsApp provider acceptance and webhook delivery states are durably corre
     /providerDeliveryStatus\s+IntegrationProviderDeliveryStatus\?/,
   );
   assert.match(schema, /providerStatusAt\s+DateTime\?/);
+  assert.match(schema, /providerErrorCode\s+String\?/);
+  assert.match(schema, /providerErrorMessage\s+String\?/);
   assert.match(persistence, /kind: "WHATSAPP_CUSTOMER_NOTIFICATION"/);
   assert.match(persistence, /providerPhoneNumberId: event\.phoneNumberId/);
+  assert.match(persistence, /providerErrorCode:/);
+  assert.match(persistence, /providerErrorMessage:/);
   assert.match(persistence, /SENT: \["OTHER", "ACCEPTED"\]/);
   assert.match(persistence, /DELIVERED: \["OTHER", "ACCEPTED", "SENT"\]/);
   assert.match(

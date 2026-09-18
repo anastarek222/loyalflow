@@ -172,6 +172,8 @@ model IntegrationJob {
   providerWabaId           String?
   providerDeliveryStatus   IntegrationProviderDeliveryStatus?
   providerStatusAt         DateTime?
+  providerErrorCode        String?
+  providerErrorMessage     String?
   createdAt                DateTime                         @default(now())
   updatedAt                DateTime                         @updatedAt
   business                 Business                         @relation(fields: [businessId], references: [id], onDelete: Cascade)

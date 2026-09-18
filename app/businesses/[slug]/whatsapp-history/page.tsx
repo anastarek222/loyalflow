@@ -413,6 +413,18 @@ export default async function WhatsAppHistoryPage({
                   eligible;
                 const providerState = providerLabel(entry, t);
                 const failure = failureLabel(entry.lastErrorCode, t);
+                const providerFailure =
+                  entry.providerDeliveryStatus === "FAILED" &&
+                  (entry.providerErrorCode || entry.providerErrorMessage)
+                    ? [
+                        entry.providerErrorCode
+                          ? `Meta ${entry.providerErrorCode}`
+                          : null,
+                        entry.providerErrorMessage,
+                      ]
+                        .filter(Boolean)
+                        .join(": ")
+                    : null;
                 const statusCopy = STATUS_LABELS[entry.status];
                 return (
                   <article
@@ -464,6 +476,11 @@ export default async function WhatsAppHistoryPage({
                       </p>
                       {failure ? (
                         <p className="text-foreground-muted">{failure}</p>
+                      ) : null}
+                      {providerFailure ? (
+                        <p className="break-words text-xs text-foreground-muted">
+                          {providerFailure}
+                        </p>
                       ) : null}
                       {entry.providerMessageId ? (
                         <p className="break-all text-xs text-foreground-muted">
