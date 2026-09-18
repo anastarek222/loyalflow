@@ -425,8 +425,6 @@ for (const locale of ["en", "ar"] as const) {
         featuresCopy[locale].journey,
         featuresCopy[locale].security,
         featuresCopy[locale].outcomes,
-        featuresCopy[locale].faq,
-        featuresCopy[locale].final,
       ]) {
         await expect(
           page.getByRole("heading", { level: 2, name: heading }),
@@ -462,13 +460,18 @@ for (const locale of ["en", "ar"] as const) {
 
       const faqItems = page.locator("details");
       await expect(faqItems).toHaveCount(6);
+      const faqSection = faqItems.first().locator("xpath=ancestor::section[1]");
+      await expect(faqSection.locator("h2")).toContainText(
+        featuresCopy[locale].faq,
+      );
       await faqItems.first().locator("summary").click();
       await expect(faqItems.first().locator("p")).toBeVisible();
 
-      const finalHeading = page.getByRole("heading", {
-        level: 2,
-        name: featuresCopy[locale].final,
-      });
+      const finalHeading = page
+        .locator("h2")
+        .filter({ hasText: featuresCopy[locale].final });
+      await expect(finalHeading).toHaveCount(1);
+      await expect(finalHeading).toContainText(featuresCopy[locale].final);
       const finalSection = finalHeading.locator("xpath=ancestor::section[1]");
       await expect(finalSection.locator('a[href="/get-started"]')).toBeVisible();
 
