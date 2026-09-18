@@ -29,7 +29,7 @@ export function InlineTaneeName({
         data-inline-tanee-ee=""
         data-preserve-latin-tracking=""
         className={cn(
-          "relative -ms-[0.015em] inline-block w-[1.92em] align-[-0.08em] leading-[0.92] text-primary",
+          "relative -ms-[0.015em] inline-block w-[1.92em] align-[-0.08em] leading-[0.92] text-[#FF6652]",
           accentClassName,
         )}
       >
