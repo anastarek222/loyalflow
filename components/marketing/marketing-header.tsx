@@ -127,7 +127,7 @@ export function MarketingHeader({
             : "border-[var(--lf-border)]/70 bg-[var(--lf-marketing-canvas)]",
         )}
       >
-        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[10rem_minmax(0,1fr)_28rem] min-[1366px]:gap-0">
+        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[8rem_minmax(0,1fr)_31rem] min-[1366px]:gap-0">
           <Link
             href="/"
             data-marketing-header-brand="true"
@@ -183,7 +183,7 @@ export function MarketingHeader({
               href="/login"
               dir={contentDirection}
               data-marketing-header-signin-slot="true"
-              className="inline-flex min-h-11 w-28 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-[var(--lf-foreground)] transition-colors hover:bg-[var(--lf-surface)]"
+              className="inline-flex min-h-11 w-[7.5rem] items-center justify-center whitespace-nowrap rounded-xl px-2 text-[13px] font-semibold text-[var(--lf-foreground)] transition-colors hover:bg-[var(--lf-surface)]"
             >
               {signIn}
             </Link>
@@ -191,7 +191,7 @@ export function MarketingHeader({
               href="/get-started"
               dir={contentDirection}
               data-marketing-header-cta-slot="true"
-              className="inline-flex min-h-11 w-44 items-center justify-center whitespace-nowrap rounded-2xl bg-primary px-3 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
+              className="inline-flex min-h-11 w-[13.5rem] items-center justify-center whitespace-nowrap rounded-2xl bg-primary px-2 text-[13px] font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
             >
               {primaryCta}
             </Link>
