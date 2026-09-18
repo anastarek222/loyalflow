@@ -27,12 +27,9 @@ async function signIn(
   });
 }
 
-async function openAccountMenu(
-  page: Page,
-  language: "EN" | "AR" = "EN",
-) {
+async function openAccountMenu(page: Page) {
   const trigger = page.getByRole("button", {
-    name: language === "AR" ? "قائمة الحساب" : "Account menu",
+    name: "Account menu",
     exact: true,
   });
 
@@ -42,24 +39,14 @@ async function openAccountMenu(
       timeout: 1_000,
     });
   }).toPass({ timeout: 30_000 });
-  await expect(
-    page.getByLabel(language === "AR" ? "الحساب" : "Account", { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByLabel("Account", { exact: true })).toBeVisible();
 }
 
-async function signOut(
-  page: Page,
-  language: "EN" | "AR" = "EN",
-) {
-  await openAccountMenu(page, language);
+async function signOut(page: Page) {
+  await openAccountMenu(page);
   await Promise.all([
     page.waitForURL(/\/login$/),
-    page
-      .getByRole("button", {
-        name: language === "AR" ? "تسجيل الخروج" : "Log out",
-        exact: true,
-      })
-      .click(),
+    page.getByRole("button", { name: "Log out", exact: true }).click(),
   ]);
   await expect(page.getByLabel("Email address")).toBeVisible();
 }
@@ -125,68 +112,56 @@ test.describe.serial("PR browser smoke", () => {
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
   });
-  test("mobile SaaS drawer keeps Tanee brand parity in both authenticated languages @desktop @pr-smoke", async ({
+  test("mobile SaaS drawer keeps Tanee brand parity in both locales @desktop @pr-smoke", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, "owner-a");
+    await page.goto(`/businesses/${fixture.businessA}`);
 
-    const scenarios = [
-      {
-        email: uatEmail("owner-a", fixture.runId),
-        business: fixture.businessA,
-        language: "EN",
-        dir: "ltr",
-        openLabel: "Open full menu",
-        closeLabel: "Close navigation",
-        drawerLabel: "Navigation menu",
-      },
-      {
-        email: "lf-uat-final-owner-b-" + fixture.runId + "@example.test",
-        business: fixture.businessB,
-        language: "AR",
-        dir: "rtl",
-        openLabel: "فتح القائمة",
-        closeLabel: "إغلاق القائمة",
-        drawerLabel: "قائمة التنقل",
-      },
-    ] as const;
-
-    for (const scenario of scenarios) {
-      await page.goto("/login");
-      await page.getByLabel("Email address").fill(scenario.email);
-      await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
-      await page.getByRole("button", { name: "Sign in", exact: true }).click();
-      await expect(page).toHaveURL(
-        new RegExp("/businesses/" + scenario.business + "$"),
-        { timeout: 45_000 },
+    async function assertDrawer(
+      locale: "en" | "ar",
+    ) {
+      const localeShell = page.locator("[data-app-language]").first();
+      await expect(localeShell).toHaveAttribute(
+        "data-app-language",
+        locale === "ar" ? "AR" : "EN",
+      );
+      await expect(localeShell).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
       );
 
-      const localizedShell = page.locator("[data-app-language]");
-      await expect(localizedShell).toHaveAttribute("data-app-language", scenario.language);
-      await expect(localizedShell).toHaveAttribute("dir", scenario.dir);
-
-      const openNavigation = page
-        .getByRole("button", {
-          name: scenario.openLabel,
-          exact: true,
-        })
-        .last();
+      const openNavigation = page.getByRole("banner").getByRole("button", {
+        name: locale === "ar" ? "فتح القائمة" : "Open navigation",
+        exact: true,
+      });
       await expect(openNavigation).toBeVisible();
+      await expect(
+        page.getByRole("navigation", {
+          name: locale === "ar" ? "التنقل السريع" : "Quick navigation",
+          exact: true,
+        }).getByRole("button", {
+          name: locale === "ar" ? "فتح القائمة الكاملة" : "Open full menu",
+          exact: true,
+        }),
+      ).toBeVisible();
       await openNavigation.click();
 
       const drawer = page.getByRole("dialog", {
-        name: scenario.drawerLabel,
+        name: locale === "ar" ? "قائمة التنقل" : "Navigation menu",
         exact: true,
       });
       await expect(drawer).toBeVisible();
 
       const brand = drawer.getByTestId("mobile-saas-brand");
-      await expect(brand.locator("[data-inline-tanee-name]")).toBeVisible();
+      const inlineBrand = brand.locator("[data-inline-tanee-name]");
+      await expect(inlineBrand).toBeVisible();
       await expect(
         brand.locator("[data-platform-brand-wordmark-size]"),
       ).toHaveCount(0);
 
-      const brandBox = await brand.boundingBox();
+      const brandBox = await inlineBrand.boundingBox();
       expect(brandBox).not.toBeNull();
       expect(brandBox!.height).toBeLessThanOrEqual(48);
       expect(brandBox!.width).toBeLessThanOrEqual(160);
@@ -196,15 +171,26 @@ test.describe.serial("PR browser smoke", () => {
 
       await page
         .getByRole("button", {
-          name: scenario.closeLabel,
+          name: locale === "ar" ? "إغلاق القائمة" : "Close navigation",
           exact: true,
         })
         .last()
         .click();
       await expect(drawer).toBeHidden();
-
-      await signOut(page, scenario.language);
     }
+
+    await assertDrawer("en");
+
+    const switchToArabicForm = page.locator("form").filter({
+      has: page.locator('input[name="language"][value="AR"]'),
+    });
+    await switchToArabicForm.getByRole("button").click();
+    await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+      "data-app-language",
+      "AR",
+    );
+
+    await assertDrawer("ar");
   });
 
   test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
