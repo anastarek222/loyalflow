@@ -250,6 +250,20 @@ async function readShellRect(locator: Locator): Promise<ShellRect> {
   });
 }
 
+async function readShellRects(locator: Locator): Promise<ShellRect[]> {
+  return locator.evaluateAll((nodes) =>
+    nodes.map((node) => {
+      const rect = node.getBoundingClientRect();
+      return {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+      };
+    }),
+  );
+}
+
 function expectSameRect(
   actual: ShellRect,
   expected: ShellRect,
@@ -277,11 +291,13 @@ for (const viewport of [
           brand: ShellRect;
           nav: ShellRect;
           actions: ShellRect;
+          actionSlots: ShellRect[];
           links: ShellRect[];
           footerShell: Pick<ShellRect, "x" | "width">;
           footerBrand: Pick<ShellRect, "x" | "width">;
           footerNav: Pick<ShellRect, "x" | "width">;
           footerActions: Pick<ShellRect, "x" | "width">;
+          footerActionSlots: ShellRect[];
         }
       | undefined;
 
@@ -317,6 +333,12 @@ for (const viewport of [
           const actions = await readShellRect(
             page.locator('[data-marketing-header-actions="true"]'),
           );
+          const actionSlots = await readShellRects(
+            page.locator(
+              '[data-marketing-header-theme-slot="true"], [data-marketing-header-language-slot="true"], [data-marketing-header-signin-slot="true"], [data-marketing-header-cta-slot="true"]',
+            ),
+          );
+          expect(actionSlots).toHaveLength(4);
           const links = await navLocator.locator(":scope > a").evaluateAll(
             (nodes) =>
               nodes.map((node) => {
@@ -343,11 +365,18 @@ for (const viewport of [
           const footerActionsRect = await readShellRect(
             page.locator('[data-marketing-footer-actions="true"]'),
           );
+          const footerActionSlots = await readShellRects(
+            page.locator(
+              '[data-marketing-footer-theme-slot="true"], [data-marketing-footer-language-slot="true"], [data-marketing-footer-access-slot="true"]',
+            ),
+          );
+          expect(footerActionSlots).toHaveLength(3);
 
           const current = {
             brand,
             nav,
             actions,
+            actionSlots,
             links,
             footerShell: {
               x: footerShellRect.x,
@@ -365,6 +394,7 @@ for (const viewport of [
               x: footerActionsRect.x,
               width: footerActionsRect.width,
             },
+            footerActionSlots,
           };
 
           if (!shellBaseline) {
@@ -373,6 +403,12 @@ for (const viewport of [
             expectSameRect(current.brand, shellBaseline.brand);
             expectSameRect(current.nav, shellBaseline.nav);
             expectSameRect(current.actions, shellBaseline.actions);
+            for (let index = 0; index < current.actionSlots.length; index += 1) {
+              expectSameRect(
+                current.actionSlots[index],
+                shellBaseline.actionSlots[index],
+              );
+            }
             for (let index = 0; index < current.links.length; index += 1) {
               expectSameRect(current.links[index], shellBaseline.links[index]);
             }
@@ -408,6 +444,16 @@ for (const viewport of [
               shellBaseline.footerActions.width,
               1,
             );
+            for (
+              let index = 0;
+              index < current.footerActionSlots.length;
+              index += 1
+            ) {
+              expectSameRect(
+                current.footerActionSlots[index],
+                shellBaseline.footerActionSlots[index],
+              );
+            }
           }
 
           expect(
