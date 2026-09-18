@@ -319,10 +319,36 @@ test.describe.serial("PR browser smoke", () => {
             ).toBeVisible();
           }
 
+          const overflowState = await page.evaluate(() => {
+            const overflowing = Array.from(document.querySelectorAll<HTMLElement>("body *"))
+              .map((node) => {
+                const rect = node.getBoundingClientRect();
+                return {
+                  tag: node.tagName.toLowerCase(),
+                  testId: node.dataset.testid ?? "",
+                  className: typeof node.className === "string" ? node.className : "",
+                  text: (node.textContent ?? "").trim().replace(/\\s+/g, " ").slice(0, 120),
+                  left: Math.round(rect.left),
+                  right: Math.round(rect.right),
+                  width: Math.round(rect.width),
+                };
+              })
+              .filter(
+                (item) =>
+                  item.width > 0 &&
+                  (item.left < -1 || item.right > window.innerWidth + 1),
+              )
+              .slice(0, 12);
+
+            return {
+              viewportWidth: window.innerWidth,
+              scrollWidth: document.documentElement.scrollWidth,
+              overflowing,
+            };
+          });
           expect(
-            await page.evaluate(
-              () => document.documentElement.scrollWidth <= window.innerWidth,
-            ),
+            overflowState.scrollWidth <= overflowState.viewportWidth,
+            JSON.stringify(overflowState, null, 2),
           ).toBe(true);
 
           await page.screenshot({
