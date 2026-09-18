@@ -3,14 +3,15 @@
 import { auth } from "@/auth";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { scheduleIntegrationJob } from "@/lib/integration-job-scheduler";
-import { canAccessBusiness } from "@/lib/permissions";
+import { canPerform } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
-  enqueueCustomerMessageJob,
+  enqueueAutomaticCustomerMessageResendJob,
   enqueueManualCustomerMessageJob,
   isCustomerMessagePayload,
   isManualCustomerMessageEvent,
 } from "@/lib/server/integrations/customer-messaging";
+import { getWhatsAppRecoveryDecision } from "@/lib/server/integrations/whatsapp-recovery";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -22,11 +23,10 @@ function canRecoverWhatsAppMessages(
   user: { role: string; businessId: string | null | undefined },
   businessId: string,
 ) {
-  return (
-    canAccessBusiness(
-      user as Parameters<typeof canAccessBusiness>[0],
-      businessId,
-    ) && user.role !== "VIEWER"
+  return canPerform(
+    user as Parameters<typeof canPerform>[0],
+    businessId,
+    "CUSTOMERS_EDIT",
   );
 }
 
@@ -88,6 +88,8 @@ export async function retryWhatsAppDeliveryAction(
       status: true,
       providerMessageId: true,
       providerDeliveryStatus: true,
+      lastErrorCode: true,
+      payload: true,
     },
   });
   if (!job) redirect(historyPath(business.slug, "not-found"));
@@ -99,6 +101,36 @@ export async function retryWhatsAppDeliveryAction(
     redirect(historyPath(business.slug, "retry-unsafe"));
   }
 
+  const recoveryDecision = getWhatsAppRecoveryDecision(job.lastErrorCode);
+  if (!recoveryDecision.retryAllowed) {
+    redirect(historyPath(business.slug, "retry-not-allowed"));
+  }
+  if (!isCustomerMessagePayload(job.payload)) {
+    redirect(historyPath(business.slug, "retry-not-allowed"));
+  }
+
+  const customer = await prisma.customer.findFirst({
+    where: {
+      id: job.payload.customerId,
+      businessId: business.id,
+      isActive: true,
+      whatsappPhoneE164: { not: null },
+      whatsappOptInAt: { not: null },
+      whatsappOptedOutAt: null,
+    },
+    select: {
+      phone: true,
+      whatsappPhoneE164: true,
+    },
+  });
+  if (
+    !customer ||
+    !customer.whatsappPhoneE164 ||
+    customer.whatsappPhoneE164 !== customer.phone
+  ) {
+    redirect(historyPath(business.slug, "retry-ineligible"));
+  }
+
   const revived = await prisma.integrationJob.updateMany({
     where: {
       id: job.id,
@@ -107,6 +139,7 @@ export async function retryWhatsAppDeliveryAction(
       status: { in: ["FAILED", "DEAD"] },
       providerMessageId: null,
       providerDeliveryStatus: null,
+      lastErrorCode: job.lastErrorCode,
     },
     data: {
       status: "PENDING",
@@ -184,13 +217,11 @@ export async function resendWhatsAppDeliveryAction(
       });
     }
 
-    return enqueueCustomerMessageJob(transaction, {
+    return enqueueAutomaticCustomerMessageResendJob(transaction, {
       businessId: business.id,
-      customerId: payload.customerId,
-      event: payload.event,
-      eventKey: `manual-resend:${sourceJob.id}:${parsed.data.requestId}`,
-      ...(payload.balance === undefined ? {} : { balance: payload.balance }),
-      ...(payload.rewardName ? { rewardName: payload.rewardName } : {}),
+      sourceJobId: sourceJob.id,
+      requestId: parsed.data.requestId,
+      payload,
     });
   });
   if (!resendJob) {

@@ -43,6 +43,7 @@ export type WhatsAppHistoryEntry = Readonly<{
   customerName: string;
   customerActive: boolean;
   whatsappPhoneE164: string | null;
+  whatsappPhoneMatchesCustomer: boolean;
   whatsappOptInAt: Date | null;
   whatsappOptedOutAt: Date | null;
 }>;
@@ -152,6 +153,7 @@ export async function getWhatsAppMessageHistoryPage(input: Readonly<{
             firstName: true,
             lastName: true,
             isActive: true,
+            phone: true,
             whatsappPhoneE164: true,
             whatsappOptInAt: true,
             whatsappOptedOutAt: true,
@@ -182,6 +184,10 @@ export async function getWhatsAppMessageHistoryPage(input: Readonly<{
       customerName,
       customerActive: customer?.isActive ?? false,
       whatsappPhoneE164: customer?.whatsappPhoneE164 ?? null,
+      whatsappPhoneMatchesCustomer: Boolean(
+        customer?.whatsappPhoneE164 &&
+          customer.whatsappPhoneE164 === customer.phone,
+      ),
       whatsappOptInAt: customer?.whatsappOptInAt ?? null,
       whatsappOptedOutAt: customer?.whatsappOptedOutAt ?? null,
     } satisfies WhatsAppHistoryEntry;
