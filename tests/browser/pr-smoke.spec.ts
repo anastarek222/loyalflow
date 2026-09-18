@@ -123,18 +123,14 @@ test.describe.serial("PR browser smoke", () => {
 
   test("mobile SaaS drawer keeps Tanee brand parity in both locales @desktop @pr-smoke", async ({
     page,
-    context,
-    baseURL,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, "owner-a");
+    await page.goto(`/businesses/${fixture.businessA}`);
 
-    for (const locale of ["en", "ar"] as const) {
-      await context.addCookies([
-        { name: "loyalflow_locale", value: locale, url: baseURL! },
-      ]);
-      await page.goto(`/businesses/${fixture.businessA}`);
-
+    async function assertDrawer(
+      locale: "en" | "ar",
+    ) {
       await expect(page.locator("html")).toHaveAttribute(
         "dir",
         locale === "ar" ? "rtl" : "ltr",
@@ -154,12 +150,12 @@ test.describe.serial("PR browser smoke", () => {
       await expect(drawer).toBeVisible();
 
       const brand = drawer.getByTestId("mobile-saas-brand");
-      await expect(brand.locator("[data-inline-tanee-name]")).toBeVisible();
+      const inlineBrand = brand.locator("[data-inline-tanee-name]");
+      await expect(inlineBrand).toBeVisible();
       await expect(
         brand.locator("[data-platform-brand-wordmark-size]"),
       ).toHaveCount(0);
 
-      const inlineBrand = brand.locator("[data-inline-tanee-name]");
       const brandBox = await inlineBrand.boundingBox();
       expect(brandBox).not.toBeNull();
       expect(brandBox!.height).toBeLessThanOrEqual(48);
@@ -177,6 +173,16 @@ test.describe.serial("PR browser smoke", () => {
         .click();
       await expect(drawer).toBeHidden();
     }
+
+    await assertDrawer("en");
+
+    const switchToArabicForm = page.locator("form").filter({
+      has: page.locator('input[name="language"][value="AR"]'),
+    });
+    await switchToArabicForm.getByRole("button").click();
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+
+    await assertDrawer("ar");
   });
 
   test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
