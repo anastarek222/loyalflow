@@ -162,5 +162,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Save SaaS shell visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: saas-shell-visual-screenshots
+          path: test-results/**/saas-shell-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Check patch whitespace
         run: git diff --check "${{ github.event.pull_request.base.sha }}..HEAD"
