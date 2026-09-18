@@ -282,7 +282,7 @@ export default async function BusinessOwnersPage({
               </Link>
               <Link
                 href="/businesses/new"
-                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+                className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
               >
                 {language === "AR" ? "إضافة نشاط" : "Add business"}
               </Link>
@@ -383,7 +383,7 @@ export default async function BusinessOwnersPage({
           </select>
 
           <button
-            className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-semibold text-white hover:bg-primary-hover"
+            className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
             type="submit"
           >
             {language === "AR" ? "تطبيق" : "Apply"}
@@ -730,7 +730,7 @@ export default async function BusinessOwnersPage({
 
                         <button
                           type="submit"
-                          className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover md:col-span-2 xl:col-span-4"
+                          className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover md:col-span-2 xl:col-span-4"
                         >
                           {copy.save}
                         </button>
