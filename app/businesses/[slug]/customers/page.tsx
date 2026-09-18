@@ -475,7 +475,7 @@ export default async function CustomersPage({
                 {canReviewDuplicates ? (
                   <a
                     href={`/businesses/${business.slug}/customers?add=1#add-customer`}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover"
                   >
                     <UserPlus className="size-4" aria-hidden="true" />
                     {copy.addCustomer}
@@ -502,7 +502,7 @@ export default async function CustomersPage({
                 {canExportData && (
                   <a
                     href={`/businesses/${business.slug}/customers/export`}
-                    className={`hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted shadow-sm hover:border-success/30 hover:bg-success-subtle sm:inline-flex ${isSimpleExperience ? "sm:hidden" : ""}`}
+                    className={`hidden min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground-muted shadow-sm hover:border-success/30 hover:bg-success-subtle sm:inline-flex ${isSimpleExperience ? "sm:hidden" : ""}`}
                   >
                     <Download className="size-4" aria-hidden="true" />
                     {copy.exportCustomers}
@@ -640,7 +640,7 @@ export default async function CustomersPage({
                 </label>
                 <button
                   type="submit"
-                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 font-semibold text-white hover:bg-primary-hover sm:col-span-2"
+                  className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary-hover sm:col-span-2"
                 >
                   {copy.addCustomer}
                 </button>
@@ -659,7 +659,7 @@ export default async function CustomersPage({
               className="group h-fit scroll-mt-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-primary/15 bg-gradient-to-b from-primary-subtle/50 to-surface shadow-sm lg:sticky lg:top-6"
             >
               <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-3 py-2.5 marker:content-none sm:min-h-16 sm:px-5 sm:py-4">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                   <UserPlus className="size-5" aria-hidden="true" />
                 </span>
                 <h2 className="font-bold text-foreground">
@@ -744,7 +744,7 @@ export default async function CustomersPage({
 
                   <button
                     type="submit"
-                    className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-white shadow-sm transition hover:bg-primary-hover"
+                    className="w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-semibold text-primary-foreground shadow-sm transition hover:bg-primary-hover"
                   >
                     {copy.addCustomer}
                   </button>
@@ -799,7 +799,7 @@ export default async function CustomersPage({
                     name="q"
                     defaultValue={search}
                     placeholder={copy.searchPlaceholder}
-                    className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30 sm:px-4"
+                    className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 py-2.5 outline-none focus:border-primary/30 sm:px-4"
                   />
                 </div>
 
@@ -843,7 +843,7 @@ export default async function CustomersPage({
                           id="tag"
                           name="tag"
                           defaultValue={selectedTagId ?? ""}
-                          className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                          className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 py-2.5 outline-none focus:border-primary/30"
                         >
                           <option value="">{copy.allTags}</option>
                           {businessTags.map((tag) => (
@@ -867,7 +867,7 @@ export default async function CustomersPage({
                         id="status"
                         name="status"
                         defaultValue={status}
-                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 py-2.5 outline-none focus:border-primary/30"
                       >
                         <option value="all">{copy.allCustomers}</option>
 
@@ -889,7 +889,7 @@ export default async function CustomersPage({
                         id="segment"
                         name="segment"
                         defaultValue={segment ?? ""}
-                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 py-2.5 outline-none focus:border-primary/30"
                       >
                         <option value="">{copy.allSegments}</option>
                         {availableSegments.map((value) => (
@@ -912,7 +912,7 @@ export default async function CustomersPage({
                         id="sort"
                         name="sort"
                         defaultValue={sort}
-                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 py-2.5 outline-none focus:border-primary/30"
+                        className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 py-2.5 outline-none focus:border-primary/30"
                       >
                         <option value="newest">{copy.newest}</option>
 
@@ -1003,7 +1003,7 @@ export default async function CustomersPage({
             </form>
 
             {customers.length === 0 ? (
-              <div className="rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
+              <div className="rounded-[var(--lf-radius-card)] border border-dashed border-border bg-surface p-12 text-center">
                 <h2 className="text-xl font-semibold text-foreground">
                   {totalCustomers === 0 ? copy.noCustomers : copy.noResults}
                 </h2>
@@ -1017,7 +1017,7 @@ export default async function CustomersPage({
                 {totalCustomers === 0 && canReviewDuplicates ? (
                   <a
                     href="#add-customer"
-                    className="mt-6 inline-flex rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white"
+                    className="mt-6 inline-flex rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-inverse"
                   >
                     {copy.addCustomer}
                   </a>
@@ -1025,7 +1025,7 @@ export default async function CustomersPage({
                 {filtersActive && (
                   <Link
                     href={`/businesses/${business.slug}/customers`}
-                    className="mt-6 inline-flex rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white"
+                    className="mt-6 inline-flex rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-inverse"
                   >
                     {copy.showAllCustomers}
                   </Link>
@@ -1254,7 +1254,7 @@ export default async function CustomersPage({
                     {currentPage > 1 ? (
                       <Link
                         href={getPageUrl(currentPage - 1)}
-                        className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 font-semibold text-foreground-muted hover:border-primary/30"
+                        className="rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 font-semibold text-foreground-muted hover:border-primary/30"
                       >
                         {copy.previous}
                       </Link>
@@ -1271,7 +1271,7 @@ export default async function CustomersPage({
                         className={
                           pageNumber === currentPage
                             ? "rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 font-semibold text-[var(--lf-primary-foreground)]"
-                            : "rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 font-semibold text-foreground-muted hover:border-primary/30"
+                            : "rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 font-semibold text-foreground-muted hover:border-primary/30"
                         }
                       >
                         {pageNumber}
@@ -1281,7 +1281,7 @@ export default async function CustomersPage({
                     {currentPage < totalPages ? (
                       <Link
                         href={getPageUrl(currentPage + 1)}
-                        className="rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 font-semibold text-foreground-muted hover:border-primary/30"
+                        className="rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 font-semibold text-foreground-muted hover:border-primary/30"
                       >
                         {copy.next}
                       </Link>
