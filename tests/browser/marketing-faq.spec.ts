@@ -214,6 +214,222 @@ for (const locale of ["en", "ar"] as const) {
   }
 }
 
+
+const marketingShellRoutes = [
+  "/",
+  "/features",
+  "/how-it-works",
+  "/pricing",
+  "/about",
+  "/faq",
+  "/contact",
+  "/security",
+  "/privacy",
+  "/terms",
+  "/data-deletion",
+  "/get-started",
+  "/demo",
+] as const;
+
+type ShellRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+async function readShellRect(locator: Locator): Promise<ShellRect> {
+  return locator.evaluate((node) => {
+    const rect = node.getBoundingClientRect();
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+    };
+  });
+}
+
+function expectSameRect(
+  actual: ShellRect,
+  expected: ShellRect,
+  axes: readonly (keyof ShellRect)[] = ["x", "y", "width", "height"],
+) {
+  for (const axis of axes) {
+    expect(actual[axis]).toBeCloseTo(expected[axis], 1);
+  }
+}
+
+test("Marketing desktop shell keeps exact geometry across routes locale and theme @desktop", async ({
+  page,
+  context,
+  baseURL,
+}) => {
+  await page.goto("/");
+
+  for (const viewport of [
+    { width: 1366, height: 768, name: "1366" },
+    { width: 1440, height: 900, name: "1440" },
+  ] as const) {
+    await page.setViewportSize(viewport);
+
+    let headerBaseline:
+      | {
+          brand: ShellRect;
+          nav: ShellRect;
+          actions: ShellRect;
+          links: ShellRect[];
+          footerShell: Pick<ShellRect, "x" | "width">;
+          footerBrand: Pick<ShellRect, "x" | "width">;
+          footerNav: Pick<ShellRect, "x" | "width">;
+          footerActions: Pick<ShellRect, "x" | "width">;
+        }
+      | undefined;
+
+    for (const locale of ["en", "ar"] as const) {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+
+      for (const theme of ["light", "dark"] as const) {
+        await page.evaluate(
+          (value) => localStorage.setItem("tanee-marketing-theme", value),
+          theme,
+        );
+
+        for (const route of marketingShellRoutes) {
+          const response = await page.goto(route);
+          expect(response?.status(), route).toBe(200);
+          await expect(page.locator("html")).toHaveAttribute(
+            "data-marketing-theme",
+            theme,
+          );
+
+          const brand = await readShellRect(
+            page.locator('[data-marketing-header-brand="true"]'),
+          );
+          const navLocator = page.locator(
+            '[data-marketing-header-nav="true"]',
+          );
+          const nav = await readShellRect(navLocator);
+          const actions = await readShellRect(
+            page.locator('[data-marketing-header-actions="true"]'),
+          );
+          const links = await navLocator.locator(":scope > a").evaluateAll(
+            (nodes) =>
+              nodes.map((node) => {
+                const rect = node.getBoundingClientRect();
+                return {
+                  x: rect.x,
+                  y: rect.y,
+                  width: rect.width,
+                  height: rect.height,
+                };
+              }),
+          );
+          expect(links, `${route} nav slots`).toHaveLength(7);
+
+          const footerShellRect = await readShellRect(
+            page.locator('[data-marketing-footer-shell="true"]'),
+          );
+          const footerBrandRect = await readShellRect(
+            page.locator('[data-marketing-footer-brand="true"]'),
+          );
+          const footerNavRect = await readShellRect(
+            page.locator('[data-marketing-footer-navigation="true"]'),
+          );
+          const footerActionsRect = await readShellRect(
+            page.locator('[data-marketing-footer-actions="true"]'),
+          );
+
+          const current = {
+            brand,
+            nav,
+            actions,
+            links,
+            footerShell: {
+              x: footerShellRect.x,
+              width: footerShellRect.width,
+            },
+            footerBrand: {
+              x: footerBrandRect.x,
+              width: footerBrandRect.width,
+            },
+            footerNav: {
+              x: footerNavRect.x,
+              width: footerNavRect.width,
+            },
+            footerActions: {
+              x: footerActionsRect.x,
+              width: footerActionsRect.width,
+            },
+          };
+
+          if (!headerBaseline) {
+            headerBaseline = current;
+          } else {
+            expectSameRect(current.brand, headerBaseline.brand);
+            expectSameRect(current.nav, headerBaseline.nav);
+            expectSameRect(current.actions, headerBaseline.actions);
+            for (let index = 0; index < current.links.length; index += 1) {
+              expectSameRect(current.links[index], headerBaseline.links[index]);
+            }
+            expect(current.footerShell.x).toBeCloseTo(
+              headerBaseline.footerShell.x,
+              1,
+            );
+            expect(current.footerShell.width).toBeCloseTo(
+              headerBaseline.footerShell.width,
+              1,
+            );
+            expect(current.footerBrand.x).toBeCloseTo(
+              headerBaseline.footerBrand.x,
+              1,
+            );
+            expect(current.footerBrand.width).toBeCloseTo(
+              headerBaseline.footerBrand.width,
+              1,
+            );
+            expect(current.footerNav.x).toBeCloseTo(
+              headerBaseline.footerNav.x,
+              1,
+            );
+            expect(current.footerNav.width).toBeCloseTo(
+              headerBaseline.footerNav.width,
+              1,
+            );
+            expect(current.footerActions.x).toBeCloseTo(
+              headerBaseline.footerActions.x,
+              1,
+            );
+            expect(current.footerActions.width).toBeCloseTo(
+              headerBaseline.footerActions.width,
+              1,
+            );
+          }
+
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          if (route === "/") {
+            await page.screenshot({
+              path: test
+                .info()
+                .outputPath(
+                  `marketing-shell-${viewport.name}-${locale}-${theme}.png`,
+                ),
+              fullPage: true,
+            });
+          }
+        }
+      }
+    }
+  }
+});
+
 const homeCopy = {
   en: {
     hero: "Tanee helps your customers choose you again.",
