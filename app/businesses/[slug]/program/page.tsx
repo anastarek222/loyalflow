@@ -120,7 +120,7 @@ export default async function LoyaltyProgramPage({
       <div className="mx-auto max-w-7xl">
         <Link
           href={`/businesses/${business.slug}`}
-          className="inline-flex min-h-11 items-center rounded-full border border-primary/15 bg-white/90 px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle"
+          className="inline-flex min-h-11 items-center rounded-full border border-primary/15 bg-surface/90 px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle"
         >
           {t("→ الرجوع إلى", "← Back to")} {business.name}
         </Link>
@@ -165,7 +165,7 @@ export default async function LoyaltyProgramPage({
 
         <nav
           aria-label={t("أقسام برنامج الولاء", "Loyalty programme sections")}
-          className="mb-8 grid gap-2 rounded-[var(--lf-radius-card)] border border-border bg-white p-2 shadow-sm sm:grid-cols-3"
+          className="mb-8 grid gap-2 rounded-[var(--lf-radius-card)] border border-border bg-surface p-2 shadow-sm sm:grid-cols-3"
           data-program-section-navigation
         >
           <ProgramSectionLink
@@ -226,7 +226,7 @@ export default async function LoyaltyProgramPage({
         <section
           id="customer-card"
           aria-labelledby="customer-card-heading"
-          className="scroll-mt-24 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-7"
+          className="scroll-mt-24 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7"
         >
           <div className="mb-6 flex items-start gap-3">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary-subtle text-primary">
@@ -345,7 +345,7 @@ export default async function LoyaltyProgramPage({
                       name="logoFile"
                       type="file"
                       accept={BUSINESS_LOGO_ACCEPT}
-                      className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                      className="mt-2 block w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm"
                     />
                     <span className="mt-1 block text-xs font-medium text-foreground-muted">
                       {t(
@@ -366,7 +366,7 @@ export default async function LoyaltyProgramPage({
                       }
                       maxLength={500}
                       placeholder="https://example.com/logo.png"
-                      className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                      className="mt-2 block w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm"
                     />
                   </label>
                 </div>
