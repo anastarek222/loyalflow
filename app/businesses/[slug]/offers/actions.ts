@@ -272,7 +272,7 @@ export async function toggleOfferStatusAction(
     redirect(`/businesses/${business.slug}/offers?error=${error}`);
   }
 
-  scheduleIntegrationJobs(result.integrationJobIds);
+  if (result.ok) scheduleIntegrationJobs(result.integrationJobIds);
   revalidateOfferPaths(business.slug);
   redirect(`/businesses/${business.slug}/offers?success=updated`);
 }
