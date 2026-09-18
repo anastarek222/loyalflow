@@ -252,6 +252,28 @@ test.describe.serial("PR browser smoke", () => {
           );
           await page.goto(route);
 
+          const dashboard = page.locator(
+            '[data-experience-dashboard="simple"]',
+          );
+          await expect(dashboard).toBeVisible();
+          await expect(dashboard).toHaveAttribute(
+            "data-experience-mode",
+            "SIMPLE",
+          );
+          await expect(
+            dashboard.getByLabel(
+              locale === "ar"
+                ? "جاهز للعميل التالي؟"
+                : "Ready for the next customer?",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(
+            dashboard.getByLabel(locale === "ar" ? "اليوم" : "Today", {
+              exact: true,
+            }),
+          ).toBeVisible();
+
           const html = page.locator("html");
           const localeShell = page.locator("[data-app-language]").first();
           const themeSwitcher = page
@@ -376,6 +398,91 @@ test.describe.serial("PR browser smoke", () => {
     }
 
     await setAuthenticatedLanguage(page, "en");
+  });
+
+  test("advanced Dashboard preserves manager content across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "manager-a");
+    const route = `/businesses/${fixture.businessA}`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const dashboard = page.locator('[data-experience-mode="ADVANCED"]');
+          await expect(dashboard).toBeVisible();
+          await expect(
+            dashboard.getByLabel(
+              locale === "ar"
+                ? "مؤشرات الأداء الرئيسية اليومية"
+                : "Daily key performance indicators",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(
+            dashboard.getByLabel(
+              locale === "ar" ? "إجراءات سريعة" : "Quick actions",
+              { exact: true },
+            ),
+          ).toBeVisible();
+
+          await expect(
+            dashboard.getByText(
+              locale === "ar"
+                ? "نمو العملاء خلال 30 يومًا"
+                : "Customer growth over 30 days",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(
+            dashboard.getByText(
+              locale === "ar"
+                ? "اختصارات شرائح العملاء"
+                : "Customer segment shortcuts",
+              { exact: true },
+            ),
+          ).toBeVisible();
+
+          const localeShell = page.locator("[data-app-language]").first();
+          await expect(localeShell).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          await expect(page.locator("html")).toHaveAttribute(
+            "data-theme",
+            theme,
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-dashboard-advanced-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
   });
 
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
