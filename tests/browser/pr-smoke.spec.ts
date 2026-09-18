@@ -14,6 +14,20 @@ let manifestPath: string;
 // broader suite bounded while allowing this cold-start smoke file to finish.
 test.setTimeout(180_000);
 
+async function resetDisposableRateLimit() {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!url || !token) return;
+
+  const response = await fetch(new URL("/reset", url), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  expect(response.ok).toBe(true);
+}
+
 async function signIn(
   page: Page,
   role: "owner-a" | "manager-a" | "viewer-a",
@@ -95,6 +109,10 @@ async function setAuthenticatedLanguage(
 }
 
 test.describe.serial("PR browser smoke", () => {
+  test.beforeEach(async () => {
+    await resetDisposableRateLimit();
+  });
+
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
     fixture = prepared.fixture;
