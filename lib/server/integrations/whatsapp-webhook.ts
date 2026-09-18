@@ -23,7 +23,54 @@ export type WhatsAppDeliveryStatusEvent = Readonly<{
   phoneNumberId: string;
   status: WhatsAppDeliveryStatus;
   timestamp: Date | null;
+  errorCode: string | null;
+  errorMessage: string | null;
 }>;
+
+function sanitizeProviderErrorText(value: unknown, maxLength: number) {
+  if (typeof value !== "string") return null;
+  const normalized = value
+    .replace(/Bearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
+    .replace(/access_token\s*[=:]\s*[^\s,;&]+/gi, "access_token=[REDACTED]")
+    .replace(/\bEAA[A-Za-z0-9_-]{20,}\b/g, "[REDACTED]")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) return null;
+  return normalized.slice(0, maxLength);
+}
+
+function extractProviderError(value: unknown) {
+  if (!Array.isArray(value)) return { errorCode: null, errorMessage: null };
+  const first = value.find(
+    (item) => item && typeof item === "object" && !Array.isArray(item),
+  );
+  if (!first || typeof first !== "object") {
+    return { errorCode: null, errorMessage: null };
+  }
+  const error = first as {
+    code?: unknown;
+    title?: unknown;
+    message?: unknown;
+    error_data?: unknown;
+  };
+  const details =
+    error.error_data &&
+    typeof error.error_data === "object" &&
+    !Array.isArray(error.error_data)
+      ? (error.error_data as { details?: unknown }).details
+      : null;
+  const codeValue =
+    typeof error.code === "number" && Number.isFinite(error.code)
+      ? String(error.code)
+      : error.code;
+  return {
+    errorCode: sanitizeProviderErrorText(codeValue, 64),
+    errorMessage:
+      sanitizeProviderErrorText(details, 500) ??
+      sanitizeProviderErrorText(error.message, 500) ??
+      sanitizeProviderErrorText(error.title, 500),
+  };
+}
 
 const WHATSAPP_OPT_OUT_KEYWORDS = new Set([
   "STOP",
@@ -231,16 +278,27 @@ export function extractWhatsAppDeliveryStatusEvents(
           id?: unknown;
           status?: unknown;
           timestamp?: unknown;
+          errors?: unknown;
         };
         const providerMessageId = normalizeProviderMessageId(candidate.id);
         if (!providerMessageId || typeof candidate.status !== "string")
           continue;
         const status = mapWhatsAppDeliveryStatus(candidate.status);
         const timestamp = parseWhatsAppStatusTimestamp(candidate.timestamp);
+        const providerError =
+          status === "FAILED"
+            ? extractProviderError(candidate.errors)
+            : { errorCode: null, errorMessage: null };
         const dedupeKey = `${phoneNumberId}:${providerMessageId}:${status}:${timestamp?.toISOString() ?? ""}`;
         if (seen.has(dedupeKey)) continue;
         seen.add(dedupeKey);
-        events.push({ providerMessageId, phoneNumberId, status, timestamp });
+        events.push({
+          providerMessageId,
+          phoneNumberId,
+          status,
+          timestamp,
+          ...providerError,
+        });
       }
     }
   }

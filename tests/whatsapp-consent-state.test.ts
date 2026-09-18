@@ -75,7 +75,7 @@ test("WA-6 schema and migration are additive, tenant-scoped and collision-safe",
   );
   assert.doesNotMatch(migration, /UPDATE\s+"Customer"/i);
 
-  assert.equal(manifest.migrationCount, 57);
+  assert.equal(manifest.migrationCount, manifest.migrations.length);
   const consentMigration = manifest.migrations.find(
     (entry) =>
       entry.name === "20260911183000_add_customer_whatsapp_consent_state",

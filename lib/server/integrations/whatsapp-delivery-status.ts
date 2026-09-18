@@ -51,6 +51,9 @@ export async function persistWhatsAppDeliveryStatusFromWebhook(
       },
       data: {
         providerDeliveryStatus: event.status,
+        providerErrorCode: event.status === "FAILED" ? event.errorCode : null,
+        providerErrorMessage:
+          event.status === "FAILED" ? event.errorMessage : null,
         ...(event.timestamp ? { providerStatusAt: event.timestamp } : {}),
       },
     });

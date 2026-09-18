@@ -35,6 +35,8 @@ export type WhatsAppHistoryEntry = Readonly<{
     | "OTHER"
     | null;
   providerStatusAt: Date | null;
+  providerErrorCode: string | null;
+  providerErrorMessage: string | null;
   createdAt: Date;
   updatedAt: Date;
   payload: CustomerMessagePayload;
@@ -122,6 +124,8 @@ export async function getWhatsAppMessageHistoryPage(input: Readonly<{
       providerMessageId: true,
       providerDeliveryStatus: true,
       providerStatusAt: true,
+      providerErrorCode: true,
+      providerErrorMessage: true,
       payload: true,
       createdAt: true,
       updatedAt: true,
@@ -170,6 +174,8 @@ export async function getWhatsAppMessageHistoryPage(input: Readonly<{
       providerMessageId: row.providerMessageId,
       providerDeliveryStatus: row.providerDeliveryStatus,
       providerStatusAt: row.providerStatusAt,
+      providerErrorCode: row.providerErrorCode,
+      providerErrorMessage: row.providerErrorMessage,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       payload,
