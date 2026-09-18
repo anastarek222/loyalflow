@@ -21,6 +21,15 @@ test("inline Tanee references stay as text instead of embedding the full wordmar
   assert.match(inlineName, /data-inline-tanee-ee-vector/);
   assert.match(inlineName, /viewBox="850 84 650 300"/);
   assert.match(inlineName, /fillRule="evenodd"/);
+  const canonicalWordmark = source("public/brand/tanee-wordmark-en.svg");
+  const canonicalEePath = canonicalWordmark.match(
+    /<path id="a15-component-4"[^>]* d="([^"]+)"\/>/,
+  )?.[1];
+  assert.ok(canonicalEePath, "canonical A15 ee ligature path must exist");
+  assert.ok(
+    inlineName.includes(`d="${canonicalEePath}"`),
+    "inline Tanee must use the exact canonical A15 connected-ee geometry",
+  );
   assert.doesNotMatch(inlineName, /rotate-45|border-e-\[0\.075em\]|border-t-\[0\.075em\]/);
   assert.doesNotMatch(
     inlineName,
