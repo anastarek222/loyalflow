@@ -27,9 +27,12 @@ async function signIn(
   });
 }
 
-async function openAccountMenu(page: Page) {
+async function openAccountMenu(
+  page: Page,
+  language: "EN" | "AR" = "EN",
+) {
   const trigger = page.getByRole("button", {
-    name: "Account menu",
+    name: language === "AR" ? "قائمة الحساب" : "Account menu",
     exact: true,
   });
 
@@ -39,14 +42,24 @@ async function openAccountMenu(page: Page) {
       timeout: 1_000,
     });
   }).toPass({ timeout: 30_000 });
-  await expect(page.getByLabel("Account", { exact: true })).toBeVisible();
+  await expect(
+    page.getByLabel(language === "AR" ? "الحساب" : "Account", { exact: true }),
+  ).toBeVisible();
 }
 
-async function signOut(page: Page) {
-  await openAccountMenu(page);
+async function signOut(
+  page: Page,
+  language: "EN" | "AR" = "EN",
+) {
+  await openAccountMenu(page, language);
   await Promise.all([
     page.waitForURL(/\/login$/),
-    page.getByRole("button", { name: "Log out", exact: true }).click(),
+    page
+      .getByRole("button", {
+        name: language === "AR" ? "تسجيل الخروج" : "Log out",
+        exact: true,
+      })
+      .click(),
   ]);
   await expect(page.getByLabel("Email address")).toBeVisible();
 }
@@ -190,7 +203,7 @@ test.describe.serial("PR browser smoke", () => {
         .click();
       await expect(drawer).toBeHidden();
 
-      await signOut(page);
+      await signOut(page, scenario.language);
     }
   });
 
