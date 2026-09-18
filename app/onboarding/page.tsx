@@ -2,12 +2,14 @@ import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { OwnerOnboardingWizardV2 } from "@/components/owner-onboarding-wizard-v2";
 import { OwnerWhatsAppOnboarding } from "@/components/owner-whatsapp-onboarding";
-import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { InlineTaneeName } from "@/components/brand/inline-tanee-name";
+import { TaneeThemeSwitcher } from "@/components/tanee-theme-switcher";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
 import { LOCALE_COOKIE_NAME, resolveRequestLocale } from "@/lib/i18n/request";
 import prisma from "@/lib/prisma";
 import { getWhatsAppEmbeddedSignupReadiness } from "@/lib/server/integrations/whatsapp-embedded-signup";
+import { TANEE_UI_THEME_BOOTSTRAP } from "@/lib/tanee-ui-theme";
 import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -62,29 +64,26 @@ export default async function OwnerOnboardingPage() {
   const graphApiVersion = process.env.WHATSAPP_GRAPH_API_VERSION?.trim() ?? "";
 
   return (
-    <main
-      lang={locale}
-      dir={direction}
-      className="relative min-h-screen overflow-hidden bg-[var(--lf-marketing-canvas)] px-4 pb-12 text-foreground sm:px-6 lg:px-8"
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgb(255_102_82/0.12),transparent_28%),radial-gradient(circle_at_95%_35%,rgb(168_71_36/0.08),transparent_25%)]" />
+    <>
+      <script dangerouslySetInnerHTML={{ __html: TANEE_UI_THEME_BOOTSTRAP }} />
+      <main
+        lang={locale}
+        dir={direction}
+        data-testid="owner-onboarding-shell"
+        className="relative min-h-screen overflow-hidden bg-[var(--lf-canvas)] px-4 pb-12 text-foreground sm:px-6 lg:px-8"
+      >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,color-mix(in_srgb,var(--lf-primary)_12%,transparent),transparent_28%),radial-gradient(circle_at_95%_35%,color-mix(in_srgb,var(--lf-primary)_8%,transparent),transparent_25%)]" />
       <div className="relative mx-auto w-full max-w-6xl">
         <header className="flex min-h-20 items-center justify-between gap-4 border-b border-border/80">
           <Link
             href="/"
             aria-label="Tanee"
-            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
+            data-testid="owner-onboarding-brand"
+            className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] text-xl font-black tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
           >
-            <PlatformBrandIdentity
-              locale={locale}
-              showMark={false}
-              themeAdaptiveWordmark
-              wordmarkClassName="h-7 w-auto max-w-36"
-              wordmarkSize="marketing"
-              textClassName="text-xl font-black text-foreground"
-            />
+            <InlineTaneeName />
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden items-center gap-2 text-xs font-bold text-foreground-subtle sm:inline-flex">
               <ShieldCheck
                 size={16}
@@ -93,6 +92,7 @@ export default async function OwnerOnboardingPage() {
               />
               {translate(locale, "onboarding.privateNote")}
             </span>
+            <TaneeThemeSwitcher locale={locale} />
             <LanguageSwitcher locale={locale} alternateOnly />
           </div>
         </header>
@@ -124,6 +124,7 @@ export default async function OwnerOnboardingPage() {
           embeddedSignupReady={embeddedSignupReadiness.ready}
         />
       </div>
-    </main>
+      </main>
+    </>
   );
 }
