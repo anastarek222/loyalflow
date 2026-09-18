@@ -12,10 +12,9 @@ import {
   type ShellBusiness,
   type ShellUser,
 } from "@/lib/app-shell-navigation";
-import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { InlineTaneeName } from "@/components/brand/inline-tanee-name";
 import { icons } from "@/components/shell-icons";
 import type { ExperienceMode } from "@/lib/experience-mode";
-import { platformBrand } from "@/lib/platform-brand";
 
 type Props = {
   open: boolean;
@@ -63,24 +62,20 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
     <button type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="fixed inset-0 z-[80] cursor-default bg-foreground/60 lg:hidden" />
     <aside role="dialog" aria-modal="true" aria-label={language === "AR" ? "قائمة التنقل" : "Navigation menu"} className="lf-nav-sidebar fixed inset-y-0 start-0 z-[90] flex h-[100dvh] w-80 max-w-[calc(100vw-2rem)] flex-col border-e bg-surface shadow-[var(--lf-shadow-overlay)] lg:hidden">
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
-        <div>
-          <div className="flex items-center">
-            <PlatformBrandIdentity
-              locale={language}
-              fallback="letters"
-              fallbackText={platformBrand.name}
-              markClassName="hidden"
-              wordmarkClassName="h-5 max-w-32"
-              textClassName="font-black text-foreground"
-            />
+        <div className="min-w-0">
+          <div
+            data-testid="mobile-saas-brand"
+            className="flex min-h-11 items-center text-lg font-black tracking-tight text-foreground"
+          >
+            <InlineTaneeName />
           </div>
-          <p className="text-xs text-foreground-subtle">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p>
+          <p className="truncate text-xs text-foreground-subtle">{business?.name ?? (language === "AR" ? "مساحة العمل" : "Workspace")}</p>
         </div>
         <button ref={closeRef} type="button" aria-label={language === "AR" ? "إغلاق القائمة" : "Close navigation"} onClick={onClose} className="flex size-11 items-center justify-center rounded-[var(--lf-radius-input)] text-foreground-muted hover:bg-surface-subtle"><X aria-hidden="true" /></button>
       </header>
       {business && businesses.length > 1 && <section aria-labelledby="mobile-business-switcher-title" className="shrink-0 border-b border-border px-4 py-3">
         <div className="flex items-baseline justify-between gap-3"><p id="mobile-business-switcher-title" className="text-xs font-semibold text-foreground-subtle">{language === "AR" ? "تبديل النشاط" : "Switch business"}</p><p className="max-w-40 truncate text-xs font-semibold text-primary">{business.name}</p></div>
-        {shouldShowBusinessSearch && <label className="mt-2 block"><span className="sr-only">{language === "AR" ? "البحث عن نشاط" : "Search businesses"}</span><input type="search" value={businessQuery} onChange={(event) => setBusinessQuery(event.target.value)} placeholder={language === "AR" ? "البحث عن نشاط" : "Search businesses"} className="min-h-10 w-full rounded-[var(--lf-radius-input)] border border-border px-3 text-sm" /></label>}
+        {shouldShowBusinessSearch && <label className="mt-2 block"><span className="sr-only">{language === "AR" ? "البحث عن نشاط" : "Search businesses"}</span><input type="search" value={businessQuery} onChange={(event) => setBusinessQuery(event.target.value)} placeholder={language === "AR" ? "البحث عن نشاط" : "Search businesses"} className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 text-sm text-foreground placeholder:text-foreground-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]" /></label>}
         <ul className="mt-2 max-h-48 overflow-y-auto overscroll-contain pe-1" aria-label={language === "AR" ? "قائمة الأنشطة" : "Business list"}>
           {visibleBusinesses.map((candidate) => <li key={candidate.id}><Link href={`/businesses/${candidate.slug}`} onClick={onClose} aria-current={candidate.slug === business.slug ? "page" : undefined} className={`flex min-h-11 items-center rounded-[var(--lf-radius-input)] px-3 text-sm font-semibold ${candidate.slug === business.slug ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`}><span className="truncate">{candidate.name}</span></Link></li>)}
           {!visibleBusinesses.length && <li className="px-3 py-2 text-sm text-foreground-subtle">{language === "AR" ? "لا توجد نتائج" : "No businesses found"}</li>}
