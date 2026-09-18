@@ -18,6 +18,10 @@ test("inline Tanee references stay as text instead of embedding the full wordmar
   assert.match(inlineName, />Tan</);
   assert.match(inlineName, />ee</);
   assert.match(inlineName, /text-primary/);
+  assert.match(inlineName, /data-inline-tanee-ee-vector/);
+  assert.match(inlineName, /viewBox="850 84 650 300"/);
+  assert.match(inlineName, /fillRule="evenodd"/);
+  assert.doesNotMatch(inlineName, /rotate-45|border-e-\[0\.075em\]|border-t-\[0\.075em\]/);
   assert.doesNotMatch(
     inlineName,
     /<img|<Image|PlatformBrandIdentity|data-marketing-inline-wordmark|\/brand\/[^"']*wordmark/i,
