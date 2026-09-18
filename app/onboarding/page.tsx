@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { OwnerOnboardingWizard } from "@/components/owner-onboarding-wizard";
 import { OwnerWhatsAppOnboarding } from "@/components/owner-whatsapp-onboarding";
-import { PlatformBrandIdentity } from "@/components/platform-brand-identity";
+import { InlineTaneeName } from "@/components/brand/inline-tanee-name";
 import { TaneeThemeSwitcher } from "@/components/tanee-theme-switcher";
 import { translate } from "@/lib/i18n/catalog";
 import { getLocaleDirection } from "@/lib/i18n/config";
@@ -78,16 +78,10 @@ export default async function OwnerOnboardingPage() {
             <Link
               href="/"
               aria-label="Tanee"
-              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
+              data-testid="owner-onboarding-brand"
+              className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] text-xl font-black tracking-tight text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
             >
-              <PlatformBrandIdentity
-                locale={locale}
-                showMark={false}
-                themeAdaptiveWordmark
-                wordmarkClassName="h-7 w-auto max-w-36"
-                wordmarkSize="marketing"
-                textClassName="text-xl font-black text-foreground"
-              />
+              <InlineTaneeName />
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <span className="hidden items-center gap-2 text-xs font-bold text-foreground-subtle sm:inline-flex">
