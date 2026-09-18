@@ -9,6 +9,7 @@ const migratedAuthSurfaces = [
   "app/forgot-password/page.tsx",
   "app/reset-password/page.tsx",
   "app/verify-email/page.tsx",
+  "app/verify-email/resend/page.tsx",
   "app/mfa/setup/page.tsx",
 ] as const;
 
@@ -26,15 +27,8 @@ test("reconciled recovery, verification, and MFA pages keep Tanee identity with 
     assert.match(page, /<AuthEntryShell/);
     assert.match(page, /locale=\{locale\}/);
     assert.match(page, /resolveRequestLocale/);
+    assert.doesNotMatch(page, /auth-input/);
   }
-
-  const resendPage = source("app/verify-email/resend/page.tsx");
-  assert.match(resendPage, /<PlatformBrandIdentity/);
-  assert.match(resendPage, /resolveRequestLocale/);
-  assert.match(resendPage, /getLocaleDirection/);
-  assert.match(resendPage, /<LanguageSwitcher/);
-  assert.match(resendPage, /lang=\{locale\}/);
-  assert.match(resendPage, /dir=\{direction\}/);
 });
 
 test("reset password consumes the canonical password policy authority", () => {
@@ -56,11 +50,11 @@ test("MFA localization preserves existing server-action boundaries", () => {
   assert.match(form, /copy\.confirmError/);
 });
 
-test("restored auth catalogs use Tanee rather than the superseded product name", () => {
+test("auth catalogs keep the Tanee brand name English in every locale", () => {
   const en = source("packages/i18n/src/locales/en/auth.ts");
   const ar = source("packages/i18n/src/locales/ar/auth.ts");
   assert.match(en, /Add Tanee to your authenticator/);
-  assert.match(ar, /أضف تاني إلى تطبيق المصادقة/);
+  assert.match(ar, /أضف Tanee إلى تطبيق المصادقة/);
   assert.doesNotMatch(en, /LoyalFlow/);
-  assert.doesNotMatch(ar, /LoyalFlow/);
+  assert.doesNotMatch(ar, /LoyalFlow|تاني/);
 });
