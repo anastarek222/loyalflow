@@ -30,7 +30,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Shared status, toast, pagination, modal, and dropdown visual pass
 
 ### Marketing pages
-- [ ] Home
+- [x] Home
 - [ ] Features
 - [ ] Pricing
 - [ ] About
