@@ -32,7 +32,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 ### Marketing pages
 - [x] Home
 - [x] Features
-- [ ] Pricing
+- [x] Pricing
 - [ ] About
 - [ ] FAQ
 - [ ] Contact
