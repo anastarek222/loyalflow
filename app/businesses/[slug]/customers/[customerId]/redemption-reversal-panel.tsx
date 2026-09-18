@@ -48,7 +48,7 @@ export default function RedemptionReversalPanel({
     .slice(0, 5);
 
   return (
-    <section className="mt-6 rounded-[var(--lf-radius-card)] border border-danger/20 bg-white p-6 shadow-sm sm:p-8">
+    <section className="mt-6 rounded-[var(--lf-radius-card)] border border-danger/20 bg-surface p-6 shadow-sm sm:p-8">
       <p className="text-xs font-bold uppercase tracking-[0.12em] text-danger">
         {language === "AR" ? "إجراء مالي محمي" : "Protected financial action"}
       </p>
@@ -94,7 +94,7 @@ export default function RedemptionReversalPanel({
                   </p>
                 </div>
 
-                <details className="mt-4 rounded-[var(--lf-radius-input)] border border-danger/20 bg-white">
+                <details className="mt-4 rounded-[var(--lf-radius-input)] border border-danger/20 bg-surface">
                   <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-danger">
                     {language === "AR" ? "عكس هذا الاستبدال" : "Reverse this redemption"}
                   </summary>
@@ -124,7 +124,7 @@ export default function RedemptionReversalPanel({
 
                     <button
                       type="submit"
-                      className="w-full rounded-[var(--lf-radius-input)] bg-danger px-4 py-3 text-sm font-bold text-white"
+                      className="w-full rounded-[var(--lf-radius-input)] bg-danger px-4 py-3 text-sm font-bold text-inverse"
                     >
                       {language === "AR" ? "تأكيد عكس الاستبدال" : "Confirm redemption reversal"}
                     </button>
