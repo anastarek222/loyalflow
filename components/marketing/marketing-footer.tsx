@@ -257,6 +257,7 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             </div>
             <MarketingNavLink
               href="/login"
+              data-marketing-footer-access-slot="true"
               className="inline-flex min-h-11 w-28 items-center justify-center px-2 text-sm font-bold text-[var(--lf-foreground-muted)] hover:text-primary"
               activeClassName="text-primary"
             >
