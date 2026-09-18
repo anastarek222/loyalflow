@@ -159,7 +159,8 @@ test.describe.serial("PR browser smoke", () => {
         brand.locator("[data-platform-brand-wordmark-size]"),
       ).toHaveCount(0);
 
-      const brandBox = await brand.boundingBox();
+      const inlineBrand = brand.locator("[data-inline-tanee-name]");
+      const brandBox = await inlineBrand.boundingBox();
       expect(brandBox).not.toBeNull();
       expect(brandBox!.height).toBeLessThanOrEqual(48);
       expect(brandBox!.width).toBeLessThanOrEqual(160);
