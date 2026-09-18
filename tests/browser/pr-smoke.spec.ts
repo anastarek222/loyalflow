@@ -112,4 +112,87 @@ test.describe.serial("PR browser smoke", () => {
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
   });
+  test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+
+    for (const locale of ["en", "ar"] as const) {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+
+      const response = await page.goto("/faq");
+      expect(response?.status()).toBe(200);
+
+      const header = page.getByTestId("marketing-header");
+      const desktopNavigation = header.locator(":scope > div > nav");
+      const desktopActions = header.locator(":scope > div > div");
+      const menuButton = header.locator(
+        'button[aria-controls="marketing-mobile-menu"]',
+      );
+
+      await expect(desktopNavigation).toBeVisible();
+      await expect(desktopNavigation.getByRole("link")).toHaveCount(7);
+      await expect(desktopActions).toBeVisible();
+      await expect(menuButton).toBeHidden();
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => window.scrollTo(0, 900));
+      await expect(header).toHaveAttribute("data-header-visible", "true");
+      await expect(header).toBeVisible();
+    }
+  });
+
+  test("marketing footer keeps usable link targets at 360px and 390px in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    for (const width of [360, 390] as const) {
+      await page.setViewportSize({ width, height: 844 });
+
+      for (const locale of ["en", "ar"] as const) {
+        await context.addCookies([
+          { name: "loyalflow_locale", value: locale, url: baseURL! },
+        ]);
+
+        const response = await page.goto("/faq");
+        expect(response?.status()).toBe(200);
+
+        const footer = page.getByTestId("marketing-footer");
+        await footer.scrollIntoViewIfNeeded();
+        await expect(footer).toBeVisible();
+        const navigation = footer.getByTestId("marketing-footer-navigation");
+        const links = navigation.getByRole("link");
+        await expect(links).toHaveCount(12);
+
+        const heights = await links.evaluateAll((nodes) =>
+          nodes.map((node) => Math.round(node.getBoundingClientRect().height)),
+        );
+        expect(Math.min(...heights)).toBeGreaterThanOrEqual(44);
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        ).toBe(true);
+        await expect(page.locator("main")).toHaveAttribute(
+          "dir",
+          locale === "ar" ? "rtl" : "ltr",
+        );
+      }
+    }
+  });
+
+
 });
