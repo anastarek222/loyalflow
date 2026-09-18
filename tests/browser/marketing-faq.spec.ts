@@ -660,3 +660,141 @@ for (const locale of ["en", "ar"] as const) {
     });
   }
 }
+
+const aboutCopy = {
+  en: {
+    title:
+      "We’re building a clearer way for businesses to grow lasting customer relationships.",
+    who:
+      "Tanee brings customer loyalty and everyday business operations closer together.",
+    why:
+      "Loyalty should feel like a relationship, not another system to manage.",
+    contact: "Let’s talk about the loyalty experience you want to build.",
+    final:
+      "Turn every eligible interaction into part of a stronger relationship.",
+    availability: "Built for growing businesses",
+  },
+  ar: {
+    title: "نبني طريقة أوضح تساعد الأنشطة على بناء علاقات تدوم مع عملائها.",
+    who:
+      "تجمع Tanee بين ولاء العملاء وعمليات النشاط اليومية في تجربة واحدة مترابطة.",
+    why: "يجب أن يبدو الولاء كعلاقة، لا كنظام إضافي يحتاج إلى إدارة.",
+    contact: "دعنا نتحدث عن تجربة الولاء التي تريد بناءها.",
+    final: "اجعل كل تفاعل مؤهل جزءًا من علاقة أقوى مع العميل.",
+    availability: "مصممة للأنشطة النامية",
+  },
+} as const;
+
+for (const locale of ["en", "ar"] as const) {
+  for (const theme of ["light", "dark"] as const) {
+    test(`About ${locale} ${theme}: story, principles and responsive contact composition @desktop @mobile`, async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+      await context.addInitScript(
+        (value) => localStorage.setItem("tanee-marketing-theme", value),
+        theme,
+      );
+
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+
+      const response = await page.goto("/about");
+      expect(response?.status()).toBe(200);
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-marketing-theme",
+        theme,
+      );
+
+      const hero = page.locator("h1").filter({ hasText: aboutCopy[locale].title });
+      await expect(hero).toHaveCount(1);
+      await expect(hero).toBeVisible();
+
+      const heroSection = hero.locator("xpath=ancestor::section[1]");
+      await expect(heroSection.locator('a[href="/how-it-works"]')).toBeVisible();
+      await expect(heroSection.locator('a[href="/contact"]')).toBeVisible();
+
+      const whoHeading = page
+        .locator("h2")
+        .filter({ hasText: aboutCopy[locale].who })
+        .first();
+      const whyHeading = page
+        .locator("h2")
+        .filter({ hasText: aboutCopy[locale].why })
+        .first();
+      await expect(whoHeading).toBeVisible();
+      await expect(whyHeading).toBeVisible();
+      await expect(
+        page.getByText(aboutCopy[locale].availability, { exact: true }),
+      ).toBeVisible();
+
+      const principles = page.locator("article");
+      await expect(principles).toHaveCount(3);
+      for (const card of await principles.all()) {
+        await expect(card).toBeVisible();
+      }
+
+      const contactHeading = page.locator("#about-contact-title");
+      await expect(contactHeading).toContainText(aboutCopy[locale].contact);
+      const contactSection = contactHeading.locator("xpath=ancestor::section[1]");
+      const supportLinks = contactSection.locator(
+        'a[href^="mailto:"], a[href^="tel:"], a[href^="https://wa.me/"]',
+      );
+      expect(await supportLinks.count()).toBeGreaterThanOrEqual(1);
+      for (const link of await supportLinks.all()) {
+        await expect(link).toBeVisible();
+      }
+
+      const finalHeading = page
+        .locator("h2")
+        .filter({ hasText: aboutCopy[locale].final })
+        .first();
+      await expect(finalHeading).toBeVisible();
+      const finalSection = finalHeading.locator("xpath=ancestor::section[1]");
+      await expect(finalSection.locator('a[href="/get-started"]')).toBeVisible();
+
+      const boxes = await principles.evaluateAll((cards) =>
+        cards.map((card) => {
+          const rect = card.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width };
+        }),
+      );
+      expect(boxes).toHaveLength(3);
+      const viewport = page.viewportSize();
+      expect(viewport).not.toBeNull();
+      if (viewport!.width >= 768) {
+        expect(Math.max(...boxes.map((box) => box.y)) - Math.min(...boxes.map((box) => box.y))).toBeLessThan(80);
+      } else {
+        expect(boxes[1].y).toBeGreaterThan(boxes[0].y);
+        expect(boxes[2].y).toBeGreaterThan(boxes[1].y);
+      }
+
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => document.fonts.ready);
+      const project = test.info().project.name.startsWith("mobile")
+        ? "mobile"
+        : "desktop";
+      await page.screenshot({
+        path: test
+          .info()
+          .outputPath(`faq-about-${locale}-${theme}-${project}.png`),
+        fullPage: true,
+      });
+
+      expect(errors).toEqual([]);
+    });
+  }
+}
