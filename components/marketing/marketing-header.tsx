@@ -175,7 +175,7 @@ export function MarketingHeader({
             </div>
             <div
               data-marketing-header-language-slot="true"
-              className="flex w-20 shrink-0 items-center justify-center"
+              className="flex w-20 shrink-0 items-center justify-center [&_button]:w-full"
             >
               <LanguageSwitcher locale={locale} alternateOnly />
             </div>
