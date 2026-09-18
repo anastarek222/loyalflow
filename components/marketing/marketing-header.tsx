@@ -182,6 +182,7 @@ export function MarketingHeader({
             <Link
               href="/login"
               dir={contentDirection}
+              data-marketing-header-signin-slot="true"
               className="inline-flex min-h-11 w-28 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-[var(--lf-foreground)] transition-colors hover:bg-[var(--lf-surface)]"
             >
               {signIn}
@@ -189,6 +190,7 @@ export function MarketingHeader({
             <Link
               href="/get-started"
               dir={contentDirection}
+              data-marketing-header-cta-slot="true"
               className="inline-flex min-h-11 w-44 items-center justify-center whitespace-nowrap rounded-2xl bg-primary px-3 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
             >
               {primaryCta}
