@@ -474,7 +474,7 @@ export default function CardOfflineManager() {
         !isRefreshing && (
           <div
             role="status"
-            className="mb-4 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-center text-sm font-bold leading-6 text-amber-200"
+            className="mb-4 rounded-2xl border border-warning/30 bg-warning-subtle px-4 py-3 text-center text-sm font-bold leading-6 text-warning"
           >
             أنت غير متصل بالإنترنت
             — يتم عرض آخر نسخة محفوظة
@@ -485,7 +485,7 @@ export default function CardOfflineManager() {
       {isRefreshing && (
         <div
           role="status"
-          className="mb-4 rounded-2xl border border-blue-400/40 bg-blue-400/10 px-4 py-3 text-center text-sm font-bold leading-6 text-blue-200"
+          className="mb-4 rounded-2xl border border-info/30 bg-info-subtle px-4 py-3 text-center text-sm font-bold leading-6 text-info"
         >
           {refreshMessage}
         </div>
@@ -494,7 +494,7 @@ export default function CardOfflineManager() {
       {showUpdatedMessage && (
         <div
           role="status"
-          className="mb-4 rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-center text-sm font-bold leading-6 text-emerald-200"
+          className="mb-4 rounded-2xl border border-success/30 bg-success-subtle px-4 py-3 text-center text-sm font-bold leading-6 text-success"
         >
           تم تحديث بيانات الكارت
           بنجاح ✓
