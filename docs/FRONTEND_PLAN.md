@@ -19,7 +19,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Shared control-height normalization started
 - [x] Shared bilingual error/loading/dialog/table defaults started
 - [x] Product dark semantic foundation started
-- [ ] Complete semantic-color migration for remaining hard-coded product surfaces
+- [x] Complete semantic-color migration for remaining hard-coded product surfaces
 
 ### Shared shell
 - [x] Marketing header pixel pass
