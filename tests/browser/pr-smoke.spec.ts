@@ -75,7 +75,15 @@ async function setAuthenticatedLanguage(
       `input[name="language"][value="${targetLanguage}"]`,
     ),
   });
+  const currentUrl = new URL(page.url());
+  const actionResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === currentUrl.pathname,
+  );
   await switchForm.getByRole("button").click();
+  await actionResponse;
+  await page.reload();
   await expect(shell).toHaveAttribute("data-app-language", targetLanguage, {
     timeout: 10_000,
   });
@@ -222,6 +230,7 @@ test.describe.serial("PR browser smoke", () => {
     );
 
     await assertDrawer("ar");
+    await setAuthenticatedLanguage(page, "en");
   });
 
   test("SaaS shell preserves Tanee brand, theme, and locale parity @desktop @pr-smoke", async ({
