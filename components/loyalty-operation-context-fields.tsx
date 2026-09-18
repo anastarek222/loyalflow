@@ -36,7 +36,7 @@ export default function LoyaltyOperationContextFields({
             required={branchRequired}
             disabled={disabled}
             defaultValue=""
-            className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
+            className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
           >
             <option value="">
               {branchRequired ? copy.selectBranch : copy.noBranch}
@@ -61,7 +61,7 @@ export default function LoyaltyOperationContextFields({
             required={staffAttributionRequired}
             disabled={disabled}
             defaultValue=""
-            className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
+            className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30 disabled:bg-surface-subtle"
           >
             <option value="">
               {staffAttributionRequired
