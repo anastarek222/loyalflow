@@ -439,7 +439,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
               onClick={startCamera}
               disabled={!isScannerModuleReady || cameraBusy}
               aria-busy={isInitializing || !isScannerModuleReady}
-              className="flex min-h-12 w-full max-w-64 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-lg transition hover:bg-primary-hover disabled:cursor-wait disabled:bg-primary/60"
+              className="flex min-h-12 w-full max-w-64 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-lg transition hover:bg-primary-hover disabled:cursor-wait disabled:bg-primary/60"
             >
               {isInitializing || !isScannerModuleReady ? (
                 <LoaderCircle
@@ -525,7 +525,7 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
                 onClick={() => qrImageInputRef.current?.click()}
                 disabled={cameraBusy}
                 aria-busy={isScanningImage}
-                className="flex min-h-11 flex-1 basis-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-foreground-subtle"
+                className="flex min-h-11 flex-1 basis-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-foreground-subtle"
               >
                 {isScanningImage ? (
                   <LoaderCircle
@@ -566,14 +566,14 @@ export default function QrScanner({ businessId, language }: QrScannerProps) {
             onChange={(event) => setManualValue(event.target.value)}
             placeholder={copy.manualPlaceholder}
             dir="ltr"
-            className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
+            className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
           />
           <button
             type="submit"
             disabled={!manualValue.trim() || isProcessing}
             aria-disabled={!manualValue.trim() || isProcessing}
             aria-busy={isProcessing}
-            className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-5 font-semibold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-foreground-subtle"
+            className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-5 font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-foreground-subtle"
           >
             {isProcessing ? copy.processing : copy.openCustomer}
           </button>
