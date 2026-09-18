@@ -33,7 +33,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Home
 - [x] Features
 - [x] Pricing
-- [ ] About
+- [x] About
 - [ ] FAQ
 - [ ] Contact
 - [ ] Security/trust visual surfaces
