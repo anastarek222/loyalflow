@@ -65,7 +65,7 @@ export default function MobileSidebar({ open, onClose, language, experienceMode,
         <div className="min-w-0">
           <div
             data-testid="mobile-saas-brand"
-            className="inline-flex min-h-11 items-center text-lg font-black tracking-tight text-foreground"
+            className="flex min-h-11 items-center text-lg font-black tracking-tight text-foreground"
           >
             <InlineTaneeName />
           </div>
