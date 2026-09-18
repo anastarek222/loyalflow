@@ -736,7 +736,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
               !isSimpleExperience && scanAction ? (
                 <Link
                   href={scanAction.href}
-                  className="inline-flex min-h-12 items-center gap-3 rounded-xl bg-primary px-5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition hover:bg-primary-hover"
+                  className="inline-flex min-h-12 items-center gap-3 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary-hover"
                 >
                   <ScanLine size={19} aria-hidden="true" />
                   {dictionary.scan}
@@ -777,7 +777,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                 ) : null}
                 <Link
                   href={`/businesses/${business.slug}/customers`}
-                  className="group flex min-h-28 items-center justify-between rounded-[var(--lf-radius-card)] border border-white/80 bg-white/85 px-6 py-5 shadow-sm transition hover:border-primary/25 hover:bg-white hover:shadow-md sm:min-h-32"
+                  className="group flex min-h-28 items-center justify-between rounded-[var(--lf-radius-card)] border border-border bg-surface px-6 py-5 shadow-[var(--lf-shadow-raised)] transition hover:border-primary/25 hover:bg-surface-subtle hover:shadow-md sm:min-h-32"
                 >
                   <span>
                     <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-foreground-subtle">
@@ -798,7 +798,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
             </section>
 
             <section aria-label={dictionary.today}>
-              <div className="grid grid-cols-3 overflow-hidden rounded-[var(--lf-radius-card)] border border-white/80 bg-white/85 shadow-sm">
+              <div className="grid grid-cols-3 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-[var(--lf-shadow-raised)]">
                 <div className="px-4 py-4 sm:px-5">
                   <p className="text-xs font-semibold text-foreground-subtle">
                     {dictionary.activityToday}
@@ -955,8 +955,8 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
               <Card
                 className={
                   operationalAlerts.length
-                    ? "border-warning/25 bg-gradient-to-br from-white to-amber-50/50"
-                    : "border-success/20 bg-gradient-to-br from-white to-emerald-50/40"
+                    ? "border-warning/25 bg-[var(--lf-warning-subtle)]"
+                    : "border-success/20 bg-[var(--lf-success-subtle)]"
                 }
               >
                 <SectionHeader
@@ -1031,7 +1031,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
             {primaryAdvancedActions.length ? (
               <section aria-label={dictionary.quickActions}>
-                <Card className="border-white/80 bg-white/85 p-4 sm:p-5">
+                <Card className="border-border bg-surface p-4 sm:p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h2 className="text-sm font-bold text-foreground">
@@ -1048,7 +1048,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                           href={action.href}
                           className={
                             index === 0 && action.id === "scan"
-                              ? "inline-flex min-h-10 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+                              ? "inline-flex min-h-10 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                               : "inline-flex min-h-10 items-center rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 text-sm font-semibold text-foreground-muted hover:border-primary/30 hover:bg-surface-subtle hover:text-foreground"
                           }
                         >
@@ -1063,7 +1063,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
             {canViewReports ? (
               <section className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(16rem,0.75fr)]">
-                <Card className="border-white/80 bg-white/85">
+                <Card className="border-border bg-surface">
                   <SectionHeader
                     title={dictionary.trend}
                     description={dictionary.trendDescription}
@@ -1085,7 +1085,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                     />
                   </div>
                 </Card>
-                <Card className="border-white/80 bg-white/85">
+                <Card className="border-border bg-surface">
                   <SectionHeader
                     title={dictionary.segments}
                     description={dictionary.segmentsDescription}
@@ -1095,7 +1095,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                       <Link
                         key={segment}
                         href={`/businesses/${business.slug}/customers?segment=${segment}`}
-                        className="flex min-h-11 items-center justify-between rounded-xl border border-border bg-white/70 px-4 text-sm font-semibold text-foreground-muted transition hover:border-primary/30 hover:bg-primary-subtle/50 hover:text-primary"
+                        className="flex min-h-11 items-center justify-between rounded-xl border border-border bg-surface-subtle px-4 text-sm font-semibold text-foreground-muted transition hover:border-primary/30 hover:bg-[var(--lf-primary-soft)] hover:text-primary"
                       >
                         <span>{getCustomerSegmentLabel(segment, language)}</span>
                         <span
@@ -1113,7 +1113,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
 
             {canViewReports ? (
               <section>
-                <Card className="border-white/80 bg-white/85">
+                <Card className="border-border bg-surface">
                   <SectionHeader
                     title={dictionary.activity}
                     description={dictionary.activityDescription}
@@ -1189,7 +1189,7 @@ export default async function BusinessPage({ params }: BusinessPageProps) {
                     actions={
                       <Link
                         href={`/businesses/${business.slug}/settings`}
-                        className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+                        className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                       >
                         {dictionary.nextStep}
                       </Link>
