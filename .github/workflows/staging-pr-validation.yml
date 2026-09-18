@@ -161,6 +161,7 @@ jobs:
           if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
             PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-mobile.xml pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium --reporter=list,junit
             PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-desktop.xml pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop --reporter=list,junit
+            PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-visual.xml pnpm exec playwright test tests/browser/owner-onboarding-visual.spec.ts --config=playwright.config.ts --project=desktop-chromium --reporter=list,junit
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
             PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/roles-desktop.xml pnpm exec playwright test tests/browser/final-uat-u13.spec.ts --config=playwright.config.ts --project=desktop-chromium --reporter=list,junit
@@ -184,6 +185,7 @@ jobs:
             receipts+=(
               "test-results/browser-matrix/owner-mobile.xml"
               "test-results/browser-matrix/owner-desktop.xml"
+              "test-results/browser-matrix/owner-visual.xml"
             )
           fi
           if [[ "${{ steps.browser-smoke.outputs.loyalty-core }}" == "true" ]]; then
