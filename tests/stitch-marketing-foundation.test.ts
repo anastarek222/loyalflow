@@ -120,6 +120,8 @@ test("desktop marketing shell keeps fixed brand, navigation, and action lanes", 
   assert.match(header, /min-\[1366px\]:w-full/);
   assert.match(header, /data-marketing-header-theme-slot="true"/);
   assert.match(header, /data-marketing-header-language-slot="true"/);
+  assert.match(header, /data-marketing-header-signin-slot="true"/);
+  assert.match(header, /data-marketing-header-cta-slot="true"/);
   assert.match(header, /w-28 items-center justify-center/);
   assert.match(header, /w-44 items-center justify-center/);
 
@@ -129,6 +131,7 @@ test("desktop marketing shell keeps fixed brand, navigation, and action lanes", 
   assert.match(footer, /data-marketing-footer-actions="true"/);
   assert.match(footer, /data-marketing-footer-theme-slot="true"/);
   assert.match(footer, /data-marketing-footer-language-slot="true"/);
+  assert.match(footer, /data-marketing-footer-access-slot="true"/);
   assert.match(
     footer,
     /lg:grid-cols-\[20rem_minmax\(0,1fr\)\]/,
