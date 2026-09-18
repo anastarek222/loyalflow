@@ -11,6 +11,9 @@ test("owner onboarding shell uses the shared Tanee theme authority", () => {
   assert.match(page, /TANEE_UI_THEME_BOOTSTRAP/);
   assert.match(page, /<TaneeThemeSwitcher locale=\{locale\}/);
   assert.match(page, /data-testid="owner-onboarding-shell"/);
+  assert.match(page, /data-testid="owner-onboarding-brand"/);
+  assert.match(page, /<InlineTaneeName \/>/);
+  assert.doesNotMatch(page, /PlatformBrandIdentity/);
   assert.match(page, /bg-\[var\(--lf-canvas\)\]/);
   assert.doesNotMatch(page, /bg-\[var\(--lf-marketing-canvas\)\]/);
   assert.doesNotMatch(page, /rgb\(255_102_82|rgb\(168_71_36/);
