@@ -347,3 +347,167 @@ for (const locale of ["en", "ar"] as const) {
     });
   }
 }
+
+const featuresCopy = {
+  en: {
+    title: "Everything you need to turn customer activity into lasting loyalty.",
+    overview: "One connected loyalty experience for you and your customers.",
+    brand: "A loyalty experience that looks and feels like your business.",
+    activity: "Understand each customer beyond a single transaction.",
+    rewards: "Reward continued loyalty in a way that fits your business.",
+    insights: "See what keeps customers engaged.",
+    journey: "Every capability works as part of one relationship.",
+    security: "Your customer relationships and business data remain yours.",
+    outcomes: "More reasons for customers to choose you again.",
+    faq: "Frequently asked questions about Tanee features",
+    final: "Bring your customer relationships together with Tanee.",
+    card: "A loyalty card that carries your brand",
+    preview: "Tanee product preview",
+  },
+  ar: {
+    title: "كل ما تحتاجه لتحوّل تفاعل عملائك إلى ولاء مستمر.",
+    overview: "تجربة ولاء واحدة ومترابطة لك ولعملائك.",
+    brand: "تجربة ولاء تعكس هوية نشاطك.",
+    activity: "افهم كل عميل بصورة تتجاوز عملية واحدة.",
+    rewards: "كافئ ولاء عملائك بالطريقة التي تناسب نشاطك.",
+    insights: "اعرف ما يشجّع عملاءك على الاستمرار.",
+    journey: "كل ميزة تعمل ضمن تجربة واحدة مترابطة.",
+    security: "علاقاتك بعملائك وبيانات نشاطك تظل ملكك.",
+    outcomes: "امنح عملاءك أسبابًا أكثر ليختاروك من جديد.",
+    faq: "الأسئلة الشائعة عن مزايا Tanee",
+    final: "اجمع علاقات عملائك في تجربة واحدة مع Tanee.",
+    card: "بطاقة ولاء تحمل هوية نشاطك",
+    preview: "معاينة منتج Tanee",
+  },
+} as const;
+
+for (const locale of ["en", "ar"] as const) {
+  for (const theme of ["light", "dark"] as const) {
+    test(`Features ${locale} ${theme}: narrative, previews and responsive composition @desktop @mobile`, async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+      await context.addInitScript(
+        (value) => localStorage.setItem("tanee-marketing-theme", value),
+        theme,
+      );
+
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+
+      const response = await page.goto("/features");
+      expect(response?.status()).toBe(200);
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-marketing-theme",
+        theme,
+      );
+
+      const hero = page.getByRole("heading", {
+        level: 1,
+        name: featuresCopy[locale].title,
+      });
+      await expect(hero).toBeVisible();
+
+      for (const heading of [
+        featuresCopy[locale].overview,
+        featuresCopy[locale].brand,
+        featuresCopy[locale].activity,
+        featuresCopy[locale].rewards,
+        featuresCopy[locale].insights,
+        featuresCopy[locale].journey,
+        featuresCopy[locale].security,
+        featuresCopy[locale].outcomes,
+        featuresCopy[locale].faq,
+        featuresCopy[locale].final,
+      ]) {
+        await expect(
+          page.getByRole("heading", { level: 2, name: heading }),
+        ).toBeVisible();
+      }
+
+      const heroSection = hero.locator("xpath=ancestor::section[1]");
+      await expect(
+        heroSection.locator('a[href="/get-started"]'),
+      ).toBeVisible();
+      await expect(
+        heroSection.locator('a[href="/how-it-works"]'),
+      ).toBeVisible();
+
+      const heroPreview = heroSection.locator(
+        '[data-marketing-product-preview="true"]',
+      );
+      await expect(heroPreview).toBeVisible();
+      await expect(heroPreview).toHaveAttribute(
+        "aria-label",
+        featuresCopy[locale].preview,
+      );
+
+      await expect(
+        page.getByRole("img", { name: featuresCopy[locale].card }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("img", { name: featuresCopy[locale].rewards }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("img", { name: featuresCopy[locale].insights }),
+      ).toBeVisible();
+
+      const faqItems = page.locator("details");
+      await expect(faqItems).toHaveCount(6);
+      await faqItems.first().locator("summary").click();
+      await expect(faqItems.first().locator("p")).toBeVisible();
+
+      const finalHeading = page.getByRole("heading", {
+        level: 2,
+        name: featuresCopy[locale].final,
+      });
+      const finalSection = finalHeading.locator("xpath=ancestor::section[1]");
+      await expect(finalSection.locator('a[href="/get-started"]')).toBeVisible();
+
+      const heroBox = await hero.boundingBox();
+      const previewBox = await heroPreview.boundingBox();
+      expect(heroBox).not.toBeNull();
+      expect(previewBox).not.toBeNull();
+      const viewport = page.viewportSize();
+      expect(viewport).not.toBeNull();
+
+      if (viewport!.width >= 1024) {
+        expect(Math.abs(heroBox!.y - previewBox!.y)).toBeLessThan(220);
+        if (locale === "ar") {
+          expect(heroBox!.x).toBeGreaterThan(previewBox!.x);
+        } else {
+          expect(heroBox!.x).toBeLessThan(previewBox!.x);
+        }
+      } else {
+        expect(previewBox!.y).toBeGreaterThan(heroBox!.y);
+      }
+
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => document.fonts.ready);
+      const project = test.info().project.name.startsWith("mobile")
+        ? "mobile"
+        : "desktop";
+      await page.screenshot({
+        path: test
+          .info()
+          .outputPath(`faq-features-${locale}-${theme}-${project}.png`),
+        fullPage: true,
+      });
+
+      expect(errors).toEqual([]);
+    });
+  }
+}
