@@ -127,7 +127,7 @@ export function MarketingHeader({
             : "border-[var(--lf-border)]/70 bg-[var(--lf-marketing-canvas)]",
         )}
       >
-        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[12rem_minmax(0,1fr)_26rem] min-[1366px]:gap-0">
+        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[10rem_minmax(0,1fr)_28rem] min-[1366px]:gap-0">
           <Link
             href="/"
             data-marketing-header-brand="true"
@@ -167,19 +167,29 @@ export function MarketingHeader({
             data-marketing-header-actions="true"
             className="hidden shrink-0 items-center justify-end gap-2 min-[1366px]:flex min-[1366px]:w-full"
           >
-            <MarketingThemeSwitcher locale={locale} />
-            <LanguageSwitcher locale={locale} alternateOnly />
+            <div
+              data-marketing-header-theme-slot="true"
+              className="flex size-11 shrink-0 items-center justify-center"
+            >
+              <MarketingThemeSwitcher locale={locale} />
+            </div>
+            <div
+              data-marketing-header-language-slot="true"
+              className="flex w-20 shrink-0 items-center justify-center"
+            >
+              <LanguageSwitcher locale={locale} alternateOnly />
+            </div>
             <Link
               href="/login"
               dir={contentDirection}
-              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-xl px-3 text-sm font-semibold text-[var(--lf-foreground)] transition-colors hover:bg-[var(--lf-surface)]"
+              className="inline-flex min-h-11 w-28 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-semibold text-[var(--lf-foreground)] transition-colors hover:bg-[var(--lf-surface)]"
             >
               {signIn}
             </Link>
             <Link
               href="/get-started"
               dir={contentDirection}
-              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl bg-primary px-4 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
+              className="inline-flex min-h-11 w-44 items-center justify-center whitespace-nowrap rounded-2xl bg-primary px-3 text-sm font-bold text-[var(--lf-primary-foreground)] transition-colors duration-150 hover:bg-primary-hover"
             >
               {primaryCta}
             </Link>
