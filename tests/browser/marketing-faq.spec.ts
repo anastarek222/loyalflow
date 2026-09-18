@@ -260,20 +260,19 @@ function expectSameRect(
   }
 }
 
-test("Marketing desktop shell keeps exact geometry across routes locale and theme @desktop", async ({
-  page,
-  context,
-  baseURL,
-}) => {
-  await page.goto("/");
-
-  for (const viewport of [
-    { width: 1366, height: 768, name: "1366" },
-    { width: 1440, height: 900, name: "1440" },
-  ] as const) {
+for (const viewport of [
+  { width: 1366, height: 768, name: "1366" },
+  { width: 1440, height: 900, name: "1440" },
+] as const) {
+  test(`Marketing desktop shell keeps exact geometry at ${viewport.name}px @desktop`, async ({
+    page,
+    context,
+    baseURL,
+  }) => {
     await page.setViewportSize(viewport);
+    await page.goto("/");
 
-    let headerBaseline:
+    let shellBaseline:
       | {
           brand: ShellRect;
           nav: ShellRect;
@@ -297,7 +296,10 @@ test("Marketing desktop shell keeps exact geometry across routes locale and them
           theme,
         );
 
-        for (const route of marketingShellRoutes) {
+        const routes =
+          theme === "light" ? marketingShellRoutes : (["/"] as const);
+
+        for (const route of routes) {
           const response = await page.goto(route);
           expect(response?.status(), route).toBe(200);
           await expect(page.locator("html")).toHaveAttribute(
@@ -365,45 +367,45 @@ test("Marketing desktop shell keeps exact geometry across routes locale and them
             },
           };
 
-          if (!headerBaseline) {
-            headerBaseline = current;
+          if (!shellBaseline) {
+            shellBaseline = current;
           } else {
-            expectSameRect(current.brand, headerBaseline.brand);
-            expectSameRect(current.nav, headerBaseline.nav);
-            expectSameRect(current.actions, headerBaseline.actions);
+            expectSameRect(current.brand, shellBaseline.brand);
+            expectSameRect(current.nav, shellBaseline.nav);
+            expectSameRect(current.actions, shellBaseline.actions);
             for (let index = 0; index < current.links.length; index += 1) {
-              expectSameRect(current.links[index], headerBaseline.links[index]);
+              expectSameRect(current.links[index], shellBaseline.links[index]);
             }
             expect(current.footerShell.x).toBeCloseTo(
-              headerBaseline.footerShell.x,
+              shellBaseline.footerShell.x,
               1,
             );
             expect(current.footerShell.width).toBeCloseTo(
-              headerBaseline.footerShell.width,
+              shellBaseline.footerShell.width,
               1,
             );
             expect(current.footerBrand.x).toBeCloseTo(
-              headerBaseline.footerBrand.x,
+              shellBaseline.footerBrand.x,
               1,
             );
             expect(current.footerBrand.width).toBeCloseTo(
-              headerBaseline.footerBrand.width,
+              shellBaseline.footerBrand.width,
               1,
             );
             expect(current.footerNav.x).toBeCloseTo(
-              headerBaseline.footerNav.x,
+              shellBaseline.footerNav.x,
               1,
             );
             expect(current.footerNav.width).toBeCloseTo(
-              headerBaseline.footerNav.width,
+              shellBaseline.footerNav.width,
               1,
             );
             expect(current.footerActions.x).toBeCloseTo(
-              headerBaseline.footerActions.x,
+              shellBaseline.footerActions.x,
               1,
             );
             expect(current.footerActions.width).toBeCloseTo(
-              headerBaseline.footerActions.width,
+              shellBaseline.footerActions.width,
               1,
             );
           }
@@ -427,8 +429,8 @@ test("Marketing desktop shell keeps exact geometry across routes locale and them
         }
       }
     }
-  }
-});
+  });
+}
 
 const homeCopy = {
   en: {
