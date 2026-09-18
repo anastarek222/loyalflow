@@ -68,3 +68,39 @@ test("dashboard and report chart surfaces use dark-capable semantic colors", () 
   assert.match(reports, /bg-\[var\(--lf-primary-soft\)\]/);
   assert.doesNotMatch(reports, /\bbg-primary-soft\b/);
 });
+
+test("semantic Tailwind color utilities resolve through the Tanee token authority", () => {
+  const aliases = source("app/loyalflow-theme-aliases.css");
+
+  for (const mapping of [
+    "--color-foreground-muted: var(--lf-foreground-muted)",
+    "--color-foreground-subtle: var(--lf-foreground-subtle)",
+    "--color-inverse: var(--lf-inverse)",
+    "--color-primary-soft: var(--lf-primary-soft)",
+    "--color-primary-subtle: var(--lf-primary-soft)",
+    "--color-success-subtle: var(--lf-success-subtle)",
+    "--color-warning-subtle: var(--lf-warning-subtle)",
+    "--color-danger-subtle: var(--lf-danger-subtle)",
+    "--color-info-subtle: var(--lf-info-subtle)",
+  ]) {
+    assert.ok(aliases.includes(mapping), `missing semantic color bridge: ${mapping}`);
+  }
+});
+
+test("sales summary surfaces use product tokens without removing business accents", () => {
+  const kpis = source("components/business-sales-kpis.tsx");
+  const progress = source("components/sales-progress-panel.tsx");
+
+  assert.match(kpis, /border border-border bg-surface/);
+  assert.match(kpis, /bg-foreground text-inverse/);
+  assert.match(kpis, /hover:bg-surface/);
+  assert.match(kpis, /backgroundColor:\s*primaryColor/);
+  assert.doesNotMatch(kpis, /\bbg-white\b|\btext-white\b/);
+
+  assert.match(progress, /border border-border bg-surface/);
+  assert.match(progress, /bg-success-subtle/);
+  assert.match(progress, /rounded-\[var\(--lf-radius-input\)\] bg-surface p-4/);
+  assert.match(progress, /linear-gradient\(135deg, \$\{primaryColor\}, #0f172a\)/);
+  assert.match(progress, /text-white/);
+  assert.doesNotMatch(progress, /border-white\/10 bg-white/);
+});
