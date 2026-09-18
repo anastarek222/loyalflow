@@ -243,11 +243,21 @@ export function MarketingFooter({ locale }: { locale: SupportedLocale }) {
             data-marketing-footer-actions="true"
             className="flex flex-wrap items-center gap-2 md:justify-end"
           >
-            <MarketingThemeSwitcher locale={locale} />
-            <LanguageSwitcher locale={locale} alternateOnly />
+            <div
+              data-marketing-footer-theme-slot="true"
+              className="flex size-11 shrink-0 items-center justify-center"
+            >
+              <MarketingThemeSwitcher locale={locale} />
+            </div>
+            <div
+              data-marketing-footer-language-slot="true"
+              className="flex w-20 shrink-0 items-center justify-center"
+            >
+              <LanguageSwitcher locale={locale} alternateOnly />
+            </div>
             <MarketingNavLink
               href="/login"
-              className="inline-flex min-h-11 items-center px-3 text-sm font-bold text-[var(--lf-foreground-muted)] hover:text-primary"
+              className="inline-flex min-h-11 w-28 items-center justify-center px-2 text-sm font-bold text-[var(--lf-foreground-muted)] hover:text-primary"
               activeClassName="text-primary"
             >
               <span dir={contentDirection}>{copy("marketing.footerAccess")}</span>
