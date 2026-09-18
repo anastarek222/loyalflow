@@ -798,3 +798,165 @@ for (const locale of ["en", "ar"] as const) {
     });
   }
 }
+
+const contactCopy = {
+  en: {
+    title: "The right conversation can save you a lot of setup time.",
+    meeting: "Book a meeting",
+    whatsapp: "Chat on WhatsApp",
+    direct: "Call or email",
+    booking: "Tell us how you would like to meet.",
+    directTitle: "Prefer to speak right away?",
+    existing: "Already using Tanee?",
+    signIn: "Sign in to Tanee",
+  },
+  ar: {
+    title: "مكالمة صح ممكن توفّر عليك وقت كبير في تجهيز نشاطك.",
+    meeting: "احجز اجتماع",
+    whatsapp: "كلّمنا على WhatsApp",
+    direct: "اتصل أو ابعت إيميل",
+    booking: "قول لنا تحب نتقابل إزاي.",
+    directTitle: "تفضّل تتكلم دلوقتي؟",
+    existing: "بتستخدم Tanee بالفعل؟",
+    signIn: "سجّل الدخول إلى Tanee",
+  },
+} as const;
+
+for (const locale of ["en", "ar"] as const) {
+  for (const theme of ["light", "dark"] as const) {
+    test(`Contact ${locale} ${theme}: booking, support and responsive composition @desktop @mobile`, async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+      await context.addInitScript(
+        (value) => localStorage.setItem("tanee-marketing-theme", value),
+        theme,
+      );
+
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+
+      const response = await page.goto("/contact");
+      expect(response?.status()).toBe(200);
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      await expect(page.locator("html")).toHaveAttribute(
+        "data-marketing-theme",
+        theme,
+      );
+
+      const hero = page.locator("h1").filter({ hasText: contactCopy[locale].title });
+      await expect(hero).toHaveCount(1);
+      await expect(hero).toBeVisible();
+
+      const routeCards = page.locator("#contact-options > div > a");
+      await expect(routeCards).toHaveCount(3);
+      await expect(routeCards.nth(0).locator("h2")).toContainText(
+        contactCopy[locale].meeting,
+      );
+      await expect(routeCards.nth(1).locator("h2")).toContainText(
+        contactCopy[locale].whatsapp,
+      );
+      await expect(routeCards.nth(2).locator("h2")).toContainText(
+        contactCopy[locale].direct,
+      );
+      await expect(routeCards.nth(0)).toHaveAttribute("href", "#book-meeting");
+
+      const booking = page.locator("#book-meeting");
+      await expect(booking).toBeVisible();
+      await expect(
+        booking.locator("h2").filter({ hasText: contactCopy[locale].booking }),
+      ).toBeVisible();
+
+      const form = booking.locator("form");
+      await expect(form).toBeVisible();
+      for (const name of [
+        "name",
+        "business",
+        "email",
+        "phone",
+        "country",
+        "purpose",
+        "preferredDate",
+        "preferredTime",
+        "meetingMethod",
+        "notes",
+      ]) {
+        await expect(form.locator(`[name="${name}"]`)).toHaveCount(1);
+      }
+
+      const meetingDate = form.locator('[data-testid="meeting-date"]');
+      const meetingTime = form.locator('[data-testid="meeting-time"]');
+      await expect(meetingDate).toHaveAttribute("min", /\d{4}-\d{2}-\d{2}/);
+      await expect(meetingDate).toHaveValue(/\d{4}-\d{2}-\d{2}/);
+      await expect(meetingTime.locator("option")).toHaveCount(11);
+      await expect(form.locator('select[name="meetingMethod"] option')).toHaveCount(6);
+      await expect(form.locator('button[type="submit"]')).toBeVisible();
+
+      const directHeading = page
+        .locator("h2")
+        .filter({ hasText: contactCopy[locale].directTitle })
+        .first();
+      await expect(directHeading).toBeVisible();
+      const directSection = directHeading.locator("xpath=ancestor::section[1]");
+      const supportLinks = directSection.locator(
+        'a[href^="mailto:"], a[href^="tel:"], a[href^="https://wa.me/"]',
+      );
+      expect(await supportLinks.count()).toBeGreaterThanOrEqual(1);
+      for (const link of await supportLinks.all()) {
+        await expect(link).toBeVisible();
+      }
+
+      const existingHeading = page
+        .locator("h2")
+        .filter({ hasText: contactCopy[locale].existing })
+        .first();
+      await expect(existingHeading).toBeVisible();
+      const existingAside = existingHeading.locator("xpath=ancestor::aside[1]");
+      await expect(existingAside.locator('a[href="/login"]')).toContainText(
+        contactCopy[locale].signIn,
+      );
+
+      const boxes = await routeCards.evaluateAll((cards) =>
+        cards.map((card) => {
+          const rect = card.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width };
+        }),
+      );
+      expect(boxes).toHaveLength(3);
+      const viewport = page.viewportSize();
+      expect(viewport).not.toBeNull();
+      if (viewport!.width >= 768) {
+        expect(Math.max(...boxes.map((box) => box.y)) - Math.min(...boxes.map((box) => box.y))).toBeLessThan(80);
+      } else {
+        expect(boxes[1].y).toBeGreaterThan(boxes[0].y);
+        expect(boxes[2].y).toBeGreaterThan(boxes[1].y);
+      }
+
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => document.fonts.ready);
+      const project = test.info().project.name.startsWith("mobile")
+        ? "mobile"
+        : "desktop";
+      await page.screenshot({
+        path: test
+          .info()
+          .outputPath(`faq-contact-${locale}-${theme}-${project}.png`),
+        fullPage: true,
+      });
+
+      expect(errors).toEqual([]);
+    });
+  }
+}
