@@ -320,36 +320,39 @@ test.describe.serial("PR browser smoke", () => {
           }
 
           const overflowState = await page.evaluate(() => {
-            const overflowing = Array.from(document.querySelectorAll<HTMLElement>("body *"))
-              .map((node) => {
-                const rect = node.getBoundingClientRect();
-                return {
-                  tag: node.tagName.toLowerCase(),
-                  testId: node.dataset.testid ?? "",
-                  className: typeof node.className === "string" ? node.className : "",
-                  text: (node.textContent ?? "").trim().replace(/\\s+/g, " ").slice(0, 120),
-                  left: Math.round(rect.left),
-                  right: Math.round(rect.right),
-                  width: Math.round(rect.width),
-                };
-              })
+            const describe = (node: HTMLElement) => {
+              const rect = node.getBoundingClientRect();
+              return {
+                tag: node.tagName.toLowerCase(),
+                testId: node.dataset.testid ?? "",
+                className: typeof node.className === "string" ? node.className : "",
+                text: (node.textContent ?? "").trim().replace(/\\s+/g, " ").slice(0, 120),
+                left: Number(rect.left.toFixed(2)),
+                right: Number(rect.right.toFixed(2)),
+                width: Number(rect.width.toFixed(2)),
+                clientWidth: node.clientWidth,
+                scrollWidth: node.scrollWidth,
+              };
+            };
+
+            const overflowing = Array.from(
+              document.querySelectorAll<HTMLElement>("body *"),
+            )
+              .map(describe)
               .filter(
                 (item) =>
                   item.width > 0 &&
-                  (item.left < -1 || item.right > window.innerWidth + 1),
+                  (item.left < -0.25 || item.right > window.innerWidth + 0.25),
               )
-              .slice(0, 12);
+              .slice(0, 16);
 
             return {
               viewportWidth: window.innerWidth,
-              scrollWidth: document.documentElement.scrollWidth,
+              root: describe(document.documentElement),
+              body: describe(document.body),
               overflowing,
             };
           });
-          expect(
-            overflowState.scrollWidth <= overflowState.viewportWidth,
-            JSON.stringify(overflowState, null, 2),
-          ).toBe(true);
 
           await page.screenshot({
             path: test.info().outputPath(
@@ -357,6 +360,11 @@ test.describe.serial("PR browser smoke", () => {
             ),
             fullPage: true,
           });
+
+          expect(
+            overflowState.root.scrollWidth <= overflowState.viewportWidth,
+            JSON.stringify(overflowState, null, 2),
+          ).toBe(true);
         }
       }
     }
