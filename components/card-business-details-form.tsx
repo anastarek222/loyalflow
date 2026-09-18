@@ -19,7 +19,7 @@ function SaveCardDetailsButton({ language }: { language: "AR" | "EN" }) {
     <button
       type="submit"
       disabled={pending}
-      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
     >
       <Save className="size-4" aria-hidden="true" />
       {pending
@@ -46,7 +46,7 @@ export default function CardBusinessDetailsForm({
   return (
     <form
       action={updateBusinessCardDetailsCommandAction}
-      className="rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-7"
+      className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-7"
       data-card-business-details="true"
     >
       <input type="hidden" name="businessSlug" value={businessSlug} />
@@ -150,19 +150,19 @@ export default function CardBusinessDetailsForm({
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2 font-mono text-xs">
-            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-surface px-2 py-1">
               {"{reward}"}
             </code>
 
-            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-surface px-2 py-1">
               {"{threshold}"}
             </code>
 
-            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-surface px-2 py-1">
               {"{unit}"}
             </code>
 
-            <code className="rounded-[var(--lf-radius-input)] bg-white px-2 py-1">
+            <code className="rounded-[var(--lf-radius-input)] bg-surface px-2 py-1">
               {"{earn}"}
             </code>
           </div>
