@@ -160,3 +160,10 @@ test("all public marketing routes inherit the canonical header, footer, and bran
   assert.match(footer, /<MarketingBrandText text="Tanee"/);
   assert.match(footer, /marketing\.footerRights/);
 });
+
+test("marketing header keeps desktop breakpoint at 1366px", () => {
+  const header = source("components/marketing/marketing-header.tsx");
+
+  assert.match(header, /max-width: 1365px/);
+  assert.match(header, /min-\[1366px\]:translate-y-0/);
+});

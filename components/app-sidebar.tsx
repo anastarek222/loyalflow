@@ -92,6 +92,7 @@ export default function AppSidebar({
       <div className="px-5 pb-4 pt-5">
         <Link
           href="/dashboard"
+          data-testid="desktop-saas-brand"
           className="flex items-center gap-3 rounded-[var(--lf-radius-input)] px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
         >
           <PlatformBrandIdentity

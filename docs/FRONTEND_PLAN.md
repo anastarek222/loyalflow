@@ -22,11 +22,11 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [ ] Complete semantic-color migration for remaining hard-coded product surfaces
 
 ### Shared shell
-- [ ] Marketing header pixel pass
-- [ ] Marketing footer pixel pass
-- [ ] Auth shell unification
-- [ ] Onboarding alignment
-- [ ] SaaS desktop/mobile brand alignment
+- [x] Marketing header pixel pass
+- [x] Marketing footer pixel pass
+- [x] Auth shell unification
+- [x] Onboarding alignment
+- [x] SaaS desktop/mobile brand alignment
 - [ ] Shared status, toast, pagination, modal, and dropdown visual pass
 
 ### Marketing pages

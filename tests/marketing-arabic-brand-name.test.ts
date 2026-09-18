@@ -1,12 +1,9 @@
-import { marketingMessagesAr } from "./locales/ar/marketing";
-import { marketingMessagesEn } from "./locales/en/marketing";
+import assert from "node:assert/strict";
+import test from "node:test";
 
-const arParity: Record<keyof typeof marketingMessagesEn, string> =
-  marketingMessagesAr;
-const enParity: Record<keyof typeof marketingMessagesAr, string> =
-  marketingMessagesEn;
+import { marketingMessages } from "../lib/i18n/marketing";
 
-const ARABIC_BRAND_NAME_KEYS = new Set<keyof typeof marketingMessagesEn>([
+const brandNameKeys = [
   "marketing.metaTitle",
   "marketing.heroBody",
   "marketing.previewLabel",
@@ -38,22 +35,26 @@ const ARABIC_BRAND_NAME_KEYS = new Set<keyof typeof marketingMessagesEn>([
   "marketing.terms.accessBody",
   "marketing.terms.loyaltyBody",
   "marketing.terms.useBody",
-]);
+] as const;
 
-const normalizedArabicMarketing = Object.fromEntries(
-  Object.entries(arParity).map(([rawKey, value]) => {
-    const key = rawKey as keyof typeof marketingMessagesEn;
-    if (key === "marketing.navAbout") {
-      return [key, "عن Tanee"];
-    }
-    if (ARABIC_BRAND_NAME_KEYS.has(key)) {
-      return [key, value.split("تاني").join("Tanee")];
-    }
-    return [key, value];
-  }),
-) as Record<keyof typeof marketingMessagesEn, string>;
+const naturalAgainKeys = [
+  "marketing.home.heroTitle",
+  "marketing.home.problemTitle",
+  "marketing.home.finalTitle",
+  "marketing.faq.item9Question",
+] as const;
 
-export const marketingMessages = {
-  en: enParity,
-  ar: normalizedArabicMarketing,
-} as const;
+test("Arabic marketing keeps the Tanee product name in English", () => {
+  for (const key of brandNameKeys) {
+    assert.match(marketingMessages.ar[key], /Tanee/, key);
+    assert.doesNotMatch(marketingMessages.ar[key], /تاني/, key);
+  }
+
+  assert.equal(marketingMessages.ar["marketing.navAbout"], "عن Tanee");
+});
+
+test("Arabic natural-language uses of تاني remain Arabic", () => {
+  for (const key of naturalAgainKeys) {
+    assert.match(marketingMessages.ar[key], /تاني/, key);
+  }
+});

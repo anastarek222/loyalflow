@@ -15,6 +15,7 @@ import {
 import LanguageSwitcher from "@/components/language-switcher";
 import ExperienceModeSwitcher from "@/components/experience-mode-switcher";
 import MobileSidebarWrapper from "@/components/mobile-sidebar-wrapper";
+import { TaneeThemeSwitcher } from "@/components/tanee-theme-switcher";
 import { Avatar } from "@/components/ui/avatar";
 import { logoutAction } from "@/app/dashboard/actions";
 import {
@@ -230,6 +231,9 @@ export default function AppTopbar({
             <Bell size={19} aria-hidden="true" />
           </Link>
         )}
+        <div data-testid="saas-theme-switcher">
+          <TaneeThemeSwitcher locale={language === "AR" ? "ar" : "en"} />
+        </div>
         <LanguageSwitcher language={language} />
         <div ref={accountRef} className="relative">
           <button

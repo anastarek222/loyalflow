@@ -51,6 +51,41 @@ async function signOut(page: Page) {
   await expect(page.getByLabel("Email address")).toBeVisible();
 }
 
+async function setAuthenticatedLanguage(
+  page: Page,
+  target: "en" | "ar",
+) {
+  const shell = page.locator("[data-app-language]").first();
+  const targetLanguage = target === "ar" ? "AR" : "EN";
+
+  if ((await shell.getAttribute("data-app-language")) === targetLanguage) {
+    return;
+  }
+
+  const topbar = page.locator('[data-shell-topbar="true"]');
+  const targetInput = topbar.locator(
+    `input[name="language"][value="${targetLanguage}"]`,
+  );
+  await expect(targetInput).toHaveCount(1);
+
+  const switchForm = targetInput.locator("xpath=..");
+  const switchButton = switchForm.getByRole("button");
+  await expect(switchButton).toBeVisible();
+
+  const currentUrl = new URL(page.url());
+  const actionResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
+      new URL(response.url()).pathname === currentUrl.pathname,
+  );
+  await switchButton.click();
+  await actionResponse;
+  await page.reload();
+  await expect(shell).toHaveAttribute("data-app-language", targetLanguage, {
+    timeout: 10_000,
+  });
+}
+
 test.describe.serial("PR browser smoke", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
@@ -112,4 +147,309 @@ test.describe.serial("PR browser smoke", () => {
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
   });
+  test("mobile SaaS drawer keeps Tanee brand parity in both locales @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, "owner-a");
+    await page.goto(`/businesses/${fixture.businessA}`);
+
+    async function assertDrawer(
+      locale: "en" | "ar",
+    ) {
+      const localeShell = page.locator("[data-app-language]").first();
+      await expect(localeShell).toHaveAttribute(
+        "data-app-language",
+        locale === "ar" ? "AR" : "EN",
+      );
+      await expect(localeShell).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+
+      const openNavigation = page.getByRole("banner").getByRole("button", {
+        name: locale === "ar" ? "فتح القائمة" : "Open navigation",
+        exact: true,
+      });
+      await expect(openNavigation).toBeVisible();
+      await expect(
+        page.getByRole("navigation", {
+          name: locale === "ar" ? "التنقل السريع" : "Quick navigation",
+          exact: true,
+        }).getByRole("button", {
+          name: locale === "ar" ? "فتح القائمة الكاملة" : "Open full menu",
+          exact: true,
+        }),
+      ).toBeVisible();
+      await openNavigation.click();
+
+      const drawer = page.getByRole("dialog", {
+        name: locale === "ar" ? "قائمة التنقل" : "Navigation menu",
+        exact: true,
+      });
+      await expect(drawer).toBeVisible();
+
+      const brand = drawer.getByTestId("mobile-saas-brand");
+      const inlineBrand = brand.locator("[data-inline-tanee-name]");
+      await expect(inlineBrand).toBeVisible();
+      await expect(
+        brand.locator("[data-platform-brand-wordmark-size]"),
+      ).toHaveCount(0);
+
+      const brandBox = await inlineBrand.boundingBox();
+      expect(brandBox).not.toBeNull();
+      expect(brandBox!.height).toBeLessThanOrEqual(48);
+      expect(brandBox!.width).toBeLessThanOrEqual(160);
+      expect(
+        await drawer.evaluate((node) => node.scrollWidth <= node.clientWidth),
+      ).toBe(true);
+
+      await page
+        .getByRole("button", {
+          name: locale === "ar" ? "إغلاق القائمة" : "Close navigation",
+          exact: true,
+        })
+        .last()
+        .click();
+      await expect(drawer).toBeHidden();
+    }
+
+    await assertDrawer("en");
+
+    await setAuthenticatedLanguage(page, "ar");
+    await assertDrawer("ar");
+    await setAuthenticatedLanguage(page, "en");
+  });
+
+  test("SaaS shell preserves Tanee brand, theme, and locale parity @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const html = page.locator("html");
+          const localeShell = page.locator("[data-app-language]").first();
+          const themeSwitcher = page
+            .getByTestId("saas-theme-switcher")
+            .getByRole("button");
+
+          await expect(html).toHaveAttribute("data-theme", theme);
+          if (theme === "dark") {
+            await expect(html).toHaveClass(/\bdark\b/);
+          } else {
+            await expect(html).not.toHaveClass(/\bdark\b/);
+          }
+
+          await expect(localeShell).toHaveAttribute(
+            "data-app-language",
+            locale === "ar" ? "AR" : "EN",
+          );
+          await expect(localeShell).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          await expect(themeSwitcher).toBeVisible();
+
+          const desktopNavigation = page.getByRole("complementary", {
+            name: locale === "ar" ? "التنقل الرئيسي" : "Primary navigation",
+            exact: true,
+          });
+          const mobileNavigation = page.getByRole("navigation", {
+            name: locale === "ar" ? "التنقل السريع" : "Quick navigation",
+            exact: true,
+          });
+
+          if (viewport.width < 1024) {
+            await expect(desktopNavigation).toBeHidden();
+            await expect(mobileNavigation).toBeVisible();
+
+            const openNavigation = page
+              .getByRole("banner")
+              .getByRole("button", {
+                name: locale === "ar" ? "فتح القائمة" : "Open navigation",
+                exact: true,
+              });
+            await openNavigation.click();
+
+            const drawer = page.getByRole("dialog", {
+              name: locale === "ar" ? "قائمة التنقل" : "Navigation menu",
+              exact: true,
+            });
+            await expect(drawer).toBeVisible();
+            await expect(
+              drawer
+                .getByTestId("mobile-saas-brand")
+                .locator("[data-inline-tanee-name]"),
+            ).toBeVisible();
+
+            await page
+              .getByRole("button", {
+                name: locale === "ar" ? "إغلاق القائمة" : "Close navigation",
+                exact: true,
+              })
+              .last()
+              .click();
+            await expect(drawer).toBeHidden();
+          } else {
+            await expect(desktopNavigation).toBeVisible();
+            await expect(mobileNavigation).toBeHidden();
+            await expect(
+              page
+                .getByTestId("desktop-saas-brand")
+                .locator("[data-inline-tanee-name]"),
+            ).toBeVisible();
+          }
+
+          const overflowState = await page.evaluate(() => {
+            const describe = (node: HTMLElement) => {
+              const rect = node.getBoundingClientRect();
+              return {
+                tag: node.tagName.toLowerCase(),
+                testId: node.dataset.testid ?? "",
+                className: typeof node.className === "string" ? node.className : "",
+                text: (node.textContent ?? "").trim().replace(/\\s+/g, " ").slice(0, 120),
+                left: Number(rect.left.toFixed(2)),
+                right: Number(rect.right.toFixed(2)),
+                width: Number(rect.width.toFixed(2)),
+                clientWidth: node.clientWidth,
+                scrollWidth: node.scrollWidth,
+              };
+            };
+
+            const overflowing = Array.from(
+              document.querySelectorAll<HTMLElement>("body *"),
+            )
+              .map(describe)
+              .filter(
+                (item) =>
+                  item.width > 0 &&
+                  (item.left < -0.25 || item.right > window.innerWidth + 0.25),
+              )
+              .slice(0, 16);
+
+            return {
+              viewportWidth: window.innerWidth,
+              root: describe(document.documentElement),
+              body: describe(document.body),
+              overflowing,
+            };
+          });
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+
+          expect(
+            overflowState.root.scrollWidth <= overflowState.viewportWidth,
+            JSON.stringify(overflowState, null, 2),
+          ).toBe(true);
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+  });
+
+  test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+
+    for (const locale of ["en", "ar"] as const) {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+
+      const response = await page.goto("/faq");
+      expect(response?.status()).toBe(200);
+
+      const header = page.getByTestId("marketing-header");
+      const desktopNavigation = header.locator(":scope > div > nav");
+      const desktopActions = header.locator(":scope > div > div");
+      const menuButton = header.locator(
+        'button[aria-controls="marketing-mobile-menu"]',
+      );
+
+      await expect(desktopNavigation).toBeVisible();
+      await expect(desktopNavigation.getByRole("link")).toHaveCount(7);
+      await expect(desktopActions).toBeVisible();
+      await expect(menuButton).toBeHidden();
+      await expect(page.locator("main")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth,
+        ),
+      ).toBe(true);
+
+      await page.evaluate(() => window.scrollTo(0, 900));
+      await expect(header).toHaveAttribute("data-header-visible", "true");
+      await expect(header).toBeVisible();
+    }
+  });
+
+  test("marketing footer keeps usable link targets at 360px and 390px in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    for (const width of [360, 390] as const) {
+      await page.setViewportSize({ width, height: 844 });
+
+      for (const locale of ["en", "ar"] as const) {
+        await context.addCookies([
+          { name: "loyalflow_locale", value: locale, url: baseURL! },
+        ]);
+
+        const response = await page.goto("/faq");
+        expect(response?.status()).toBe(200);
+
+        const footer = page.getByTestId("marketing-footer");
+        await footer.scrollIntoViewIfNeeded();
+        await expect(footer).toBeVisible();
+        const navigation = footer.getByTestId("marketing-footer-navigation");
+        const links = navigation.getByRole("link");
+        await expect(links).toHaveCount(12);
+
+        const heights = await links.evaluateAll((nodes) =>
+          nodes.map((node) => Math.round(node.getBoundingClientRect().height)),
+        );
+        expect(Math.min(...heights)).toBeGreaterThanOrEqual(44);
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth,
+          ),
+        ).toBe(true);
+        await expect(page.locator("main")).toHaveAttribute(
+          "dir",
+          locale === "ar" ? "rtl" : "ltr",
+        );
+      }
+    }
+  });
+
+
 });
