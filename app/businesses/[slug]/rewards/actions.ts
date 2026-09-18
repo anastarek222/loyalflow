@@ -213,6 +213,7 @@ export async function toggleRewardStatusAction(
     redirect(`/businesses/${business.slug}/rewards?error=${error}`);
   }
 
+  scheduleIntegrationJobs(result.integrationJobIds);
   revalidateRewardPaths(business.slug);
   redirect(`/businesses/${business.slug}/rewards?success=updated`);
 }

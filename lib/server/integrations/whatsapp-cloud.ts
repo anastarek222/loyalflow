@@ -1,7 +1,9 @@
 import { normalizePhoneE164, phoneDigits } from "@/lib/customers/phone";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
+import { isOfferEligible } from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
 import { getRewardAvailability } from "@/lib/rewards/availability";
+import { resolveBusinessCustomerAudienceContext } from "@/lib/server/customers/audience-context";
 import {
   isAutomaticCustomerMessageEvent,
   isCustomerMessagePayload,
@@ -138,18 +140,29 @@ export async function sendWhatsAppCustomerNotificationSafely(
       isActive: true,
     },
     select: {
+      id: true,
+      businessId: true,
       firstName: true,
       lastName: true,
       phone: true,
       balance: true,
+      createdAt: true,
+      lifetimeEarned: true,
       publicToken: true,
       whatsappPhoneE164: true,
       whatsappOptInAt: true,
       whatsappOptedOutAt: true,
+      transactions: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
+      },
       business: {
         select: {
+          id: true,
           name: true,
           country: true,
+          loyaltyMode: true,
           unitName: true,
           rewardName: true,
           rewardThreshold: true,
@@ -175,10 +188,79 @@ export async function sendWhatsAppCustomerNotificationSafely(
   if (!customer || !customer.whatsappOptInAt || customer.whatsappOptedOutAt) {
     return { status: "success" };
   }
+  if (
+    !customer.whatsappPhoneE164 ||
+    customer.whatsappPhoneE164 !== customer.phone
+  ) {
+    return { status: "success" };
+  }
 
-  const canonicalRecipient = customer.whatsappPhoneE164
-    ? normalizePhoneE164(customer.whatsappPhoneE164)
-    : normalizePhoneE164(customer.phone, customer.business.country);
+  let publishedSubjectName: string | null = null;
+  if (payload.event === "NEW_REWARD") {
+    const reward = await prisma.reward.findFirst({
+      where: {
+        id: payload.rewardId,
+        businessId,
+        isActive: true,
+      },
+      select: { name: true },
+    });
+    if (!reward) return { status: "success" };
+    publishedSubjectName = reward.name;
+  }
+
+  if (payload.event === "NEW_OFFER") {
+    const now = new Date();
+    const offer = await prisma.offer.findFirst({
+      where: { id: payload.offerId, businessId },
+      select: {
+        businessId: true,
+        isActive: true,
+        validFrom: true,
+        validUntil: true,
+        eligibility: true,
+        segment: true,
+        name: true,
+      },
+    });
+    if (!offer) return { status: "success" };
+
+    const audienceContext = await resolveBusinessCustomerAudienceContext({
+      business: {
+        id: customer.business.id,
+        loyaltyMode: customer.business.loyaltyMode,
+        rewardThreshold: customer.business.rewardThreshold,
+        rewardName: customer.business.rewardName,
+      },
+      customer: {
+        id: customer.id,
+        isActive: true,
+        balance: customer.balance,
+      },
+      catalogueRewards: customer.business.rewards,
+      now,
+    });
+    const eligible = isOfferEligible(
+      offer,
+      {
+        businessId: customer.businessId,
+        isActive: true,
+        createdAt: customer.createdAt,
+        lifetimeEarned: customer.lifetimeEarned,
+        lastActivityAt: customer.transactions[0]?.createdAt ?? null,
+      },
+      {
+        id: customer.business.id,
+        rewardThreshold: customer.business.rewardThreshold,
+      },
+      now,
+      audienceContext,
+    );
+    if (!eligible) return { status: "success" };
+    publishedSubjectName = offer.name;
+  }
+
+  const canonicalRecipient = normalizePhoneE164(customer.whatsappPhoneE164);
   const to = canonicalRecipient ? phoneDigits(canonicalRecipient) : null;
   if (!to) {
     return {
@@ -309,7 +391,10 @@ export async function sendWhatsAppCustomerNotificationSafely(
       business: customer.business.name,
       balance,
       unit: customer.business.unitName,
-      reward: payload.rewardName ?? rewardAvailability.defaultReward.name,
+      reward:
+        publishedSubjectName ??
+        payload.rewardName ??
+        rewardAvailability.defaultReward.name,
       remaining: rewardAvailability.remaining,
       cardLink: cardUrl,
     },

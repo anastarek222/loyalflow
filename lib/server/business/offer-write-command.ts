@@ -6,15 +6,12 @@ import { configurationToPlanLimits } from "@/lib/entitlements-server";
 import { normalizeOfferInput } from "@/lib/offers/catalog";
 import {
   getOfferTagAudienceId,
-  isOfferCurrentlyValid,
-  isOfferSegment,
   isOfferAudienceSelectorForLoyaltyMode,
 } from "@/lib/offers/eligibility";
 import prisma from "@/lib/prisma";
 import { lockBusinessCapacity } from "@/lib/server/business/business-capacity-lock";
 import type { LoyaltyMode } from "@/generated/prisma/client";
-import { resolveBusinessCustomerIdsForSegment } from "@/lib/server/customers/audience-context";
-import { enqueueCustomerMessageAudienceJobs } from "@/lib/server/integrations/customer-messaging";
+import { enqueueCustomerMessagePublicationJobs } from "@/lib/server/integrations/customer-messaging";
 
 export type OfferWriteActor = Readonly<{
   id: string;
@@ -68,6 +65,14 @@ async function hasValidOfferAudience(
     select: { id: true },
   });
   return Boolean(tag);
+}
+
+function offerNotificationAvailableAt(
+  offer: Readonly<{ validFrom: Date | null; validUntil: Date | null }>,
+  now: Date,
+) {
+  if (offer.validUntil && offer.validUntil < now) return null;
+  return offer.validFrom && offer.validFrom > now ? offer.validFrom : now;
 }
 
 /**
@@ -167,36 +172,17 @@ export async function createOfferCommand(input: {
       }),
     });
 
-    let audienceIds: string[] | undefined;
-    if (offer.eligibility === "VIP") {
-      audienceIds = await resolveBusinessCustomerIdsForSegment({
-        business: { id: input.businessId, ...business },
-        segment: "VIP",
-      });
-    } else if (offer.eligibility === "SEGMENT") {
-      const tagId = getOfferTagAudienceId(offer.segment);
-      if (tagId) {
-        const assignments = await transaction.customerTagAssignment.findMany({
-          where: { businessId: input.businessId, tagId },
-          select: { customerId: true },
-        });
-        audienceIds = assignments.map((assignment) => assignment.customerId);
-      } else if (isOfferSegment(offer.segment)) {
-        audienceIds = await resolveBusinessCustomerIdsForSegment({
-          business: { id: input.businessId, ...business },
-          segment: offer.segment,
-        });
-      } else {
-        audienceIds = [];
-      }
-    }
-
-    const messageJobs = isOfferCurrentlyValid(offer)
-      ? await enqueueCustomerMessageAudienceJobs(transaction, {
+    const now = new Date();
+    const availableAt = offer.isActive
+      ? offerNotificationAvailableAt(offer, now)
+      : null;
+    const messageJobs = availableAt
+      ? await enqueueCustomerMessagePublicationJobs(transaction, {
           businessId: input.businessId,
           event: "NEW_OFFER",
-          eventKey: offer.id,
-          ...(audienceIds ? { customerIds: audienceIds } : {}),
+          offerId: offer.id,
+          publicationKey: `offer:${offer.id}:created`,
+          availableAt,
         })
       : [];
 
@@ -299,7 +285,7 @@ export async function setOfferStatusCommand(input: {
       }),
       transaction.offer.findFirst({
         where: { id: input.offerId, businessId: input.businessId },
-        select: { id: true, eligibility: true, segment: true },
+        select: { id: true, eligibility: true, segment: true, isActive: true },
       }),
     ]);
     if (!business) {
@@ -323,7 +309,14 @@ export async function setOfferStatusCommand(input: {
     const offer = await transaction.offer.update({
       where: { id: existingOffer.id },
       data: { isActive: input.isActive },
-      select: { id: true, name: true },
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        validFrom: true,
+        validUntil: true,
+        updatedAt: true,
+      },
     });
     await transaction.businessActivity.create({
       data: buildCatalogAuditActivity({
@@ -336,6 +329,22 @@ export async function setOfferStatusCommand(input: {
       }),
     });
 
-    return { ok: true, integrationJobIds: [] } as const;
+    const now = new Date();
+    const availableAt = offerNotificationAvailableAt(offer, now);
+    const messageJobs =
+      !existingOffer.isActive && offer.isActive && availableAt
+        ? await enqueueCustomerMessagePublicationJobs(transaction, {
+            businessId: input.businessId,
+            event: "NEW_OFFER",
+            offerId: offer.id,
+            publicationKey: `offer:${offer.id}:activated:${offer.updatedAt.getTime()}`,
+            availableAt,
+          })
+        : [];
+
+    return {
+      ok: true,
+      integrationJobIds: messageJobs.map((job) => job.id),
+    } as const;
   });
 }
