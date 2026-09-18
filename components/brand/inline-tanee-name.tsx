@@ -29,7 +29,7 @@ export function InlineTaneeName({
         data-inline-tanee-ee=""
         data-preserve-latin-tracking=""
         className={cn(
-          "relative -ms-[0.015em] inline-block w-[1.92em] align-[-0.08em] leading-[0.92] text-[#FF6652]",
+          "relative -ms-[0.015em] inline-block w-[1.68em] align-[-0.08em] leading-none text-[#FF6652]",
           accentClassName,
         )}
       >
@@ -37,7 +37,7 @@ export function InlineTaneeName({
         <svg
           aria-hidden="true"
           focusable="false"
-          viewBox="850 84 650 300"
+          viewBox="850 0 650 384"
           preserveAspectRatio="xMidYMid meet"
           data-inline-tanee-ee-vector=""
           className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
