@@ -84,7 +84,7 @@ export async function CustomCardArtworkManager({
             )}
           </p>
         </div>
-        <span className="rounded-full border border-primary/20 bg-white px-3 py-1 text-xs font-black text-primary">
+        <span className="rounded-full border border-primary/20 bg-surface px-3 py-1 text-xs font-black text-primary">
           {t("للمشرف العام فقط", "Super Admin only")}
         </span>
       </div>
@@ -94,7 +94,7 @@ export async function CustomCardArtworkManager({
         status={status}
       />
 
-      <details className="group mt-4 rounded-xl border border-border bg-white p-4">
+      <details className="group mt-4 rounded-xl border border-border bg-surface p-4">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-black marker:content-none">
           <span>{t("متطلبات التصميم", "Artwork requirements")}</span>
           <span
@@ -141,7 +141,7 @@ export async function CustomCardArtworkManager({
                 name="customCardFrontFile"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                className="mt-2 block w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm"
               />
             </label>
             <label className="text-sm font-bold">
@@ -151,7 +151,7 @@ export async function CustomCardArtworkManager({
                 name="customCardBackFile"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                className="mt-2 block w-full rounded-xl border border-border bg-white px-3 py-3 text-sm"
+                className="mt-2 block w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm"
               />
             </label>
           </div>
@@ -171,7 +171,7 @@ export async function CustomCardArtworkManager({
       )}
 
       {selected && selectedArtwork ? (
-        <div className="mt-6 rounded-2xl border border-border bg-white p-4">
+        <div className="mt-6 rounded-2xl border border-border bg-surface p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-black">{t("معاينة المسودة", "Draft preview")}</p>
@@ -190,7 +190,7 @@ export async function CustomCardArtworkManager({
                   "نشر زوج الأمامية + الخلفية هذا على جميع بطاقات العملاء لهذا النشاط؟ سيتم استبدال الزوج المنشور حاليًا.",
                   "Publish this Front + Back pair to all customer cards for this business? The currently published pair will be replaced.",
                 )}
-                className="rounded-[var(--lf-radius-input)] bg-emerald-600 px-5 py-3 font-black text-white"
+                className="rounded-[var(--lf-radius-input)] bg-success px-5 py-3 font-black text-inverse"
               />
             </form>
           </div>
@@ -228,7 +228,7 @@ export async function CustomCardArtworkManager({
 
       {versions.length > 0 ? (
         <details
-          className="mt-5 rounded-xl border border-border bg-white p-4"
+          className="mt-5 rounded-xl border border-border bg-surface p-4"
           data-testid="custom-card-retained-library"
         >
           <summary className="cursor-pointer font-black">
