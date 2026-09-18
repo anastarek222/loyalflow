@@ -40,7 +40,7 @@ export default async function CustomerLayout({
         >
           <Link
             href={`/businesses/${slug}/customers/${customerId}/redemption-reversal`}
-            className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-danger/20 bg-white px-4 py-3 text-sm font-bold text-danger shadow-lg transition hover:bg-danger-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40"
+            className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-danger/20 bg-surface px-4 py-3 text-sm font-bold text-danger shadow-lg transition hover:bg-danger-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger/40"
           >
             Reverse redemption
           </Link>
