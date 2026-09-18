@@ -485,6 +485,193 @@ test.describe.serial("PR browser smoke", () => {
     await signOut(page);
   });
 
+  test("Customers SIMPLE preserves search, cards, locale and theme across viewports @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}/customers`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const main = page.locator('main[data-experience-customers="simple"]');
+          await expect(main).toBeVisible();
+          await expect(main).toHaveAttribute("data-experience-mode", "SIMPLE");
+          await expect(
+            page.locator("#app-content").getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "العملاء" : "Customers",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const search = main.getByLabel(locale === "ar" ? "البحث" : "Search", {
+            exact: true,
+          });
+          await expect(search).toBeVisible();
+          await expect(search).toHaveAttribute(
+            "placeholder",
+            locale === "ar"
+              ? "الاسم أو الهاتف أو كود العميل"
+              : "Name, phone, or customer code",
+          );
+
+          const mobileList = main.getByLabel(
+            locale === "ar" ? "قائمة العملاء على الجوال" : "Mobile customer list",
+            { exact: true },
+          );
+          await expect(mobileList).toBeVisible();
+          expect(await mobileList.getByRole("link").count()).toBeGreaterThan(0);
+          await expect(main.locator("table")).toHaveCount(0);
+
+          const advancedOptions = main
+            .getByText(locale === "ar" ? "خيارات متقدمة" : "Advanced options", {
+              exact: true,
+            })
+            .last();
+          await expect(advancedOptions).toBeVisible();
+
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-customers-simple-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Customers ADVANCED preserves filters and table-to-card responsiveness @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "manager-a");
+    const route = `/businesses/${fixture.businessA}/customers`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const main = page.locator('main[data-experience-customers="advanced"]');
+          await expect(main).toBeVisible();
+          await expect(main).toHaveAttribute("data-experience-mode", "ADVANCED");
+          await expect(
+            page.locator("#app-content").getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "العملاء" : "Customers",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          await expect(
+            main.getByLabel(locale === "ar" ? "البحث" : "Search", {
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const advancedOptions = main
+            .getByText(locale === "ar" ? "خيارات متقدمة" : "Advanced options", {
+              exact: true,
+            })
+            .first();
+          await advancedOptions.click();
+
+          await expect(
+            main.getByLabel(locale === "ar" ? "الحالة" : "Status", {
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(
+            main.getByLabel(
+              locale === "ar" ? "شريحة العميل" : "Customer segment",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(
+            main.getByLabel(locale === "ar" ? "الترتيب" : "Sort", {
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const table = main.locator("table");
+          const mobileList = main.getByLabel(
+            locale === "ar" ? "قائمة العملاء على الجوال" : "Mobile customer list",
+            { exact: true },
+          );
+          if (viewport.width >= 1024) {
+            await expect(table).toBeVisible();
+            await expect(mobileList).toBeHidden();
+            expect(await table.locator("tbody tr").count()).toBeGreaterThan(0);
+          } else {
+            await expect(table).toBeHidden();
+            await expect(mobileList).toBeVisible();
+            expect(await mobileList.getByRole("link").count()).toBeGreaterThan(0);
+          }
+
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-customers-advanced-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
     page,
   }) => {
