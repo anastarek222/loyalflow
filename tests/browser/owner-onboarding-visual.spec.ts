@@ -68,7 +68,7 @@ async function signInPendingOwner(page: import("@playwright/test").Page) {
   await expect(page).toHaveURL(/\/onboarding$/, { timeout: 20_000 });
 }
 
-test.describe.serial("Owner onboarding visual alignment @onboarding-visual", () => {
+test.describe.serial("Owner onboarding visual alignment @desktop @onboarding-visual", () => {
   test.beforeAll(async ({ baseURL }) => {
     const prepared = await prepareBrowserUat(baseURL!);
     fixture = prepared.fixture;
