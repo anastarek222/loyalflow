@@ -80,10 +80,9 @@ for (const locale of ["en", "ar"] as const) {
       await expect(page.locator("footer")).toBeVisible();
 
       const heroSection = hero.locator("xpath=ancestor::section[1]");
-      const heroPreview = heroSection
-        .locator("[aria-label]")
-        .filter({ has: page.getByText(copy[locale].preview, { exact: true }) })
-        .first();
+      const heroPreview = heroSection.locator(
+        '[data-marketing-product-preview="true"]',
+      );
       await expect(heroPreview).toBeVisible();
 
       const heroBox = await hero.boundingBox();
