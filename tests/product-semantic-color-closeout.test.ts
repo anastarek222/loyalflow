@@ -43,6 +43,12 @@ const strictProductPaths = [
   "components/copy-link-button.tsx",
   "components/share-link-button.tsx",
   "components/scan-action-button.tsx",
+  "app/businesses/[slug]/customers/[customerId]/layout.tsx",
+  "components/custom-card-safe-zone-guide.tsx",
+  "components/customer-profile/operational-disclosure.tsx",
+  "components/owner-onboarding-wizard.tsx",
+  "components/public-trial-form.tsx",
+  "components/whatsapp-embedded-signup-button.tsx",
 ] as const;
 
 for (const path of strictProductPaths) {
@@ -132,5 +138,29 @@ test("QR scanner keeps fixed black and white inside the camera reader only", () 
   assert.match(
     scanner,
     /border border-border bg-surface px-4 text-foreground/,
+  );
+});
+
+
+test("Owner onboarding keeps fixed colours limited to card preview defaults", () => {
+  const onboarding = source("components/owner-onboarding-wizard.tsx");
+
+  assert.doesNotMatch(onboarding, /rgb\(15_23_42\/0\.(?:08|1)\)/);
+  assert.deepEqual(
+    [...new Set(onboarding.match(/#[0-9A-Fa-f]{6,8}\b/g) ?? [])].sort(),
+    ["#111827", "#FFFFFF"].sort(),
+  );
+  assert.match(onboarding, /bg-surface/);
+  assert.match(onboarding, /text-primary-foreground/);
+});
+
+test("Scan page fixed white is isolated to the business logo plate", () => {
+  const scan = source("app/businesses/[slug]/scan/page.tsx");
+  const fixedWhite = scan.match(/\bbg-white\b/g) ?? [];
+
+  assert.equal(fixedWhite.length, 1);
+  assert.match(
+    scan,
+    /business\.logoUrl[\s\S]*?border border-white\/80 bg-white object-contain/,
   );
 });
