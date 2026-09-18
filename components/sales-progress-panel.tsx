@@ -105,7 +105,7 @@ export default function SalesProgressPanel({
   return (
     <section
       dir={defaultLanguage === "AR" ? "rtl" : "ltr"}
-      className="mb-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-white/10 bg-white shadow-xl"
+      className="mb-6 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-xl"
     >
       <div
         className="p-6 text-white sm:p-6"
@@ -174,7 +174,7 @@ export default function SalesProgressPanel({
 
             {rewardType === "PROMO_CODE" &&
               rewardCode && (
-                <div className="mt-4 rounded-[var(--lf-radius-input)] bg-white p-4">
+                <div className="mt-4 rounded-[var(--lf-radius-input)] bg-surface p-4">
                   <p className="text-xs font-black">
                     {text.promoCode}
                   </p>
