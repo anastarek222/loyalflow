@@ -27,7 +27,7 @@ type Props = {
 };
 
 const inputClass =
-  "w-full min-h-12 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
+  "w-full min-h-12 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10";
 
 function SaveButton({ language }: { language: "AR" | "EN" }) {
   const { pending } = useFormStatus();
@@ -35,7 +35,7 @@ function SaveButton({ language }: { language: "AR" | "EN" }) {
     <button
       type="submit"
       disabled={pending}
-      className="mt-7 min-h-12 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+      className="mt-7 min-h-12 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
     >
       {pending
         ? language === "AR"
@@ -160,7 +160,7 @@ export function ProgramRulesForm({
     <form
       action={action}
       onSubmit={confirmEconomicRuleChanges}
-      className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-8"
+      className="overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-8"
       data-program-rules-form
     >
       <input type="hidden" name="confirmEconomicRules" defaultValue="false" />
