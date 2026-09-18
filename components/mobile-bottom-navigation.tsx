@@ -130,7 +130,7 @@ export default function MobileBottomNavigation({
               aria-current={active ? "page" : undefined}
               className={
                 isScan
-                  ? "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl bg-primary px-1 text-[11px] font-bold text-white shadow-md shadow-primary/20"
+                  ? "flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl bg-primary px-1 text-[11px] font-bold text-primary-foreground shadow-md shadow-primary/20"
                   : `flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold ${active ? "bg-primary-subtle text-primary" : "text-foreground-muted hover:bg-surface-subtle"}`
               }
             >

@@ -7,6 +7,7 @@ import {
   resolveExperienceMode,
 } from "@/lib/experience-mode";
 import { getAuthenticatedRequestContext } from "@/lib/auth/authenticated-request-context";
+import { TANEE_UI_THEME_BOOTSTRAP } from "@/lib/tanee-ui-theme";
 
 import prisma from "@/lib/prisma";
 
@@ -66,11 +67,13 @@ export default async function AuthenticatedLocaleShell({
 
 
   return (
-    <div
+    <>
+      <script dangerouslySetInnerHTML={{ __html: TANEE_UI_THEME_BOOTSTRAP }} />
+      <div
       lang={lang}
       dir={dir}
       data-app-language={language}
-      className="min-h-screen bg-slate-50"
+      className="min-h-screen bg-canvas text-foreground"
     >
 
       <AuthenticatedAppShell
@@ -90,6 +93,7 @@ export default async function AuthenticatedLocaleShell({
         {children}
       </AuthenticatedAppShell>
 
-    </div>
+      </div>
+    </>
   );
 }
