@@ -12,7 +12,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 ## Execution order
 
 ### Foundation
-- [x] Inline Tanee text component
+- [ ] Inline Tanee canonical text/ligature reconciliation (reopened for exact A15 geometry)
 - [x] English-only Tanee brand-name authority
 - [x] Stable Arabic web font
 - [x] Shared RTL tracking/uppercase normalization
@@ -22,8 +22,8 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Complete semantic-color migration for remaining hard-coded product surfaces
 
 ### Shared shell
-- [x] Marketing header pixel pass
-- [x] Marketing footer pixel pass
+- [ ] Marketing header exact desktop geometry pass (reopened)
+- [ ] Marketing footer exact desktop geometry pass (reopened)
 - [x] Auth shell unification
 - [x] Onboarding alignment
 - [x] SaaS desktop/mobile brand alignment
