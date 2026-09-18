@@ -131,7 +131,12 @@ test.describe.serial("PR browser smoke", () => {
     async function assertDrawer(
       locale: "en" | "ar",
     ) {
-      await expect(page.locator("html")).toHaveAttribute(
+      const localeShell = page.locator("[data-app-language]").first();
+      await expect(localeShell).toHaveAttribute(
+        "data-app-language",
+        locale === "ar" ? "AR" : "EN",
+      );
+      await expect(localeShell).toHaveAttribute(
         "dir",
         locale === "ar" ? "rtl" : "ltr",
       );
@@ -180,7 +185,10 @@ test.describe.serial("PR browser smoke", () => {
       has: page.locator('input[name="language"][value="AR"]'),
     });
     await switchToArabicForm.getByRole("button").click();
-    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+      "data-app-language",
+      "AR",
+    );
 
     await assertDrawer("ar");
   });
