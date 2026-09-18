@@ -184,7 +184,7 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
           </div>
           <div className="border-t border-border bg-surface-subtle p-5 lg:border-s lg:border-t-0 lg:p-6">
             <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-success-subtle text-success">
                 <ShieldCheck className="size-5" aria-hidden="true" />
               </span>
               <div>
@@ -231,7 +231,7 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
           {canExport ? (
             <a
               href={`/businesses/${business.slug}/recovery/export?audience=${audience}`}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] border border-emerald-300 bg-emerald-50 px-4 text-sm font-bold text-emerald-900 transition-colors hover:bg-emerald-100"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 text-sm font-bold text-success transition-colors hover:bg-success/10"
             >
               <Download className="size-4" aria-hidden="true" />
               {language === "AR" ? "تصدير CSV" : "Export CSV"}
@@ -257,14 +257,14 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
                 aria-current={selected ? "page" : undefined}
                 className={`flex min-h-20 items-center gap-3 rounded-[var(--lf-radius-input)] border p-4 transition-colors ${
                   selected
-                    ? "border-primary bg-primary text-white shadow-sm"
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
                     : "border-border bg-surface text-foreground hover:bg-surface-subtle"
                 }`}
               >
                 <span
                   className={`grid size-10 shrink-0 place-items-center rounded-xl ${
                     selected
-                      ? "bg-white/15 text-white"
+                      ? "bg-primary-foreground/15 text-primary-foreground"
                       : "bg-primary-soft text-primary"
                   }`}
                 >
@@ -279,7 +279,7 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
                     {audienceLabel(option)}
                   </span>
                   <span
-                    className={`mt-1 block text-xs ${selected ? "text-white/75" : "text-foreground-subtle"}`}
+                    className={`mt-1 block text-xs ${selected ? "text-primary-foreground/75" : "text-foreground-subtle"}`}
                   >
                     {isInactive
                       ? language === "AR"
@@ -417,7 +417,7 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
                         {customer.phone}
                       </p>
                     </div>
-                    <span className="ms-auto shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800">
+                    <span className="ms-auto shrink-0 rounded-full bg-warning-subtle px-2.5 py-1 text-xs font-bold text-warning">
                       {audienceLabel(audience)}
                     </span>
                   </div>
@@ -483,7 +483,7 @@ export default async function RecoveryPage({ params, searchParams }: Props) {
                       href={buildWhatsAppUrl(customer.phone, message)}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
                     >
                       <MessageSquareText
                         className="size-4"
