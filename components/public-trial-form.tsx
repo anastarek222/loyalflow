@@ -39,7 +39,7 @@ export function PublicTrialForm({ locale, action }: Props) {
         unavailable: "تعذر إرسال رابط الإعداد الآن. حاول مرة أخرى لاحقًا.",
         successTitle: "راجع بريدك الإلكتروني",
         successBody:
-          "إذا كانت البيانات مؤهلة، ستصلك رسالة من تاني تحتوي على رابط آمن لتعيين كلمة المرور. لا نكشف هنا إذا كان الحساب موجودًا أو استُخدمت الفترة التجريبية من قبل.",
+          "إذا كانت البيانات مؤهلة، ستصلك رسالة من Tanee تحتوي على رابط آمن لتعيين كلمة المرور. لا نكشف هنا إذا كان الحساب موجودًا أو استُخدمت الفترة التجريبية من قبل.",
       }
     : {
         firstName: "First name",
@@ -207,7 +207,7 @@ export function PublicTrialForm({ locale, action }: Props) {
       <button
         type="submit"
         disabled={pending}
-        className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? copy.submitting : copy.submit}
       </button>
