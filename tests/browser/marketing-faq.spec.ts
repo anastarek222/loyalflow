@@ -283,14 +283,16 @@ for (const locale of ["en", "ar"] as const) {
       ).toBeVisible();
 
       const trialLinks = page.locator('a[href="/get-started"]');
-      await expect(trialLinks.first()).toBeVisible();
       expect(await trialLinks.count()).toBeGreaterThanOrEqual(2);
-      await expect(
-        page.locator('a[href="/how-it-works"]').first(),
-      ).toBeVisible();
       await expect(page.locator("footer")).toBeVisible();
 
       const heroSection = hero.locator("xpath=ancestor::section[1]");
+      await expect(
+        heroSection.locator('a[href="/get-started"]'),
+      ).toBeVisible();
+      await expect(
+        heroSection.locator('a[href="/how-it-works"]'),
+      ).toBeVisible();
       const heroPreview = heroSection.locator(
         '[data-marketing-product-preview="true"]',
       );
