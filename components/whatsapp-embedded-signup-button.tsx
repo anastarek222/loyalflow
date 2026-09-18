@@ -279,7 +279,7 @@ export function WhatsAppEmbeddedSignupButton({
         type="button"
         onClick={startConnection}
         disabled={!enabled || !sdkReady || connecting}
-        className="min-h-12 rounded-xl bg-primary px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-12 rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
       >
         {connecting
           ? t("جارٍ ربط WhatsApp…", "Connecting WhatsApp…")
