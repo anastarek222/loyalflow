@@ -197,7 +197,7 @@ export default async function CampaignsPage({
           </div>
           <div className="border-t border-border bg-surface-subtle p-5 lg:border-s lg:border-t-0 lg:p-6">
             <div className="flex items-start gap-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-success-subtle text-success">
                 <ShieldCheck className="size-5" aria-hidden="true" />
               </span>
               <div>
@@ -243,7 +243,7 @@ export default async function CampaignsPage({
       </section>
 
       {selectedIds ? (
-        <p className="flex items-center gap-3 rounded-[var(--lf-radius-input)] border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm font-bold text-cyan-900">
+        <p className="flex items-center gap-3 rounded-[var(--lf-radius-input)] border border-info/30 bg-info-subtle px-4 py-3 text-sm font-bold text-info">
           <Users className="size-5 shrink-0" aria-hidden="true" />
           {language === "AR"
             ? `هذه المعاينة مقصورة على ${selectedIds.length} عميل محدد. لا يتم حفظ أو إرسال أي حملة.`
