@@ -29,7 +29,7 @@ export default function OperationalDisclosure({
       id={id}
       open={defaultOpen || undefined}
       className={cn(
-        "group overflow-hidden rounded-[var(--lf-radius-card)] border bg-white shadow-sm",
+        "group overflow-hidden rounded-[var(--lf-radius-card)] border bg-surface shadow-sm",
         tone === "danger" ? "border-danger/25" : "border-border/80",
         className,
       )}
