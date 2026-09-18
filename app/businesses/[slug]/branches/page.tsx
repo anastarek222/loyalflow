@@ -161,7 +161,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
 
         <section className="space-y-4">
           {branches.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+            <div className="rounded-3xl border border-dashed border-border bg-surface p-10 text-center text-foreground-subtle">
               {t(language, "لا توجد فروع بعد. يبقى مسار الموقع الواحد الحالي مدعومًا حتى تضيف فرعًا.", "No branches yet. The existing single-location path remains supported until you add one.")}
             </div>
           ) : (
@@ -174,17 +174,17 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
 
               return (
                 <article key={branch.id} data-branch-card="true" className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
-                  <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary"><Store className="size-5" aria-hidden="true" /></span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
-                          <h2 className="text-xl font-bold text-slate-950">{branch.name}</h2>
-                          <span className={`rounded-full px-3 py-1 text-xs font-bold ${branch.isActive ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
+                          <h2 className="text-xl font-bold text-foreground">{branch.name}</h2>
+                          <span className={`rounded-full px-3 py-1 text-xs font-bold ${branch.isActive ? "bg-success-subtle text-success" : "bg-surface-subtle text-foreground-muted"}`}>
                             {branch.isActive ? t(language, "نشط", "Active") : t(language, "موقوف", "Inactive")}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-500">
+                        <p className="mt-2 text-sm text-foreground-subtle">
                           {t(language, `أُنشئ في ${dateFormatter.format(branch.createdAt)} · ${branch._count.staffAssignments} موظف مسند`, `Created ${dateFormatter.format(branch.createdAt)} · ${branch._count.staffAssignments} staff assigned`)}
                         </p>
                         <div className="mt-3 flex flex-wrap gap-3 text-xs text-foreground-subtle">
@@ -199,7 +199,7 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
                           ? t(language, `إيقاف فرع ${branch.name}؟ لن يقبل عمليات ولاء أو إسنادات جديدة حتى إعادة تفعيله.`, `Deactivate ${branch.name}? It will not accept new loyalty operations or assignments until reactivated.`)
                           : t(language, `تفعيل فرع ${branch.name}؟`, `Activate ${branch.name}?`)}
                         type="submit"
-                        className={`min-h-11 rounded-xl px-4 py-2 text-sm font-bold ${branch.isActive ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"}`}
+                        className={`min-h-11 rounded-xl px-4 py-2 text-sm font-bold ${branch.isActive ? "bg-warning-subtle text-warning hover:bg-warning/15" : "bg-success-subtle text-success hover:bg-success/15"}`}
                       >
                         {branch.isActive ? t(language, "إيقاف الفرع", "Deactivate branch") : t(language, "تفعيل الفرع", "Activate branch")}
                       </ConfirmSubmitButton>
@@ -213,27 +213,27 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
                     </summary>
                     <div className="border-t border-border p-4">
                       <form action={updateBranch} className="grid gap-4 md:grid-cols-3">
-                        <label className="text-sm font-bold text-slate-700">{t(language, "اسم الفرع", "Branch name")}<input name="name" required minLength={2} maxLength={80} defaultValue={branch.name} className={`${branchFieldClass} mt-2 font-normal`} /></label>
-                        <label className="text-sm font-bold text-slate-700">{t(language, "هاتف التواصل", "Contact phone")}<input name="contactPhone" maxLength={25} defaultValue={branch.contactPhone ?? ""} className={`${branchFieldClass} mt-2 font-normal`} /></label>
-                        <label className="text-sm font-bold text-slate-700">{t(language, "العنوان", "Address")}<input name="address" maxLength={250} defaultValue={branch.address ?? ""} className={`${branchFieldClass} mt-2 font-normal`} /></label>
-                        <button type="submit" className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-3 font-bold text-violet-700 transition hover:bg-violet-100 md:col-start-3">{t(language, "حفظ التعديلات", "Save changes")}</button>
+                        <label className="text-sm font-bold text-foreground-muted">{t(language, "اسم الفرع", "Branch name")}<input name="name" required minLength={2} maxLength={80} defaultValue={branch.name} className={`${branchFieldClass} mt-2 font-normal`} /></label>
+                        <label className="text-sm font-bold text-foreground-muted">{t(language, "هاتف التواصل", "Contact phone")}<input name="contactPhone" maxLength={25} defaultValue={branch.contactPhone ?? ""} className={`${branchFieldClass} mt-2 font-normal`} /></label>
+                        <label className="text-sm font-bold text-foreground-muted">{t(language, "العنوان", "Address")}<input name="address" maxLength={250} defaultValue={branch.address ?? ""} className={`${branchFieldClass} mt-2 font-normal`} /></label>
+                        <button type="submit" className="rounded-xl border border-primary/20 bg-primary-soft px-5 py-3 font-bold text-primary transition hover:bg-primary/15 md:col-start-3">{t(language, "حفظ التعديلات", "Save changes")}</button>
                       </form>
 
-                      <div className="mt-6 border-t border-slate-100 pt-5">
-                        <h3 className="font-bold text-slate-950">{t(language, "إسنادات الموظفين", "Staff assignments")}</h3>
+                      <div className="mt-6 border-t border-border pt-5">
+                        <h3 className="font-bold text-foreground">{t(language, "إسنادات الموظفين", "Staff assignments")}</h3>
                         <p className="mt-1 text-sm text-slate-500">{t(language, "تُسند حسابات الموظفين النشطة فقط؛ المديرون والمشاهدون لا يحتاجون إسناد فرع.", "Only active staff accounts are assigned; managers and viewers do not require a branch assignment.")}</p>
                         {branch.staffAssignments.length > 0 && (
                           <ul className="mt-4 space-y-2">
                             {branch.staffAssignments.map((assignment) => {
                               const removeAssignment = removeStaffAssignmentAction.bind(null, business.slug, assignment.id);
                               return (
-                                <li key={assignment.id} className="flex flex-col gap-3 rounded-xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                                  <span className="text-sm text-slate-700"><strong>{fullName(assignment.user)}</strong>{" "}<span dir="ltr" className="text-slate-500">{assignment.user.email}</span></span>
+                                <li key={assignment.id} className="flex flex-col gap-3 rounded-xl bg-surface-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                                  <span className="text-sm text-foreground-muted"><strong>{fullName(assignment.user)}</strong>{" "}<span dir="ltr" className="text-foreground-subtle">{assignment.user.email}</span></span>
                                   <form action={removeAssignment}>
                                     <ConfirmSubmitButton
                                       confirmation={t(language, `إزالة إسناد ${fullName(assignment.user)} من ${branch.name}؟`, `Remove ${fullName(assignment.user)} from ${branch.name}?`)}
                                       type="submit"
-                                      className="min-h-11 text-sm font-bold text-red-700 hover:text-red-900"
+                                      className="min-h-11 text-sm font-bold text-danger hover:text-danger"
                                     >
                                       {t(language, "إزالة الإسناد", "Remove assignment")}
                                     </ConfirmSubmitButton>
@@ -249,14 +249,14 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
                               <option value="" disabled>{t(language, "اختر موظفًا نشطًا لإسناده", "Choose an active staff member to assign")}</option>
                               {availableStaff.map((user) => <option key={user.id} value={user.id}>{fullName(user)} — {user.email}</option>)}
                             </select>
-                            <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover">
+                            <button type="submit" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition-colors hover:bg-primary-hover">
                               <UserPlus className="size-4" aria-hidden="true" /> {t(language, "إسناد الموظف", "Assign staff")}
                             </button>
                           </form>
                         ) : branch.isActive ? (
-                          <p className="mt-4 text-sm text-slate-500">{t(language, "لا توجد حسابات موظفين نشطة متاحة للإسناد.", "No active staff accounts are available for assignment.")}</p>
+                          <p className="mt-4 text-sm text-foreground-subtle">{t(language, "لا توجد حسابات موظفين نشطة متاحة للإسناد.", "No active staff accounts are available for assignment.")}</p>
                         ) : (
-                          <p className="mt-4 text-sm text-amber-700">{t(language, "لا يمكن إنشاء إسنادات جديدة لفرع موقوف.", "New assignments cannot be created for an inactive branch.")}</p>
+                          <p className="mt-4 text-sm text-warning">{t(language, "لا يمكن إنشاء إسنادات جديدة لفرع موقوف.", "New assignments cannot be created for an inactive branch.")}</p>
                         )}
                       </div>
                     </div>
@@ -273,10 +273,10 @@ export default async function BranchesPage({ params, searchParams }: BranchesPag
 
 function Notice({ children, tone, role }: { children: ReactNode; tone: "success" | "warning" | "error"; role: "status" | "alert" }) {
   const className = tone === "success"
-    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+    ? "border-success/30 bg-success-subtle text-success"
     : tone === "warning"
-      ? "border-amber-200 bg-amber-50 text-amber-800"
-      : "border-red-200 bg-red-50 text-red-800";
+      ? "border-warning/30 bg-warning-subtle text-warning"
+      : "border-danger/30 bg-danger-subtle text-danger";
   return <div role={role} className={`mb-6 rounded-xl border px-4 py-3 ${className}`}>{children}</div>;
 }
 
