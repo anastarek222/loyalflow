@@ -6,9 +6,11 @@ export type PublicMarketingPath =
   | "/"
   | "/get-started"
   | "/features"
+  | "/how-it-works"
   | "/pricing"
   | "/about"
   | "/faq"
+  | "/security"
   | "/contact"
   | "/privacy"
   | "/terms";

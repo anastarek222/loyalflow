@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TableSkeleton } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { PageContainer } from "@/components/page-layout/page-container";
+import { DirectionText } from "@/components/i18n/direction-text";
 
 type PageStateProps = { title: ReactNode; description: ReactNode; action?: ReactNode; className?: string };
 
@@ -18,21 +19,33 @@ export function FilteredEmptyState({ action, ...props }: PageStateProps) {
   return <EmptyState {...props} actionSlot={action} className={cn(props.className)} />;
 }
 
-export function PagePermissionDeniedState({ title = "You do not have access to this area.", description = "Contact a workspace owner if you believe this is a mistake.", action }: Partial<PageStateProps>) {
+export function PagePermissionDeniedState({
+  title = <DirectionText en="You do not have access to this area." ar="ليس لديك صلاحية للوصول إلى هذه المنطقة." />,
+  description = <DirectionText en="Contact a workspace owner if you believe this is a mistake." ar="تواصل مع مالك مساحة العمل إذا كنت تعتقد أن هذا حدث بالخطأ." />,
+  action,
+}: Partial<PageStateProps>) {
   return <EmptyState title={title} description={description} actionSlot={action} className="min-h-56" />;
 }
 
-export function EntityUnavailableState({ title = "This item is unavailable.", description = "It may have been removed or you may no longer have access to it.", action }: Partial<PageStateProps>) {
+export function EntityUnavailableState({
+  title = <DirectionText en="This item is unavailable." ar="هذا العنصر غير متاح." />,
+  description = <DirectionText en="It may have been removed or you may no longer have access to it." ar="قد يكون تم حذفه أو لم تعد لديك صلاحية للوصول إليه." />,
+  action,
+}: Partial<PageStateProps>) {
   return <EmptyState title={title} description={description} actionSlot={action} className="min-h-56" />;
 }
 
-export function EmptyTenantContextState({ title = "No workspace is available.", description = "Ask an administrator to assign you to a workspace before continuing.", action }: Partial<PageStateProps>) {
+export function EmptyTenantContextState({
+  title = <DirectionText en="No workspace is available." ar="لا توجد مساحة عمل متاحة." />,
+  description = <DirectionText en="Ask an administrator to assign you to a workspace before continuing." ar="اطلب من مسؤول النظام تعيينك إلى مساحة عمل قبل المتابعة." />,
+  action,
+}: Partial<PageStateProps>) {
   return <EmptyState title={title} description={description} actionSlot={action} className="min-h-56" />;
 }
 
 export function PageErrorState({
-  title = "We could not load this page.",
-  description = "Please try again. If the problem continues, return to a previous page.",
+  title = <DirectionText en="We could not load this page." ar="تعذر تحميل هذه الصفحة." />,
+  description = <DirectionText en="Please try again. If the problem continues, return to a previous page." ar="حاول مرة أخرى. إذا استمرت المشكلة، ارجع إلى الصفحة السابقة." />,
   onRetry,
   backAction,
 }: {
@@ -47,7 +60,7 @@ export function PageErrorState({
         <h1 id="page-error-title" className="lf-type-section text-foreground">{title}</h1>
         <p className="mt-2 lf-type-body text-foreground-muted">{description}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          {onRetry ? <Button type="button" autoFocus onClick={onRetry}>Try again</Button> : null}
+          {onRetry ? <Button type="button" autoFocus onClick={onRetry}><DirectionText en="Try again" ar="حاول مرة أخرى" /></Button> : null}
           {backAction}
         </div>
       </div>
@@ -60,7 +73,7 @@ export function RouteErrorState({ reset }: { reset: () => void }) {
 }
 
 export function PageHeaderSkeleton() {
-  return <div aria-busy="true" role="status" aria-label="Loading page header" className="space-y-4"><Skeleton className="h-3 w-28" /><Skeleton className="h-8 w-52" /><Skeleton className="h-4 max-w-xl" /></div>;
+  return <div aria-busy="true" role="status" className="space-y-4"><span className="sr-only"><DirectionText en="Loading page header" ar="جارٍ تحميل عنوان الصفحة" /></span><Skeleton className="h-3 w-28" /><Skeleton className="h-8 w-52" /><Skeleton className="h-4 max-w-xl" /></div>;
 }
 
 export function TablePageSkeleton() {

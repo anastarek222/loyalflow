@@ -12,15 +12,27 @@ test("desktop and mobile application shells consume the central platform brand",
     "components/mobile-sidebar.tsx",
   ]) {
     const shell = source(path);
-    assert.match(shell, /import \{ platformBrand \} from "@\/lib\/platform-brand"/);
     assert.match(
       shell,
       /import \{ PlatformBrandIdentity \} from "@\/components\/platform-brand-identity"/,
     );
     assert.match(shell, /<PlatformBrandIdentity/);
-    assert.match(shell, /platformBrand\.name/);
     assert.doesNotMatch(shell, />LoyalFlow</);
   }
+
+  const desktopShell = source("components/app-sidebar.tsx");
+  assert.match(
+    desktopShell,
+    /import \{ InlineTaneeName \} from "@\/components\/brand\/inline-tanee-name"/,
+  );
+  assert.match(desktopShell, /<InlineTaneeName/);
+
+  const mobileShell = source("components/mobile-sidebar.tsx");
+  assert.match(
+    mobileShell,
+    /import \{ platformBrand \} from "@\/lib\/platform-brand"/,
+  );
+  assert.match(mobileShell, /platformBrand\.name/);
 });
 
 test("transactional auth emails consume the Tanee auth email brand authority", () => {

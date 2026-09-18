@@ -29,7 +29,8 @@ export function CustomerFeedbackBanner({ locale }: CustomerFeedbackBannerProps) 
   return (
     <div
       role="alert"
-      className="fixed inset-x-4 top-4 z-[100] mx-auto max-w-2xl rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-sm font-semibold text-warning shadow-lg sm:inset-x-6"
+      data-customer-feedback-banner="plan-limit"
+      className="fixed inset-x-4 top-[calc(4rem+0.75rem)] z-40 mx-auto max-w-2xl rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle px-4 py-4 text-sm font-semibold text-warning shadow-[var(--lf-shadow-raised)] sm:inset-x-6"
     >
       {getCustomerPlanLimitMessage(locale)}
     </div>

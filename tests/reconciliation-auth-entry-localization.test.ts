@@ -5,25 +5,36 @@ import test from "node:test";
 const source = (path: string) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-const bilingualAuthSurfaces = [
+const migratedAuthSurfaces = [
   "app/forgot-password/page.tsx",
   "app/reset-password/page.tsx",
   "app/verify-email/page.tsx",
-  "app/verify-email/resend/page.tsx",
   "app/mfa/setup/page.tsx",
 ] as const;
 
 test("reconciled recovery, verification, and MFA pages keep Tanee identity with AR/EN direction", () => {
-  for (const path of bilingualAuthSurfaces) {
+  const shell = source("components/auth/auth-entry-shell.tsx");
+
+  assert.match(shell, /<PlatformBrandIdentity/);
+  assert.match(shell, /getLocaleDirection/);
+  assert.match(shell, /<LanguageSwitcher/);
+  assert.match(shell, /lang=\{locale\}/);
+  assert.match(shell, /dir=\{direction\}/);
+
+  for (const path of migratedAuthSurfaces) {
     const page = source(path);
-    assert.match(page, /<PlatformBrandIdentity/);
+    assert.match(page, /<AuthEntryShell/);
     assert.match(page, /locale=\{locale\}/);
     assert.match(page, /resolveRequestLocale/);
-    assert.match(page, /getLocaleDirection/);
-    assert.match(page, /<LanguageSwitcher/);
-    assert.match(page, /lang=\{locale\}/);
-    assert.match(page, /dir=\{direction\}/);
   }
+
+  const resendPage = source("app/verify-email/resend/page.tsx");
+  assert.match(resendPage, /<PlatformBrandIdentity/);
+  assert.match(resendPage, /resolveRequestLocale/);
+  assert.match(resendPage, /getLocaleDirection/);
+  assert.match(resendPage, /<LanguageSwitcher/);
+  assert.match(resendPage, /lang=\{locale\}/);
+  assert.match(resendPage, /dir=\{direction\}/);
 });
 
 test("reset password consumes the canonical password policy authority", () => {

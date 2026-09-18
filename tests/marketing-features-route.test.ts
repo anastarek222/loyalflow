@@ -7,12 +7,14 @@ const source = (path: string) =>
 
 test("public Features route is bilingual, indexable, and conversion-ready", () => {
   const page = source("app/features/page.tsx");
+  const header = source("components/marketing/marketing-header.tsx");
 
   assert.match(page, /alternates: \{ canonical: "\/features" \}/);
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.match(page, /getLocaleDirection\(locale\)/);
   assert.match(page, /href="\/get-started"/);
-  assert.match(page, /href="\/login"/);
+  assert.match(page, /<MarketingHeader/);
+  assert.match(header, /href="\/login"/);
   assert.match(page, /<MarketingFooter locale=\{locale\} \/>/);
   assert.doesNotMatch(page, /checkout|payment|guarantee/i);
 });
@@ -25,8 +27,10 @@ test("Features is discoverable from the Home page and sitemap", () => {
 
   assert.match(home, /getPublicMarketingNavigation\(locale\)/);
   assert.match(navigation, /href: "\/features"/);
+  assert.match(navigation, /href: "\/features"[\s\S]*?footerGroup: "product"/);
   assert.match(home, /<MarketingFooter locale=\{locale\} \/>/);
-  assert.match(footer, /href="\/features"/);
+  assert.match(footer, /getPublicMarketingFooterNavigation\(locale\)/);
+  assert.match(footer, /navigation\.product\.map/);
   assert.match(sitemap, /publicSiteUrl\("\/features"\)/);
 });
 
@@ -73,7 +77,7 @@ test("marketing mobile navigation is a solid viewport portal", () => {
   assert.match(header, /createPortal/);
   assert.match(header, /document\.body/);
   assert.match(header, /fixed inset-y-0 end-0 z-\[90\]/);
-  assert.match(header, /bg-white/);
+  assert.match(header, /bg-\[var\(--lf-surface\)\]/);
   assert.match(header, /aria-modal="true"/);
   assert.match(header, /document\.body\.style\.overflow = "hidden"/);
 });

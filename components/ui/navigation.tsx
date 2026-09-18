@@ -6,6 +6,7 @@ import type {
   ReactNode,
 } from "react";
 
+import { DirectionText } from "@/components/i18n/direction-text";
 import { cn } from "@/lib/utils";
 
 export type TabItem = { id: string; label: ReactNode; disabled?: boolean };
@@ -91,7 +92,7 @@ export function Tabs({
           onClick={() => onChange(item.id)}
           onKeyDown={handleTabKeyDown}
           className={cn(
-            "min-h-10 shrink-0 border-b-2 px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2",
+            "min-h-11 shrink-0 border-b-2 px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2",
             item.id === activeId
               ? "border-primary text-primary"
               : "border-transparent text-foreground-muted hover:text-foreground",
@@ -171,7 +172,8 @@ export function Pagination({
         disabled={page <= 1}
         className="min-h-11 rounded-[var(--lf-radius-input)] border border-border-strong bg-surface px-4 disabled:opacity-50"
       >
-        ‹ <span className="sr-only">Previous</span>
+        <span aria-hidden="true" className="inline-block rtl:rotate-180">‹</span>{" "}
+        <span className="sr-only"><DirectionText en="Previous" ar="السابق" /></span>
       </button>
       <span className="lf-type-numeric text-foreground-muted">
         {page} / {pageCount}
@@ -182,7 +184,8 @@ export function Pagination({
         disabled={page >= pageCount}
         className="min-h-11 rounded-[var(--lf-radius-input)] border border-border-strong bg-surface px-4 disabled:opacity-50"
       >
-        <span className="sr-only">Next</span> ›
+        <span className="sr-only"><DirectionText en="Next" ar="التالي" /></span>{" "}
+        <span aria-hidden="true" className="inline-block rtl:rotate-180">›</span>
       </button>
     </nav>
   );

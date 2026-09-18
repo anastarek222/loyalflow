@@ -130,6 +130,143 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/*
+ * Marketing themes are deliberately scoped to public marketing surfaces.
+ * Persisting a marketing preference must not restyle authenticated product UI.
+ */
+.lf-marketing-surface {
+  color-scheme: light;
+  --lf-canvas: #fff9f5;
+  --lf-surface: #ffffff;
+  --lf-surface-subtle: #fff3ed;
+  --lf-marketing-canvas: #fff9f5;
+  --lf-foreground: #171717;
+  --lf-foreground-muted: #5f5e5e;
+  --lf-foreground-subtle: #756f6b;
+  --lf-border: #e8e2de;
+  --lf-border-strong: #171717;
+  --lf-primary: #ff6652;
+  --lf-primary-hover: #f25543;
+  --lf-primary-active: #dc4938;
+  --lf-primary-foreground: #171717;
+  --lf-primary-soft: #ffebe7;
+  --lf-focus: #ff6652;
+}
+
+.lf-marketing-surface [data-marketing-inline-wordmark] {
+  position: relative;
+  display: inline-block;
+  block-size: 0.9em;
+  inline-size: 3.515625em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lf-marketing-surface [data-marketing-inline-wordmark] > span {
+  position: absolute;
+  inset: 0;
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.lf-marketing-surface [data-platform-brand-wordmark-size="compact"] {
+  display: block;
+  block-size: 100%;
+  inline-size: 100%;
+  max-block-size: 100%;
+  max-inline-size: 100%;
+  object-fit: contain;
+}
+
+.lf-marketing-surface [data-platform-brand-wordmark-size="marketing"] {
+  display: block;
+  block-size: 1.75rem;
+  inline-size: auto;
+  max-inline-size: 10rem;
+  object-fit: contain;
+}
+
+.lf-marketing-surface [data-platform-brand-wordmark-size="marketing-footer"] {
+  display: block;
+  block-size: 2rem;
+  inline-size: auto;
+  max-inline-size: 10rem;
+  object-fit: contain;
+}
+
+.lf-marketing-surface [data-platform-brand-wordmark-theme="dark"] {
+  display: none;
+}
+
+html[data-marketing-theme="dark"]
+  .lf-marketing-surface
+  [data-platform-brand-wordmark-theme="light"] {
+  display: none;
+}
+
+html[data-marketing-theme="dark"]
+  .lf-marketing-surface
+  [data-platform-brand-wordmark-theme="dark"] {
+  display: block;
+}
+
+.lf-marketing-home {
+  font-family: var(--font-marketing-sans), var(--lf-font-sans);
+}
+
+.lf-marketing-home:lang(en) > section :is(h1, h2, h3) {
+  font-family:
+    var(--font-marketing-editorial), Georgia, "Times New Roman", serif;
+  font-weight: 600;
+}
+
+.lf-marketing-home:lang(ar) > section :is(h1, h2, h3) {
+  font-family: var(--font-marketing-sans), var(--lf-font-arabic);
+  letter-spacing: 0;
+}
+
+html[data-marketing-theme="dark"] .lf-marketing-surface {
+  color-scheme: dark;
+  --lf-canvas: #11100f;
+  --lf-surface: #191715;
+  --lf-surface-subtle: #211e1b;
+  --lf-surface-raised: rgb(31 28 26 / 0.94);
+  --lf-marketing-canvas: #11100f;
+  --lf-foreground: #fff9f5;
+  --lf-foreground-muted: #d7cbc5;
+  --lf-foreground-subtle: #aa9e98;
+  --lf-inverse: #171717;
+  --lf-border: #3c3531;
+  --lf-border-strong: #584d47;
+  --lf-divider: #3c3531;
+  --lf-primary: #ff7a68;
+  --lf-primary-hover: #ff6652;
+  --lf-primary-active: #e65340;
+  --lf-primary-foreground: #171717;
+  --lf-primary-soft: #3a211d;
+  --lf-focus: #ff8d7d;
+  --lf-selection: #5c2a24;
+  --lf-chart-grid: #3c3531;
+  --background: #11100f;
+  --foreground: #fff9f5;
+  --card: #191715;
+  --card-foreground: #fff9f5;
+  --popover: #191715;
+  --popover-foreground: #fff9f5;
+  --border: #3c3531;
+  --input: #584d47;
+  --ring: #ff8d7d;
+}
+
+.lf-marketing-surface :where(.bg-white) {
+  background-color: var(--lf-surface);
+}
+
+html[data-marketing-theme="dark"] .lf-marketing-surface :where(.bg-foreground) {
+  background-color: #171717;
+}
+
 /* Apply business colors only inside a deliberate business-context boundary. */
 .lf-business-context {
   --lf-business-primary: var(--business-primary, var(--lf-primary));

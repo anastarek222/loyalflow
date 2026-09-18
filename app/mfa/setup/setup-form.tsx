@@ -61,7 +61,7 @@ export function SuperAdminMfaSetupForm({ copy }: { copy: MfaSetupCopy }) {
               required
               autoComplete="email"
               dir="ltr"
-              className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3"
+              className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
             />
           </div>
           <div>
@@ -78,16 +78,18 @@ export function SuperAdminMfaSetupForm({ copy }: { copy: MfaSetupCopy }) {
               required
               minLength={10}
               autoComplete="current-password"
-              className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3"
+              className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
             />
           </div>
           {beginState.error && (
-            <p className="text-sm font-medium text-danger">{copy.startError}</p>
+            <p role="alert" className="text-sm font-medium text-danger">
+              {copy.startError}
+            </p>
           )}
           <button
             type="submit"
             disabled={beginPending}
-            className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white disabled:opacity-60"
+            className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
           >
             {beginPending ? copy.preparing : copy.start}
           </button>
@@ -96,18 +98,18 @@ export function SuperAdminMfaSetupForm({ copy }: { copy: MfaSetupCopy }) {
         <div className="space-y-5">
           <div className="rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle p-4">
             <h2 className="font-bold text-foreground">{copy.addAuthenticator}</h2>
-            <p className="mt-2 text-sm text-foreground-muted">
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">
               {copy.addAuthenticatorBody}
             </p>
             <code
-              className="mt-3 block break-all rounded bg-white p-3 text-sm font-bold text-foreground"
+              className="mt-3 block break-all rounded-[var(--lf-radius-input)] border border-border bg-surface p-3 text-sm font-bold text-foreground"
               dir="ltr"
             >
               {beginState.secret}
             </code>
             <a
               href={beginState.otpauthUri}
-              className="mt-3 inline-block text-sm font-semibold text-primary hover:underline"
+              className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary hover:underline"
             >
               {copy.openAuthenticator}
             </a>
@@ -115,12 +117,18 @@ export function SuperAdminMfaSetupForm({ copy }: { copy: MfaSetupCopy }) {
 
           <div className="rounded-[var(--lf-radius-input)] border border-warning/30 bg-warning-subtle p-4">
             <h2 className="font-bold text-foreground">{copy.recoveryTitle}</h2>
-            <p className="mt-2 text-sm text-foreground-muted">
+            <p className="mt-2 text-sm leading-6 text-foreground-muted">
               {copy.recoveryBody}
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm" dir="ltr">
+            <div
+              className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm"
+              dir="ltr"
+            >
               {beginState.recoveryCodes?.map((code) => (
-                <code key={code} className="rounded bg-white px-2 py-1">
+                <code
+                  key={code}
+                  className="rounded-[var(--lf-radius-input)] border border-border bg-surface px-2 py-1"
+                >
                   {code}
                 </code>
               ))}
@@ -149,16 +157,19 @@ export function SuperAdminMfaSetupForm({ copy }: { copy: MfaSetupCopy }) {
                 maxLength={6}
                 required
                 dir="ltr"
-                className="auth-input min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 tracking-[0.3em]"
+                data-preserve-latin-tracking=""
+                className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border px-4 py-3 tracking-[0.3em] outline-none transition focus:border-primary/30 focus:ring-4 focus:ring-primary/15"
               />
             </div>
             {confirmState.error && (
-              <p className="text-sm font-medium text-danger">{copy.confirmError}</p>
+              <p role="alert" className="text-sm font-medium text-danger">
+                {copy.confirmError}
+              </p>
             )}
             <button
               type="submit"
               disabled={confirmPending}
-              className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-white disabled:opacity-60"
+              className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover disabled:opacity-60"
             >
               {confirmPending ? copy.enabling : copy.enable}
             </button>
