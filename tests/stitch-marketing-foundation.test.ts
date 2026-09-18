@@ -104,6 +104,61 @@ test("marketing wordmarks keep explicit production dimensions", () => {
   );
 });
 
+
+test("desktop marketing shell keeps fixed brand, navigation, and action lanes", () => {
+  const header = source("components/marketing/marketing-header.tsx");
+  const footer = source("components/marketing/marketing-footer.tsx");
+
+  assert.match(header, /data-marketing-header-brand="true"/);
+  assert.match(header, /data-marketing-header-nav="true"/);
+  assert.match(header, /data-marketing-header-actions="true"/);
+  assert.match(
+    header,
+    /min-\[1366px\]:grid-cols-\[12rem_minmax\(0,1fr\)_26rem\]/,
+  );
+  assert.match(header, /min-\[1366px\]:grid-cols-7/);
+  assert.match(header, /min-\[1366px\]:w-full/);
+
+  assert.match(footer, /data-marketing-footer-shell="true"/);
+  assert.match(footer, /data-marketing-footer-brand="true"/);
+  assert.match(footer, /data-marketing-footer-navigation="true"/);
+  assert.match(footer, /data-marketing-footer-actions="true"/);
+  assert.match(
+    footer,
+    /lg:grid-cols-\[20rem_minmax\(0,1fr\)\]/,
+  );
+  assert.match(
+    footer,
+    /md:grid-cols-\[minmax\(0,1fr\)_22rem\]/,
+  );
+});
+
+test("all marketing routes with Tanee copy use the canonical inline brand renderer", () => {
+  for (const route of [
+    "app/page.tsx",
+    "app/features/page.tsx",
+    "app/how-it-works/page.tsx",
+    "app/pricing/page.tsx",
+    "app/about/page.tsx",
+    "app/faq/page.tsx",
+    "app/security/page.tsx",
+    "app/data-deletion/page.tsx",
+    "app/get-started/page.tsx",
+    "app/demo/page.tsx",
+  ]) {
+    assert.match(source(route), /MarketingBrandText/);
+  }
+
+  assert.match(
+    source("components/marketing/contact-sales-experience.tsx"),
+    /MarketingBrandText/,
+  );
+  assert.match(
+    source("components/marketing/legal-document-page.tsx"),
+    /MarketingBrandText/,
+  );
+});
+
 test("marketing language controls offer only the alternate locale", () => {
   const switcher = source("components/i18n/language-switcher.tsx");
   const header = source("components/marketing/marketing-header.tsx");
