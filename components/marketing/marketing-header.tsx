@@ -127,10 +127,11 @@ export function MarketingHeader({
             : "border-[var(--lf-border)]/70 bg-[var(--lf-marketing-canvas)]",
         )}
       >
-        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
+        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[12rem_minmax(0,1fr)_26rem] min-[1366px]:gap-0">
           <Link
             href="/"
-            className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-[var(--lf-foreground)]"
+            data-marketing-header-brand="true"
+            className="group inline-flex min-h-11 items-center gap-2.5 rounded-xl font-black tracking-tight text-[var(--lf-foreground)] min-[1366px]:justify-self-start"
           >
             <PlatformBrandIdentity
               locale={locale}
@@ -147,13 +148,14 @@ export function MarketingHeader({
 
           <nav
             aria-label={translate(locale, "marketing.primaryNavLabel")}
-            className="hidden min-w-0 items-center gap-0 min-[1366px]:flex"
+            data-marketing-header-nav="true"
+            className="hidden min-w-0 items-center min-[1366px]:grid min-[1366px]:w-full min-[1366px]:grid-cols-7"
           >
             {navigation.map((item) => (
               <MarketingNavLink
                 key={item.href}
                 href={item.href}
-                className="inline-flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-xl px-2.5 text-sm font-semibold text-[var(--lf-foreground-muted)] transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-[var(--lf-foreground)]"
+                className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-nowrap rounded-xl px-1.5 text-sm font-semibold text-[var(--lf-foreground-muted)] transition-colors hover:bg-[var(--lf-primary-soft)] hover:text-[var(--lf-foreground)]"
                 activeClassName="bg-[var(--lf-primary-soft)] text-[var(--lf-foreground)]"
               >
                 <span dir={contentDirection}><MarketingBrandText text={item.label} /></span>
@@ -161,7 +163,10 @@ export function MarketingHeader({
             ))}
           </nav>
 
-          <div className="hidden shrink-0 items-center gap-2 min-[1366px]:flex">
+          <div
+            data-marketing-header-actions="true"
+            className="hidden shrink-0 items-center justify-end gap-2 min-[1366px]:flex min-[1366px]:w-full"
+          >
             <MarketingThemeSwitcher locale={locale} />
             <LanguageSwitcher locale={locale} alternateOnly />
             <Link
