@@ -69,7 +69,7 @@ export function CustomCardExperienceStatus({ isArabic, status }: Props) {
 
   const className =
     copy.tone === "success"
-      ? "mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-bold text-emerald-900"
+      ? "mt-4 rounded-xl border border-success/30 bg-success-subtle p-3 text-sm font-bold text-success"
       : copy.tone === "warning"
         ? "mt-4 rounded-xl border border-warning/30 bg-warning-subtle p-3 text-sm font-bold"
         : "mt-4 rounded-xl border border-danger/25 bg-danger-subtle p-3 text-sm font-bold text-danger";
