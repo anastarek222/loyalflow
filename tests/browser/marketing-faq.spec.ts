@@ -267,9 +267,6 @@ for (const locale of ["en", "ar"] as const) {
       const hero = page.getByRole("heading", { level: 1 });
       await expect(hero).toHaveText(homeCopy[locale].hero);
       await expect(
-        page.getByText(homeCopy[locale].preview, { exact: true }).first(),
-      ).toBeVisible();
-      await expect(
         page.getByRole("heading", { level: 2, name: homeCopy[locale].problem }),
       ).toBeVisible();
       await expect(
@@ -298,6 +295,10 @@ for (const locale of ["en", "ar"] as const) {
         '[data-marketing-product-preview="true"]',
       );
       await expect(heroPreview).toBeVisible();
+      await expect(heroPreview).toHaveAttribute(
+        "aria-label",
+        homeCopy[locale].preview,
+      );
 
       const heroBox = await hero.boundingBox();
       const previewBox = await heroPreview.boundingBox();
