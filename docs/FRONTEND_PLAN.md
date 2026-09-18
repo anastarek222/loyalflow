@@ -41,7 +41,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 ### Product pages
 - [x] Dashboard
 - [x] Customers
-- [ ] Customer detail
+- [x] Customer detail
 - [ ] Reports
 - [ ] Staff reports
 - [ ] Settings
