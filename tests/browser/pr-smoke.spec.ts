@@ -378,6 +378,71 @@ test.describe.serial("PR browser smoke", () => {
     await setAuthenticatedLanguage(page, "en");
   });
 
+  test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+      await page.goto(route);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(`${route}?notifications=1`);
+
+          const dialog = page.getByTestId("business-notifications-dialog");
+          const panel = page.getByTestId("business-notifications-panel");
+          const localeShell = page.locator("[data-app-language]").first();
+
+          await expect(dialog).toBeVisible();
+          await expect(dialog).toHaveAttribute("aria-modal", "true");
+          await expect(panel).toBeVisible();
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(localeShell).toHaveAttribute(
+            "data-app-language",
+            locale === "ar" ? "AR" : "EN",
+          );
+          await expect(localeShell).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await panel.evaluate((node) => node.scrollWidth <= node.clientWidth),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `notification-centre-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+
+          await page
+            .getByRole("button", {
+              name: locale === "ar" ? "إغلاق التنبيهات" : "Close notifications",
+              exact: true,
+            })
+            .click();
+          await expect(dialog).toBeHidden();
+        }
+      }
+    }
+
+    await page.goto(route);
+    await setAuthenticatedLanguage(page, "en");
+  });
+
   test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
     page,
     context,
