@@ -352,6 +352,26 @@ for (const viewport of [
               }),
           );
           expect(links, `${route} nav slots`).toHaveLength(7);
+          expect(
+            await navLocator.locator(":scope > a").evaluateAll((nodes) =>
+              nodes.every(
+                (node) => node.scrollWidth <= node.clientWidth,
+              ),
+            ),
+            `${route} navigation text must stay inside fixed slots`,
+          ).toBe(true);
+          expect(
+            await page
+              .locator(
+                '[data-marketing-header-theme-slot="true"], [data-marketing-header-language-slot="true"], [data-marketing-header-signin-slot="true"], [data-marketing-header-cta-slot="true"]',
+              )
+              .evaluateAll((nodes) =>
+                nodes.every(
+                  (node) => node.scrollWidth <= node.clientWidth,
+                ),
+              ),
+            `${route} header actions must stay inside fixed slots`,
+          ).toBe(true);
 
           const footerShellRect = await readShellRect(
             page.locator('[data-marketing-footer-shell="true"]'),
@@ -376,6 +396,18 @@ for (const viewport of [
             y: rect.y - footerActionsRect.y,
           }));
           expect(footerActionSlots).toHaveLength(3);
+          expect(
+            await page
+              .locator(
+                '[data-marketing-footer-theme-slot="true"], [data-marketing-footer-language-slot="true"], [data-marketing-footer-access-slot="true"]',
+              )
+              .evaluateAll((nodes) =>
+                nodes.every(
+                  (node) => node.scrollWidth <= node.clientWidth,
+                ),
+              ),
+            `${route} footer controls must stay inside fixed slots`,
+          ).toBe(true);
 
           const current = {
             brand,
