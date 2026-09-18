@@ -34,7 +34,7 @@ export function CustomCardSafeZoneGuide({ isArabic, preview }: Props) {
   return (
     <details
       open
-      className="mt-5 rounded-2xl border border-sky-200 bg-sky-50/70 p-4"
+      className="mt-5 rounded-2xl border border-info/30 bg-info-subtle/70 p-4"
     >
       <summary className="cursor-pointer font-black text-foreground">
         {t(
@@ -64,7 +64,7 @@ export function CustomCardSafeZoneGuide({ isArabic, preview }: Props) {
         </figure>
       </div>
 
-      <div className="mt-4 rounded-xl border border-sky-200 bg-white p-3 text-xs leading-5 text-foreground-muted">
+      <div className="mt-4 rounded-xl border border-info/30 bg-surface p-3 text-xs leading-5 text-foreground-muted">
         {t(
           `قالب التصميم المقترح: ${LOYALTY_CARD_CANVAS.width} × ${LOYALTY_CARD_CANVAS.height} بكسل. تُقبل المقاسات الأكبر بنفس نسبة ID-1 ‏(1.586:1)، ويجب أن تتطابق أبعاد الواجهة والخلفية. الخطوط الزرقاء إرشادية فقط ولا تظهر على بطاقة العميل.`,
           `Recommended design canvas: ${LOYALTY_CARD_CANVAS.width} × ${LOYALTY_CARD_CANVAS.height} px. Larger files are accepted at the same ID-1 ratio (1.586:1), and Front and Back pixel dimensions must match. Blue outlines are guides only and never appear on the customer card.`,
