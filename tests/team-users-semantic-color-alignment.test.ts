@@ -13,9 +13,9 @@ test("Team administration uses semantic product colors", () => {
     /\b(?:bg|text|border|from|via|to)-(?:white|black|slate|gray|zinc|neutral|stone|emerald|amber|red|violet|cyan)(?:-\d+)?(?:\/\d+)?\b/,
   );
 
-  assert.match(users, /border-success\/30 bg-success-subtle text-success/);
-  assert.match(users, /border-warning\/30 bg-warning-subtle text-warning/);
-  assert.match(users, /border-danger\/30 bg-danger-subtle text-danger/);
+  assert.match(users, /border-success\/30[^"\n]*bg-success-subtle[^"\n]*text-success/);
+  assert.match(users, /border-warning\/30[^"\n]*bg-warning-subtle[^"\n]*text-warning/);
+  assert.match(users, /border-danger\/30[^"\n]*bg-danger-subtle[^"\n]*text-danger/);
   assert.match(users, /bg-primary[\s\S]*text-primary-foreground/);
   assert.match(users, /bg-surface-subtle/);
   assert.match(users, /bg-info-subtle[\s\S]*text-info/);
