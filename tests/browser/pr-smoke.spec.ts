@@ -110,7 +110,109 @@ test.describe.serial("PR browser smoke", () => {
     await page.goto(`/businesses/${fixture.businessA}/reports`);
     await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
     await page.goto(`/businesses/${fixture.businessA}/scan`);
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import {
+  cleanupBrowserUat,
+  prepareBrowserUat,
+  type BrowserUatFixture,
+  uatEmail,
+} from "./fixtures";
+
+let fixture: BrowserUatFixture;
+let manifestPath: string;
+
+// Webpack compiles each critical route on first use in disposable CI. Keep the
+// broader suite bounded while allowing this cold-start smoke file to finish.
+test.setTimeout(180_000);
+
+async function signIn(
+  page: Page,
+  role: "owner-a" | "manager-a" | "viewer-a",
+) {
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill(uatEmail(role, fixture.runId));
+  await page.getByLabel("Password").fill(process.env.UAT_FIXTURE_PASSWORD!);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`), {
+    timeout: 45_000,
+  });
+}
+
+async function openAccountMenu(page: Page) {
+  const trigger = page.getByRole("button", {
+    name: "Account menu",
+    exact: true,
+  });
+
+  await expect(async () => {
+    await trigger.click();
+    await expect(trigger).toHaveAttribute("aria-expanded", "true", {
+      timeout: 1_000,
+    });
+  }).toPass({ timeout: 30_000 });
+  await expect(page.getByLabel("Account", { exact: true })).toBeVisible();
+}
+
+async function signOut(page: Page) {
+  await openAccountMenu(page);
+  await Promise.all([
+    page.waitForURL(/\/login$/),
+    page.getByRole("button", { name: "Log out", exact: true }).click(),
+  ]);
+  await expect(page.getByLabel("Email address")).toBeVisible();
+}
+
+async function expectSameRow(locator: Locator) {
+  const tops = await locator.evaluateAll((nodes) =>
+    nodes.map((node) => Math.round(node.getBoundingClientRect().top)),
+  );
+  expect(tops.length).toBeGreaterThan(1);
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
+}
+
+test.describe.serial("PR browser smoke", () => {
+  test.beforeAll(async ({ baseURL }) => {
+    const prepared = await prepareBrowserUat(baseURL!);
+    fixture = prepared.fixture;
+    manifestPath = prepared.manifestPath;
+  });
+
+  test.afterAll(async () => {
+    if (fixture && manifestPath) {
+      await cleanupBrowserUat(fixture.runId, manifestPath);
+    }
+  });
+
+  test("owner can sign in, navigate critical surfaces, and log out @desktop @pr-smoke", async ({ page }) => {
+    await signIn(page, "owner-a");
+    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+
+    const navigation = page.getByRole("complementary", {
+      name: "Primary navigation",
+      exact: true,
+    });
+    await expect(navigation.getByRole("link", { name: "Home", exact: true })).toBeVisible();
+    const customersLink = navigation.getByRole("link", {
+      name: "Customers",
+      exact: true,
+    });
+    await expect(customersLink).toBeVisible();
+
+    await customersLink.click();
+    await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}/customers$`));
+    await expect(page.locator("#app-content").getByRole("heading", { level: 1 })).toHaveCount(1);
+
+    await navigation.getByRole("link", { name: "Home", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/businesses/${fixture.businessA}$`));
+
+    await signOut(page);
+
+    await page.goto(`/businesses/${fixture.businessA}`);
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+));
 
     const navigation = page.getByRole("complementary", {
       name: "Primary navigation",
@@ -119,6 +221,63 @@ test.describe.serial("PR browser smoke", () => {
     await expect(
       navigation.getByRole("link", { name: "Team", exact: true }),
     ).toHaveCount(0);
+  });
+
+  test("mobile SaaS drawer keeps Tanee brand parity in both locales @desktop @pr-smoke", async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, "owner-a");
+
+    for (const locale of ["en", "ar"] as const) {
+      await context.addCookies([
+        { name: "loyalflow_locale", value: locale, url: baseURL! },
+      ]);
+      await page.goto(`/businesses/${fixture.businessA}`);
+
+      await expect(page.locator("html")).toHaveAttribute(
+        "dir",
+        locale === "ar" ? "rtl" : "ltr",
+      );
+
+      const openNavigation = page.getByRole("button", {
+        name: locale === "ar" ? "فتح القائمة" : "Open navigation",
+        exact: true,
+      });
+      await expect(openNavigation).toBeVisible();
+      await openNavigation.click();
+
+      const drawer = page.getByRole("dialog", {
+        name: locale === "ar" ? "قائمة التنقل" : "Navigation menu",
+        exact: true,
+      });
+      await expect(drawer).toBeVisible();
+
+      const brand = drawer.getByTestId("mobile-saas-brand");
+      await expect(brand.locator("[data-inline-tanee-name]")).toBeVisible();
+      await expect(
+        brand.locator("[data-platform-brand-wordmark-size]"),
+      ).toHaveCount(0);
+
+      const brandBox = await brand.boundingBox();
+      expect(brandBox).not.toBeNull();
+      expect(brandBox!.height).toBeLessThanOrEqual(48);
+      expect(brandBox!.width).toBeLessThanOrEqual(160);
+      expect(
+        await drawer.evaluate((node) => node.scrollWidth <= node.clientWidth),
+      ).toBe(true);
+
+      await page
+        .getByRole("button", {
+          name: locale === "ar" ? "إغلاق القائمة" : "Close navigation",
+          exact: true,
+        })
+        .last()
+        .click();
+      await expect(drawer).toBeHidden();
+    }
   });
 
   test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
