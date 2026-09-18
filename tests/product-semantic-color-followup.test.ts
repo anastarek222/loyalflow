@@ -37,6 +37,6 @@ test("Reversal exceptions use warning, success, and danger semantics", () => {
   );
 
   assert.match(exceptions, /bg-warning-subtle[^\"\\n]*text-warning/);
-  assert.match(exceptions, /border-success\/30 bg-success-subtle text-success/);
-  assert.match(exceptions, /border-danger\/30 bg-danger-subtle text-danger/);
+  assert.match(exceptions, /border-success\/30[^"\n]*bg-success-subtle[^"\n]*text-success/);
+  assert.match(exceptions, /border-danger\/30[^"\n]*bg-danger-subtle[^"\n]*text-danger/);
 });
