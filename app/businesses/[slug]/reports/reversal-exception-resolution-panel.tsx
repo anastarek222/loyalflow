@@ -25,7 +25,7 @@ function ResolveButton({ language }: { language: "AR" | "EN" }) {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending
         ? language === "AR"
@@ -89,7 +89,7 @@ export function ReversalExceptionResolutionPanel({
         >
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.08em] text-amber-700">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-warning">
                 {kindLabel(item.reversalKind, language)}
               </p>
               <h2 dir="auto" className="mt-1 text-lg font-bold text-foreground">
@@ -99,7 +99,7 @@ export function ReversalExceptionResolutionPanel({
                 {item.customerCode}
               </p>
             </div>
-            <span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+            <span className="w-fit rounded-full bg-warning-subtle px-3 py-1 text-xs font-semibold text-warning">
               {language === "AR" ? "تحتاج متابعة" : "Needs follow-up"}
             </span>
           </div>
