@@ -35,3 +35,14 @@ test("desktop and mobile SaaS identities use the selectable Tanee treatment", ()
   assert.match(mobile, /data-testid="mobile-saas-brand"/);
   assert.match(mobile, /<InlineTaneeName \/>/);
 });
+
+
+test("authenticated SaaS shell keeps the hidden skip link inside the mobile viewport", () => {
+  const appShell = source("components/authenticated-app-shell.tsx");
+
+  assert.match(appShell, /focus:px-4 focus:py-2/);
+  assert.doesNotMatch(
+    appShell,
+    /bg-primary px-4 py-2 font-semibold text-primary-foreground/,
+  );
+});
