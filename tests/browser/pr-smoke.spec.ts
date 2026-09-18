@@ -131,10 +131,12 @@ test.describe.serial("PR browser smoke", () => {
         locale === "ar" ? "rtl" : "ltr",
       );
 
-      const openNavigation = page.getByRole("button", {
-        name: locale === "ar" ? "فتح القائمة" : "Open navigation",
-        exact: true,
-      });
+      const openNavigation = page
+        .getByRole("button", {
+          name: locale === "ar" ? "فتح القائمة" : "Open full menu",
+          exact: true,
+        })
+        .last();
       await expect(openNavigation).toBeVisible();
       await openNavigation.click();
 
