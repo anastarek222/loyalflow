@@ -225,15 +225,7 @@ test.describe.serial("PR browser smoke", () => {
 
     await assertDrawer("en");
 
-    const switchToArabicForm = page.locator("form").filter({
-      has: page.locator('input[name="language"][value="AR"]'),
-    });
-    await switchToArabicForm.getByRole("button").click();
-    await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
-      "data-app-language",
-      "AR",
-    );
-
+    await setAuthenticatedLanguage(page, "ar");
     await assertDrawer("ar");
     await setAuthenticatedLanguage(page, "en");
   });
