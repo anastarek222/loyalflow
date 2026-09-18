@@ -672,6 +672,218 @@ test.describe.serial("PR browser smoke", () => {
     await signOut(page);
   });
 
+  test("Customer detail SIMPLE preserves focused loyalty profile across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}/customers/${fixture.activeCustomer.id}`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const main = page.locator(
+            'main[data-experience-customer-detail="simple"]',
+          );
+          await expect(main).toBeVisible();
+          await expect(main).toHaveAttribute("data-experience-mode", "SIMPLE");
+
+          const hero = main.locator("[data-customer-profile-hero]");
+          await expect(hero).toBeVisible();
+          await expect(
+            hero.getByText(
+              locale === "ar" ? "ملف العميل" : "Customer profile",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(hero.getByRole("heading", { level: 1 })).toBeVisible();
+
+          await expect(
+            main.getByText(
+              locale === "ar" ? "الولاء اليوم" : "Loyalty today",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(main.locator("#daily-loyalty")).toBeVisible();
+          await expect(
+            main.locator("[data-customer-activity-timeline]"),
+          ).toBeVisible();
+
+          const cardDisclosure = main.locator(
+            '#customer-card[data-operational-disclosure]',
+          );
+          await expect(cardDisclosure).toBeVisible();
+          await expect(cardDisclosure.locator("summary")).toContainText(
+            locale === "ar" ? "الكارت والمشاركة" : "Card & sharing",
+          );
+          await cardDisclosure.locator("summary").click();
+          await expect(
+            cardDisclosure.locator(
+              `a[href="/card/${fixture.activeCustomer.publicToken}"]`,
+            ),
+          ).toBeVisible();
+
+          const hiddenAdvancedTitles = [
+            locale === "ar" ? "وسوم العميل" : "Customer tags",
+            locale === "ar" ? "ملاحظات داخلية" : "Internal notes",
+            locale === "ar" ? "بيانات العميل" : "Customer details",
+            locale === "ar" ? "تعديل رصيد الولاء" : "Adjust loyalty balance",
+            locale === "ar" ? "منطقة الخطر" : "Danger zone",
+          ];
+          for (const title of hiddenAdvancedTitles) {
+            const disclosure = main
+              .locator("details[data-operational-disclosure]")
+              .filter({ hasText: title })
+              .first();
+            await expect(disclosure).toBeHidden();
+          }
+
+          const quickActions = main.locator("[data-customer-quick-actions]");
+          if (viewport.width < 640) {
+            await expect(quickActions).toBeVisible();
+          } else {
+            await expect(quickActions).toBeHidden();
+          }
+
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-customer-detail-simple-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Customer detail ADVANCED preserves operational disclosures across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "manager-a");
+    const route = `/businesses/${fixture.businessA}/customers/${fixture.activeCustomer.id}`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          await page.goto(route);
+
+          const main = page.locator(
+            'main[data-experience-customer-detail="advanced"]',
+          );
+          await expect(main).toBeVisible();
+          await expect(main).toHaveAttribute("data-experience-mode", "ADVANCED");
+
+          const hero = main.locator("[data-customer-profile-hero]");
+          await expect(hero).toBeVisible();
+          await expect(
+            hero.getByText(
+              locale === "ar" ? "ملف العميل" : "Customer profile",
+              { exact: true },
+            ),
+          ).toBeVisible();
+          await expect(main.locator("#daily-loyalty")).toBeVisible();
+          await expect(
+            main.getByText(
+              locale === "ar" ? "الولاء اليوم" : "Loyalty today",
+              { exact: true },
+            ),
+          ).toHaveCount(0);
+
+          const advancedTitles = [
+            locale === "ar" ? "وسوم العميل" : "Customer tags",
+            locale === "ar" ? "ملاحظات داخلية" : "Internal notes",
+            locale === "ar" ? "بيانات العميل" : "Customer details",
+            locale === "ar" ? "تعديل رصيد الولاء" : "Adjust loyalty balance",
+            locale === "ar" ? "منطقة الخطر" : "Danger zone",
+          ];
+          for (const title of advancedTitles) {
+            const disclosure = main
+              .locator("details[data-operational-disclosure]")
+              .filter({ hasText: title })
+              .first();
+            await expect(disclosure).toBeVisible();
+          }
+
+          await expect(
+            main.locator("[data-customer-activity-timeline]"),
+          ).toBeVisible();
+          const cardDisclosure = main.locator(
+            '#customer-card[data-operational-disclosure]',
+          );
+          await expect(cardDisclosure).toBeVisible();
+          await expect(cardDisclosure.locator("summary")).toContainText(
+            locale === "ar" ? "الكارت والمشاركة" : "Card & sharing",
+          );
+
+          const quickActions = main.locator("[data-customer-quick-actions]");
+          if (viewport.width < 640) {
+            await expect(quickActions).toBeVisible();
+          } else {
+            await expect(quickActions).toBeHidden();
+          }
+
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-customer-detail-advanced-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
     page,
   }) => {
