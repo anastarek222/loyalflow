@@ -20,11 +20,13 @@ import {
 type Props = {
   params: Promise<{ slug: string; customerId: string }>;
   searchParams: Promise<{ success?: string; error?: string }>;
+  embedded?: boolean;
 };
 
 export default async function CustomerWhatsAppPanel({
   params,
   searchParams,
+  embedded = false,
 }: Props) {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -227,10 +229,22 @@ export default async function CustomerWhatsAppPanel({
 
   return (
     <section
-      className="bg-surface-subtle px-3 pb-8 sm:px-8"
+      id="customer-whatsapp"
+      className={
+        embedded
+          ? "order-0 mt-3 scroll-mt-6 sm:mt-6"
+          : "bg-surface-subtle px-3 pb-8 sm:px-8"
+      }
       data-whatsapp-customer-state
+      data-whatsapp-embedded={embedded ? "true" : "false"}
     >
-      <div className="mx-auto max-w-7xl rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-6">
+      <div
+        className={
+          embedded
+            ? "rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
+            : "mx-auto max-w-7xl rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6"
+        }
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.12em] text-success">
@@ -238,14 +252,20 @@ export default async function CustomerWhatsAppPanel({
             </p>
             <h2 className="mt-1 text-lg font-black text-foreground">
               {t(
-                "حالة العميل والإرسال اليدوي",
-                "Customer state & manual delivery",
+                "حالة واتساب والإجراءات",
+                "WhatsApp status & actions",
               )}
             </h2>
             <p
               className={`mt-2 text-sm font-semibold ${eligible ? "text-success" : "text-warning"}`}
             >
               {eligibilityCopy}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-foreground-muted">
+              {t(
+                "الرسائل التلقائية تخرج من أحداث النشاط نفسها. الأزرار بالأسفل إرسال يدوي اختياري فقط.",
+                "Automatic messages are triggered by business events themselves. The buttons below are optional manual actions only.",
+              )}
             </p>
           </div>
           <Link
@@ -291,7 +311,11 @@ export default async function CustomerWhatsAppPanel({
             </p>
             {latest ? (
               <p className="mt-1 text-sm text-foreground-muted">
-                {latest.payload.event.replaceAll("_", " ")} · {latestStatus} ·{" "}
+                {latest.payload.event.replaceAll("_", " ")} ·{" "}
+                {latest.payload.deliveryMode === "MANUAL"
+                  ? t("يدوي", "Manual")
+                  : t("تلقائي", "Automatic")}{" "}
+                · {latestStatus} ·{" "}
                 {new Intl.DateTimeFormat(locale, {
                   dateStyle: "medium",
                   timeStyle: "short",
@@ -325,7 +349,17 @@ export default async function CustomerWhatsAppPanel({
         ) : null}
 
         {canSend && eligible && manualReadiness.readyEvents.length > 0 ? (
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-5">
+          <div className="mt-5 border-t border-border pt-5">
+            <p className="text-sm font-black text-foreground">
+              {t("إرسال يدوي اختياري", "Optional manual send")}
+            </p>
+            <p className="mt-1 text-xs leading-5 text-foreground-muted">
+              {t(
+                "استخدم الأزرار دي لو عايز تبعت رسالة يدويًا الآن. الأتمتة لا تعتمد عليها.",
+                "Use these buttons only when you want to send a message manually now. Automations do not depend on them.",
+              )}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
             {manualReadiness.isEventReady("WELCOME") ? (
               <ManualWhatsAppSendButton action={sendAction} event="WELCOME" requestId={randomUUID()} label={t("إرسال ترحيب", "Send welcome")} customerName={customerName} maskedPhone={maskedPhone} preview={renderWhatsAppTemplate(business.whatsappWelcomeMessage ?? "", previewContext)} language={language} tone="success" />
             ) : null}
@@ -356,6 +390,7 @@ export default async function CustomerWhatsAppPanel({
                 tone="success"
               />
             ) : null}
+            </div>
           </div>
         ) : null}
 

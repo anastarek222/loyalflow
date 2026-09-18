@@ -29,6 +29,7 @@ import { LoyaltyCardPreview } from "@/components/loyalty-card-preview";
 import RedeemRewardDialog from "@/components/redeem-reward-dialog";
 import LoyaltySubmitButton from "@/components/loyalty-submit-button";
 import LoyaltyOperationContextFields from "@/components/loyalty-operation-context-fields";
+import CustomerWhatsAppPanel from "./whatsapp-panel";
 import { getOperationContextOptions } from "@/lib/loyalty/operation-context";
 import {
   getExperienceModeCookieName,
@@ -690,6 +691,12 @@ export default async function CustomerDetailsPage({
               >
                 {copy.openCard}
               </Link>
+              <a
+                href="#customer-whatsapp"
+                className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-3 py-2 text-center text-sm font-bold text-success"
+              >
+                WhatsApp
+              </a>
               {canEarnLoyalty || canRedeemLoyalty ? (
                 <a
                   href="#daily-loyalty"
@@ -706,6 +713,12 @@ export default async function CustomerDetailsPage({
                 </a>
               ) : null}
             </nav>
+
+            <CustomerWhatsAppPanel
+              params={params}
+              searchParams={searchParams}
+              embedded
+            />
 
             {isSimpleExperience ? (
               <section className="mt-5 rounded-[var(--lf-radius-card)] border border-primary/20 bg-primary-subtle/40 p-5 sm:p-6">

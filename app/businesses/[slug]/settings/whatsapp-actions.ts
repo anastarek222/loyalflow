@@ -6,9 +6,11 @@ import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
   deleteBusinessWhatsAppCredential,
+  getBusinessWhatsAppCredential,
   upsertBusinessWhatsAppCredential,
 } from "@/lib/server/integrations/business-whatsapp-credentials";
 import { upsertBusinessWhatsAppAutomationSettings } from "@/lib/server/integrations/business-whatsapp-automation-settings";
+import { getBusinessWhatsAppAutomaticReadiness } from "@/lib/server/integrations/business-whatsapp-template-bindings";
 import {
   completeWhatsAppEmbeddedSignup,
   verifyWhatsAppBusinessConnection,
@@ -19,6 +21,8 @@ import {
   refreshBusinessWhatsAppTemplateFromMeta,
   submitBusinessWhatsAppTemplateToMeta,
 } from "@/lib/server/integrations/whatsapp-template-provider";
+import { getWhatsAppProviderReadiness } from "@/lib/server/integrations/whatsapp-readiness";
+import { compileWhatsAppTemplateForMeta } from "@/lib/whatsapp-templates";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -72,6 +76,7 @@ const automaticEventSchema = z.enum([
   "NEW_REWARD",
   "NEW_OFFER",
 ]);
+type AutomaticEvent = z.infer<typeof automaticEventSchema>;
 
 const automationSettingsSchema = z.object({
   whatsappWelcomeMessage: ownerMessageSchema,
@@ -98,6 +103,7 @@ async function managedBusiness(slug: string) {
     select: {
       id: true,
       slug: true,
+      cardDefaultLanguage: true,
     },
   });
   if (!business) redirect("/businesses");
@@ -262,7 +268,27 @@ export async function updateBusinessWhatsAppAutomationAction(
   }
 
   const copy = parsed.data;
-  await prisma.$transaction(async (transaction) => {
+  const ownerMessages = [
+    copy.whatsappWelcomeMessage,
+    copy.whatsappBalanceMessage,
+    copy.whatsappRewardMessage,
+    copy.whatsappRedeemedMessage,
+    copy.newRewardMessage,
+    copy.newOfferMessage,
+  ];
+  if (
+    ownerMessages.some(
+      (message) =>
+        message.length > 0 && !compileWhatsAppTemplateForMeta(message).ok,
+    )
+  ) {
+    redirect(
+      `/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=invalid-copy`,
+    );
+  }
+
+  const credential = await getBusinessWhatsAppCredential(prisma, business.id);
+  const saveResult = await prisma.$transaction(async (transaction) => {
     await transaction.business.update({
       where: { id: business.id },
       data: {
@@ -272,8 +298,8 @@ export async function updateBusinessWhatsAppAutomationAction(
         whatsappRedeemedMessage: copy.whatsappRedeemedMessage || null,
       },
     });
-    await upsertBusinessWhatsAppAutomationSettings(transaction, {
-      businessId: business.id,
+
+    const requestedAutomation = {
       paused: copy.paused,
       welcomeEnabled: copy.welcomeEnabled,
       balanceUpdatedEnabled: copy.balanceUpdatedEnabled,
@@ -281,14 +307,77 @@ export async function updateBusinessWhatsAppAutomationAction(
       rewardRedeemedEnabled: copy.rewardRedeemedEnabled,
       newRewardEnabled: copy.newRewardEnabled,
       newOfferEnabled: copy.newOfferEnabled,
+    };
+    const readiness = await getBusinessWhatsAppAutomaticReadiness(transaction, {
+      businessId: business.id,
+      wabaId: credential?.wabaId ?? null,
+      language: business.cardDefaultLanguage,
+      messages: {
+        whatsappWelcomeMessage: copy.whatsappWelcomeMessage || null,
+        whatsappBalanceMessage: copy.whatsappBalanceMessage || null,
+        whatsappRewardMessage: copy.whatsappRewardMessage || null,
+        whatsappRedeemedMessage: copy.whatsappRedeemedMessage || null,
+        newRewardMessage: copy.newRewardMessage || null,
+        newOfferMessage: copy.newOfferMessage || null,
+      },
+      automation: requestedAutomation,
+    });
+    const blockedEvents = new Set<AutomaticEvent>([
+      ...readiness.missingCopyEvents,
+      ...readiness.blockedEvents,
+    ]);
+    const providerReady = getWhatsAppProviderReadiness().providerReady;
+    const senderReady = Boolean(
+      credential?.wabaId?.trim() &&
+        credential.phoneNumberId.trim() &&
+        credential.accessTokenCiphertext.trim(),
+    );
+    const enabled = (event: AutomaticEvent, requested: boolean) =>
+      requested &&
+      providerReady &&
+      senderReady &&
+      !blockedEvents.has(event);
+
+    await upsertBusinessWhatsAppAutomationSettings(transaction, {
+      businessId: business.id,
+      paused: copy.paused,
+      welcomeEnabled: enabled("WELCOME", copy.welcomeEnabled),
+      balanceUpdatedEnabled: enabled(
+        "BALANCE_UPDATED",
+        copy.balanceUpdatedEnabled,
+      ),
+      rewardReadyEnabled: enabled("REWARD_READY", copy.rewardReadyEnabled),
+      rewardRedeemedEnabled: enabled(
+        "REWARD_REDEEMED",
+        copy.rewardRedeemedEnabled,
+      ),
+      newRewardEnabled: enabled("NEW_REWARD", copy.newRewardEnabled),
+      newOfferEnabled: enabled("NEW_OFFER", copy.newOfferEnabled),
       newRewardMessage: copy.newRewardMessage || null,
       newOfferMessage: copy.newOfferMessage || null,
     });
+
+    const prerequisitesBlocked =
+      Boolean(
+        copy.welcomeEnabled ||
+          copy.balanceUpdatedEnabled ||
+          copy.rewardReadyEnabled ||
+          copy.rewardRedeemedEnabled ||
+          copy.newRewardEnabled ||
+          copy.newOfferEnabled,
+      ) &&
+      (!providerReady || !senderReady);
+    return {
+      blockedRequestedEvents:
+        blockedEvents.size + (prerequisitesBlocked ? 1 : 0),
+    };
   });
 
   revalidatePath(`/businesses/${business.slug}/settings/whatsapp`);
   redirect(
-    `/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=saved`,
+    `/businesses/${business.slug}/settings/whatsapp?whatsappAutomation=${
+      saveResult.blockedRequestedEvents > 0 ? "saved-needs-approval" : "saved"
+    }`,
   );
 }
 

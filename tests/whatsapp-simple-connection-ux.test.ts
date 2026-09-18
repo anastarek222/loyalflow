@@ -85,3 +85,38 @@ test("Arabic WhatsApp UI localizes provider states and avoids Latin-only styling
   assert.match(historyPage, /إعادة نفس المحاولة/);
   assert.match(historyPage, /إعادة الإرسال كمحاولة جديدة/);
 });
+
+test("suggested WhatsApp drafts must be saved before Meta submission", () => {
+  assert.match(page, /savedMessage: business\.whatsappRedeemedMessage/);
+  assert.match(page, /savedMessage: automation\.newRewardMessage/);
+  assert.match(page, /savedMessage: automation\.newOfferMessage/);
+  assert.match(page, /const message = row\.savedMessage\?\.trim\(\) \?\? ""/);
+  assert.match(page, /Suggested draft — save WhatsApp settings before submitting it to Meta/);
+  assert.match(page, /Submit saved copy/);
+});
+
+test("WhatsApp automation editor exposes supported variables including live offer identity", () => {
+  assert.match(page, /Available variables/);
+  assert.match(page, /\{offer\}/);
+  assert.match(page, /live offer name for New Offer/);
+  assert.match(page, /unsupported variable/);
+  assert.match(actions, /compileWhatsAppTemplateForMeta/);
+  assert.match(actions, /whatsappAutomation=invalid-copy/);
+});
+
+test("unapproved automatic events stay off instead of creating doomed deliveries", () => {
+  assert.match(actions, /getBusinessWhatsAppAutomaticReadiness\(transaction/);
+  assert.match(actions, /readiness\.missingCopyEvents/);
+  assert.match(actions, /readiness\.blockedEvents/);
+  assert.match(actions, /requested && !blockedEvents\.has/);
+  assert.match(actions, /saved-needs-approval/);
+  assert.match(page, /keeps that event OFF instead of creating failed deliveries/);
+});
+
+test("automatic activation also requires provider and sender readiness", () => {
+  assert.match(actions, /getWhatsAppProviderReadiness\(\)\.providerReady/);
+  assert.match(actions, /credential\?\.wabaId\?\.trim\(\)/);
+  assert.match(actions, /credential\.phoneNumberId\.trim\(\)/);
+  assert.match(actions, /credential\.accessTokenCiphertext\.trim\(\)/);
+  assert.match(actions, /requested &&[\s\S]*providerReady &&[\s\S]*senderReady/);
+});

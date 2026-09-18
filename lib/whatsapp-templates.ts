@@ -20,7 +20,7 @@ export const SUGGESTED_WHATSAPP_TEMPLATES = {
     NEW_REWARD:
       "يوجد مكافأة جديدة من {business} 🎁 {reward}. تابع رصيدك ومكافآتك من هنا: {card_link}",
     NEW_OFFER:
-      "عرض جديد من {business} ✨ افتح كارتك لمعرفة تفاصيل العرض: {card_link}",
+      "عرض جديد من {business} ✨ {offer}. افتح كارتك لمعرفة تفاصيل العرض: {card_link}",
   },
   EN: {
     WELCOME:
@@ -34,7 +34,7 @@ export const SUGGESTED_WHATSAPP_TEMPLATES = {
     NEW_REWARD:
       "A new reward is available from {business} 🎁 {reward}. Follow your balance and rewards here: {card_link}",
     NEW_OFFER:
-      "A new offer is available from {business} ✨ Open your card to view the offer: {card_link}",
+      "A new offer is available from {business} ✨ {offer}. Open your card to view the offer: {card_link}",
   },
 } as const;
 
@@ -54,6 +54,7 @@ type WhatsAppTemplateContext = {
   balance: number;
   unit: string;
   reward: string;
+  offer?: string;
   cardLink: string;
   remaining: number;
 };
@@ -64,6 +65,7 @@ const META_TEMPLATE_EXAMPLE_BY_TOKEN = {
   balance: "12",
   unit: "points",
   reward: "Free coffee",
+  offer: "20% weekend offer",
   card_link: "https://example.com/card/demo",
   remaining: "3",
 } as const;
@@ -77,6 +79,7 @@ function getWhatsAppTemplateReplacements(context: WhatsAppTemplateContext) {
     balance: String(context.balance),
     unit: context.unit,
     reward: context.reward,
+    offer: context.offer ?? context.reward,
     card_link: context.cardLink,
     remaining: String(context.remaining),
   };

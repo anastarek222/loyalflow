@@ -395,6 +395,10 @@ export async function sendWhatsAppCustomerNotificationSafely(
         publishedSubjectName ??
         payload.rewardName ??
         rewardAvailability.defaultReward.name,
+      offer:
+        payload.event === "NEW_OFFER"
+          ? (publishedSubjectName ?? "")
+          : undefined,
       remaining: rewardAvailability.remaining,
       cardLink: cardUrl,
     },

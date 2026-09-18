@@ -1,5 +1,4 @@
 import LegacyCustomerDetailsPage from "./legacy-page";
-import CustomerWhatsAppPanel from "./whatsapp-panel";
 
 type CustomerDetailsPageProps = {
   params: Promise<{
@@ -13,17 +12,13 @@ type CustomerDetailsPageProps = {
 };
 
 /**
- * Keeps the established Customer Profile intact while WA-4 moves WhatsApp
- * delivery onto the durable outbox/history contract. The legacy page no longer
- * renders direct wa.me links, so every send is checked by the server authority.
+ * Keeps the established Customer Profile route while the profile owns the
+ * placement of its guarded WhatsApp operational panel. Every delivery still
+ * passes through server authority and the durable outbox; no direct wa.me send
+ * is restored.
  */
 export default async function CustomerDetailsPage(
   props: CustomerDetailsPageProps,
 ) {
-  return (
-    <>
-      <LegacyCustomerDetailsPage {...props} />
-      <CustomerWhatsAppPanel {...props} />
-    </>
-  );
+  return <LegacyCustomerDetailsPage {...props} />;
 }

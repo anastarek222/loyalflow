@@ -112,9 +112,15 @@ test("contextual customer action uses the manual queue and authoritative Reward 
   assert.doesNotMatch(manualSource, /wa\.me/);
 });
 
-test("Customer Profile removes legacy direct WhatsApp links from the render source", () => {
+test("Customer Profile elevates the guarded WhatsApp panel without restoring direct WhatsApp links", () => {
   assert.match(wrapperSource, /LegacyCustomerDetailsPage/);
-  assert.match(wrapperSource, /CustomerWhatsAppPanel/);
+  assert.doesNotMatch(wrapperSource, /CustomerWhatsAppPanel/);
+  assert.match(legacyProfileSource, /CustomerWhatsAppPanel/);
+  assert.match(legacyProfileSource, /href="#customer-whatsapp"/);
+  assert.match(legacyProfileSource, /embedded/);
+  assert.match(panelSource, /id="customer-whatsapp"/);
+  assert.match(panelSource, /Automatic messages are triggered by business events themselves/);
+  assert.match(panelSource, /Optional manual send/);
   assert.doesNotMatch(wrapperSource, /href\^=.*wa\.me/);
   assert.doesNotMatch(legacyProfileSource, /buildWhatsAppUrl|wa\.me/);
 });
@@ -159,4 +165,9 @@ test("global WhatsApp history labels manual and automatic delivery distinctly", 
   assert.match(historyPageSource, /payload\.deliveryMode === "MANUAL"/);
   assert.match(historyPageSource, /"يدوي", "Manual"/);
   assert.match(historyPageSource, /"تلقائي", "Automatic"/);
+});
+
+test("customer WhatsApp panel uses theme-aware surfaces", () => {
+  assert.match(panelSource, /bg-surface p-5 shadow-sm/);
+  assert.doesNotMatch(panelSource, /bg-white p-5 shadow-sm/);
 });

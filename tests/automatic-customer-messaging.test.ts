@@ -677,3 +677,29 @@ test("manual customer-profile WhatsApp actions require customer edit permission"
     /!canPerform\(session\.user, business\.id, "CUSTOMERS_EDIT"\)/,
   );
 });
+
+test("New Offer provider rendering carries the live offer name into template context", () => {
+  const sender = readFileSync(
+    "lib/server/integrations/whatsapp-cloud.ts",
+    "utf8",
+  );
+  assert.match(
+    sender,
+    /payload\.event === "NEW_OFFER"[\s\S]*publishedSubjectName = offer\.name/,
+  );
+  assert.match(
+    sender,
+    /offer:[\s\S]*payload\.event === "NEW_OFFER"[\s\S]*publishedSubjectName/,
+  );
+});
+
+test("Owner settings fail closed when an automatic event lacks current Meta readiness", () => {
+  const actions = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
+    "utf8",
+  );
+  assert.match(actions, /getBusinessWhatsAppAutomaticReadiness\(transaction/);
+  assert.match(actions, /welcomeEnabled: enabled\("WELCOME"/);
+  assert.match(actions, /newRewardEnabled: enabled\("NEW_REWARD"/);
+  assert.match(actions, /newOfferEnabled: enabled\("NEW_OFFER"/);
+});

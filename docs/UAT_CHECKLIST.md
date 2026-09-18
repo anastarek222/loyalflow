@@ -87,6 +87,53 @@ promotion-application IDs as evidence, then delete only the two UAT businesses.
   QR value is rejected by the staff scanner.
 - [ ] Repeated reward cycles show correct post-redemption balance and history.
 
+## WhatsApp V1 certification
+
+Use an isolated non-production business with an explicitly approved test recipient.
+Do not use a real customer balance or a production audience. Automatic flows must
+be triggered by their business event; pressing a Manual Send button does **not**
+count as evidence that an automatic flow works.
+
+### Readiness
+
+- [ ] Record the exact Staging Git SHA and deployed URL before testing. The deployed SHA must match the reviewed SHA.
+- [ ] Confirm the WhatsApp business credential belongs to the same tenant/WABA/sender and no plaintext token is exposed.
+- [ ] Confirm the current customer phone equals the consent-bound `whatsappPhoneE164`, opt-in exists, STOP/opt-out is empty, and the customer is active.
+- [ ] Confirm the tested event has saved Owner copy, a current-copy Meta binding, and `APPROVED` provider state.
+- [ ] Confirm Global Pause and the tested per-event switch are in the intended state before each scenario.
+- [ ] Confirm provider failure diagnostics columns are present and the diagnostics migration is recorded as finished.
+
+### Automatic event evidence
+
+- [ ] **WELCOME — staff create:** create a new consented customer from the business UI. Do not press **Send welcome**. Confirm one automatic Welcome job is created, scheduled, sent by the business sender, and shown as **Automatic** in History.
+- [ ] **WELCOME — public join:** repeat through the public join flow with explicit WhatsApp opt-in. Confirm the same zero-click automatic behavior and no cross-tenant job.
+- [ ] **BALANCE_UPDATED:** perform a normal earn or authorised balance adjustment. Confirm the committed operation creates exactly one automatic Balance Updated job for its event key.
+- [ ] **REWARD_READY:** start below the threshold and cross it with one normal earn/adjustment. Confirm Reward Ready is created only when the reward becomes newly ready; repeating a non-transitioning operation must not duplicate that publication.
+- [ ] **REWARD_REDEEMED:** redeem an actually available reward through the normal confirmation flow. Confirm the redemption commits first, then one automatic Reward Redeemed delivery is queued with the authoritative reward snapshot.
+- [ ] **NEW_REWARD:** with the event enabled and approved, create an active reward and confirm one publication per eligible consented customer. Create inactive then activate it and confirm one new activation publication. Normal edits while it stays active must not create another publication.
+- [ ] **NEW_OFFER — valid now:** create an active currently-valid offer and confirm only the eligible audience gets one automatic publication.
+- [ ] **NEW_OFFER — future:** create/activate an offer whose `validFrom` is in the future. Confirm jobs are durable but unavailable until `validFrom`, then re-check live offer state and audience immediately before sending.
+- [ ] **NEW_OFFER — expired/ineligible:** confirm expired, inactive, wrong-segment, or otherwise ineligible offers do not send even if a stale job exists.
+
+### Safety, manual separation, and recovery
+
+- [ ] Turn **Global Pause** on. Confirm automatic events create no sendable WhatsApp delivery while an otherwise-eligible explicit Manual Send remains available.
+- [ ] Disable one event switch only. Confirm that event is suppressed without changing the other five switches or deleting its saved copy.
+- [ ] Change the customer's phone after consent without reconfirming. Confirm enqueue/send/retry/resend all fail closed and History no longer labels the customer eligible.
+- [ ] Send inbound STOP/opt-out for the exact tenant sender. Confirm subsequent automatic and manual sends are blocked and another tenant/sender cannot opt the customer out.
+- [ ] Confirm Manual Send creates History with **Manual** and an automatic business event creates **Automatic**. Manual buttons are optional and never used as proof of automation.
+- [ ] For a retryable pre-provider failure (network/429/5xx), confirm Retry revives the same durable job only when the shared recovery policy and current customer eligibility allow it.
+- [ ] For permanent failures (for example 400/401/template/connection problems), confirm blind Retry is unavailable.
+- [ ] After provider acceptance, confirm Retry is unavailable; an intentional Resend creates a new delivery attempt only and never replays earn, redemption, reward creation, or offer creation.
+- [ ] Resend a NEW_REWARD/NEW_OFFER attempt and confirm the new job preserves the original `rewardId`/`offerId` publication identity and re-checks live source/audience truth.
+- [ ] Confirm a failed Meta delivery records the safe provider error code/message, displays it in History, redacts token-like secrets, and never exposes credentials.
+
+### Provider lifecycle evidence
+
+- [ ] Retain the Tanee job ID, event, Automatic/Manual mode, provider message ID, provider sender identity, and timestamps for Accepted/Sent/Delivered/Read when Meta supplies them.
+- [ ] For a provider-side failure, retain the Meta error code and sanitized description. Do not retain access tokens or full customer phone numbers in the evidence bundle.
+- [ ] Do not mark WhatsApp V1 provider certification complete from source tests alone. It requires real Staging provider evidence against the exact deployed SHA.
+
 ## Evidence to retain
 
 - [ ] Deployment URL and Vercel production build log.

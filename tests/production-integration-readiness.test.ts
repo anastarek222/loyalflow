@@ -103,7 +103,8 @@ test("WhatsApp settings report fail-closed WABA and business-scoped automatic de
   );
   assert.match(page, /binding\?\.wabaId === credential\.wabaId/);
   assert.match(page, /name="wabaId"/);
-  assert.match(page, /Submit current copy/);
+  assert.match(page, /Submit saved copy/);
+  assert.match(page, /const message = row\.savedMessage\?\.trim\(\) \?\? ""/);
   assert.match(page, /Refresh from Meta/);
   assert.match(actions, /wabaId: formData\.get\("wabaId"\)/);
 });
