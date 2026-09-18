@@ -554,7 +554,7 @@ export function StandardCardSetup({
                     type="color"
                     value={values.primaryColor}
                     onChange={(event) => updateCustomColor(event.target.value)}
-                    className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-white p-1"
+                    className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-surface p-1"
                   />
                 </label>
                 <label className="text-xs font-bold text-foreground-muted">
@@ -575,7 +575,7 @@ export function StandardCardSetup({
                       }
                     }}
                     aria-invalid={!HEX_COLOR.test(primaryDraft)}
-                    className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-white px-3 font-mono text-sm uppercase"
+                    className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-surface px-3 font-mono text-sm text-foreground uppercase"
                   />
                 </label>
               </div>
@@ -630,7 +630,7 @@ export function StandardCardSetup({
                     onChange={(event) =>
                       updateSecondaryColor(event.target.value)
                     }
-                    className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-white p-1"
+                    className="mt-2 block h-11 w-20 cursor-pointer rounded-lg border border-border bg-surface p-1"
                   />
                 </label>
                 <label className="text-xs font-bold text-foreground-muted">
@@ -651,7 +651,7 @@ export function StandardCardSetup({
                       }
                     }}
                     aria-invalid={!HEX_COLOR.test(secondaryDraft)}
-                    className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-white px-3 font-mono text-sm uppercase"
+                    className="mt-2 block min-h-11 w-full rounded-lg border border-border bg-surface px-3 font-mono text-sm text-foreground uppercase"
                   />
                 </label>
               </div>
@@ -708,7 +708,7 @@ export function StandardCardSetup({
                   value={values.artworkCategory}
                   onChange={(event) => update("artworkCategory", event.target.value)}
                   disabled={!values.artworkEnabled}
-                  className="mt-2 w-full rounded-xl border border-border bg-white px-3 py-3 disabled:opacity-50"
+                  className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-3 text-foreground disabled:opacity-50"
                 >
                   {STANDARD_CARD_ARTWORK_CATEGORIES.map((category) => (
                     <option key={category} value={category}>
