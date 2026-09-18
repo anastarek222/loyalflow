@@ -225,12 +225,18 @@ test("local database verifier requires the complete reviewed committed migration
     .map((entry) => entry.name)
     .sort();
 
-  assert.equal(committedMigrations.length, 57);
+  assert.equal(committedMigrations.length, 58);
   assert.ok(
     committedMigrations.includes(
       "20260916220000_harden_whatsapp_sender_isolation",
     ),
     "WhatsApp sender isolation must be part of the reviewed migration history.",
+  );
+  assert.ok(
+    committedMigrations.includes(
+      "20260918130000_add_whatsapp_provider_error_details",
+    ),
+    "WhatsApp provider diagnostics must be part of the reviewed migration history.",
   );
   assert.ok(
     committedMigrations.includes(
