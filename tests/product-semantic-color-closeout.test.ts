@@ -34,6 +34,15 @@ const strictProductPaths = [
   "components/custom-card-experience-status.tsx",
   "components/customer-messages-form.tsx",
   "components/scan-customer-search.tsx",
+  "components/campaign-builder.tsx",
+  "components/card-offline-manager.tsx",
+  "components/program-rules-form.tsx",
+  "components/loyalty-operation-context-fields.tsx",
+  "components/administration/administration-navigation.tsx",
+  "components/growth/growth-navigation.tsx",
+  "components/copy-link-button.tsx",
+  "components/share-link-button.tsx",
+  "components/scan-action-button.tsx",
 ] as const;
 
 for (const path of strictProductPaths) {
