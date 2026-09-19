@@ -480,15 +480,9 @@ export default async function BusinessWhatsAppSettingsPage({
                 configId={embeddedSignupConfigId}
                 graphApiVersion={graphApiVersion}
                 enabled={embeddedSignupReadiness.ready}
-                fallbackWabaId={
-                  credential?.wabaId ??
-                  lastVerifiedSender?.providerWabaId ??
-                  undefined
-                }
+                fallbackWabaId={lastVerifiedSender?.providerWabaId ?? undefined}
                 fallbackPhoneNumberId={
-                  credential?.phoneNumberId ??
-                  lastVerifiedSender?.providerPhoneNumberId ??
-                  undefined
+                  lastVerifiedSender?.providerPhoneNumberId ?? undefined
                 }
                 action={completeEmbeddedSignup}
               />
