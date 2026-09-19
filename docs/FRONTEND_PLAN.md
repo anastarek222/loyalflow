@@ -56,7 +56,7 @@ Browser evidence on code SHA `b495f74fe6c70ff5953edb1b737b75cc2b26a57c`, Product
 - [x] Customer detail
 - [x] Reports
 - [x] Staff reports
-- [ ] Settings
+- [x] Settings
 - [ ] Account security
 - [ ] Team / branches / rewards / offers
 
@@ -81,6 +81,18 @@ Browser evidence on code SHA `53d7e1444a66bb58245068d0080266854ff00a9b`, Product
 - The run completed 18/18 PR smoke tests and 74/74 marketing/browser matrix tests; full tests, typecheck, workspace boundaries, lint, build, browser smoke, and patch whitespace all passed.
 - Visual artifacts were reviewed for the verified Staff reports variants.
 - Persisted staff attribution, permissions, and reporting calculations were not changed by this frontend verification pass.
+
+
+#### Settings verification checkpoint — 2026-09-19
+
+Browser evidence on code SHA `f51e07ba2c721936b54a464b29e0a72dbcdb07d5`, Production PR Validation run #403:
+
+- Settings passed at 390px and 1366px across English/Arabic and light/dark variants.
+- The shared Settings sub-navigation is now localized in Arabic and English, including direction and accessible labels.
+- Verified the administration hero, four section links, plan usage, profile and operations forms, integrations, card details, export permission surface, danger zone, locale direction, theme parity, and no horizontal overflow.
+- The run completed 19/19 PR smoke tests and 74/74 marketing/browser matrix tests; full tests, typecheck, workspace boundaries, lint, build, browser smoke, and patch whitespace all passed.
+- Visual artifacts were reviewed for the verified Settings variants.
+- Settings actions, tenant authorization, plan enforcement, integrations, export permissions, and deletion behavior were not changed by this frontend pass.
 
 
 ### Customer-facing
