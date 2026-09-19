@@ -153,9 +153,19 @@ async function captureMarketingShellGeometry(
   const headerBrand = header.locator('[data-marketing-header-brand="true"]');
   const headerNav = header.locator('[data-marketing-header-nav="true"]');
   const headerActions = header.locator('[data-marketing-header-actions="true"]');
+  const activeWordmarkTheme =
+    (await page.locator("html").getAttribute("data-marketing-theme")) === "dark"
+      ? "dark"
+      : "light";
+  const wordmarkSelector =
+    `[data-platform-brand-wordmark-theme="${activeWordmarkTheme}"]`;
 
   await addHeader("header.shell", headerShell);
   await addHeader("header.brand", headerBrand);
+  await addHeader(
+    "header.wordmark",
+    headerBrand.locator(wordmarkSelector),
+  );
   await addHeader("header.nav", headerNav);
   await addHeader("header.actions", headerActions);
   await addHeader(
@@ -188,6 +198,10 @@ async function captureMarketingShellGeometry(
 
   await addFooter("footer.shell", footerShell);
   await addFooter("footer.brand", footerBrand);
+  await addFooter(
+    "footer.wordmark",
+    footerBrand.locator(wordmarkSelector),
+  );
   await addFooter("footer.nav", footerNav);
   await addFooter("footer.bottom", footerBottom);
   await addFooter(

@@ -99,6 +99,14 @@ test("marketing wordmarks keep explicit production dimensions", () => {
     /\.lf-marketing-surface \[data-platform-brand-wordmark-theme="dark"\]\s*\{\s*display: none;/,
   );
   assert.match(
+    styles,
+    /html\[data-marketing-theme="dark"\][\s\S]*?\[data-platform-brand-wordmark-theme="light"\]\s*\{\s*opacity: 0;/,
+  );
+  assert.doesNotMatch(
+    styles,
+    /html\[data-marketing-theme="dark"\][\s\S]*?\[data-platform-brand-wordmark-theme="light"\]\s*\{\s*display: none;/,
+  );
+  assert.match(
     source("public/brand/tanee-wordmark-en-dark.svg"),
     /fill="#FFF9F5"/,
   );

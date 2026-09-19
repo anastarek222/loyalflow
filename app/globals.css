@@ -202,7 +202,7 @@
 html[data-marketing-theme="dark"]
   .lf-marketing-surface
   [data-platform-brand-wordmark-theme="light"] {
-  display: none;
+  opacity: 0;
 }
 
 html[data-marketing-theme="dark"]
