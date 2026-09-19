@@ -60,7 +60,7 @@ export default async function AccountSecurityPage() {
         };
 
   return (
-    <PageContainer variant="narrow">
+    <PageContainer variant="narrow" data-account-security-workspace="true">
       <header>
         <p className="text-sm font-bold text-primary">{copy.eyebrow}</p>
         <h1 className="mt-2 text-3xl font-black text-foreground">
@@ -71,7 +71,7 @@ export default async function AccountSecurityPage() {
         </p>
       </header>
 
-      <Card>
+      <Card data-account-security-section="password">
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary-subtle text-primary">
             <KeyRound size={20} aria-hidden="true" />
@@ -89,7 +89,7 @@ export default async function AccountSecurityPage() {
         <ChangePasswordForm language={language} />
       </Card>
 
-      <Card>
+      <Card data-account-security-section="sessions">
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-danger-subtle text-danger">
             <LogOut size={20} aria-hidden="true" />
@@ -107,7 +107,7 @@ export default async function AccountSecurityPage() {
         <LogoutEverywhereForm language={language} />
       </Card>
 
-      <Card>
+      <Card data-account-security-section="alerts">
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary-subtle text-primary">
             <ShieldAlert size={20} aria-hidden="true" />

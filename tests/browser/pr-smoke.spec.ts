@@ -1650,6 +1650,140 @@ test.describe.serial("PR browser smoke", () => {
     await signOut(page);
   });
 
+  test("Account security preserves password session and alert surfaces across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = "/account/security";
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const workspace = page.locator(
+            '[data-account-security-workspace="true"]',
+          );
+          await expect(workspace).toBeVisible();
+          await expect(
+            workspace.getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "تغيير كلمة المرور" : "Change password",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const passwordSection = workspace.locator(
+            '[data-account-security-section="password"]',
+          );
+          const sessionsSection = workspace.locator(
+            '[data-account-security-section="sessions"]',
+          );
+          const alertsSection = workspace.locator(
+            '[data-account-security-section="alerts"]',
+          );
+          await expect(passwordSection).toBeVisible();
+          await expect(sessionsSection).toBeVisible();
+          await expect(alertsSection).toBeVisible();
+
+          await expect(
+            passwordSection.getByLabel(
+              locale === "ar" ? "كلمة المرور الحالية" : "Current password",
+              { exact: true },
+            ),
+          ).toHaveAttribute("dir", "ltr");
+          await expect(
+            passwordSection.getByLabel(
+              locale === "ar" ? "كلمة المرور الجديدة" : "New password",
+              { exact: true },
+            ),
+          ).toHaveAttribute("dir", "ltr");
+          await expect(
+            passwordSection.getByLabel(
+              locale === "ar"
+                ? "تأكيد كلمة المرور الجديدة"
+                : "Confirm new password",
+              { exact: true },
+            ),
+          ).toHaveAttribute("dir", "ltr");
+          await expect(
+            passwordSection.getByRole("button", {
+              name: locale === "ar" ? "تغيير كلمة المرور" : "Change password",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          await expect(
+            sessionsSection.getByRole("heading", {
+              level: 2,
+              name:
+                locale === "ar"
+                  ? "تسجيل الخروج من جميع الأجهزة"
+                  : "Log out everywhere",
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(
+            sessionsSection.getByRole("button", {
+              name:
+                locale === "ar"
+                  ? "تسجيل الخروج من جميع الأجهزة"
+                  : "Log out everywhere",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          await expect(
+            alertsSection.getByRole("heading", {
+              level: 2,
+              name:
+                locale === "ar"
+                  ? "آخر تنبيهات الأمان"
+                  : "Recent security alerts",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          await expect(page.locator("html")).toHaveAttribute(
+            "data-theme",
+            theme,
+          );
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-account-security-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
     page,
   }) => {
