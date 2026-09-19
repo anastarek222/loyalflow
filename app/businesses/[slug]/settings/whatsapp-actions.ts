@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { canBusinessPerformSubscriptionOperation } from "@/lib/billing/subscription-entitlement-runtime";
 import { canManageBusiness } from "@/lib/permissions";
 import prisma from "@/lib/prisma";
+import { logServerEvent } from "@/lib/server/logging";
 import {
   deleteBusinessWhatsAppCredential,
   getBusinessWhatsAppCredential,
@@ -152,11 +153,30 @@ export async function completeBusinessWhatsAppEmbeddedSignupAction(
       accessTokenCiphertext,
     });
   } catch (error) {
+    const reason =
+      error instanceof WhatsAppEmbeddedSignupError
+        ? error.reason
+        : "UNKNOWN";
     const status =
-      error instanceof WhatsAppEmbeddedSignupError &&
-      error.reason === "NOT_CONFIGURED"
+      reason === "NOT_CONFIGURED"
         ? "embedded-not-configured"
-        : "embedded-failed";
+        : reason === "TOKEN_EXCHANGE_FAILED"
+          ? "embedded-token-exchange-failed"
+          : reason === "PHONE_VERIFICATION_FAILED"
+            ? "embedded-phone-verification-failed"
+            : reason === "PHONE_WABA_MISMATCH"
+              ? "embedded-sender-mismatch"
+              : reason === "PHONE_SELECTION_FAILED"
+                ? "embedded-phone-selection-failed"
+                : reason === "SUBSCRIPTION_FAILED"
+                  ? "embedded-subscription-failed"
+                  : "embedded-failed";
+
+    logServerEvent("WHATSAPP_EMBEDDED_SIGNUP_FAILED", {
+      businessId: business.id,
+      reason,
+    });
+
     redirect(
       `/businesses/${business.slug}/settings/whatsapp?whatsapp=${status}`,
     );
