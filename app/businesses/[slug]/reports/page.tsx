@@ -1185,10 +1185,10 @@ export default async function ReportsPage({
 
   return (
     <main
-      className="min-h-screen px-3 py-3 sm:px-8 sm:py-8"
+      data-report-canvas="true"
+      className="min-h-screen bg-canvas px-3 py-3 sm:px-8 sm:py-8"
       dir={language === "AR" ? "rtl" : "ltr"}
       style={{
-        backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >

@@ -73,6 +73,19 @@ async function expectSameRow(locator: Locator) {
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
 }
 
+async function expectAuthenticatedCanvasParity(page: Page) {
+  const reportCanvas = page.locator('main[data-report-canvas="true"]');
+  const appCanvas = page.locator("[data-app-language]").first();
+  await expect(reportCanvas).toBeVisible();
+  await expect(appCanvas).toBeVisible();
+
+  const [reportBackground, appBackground] = await Promise.all([
+    reportCanvas.evaluate((node) => getComputedStyle(node).backgroundColor),
+    appCanvas.evaluate((node) => getComputedStyle(node).backgroundColor),
+  ]);
+  expect(reportBackground).toBe(appBackground);
+}
+
 type ShellRect = {
   x: number;
   y: number;
@@ -1192,6 +1205,7 @@ test.describe.serial("PR browser smoke", () => {
           ).toBeHidden();
 
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expectAuthenticatedCanvasParity(page);
           await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
             "dir",
             locale === "ar" ? "rtl" : "ltr",
@@ -1309,6 +1323,7 @@ test.describe.serial("PR browser smoke", () => {
           await expect(summary.locator(":scope > article, :scope > a")).toHaveCount(4);
 
           await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expectAuthenticatedCanvasParity(page);
           await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
             "dir",
             locale === "ar" ? "rtl" : "ltr",
@@ -1404,6 +1419,7 @@ test.describe.serial("PR browser smoke", () => {
             "data-theme",
             theme,
           );
+          await expectAuthenticatedCanvasParity(page);
           await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
             "dir",
             locale === "ar" ? "rtl" : "ltr",
@@ -1490,6 +1506,7 @@ test.describe.serial("PR browser smoke", () => {
             "data-theme",
             theme,
           );
+          await expectAuthenticatedCanvasParity(page);
           await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
             "dir",
             locale === "ar" ? "rtl" : "ltr",

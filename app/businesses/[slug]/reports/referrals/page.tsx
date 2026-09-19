@@ -115,10 +115,10 @@ export default async function ReferralReportsPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      data-report-canvas="true"
+      className="min-h-screen bg-canvas px-4 py-5 sm:px-8 sm:py-8"
       dir={language === "AR" ? "rtl" : "ltr"}
       style={{
-        backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
