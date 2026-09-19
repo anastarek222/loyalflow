@@ -147,7 +147,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
       </section>
 
       {!simple ? (
-        <details className="group overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
+        <details data-reward-create="true" className="group overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
           <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-surface-subtle sm:px-6">
             <span className="flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-subtle text-primary">
@@ -275,6 +275,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
               {business.rewards.map((reward) => (
                 <article
                   key={reward.id}
+                  data-reward-card="true"
                   className={`flex flex-col overflow-hidden rounded-[var(--lf-radius-card)] border bg-surface shadow-sm ${
                     reward.isActive
                       ? "border-primary/20"
@@ -365,7 +366,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                     </div>
                   </div>
                   {!simple ? (
-                    <details className="group border-t border-border bg-surface-subtle/60">
+                    <details data-reward-edit="true" className="group border-t border-border bg-surface-subtle/60">
                       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-5 font-bold text-primary sm:px-6">
                         {language === "AR"
                           ? "تعديل الإعدادات"

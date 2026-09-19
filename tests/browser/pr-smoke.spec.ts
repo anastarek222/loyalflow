@@ -326,6 +326,26 @@ async function setAuthenticatedLanguage(
   });
 }
 
+async function setAuthenticatedExperienceMode(
+  page: Page,
+  target: "SIMPLE" | "ADVANCED",
+) {
+  await openAccountMenu(page);
+  const account = page.getByLabel("Account", { exact: true });
+  const button = account.getByRole("button", {
+    name: target === "SIMPLE" ? "Simple" : "Advanced",
+    exact: true,
+  });
+  await expect(button).toBeVisible();
+
+  if ((await button.getAttribute("aria-pressed")) !== "true") {
+    await button.click();
+    await expect(button).toHaveAttribute("aria-pressed", "true", {
+      timeout: 10_000,
+    });
+  }
+}
+
 test.describe.serial("PR browser smoke", () => {
   test.beforeEach(async () => {
     await resetDisposableRateLimit();
@@ -1639,6 +1659,330 @@ test.describe.serial("PR browser smoke", () => {
           await page.screenshot({
             path: test.info().outputPath(
               `saas-shell-settings-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Team and branches preserve administration surfaces across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+
+          const teamResponse = await page.goto(
+            `/businesses/${fixture.businessA}/users`,
+          );
+          expect(teamResponse?.status()).toBe(200);
+          const team = page.locator('[data-team-administration="true"]');
+          await expect(team).toBeVisible();
+          await expect(
+            team.getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "حسابات الفريق" : "Team accounts",
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(team.locator('[data-team-filters="true"]')).toBeVisible();
+          expect(await team.locator('[data-team-member="true"]').count()).toBeGreaterThan(0);
+          await expect(team).toHaveAttribute("dir", locale === "ar" ? "rtl" : "ltr");
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-team-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+
+          const branchesResponse = await page.goto(
+            `/businesses/${fixture.businessA}/branches`,
+          );
+          expect(branchesResponse?.status()).toBe(200);
+          const branches = page.locator(
+            '[data-branches-administration="true"]',
+          );
+          await expect(branches).toBeVisible();
+          await expect(
+            branches.getByRole("heading", {
+              level: 1,
+              name:
+                locale === "ar"
+                  ? "الفروع والإسنادات"
+                  : "Branches & assignments",
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(branches.locator('[data-branch-card="true"]')).toHaveCount(3);
+          await expect(
+            branches.getByText(locale === "ar" ? "إضافة فرع" : "Add branch", {
+              exact: true,
+            }).first(),
+          ).toBeVisible();
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-branches-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Rewards SIMPLE preserves catalog truth while hiding advanced editors across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    await setAuthenticatedExperienceMode(page, "SIMPLE");
+    const route = `/businesses/${fixture.businessA}/rewards`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const shell = page.locator('main[data-growth-area="rewards"]');
+          await expect(shell).toHaveAttribute("data-experience-growth", "simple");
+          await expect(shell.locator("[data-reward-catalog-overview]")).toBeVisible();
+          await expect(
+            shell.getByRole("heading", {
+              level: 2,
+              name: locale === "ar" ? "مكتبة المكافآت" : "Reward library",
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(shell.locator('[data-reward-card="true"]')).toHaveCount(3);
+          await expect(shell.locator('[data-reward-create="true"]')).toHaveCount(0);
+          await expect(shell.locator('[data-reward-edit="true"]')).toHaveCount(0);
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-rewards-simple-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Rewards ADVANCED preserves catalog editors across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    await setAuthenticatedExperienceMode(page, "ADVANCED");
+    const route = `/businesses/${fixture.businessA}/rewards`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const shell = page.locator('main[data-growth-area="rewards"]');
+          await expect(shell).toHaveAttribute("data-experience-growth", "advanced");
+          await expect(shell.locator('[data-reward-card="true"]')).toHaveCount(3);
+          await expect(shell.locator('[data-reward-create="true"]')).toBeVisible();
+          await expect(shell.locator('[data-reward-edit="true"]')).toHaveCount(3);
+          await expect(
+            shell.locator('[data-reward-create="true"] summary'),
+          ).toContainText(locale === "ar" ? "إضافة مكافأة" : "Add reward");
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-rewards-advanced-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Offers SIMPLE preserves catalog truth while hiding advanced editors across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    await setAuthenticatedExperienceMode(page, "SIMPLE");
+    const route = `/businesses/${fixture.businessA}/offers`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const shell = page.locator('main[data-growth-area="offers"]');
+          await expect(shell).toHaveAttribute("data-experience-growth", "simple");
+          await expect(shell.locator('[data-offers-workspace="true"]')).toBeVisible();
+          await expect(shell.locator('[data-offer-card="true"]')).toHaveCount(2);
+          await expect(shell.locator('[data-offer-create="true"]')).toHaveCount(0);
+          await expect(shell.locator('[data-offer-edit="true"]')).toHaveCount(0);
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-offers-simple-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Offers ADVANCED preserves catalog editors across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    await setAuthenticatedExperienceMode(page, "ADVANCED");
+    const route = `/businesses/${fixture.businessA}/offers`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const shell = page.locator('main[data-growth-area="offers"]');
+          await expect(shell).toHaveAttribute("data-experience-growth", "advanced");
+          await expect(shell.locator('[data-offer-card="true"]')).toHaveCount(2);
+          await expect(shell.locator('[data-offer-create="true"]')).toBeVisible();
+          await expect(shell.locator('[data-offer-edit="true"]')).toHaveCount(2);
+          await expect(
+            shell.locator('[data-offer-create="true"] summary'),
+          ).toContainText(locale === "ar" ? "إنشاء عرض جديد" : "Create a new offer");
+          await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-offers-advanced-${viewport.name}-${locale}-${theme}.png`,
             ),
             fullPage: true,
           });

@@ -227,7 +227,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
       </section>
 
       {manage && !simple ? (
-        <details className="group rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
+        <details data-offer-create="true" className="group rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
           <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 sm:px-6">
             <span className="flex items-center gap-3">
               <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
@@ -303,6 +303,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
               return (
                 <article
                   key={offer.id}
+                  data-offer-card="true"
                   className="flex flex-col rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm"
                 >
                   <div className="flex min-w-0 items-start gap-3">
@@ -387,7 +388,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                   </div>
 
                   {manage && !simple ? (
-                    <details className="group mt-4 rounded-[var(--lf-radius-input)] bg-surface-subtle">
+                    <details data-offer-edit="true" className="group mt-4 rounded-[var(--lf-radius-input)] bg-surface-subtle">
                       <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold text-primary">
                         {language === "AR"
                           ? "تعديل ومعاينة"

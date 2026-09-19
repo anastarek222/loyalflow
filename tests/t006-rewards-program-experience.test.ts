@@ -118,5 +118,8 @@ test("T006 Rewards and Program expose the refreshed workspace without a new data
   assert.match(program, /href="#customer-messages"/);
   assert.match(rewards, /data-reward-catalog-overview/);
   assert.match(rewards, /data-reward-catalog/);
+  assert.match(rewards, /data-reward-create="true"/);
+  assert.match(rewards, /data-reward-card="true"/);
+  assert.match(rewards, /data-reward-edit="true"/);
   assert.doesNotMatch(`${program}\n${rewards}`, /fetch\(|"use client"/);
 });
