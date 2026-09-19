@@ -55,7 +55,7 @@ Browser evidence on code SHA `b495f74fe6c70ff5953edb1b737b75cc2b26a57c`, Product
 - [x] Customers
 - [x] Customer detail
 - [x] Reports
-- [ ] Staff reports
+- [x] Staff reports
 - [ ] Settings
 - [ ] Account security
 - [ ] Team / branches / rewards / offers
@@ -70,6 +70,18 @@ Browser evidence on code SHA `f29aaeb16fc3bf825d62ba9f50b75a5fd5f4f166`, Product
 - The run completed 16/16 PR smoke tests and 74/74 marketing/browser matrix tests, with full tests, typecheck, workspace boundaries, lint, build, browser smoke, and patch whitespace all green.
 - Visual artifacts were captured for all verified Reports variants.
 - Global 360/390 and 1366/1440 validation remains a separate plan-wide gate.
+
+#### Staff reports verification checkpoint — 2026-09-19
+
+Browser evidence on code SHA `53d7e1444a66bb58245068d0080266854ff00a9b`, Production PR Validation run #400:
+
+- Staff reports SIMPLE passed at 390px and 1366px across English/Arabic and light/dark variants.
+- Staff reports ADVANCED passed at 390px and 1366px across English/Arabic and light/dark variants.
+- Verified report filters, four-card summary, SIMPLE detail suppression, ADVANCED responsive table/cards, locale direction, theme parity, and no horizontal overflow.
+- The run completed 18/18 PR smoke tests and 74/74 marketing/browser matrix tests; full tests, typecheck, workspace boundaries, lint, build, browser smoke, and patch whitespace all passed.
+- Visual artifacts were reviewed for the verified Staff reports variants.
+- Persisted staff attribution, permissions, and reporting calculations were not changed by this frontend verification pass.
+
 
 ### Customer-facing
 - [ ] Customer card
