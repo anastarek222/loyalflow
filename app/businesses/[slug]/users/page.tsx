@@ -363,7 +363,7 @@ export default async function UsersPage({
         </header>
 
         {query.created === "business" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mb-6 rounded-xl border border-success/30 bg-success-subtle px-4 py-3 text-success">
             {t(
               "تم إنشاء النشاط وحساب المالك بنجاح. يمكنك الآن إضافة باقي أعضاء الفريق.",
               "The business and owner account were created successfully. You can now add the remaining team members.",
@@ -372,7 +372,7 @@ export default async function UsersPage({
         )}
 
         {query.created === "business" && query.sheetSync === "pending" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+          <div className="mb-6 rounded-xl border border-warning/30 bg-warning-subtle px-4 py-3 text-warning">
             {t(
               "تم حفظ النشاط بنجاح. مزامنة Google Sheets تعمل في الخلفية، ويمكن متابعة حالتها أو إعادة المحاولة من إعدادات النشاط.",
               "The business was saved successfully. Google Sheets sync is running in the background; you can review its status or retry from business settings.",
@@ -381,19 +381,19 @@ export default async function UsersPage({
         )}
 
         {query.created === "1" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mb-6 rounded-xl border border-success/30 bg-success-subtle px-4 py-3 text-success">
             {t("تم إنشاء الحساب بنجاح.", "Account created successfully.")}
           </div>
         )}
 
         {query.success === "activated" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mb-6 rounded-xl border border-success/30 bg-success-subtle px-4 py-3 text-success">
             {t("تم إعادة تفعيل الحساب بنجاح.", "Account reactivated successfully.")}
           </div>
         )}
 
         {query.success === "deactivated" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mb-6 rounded-xl border border-warning/30 bg-warning-subtle px-4 py-3 text-warning">
             {t(
               "تم إيقاف الحساب وإنهاء صلاحية جلساته الحالية.",
               "The account was deactivated and its current sessions were revoked.",
@@ -402,7 +402,7 @@ export default async function UsersPage({
         )}
 
         {query.success === "password" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mb-6 rounded-xl border border-success/30 bg-success-subtle px-4 py-3 text-success">
             {t(
               "تم تغيير كلمة المرور وإلغاء الجلسات السابقة للحساب.",
               "The password was changed and the account’s previous sessions were revoked.",
@@ -411,13 +411,13 @@ export default async function UsersPage({
         )}
 
         {query.success === "experience-access" && (
-          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+          <div className="mb-6 rounded-xl border border-success/30 bg-success-subtle px-4 py-3 text-success">
             {accessCopy.updated}
           </div>
         )}
 
         {query.error === "invalid" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger-subtle px-4 py-3 text-danger">
             {t(
               "راجع البيانات المدخلة. يجب ألا تقل كلمة المرور عن 10 أحرف.",
               "Review the entered data. Passwords must be at least 10 characters.",
@@ -426,19 +426,19 @@ export default async function UsersPage({
         )}
 
         {query.error === "email" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mb-6 rounded-xl border border-warning/30 bg-warning-subtle px-4 py-3 text-warning">
             {t("البريد الإلكتروني مسجل بالفعل.", "That email address is already registered.")}
           </div>
         )}
 
         {query.error === "role" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger-subtle px-4 py-3 text-danger">
             {t("يمكن للمالك إنشاء حسابات موظفين فقط.", "Owners may create staff accounts only.")}
           </div>
         )}
 
         {query.error === "owner-exists" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mb-6 rounded-xl border border-warning/30 bg-warning-subtle px-4 py-3 text-warning">
             {t(
               "يوجد بالفعل مالك أساسي لهذا النشاط. لا يمكن إنشاء مالك إضافي.",
               "This business already has a primary owner. An additional owner cannot be created.",
@@ -447,7 +447,7 @@ export default async function UsersPage({
         )}
 
         {query.error === "password" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger-subtle px-4 py-3 text-danger">
             {t(
               "يجب أن تتطابق كلمتا المرور وألا تقل كل منهما عن 10 أحرف.",
               "The passwords must match and each must be at least 10 characters.",
@@ -456,25 +456,25 @@ export default async function UsersPage({
         )}
 
         {query.error === "self-status" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger-subtle px-4 py-3 text-danger">
             {t("لا يمكنك إيقاف حسابك الشخصي.", "You cannot deactivate your own account.")}
           </div>
         )}
 
         {query.error === "permission" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger-subtle px-4 py-3 text-danger">
             {t("ليست لديك صلاحية تعديل هذا الحساب.", "You do not have permission to modify this account.")}
           </div>
         )}
 
         {query.error === "not-found" && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger-subtle px-4 py-3 text-danger">
             {t("الحساب المحدد غير موجود.", "The selected account was not found.")}
           </div>
         )}
 
         {query.error === "subscription-restricted" && (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <div className="mb-6 rounded-xl border border-warning/30 bg-warning-subtle px-4 py-3 text-warning">
             {t(
               "لا تسمح حالة الاشتراك الحالية بإضافة حساب فريق أو تغيير وصوله التشغيلي. تظل الحسابات والبيانات الحالية متاحة، وتظل إجراءات الأمان متاحة.",
               "The current subscription state does not allow adding a team account or changing its operational access. Existing accounts and data remain available, and security controls remain accessible.",
@@ -559,14 +559,14 @@ export default async function UsersPage({
 
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               <CheckCircle2 className="size-4" aria-hidden="true" />
               {t("تطبيق", "Apply")}
             </button>
             </form>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-foreground-subtle">
             <span>
               {language === "AR"
                 ? `${filteredUsers} نتيجة من ${totalUsers} حساب`
@@ -576,7 +576,7 @@ export default async function UsersPage({
             {filtersActive && (
               <Link
                 href={`/businesses/${business.slug}/users`}
-                className="font-semibold text-violet-600 hover:text-violet-800"
+                className="font-semibold text-primary hover:text-primary-active"
               >
                 {t("مسح الفلاتر", "Clear filters")}
               </Link>
@@ -615,7 +615,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="firstName"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {t("الاسم الأول", "First name")}
                 </label>
@@ -634,7 +634,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="lastName"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {t("اسم العائلة", "Last name")}
                 </label>
@@ -651,7 +651,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {t("البريد الإلكتروني", "Email")}
                 </label>
@@ -670,7 +670,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {t("كلمة مرور مؤقتة", "Temporary password")}
                 </label>
@@ -690,7 +690,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="role"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {t("صلاحية الحساب", "Account role")}
                 </label>
@@ -722,7 +722,7 @@ export default async function UsersPage({
               <div>
                 <label
                   htmlFor="experienceAccess"
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-foreground-muted"
                 >
                   {accessCopy.label}
                 </label>
@@ -744,25 +744,25 @@ export default async function UsersPage({
 
                 <p
                   id="experience-access-description"
-                  className="mt-2 text-sm text-slate-500"
+                  className="mt-2 text-sm text-foreground-subtle"
                 >
                   {accessCopy.createDescription}
                 </p>
-                <ul className="mt-2 space-y-1 text-xs text-slate-500">
+                <ul className="mt-2 space-y-1 text-xs text-foreground-subtle">
                   <li>
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-foreground-muted">
                       {accessCopy.SIMPLE_ONLY}:
                     </span>{" "}
                     {accessCopy.simpleHelp}
                   </li>
                   <li>
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-foreground-muted">
                       {accessCopy.ADVANCED_ONLY}:
                     </span>{" "}
                     {accessCopy.advancedHelp}
                   </li>
                   <li>
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-foreground-muted">
                       {accessCopy.BOTH}:
                     </span>{" "}
                     {accessCopy.bothHelp}
@@ -772,7 +772,7 @@ export default async function UsersPage({
 
               <button
                 type="submit"
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover sm:w-auto"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
               >
                 <UserRound className="size-4" aria-hidden="true" />
                 {t("إنشاء الحساب", "Create account")}
@@ -784,7 +784,7 @@ export default async function UsersPage({
         <div>
           <section>
             {users.length === 0 ? (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center">
+              <div className="rounded-3xl border border-dashed border-border bg-surface p-12 text-center">
                 {t("لا توجد حسابات فريق حتى الآن.", "There are no team accounts yet.")}
               </div>
             ) : (
@@ -832,13 +832,13 @@ export default async function UsersPage({
                             <div className="flex flex-wrap items-center gap-2">
                               <h2
                                 dir="auto"
-                                className="text-lg font-bold text-slate-950"
+                                className="text-lg font-bold text-foreground"
                               >
                                 {user.firstName} {user.lastName ?? ""}
                               </h2>
 
                               {isCurrentUser && (
-                                <span className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-700">
+                                <span className="rounded-full bg-info-subtle px-3 py-1 text-xs font-semibold text-info">
                                   {t("أنت", "You")}
                                 </span>
                               )}
@@ -861,15 +861,15 @@ export default async function UsersPage({
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+                          <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary-active">
                             {roleLabel(user.role)}
                           </span>
 
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-semibold ${
                               user.isActive
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-red-100 text-red-700"
+                                ? "bg-success-subtle text-success"
+                                : "bg-danger-subtle text-danger"
                             }`}
                           >
                             {user.isActive ? t("نشط", "Active") : t("موقوف", "Inactive")}
@@ -897,12 +897,12 @@ export default async function UsersPage({
                           {canChangePassword && (
                             <form
                               action={resetPassword}
-                              className="mt-6 grid gap-4 border-t border-slate-200 pt-6 sm:grid-cols-2"
+                              className="mt-6 grid gap-4 border-t border-border pt-6 sm:grid-cols-2"
                             >
                               <div>
                                 <label
                                   htmlFor={`password-${user.id}`}
-                                  className="mb-2 block text-sm font-medium text-slate-700"
+                                  className="mb-2 block text-sm font-medium text-foreground-muted"
                                 >
                                   {t("كلمة المرور الجديدة", "New password")}
                                 </label>
@@ -914,14 +914,14 @@ export default async function UsersPage({
                                   minLength={10}
                                   required
                                   autoComplete="new-password"
-                                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                  className={administrationFieldClass}
                                 />
                               </div>
 
                               <div>
                                 <label
                                   htmlFor={`confirm-${user.id}`}
-                                  className="mb-2 block text-sm font-medium text-slate-700"
+                                  className="mb-2 block text-sm font-medium text-foreground-muted"
                                 >
                                   {t("تأكيد كلمة المرور", "Confirm password")}
                                 </label>
@@ -933,13 +933,13 @@ export default async function UsersPage({
                                   minLength={10}
                                   required
                                   autoComplete="new-password"
-                                  className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                  className={administrationFieldClass}
                                 />
                               </div>
 
                               <button
                                 type="submit"
-                                className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700 sm:col-span-2"
+                                className="rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover sm:col-span-2"
                               >
                                 {t("تغيير كلمة المرور", "Change password")}
                               </button>
@@ -947,17 +947,17 @@ export default async function UsersPage({
                           )}
 
                           <section
-                            className="mt-6 border-t border-slate-200 pt-6"
+                            className="mt-6 border-t border-border pt-6"
                             aria-labelledby={`experience-access-${user.id}`}
                           >
                             <h3
                               id={`experience-access-${user.id}`}
-                              className="font-semibold text-slate-900"
+                              className="font-semibold text-foreground"
                             >
                               {accessCopy.label}
                             </h3>
                             {user.role === "OWNER" ? (
-                              <p className="mt-1 text-sm text-slate-500">
+                              <p className="mt-1 text-sm text-foreground-subtle">
                                 {accessCopy.ownerDescription}
                               </p>
                             ) : (
@@ -968,7 +968,7 @@ export default async function UsersPage({
                                 <div>
                                   <label
                                     htmlFor={`experienceAccess-${user.id}`}
-                                    className="mb-2 block text-sm font-medium text-slate-700"
+                                    className="mb-2 block text-sm font-medium text-foreground-muted"
                                   >
                                     {accessCopy.label}
                                   </label>
@@ -977,7 +977,7 @@ export default async function UsersPage({
                                     name="experienceAccess"
                                     defaultValue={user.experienceAccess}
                                     aria-describedby={`experience-access-description-${user.id}`}
-                                    className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-violet-500"
+                                    className={administrationFieldClass}
                                   >
                                     <option value="SIMPLE_ONLY">
                                       {accessCopy.SIMPLE_ONLY}
@@ -989,14 +989,14 @@ export default async function UsersPage({
                                   </select>
                                   <p
                                     id={`experience-access-description-${user.id}`}
-                                    className="mt-2 text-sm text-slate-500"
+                                    className="mt-2 text-sm text-foreground-subtle"
                                   >
                                     {accessCopy.editDescription}
                                   </p>
                                 </div>
                                 <button
                                   type="submit"
-                                  className="min-h-11 rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700"
+                                  className="min-h-11 rounded-xl bg-primary px-5 py-3 font-semibold text-primary-foreground transition hover:bg-primary-hover"
                                 >
                                   {accessCopy.save}
                                 </button>
@@ -1004,15 +1004,15 @@ export default async function UsersPage({
                             )}
                           </section>
 
-                          <div className="mt-6 flex flex-col justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
+                          <div className="mt-6 flex flex-col justify-between gap-4 border-t border-border pt-6 sm:flex-row sm:items-center">
                             <div>
-                              <p className="font-semibold text-slate-900">
+                              <p className="font-semibold text-foreground">
                                 {t("الوصول إلى الحساب", "Account access")}
                               </p>
 
-                              <p className="mt-1 break-words text-sm text-slate-500">
+                              <p className="mt-1 break-words text-sm text-foreground-subtle">
                                 {t(
-                                  "الحساب الموقوف لا يمكنه الدخول إلى تاني.",
+                                  "الحساب الموقوف لا يمكنه الدخول إلى Tanee.",
                                   "An inactive account cannot sign in to Tanee.",
                                 )}
                               </p>
@@ -1035,8 +1035,8 @@ export default async function UsersPage({
                                   type="submit"
                                   className={
                                     user.isActive
-                                      ? "w-full rounded-xl border border-red-300 bg-red-50 px-5 py-3 font-semibold text-red-700 transition hover:bg-red-100 sm:w-auto"
-                                      : "w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition hover:bg-emerald-700 sm:w-auto"
+                                      ? "w-full rounded-xl border border-danger/30 bg-danger-subtle px-5 py-3 font-semibold text-danger transition hover:bg-danger/10 sm:w-auto"
+                                      : "w-full rounded-xl bg-success px-5 py-3 font-semibold text-inverse transition hover:opacity-90 sm:w-auto"
                                   }
                                 >
                                   {user.isActive
@@ -1045,7 +1045,7 @@ export default async function UsersPage({
                                 </ConfirmSubmitButton>
                               </form>
                             ) : (
-                              <p className="text-sm font-medium text-slate-400">
+                              <p className="text-sm font-medium text-disabled">
                                 {isCurrentUser
                                   ? t(
                                       "لا يمكنك إيقاف حسابك الشخصي.",
@@ -1070,29 +1070,29 @@ export default async function UsersPage({
             {currentPage > 1 ? (
               <Link
                 href={getPageUrl(currentPage - 1)}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+                className="rounded-xl border border-border bg-surface px-5 py-3 font-semibold text-foreground-muted"
               >
                 {t("→ السابق", "← Previous")}
               </Link>
             ) : (
-              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
+              <span className="cursor-not-allowed rounded-xl border border-border bg-surface-subtle px-5 py-3 font-semibold text-disabled">
                 {t("→ السابق", "← Previous")}
               </span>
             )}
 
-            <span className="rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white">
+            <span className="rounded-xl bg-foreground px-5 py-3 font-semibold text-inverse">
               {currentPage} / {totalPages}
             </span>
 
             {currentPage < totalPages ? (
               <Link
                 href={getPageUrl(currentPage + 1)}
-                className="rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-700"
+                className="rounded-xl border border-border bg-surface px-5 py-3 font-semibold text-foreground-muted"
               >
                 {t("التالي ←", "Next →")}
               </Link>
             ) : (
-              <span className="cursor-not-allowed rounded-xl border border-slate-200 bg-slate-100 px-5 py-3 font-semibold text-slate-400">
+              <span className="cursor-not-allowed rounded-xl border border-border bg-surface-subtle px-5 py-3 font-semibold text-disabled">
                 {t("التالي ←", "Next →")}
               </span>
             )}
