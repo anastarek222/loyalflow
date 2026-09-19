@@ -318,3 +318,33 @@ test("Embedded Signup exits Connecting state when Meta returns auth without send
   );
   assert.match(source, /setConnecting\(false\)/);
 });
+
+test("Embedded Signup server action exposes safe granular failure reasons without logging secrets", () => {
+  const actions = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
+    "utf8",
+  );
+  const page = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp/page.tsx",
+    "utf8",
+  );
+
+  assert.match(actions, /WHATSAPP_EMBEDDED_SIGNUP_FAILED/);
+  assert.match(actions, /TOKEN_EXCHANGE_FAILED/);
+  assert.match(actions, /PHONE_VERIFICATION_FAILED/);
+  assert.match(actions, /PHONE_WABA_MISMATCH/);
+  assert.match(actions, /PHONE_SELECTION_FAILED/);
+  assert.match(actions, /SUBSCRIPTION_FAILED/);
+  assert.match(page, /embedded-token-exchange-failed/);
+  assert.match(page, /embedded-phone-verification-failed/);
+  assert.match(page, /embedded-sender-mismatch/);
+  assert.match(page, /embedded-phone-selection-failed/);
+  assert.match(page, /embedded-subscription-failed/);
+
+  const failureLogStart = actions.indexOf(
+    'logServerEvent("WHATSAPP_EMBEDDED_SIGNUP_FAILED"',
+  );
+  const failureLogEnd = actions.indexOf("redirect(", failureLogStart);
+  const failureLogBlock = actions.slice(failureLogStart, failureLogEnd);
+  assert.doesNotMatch(failureLogBlock, /accessToken|authorizationCode|phoneNumberId|wabaId/);
+});

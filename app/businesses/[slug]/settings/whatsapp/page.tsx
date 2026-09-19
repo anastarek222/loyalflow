@@ -222,11 +222,36 @@ export default async function BusinessWhatsAppSettingsPage({
               "إعداد الربط الرسمي مع Meta ما زال قيد التجهيز.",
               "The official Meta connection setup is still being prepared.",
             )
-          : query.whatsapp === "embedded-failed"
+          : query.whatsapp === "embedded-token-exchange-failed"
             ? t(
-                "Meta لم تكمل الربط. لم يتم حفظ اتصال جزئي؛ حاول مرة أخرى.",
-                "Meta did not complete the connection. No partial connection was saved; try again.",
+                "Meta رجّعت كود تسجيل الدخول، لكن Tanee لم يستطع استبداله بتوكن صالح. راجع إعداد Meta Login for Business / Embedded Signup ثم حاول مرة أخرى.",
+                "Meta returned the login code, but Tanee could not exchange it for a valid access token. Review the Meta Login for Business / Embedded Signup configuration and try again.",
               )
+            : query.whatsapp === "embedded-phone-verification-failed"
+              ? t(
+                  "تم استلام التوكن، لكن Meta رفضت التحقق من أرقام الـWABA المحدد.",
+                  "The token was received, but Meta rejected phone-number verification for the selected WABA.",
+                )
+              : query.whatsapp === "embedded-sender-mismatch"
+                ? t(
+                    "الرقم المحدد لا يتبع الـWABA الذي رجع من Meta. أعد الربط واختَر نفس حساب WhatsApp Business والرقم الصحيح.",
+                    "The selected phone does not belong to the WABA returned by Meta. Reconnect and choose the correct WhatsApp Business account and phone.",
+                  )
+                : query.whatsapp === "embedded-phone-selection-failed"
+                  ? t(
+                      "Meta لم تُرجع رقم WhatsApp واحدًا واضحًا للاختيار. راجع إعداد Embedded Signup واختيار الرقم.",
+                      "Meta did not return one unambiguous WhatsApp phone to select. Review the Embedded Signup phone-selection configuration.",
+                    )
+                  : query.whatsapp === "embedded-subscription-failed"
+                    ? t(
+                        "تم التحقق من الحساب والرقم، لكن Meta رفضت ربط التطبيق بالـWABA عبر subscribed_apps.",
+                        "The WABA and phone were verified, but Meta rejected subscribing the app to the WABA via subscribed_apps.",
+                      )
+                    : query.whatsapp === "embedded-failed"
+                      ? t(
+                          "Meta لم تكمل الربط. لم يتم حفظ اتصال جزئي؛ حاول مرة أخرى.",
+                          "Meta did not complete the connection. No partial connection was saved; try again.",
+                        )
             : query.whatsapp === "advanced-verification-failed"
               ? t(
                   "تعذر على Meta تأكيد أن رقم WhatsApp تابع لحساب WABA والتوكن المُدخل. لم يتم حفظ بيانات الاتصال.",
