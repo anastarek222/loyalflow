@@ -1,3 +1,5 @@
+import { logWhatsAppMetaProviderFailure } from "@/lib/server/integrations/whatsapp-meta-provider-diagnostics";
+
 type EmbeddedSignupEnvironment = Record<string, string | undefined>;
 
 type WhatsAppEmbeddedSignupMode = "STANDARD" | "COEXISTENCE";
@@ -147,6 +149,11 @@ export async function completeWhatsAppEmbeddedSignup(
   const tokenPayload = await readProviderJson(tokenResponse);
   const accessToken = tokenResponse.ok ? getAccessToken(tokenPayload) : null;
   if (!accessToken) {
+    logWhatsAppMetaProviderFailure({
+      operation: "token-exchange",
+      httpStatus: tokenResponse.status,
+      payload: tokenPayload,
+    });
     throw new WhatsAppEmbeddedSignupError("TOKEN_EXCHANGE_FAILED");
   }
 
