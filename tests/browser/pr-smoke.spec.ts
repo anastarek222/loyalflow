@@ -73,6 +73,196 @@ async function expectSameRow(locator: Locator) {
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(2);
 }
 
+type ShellRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type MarketingShellGeometry = Record<string, ShellRect>;
+
+const MARKETING_SHELL_ROUTES = [
+  "/",
+  "/features",
+  "/how-it-works",
+  "/pricing",
+  "/about",
+  "/faq",
+  "/contact",
+  "/security",
+  "/privacy",
+  "/terms",
+  "/data-deletion",
+  "/get-started",
+  "/demo",
+] as const;
+
+function roundRectValue(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+async function locatorRect(locator: Locator): Promise<ShellRect> {
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  return {
+    x: roundRectValue(box!.x),
+    y: roundRectValue(box!.y),
+    width: roundRectValue(box!.width),
+    height: roundRectValue(box!.height),
+  };
+}
+
+function relativeRect(rect: ShellRect, origin: ShellRect): ShellRect {
+  return {
+    x: roundRectValue(rect.x - origin.x),
+    y: roundRectValue(rect.y - origin.y),
+    width: rect.width,
+    height: rect.height,
+  };
+}
+
+async function captureMarketingShellGeometry(
+  page: Page,
+): Promise<MarketingShellGeometry> {
+  const header = page.getByTestId("marketing-header");
+  const footer = page.getByTestId("marketing-footer");
+  await expect(header).toBeVisible();
+  await expect(footer).toBeAttached();
+
+  const headerRect = await locatorRect(header);
+  const footerRect = await locatorRect(footer);
+  const geometry: MarketingShellGeometry = {
+    "header.root": headerRect,
+    "footer.root": {
+      x: 0,
+      y: 0,
+      width: footerRect.width,
+      height: footerRect.height,
+    },
+  };
+
+  const addHeader = async (key: string, locator: Locator) => {
+    geometry[key] = await locatorRect(locator);
+  };
+  const addFooter = async (key: string, locator: Locator) => {
+    geometry[key] = relativeRect(await locatorRect(locator), footerRect);
+  };
+
+  const headerShell = header.locator('[data-marketing-header-shell="true"]');
+  const headerBrand = header.locator('[data-marketing-header-brand="true"]');
+  const headerNav = header.locator('[data-marketing-header-nav="true"]');
+  const headerActions = header.locator('[data-marketing-header-actions="true"]');
+
+  await addHeader("header.shell", headerShell);
+  await addHeader("header.brand", headerBrand);
+  await addHeader("header.nav", headerNav);
+  await addHeader("header.actions", headerActions);
+  await addHeader(
+    "header.theme",
+    header.locator('[data-marketing-header-theme-slot="true"]'),
+  );
+  await addHeader(
+    "header.language",
+    header.locator('[data-marketing-header-language-slot="true"]'),
+  );
+  await addHeader(
+    "header.signin",
+    header.locator('[data-marketing-header-signin-slot="true"]'),
+  );
+  await addHeader(
+    "header.cta",
+    header.locator('[data-marketing-header-cta-slot="true"]'),
+  );
+
+  const headerNavLinks = headerNav.getByRole("link");
+  await expect(headerNavLinks).toHaveCount(7);
+  for (let index = 0; index < 7; index += 1) {
+    await addHeader(`header.nav.${index}`, headerNavLinks.nth(index));
+  }
+
+  const footerShell = footer.locator('[data-marketing-footer-shell="true"]');
+  const footerBrand = footer.locator('[data-marketing-footer-brand="true"]');
+  const footerNav = footer.locator('[data-marketing-footer-navigation="true"]');
+  const footerBottom = footer.locator('[data-marketing-footer-bottom="true"]');
+
+  await addFooter("footer.shell", footerShell);
+  await addFooter("footer.brand", footerBrand);
+  await addFooter("footer.nav", footerNav);
+  await addFooter("footer.bottom", footerBottom);
+  await addFooter(
+    "footer.actions",
+    footer.locator('[data-marketing-footer-actions="true"]'),
+  );
+  await addFooter(
+    "footer.theme",
+    footer.locator('[data-marketing-footer-theme-slot="true"]'),
+  );
+  await addFooter(
+    "footer.language",
+    footer.locator('[data-marketing-footer-language-slot="true"]'),
+  );
+  await addFooter(
+    "footer.access",
+    footer.locator('[data-marketing-footer-access-slot="true"]'),
+  );
+
+  const footerColumns = footerNav.locator(":scope > div");
+  await expect(footerColumns).toHaveCount(4);
+  for (let index = 0; index < 4; index += 1) {
+    await addFooter(`footer.nav.${index}`, footerColumns.nth(index));
+  }
+
+  return geometry;
+}
+
+function expectMarketingShellGeometryMatch(
+  actual: MarketingShellGeometry,
+  expected: MarketingShellGeometry,
+  context: string,
+) {
+  expect(Object.keys(actual).sort()).toEqual(Object.keys(expected).sort());
+  for (const key of Object.keys(expected)) {
+    for (const field of ["x", "y", "width", "height"] as const) {
+      const delta = Math.abs(actual[key][field] - expected[key][field]);
+      expect(
+        delta,
+        `${context}: ${key}.${field} drifted by ${delta}px (expected ${expected[key][field]}, received ${actual[key][field]})`,
+      ).toBeLessThanOrEqual(1);
+    }
+  }
+}
+
+async function setMarketingVariant(
+  page: Page,
+  context: import("@playwright/test").BrowserContext,
+  baseURL: string,
+  route: string,
+  locale: "en" | "ar",
+  theme: "light" | "dark",
+) {
+  await context.addCookies([
+    { name: "loyalflow_locale", value: locale, url: baseURL },
+  ]);
+
+  const response = await page.goto(route);
+  expect(response?.status()).toBe(200);
+  await page.evaluate(
+    (value) => localStorage.setItem("tanee-marketing-theme", value),
+    theme,
+  );
+  await page.reload();
+
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-marketing-theme",
+    theme,
+  );
+  await expect(page.locator("main")).toHaveAttribute(
+    "dir",
+    locale === "ar" ? "rtl" : "ltr",
+  );
+}
+
 async function setAuthenticatedLanguage(
   page: Page,
   target: "en" | "ar",
@@ -1193,45 +1383,168 @@ test.describe.serial("PR browser smoke", () => {
     await setAuthenticatedLanguage(page, "en");
   });
 
-  test("marketing header keeps desktop navigation at 1366px in both locales @desktop @pr-smoke", async ({
+  for (const viewport of [
+    { width: 1366, height: 768 },
+    { width: 1440, height: 900 },
+  ] as const) {
+    test(`marketing shell keeps exact desktop geometry at ${viewport.width}px across locale theme and routes @desktop @pr-smoke`, async ({
+      page,
+      context,
+      baseURL,
+    }) => {
+      await page.setViewportSize(viewport);
+
+      let variantBaseline: MarketingShellGeometry | null = null;
+      for (const locale of ["en", "ar"] as const) {
+        for (const theme of ["light", "dark"] as const) {
+          await setMarketingVariant(
+            page,
+            context,
+            baseURL!,
+            "/faq",
+            locale,
+            theme,
+          );
+
+          const geometry = await captureMarketingShellGeometry(page);
+          if (!variantBaseline) {
+            variantBaseline = geometry;
+          } else {
+            expectMarketingShellGeometryMatch(
+              geometry,
+              variantBaseline,
+              `${viewport.width}px /faq ${locale} ${theme}`,
+            );
+          }
+
+          const header = page.getByTestId("marketing-header");
+          const menuButton = header.locator(
+            'button[aria-controls="marketing-mobile-menu"]',
+          );
+          await expect(menuButton).toBeHidden();
+          await page.evaluate(() => window.scrollTo(0, 900));
+          await expect(header).toHaveAttribute("data-header-visible", "true");
+          await expect(header).toBeVisible();
+          await page.evaluate(() => window.scrollTo(0, 0));
+
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `marketing-shell-${viewport.width}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+
+      await setMarketingVariant(
+        page,
+        context,
+        baseURL!,
+        "/faq",
+        "en",
+        "light",
+      );
+      const routeBaseline = await captureMarketingShellGeometry(page);
+
+      for (const route of MARKETING_SHELL_ROUTES) {
+        const response = await page.goto(route);
+        expect(response?.status(), route).toBe(200);
+        await expect(page.locator("html")).toHaveAttribute(
+          "data-marketing-theme",
+          "light",
+        );
+        await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
+
+        const geometry = await captureMarketingShellGeometry(page);
+        expectMarketingShellGeometryMatch(
+          geometry,
+          routeBaseline,
+          `${viewport.width}px route ${route}`,
+        );
+      }
+    });
+  }
+
+  test("inline Tanee keeps the canonical A15 connected-ee geometry across rendered text sizes @desktop @pr-smoke", async ({
     page,
     context,
     baseURL,
   }) => {
-    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     for (const locale of ["en", "ar"] as const) {
-      await context.addCookies([
-        { name: "loyalflow_locale", value: locale, url: baseURL! },
-      ]);
+      for (const theme of ["light", "dark"] as const) {
+        await setMarketingVariant(
+          page,
+          context,
+          baseURL!,
+          "/security",
+          locale,
+          theme,
+        );
 
-      const response = await page.goto("/faq");
-      expect(response?.status()).toBe(200);
+        const names = page.locator("[data-inline-tanee-name]");
+        expect(await names.count()).toBeGreaterThan(1);
 
-      const header = page.getByTestId("marketing-header");
-      const desktopNavigation = header.locator(":scope > div > nav");
-      const desktopActions = header.locator(":scope > div > div");
-      const menuButton = header.locator(
-        'button[aria-controls="marketing-mobile-menu"]',
-      );
+        const fontSizes = await names.evaluateAll((nodes) =>
+          Array.from(
+            new Set(
+              nodes.map((node) =>
+                Number.parseFloat(getComputedStyle(node).fontSize).toFixed(2),
+              ),
+            ),
+          ),
+        );
+        expect(fontSizes.length).toBeGreaterThanOrEqual(2);
 
-      await expect(desktopNavigation).toBeVisible();
-      await expect(desktopNavigation.getByRole("link")).toHaveCount(7);
-      await expect(desktopActions).toBeVisible();
-      await expect(menuButton).toBeHidden();
-      await expect(page.locator("main")).toHaveAttribute(
-        "dir",
-        locale === "ar" ? "rtl" : "ltr",
-      );
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= window.innerWidth,
-        ),
-      ).toBe(true);
+        const vectorChecks = await names.evaluateAll((nodes) =>
+          nodes.map((node) => {
+            const svg = node.querySelector<SVGSVGElement>(
+              "[data-inline-tanee-ee-vector]",
+            );
+            const path = svg?.querySelector<SVGPathElement>("path");
+            if (!svg || !path) return null;
+            const box = path.getBBox();
+            return {
+              text: node.textContent,
+              viewBox: svg.getAttribute("viewBox"),
+              preserveAspectRatio: svg.getAttribute("preserveAspectRatio"),
+              box: {
+                x: box.x,
+                y: box.y,
+                width: box.width,
+                height: box.height,
+              },
+            };
+          }),
+        );
 
-      await page.evaluate(() => window.scrollTo(0, 900));
-      await expect(header).toHaveAttribute("data-header-visible", "true");
-      await expect(header).toBeVisible();
+        for (const check of vectorChecks) {
+          expect(check).not.toBeNull();
+          expect(check!.text).toContain("Tanee");
+          expect(check!.viewBox).toBe("850 0 650 384");
+          expect(check!.preserveAspectRatio).toBe("xMidYMid meet");
+          expect(check!.box.x).toBeGreaterThanOrEqual(850);
+          expect(check!.box.x).toBeLessThan(852);
+          expect(check!.box.y).toBeGreaterThanOrEqual(83);
+          expect(check!.box.y).toBeLessThan(86);
+          expect(check!.box.x + check!.box.width).toBeGreaterThan(1498);
+          expect(check!.box.y + check!.box.height).toBeGreaterThan(383);
+        }
+
+        await page.screenshot({
+          path: test.info().outputPath(
+            `marketing-inline-tanee-1440-${locale}-${theme}.png`,
+          ),
+          fullPage: true,
+        });
+      }
     }
   });
 

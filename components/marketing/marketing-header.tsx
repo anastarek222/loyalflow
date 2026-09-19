@@ -127,7 +127,10 @@ export function MarketingHeader({
             : "border-[var(--lf-border)]/70 bg-[var(--lf-marketing-canvas)]",
         )}
       >
-        <div className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[8rem_minmax(0,1fr)_31rem] min-[1366px]:gap-0">
+        <div
+          data-marketing-header-shell="true"
+          className="mx-auto flex min-h-[72px] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10 min-[1366px]:grid min-[1366px]:grid-cols-[8rem_minmax(0,1fr)_31rem] min-[1366px]:gap-0"
+        >
           <Link
             href="/"
             data-marketing-header-brand="true"
