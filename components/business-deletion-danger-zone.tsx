@@ -104,7 +104,7 @@ export function BusinessDeletionDangerZone({
               onChange={(event) => setTypedBusinessName(event.target.value)}
               autoComplete="off"
               required
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 outline-none focus:border-danger/40 focus:ring-4 focus:ring-danger/10"
+              className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 outline-none focus:border-danger/40 focus:ring-4 focus:ring-danger/10"
             />
           </label>
 
@@ -120,7 +120,7 @@ export function BusinessDeletionDangerZone({
               autoComplete="off"
               spellCheck={false}
               required
-              className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 font-mono outline-none focus:border-danger/40 focus:ring-4 focus:ring-danger/10"
+              className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 font-mono outline-none focus:border-danger/40 focus:ring-4 focus:ring-danger/10"
             />
           </label>
 
@@ -129,7 +129,7 @@ export function BusinessDeletionDangerZone({
               type="button"
               disabled={pending}
               onClick={() => setOpen(false)}
-              className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-white px-5 py-3 font-bold text-foreground-muted disabled:opacity-60"
+              className="min-h-11 rounded-[var(--lf-radius-input)] border border-border bg-surface px-5 py-3 font-bold text-foreground-muted disabled:opacity-60"
             >
               {t("إلغاء", "Cancel")}
             </button>

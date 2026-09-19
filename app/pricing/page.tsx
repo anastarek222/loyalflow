@@ -1,3 +1,4 @@
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
@@ -96,7 +97,7 @@ function PlanCard({
     >
       {plan.featured && plan.popularLabel ? (
         <span className="absolute -top-3 start-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-[var(--lf-primary-foreground)] rtl:translate-x-1/2">
-          {plan.popularLabel}
+          <MarketingBrandText text={plan.popularLabel} />
         </span>
       ) : null}
 
@@ -121,7 +122,7 @@ function PlanCard({
         </div>
 
         <h2 className={`mt-6 text-2xl font-semibold ${editorial}`}>
-          {plan.name}
+          <MarketingBrandText text={plan.name} />
         </h2>
 
         <div className="mt-3 flex min-h-16 flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -146,7 +147,7 @@ function PlanCard({
         </div>
 
         <p className="mt-5 min-h-24 text-sm leading-7 text-foreground-muted">
-          {plan.body}
+          <MarketingBrandText text={plan.body} />
         </p>
       </div>
 
@@ -158,7 +159,7 @@ function PlanCard({
             : "bg-surface-subtle text-foreground hover:text-primary"
         }`}
       >
-        {cta}
+        <MarketingBrandText text={cta} />
       </Link>
     </article>
   );
@@ -195,15 +196,15 @@ export default async function PricingPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-primary shadow-[var(--lf-shadow-soft)]">
             <span className="size-1.5 rounded-full bg-primary" />
-            {pricing.eyebrow}
+            <MarketingBrandText text={pricing.eyebrow} />
           </span>
           <h1
             className={`mx-auto mt-6 max-w-4xl text-4xl font-semibold leading-[1.08] sm:text-5xl lg:text-6xl ${editorial}`}
           >
-            {pricing.title}
+            <MarketingBrandText text={pricing.title} />
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-foreground-muted sm:text-lg">
-            {pricing.body}
+            <MarketingBrandText text={pricing.body} />
           </p>
 
           <div className="mx-auto mt-8 grid max-w-3xl gap-3 rounded-2xl border border-border bg-white p-4 text-sm font-semibold text-foreground-muted shadow-[var(--lf-shadow-soft)] sm:grid-cols-3 sm:rounded-full sm:px-6">
@@ -213,7 +214,7 @@ export default async function PricingPage() {
                 className="text-primary"
                 aria-hidden="true"
               />
-              {pricing.proofTrial}
+              <MarketingBrandText text={pricing.proofTrial} />
             </span>
             <span className="inline-flex items-center justify-center gap-2 sm:border-x sm:border-border sm:px-4">
               <CreditCard
@@ -221,11 +222,11 @@ export default async function PricingPage() {
                 className="text-primary"
                 aria-hidden="true"
               />
-              {pricing.proofPayment}
+              <MarketingBrandText text={pricing.proofPayment} />
             </span>
             <span className="inline-flex items-center justify-center gap-2">
               <Zap size={18} className="text-primary" aria-hidden="true" />
-              {pricing.proofSetup}
+              <MarketingBrandText text={pricing.proofSetup} />
             </span>
           </div>
         </div>
@@ -246,7 +247,7 @@ export default async function PricingPage() {
           ))}
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-xs leading-6 text-foreground-muted sm:text-sm">
-          {pricing.planFootnote}
+          <MarketingBrandText text={pricing.planFootnote} />
         </p>
       </section>
 
@@ -254,12 +255,12 @@ export default async function PricingPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="text-center">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-primary">
-              {pricing.includedEyebrow}
+              <MarketingBrandText text={pricing.includedEyebrow} />
             </p>
             <h2
               className={`mx-auto mt-4 max-w-3xl text-3xl font-semibold leading-tight sm:text-4xl ${editorial}`}
             >
-              {pricing.includedTitle}
+              <MarketingBrandText text={pricing.includedTitle} />
             </h2>
           </div>
           <div className="mt-12 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -276,10 +277,10 @@ export default async function PricingPage() {
                   <h3
                     className={`mt-7 text-lg font-semibold leading-7 ${editorial}`}
                   >
-                    {item.title}
+                    <MarketingBrandText text={item.title} />
                   </h3>
                   <p className="mt-4 text-sm leading-7 text-foreground-muted">
-                    {item.body}
+                    <MarketingBrandText text={item.body} />
                   </p>
                 </article>
               );
@@ -293,7 +294,7 @@ export default async function PricingPage() {
           <h2
             className={`text-center text-3xl font-semibold sm:text-4xl ${editorial}`}
           >
-            {pricing.faqTitle}
+            <MarketingBrandText text={pricing.faqTitle} />
           </h2>
           <div className="relative mt-10 grid gap-4 before:absolute before:-inset-x-8 before:-top-10 before:-z-10 before:h-40 before:bg-[var(--lf-primary-soft)] before:content-['']">
             {pricing.faqs.map((faq, index) => (
@@ -303,7 +304,7 @@ export default async function PricingPage() {
                 className="group rounded-2xl border border-border bg-white p-5 shadow-[var(--lf-shadow-soft)] open:shadow-[var(--lf-shadow-raised)] sm:px-7 sm:py-6"
               >
                 <summary className="flex min-h-7 cursor-pointer list-none items-center justify-between gap-4 font-bold leading-7 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] [&::-webkit-details-marker]:hidden">
-                  {faq.question}
+                  <MarketingBrandText text={faq.question} />
                   <ChevronDown
                     size={18}
                     className="shrink-0 text-primary transition-transform duration-200 group-open:rotate-180"
@@ -311,7 +312,7 @@ export default async function PricingPage() {
                   />
                 </summary>
                 <p className="mt-4 border-t border-border pt-4 text-sm leading-7 text-foreground-muted">
-                  {faq.answer}
+                  <MarketingBrandText text={faq.answer} />
                 </p>
               </details>
             ))}
@@ -323,28 +324,28 @@ export default async function PricingPage() {
         <div className="mx-auto flex w-full max-w-4xl flex-col items-center overflow-hidden rounded-3xl border border-white/10 bg-[#171717] px-6 py-14 text-center text-[#fff9f5] shadow-[var(--lf-shadow-raised)] sm:px-10 lg:py-20">
           <Gift size={23} className="text-primary" aria-hidden="true" />
           <p className="mt-5 text-xs font-black uppercase tracking-[0.16em] text-primary">
-            {pricing.finalEyebrow}
+            <MarketingBrandText text={pricing.finalEyebrow} />
           </p>
           <h2
             className={`mt-4 max-w-3xl text-3xl font-semibold leading-tight sm:text-5xl ${editorial}`}
           >
-            {pricing.finalTitle}
+            <MarketingBrandText text={pricing.finalTitle} />
           </h2>
           <p className="mt-5 max-w-xl leading-8 text-[#d7cbc5]">
-            {pricing.finalBody}
+            <MarketingBrandText text={pricing.finalBody} />
           </p>
           <Link
             href="/get-started"
             className="mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[#171717]"
           >
-            {pricing.cta}
+            <MarketingBrandText text={pricing.cta} />
             <ArrowUpRight
               size={18}
               className="rtl:-scale-x-100"
               aria-hidden="true"
             />
           </Link>
-          <p className="mt-4 text-sm text-[#aa9e98]">{pricing.trialNote}</p>
+          <p className="mt-4 text-sm text-[#aa9e98]"><MarketingBrandText text={pricing.trialNote} /></p>
         </div>
       </section>
 

@@ -337,7 +337,7 @@ export default function CampaignBuilder({
                       href={buildWhatsAppUrl(candidate.phone, message)}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
                     >
                       <MessageSquareText
                         className="size-4"

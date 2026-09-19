@@ -146,7 +146,7 @@ export default function ScanCustomerSearch({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={copy.customerSearchPlaceholder}
             autoComplete="off"
-            className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white ps-11 pe-4 text-black placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
+            className="min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface ps-11 pe-4 text-foreground placeholder:text-foreground-subtle outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/20"
           />
         </div>
         {query && (
@@ -195,7 +195,7 @@ export default function ScanCustomerSearch({
               <li key={customer.id}>
                 <Link
                   href={customer.url}
-                  className="group flex min-h-11 items-center justify-between gap-4 rounded-xl border border-border bg-white px-4 py-4 text-sm shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20"
+                  className="group flex min-h-11 items-center justify-between gap-4 rounded-xl border border-border bg-surface px-4 py-4 text-sm shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle focus:outline-none focus:ring-4 focus:ring-primary/20"
                   aria-label={`${copy.customerSearchOpen}: ${customer.name}`}
                 >
                   <span className="min-w-0">

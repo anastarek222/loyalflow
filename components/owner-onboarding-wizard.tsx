@@ -194,7 +194,7 @@ export function OwnerOnboardingWizard({
       noValidate
       data-owner-step={step + 1}
       data-owner-hydrated="false"
-      className="mx-auto min-w-0 max-w-6xl overflow-clip rounded-3xl border border-border/80 bg-white shadow-[0_24px_60px_rgb(15_23_42/0.1)]"
+      className="mx-auto min-w-0 max-w-6xl overflow-clip rounded-3xl border border-border/80 bg-surface shadow-[var(--lf-shadow-raised)]"
     >
       <div className="grid min-w-0 lg:grid-cols-[17rem_minmax(0,1fr)]">
         <aside className="hidden border-e border-border bg-surface-subtle/70 p-6 lg:block">
@@ -202,7 +202,7 @@ export function OwnerOnboardingWizard({
             {copy.step} {step + 1} {copy.of} {sections.length}
           </p>
           <div
-            className="mt-4 h-2 overflow-hidden rounded-full bg-white"
+            className="mt-4 h-2 overflow-hidden rounded-full bg-surface"
             role="progressbar"
             aria-label={copy.progressLabel}
             aria-valuemin={1}
@@ -221,10 +221,10 @@ export function OwnerOnboardingWizard({
                 key={section}
                 onClick={() => navigateToStep(index)}
                 aria-current={step === index ? "step" : undefined}
-                className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-start text-sm font-bold transition ${step === index ? "bg-white text-primary shadow-sm ring-1 ring-border" : "text-foreground-muted hover:bg-white/75 hover:text-foreground"}`}
+                className={`flex min-h-12 items-center gap-3 rounded-xl px-3 text-start text-sm font-bold transition ${step === index ? "bg-surface text-primary shadow-sm ring-1 ring-border" : "text-foreground-muted hover:bg-surface/75 hover:text-foreground"}`}
               >
                 <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs ${step === index ? "bg-primary text-white" : index < step ? "bg-primary/10 text-primary" : "bg-white text-foreground-subtle"}`}
+                  className={`flex size-7 shrink-0 items-center justify-center rounded-lg text-xs ${step === index ? "bg-primary text-primary-foreground" : index < step ? "bg-primary/10 text-primary" : "bg-surface text-foreground-subtle"}`}
                 >
                   {index + 1}
                 </span>
@@ -284,7 +284,7 @@ export function OwnerOnboardingWizard({
                 key={section}
                 onClick={() => navigateToStep(index)}
                 aria-current={step === index ? "step" : undefined}
-                className={`min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 text-sm font-bold ${step === index ? "bg-primary text-white" : "bg-surface-subtle text-foreground-muted"}`}
+                className={`min-h-10 shrink-0 whitespace-nowrap rounded-lg px-3 text-sm font-bold ${step === index ? "bg-primary text-primary-foreground" : "bg-surface-subtle text-foreground-muted"}`}
               >
                 {index + 1}. {section}
               </button>
@@ -552,7 +552,7 @@ export function OwnerOnboardingWizard({
               {sections[3]}
             </h1>
             <div className="flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
-              <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
+              <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-surface">
                 {logoPreview ? (
                   <BusinessLogoImage
                     src={logoPreview}
@@ -587,7 +587,7 @@ export function OwnerOnboardingWizard({
               {copy.cardHint}
             </p>
             <div className="mt-4 flex items-center gap-4 rounded-xl border bg-surface-subtle p-4">
-              <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-white">
+              <div className="flex size-24 items-center justify-center overflow-hidden rounded-xl border bg-surface">
                 {logoPreview ? (
                   <BusinessLogoImage
                     src={logoPreview}
@@ -623,7 +623,7 @@ export function OwnerOnboardingWizard({
                       );
                     reader.readAsDataURL(file);
                   }}
-                  className="mt-2 block w-full rounded-xl border bg-white px-3 py-2"
+                  className="mt-2 block w-full rounded-xl border bg-surface px-3 py-2"
                 />
               </label>
             </div>
@@ -666,7 +666,7 @@ export function OwnerOnboardingWizard({
 
           <div
             data-testid="owner-mobile-action-bar"
-            className="sticky bottom-0 z-20 -mx-4 grid min-w-0 grid-cols-2 gap-3 border-t border-border/80 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_rgb(15_23_42/0.08)] backdrop-blur sm:static sm:mx-0 sm:flex sm:items-center sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
+            className="sticky bottom-0 z-20 -mx-4 grid min-w-0 grid-cols-2 gap-3 border-t border-border/80 bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:flex sm:items-center sm:justify-between sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none"
           >
             <button
               type="button"
@@ -692,7 +692,7 @@ export function OwnerOnboardingWizard({
               <button
                 type="submit"
                 formAction={launchAction}
-                className="col-span-2 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-white sm:col-span-1 sm:w-auto"
+                className="col-span-2 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground sm:col-span-1 sm:w-auto"
               >
                 {copy.launch}
               </button>
@@ -701,7 +701,7 @@ export function OwnerOnboardingWizard({
                 type="button"
                 onClick={goNext}
                 data-owner-next-checkpoint="OWNER_NEXT_CLICK"
-                className="col-span-2 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-white sm:col-span-1 sm:w-auto"
+                className="col-span-2 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground sm:col-span-1 sm:w-auto"
               >
                 {copy.next}
               </button>

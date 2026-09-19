@@ -14,7 +14,7 @@ type Props = {
 export function AdministrationNavigation({ user, businessId, slug, active, language = "AR" }: Props) {
   const items = getAdministrationNavigation(user, businessId, slug, language);
   return (
-    <nav aria-label={language === "AR" ? "إدارة النشاط" : "Business administration"} dir={language === "AR" ? "rtl" : "ltr"} className="mb-6 overflow-x-auto rounded-[var(--lf-radius-card)] border border-border bg-white p-2 shadow-sm">
+    <nav aria-label={language === "AR" ? "إدارة النشاط" : "Business administration"} dir={language === "AR" ? "rtl" : "ltr"} className="mb-6 overflow-x-auto rounded-[var(--lf-radius-card)] border border-border bg-surface p-2 shadow-sm">
       <ul className="flex min-w-max gap-1" role="list">
         {items.map((item) => {
           const selected = item.id === active;

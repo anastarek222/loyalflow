@@ -64,7 +64,7 @@ function SubmitButton({ idle, pending }: { idle: string; pending: string }) {
     <button
       type="submit"
       disabled={isPending}
-      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-white transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+      className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 py-3 font-bold text-primary-foreground transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
     >
       <Save className="size-4" aria-hidden="true" />
       {isPending ? pending : idle}

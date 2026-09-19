@@ -6,7 +6,7 @@ export const arabicAuthMessages = {
   "auth.email": "البريد الإلكتروني",
   "auth.password": "كلمة المرور",
   "auth.forgotPassword": "هل نسيت كلمة المرور؟",
-  "auth.secureWorkspace": "مساحة عمل تاني آمنة",
+  "auth.secureWorkspace": "مساحة عمل Tanee آمنة",
   "auth.emailPlaceholder": "name@company.com",
   "auth.passwordPlaceholder": "أدخل كلمة المرور",
   "auth.signingIn": "جارٍ التحقق من الحساب…",
@@ -15,7 +15,7 @@ export const arabicAuthMessages = {
     "تسجيل الدخول غير متاح مؤقتًا. حاول مرة أخرى بعد قليل.",
   "auth.welcomeBack": "مرحبًا بعودتك",
   "auth.signInBody":
-    "استخدم نفس تسجيل الدخول لكل أدوار تاني، وسنوجّهك بأمان إلى مساحة العمل المناسبة.",
+    "استخدم نفس تسجيل الدخول لكل أدوار Tanee، وسنوجّهك بأمان إلى مساحة العمل المناسبة.",
   "auth.backHome": "العودة إلى الصفحة الرئيسية",
   "auth.protectedAccess": "دخول محمي إلى مساحة العمل",
   "auth.workspaceReadyTitle": "مساحة الولاء الخاصة بك جاهزة عندما تكون جاهزًا.",
@@ -42,7 +42,7 @@ export const arabicAuthMessages = {
     "البريد وكلمة المرور صحيحان، لكن هذا الحساب ما زال يحتاج إلى تأكيد البريد الإلكتروني قبل فتح مساحة العمل.",
   "auth.verificationRequiredCta": "إرسال رابط تحقق جديد",
   "auth.noRoleSelection":
-    "لا تحتاج إلى اختيار دورك؛ يفتح تاني التجربة المناسبة بعد تسجيل الدخول الآمن.",
+    "لا تحتاج إلى اختيار دورك؛ يفتح Tanee التجربة المناسبة بعد تسجيل الدخول الآمن.",
   "auth.passwordResetSuccess":
     "تم تحديث كلمة المرور. سجّل الدخول باستخدام كلمة المرور الجديدة.",
   "auth.verificationSuccess":
@@ -80,13 +80,13 @@ export const arabicAuthMessages = {
   "auth.superAdminSecurity": "أمان المشرف العام",
   "auth.setupMfaPageTitle": "إعداد المصادقة متعددة العوامل",
   "auth.setupMfaPageBody":
-    "المصادقة متعددة العوامل مطلوبة لدخول المشرف العام. تحقق من حسابك، وأضف تاني إلى تطبيق المصادقة، واحفظ رموز الاسترداد أحادية الاستخدام.",
+    "المصادقة متعددة العوامل مطلوبة لدخول المشرف العام. تحقق من حسابك، وأضف Tanee إلى تطبيق المصادقة، واحفظ رموز الاسترداد أحادية الاستخدام.",
   "auth.superAdminEmail": "بريد المشرف العام",
   "auth.mfaStartError":
     "تعذر بدء إعداد المصادقة متعددة العوامل. تحقق من بيانات الدخول وحاول مرة أخرى.",
   "auth.mfaPreparing": "جارٍ تجهيز المصادقة…",
   "auth.mfaStart": "بدء إعداد المصادقة",
-  "auth.mfaAddAuthenticator": "أضف تاني إلى تطبيق المصادقة",
+  "auth.mfaAddAuthenticator": "أضف Tanee إلى تطبيق المصادقة",
   "auth.mfaAddAuthenticatorBody":
     "أدخل هذا المفتاح يدويًا في تطبيق المصادقة، ثم استخدم الرمز الحالي المكوّن من 6 أرقام أدناه.",
   "auth.mfaOpenAuthenticator": "فتح رابط تطبيق المصادقة",

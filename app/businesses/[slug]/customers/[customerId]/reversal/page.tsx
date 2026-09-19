@@ -102,7 +102,7 @@ export default async function EarnReversalPage({
           {language === "AR" ? "العودة إلى العميل" : "Back to customer"}
         </Link>
 
-        <header className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-6">
+        <header className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground-subtle">
             {business.name}
           </p>

@@ -166,9 +166,9 @@ export default async function ReversalExceptionsPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      data-report-canvas="true"
+      className="min-h-screen bg-canvas px-4 py-5 sm:px-8 sm:py-8"
       style={{
-        backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
@@ -195,7 +195,7 @@ export default async function ReversalExceptionsPage({
                   : "Review reversals blocked by insufficient customer balance, then resolve each exception after real follow-up."}
               </p>
             </div>
-            <span className="w-fit rounded-full bg-amber-50 px-3 py-1 text-sm font-bold text-amber-800">
+            <span className="w-fit rounded-full bg-warning-subtle px-3 py-1 text-sm font-bold text-warning">
               {items.length} {language === "AR" ? "معروضة" : "shown"}
             </span>
           </div>
@@ -206,8 +206,8 @@ export default async function ReversalExceptionsPage({
             role={feedback.tone === "success" ? "status" : "alert"}
             className={`mt-4 rounded-[var(--lf-radius-input)] border p-3 text-sm font-semibold ${
               feedback.tone === "success"
-                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                : "border-rose-200 bg-rose-50 text-rose-800"
+                ? "border-success/30 bg-success-subtle text-success"
+                : "border-danger/30 bg-danger-subtle text-danger"
             }`}
           >
             {feedback.text}

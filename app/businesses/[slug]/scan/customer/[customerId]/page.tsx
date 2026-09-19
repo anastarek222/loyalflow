@@ -231,7 +231,7 @@ export default async function ScanCustomerPage({
             role="status"
             className="lf-scan-success-reveal overflow-hidden border-success/25 bg-gradient-to-br from-success-subtle via-surface to-primary-subtle/40 p-6 sm:p-8"
           >
-            <span className="lf-scan-success-mark flex size-12 items-center justify-center rounded-2xl bg-success text-white shadow-sm">
+            <span className="lf-scan-success-mark flex size-12 items-center justify-center rounded-2xl bg-success text-inverse shadow-sm">
               <CheckCircle2 className="size-6" aria-hidden="true" />
             </span>
             <p className="mt-4 lf-type-supporting font-semibold text-success">
@@ -264,7 +264,7 @@ export default async function ScanCustomerPage({
             <nav aria-label={copy.scan} className="mt-6 grid gap-4">
               <Link
                 href={`/businesses/${slug}/scan`}
-                className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-6 text-center font-semibold text-white hover:bg-primary-hover"
+                className="inline-flex min-h-12 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-6 text-center font-semibold text-primary-foreground hover:bg-primary-hover"
               >
                 {copy.scanNext}
               </Link>
@@ -276,7 +276,7 @@ export default async function ScanCustomerPage({
               </Link>
               <Link
                 href={`/businesses/${slug}/customers/${customer.id}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] px-6 text-center text-sm font-semibold text-foreground-muted hover:bg-white/60"
+                className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] px-6 text-center text-sm font-semibold text-foreground-muted hover:bg-surface/60"
               >
                 {copy.openFullProfile}
               </Link>
@@ -527,7 +527,7 @@ export default async function ScanCustomerPage({
             >
               <Link
                 href={`/businesses/${slug}/scan`}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 text-center font-semibold text-white shadow-sm transition hover:bg-primary-hover"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-6 text-center font-semibold text-primary-foreground shadow-sm transition hover:bg-primary-hover"
               >
                 <ScanLine className="size-5" aria-hidden="true" />
                 {copy.scanNext}

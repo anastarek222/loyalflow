@@ -6,7 +6,7 @@ import {
 } from "@/lib/auth/password-change-copy";
 
 const inputClassName =
-  "mt-2 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15";
+  "mt-2 min-h-11 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-3 text-foreground outline-none focus:border-primary/30 focus:ring-4 focus:ring-primary/15";
 
 export function PasswordChangeFormView({
   language,
@@ -106,7 +106,7 @@ export function PasswordChangeFormView({
         type="submit"
         disabled={pending}
         aria-busy={pending}
-        className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-bold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+        className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-primary px-5 py-3 font-bold text-primary-foreground transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60 sm:w-auto"
       >
         {pending ? copy.submitting : copy.submit}
       </button>

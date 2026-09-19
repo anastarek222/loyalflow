@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import {
   LineChart,
@@ -14,11 +14,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import {
-  chartClassNames,
-  chartTokens,
-} from "@/components/ui/chart";
-
+import { chartClassNames, chartTokens } from "@/components/ui/chart";
 
 type ChartProps = {
   loyaltyGrowth: {
@@ -38,15 +34,9 @@ type ChartProps = {
   }[];
 };
 
-
 function EmptyChart() {
-  return (
-    <div className={chartClassNames.empty}>
-      No data available yet
-    </div>
-  );
+  return <div className={chartClassNames.empty}>No data available yet</div>;
 }
-
 
 function ChartCard({
   title,
@@ -59,61 +49,39 @@ function ChartCard({
 }) {
   return (
     <div
-      className={`rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm transition hover:shadow-md ${className}`}
+      className={`rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 shadow-sm transition hover:shadow-md ${className}`}
     >
-
       <div className="mb-6 flex items-center justify-between">
-
-        <h3 className="text-lg font-black text-foreground">
-          {title}
-        </h3>
-
-        <span className="h-2 w-2 rounded-full bg-primary-subtle" />
-
+        <h3 className="text-lg font-black text-foreground">{title}</h3>
+        <span className="h-2 w-2 rounded-full bg-[var(--lf-primary-soft)]" />
       </div>
 
       {children}
-
     </div>
   );
 }
 
-
 const tooltipStyle = chartTokens.tooltip;
-
 
 export default function DashboardCharts({
   loyaltyGrowth,
   customerGrowth,
   rewardStats,
 }: ChartProps) {
-
-
   return (
     <section className="grid gap-6 lg:grid-cols-2">
-
-
       <ChartCard title="Loyalty Growth">
-
         {loyaltyGrowth.length ? (
-
           <ResponsiveContainer width="100%" height={300}>
-
             <LineChart data={loyaltyGrowth}>
-
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={chartTokens.grid}
                 vertical={false}
               />
-
               <XAxis dataKey="date" />
-
               <YAxis />
-
-              <Tooltip contentStyle={tooltipStyle}/>
-
-
+              <Tooltip contentStyle={tooltipStyle} />
               <Line
                 type="monotone"
                 dataKey="earned"
@@ -121,8 +89,6 @@ export default function DashboardCharts({
                 strokeWidth={3}
                 dot={false}
               />
-
-
               <Line
                 type="monotone"
                 dataKey="redeemed"
@@ -130,44 +96,25 @@ export default function DashboardCharts({
                 strokeWidth={3}
                 dot={false}
               />
-
-
             </LineChart>
-
           </ResponsiveContainer>
-
         ) : (
           <EmptyChart />
         )}
-
       </ChartCard>
 
-
-
-
       <ChartCard title="Customer Growth">
-
         {customerGrowth.length ? (
-
           <ResponsiveContainer width="100%" height={300}>
-
             <AreaChart data={customerGrowth}>
-
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={chartTokens.grid}
                 vertical={false}
               />
-
-
               <XAxis dataKey="date" />
-
               <YAxis />
-
-
-              <Tooltip contentStyle={tooltipStyle}/>
-
-
+              <Tooltip contentStyle={tooltipStyle} />
               <Area
                 type="monotone"
                 dataKey="customers"
@@ -176,62 +123,36 @@ export default function DashboardCharts({
                 fillOpacity={0.15}
                 strokeWidth={3}
               />
-
-
             </AreaChart>
-
           </ResponsiveContainer>
-
         ) : (
           <EmptyChart />
         )}
-
       </ChartCard>
 
-
-
-
-      <ChartCard
-        title="Rewards Performance"
-        className="lg:col-span-2"
-      >
-
+      <ChartCard title="Rewards Performance" className="lg:col-span-2">
         {rewardStats.length ? (
-
           <ResponsiveContainer width="100%" height={300}>
-
             <BarChart data={rewardStats}>
-
               <CartesianGrid
                 strokeDasharray="3 3"
                 stroke={chartTokens.grid}
                 vertical={false}
               />
-
               <XAxis dataKey="name" />
-
               <YAxis />
-
-              <Tooltip contentStyle={tooltipStyle}/>
-
-
+              <Tooltip contentStyle={tooltipStyle} />
               <Bar
                 dataKey="redeemed"
                 fill={chartTokens.warning}
-                radius={[10,10,0,0]}
+                radius={[10, 10, 0, 0]}
               />
-
             </BarChart>
-
           </ResponsiveContainer>
-
         ) : (
           <EmptyChart />
         )}
-
       </ChartCard>
-
-
     </section>
   );
 }

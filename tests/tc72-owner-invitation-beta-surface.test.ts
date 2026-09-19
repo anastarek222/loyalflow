@@ -15,9 +15,12 @@ test("TC7.2 keeps owner invitation metadata private", () => {
 
 test("TC7.2 renders the invitation surface from the saved locale", () => {
   const page = source("app/accept-owner-invitation/page.tsx");
+  const shell = source("components/auth/auth-entry-shell.tsx");
+
   assert.match(page, /resolveRequestLocale/);
-  assert.match(page, /lang=\{locale\} dir=\{direction\}/);
-  assert.match(page, /LanguageSwitcher locale=\{locale\}/);
+  assert.match(page, /<AuthEntryShell locale=\{locale\}>/);
+  assert.match(shell, /lang=\{locale\}[\s\S]*dir=\{direction\}/);
+  assert.match(shell, /<LanguageSwitcher locale=\{locale\} alternateOnly \/>/);
 });
 
 test("TC7.2 presents secure activation as business setup continuation", () => {

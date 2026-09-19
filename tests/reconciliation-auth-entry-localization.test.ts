@@ -5,7 +5,7 @@ import test from "node:test";
 const source = (path: string) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-const bilingualAuthSurfaces = [
+const migratedAuthSurfaces = [
   "app/forgot-password/page.tsx",
   "app/reset-password/page.tsx",
   "app/verify-email/page.tsx",
@@ -14,15 +14,20 @@ const bilingualAuthSurfaces = [
 ] as const;
 
 test("reconciled recovery, verification, and MFA pages keep Tanee identity with AR/EN direction", () => {
-  for (const path of bilingualAuthSurfaces) {
+  const shell = source("components/auth/auth-entry-shell.tsx");
+
+  assert.match(shell, /<PlatformBrandIdentity/);
+  assert.match(shell, /getLocaleDirection/);
+  assert.match(shell, /<LanguageSwitcher/);
+  assert.match(shell, /lang=\{locale\}/);
+  assert.match(shell, /dir=\{direction\}/);
+
+  for (const path of migratedAuthSurfaces) {
     const page = source(path);
-    assert.match(page, /<PlatformBrandIdentity/);
+    assert.match(page, /<AuthEntryShell/);
     assert.match(page, /locale=\{locale\}/);
     assert.match(page, /resolveRequestLocale/);
-    assert.match(page, /getLocaleDirection/);
-    assert.match(page, /<LanguageSwitcher/);
-    assert.match(page, /lang=\{locale\}/);
-    assert.match(page, /dir=\{direction\}/);
+    assert.doesNotMatch(page, /auth-input/);
   }
 });
 
@@ -45,11 +50,11 @@ test("MFA localization preserves existing server-action boundaries", () => {
   assert.match(form, /copy\.confirmError/);
 });
 
-test("restored auth catalogs use Tanee rather than the superseded product name", () => {
+test("auth catalogs keep the Tanee brand name English in every locale", () => {
   const en = source("packages/i18n/src/locales/en/auth.ts");
   const ar = source("packages/i18n/src/locales/ar/auth.ts");
   assert.match(en, /Add Tanee to your authenticator/);
-  assert.match(ar, /أضف تاني إلى تطبيق المصادقة/);
+  assert.match(ar, /أضف Tanee إلى تطبيق المصادقة/);
   assert.doesNotMatch(en, /LoyalFlow/);
-  assert.doesNotMatch(ar, /LoyalFlow/);
+  assert.doesNotMatch(ar, /LoyalFlow|تاني/);
 });

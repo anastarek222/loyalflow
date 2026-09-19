@@ -10,6 +10,10 @@ const settingsForm = readFileSync(
   new URL("../components/business-settings-form.tsx", import.meta.url),
   "utf8",
 );
+const settingsLayout = readFileSync(
+  new URL("../app/businesses/[slug]/settings/layout.tsx", import.meta.url),
+  "utf8",
+);
 
 test("Settings uses a direction-safe semantic shell and language-aware integration time", () => {
   assert.match(settingsPage, /dir=\{language === "AR" \? "rtl" : "ltr"\}/);
@@ -35,4 +39,14 @@ test("Settings preserves management, integration, export, card, and deletion bou
   assert.match(settingsPage, /<BusinessDeletionDangerZone/);
   assert.match(settingsPage, /getGoogleSheetsConfiguration\(\)/);
   assert.match(settingsPage, /QRCode\.toDataURL\(joinUrl/);
+});
+
+test("Settings shared sub-navigation follows the authenticated locale", () => {
+  assert.match(settingsLayout, /normalizeLanguage\(currentUser\?\.language\)/);
+  assert.match(settingsLayout, /data-settings-subnavigation="true"/);
+  assert.match(settingsLayout, /تنقل إعدادات النشاط/);
+  assert.match(settingsLayout, /Business settings navigation/);
+  assert.match(settingsLayout, /الإعدادات العامة/);
+  assert.match(settingsLayout, /General settings/);
+  assert.match(settingsLayout, /واتساب/);
 });

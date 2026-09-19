@@ -104,7 +104,7 @@ export default async function ScanPage({ params }: ScanPageProps) {
                 className="size-11 shrink-0 rounded-xl border border-white/80 bg-white object-contain p-1.5 shadow-sm"
               />
             ) : (
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-white shadow-sm">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-black text-primary-foreground shadow-sm">
                 {business.name.trim().charAt(0).toUpperCase()}
               </div>
             )}
@@ -123,13 +123,13 @@ export default async function ScanPage({ params }: ScanPageProps) {
                 {copy.scanner}
               </p>
             </div>
-            <span className="ms-auto flex size-10 items-center justify-center rounded-full border border-primary/15 bg-white/80 text-primary">
+            <span className="ms-auto flex size-10 items-center justify-center rounded-full border border-primary/15 bg-surface/80 text-primary">
               <ScanLine className="size-5" aria-hidden="true" />
             </span>
           </div>
           <div className="p-2 sm:p-7">
             <div className="mb-3 hidden items-start gap-2.5 rounded-2xl border border-primary/10 bg-primary-subtle/45 p-3 sm:mb-5 sm:flex sm:gap-3 sm:p-4">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-sm sm:size-10">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm sm:size-10">
                 <Camera className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0">

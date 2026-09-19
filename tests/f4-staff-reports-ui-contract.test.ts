@@ -12,6 +12,10 @@ test("Staff Reports keeps persisted attribution logic while using the final bili
   assert.match(staffReports, /getCanonicalStaffAttribution\(redemption\)/);
   assert.match(staffReports, /dir=\{language === "AR" \? "rtl" : "ltr"\}/);
   assert.match(staffReports, /data-staff-reports-workspace="true"/);
+  assert.match(staffReports, /data-staff-report-filters="true"/);
+  assert.match(staffReports, /data-staff-report-summary="true"/);
+  assert.match(staffReports, /data-staff-report-desktop="table"/);
+  assert.match(staffReports, /data-staff-report-mobile="cards"/);
   assert.match(staffReports, /Staff performance filters/);
   assert.match(staffReports, /فلاتر أداء الفريق/);
   assert.match(staffReports, /bg-surface/);

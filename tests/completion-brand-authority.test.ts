@@ -6,21 +6,29 @@ import test from "node:test";
 const root = process.cwd();
 const source = (path: string) => readFileSync(join(root, path), "utf8");
 
-test("desktop and mobile application shells consume the central platform brand", () => {
-  for (const path of [
-    "components/app-sidebar.tsx",
-    "components/mobile-sidebar.tsx",
-  ]) {
-    const shell = source(path);
-    assert.match(shell, /import \{ platformBrand \} from "@\/lib\/platform-brand"/);
+test("desktop and mobile application shells share the inline Tanee name authority", () => {
+  const desktopShell = source("components/app-sidebar.tsx");
+  const mobileShell = source("components/mobile-sidebar.tsx");
+
+  for (const shell of [desktopShell, mobileShell]) {
     assert.match(
       shell,
-      /import \{ PlatformBrandIdentity \} from "@\/components\/platform-brand-identity"/,
+      /import \{ InlineTaneeName \} from "@\/components\/brand\/inline-tanee-name"/,
     );
-    assert.match(shell, /<PlatformBrandIdentity/);
-    assert.match(shell, /platformBrand\.name/);
+    assert.match(shell, /<InlineTaneeName/);
     assert.doesNotMatch(shell, />LoyalFlow</);
   }
+
+  assert.match(
+    desktopShell,
+    /import \{ PlatformBrandIdentity \} from "@\/components\/platform-brand-identity"/,
+  );
+  assert.match(desktopShell, /<PlatformBrandIdentity/);
+
+  assert.match(mobileShell, /data-testid="mobile-saas-brand"/);
+  assert.doesNotMatch(mobileShell, /PlatformBrandIdentity/);
+  assert.doesNotMatch(mobileShell, /platformBrand\.name/);
+  assert.match(mobileShell, /min-h-11 w-full[\s\S]*bg-surface[\s\S]*text-foreground/);
 });
 
 test("transactional auth emails consume the Tanee auth email brand authority", () => {

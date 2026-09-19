@@ -140,15 +140,80 @@ jobs:
             fi
             sleep 0.25
           done
+          rm -rf visual-artifacts
+          mkdir -p visual-artifacts/saas-shell visual-artifacts/shared-ui visual-artifacts/marketing-shell visual-artifacts/marketing-faq visual-artifacts/onboarding
+
+          set +e
           pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          pr_smoke_status=$?
+          set -e
+          find test-results -type f -name 'saas-shell-*.png' -exec cp {} visual-artifacts/saas-shell/ \;
+          find test-results -type f -name 'notification-centre-*.png' -exec cp {} visual-artifacts/shared-ui/ \;
+          find test-results -type f \( -name 'marketing-shell-*.png' -o -name 'marketing-inline-tanee-*.png' \) -exec cp {} visual-artifacts/marketing-shell/ \;
+          if (( pr_smoke_status != 0 )); then
+            exit "$pr_smoke_status"
+          fi
+
+          set +e
           pnpm exec playwright test tests/browser/marketing-faq.spec.ts --config=playwright.config.ts --project=desktop-chromium --project=mobile-chromium
+          faq_status=$?
+          set -e
+          find test-results -type f -name 'faq-*.png' -exec cp {} visual-artifacts/marketing-faq/ \;
+          if (( faq_status != 0 )); then
+            exit "$faq_status"
+          fi
+
+          set +e
+          pnpm exec playwright test tests/browser/owner-onboarding-visual.spec.ts --config=playwright.config.ts --project=desktop-chromium
+          onboarding_status=$?
+          set -e
+          find test-results -type f -name 'onboarding-*.png' -exec cp {} visual-artifacts/onboarding/ \;
+          if (( onboarding_status != 0 )); then
+            exit "$onboarding_status"
+          fi
+
+      - name: Save marketing shell visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketing-shell-screenshots
+          path: visual-artifacts/marketing-shell/*.png
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Save FAQ visual acceptance screenshots
         if: always() && steps.browser-smoke.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: marketing-faq-screenshots
-          path: test-results/**/faq-*.png
+          path: visual-artifacts/marketing-faq/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save onboarding visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: onboarding-visual-screenshots
+          path: visual-artifacts/onboarding/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save SaaS shell visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: saas-shell-visual-screenshots
+          path: visual-artifacts/saas-shell/*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Save shared UI visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ui-visual-screenshots
+          path: visual-artifacts/shared-ui/*.png
           if-no-files-found: ignore
           retention-days: 7
 

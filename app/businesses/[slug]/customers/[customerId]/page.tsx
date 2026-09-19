@@ -500,7 +500,7 @@ export default async function CustomerDetailsPage({
       <div className="mx-auto max-w-7xl">
         <Link
           href={`/businesses/${business.slug}/customers`}
-          className="inline-flex min-h-11 items-center rounded-full border border-primary/15 bg-white/90 px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle"
+          className="inline-flex min-h-11 items-center rounded-full border border-primary/15 bg-surface/90 px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:border-primary/30 hover:bg-primary-subtle"
         >
           <span aria-hidden="true" className="me-2">
             ←
@@ -762,21 +762,21 @@ export default async function CustomerDetailsPage({
               <Link
                 href={`/card/${customer.publicToken}`}
                 target="_blank"
-                className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-foreground px-3 py-2 text-center text-sm font-bold text-white"
+                className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-foreground px-3 py-2 text-center text-sm font-bold text-inverse"
               >
                 {copy.openCard}
               </Link>
               {canEarnLoyalty || canRedeemLoyalty ? (
                 <a
                   href="#daily-loyalty"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-surface px-3 py-2 text-center text-sm font-bold text-primary"
                 >
                   {copy.loyaltyAction}
                 </a>
               ) : canManageCustomer ? (
                 <a
                   href="#customer-details"
-                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-white px-3 py-2 text-center text-sm font-bold text-primary"
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] border border-primary/20 bg-surface px-3 py-2 text-center text-sm font-bold text-primary"
                 >
                   {copy.manageCustomer}
                 </a>
@@ -816,7 +816,7 @@ export default async function CustomerDetailsPage({
                     {canEarnLoyalty || canRedeemLoyalty ? (
                       <a
                         href="#daily-loyalty"
-                        className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+                        className="inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                       >
                         {copy.loyaltyAction}
                       </a>
@@ -959,7 +959,7 @@ export default async function CustomerDetailsPage({
                     />
                     <button
                       type="submit"
-                      className="mt-4 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white hover:bg-primary-subtle"
+                      className="mt-4 rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-inverse hover:bg-primary-subtle"
                     >
                       {copy.saveInternalNote}
                     </button>
@@ -1004,11 +1004,11 @@ export default async function CustomerDetailsPage({
                                 minLength={1}
                                 maxLength={2000}
                                 rows={3}
-                                className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm outline-none focus:border-primary/30"
+                                className="w-full resize-y rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm outline-none focus:border-primary/30"
                               />
                               <button
                                 type="submit"
-                                className="mt-4 rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground-muted hover:border-primary/30"
+                                className="mt-4 rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground-muted hover:border-primary/30"
                               >
                                 {copy.saveEdit}
                               </button>
@@ -1041,7 +1041,7 @@ export default async function CustomerDetailsPage({
 
             <section
               id="daily-loyalty"
-              className="order-1 mt-3 scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-white p-4 shadow-sm sm:mt-6 sm:p-8"
+              className="order-1 mt-3 scroll-mt-6 rounded-[var(--lf-radius-card)] border border-border/80 bg-surface p-4 shadow-sm sm:mt-6 sm:p-8"
             >
               <div className="flex items-center justify-between gap-3 sm:gap-6">
                 <div>
@@ -1122,7 +1122,7 @@ export default async function CustomerDetailsPage({
                       </span>
                     </div>
 
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-white">
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
@@ -1175,7 +1175,7 @@ export default async function CustomerDetailsPage({
                     rewardState.reward.code ? (
                       <p
                         dir="ltr"
-                        className="mt-4 select-all rounded-[var(--lf-radius-input)] border border-success/30 bg-white px-4 py-2 text-center text-sm font-black tracking-widest text-success"
+                        className="mt-4 select-all rounded-[var(--lf-radius-input)] border border-success/30 bg-surface px-4 py-2 text-center text-sm font-black tracking-widest text-success"
                       >
                         {rewardState.reward.code}
                       </p>
@@ -1232,12 +1232,12 @@ export default async function CustomerDetailsPage({
                           inputMode="numeric"
                           placeholder={copy.saleAmountPlaceholder}
                           disabled={!customer.isActive || !canEarnLoyalty}
-                          className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-4 text-lg font-black outline-none focus:border-primary/30 disabled:bg-surface-subtle"
+                          className="min-w-0 flex-1 rounded-[var(--lf-radius-input)] border border-primary/30 bg-surface px-4 py-4 text-lg font-black outline-none focus:border-primary/30 disabled:bg-surface-subtle"
                         />
 
                         <span
                           dir="auto"
-                          className="flex items-center rounded-[var(--lf-radius-input)] bg-white px-4 font-black text-primary"
+                          className="flex items-center rounded-[var(--lf-radius-input)] bg-surface px-4 font-black text-primary"
                         >
                           {operationalUnitLabel(loyaltyPresentation)}
                         </span>
@@ -1256,7 +1256,7 @@ export default async function CustomerDetailsPage({
                     className={
                       business.loyaltyMode === "SALES_AMOUNT"
                         ? "mt-4 w-full rounded-[var(--lf-radius-input)] bg-primary px-6 py-4 font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
-                        : "w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
+                        : "w-full rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-inverse transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle"
                     }
                   >
                     {loyaltyEarnLabel}
@@ -1423,7 +1423,7 @@ export default async function CustomerDetailsPage({
                           id="adjustmentDirection"
                           name="direction"
                           defaultValue="ADD"
-                          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30"
+                          className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30"
                         >
                           <option value="ADD">{copy.addBalance}</option>
 
@@ -1595,7 +1595,7 @@ export default async function CustomerDetailsPage({
               <Link
                 href={`/card/${customer.publicToken}`}
                 target="_blank"
-                className="rounded-[var(--lf-radius-input)] bg-foreground px-5 py-3 text-center font-semibold text-white transition hover:bg-primary-subtle"
+                className="rounded-[var(--lf-radius-input)] bg-foreground px-5 py-3 text-center font-semibold text-inverse transition hover:bg-primary-subtle"
               >
                 {copy.openCard}
               </Link>

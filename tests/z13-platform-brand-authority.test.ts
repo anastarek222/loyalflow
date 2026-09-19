@@ -11,7 +11,7 @@ function source(path: string) {
 test("Z13 central platform brand authority preserves the approved Tanee identity", () => {
   assert.deepEqual(platformBrand, {
     name: "Tanee",
-    nameAr: "تاني",
+    nameAr: "Tanee",
     shortName: "Tanee",
     iconMark: "ee",
     assets: {

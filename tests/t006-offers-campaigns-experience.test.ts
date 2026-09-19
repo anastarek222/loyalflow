@@ -109,6 +109,9 @@ test("T006 Campaign builder preserves deterministic audiences and manual WhatsAp
 test("T006 Offers and Campaigns expose refreshed truthful workspaces without new writers", () => {
   assert.match(offers, /data-offers-workspace="true"/);
   assert.match(offers, /data-offer-form="true"/);
+  assert.match(offers, /data-offer-create="true"/);
+  assert.match(offers, /data-offer-card="true"/);
+  assert.match(offers, /data-offer-edit="true"/);
   assert.match(campaigns, /data-campaign-workspace="true"/);
   assert.match(builder, /data-campaign-builder="manual-review"/);
   assert.match(builder, /Manual review/);

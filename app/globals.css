@@ -202,7 +202,7 @@
 html[data-marketing-theme="dark"]
   .lf-marketing-surface
   [data-platform-brand-wordmark-theme="light"] {
-  display: none;
+  opacity: 0;
 }
 
 html[data-marketing-theme="dark"]
@@ -431,11 +431,13 @@ body {
   outline-offset: 2px;
 }
 
-img,
-svg,
-video {
-  max-width: 100%;
-  height: auto;
+@layer base {
+  img,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 button {

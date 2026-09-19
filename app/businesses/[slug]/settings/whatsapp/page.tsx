@@ -451,7 +451,7 @@ export default async function BusinessWhatsAppSettingsPage({
                           type="submit"
                           name="intent"
                           value="submit-template"
-                          className="min-h-10 rounded-xl bg-primary px-3 text-xs font-bold text-white"
+                          className="min-h-10 rounded-xl bg-primary px-3 text-xs font-bold text-primary-foreground"
                         >
                           {bindingMatchesCurrent
                             ? t("إعادة التحقق/الإرسال", "Reconcile/submit")

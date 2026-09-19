@@ -264,7 +264,7 @@ export default async function DashboardPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   href="/businesses/new"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                 >
                   <Plus size={17} aria-hidden="true" />
                   {dictionary.addBusiness}
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
         </section>
 
         <section className="mt-6 grid gap-6 xl:grid-cols-2">
-          <Card className="border-white/80 bg-white/85">
+          <Card className="border-border bg-surface/85">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="lf-type-section text-foreground">
@@ -408,7 +408,7 @@ export default async function DashboardPage() {
                     </div>
                     <Link
                       href={`/businesses/${business.slug}`}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-white"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-surface"
                     >
                       {dictionary.open}
                       <ArrowUpRight size={15} aria-hidden="true" />
@@ -423,7 +423,7 @@ export default async function DashboardPage() {
             )}
           </Card>
 
-          <Card className="border-white/80 bg-white/85">
+          <Card className="border-border bg-surface/85">
             <div className="flex items-center justify-between gap-4">
               <h2 className="lf-type-section text-foreground">
                 {dictionary.recentOwners}
@@ -475,7 +475,7 @@ export default async function DashboardPage() {
                       {owner.business ? (
                         <Link
                           href={`/businesses/${owner.business.slug}`}
-                          className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-white"
+                          className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-primary hover:bg-surface"
                         >
                           {dictionary.open}
                           <ArrowUpRight size={15} aria-hidden="true" />
@@ -549,7 +549,7 @@ export default async function DashboardPage() {
     >
       {mode === "empty" ? (
         <Card
-          className="max-w-2xl border-dashed border-primary/25 bg-white/80 py-10 text-center"
+          className="max-w-2xl border-dashed border-primary/25 bg-surface/80 py-10 text-center"
           role="status"
         >
           <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary-subtle text-primary">
@@ -596,8 +596,8 @@ export default async function DashboardPage() {
                   interactive
                   className={
                     isPrimary
-                      ? "overflow-hidden border-primary/20 bg-gradient-to-br from-white via-white to-primary-subtle/80 p-7"
-                      : "border-white/80 bg-white/85"
+                      ? "overflow-hidden border-primary/20 bg-gradient-to-br from-surface via-surface to-primary-subtle/80 p-7"
+                      : "border-border bg-surface/85"
                   }
                 >
                   <div className="flex items-start gap-4">
@@ -633,7 +633,7 @@ export default async function DashboardPage() {
                   <div className="mt-6 flex flex-wrap gap-2">
                     <Link
                       href={`/businesses/${business.slug}`}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-primary bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+                      className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-primary bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
                     >
                       {dictionary.open}
                       <ArrowUpRight size={16} aria-hidden="true" />

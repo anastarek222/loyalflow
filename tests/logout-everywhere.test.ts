@@ -178,6 +178,11 @@ test("logout everywhere UI requires explicit confirmation and disables repeated 
 test("account security page adds a separate logout card without replacing password change", () => {
   const page = source("app/account/security/page.tsx");
 
+  assert.match(page, /data-account-security-workspace="true"/);
+  assert.match(page, /data-account-security-section="password"/);
+  assert.match(page, /data-account-security-section="sessions"/);
+  assert.match(page, /data-account-security-section="alerts"/);
+
   assert.match(page, /<ChangePasswordForm language=\{language\} \/>/);
   assert.match(page, /<LogoutEverywhereForm language=\{language\} \/>/);
   assert.ok(

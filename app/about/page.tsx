@@ -1,3 +1,4 @@
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
@@ -112,21 +113,21 @@ export default async function AboutPage() {
 
       <section className="border-b border-border px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
         <div className="mx-auto max-w-5xl text-center">
-          <Eyebrow locale={locale}>{pageCopy.eyebrow}</Eyebrow>
+          <Eyebrow locale={locale}><MarketingBrandText text={pageCopy.eyebrow} /></Eyebrow>
           <h1
             className={`${editorialClass} mx-auto mt-6 max-w-5xl text-balance text-4xl font-black leading-[1.08] tracking-[-0.035em] sm:text-5xl lg:text-7xl ${locale === "en" ? "font-normal" : ""}`}
           >
-            {pageCopy.title}
+            <MarketingBrandText text={pageCopy.title} />
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-pretty text-base leading-8 text-foreground-muted sm:text-lg">
-            {pageCopy.body}
+            <MarketingBrandText text={pageCopy.body} />
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/how-it-works"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-white transition-colors hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              {pageCopy.primaryCta}
+              <MarketingBrandText text={pageCopy.primaryCta} />
               <ArrowUpRight
                 className="size-4 rtl:-scale-x-100"
                 aria-hidden="true"
@@ -136,7 +137,7 @@ export default async function AboutPage() {
               href="/contact"
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-white px-6 py-3 font-bold transition-colors hover:border-primary/45 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              {pageCopy.secondaryCta}
+              <MarketingBrandText text={pageCopy.secondaryCta} />
             </Link>
           </div>
         </div>
@@ -144,24 +145,24 @@ export default async function AboutPage() {
 
       <section className="px-4 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-6xl">
-          <Eyebrow locale={locale}>{pageCopy.whoEyebrow}</Eyebrow>
+          <Eyebrow locale={locale}><MarketingBrandText text={pageCopy.whoEyebrow} /></Eyebrow>
           <div className="mt-6 grid gap-10 rounded-[1.75rem] border border-border bg-white p-6 shadow-[var(--lf-shadow-raised)] sm:p-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16 lg:p-14">
             <div>
               <h2
                 className={`${editorialClass} text-3xl font-black leading-tight tracking-[-0.025em] sm:text-4xl lg:text-5xl ${locale === "en" ? "font-normal" : ""}`}
               >
-                {pageCopy.whoTitle}
+                <MarketingBrandText text={pageCopy.whoTitle} />
               </h2>
             </div>
             <div className="self-center text-base leading-8 text-foreground-muted">
               <div className="space-y-5">
                 {pageCopy.whoParagraphs.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                  <p key={paragraph}><MarketingBrandText text={paragraph} /></p>
                 ))}
               </div>
               <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[var(--lf-primary-soft)] px-4 py-3 text-sm font-bold text-primary">
                 <BadgeCheck className="size-5" aria-hidden="true" />
-                {pageCopy.availability}
+                <MarketingBrandText text={pageCopy.availability} />
               </div>
             </div>
           </div>
@@ -171,14 +172,14 @@ export default async function AboutPage() {
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <Eyebrow locale={locale}>{pageCopy.whyEyebrow}</Eyebrow>
+            <Eyebrow locale={locale}><MarketingBrandText text={pageCopy.whyEyebrow} /></Eyebrow>
             <h2
               className={`${editorialClass} mt-6 text-balance text-3xl font-black leading-tight tracking-[-0.025em] sm:text-4xl lg:text-5xl ${locale === "en" ? "font-normal" : ""}`}
             >
-              {pageCopy.whyTitle}
+              <MarketingBrandText text={pageCopy.whyTitle} />
             </h2>
             <p className="mt-5 text-pretty leading-8 text-foreground-muted">
-              {pageCopy.whyBody}
+              <MarketingBrandText text={pageCopy.whyBody} />
             </p>
           </div>
           <div className="mt-12 grid gap-5 md:grid-cols-3">
@@ -203,13 +204,13 @@ export default async function AboutPage() {
                   <p
                     className={`mt-6 text-xs font-black text-primary ${locale === "en" ? "uppercase tracking-[0.14em]" : ""}`}
                   >
-                    {principle.label}
+                    <MarketingBrandText text={principle.label} />
                   </p>
                   <h3 className="mt-3 text-xl font-black leading-8">
-                    {principle.title}
+                    <MarketingBrandText text={principle.title} />
                   </h3>
                   <p className="mt-4 text-sm leading-7 text-foreground-muted">
-                    {principle.body}
+                    <MarketingBrandText text={principle.body} />
                   </p>
                 </article>
               );
@@ -224,15 +225,15 @@ export default async function AboutPage() {
       >
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <Eyebrow locale={locale}>{pageCopy.contactEyebrow}</Eyebrow>
+            <Eyebrow locale={locale}><MarketingBrandText text={pageCopy.contactEyebrow} /></Eyebrow>
             <h2
               id="about-contact-title"
               className={`${editorialClass} mt-6 text-3xl font-black leading-tight tracking-[-0.025em] sm:text-4xl ${locale === "en" ? "font-normal" : ""}`}
             >
-              {pageCopy.contactTitle}
+              <MarketingBrandText text={pageCopy.contactTitle} />
             </h2>
             <p className="mt-4 leading-8 text-foreground-muted">
-              {pageCopy.contactBody}
+              <MarketingBrandText text={pageCopy.contactBody} />
             </p>
           </div>
           <div
@@ -253,7 +254,7 @@ export default async function AboutPage() {
                     <Icon className="size-5" aria-hidden="true" />
                   </span>
                   <span className="mt-4 text-sm font-black">
-                    {pageCopy.contactLabels[channel.kind]}
+                    <MarketingBrandText text={pageCopy.contactLabels[channel.kind]} />
                   </span>
                   <span
                     dir="ltr"
@@ -274,15 +275,15 @@ export default async function AboutPage() {
             <p
               className={`text-xs font-black text-[#ff806f] ${locale === "en" ? "uppercase tracking-[0.16em]" : ""}`}
             >
-              {pageCopy.finalEyebrow}
+              <MarketingBrandText text={pageCopy.finalEyebrow} />
             </p>
             <h2
               className={`${editorialClass} mt-4 text-balance text-3xl font-black leading-tight tracking-[-0.025em] sm:text-4xl lg:text-5xl ${locale === "en" ? "font-normal" : ""}`}
             >
-              {pageCopy.finalTitle}
+              <MarketingBrandText text={pageCopy.finalTitle} />
             </h2>
             <p className="mx-auto mt-5 max-w-2xl leading-8 text-[#c7bfba]">
-              {pageCopy.finalBody}
+              <MarketingBrandText text={pageCopy.finalBody} />
             </p>
           </div>
           <div className="mt-8 flex flex-col items-center gap-3">
@@ -290,14 +291,14 @@ export default async function AboutPage() {
               href="/get-started"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#ff6652] px-6 py-3 font-bold text-white transition-colors hover:bg-[#e85745] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             >
-              {pageCopy.finalCta}
+              <MarketingBrandText text={pageCopy.finalCta} />
               <ArrowUpRight
                 className="size-4 rtl:-scale-x-100"
                 aria-hidden="true"
               />
             </Link>
             <p className="text-xs font-semibold text-[#c7bfba]">
-              {pageCopy.trialNote}
+              <MarketingBrandText text={pageCopy.trialNote} />
             </p>
           </div>
         </div>

@@ -45,7 +45,7 @@ export function LogoutEverywhereForm({
         confirmation={copy.confirmation}
         disabled={pending}
         aria-busy={pending}
-        className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-danger px-5 py-3 font-bold text-white transition hover:brightness-95 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
+        className="min-h-11 w-full rounded-[var(--lf-radius-input)] bg-danger px-5 py-3 font-bold text-inverse transition hover:brightness-95 disabled:cursor-wait disabled:opacity-60 sm:w-auto"
       >
         {pending ? copy.submitting : copy.submit}
       </ConfirmSubmitButton>

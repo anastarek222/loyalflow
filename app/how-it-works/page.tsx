@@ -1,3 +1,4 @@
+import { MarketingBrandText } from "@/components/marketing/marketing-brand-text";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { translate, type MessageKey } from "@/lib/i18n/catalog";
@@ -111,9 +112,9 @@ function HeroWorkflowPreview({
       <div className="flex items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.14em] text-primary">
-            {label}
+            <MarketingBrandText text={label} />
           </p>
-          <p className="mt-1 font-black">{title}</p>
+          <p className="mt-1 font-black"><MarketingBrandText text={title} /></p>
         </div>
         <span className="flex size-11 items-center justify-center rounded-xl bg-[var(--lf-primary-soft)] text-primary">
           <Sparkles size={20} aria-hidden="true" />
@@ -139,7 +140,7 @@ function HeroWorkflowPreview({
                 </span>
               </div>
               <p className="mt-4 text-sm font-bold leading-6">
-                {step.shortTitle}
+                <MarketingBrandText text={step.shortTitle} />
               </p>
               {index < steps.length - 1 ? (
                 <span className="absolute -bottom-2 start-1/2 z-10 hidden size-4 -translate-x-1/2 rotate-45 border-b border-e border-border bg-surface-subtle sm:block rtl:translate-x-1/2" />
@@ -445,7 +446,7 @@ function StagePreview({
           >
             <Icon size={18} className="text-primary" aria-hidden="true" />
             <p className="mt-3 text-xs leading-5 text-foreground-muted">
-              {label}
+              <MarketingBrandText text={label} />
             </p>
             <p dir="ltr" className="mt-1 text-lg font-black">
               {value}
@@ -489,22 +490,22 @@ export default async function HowItWorksPage() {
           <div className="lg:col-span-7 lg:pe-10">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-foreground-muted">
               <span className="size-2 rounded-full bg-primary" />
-              {pageCopy.eyebrow}
+              <MarketingBrandText text={pageCopy.eyebrow} />
             </p>
             <h1
               className={`mt-5 max-w-3xl text-[clamp(2.35rem,4.7vw,4.25rem)] font-semibold leading-[1.08] tracking-[-0.025em] ${editorial}`}
             >
-              {pageCopy.title}
+              <MarketingBrandText text={pageCopy.title} />
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-foreground-muted sm:text-lg sm:leading-9">
-              {pageCopy.body}
+              <MarketingBrandText text={pageCopy.body} />
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/get-started"
                 className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-primary px-7 py-3 font-bold text-[var(--lf-primary-foreground)] transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] focus-visible:ring-offset-2"
               >
-                {pageCopy.primaryCta}
+                <MarketingBrandText text={pageCopy.primaryCta} />
                 <ArrowUpRight
                   size={18}
                   className="rtl:-scale-x-100"
@@ -515,7 +516,7 @@ export default async function HowItWorksPage() {
                 href="/features"
                 className="inline-flex min-h-[52px] items-center justify-center rounded-2xl border border-border-strong px-7 py-3 font-bold transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
               >
-                {pageCopy.secondaryCta}
+                <MarketingBrandText text={pageCopy.secondaryCta} />
               </Link>
             </div>
             <p className="mt-5 flex items-start gap-2 text-sm leading-6 text-foreground-subtle">
@@ -524,7 +525,7 @@ export default async function HowItWorksPage() {
                 className="mt-0.5 shrink-0 text-primary"
                 aria-hidden="true"
               />
-              {pageCopy.trialNote}
+              <MarketingBrandText text={pageCopy.trialNote} />
             </p>
           </div>
           <div className="lg:col-span-5">
@@ -544,10 +545,10 @@ export default async function HowItWorksPage() {
             <h2
               className={`text-3xl font-semibold leading-tight sm:text-5xl ${editorial}`}
             >
-              {pageCopy.journeyTitle}
+              <MarketingBrandText text={pageCopy.journeyTitle} />
             </h2>
             <p className="mt-5 text-base leading-8 text-foreground-muted sm:text-lg">
-              {pageCopy.journeyBody}
+              <MarketingBrandText text={pageCopy.journeyBody} />
             </p>
           </div>
           <ol className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -570,7 +571,7 @@ export default async function HowItWorksPage() {
                     </span>
                   </div>
                   <p className="mt-5 text-sm font-bold leading-6">
-                    {step.shortTitle}
+                    <MarketingBrandText text={step.shortTitle} />
                   </p>
                 </li>
               );
@@ -593,15 +594,15 @@ export default async function HowItWorksPage() {
                     <span className="flex size-9 items-center justify-center rounded-xl bg-[var(--lf-primary-soft)]">
                       <Icon size={17} aria-hidden="true" />
                     </span>
-                    {pageCopy.stepLabel} {String(index + 1).padStart(2, "0")}
+                    <MarketingBrandText text={pageCopy.stepLabel} />{" "}{String(index + 1).padStart(2, "0")}
                   </p>
                   <h2
                     className={`mt-6 text-3xl font-semibold leading-tight sm:text-4xl ${editorial}`}
                   >
-                    {step.title}
+                    <MarketingBrandText text={step.title} />
                   </h2>
                   <p className="mt-5 text-base leading-8 text-foreground-muted">
-                    {step.body}
+                    <MarketingBrandText text={step.body} />
                   </p>
                   <ul className="mt-8 grid gap-4">
                     {step.bullets.map((bullet) => (
@@ -614,7 +615,7 @@ export default async function HowItWorksPage() {
                           className="mt-1 shrink-0 text-primary"
                           aria-hidden="true"
                         />
-                        {bullet}
+                        <MarketingBrandText text={bullet} />
                       </li>
                     ))}
                   </ul>
@@ -641,10 +642,10 @@ export default async function HowItWorksPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="mx-auto max-w-3xl text-center">
             <h2 className={`text-3xl font-semibold sm:text-5xl ${editorial}`}>
-              {pageCopy.balanceTitle}
+              <MarketingBrandText text={pageCopy.balanceTitle} />
             </h2>
             <p className="mt-5 text-base leading-8 text-[#c7bfba] sm:text-lg">
-              {pageCopy.balanceBody}
+              <MarketingBrandText text={pageCopy.balanceBody} />
             </p>
           </div>
           <div className="mt-14 grid gap-5 md:grid-cols-2">
@@ -653,7 +654,7 @@ export default async function HowItWorksPage() {
                 <CreditCard size={23} aria-hidden="true" />
               </span>
               <h3 className={`mt-7 text-3xl font-semibold ${editorial}`}>
-                {pageCopy.customerExperienceTitle}
+                <MarketingBrandText text={pageCopy.customerExperienceTitle} />
               </h3>
               <ul className="mt-7 grid gap-4 text-sm leading-7 text-[#d7cbc5]">
                 {[
@@ -667,7 +668,7 @@ export default async function HowItWorksPage() {
                       className="mt-1 shrink-0 text-[#ff7a68]"
                       aria-hidden="true"
                     />
-                    {item}
+                    <MarketingBrandText text={item} />
                   </li>
                 ))}
               </ul>
@@ -677,7 +678,7 @@ export default async function HowItWorksPage() {
                 <BarChart3 size={23} aria-hidden="true" />
               </span>
               <h3 className={`mt-7 text-3xl font-semibold ${editorial}`}>
-                {pageCopy.businessExperienceTitle}
+                <MarketingBrandText text={pageCopy.businessExperienceTitle} />
               </h3>
               <ul className="mt-7 grid gap-4 text-sm leading-7 text-[#d7cbc5]">
                 {[
@@ -691,7 +692,7 @@ export default async function HowItWorksPage() {
                       className="mt-1 shrink-0 text-[#ff7a68]"
                       aria-hidden="true"
                     />
-                    {item}
+                    <MarketingBrandText text={item} />
                   </li>
                 ))}
               </ul>
@@ -704,15 +705,15 @@ export default async function HowItWorksPage() {
         <div className="mx-auto w-full max-w-[1240px]">
           <div className="max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.14em] text-primary">
-              {pageCopy.teamEyebrow}
+              <MarketingBrandText text={pageCopy.teamEyebrow} />
             </p>
             <h2
               className={`mt-4 text-3xl font-semibold leading-tight sm:text-5xl ${editorial}`}
             >
-              {pageCopy.teamTitle}
+              <MarketingBrandText text={pageCopy.teamTitle} />
             </h2>
             <p className="mt-5 text-base leading-8 text-foreground-muted sm:text-lg">
-              {pageCopy.teamBody}
+              <MarketingBrandText text={pageCopy.teamBody} />
             </p>
           </div>
           <ol className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -741,10 +742,10 @@ export default async function HowItWorksPage() {
                     </span>
                   </div>
                   <h3 className="mt-6 text-lg font-black leading-7">
-                    {step.title}
+                    <MarketingBrandText text={step.title} />
                   </h3>
                   <p className="mt-3 text-sm leading-7 text-foreground-muted">
-                    {step.body}
+                    <MarketingBrandText text={step.body} />
                   </p>
                 </li>
               );
@@ -770,10 +771,10 @@ export default async function HowItWorksPage() {
             <h2
               className={`text-3xl font-semibold leading-tight sm:text-5xl ${editorial}`}
             >
-              {pageCopy.controlTitle}
+              <MarketingBrandText text={pageCopy.controlTitle} />
             </h2>
             <p className="mt-5 text-base leading-8 text-foreground-muted sm:text-lg">
-              {pageCopy.controlBody}
+              <MarketingBrandText text={pageCopy.controlBody} />
             </p>
             <ul className="mt-8 grid gap-4">
               {pageCopy.controlPoints.map((point) => (
@@ -786,7 +787,7 @@ export default async function HowItWorksPage() {
                     className="mt-1 shrink-0 text-primary"
                     aria-hidden="true"
                   />
-                  {point}
+                  <MarketingBrandText text={point} />
                 </li>
               ))}
             </ul>
@@ -810,7 +811,7 @@ export default async function HowItWorksPage() {
           <h2
             className={`text-center text-3xl font-semibold sm:text-5xl ${editorial}`}
           >
-            {pageCopy.faqTitle}
+            <MarketingBrandText text={pageCopy.faqTitle} />
           </h2>
           <div className="mt-12 divide-y divide-border border-y border-border">
             {pageCopy.faqs.map((item, index) => (
@@ -820,7 +821,7 @@ export default async function HowItWorksPage() {
                 open={index === 0}
               >
                 <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 rounded-xl px-3 py-4 font-bold leading-7 transition hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] [&::-webkit-details-marker]:hidden">
-                  <span>{item.question}</span>
+                  <span><MarketingBrandText text={item.question} /></span>
                   <ChevronDown
                     size={19}
                     className="shrink-0 text-primary transition-transform group-open:rotate-180"
@@ -828,7 +829,7 @@ export default async function HowItWorksPage() {
                   />
                 </summary>
                 <p className="max-w-3xl px-3 pb-6 pe-12 text-sm leading-7 text-foreground-muted">
-                  {item.answer}
+                  <MarketingBrandText text={item.answer} />
                 </p>
               </details>
             ))}
@@ -839,28 +840,28 @@ export default async function HowItWorksPage() {
       <section className="bg-[#171717] px-5 py-20 text-center text-[#fff9f5] sm:px-8 lg:px-10 lg:py-24">
         <div className="mx-auto max-w-4xl">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#ff7a68]">
-            {pageCopy.finalEyebrow}
+            <MarketingBrandText text={pageCopy.finalEyebrow} />
           </p>
           <h2
             className={`mt-4 text-3xl font-semibold leading-tight sm:text-5xl ${editorial}`}
           >
-            {pageCopy.finalTitle}
+            <MarketingBrandText text={pageCopy.finalTitle} />
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#c7bfba] sm:text-lg">
-            {pageCopy.finalBody}
+            <MarketingBrandText text={pageCopy.finalBody} />
           </p>
           <Link
             href="/get-started"
             className="mt-8 inline-flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#ff6652] px-8 py-3 font-black text-[#171717] transition hover:bg-[#ff7a68] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8d7d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#171717]"
           >
-            {pageCopy.primaryCta}
+            <MarketingBrandText text={pageCopy.primaryCta} />
             <ArrowUpRight
               size={18}
               className="rtl:-scale-x-100"
               aria-hidden="true"
             />
           </Link>
-          <p className="mt-4 text-sm text-[#aa9e98]">{pageCopy.trialNote}</p>
+          <p className="mt-4 text-sm text-[#aa9e98]"><MarketingBrandText text={pageCopy.trialNote} /></p>
         </div>
       </section>
 

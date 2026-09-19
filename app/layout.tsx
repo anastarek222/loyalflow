@@ -5,8 +5,9 @@ import type {
 
 import "./globals.css";
 import "./loyalflow-theme-aliases.css";
+import "./frontend-foundation.css";
 import { cookies } from "next/headers";
-import { Geist } from "next/font/google";
+import { Alexandria, Geist } from "next/font/google";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { getLocaleDirection } from "@/lib/i18n/config";
@@ -15,7 +16,17 @@ import { platformBrand } from "@/lib/platform-brand";
 import { PUBLIC_SITE_URL } from "@/lib/urls/public-site-url";
 import { CustomerFeedbackBanner } from "@/components/customer-feedback-banner";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const arabicSans = Alexandria({
+  subsets: ["arabic", "latin"],
+  variable: "--font-arabic",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(PUBLIC_SITE_URL),
@@ -46,7 +57,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  colorScheme: "light",
+  colorScheme: "light dark",
   themeColor: platformBrand.themeColor,
 };
 
@@ -63,7 +74,12 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={direction}
-      className={cn("h-full bg-surface-subtle antialiased", "font-sans", geist.variable)}
+      className={cn(
+        "h-full bg-surface-subtle antialiased",
+        "font-sans",
+        geist.variable,
+        arabicSans.variable,
+      )}
     >
       <body className="flex min-h-full flex-col overflow-x-clip">
         <Suspense fallback={null}>

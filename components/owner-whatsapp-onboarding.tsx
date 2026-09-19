@@ -36,7 +36,10 @@ export function OwnerWhatsAppOnboarding({
   if (!visible) return null;
 
   return (
-    <section className="mx-auto mt-4 max-w-6xl rounded-3xl border border-border/80 bg-white p-5 shadow-sm sm:p-6">
+    <section
+      data-testid="owner-whatsapp-onboarding"
+      className="mx-auto mt-4 max-w-6xl rounded-3xl border border-border/80 bg-surface p-5 shadow-[var(--lf-shadow-raised)] sm:p-6"
+    >
       <p className="text-xs font-black uppercase tracking-[0.12em] text-primary">
         {isArabic ? "اختياري" : "Optional"}
       </p>

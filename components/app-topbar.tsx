@@ -15,6 +15,7 @@ import {
 import LanguageSwitcher from "@/components/language-switcher";
 import ExperienceModeSwitcher from "@/components/experience-mode-switcher";
 import MobileSidebarWrapper from "@/components/mobile-sidebar-wrapper";
+import { TaneeThemeSwitcher } from "@/components/tanee-theme-switcher";
 import { Avatar } from "@/components/ui/avatar";
 import { logoutAction } from "@/app/dashboard/actions";
 import {
@@ -86,6 +87,8 @@ export default function AppTopbar({
   const accountButtonRef = useRef<HTMLButtonElement>(null);
   const businessButtonRef = useRef<HTMLButtonElement>(null);
   const fullName = `${user.firstName} ${user.lastName}`.trim();
+  const accountDisplayName =
+    fullName || (language === "AR" ? "المستخدم" : "User");
   const context = getShellPageContext(pathname, language, activeBusiness);
   const platformWorkspace = user.role === "SUPER_ADMIN" && !activeBusiness;
   const advancedEntries = activeBusiness
@@ -147,16 +150,16 @@ export default function AppTopbar({
         />
         <div className="min-w-0">
           {platformWorkspace && !context.parent ? (
-            <p className="hidden truncate text-[11px] font-bold uppercase tracking-[0.08em] text-primary/70 sm:block">
+            <p className="hidden truncate text-[11px] font-bold uppercase tracking-[0.08em] text-primary/70 sm:block rtl:normal-case rtl:tracking-normal">
               {language === "AR" ? "إدارة المنصة" : "Platform administration"}
             </p>
           ) : null}
           {context.parent && (
-            <p className="hidden truncate text-[11px] font-bold uppercase tracking-[0.08em] text-primary/70 sm:block">
+            <p className="hidden truncate text-[11px] font-bold uppercase tracking-[0.08em] text-primary/70 sm:block rtl:normal-case rtl:tracking-normal">
               {context.parent}
             </p>
           )}
-          <p className="truncate text-base font-bold tracking-[-0.01em] text-foreground sm:text-lg">
+          <p className="truncate text-base font-bold tracking-[-0.01em] text-foreground sm:text-lg rtl:tracking-normal">
             {context.title}
           </p>
         </div>
@@ -172,7 +175,7 @@ export default function AppTopbar({
               aria-expanded={businessOpen}
               aria-controls="topbar-business-popover"
               onClick={() => setBusinessOpen((value) => !value)}
-              className="flex min-h-10 max-w-52 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface/80 px-3 text-sm font-semibold text-foreground-muted shadow-[var(--lf-shadow-raised)] transition hover:border-primary/30 hover:bg-surface"
+              className="flex min-h-11 max-w-52 items-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface/80 px-3 text-sm font-semibold text-foreground-muted shadow-[var(--lf-shadow-raised)] transition hover:border-primary/30 hover:bg-surface"
             >
               <Building2 size={16} aria-hidden="true" />
               <span className="truncate">{activeBusiness.name}</span>
@@ -228,6 +231,9 @@ export default function AppTopbar({
             <Bell size={19} aria-hidden="true" />
           </Link>
         )}
+        <div data-testid="saas-theme-switcher">
+          <TaneeThemeSwitcher locale={language === "AR" ? "ar" : "en"} />
+        </div>
         <LanguageSwitcher language={language} />
         <div ref={accountRef} className="relative">
           <button
@@ -240,7 +246,7 @@ export default function AppTopbar({
             className="flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] px-1.5 hover:bg-surface-subtle"
           >
             <Avatar
-              name={fullName || user.email}
+              name={accountDisplayName || user.email}
               className="bg-primary text-primary-foreground"
             />
             <ChevronDown
@@ -264,7 +270,7 @@ export default function AppTopbar({
             >
               <div className="border-b border-border px-4 py-2">
                 <p className="font-semibold text-foreground">
-                  {fullName || "User"}
+                  {accountDisplayName}
                 </p>
                 <p
                   dir="ltr"

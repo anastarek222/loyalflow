@@ -61,7 +61,7 @@ export default function NotificationReadButton({ slug, notificationKey, language
         type="button"
         onClick={markAsRead}
         disabled={isPending}
-        className="shrink-0 rounded-[var(--lf-radius-input)] border border-primary/30 bg-white px-4 py-2 text-xs font-black text-primary transition hover:border-primary/30 hover:bg-primary-subtle disabled:cursor-wait disabled:opacity-60"
+        className="shrink-0 rounded-[var(--lf-radius-input)] border border-primary/30 bg-surface px-4 py-2 text-xs font-black text-primary transition hover:border-primary/30 hover:bg-[var(--lf-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] disabled:cursor-wait disabled:opacity-60"
       >
         {isPending ? t.saving : status === "error" ? t.retry : t.markRead}
       </button>

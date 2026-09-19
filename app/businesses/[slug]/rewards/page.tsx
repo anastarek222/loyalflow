@@ -85,7 +85,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
       {query.success ? (
         <p
           role="status"
-          className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900"
+          className="rounded-lg border border-success/30 bg-success-subtle p-4 text-sm font-semibold text-success"
         >
           {language === "AR"
             ? "تم حفظ كتالوج المكافآت."
@@ -95,7 +95,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
       {query.error ? (
         <p
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"
+          className="rounded-lg border border-danger/30 bg-danger-subtle p-4 text-sm font-semibold text-danger"
         >
           {query.error === "subscription-restricted"
               ? language === "AR"
@@ -116,7 +116,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
         />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <span className="flex size-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
+            <span className="flex size-11 items-center justify-center rounded-2xl border border-white/20 bg-surface/10">
               <Gift className="size-5" aria-hidden="true" />
             </span>
             <h2 className="mt-4 text-2xl font-black">
@@ -147,7 +147,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
       </section>
 
       {!simple ? (
-        <details className="group overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
+        <details data-reward-create="true" className="group overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm">
           <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 transition hover:bg-surface-subtle sm:px-6">
             <span className="flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-2xl bg-primary-subtle text-primary">
@@ -200,7 +200,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
               <select
                 name="type"
                 defaultValue="GIFT"
-                className="mt-2 min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-3 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+                className="mt-2 min-h-12 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-3 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               >
                 <option value="GIFT">{rewardType("GIFT", language)}</option>
                 <option value="PROMO_CODE">{rewardType("PROMO_CODE", language)}</option>
@@ -218,12 +218,12 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                 name="description"
                 rows={3}
                 maxLength={300}
-                className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-white p-3 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+                className="mt-2 w-full rounded-[var(--lf-radius-input)] border border-border bg-surface p-3 outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               />
             </label>
             <button
               type="submit"
-              className="min-h-12 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition hover:bg-primary-hover sm:col-span-2"
+              className="min-h-12 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition hover:bg-primary-hover sm:col-span-2"
             >
               {language === "AR" ? "إضافة مكافأة" : "Add reward"}
             </button>
@@ -253,7 +253,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                 {language === "AR" ? "المكافآت المتاحة" : "Available rewards"}
               </h2>
             </div>
-            <span className="rounded-full border border-border bg-white px-3 py-1 text-xs font-bold text-foreground-muted">
+            <span className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-bold text-foreground-muted">
               {business.rewards.length}
             </span>
           </div>
@@ -275,6 +275,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
               {business.rewards.map((reward) => (
                 <article
                   key={reward.id}
+                  data-reward-card="true"
                   className={`flex flex-col overflow-hidden rounded-[var(--lf-radius-card)] border bg-surface shadow-sm ${
                     reward.isActive
                       ? "border-primary/20"
@@ -365,7 +366,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                     </div>
                   </div>
                   {!simple ? (
-                    <details className="group border-t border-border bg-surface-subtle/60">
+                    <details data-reward-edit="true" className="group border-t border-border bg-surface-subtle/60">
                       <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-5 font-bold text-primary sm:px-6">
                         {language === "AR"
                           ? "تعديل الإعدادات"
@@ -408,7 +409,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                             reward.expiresAfterDays?.toString() ?? ""
                           }
                         />
-                        <label className="text-sm font-semibold text-slate-700">
+                        <label className="text-sm font-semibold text-foreground-muted">
                           {language === "AR" ? "النوع" : "Type"}
                           <select
                             name="type"
@@ -426,7 +427,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                           label={language === "AR" ? "الكود (مطلوب للمكافآت ذات الكود الترويجي)" : "Code (required for promo code rewards)"}
                           defaultValue={reward.code ?? ""}
                         />
-                        <label className="text-sm font-semibold text-slate-700 sm:col-span-2">
+                        <label className="text-sm font-semibold text-foreground-muted sm:col-span-2">
                           {language === "AR" ? "الوصف" : "Description"}
                           <textarea
                             name="description"
@@ -438,7 +439,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
                         </label>
                         <button
                           type="submit"
-                          className="min-h-11 rounded-md bg-primary px-4 font-semibold text-white sm:col-span-2"
+                          className="min-h-11 rounded-md bg-primary px-4 font-semibold text-primary-foreground sm:col-span-2"
                         >
                           {language === "AR" ? "حفظ التعديلات" : "Save changes"}
                         </button>
@@ -456,7 +457,7 @@ export default async function RewardsPage({ params, searchParams }: Props) {
 }
 function Summary({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 backdrop-blur-sm sm:px-4">
+    <div className="rounded-2xl border border-white/15 bg-surface/10 px-3 py-3 backdrop-blur-sm sm:px-4">
       <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/60 sm:text-xs">
         {label}
       </p>
@@ -504,7 +505,7 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <label className="block text-sm font-semibold text-slate-700">
+    <label className="block text-sm font-semibold text-foreground-muted">
       {label}
       <input
         name={name}
@@ -514,7 +515,7 @@ function Field({
         min={type === "number" ? 1 : undefined}
         maxLength={type === "text" ? 100 : undefined}
         dir={name === "code" ? "ltr" : undefined}
-        className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-slate-950"
+        className="mt-1 min-h-11 w-full rounded-md border border-border bg-surface px-3 text-foreground"
       />
     </label>
   );
@@ -522,7 +523,7 @@ function Field({
 function Empty({ title, description }: { title: string; description: string }) {
   return (
     <section className="rounded-[var(--lf-radius-card)] border border-dashed border-primary/25 bg-primary-subtle/30 p-8 text-center sm:p-12">
-      <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
+      <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-surface text-primary shadow-sm">
         <Sparkles className="size-5" aria-hidden="true" />
       </span>
       <h2 className="mt-4 font-black text-foreground">{title}</h2>

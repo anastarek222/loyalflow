@@ -284,10 +284,10 @@ export default async function StaffReportsPage({
 
   return (
     <main
-      className="min-h-screen px-4 py-5 sm:px-8 sm:py-8"
+      data-report-canvas="true"
+      className="min-h-screen bg-canvas px-4 py-5 sm:px-8 sm:py-8"
       dir={language === "AR" ? "rtl" : "ltr"}
       style={{
-        backgroundColor: theme.backgroundColor,
         fontFamily: theme.fontFamily,
       }}
     >
@@ -337,6 +337,7 @@ export default async function StaffReportsPage({
 
         <form
           method="get"
+          data-staff-report-filters="true"
           className="mt-5 grid gap-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:grid-cols-2 sm:p-6 xl:grid-cols-4"
           aria-label={t("فلاتر أداء الفريق", "Staff performance filters")}
         >
@@ -432,7 +433,7 @@ export default async function StaffReportsPage({
           <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-4">
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               {t("تطبيق الفلاتر", "Apply filters")}
             </button>
@@ -461,6 +462,7 @@ export default async function StaffReportsPage({
         </p>
 
         <section
+          data-staff-report-summary="true"
           className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4"
           aria-label={t("ملخص أداء الفريق", "Staff performance summary")}
         >
@@ -496,9 +498,9 @@ export default async function StaffReportsPage({
               <p
                 className={`lf-type-numeric mt-2 text-2xl font-black sm:text-3xl ${
                   metric.tone === "success"
-                    ? "text-emerald-700"
+                    ? "text-success"
                     : metric.tone === "warning"
-                      ? "text-amber-700"
+                      ? "text-warning"
                       : "text-foreground"
                 }`}
               >
@@ -523,6 +525,7 @@ export default async function StaffReportsPage({
         ) : (
           <>
             <section
+              data-staff-report-desktop="table"
               className={`${simple ? "hidden" : "hidden lg:block"} mt-5 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm`}
               aria-label={t("جدول أداء الفريق", "Staff performance table")}
             >
@@ -561,7 +564,7 @@ export default async function StaffReportsPage({
                             <span
                               className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                                 row.isActive
-                                  ? "bg-emerald-50 text-emerald-700"
+                                  ? "bg-success-subtle text-success"
                                   : "bg-surface-subtle text-foreground-subtle"
                               }`}
                             >
@@ -577,13 +580,13 @@ export default async function StaffReportsPage({
                         <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.earnActions)}
                         </td>
-                        <td className="px-5 py-4 font-bold text-emerald-700">
+                        <td className="px-5 py-4 font-bold text-success">
                           {numberFormatter.format(row.earnedAmount)}
                         </td>
                         <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.redeemActions)}
                         </td>
-                        <td className="px-5 py-4 font-bold text-amber-700">
+                        <td className="px-5 py-4 font-bold text-warning">
                           {numberFormatter.format(row.redeemedAmount)}
                         </td>
                         <td className="px-5 py-4 font-bold text-foreground">
@@ -605,6 +608,7 @@ export default async function StaffReportsPage({
             </section>
 
             <section
+              data-staff-report-mobile="cards"
               className={`${simple ? "hidden" : "lg:hidden"} mt-5 space-y-3`}
               aria-label={t("بطاقات أداء الفريق", "Staff performance cards")}
             >
@@ -645,27 +649,27 @@ export default async function StaffReportsPage({
                         {numberFormatter.format(row.customersCount)}
                       </p>
                     </div>
-                    <div className="rounded-[var(--lf-radius-input)] bg-amber-50 p-3">
-                      <p className="text-amber-800">
+                    <div className="rounded-[var(--lf-radius-input)] bg-warning-subtle p-3">
+                      <p className="text-warning">
                         {t("مكافآت مستبدلة", "Reward redemptions")}
                       </p>
-                      <p className="mt-1 font-black text-amber-950">
+                      <p className="mt-1 font-black text-warning">
                         {numberFormatter.format(row.rewardRedemptions)}
                       </p>
                     </div>
-                    <div className="rounded-[var(--lf-radius-input)] bg-emerald-50 p-3">
-                      <p className="text-emerald-700">
+                    <div className="rounded-[var(--lf-radius-input)] bg-success-subtle p-3">
+                      <p className="text-success">
                         {t("الرصيد المضاف", "Earned balance")}
                       </p>
-                      <p className="mt-1 font-black text-emerald-900">
+                      <p className="mt-1 font-black text-success">
                         {numberFormatter.format(row.earnedAmount)}
                       </p>
                     </div>
-                    <div className="rounded-[var(--lf-radius-input)] bg-amber-50 p-3">
-                      <p className="text-amber-700">
+                    <div className="rounded-[var(--lf-radius-input)] bg-warning-subtle p-3">
+                      <p className="text-warning">
                         {t("الرصيد المستبدل", "Redeemed balance")}
                       </p>
-                      <p className="mt-1 font-black text-amber-900">
+                      <p className="mt-1 font-black text-warning">
                         {numberFormatter.format(row.redeemedAmount)}
                       </p>
                     </div>

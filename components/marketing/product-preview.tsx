@@ -32,6 +32,7 @@ export function ProductPreview({ locale, labels }: ProductPreviewProps) {
     <div
       className="mx-auto w-full min-w-0 max-w-[42rem] lg:mx-0"
       aria-label={labels.preview}
+      data-marketing-product-preview="true"
     >
       <div className="rounded-[1.35rem] border border-border bg-white p-3 shadow-[var(--lf-shadow-raised)] sm:p-4">
         <div className="rounded-2xl border border-border/80 bg-white p-4 sm:p-5">

@@ -1,0 +1,195 @@
+/*
+ * Tanee frontend foundation overrides.
+ *
+ * This layer intentionally loads after the historical global stylesheet so we
+ * can normalize shared visual behaviour without forcing page-by-page patches.
+ */
+
+:root {
+  --lf-font-arabic: var(--font-arabic), "Noto Sans Arabic", Arial, sans-serif;
+}
+
+/*
+ * Arabic interface copy must not inherit Latin uppercase/tracking treatments.
+ * Explicit Latin/numeric treatments can opt out with data-preserve-latin-tracking.
+ */
+:lang(ar)
+  :where(.uppercase, [class*="tracking-"]):not([data-preserve-latin-tracking]) {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[dir="rtl"] :where(.lf-nav-group-label, .lf-type-display) {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Theme-adaptive identity assets outside the marketing-only theme scope. */
+[data-platform-brand-wordmark-theme="dark"] {
+  display: none;
+}
+
+.dark [data-platform-brand-wordmark-theme="light"] {
+  display: none;
+}
+
+.dark [data-platform-brand-wordmark-theme="dark"] {
+  display: block;
+}
+
+/* Keep product chrome on the current Tanee terracotta identity. */
+.lf-brand-mark {
+  background: linear-gradient(
+    145deg,
+    var(--lf-primary) 0%,
+    var(--lf-primary-hover) 62%,
+    var(--lf-primary-active) 100%
+  );
+}
+
+.lf-nav-item-active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lf-primary) 14%, transparent);
+}
+
+.lf-nav-item-active .lf-nav-icon {
+  box-shadow: 0 5px 12px color-mix(in srgb, var(--lf-primary) 24%, transparent);
+}
+
+.lf-app-shell {
+  background:
+    radial-gradient(
+      circle at 85% 5%,
+      color-mix(in srgb, var(--lf-primary) 9%, transparent),
+      transparent 26rem
+    ),
+    radial-gradient(
+      circle at 15% 85%,
+      color-mix(in srgb, var(--lf-primary) 5%, transparent),
+      transparent 30rem
+    ),
+    var(--lf-canvas);
+}
+
+/* Product dark foundation. The marketing theme remains independently scoped. */
+.dark {
+  color-scheme: dark;
+  --lf-canvas: #11100f;
+  --lf-surface: #191715;
+  --lf-surface-subtle: #211e1b;
+  --lf-surface-raised: rgb(31 28 26 / 0.94);
+  --lf-foreground: #fff9f5;
+  --lf-foreground-muted: #d7cbc5;
+  --lf-foreground-subtle: #aa9e98;
+  --lf-inverse: #171717;
+  --lf-border: #3c3531;
+  --lf-border-strong: #584d47;
+  --lf-divider: #3c3531;
+  --lf-primary: #ff7a68;
+  --lf-primary-hover: #ff6652;
+  --lf-primary-active: #e65340;
+  --lf-primary-foreground: #171717;
+  --lf-primary-soft: #3a211d;
+  --lf-success: #34d399;
+  --lf-success-subtle: #102f28;
+  --lf-warning: #fbbf24;
+  --lf-warning-subtle: #33270f;
+  --lf-danger: #f87171;
+  --lf-danger-subtle: #361818;
+  --lf-info: #7dd3fc;
+  --lf-info-subtle: #102b3a;
+  --lf-focus: #ff8d7d;
+  --lf-selection: #5c2a24;
+  --lf-disabled: #6b7280;
+  --lf-chart-grid: #3c3531;
+}
+
+.dark .lf-topbar {
+  background: rgb(25 23 21 / 0.86);
+}
+
+.dark .lf-mobile-nav {
+  background: rgb(25 23 21 / 0.94);
+}
+
+.dark .lf-page-header {
+  background-image: linear-gradient(
+    135deg,
+    rgb(31 28 26 / 0.96),
+    rgb(58 33 29 / 0.62)
+  );
+}
+
+.dark input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: var(--lf-surface);
+  color: var(--lf-foreground);
+  -webkit-text-fill-color: var(--lf-foreground);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: var(--lf-foreground-subtle);
+  -webkit-text-fill-color: var(--lf-foreground-subtle);
+}
+
+.dark input:disabled,
+.dark textarea:disabled,
+.dark select:disabled {
+  color: var(--lf-foreground-subtle);
+  -webkit-text-fill-color: var(--lf-foreground-subtle);
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--lf-foreground);
+  box-shadow: 0 0 0 1000px var(--lf-surface) inset;
+}
+
+/* Owner onboarding is part of the product experience, not a light-only island. */
+form[data-owner-step] {
+  background-color: var(--lf-surface);
+  color: var(--lf-foreground);
+  box-shadow: var(--lf-shadow-raised);
+}
+
+form[data-owner-step] > div > aside {
+  background-color: color-mix(in srgb, var(--lf-surface-subtle) 72%, transparent);
+}
+
+form[data-owner-step] > div > aside [role="progressbar"] {
+  background-color: var(--lf-surface);
+}
+
+form[data-owner-step] > div > aside nav button[aria-current="step"] {
+  background-color: var(--lf-surface);
+  box-shadow: var(--lf-shadow-raised);
+}
+
+form[data-owner-step] > div > aside nav button:not([aria-current="step"]):hover {
+  background-color: var(--lf-primary-soft);
+}
+
+form[data-owner-step]
+  :is(input:not([type="color"]):not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: var(--lf-border-strong);
+  background-color: var(--lf-surface);
+  color: var(--lf-foreground);
+}
+
+form[data-owner-step] .bg-primary.text-white {
+  color: var(--lf-primary-foreground);
+}
+
+[data-testid="owner-mobile-action-bar"] {
+  background-color: color-mix(in srgb, var(--lf-surface) 95%, transparent);
+  box-shadow: 0 -12px 30px color-mix(in srgb, var(--lf-foreground) 8%, transparent);
+}
+
+@media (min-width: 40rem) {
+  [data-testid="owner-mobile-action-bar"] {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}

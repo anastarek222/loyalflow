@@ -124,7 +124,7 @@ export function LoginForm({
           </p>
           <Link
             href="/verify-email/resend"
-            className="mt-3 inline-flex min-h-10 items-center font-bold text-primary hover:underline"
+            className="mt-3 inline-flex min-h-11 items-center font-bold text-primary hover:underline"
           >
             {copy.verificationRequiredCta}
           </Link>
@@ -154,7 +154,7 @@ export function LoginForm({
                 autoComplete="email"
                 dir="ltr"
                 placeholder={copy.emailPlaceholder}
-                className="auth-input min-h-12 w-full rounded-xl border border-border bg-white py-3 pe-4 ps-11 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+                className="min-h-12 w-full rounded-xl border border-border py-3 pe-4 ps-11 outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               />
             </span>
           </label>
@@ -190,7 +190,7 @@ export function LoginForm({
                 autoComplete="current-password"
                 dir="ltr"
                 placeholder={copy.passwordPlaceholder}
-                className="auth-input min-h-12 w-full rounded-xl border border-border bg-white py-3 pe-4 ps-11 text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+                className="min-h-12 w-full rounded-xl border border-border py-3 pe-4 ps-11 outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
               />
             </span>
           </label>
@@ -198,7 +198,7 @@ export function LoginForm({
           <button
             type="submit"
             disabled={pending}
-            className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-[0_10px_24px_rgb(79_70_229/0.22)] transition hover:-translate-y-0.5 hover:bg-primary-hover disabled:translate-y-0 disabled:cursor-wait disabled:opacity-65"
+            className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground shadow-[0_10px_24px_color-mix(in_srgb,var(--lf-primary)_22%,transparent)] transition hover:-translate-y-0.5 hover:bg-primary-hover disabled:translate-y-0 disabled:cursor-wait disabled:opacity-65"
           >
             {pending ? (
               <LoaderCircle
@@ -251,13 +251,14 @@ export function LoginForm({
               dir="ltr"
               placeholder={copy.mfaPlaceholder}
               maxLength={64}
-              className="auth-input mt-2 min-h-12 w-full rounded-xl border border-border bg-white px-4 py-3 text-center font-mono text-lg tracking-[0.18em] text-foreground outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
+              data-preserve-latin-tracking=""
+              className="mt-2 min-h-12 w-full rounded-xl border border-border px-4 py-3 text-center font-mono text-lg tracking-[0.18em] outline-none transition focus:border-primary/40 focus:ring-4 focus:ring-primary/10"
             />
           </label>
           <button
             type="submit"
             disabled={pending}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-[0_10px_24px_rgb(79_70_229/0.22)] transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-65"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground shadow-[0_10px_24px_color-mix(in_srgb,var(--lf-primary)_22%,transparent)] transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-65"
           >
             {pending ? (
               <LoaderCircle
@@ -296,7 +297,7 @@ export function LoginForm({
           </div>
           <Link
             href="/mfa/setup"
-            className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-5 py-3 font-bold text-white hover:bg-primary-hover"
+            className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground hover:bg-primary-hover"
           >
             {copy.setupCta}
           </Link>

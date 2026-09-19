@@ -73,7 +73,7 @@ export default function CopyLinkButton({
       onClick={copyLink}
       className={
         className ??
-        "rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted transition hover:bg-surface-subtle"
+        "rounded-[var(--lf-radius-input)] border border-border bg-surface px-6 py-4 font-semibold text-foreground-muted transition hover:bg-surface-subtle"
       }
     >
       {copied
