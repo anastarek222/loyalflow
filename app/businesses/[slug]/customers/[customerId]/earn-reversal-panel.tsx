@@ -153,7 +153,7 @@ export default function EarnReversalPanel({
     });
 
   return (
-    <section className="order-2 mt-6 rounded-[var(--lf-radius-card)] border border-warning/20 bg-white p-6 shadow-sm sm:p-8">
+    <section className="order-2 mt-6 rounded-[var(--lf-radius-card)] border border-warning/20 bg-surface p-6 shadow-sm sm:p-8">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-bold uppercase tracking-[0.12em] text-warning">
           {language === "AR" ? "إجراء مالي محمي" : "Protected financial action"}
@@ -226,7 +226,7 @@ export default function EarnReversalPanel({
                 </div>
 
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                  <details className="rounded-[var(--lf-radius-input)] border border-border bg-white">
+                  <details className="rounded-[var(--lf-radius-input)] border border-border bg-surface">
                     <summary className="cursor-pointer px-4 py-3 text-sm font-bold text-foreground">
                       {language === "AR" ? "استرداد جزئي" : "Partial refund"}
                     </summary>
@@ -282,7 +282,7 @@ export default function EarnReversalPanel({
                     </form>
                   </details>
 
-                  <details className="rounded-[var(--lf-radius-input)] border border-danger/20 bg-white">
+                  <details className="rounded-[var(--lf-radius-input)] border border-danger/20 bg-surface">
                     <summary className={`px-4 py-3 text-sm font-bold ${canVoid ? "cursor-pointer text-danger" : "cursor-not-allowed text-foreground-subtle"}`}>
                       {language === "AR" ? "إلغاء كامل للعملية" : "Void full earn"}
                     </summary>
@@ -314,7 +314,7 @@ export default function EarnReversalPanel({
                         </label>
                         <button
                           type="submit"
-                          className="w-full rounded-[var(--lf-radius-input)] bg-danger px-4 py-3 text-sm font-bold text-white"
+                          className="w-full rounded-[var(--lf-radius-input)] bg-danger px-4 py-3 text-sm font-bold text-inverse"
                         >
                           {language === "AR" ? "تأكيد الإلغاء الكامل" : "Confirm full void"}
                         </button>
