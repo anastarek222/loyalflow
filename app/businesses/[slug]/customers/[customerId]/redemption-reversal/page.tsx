@@ -86,7 +86,7 @@ export default async function RedemptionReversalPage({
           {language === "AR" ? "العودة إلى العميل" : "Back to customer"}
         </Link>
 
-        <header className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-white p-5 shadow-sm sm:p-6">
+        <header className="mt-6 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:p-6">
           <p className="text-xs font-bold uppercase tracking-[0.12em] text-foreground-subtle">{business.name}</p>
           <h1 dir="auto" className="mt-2 text-2xl font-black text-foreground sm:text-3xl">
             {language === "AR" ? "عكس استبدال مكافأة" : "Reverse a reward redemption"}
