@@ -348,3 +348,27 @@ test("Embedded Signup server action exposes safe granular failure reasons withou
   const failureLogBlock = actions.slice(failureLogStart, failureLogEnd);
   assert.doesNotMatch(failureLogBlock, /accessToken|authorizationCode|phoneNumberId|wabaId/);
 });
+
+test("token exchange failure logs only sanitized Meta diagnostics and never OAuth secrets", async () => {
+  const diagnosticsSource = readFileSync(
+    "lib/server/integrations/whatsapp-meta-provider-diagnostics.ts",
+    "utf8",
+  );
+  const embeddedSource = readFileSync(
+    "lib/server/integrations/whatsapp-embedded-signup.ts",
+    "utf8",
+  );
+
+  assert.match(embeddedSource, /operation: "token-exchange"/);
+  assert.match(embeddedSource, /httpStatus: tokenResponse\.status/);
+  assert.match(embeddedSource, /payload: tokenPayload/);
+  assert.match(diagnosticsSource, /REDACTED_META_TOKEN/);
+  assert.match(diagnosticsSource, /access_token=\[REDACTED\]/);
+  assert.doesNotMatch(
+    embeddedSource.slice(
+      embeddedSource.indexOf('operation: "token-exchange"') - 300,
+      embeddedSource.indexOf('operation: "token-exchange"') + 400,
+    ),
+    /authorizationCode|appSecret|client_secret/,
+  );
+});
