@@ -179,7 +179,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
       {query.success ? (
         <p
           role="status"
-          className="flex items-center gap-2 rounded-[var(--lf-radius-input)] border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900"
+          className="flex items-center gap-2 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle p-4 text-sm font-semibold text-success"
         >
           <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
           {language === "AR" ? "تم حفظ العرض." : "Offer saved."}
@@ -188,7 +188,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
       {query.error ? (
         <p
           role="alert"
-          className="rounded-[var(--lf-radius-input)] border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-900"
+          className="rounded-[var(--lf-radius-input)] border border-danger/30 bg-danger-subtle p-4 text-sm font-semibold text-danger"
         >
           {query.error === "subscription-restricted"
               ? language === "AR"
@@ -358,7 +358,7 @@ export default async function OffersPage({ params, searchParams }: Props) {
                           {offer.name}
                         </h3>
                         <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-bold ${current ? "bg-emerald-100 text-emerald-900" : "bg-surface-subtle text-foreground-muted"}`}
+                          className={`rounded-full px-2.5 py-1 text-xs font-bold ${current ? "bg-success-subtle text-success" : "bg-surface-subtle text-foreground-muted"}`}
                         >
                           {state}
                         </span>
@@ -487,7 +487,7 @@ function Metric({
 }) {
   const toneClass =
     tone === "success"
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-success-subtle text-success"
       : tone === "primary"
         ? "bg-primary-soft text-primary"
         : "bg-surface-subtle text-foreground-muted";
@@ -651,7 +651,7 @@ function OfferForm({
       </div>
       <button
         type="submit"
-        className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover sm:justify-self-start"
+        className="min-h-11 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition-colors hover:bg-primary-hover sm:justify-self-start"
       >
         {label(
           offer ? "حفظ التعديلات" : "إضافة عرض",

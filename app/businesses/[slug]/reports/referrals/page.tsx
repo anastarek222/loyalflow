@@ -179,7 +179,7 @@ export default async function ReferralReportsPage({
           <div className="flex flex-wrap gap-2 sm:col-span-2">
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               {t("تطبيق الفلاتر", "Apply filters")}
             </button>
