@@ -1514,6 +1514,125 @@ test.describe.serial("PR browser smoke", () => {
     await signOut(page);
   });
 
+  test("Settings preserves bilingual responsive administration surfaces across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}/settings`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const workspace = page.locator(
+            '[data-settings-administration="true"]',
+          );
+          await expect(workspace).toBeVisible();
+          await expect(
+            workspace.getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "إعدادات النشاط" : "Business settings",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const subnav = page.locator(
+            '[data-settings-subnavigation="true"]',
+          );
+          await expect(subnav).toBeVisible();
+          await expect(subnav).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          await expect(
+            subnav.getByRole("link", {
+              name: locale === "ar" ? "الإعدادات العامة" : "General settings",
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(
+            subnav.getByRole("link", {
+              name: locale === "ar" ? "واتساب" : "WhatsApp",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const sectionLinks = workspace.locator(
+            '[data-settings-section-links="true"] > a',
+          );
+          await expect(sectionLinks).toHaveCount(4);
+
+          const planUsage = workspace.locator('[data-plan-usage="true"]');
+          await expect(planUsage).toBeVisible();
+          await expect(planUsage.locator(":scope > div + div > div")).toHaveCount(5);
+
+          await expect(
+            workspace.locator('[data-settings-profile="true"]'),
+          ).toBeVisible();
+          await expect(
+            workspace.locator('[data-settings-operations="true"]'),
+          ).toBeVisible();
+
+          const integrations = workspace.locator(
+            '[data-settings-integrations="true"]',
+          );
+          await expect(integrations).toBeVisible();
+          await expect(integrations.locator(":scope > details")).toHaveCount(2);
+
+          const cardDetails = workspace.locator(
+            'details[data-settings-card-details="true"]',
+          );
+          await expect(cardDetails).toBeVisible();
+
+          await expect(
+            workspace.getByRole("heading", {
+              level: 2,
+              name: locale === "ar" ? "منطقة الخطر" : "Danger Zone",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          await expect(page.locator("html")).toHaveAttribute(
+            "data-theme",
+            theme,
+          );
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-settings-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
     page,
   }) => {
