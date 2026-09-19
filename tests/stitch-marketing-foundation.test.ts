@@ -124,7 +124,10 @@ test("desktop marketing shell keeps fixed brand, navigation, and action lanes", 
     header,
     /min-\[1366px\]:grid-cols-\[8rem_minmax\(0,1fr\)_31rem\]/,
   );
-  assert.match(header, /min-\[1366px\]:grid-cols-7/);
+  assert.match(
+    header,
+    /min-\[1366px\]:grid-cols-\[0\.8fr_0\.95fr_1\.2fr_0\.85fr_1\.2fr_1\.2fr_1fr\]/,
+  );
   assert.match(header, /min-\[1366px\]:w-full/);
   assert.match(header, /data-marketing-header-theme-slot="true"/);
   assert.match(header, /data-marketing-header-language-slot="true"/);

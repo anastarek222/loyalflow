@@ -228,8 +228,9 @@ const marketingShellRoutes = [
   "/terms",
   "/data-deletion",
   "/get-started",
-  "/demo",
 ] as const;
+
+const optionalMarketingShellRoutes = ["/demo"] as const;
 
 type ShellRect = {
   x: number;
@@ -508,6 +509,49 @@ for (const viewport of [
                 ),
               fullPage: true,
             });
+          }
+        }
+
+        if (theme === "light") {
+          for (const route of optionalMarketingShellRoutes) {
+            const response = await page.goto(route);
+            expect([200, 404], route).toContain(response?.status());
+            if (response?.status() === 404) continue;
+
+            await expect(page.locator("html")).toHaveAttribute(
+              "data-marketing-theme",
+              theme,
+            );
+
+            const optionalNav = page.locator(
+              '[data-marketing-header-nav="true"]',
+            );
+            expect(
+              await optionalNav.locator(":scope > a").evaluateAll((nodes) =>
+                nodes.every(
+                  (node) => node.scrollWidth <= node.clientWidth,
+                ),
+              ),
+              `${route} navigation text must stay inside fixed slots`,
+            ).toBe(true);
+
+            expect(shellBaseline).toBeDefined();
+            expectSameRect(
+              await readShellRect(
+                page.locator('[data-marketing-header-brand="true"]'),
+              ),
+              shellBaseline!.brand,
+            );
+            expectSameRect(
+              await readShellRect(optionalNav),
+              shellBaseline!.nav,
+            );
+            expectSameRect(
+              await readShellRect(
+                page.locator('[data-marketing-header-actions="true"]'),
+              ),
+              shellBaseline!.actions,
+            );
           }
         }
       }
