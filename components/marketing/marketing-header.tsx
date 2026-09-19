@@ -152,7 +152,7 @@ export function MarketingHeader({
           <nav
             aria-label={translate(locale, "marketing.primaryNavLabel")}
             data-marketing-header-nav="true"
-            className="hidden min-w-0 items-center min-[1366px]:grid min-[1366px]:w-full min-[1366px]:grid-cols-[4.5rem_5rem_6.25rem_4.5rem_6.25rem_8rem_6rem] min-[1366px]:justify-between"
+            className="hidden min-w-0 items-center min-[1366px]:grid min-[1366px]:w-full min-[1366px]:grid-cols-[4.5rem_5rem_6.25rem_4.5rem_6.5rem_8rem_6rem] min-[1366px]:justify-between"
           >
             {navigation.map((item) => (
               <MarketingNavLink
