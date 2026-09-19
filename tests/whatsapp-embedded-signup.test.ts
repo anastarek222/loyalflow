@@ -286,3 +286,35 @@ test("Connect WhatsApp client keeps provider tokens server-only and supports sta
   assert.doesNotMatch(source, /accessToken|access_token/);
   assert.doesNotMatch(source, /localStorage|sessionStorage/);
 });
+
+test("reconnect can reuse only previously verified non-secret sender IDs when Meta returns an auth-only response", () => {
+  const source = readFileSync(
+    "components/whatsapp-embedded-signup-button.tsx",
+    "utf8",
+  );
+  const page = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp/page.tsx",
+    "utf8",
+  );
+  assert.match(page, /providerWabaId: \{ not: null \}/);
+  assert.match(page, /providerPhoneNumberId: \{ not: null \}/);
+  assert.match(page, /fallbackWabaId=/);
+  assert.match(page, /fallbackPhoneNumberId=/);
+  assert.match(source, /validMetaId\(fallbackWabaId\)/);
+  assert.match(source, /validMetaId\(fallbackPhoneNumberId\)/);
+  assert.match(source, /previously verified sender/);
+});
+
+test("Embedded Signup exits Connecting state when Meta returns auth without sender data and no safe fallback exists", () => {
+  const source = readFileSync(
+    "components/whatsapp-embedded-signup-button.tsx",
+    "utf8",
+  );
+  assert.match(source, /completionTimeoutRef/);
+  assert.match(source, /12000/);
+  assert.match(
+    source,
+    /Meta completed login but did not return the WhatsApp account and phone/,
+  );
+  assert.match(source, /setConnecting\(false\)/);
+});

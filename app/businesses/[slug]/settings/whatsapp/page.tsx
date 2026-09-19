@@ -65,18 +65,32 @@ export default async function BusinessWhatsAppSettingsPage({
   if (!business) notFound();
   if (!canManageBusiness(session.user, business.id)) redirect("/dashboard");
 
-  const [currentUser, credential, bindings, automation] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { language: true },
-    }),
-    getBusinessWhatsAppCredential(prisma, business.id),
-    getBusinessWhatsAppTemplateBindings(prisma, {
-      businessId: business.id,
-      language: business.cardDefaultLanguage,
-    }),
-    getBusinessWhatsAppAutomationSettings(prisma, business.id),
-  ]);
+  const [currentUser, credential, bindings, automation, lastVerifiedSender] =
+    await Promise.all([
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { language: true },
+      }),
+      getBusinessWhatsAppCredential(prisma, business.id),
+      getBusinessWhatsAppTemplateBindings(prisma, {
+        businessId: business.id,
+        language: business.cardDefaultLanguage,
+      }),
+      getBusinessWhatsAppAutomationSettings(prisma, business.id),
+      prisma.integrationJob.findFirst({
+        where: {
+          businessId: business.id,
+          kind: "WHATSAPP_CUSTOMER_NOTIFICATION",
+          providerWabaId: { not: null },
+          providerPhoneNumberId: { not: null },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          providerWabaId: true,
+          providerPhoneNumberId: true,
+        },
+      }),
+    ]);
   if (!automation) notFound();
 
   const messages = {
@@ -466,6 +480,10 @@ export default async function BusinessWhatsAppSettingsPage({
                 configId={embeddedSignupConfigId}
                 graphApiVersion={graphApiVersion}
                 enabled={embeddedSignupReadiness.ready}
+                fallbackWabaId={lastVerifiedSender?.providerWabaId ?? undefined}
+                fallbackPhoneNumberId={
+                  lastVerifiedSender?.providerPhoneNumberId ?? undefined
+                }
                 action={completeEmbeddedSignup}
               />
               {!embeddedSignupReadiness.ready ? (
