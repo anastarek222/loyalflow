@@ -27,7 +27,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Auth shell unification
 - [x] Onboarding alignment
 - [x] SaaS desktop/mobile brand alignment
-- [ ] Shared status, toast, pagination, modal, and dropdown visual pass
+- [x] Shared status, toast, pagination, modal, and dropdown visual pass
 
 ### Marketing pages
 - [ ] Home

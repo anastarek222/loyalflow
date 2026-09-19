@@ -146,6 +146,7 @@ jobs:
           mkdir -p test-results/browser-matrix
           rm -rf visual-artifacts
           mkdir -p visual-artifacts/saas-shell
+          mkdir -p visual-artifacts/shared-ui
           node scripts/ci-rate-limit-server.mjs &
           rate_limit_pid=$!
           trap 'kill "$rate_limit_pid" 2>/dev/null || true' EXIT
@@ -161,6 +162,7 @@ jobs:
           done
           PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/pr-smoke-desktop.xml pnpm exec playwright test tests/browser/pr-smoke.spec.ts --config=playwright.config.ts --project=desktop-chromium --reporter=list,junit
           find playwright-output -type f -name 'saas-shell-*.png' -exec cp {} visual-artifacts/saas-shell/ \;
+          find playwright-output -type f -name 'notification-centre-*.png' -exec cp {} visual-artifacts/shared-ui/ \;
           if [[ "${{ steps.browser-smoke.outputs.owner-onboarding }}" == "true" ]]; then
             PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-mobile.xml pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-chromium --reporter=list,junit
             PLAYWRIGHT_JUNIT_OUTPUT_FILE=test-results/browser-matrix/owner-desktop.xml pnpm exec playwright test tests/browser/owner-onboarding-mobile.spec.ts --config=playwright.config.ts --project=owner-onboarding-desktop --reporter=list,junit
@@ -235,6 +237,15 @@ jobs:
         with:
           name: saas-shell-visual-screenshots
           path: visual-artifacts/saas-shell/*.png
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Save shared UI visual acceptance screenshots
+        if: always() && steps.browser-smoke.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shared-ui-visual-screenshots
+          path: visual-artifacts/shared-ui/*.png
           if-no-files-found: error
           retention-days: 7
 
