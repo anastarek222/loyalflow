@@ -3,7 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { extractWhatsAppTemplateStatusUpdates } from "../lib/server/integrations/whatsapp-template-status";
-import { compileWhatsAppTemplateForMeta } from "../lib/whatsapp-templates";
+import {
+  compileWhatsAppTemplateForMeta,
+  SUGGESTED_WHATSAPP_TEMPLATES,
+} from "../lib/whatsapp-templates";
 
 test("Owner template compiler preserves static copy and numbers Meta variables by occurrence", () => {
   const compiled = compileWhatsAppTemplateForMeta(
@@ -112,6 +115,9 @@ test("Meta template provisioning is WABA-scoped, provider-owned and idempotent b
   assert.match(provider, /BALANCE_UPDATED: "UTILITY"/);
   assert.match(provider, /WELCOME: "MARKETING"/);
   assert.match(provider, /REWARD_READY: "MARKETING"/);
+  assert.match(provider, /REWARD_REDEEMED: "UTILITY"/);
+  assert.match(provider, /NEW_REWARD: "MARKETING"/);
+  assert.match(provider, /NEW_OFFER: "MARKETING"/);
   assert.match(provider, /body_text: \[context\.compiled\.exampleParameters\]/);
   assert.match(provider, /WHATSAPP_META_TEMPLATE_NAME_COLLISION/);
   assert.match(provider, /approvalStatus: fetched\.template\.status/);
@@ -186,4 +192,42 @@ test("Meta template status cannot be written by the generic read helper", () => 
   assert.doesNotMatch(binding, /\$executeRaw|INSERT INTO|UPDATE "BusinessWhatsAppTemplateBinding"/);
   assert.match(provider, /normalizeApprovalStatus/);
   assert.match(provider, /"UNKNOWN"/);
+});
+
+test("all six suggested WhatsApp drafts compile for Meta in Arabic and English", () => {
+  for (const language of ["AR", "EN"] as const) {
+    for (const [event, template] of Object.entries(
+      SUGGESTED_WHATSAPP_TEMPLATES[language],
+    )) {
+      const compiled = compileWhatsAppTemplateForMeta(template);
+      assert.equal(
+        compiled.ok,
+        true,
+        `${language} ${event} suggested draft must compile for Meta`,
+      );
+    }
+  }
+});
+
+test("Meta compiler accepts the authoritative offer token", () => {
+  const compiled = compileWhatsAppTemplateForMeta(
+    "New offer from {business}: {offer}. {card_link}",
+  );
+  assert.equal(compiled.ok, true);
+  if (!compiled.ok) return;
+  assert.equal(compiled.bodyText, "New offer from {{1}}: {{2}}. {{3}}");
+  assert.deepEqual(compiled.exampleParameters, [
+    "Tanee Demo",
+    "20% weekend offer",
+    "https://example.com/card/demo",
+  ]);
+});
+
+test("WhatsApp settings fail early on unsupported owner variables before provider submission", () => {
+  const actions = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
+    "utf8",
+  );
+  assert.match(actions, /compileWhatsAppTemplateForMeta\(message\)\.ok/);
+  assert.match(actions, /whatsappAutomation=invalid-copy/);
 });

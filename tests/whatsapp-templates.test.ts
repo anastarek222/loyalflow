@@ -15,6 +15,7 @@ const context = {
   balance: 3020,
   unit: "Monthly subscription",
   reward: "50% discount",
+  offer: "Weekend 20% off",
   remaining: 6980,
   cardLink: "https://app.loyalflow.test/card/public-token",
 };
@@ -90,4 +91,18 @@ test("WhatsApp URL safely supports a missing phone number", () => {
   assert.equal(parsed.origin, "https://wa.me");
   assert.equal(parsed.pathname, "/");
   assert.equal(parsed.searchParams.get("text"), message);
+});
+
+test("New Offer copy can render the authoritative offer name", () => {
+  assert.equal(
+    renderWhatsAppTemplate(
+      "New from {business}: {offer}. {card_link}",
+      context,
+    ),
+    "New from Sprint Group: Weekend 20% off. https://app.loyalflow.test/card/public-token",
+  );
+  assert.deepEqual(
+    renderWhatsAppTemplateParameters("{business} — {offer}", context),
+    ["Sprint Group", "Weekend 20% off"],
+  );
 });

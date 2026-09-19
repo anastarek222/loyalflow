@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import { auth } from "@/auth";
 import { getLanguageLocale, normalizeLanguage } from "@/lib/i18n";
-import { canAccessBusiness, canManageBusiness } from "@/lib/permissions";
+import {
+  canAccessBusiness,
+  canManageBusiness,
+  canPerform,
+} from "@/lib/permissions";
 import prisma from "@/lib/prisma";
 import {
   AUTOMATIC_CUSTOMER_MESSAGE_EVENTS,
@@ -16,6 +20,7 @@ import {
   type WhatsAppHistoryEntry,
   type WhatsAppHistoryStatus,
 } from "@/lib/server/integrations/whatsapp-message-history";
+import { getWhatsAppRecoveryDecision } from "@/lib/server/integrations/whatsapp-recovery";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -149,6 +154,16 @@ function recoveryMessage(
         "تغيرت حالة الرسالة قبل إعادة المحاولة. حدّث الصفحة.",
         "The message state changed before retry. Refresh the page.",
       );
+    case "retry-not-allowed":
+      return t(
+        "سبب الفشل الحالي لا يسمح بإعادة المحاولة العمياء. أصلح السبب أولًا أو استخدم إجراء الاسترداد المناسب.",
+        "The current failure is not safe to retry blindly. Fix the cause first or use the appropriate recovery action.",
+      );
+    case "retry-ineligible":
+      return t(
+        "لا يمكن إعادة المحاولة لأن العميل لم يعد مؤهلًا للإرسال. راجع الرقم والموافقة أولًا.",
+        "Retry is blocked because the customer is no longer eligible. Review the phone and consent first.",
+      );
     case "resend-in-flight":
       return t(
         "الرسالة ما زالت قيد التنفيذ؛ لا يمكن إنشاء نسخة موازية الآن.",
@@ -180,15 +195,6 @@ function recoveryMessage(
   }
 }
 
-function canRecoverForRole(role: string) {
-  return (
-    role === "OWNER" ||
-    role === "MANAGER" ||
-    role === "STAFF" ||
-    role === "SUPER_ADMIN"
-  );
-}
-
 function eligibilityLabel(
   entry: WhatsAppHistoryEntry,
   t: (ar: string, en: string) => string,
@@ -196,7 +202,12 @@ function eligibilityLabel(
   if (!entry.customerActive) return t("العميل غير نشط", "Customer inactive");
   if (entry.whatsappOptedOutAt) return t("أوقف رسائل واتساب", "Opted out");
   if (!entry.whatsappOptInAt) return t("لا توجد موافقة", "No consent");
-  if (!entry.whatsappPhoneE164) return t("يحتاج تصحيح الرقم", "Fix phone");
+  if (!entry.whatsappPhoneMatchesCustomer) {
+    return t(
+      "رقم العميل اتغير — أعد تأكيد موافقة واتساب",
+      "Customer phone changed — reconfirm WhatsApp consent",
+    );
+  }
   return t("مؤهل للإرسال", "Eligible");
 }
 
@@ -217,6 +228,15 @@ function failureLabel(
     "تعذر إكمال محاولة الإرسال.",
     "The delivery attempt could not be completed.",
   );
+}
+
+function deliveryModeLabel(
+  entry: WhatsAppHistoryEntry,
+  t: (ar: string, en: string) => string,
+) {
+  return entry.payload.deliveryMode === "MANUAL"
+    ? t("يدوي", "Manual")
+    : t("تلقائي", "Automatic");
 }
 
 function providerLabel(
@@ -276,7 +296,11 @@ export default async function WhatsAppHistoryPage({
     cursor: query.cursor ?? null,
     pageSize: 20,
   });
-  const canRecover = canRecoverForRole(session.user.role);
+  const canRecover = canPerform(
+    session.user,
+    business.id,
+    "CUSTOMERS_EDIT",
+  );
   const canManage = canManageBusiness(session.user, business.id);
   const notice = recoveryMessage(query.recovery, t);
   const retryAction = retryWhatsAppDeliveryAction.bind(null, business.slug);
@@ -400,13 +424,18 @@ export default async function WhatsAppHistoryPage({
               {history.entries.map((entry) => {
                 const eligible =
                   entry.customerActive &&
-                  Boolean(entry.whatsappPhoneE164) &&
+                  entry.whatsappPhoneMatchesCustomer &&
                   Boolean(entry.whatsappOptInAt) &&
                   !entry.whatsappOptedOutAt;
+                const recoveryDecision = getWhatsAppRecoveryDecision(
+                  entry.lastErrorCode,
+                );
                 const safeRetry =
+                  eligible &&
                   (entry.status === "FAILED" || entry.status === "DEAD") &&
                   !entry.providerMessageId &&
-                  !entry.providerDeliveryStatus;
+                  !entry.providerDeliveryStatus &&
+                  recoveryDecision.retryAllowed;
                 const canResend =
                   entry.status !== "PENDING" &&
                   entry.status !== "PROCESSING" &&
@@ -438,6 +467,9 @@ export default async function WhatsAppHistoryPage({
                             EVENT_LABELS[entry.payload.event].ar,
                             EVENT_LABELS[entry.payload.event].en,
                           )}
+                        </span>
+                        <span className="text-xs font-bold text-foreground-muted">
+                          {deliveryModeLabel(entry, t)}
                         </span>
                         <span className="text-xs font-bold text-foreground-muted">
                           {t(statusCopy.ar, statusCopy.en)}

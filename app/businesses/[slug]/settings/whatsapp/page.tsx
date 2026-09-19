@@ -165,7 +165,12 @@ export default async function BusinessWhatsAppSettingsPage({
               "تم حفظ إعدادات الرسائل التلقائية بدون حذف النصوص المتوقفة.",
               "Automation settings were saved without deleting copy for disabled events.",
             )
-          : query.whatsappTemplate === "approved"
+          : query.whatsappAutomation === "saved-needs-approval"
+            ? t(
+                "تم حفظ النصوص. أي Event طلبت تفعيله بدون قالب Meta معتمد ومطابق ظل متوقفًا تلقائيًا لحد الاعتماد.",
+                "Copy was saved. Any event you tried to enable without a matching approved Meta template stayed OFF automatically until approval.",
+              )
+            : query.whatsappTemplate === "approved"
             ? t(
                 "Meta تؤكد أن القالب معتمد.",
                 "Meta confirms that the template is approved.",
@@ -219,12 +224,17 @@ export default async function BusinessWhatsAppSettingsPage({
                     "لا يمكن تعديل إعدادات WhatsApp في حالة الاشتراك الحالية.",
                     "WhatsApp settings cannot be changed in the current subscription state.",
                   )
-                : query.whatsappAutomation === "invalid"
+                : query.whatsappAutomation === "invalid-copy"
                   ? t(
-                      "راجع إعدادات الرسائل التلقائية وحاول مرة أخرى.",
-                      "Review the automation settings and try again.",
+                      "في نص رسالة متغير غير مدعوم. استخدم فقط المتغيرات المعروضة في قسم الأتمتة.",
+                      "A message contains an unsupported variable. Use only the variables shown in the Automations section.",
                     )
-                  : query.whatsappTemplate === "provider-error"
+                  : query.whatsappAutomation === "invalid"
+                    ? t(
+                        "راجع إعدادات الرسائل التلقائية وحاول مرة أخرى.",
+                        "Review the automation settings and try again.",
+                      )
+                    : query.whatsappTemplate === "provider-error"
                     ? t(
                         "تعذر إكمال العملية مع Meta. لم يتم اعتماد أي حالة محليًا من عندنا.",
                         "The Meta operation could not be completed. Tanee did not invent or locally approve a provider state.",
@@ -290,6 +300,7 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "welcomeEnabled",
       messageName: "whatsappWelcomeMessage",
       enabled: automation.welcomeEnabled,
+      savedMessage: business.whatsappWelcomeMessage,
       message:
         business.whatsappWelcomeMessage ??
         getSuggestedWhatsAppTemplate(business.cardDefaultLanguage, "WELCOME"),
@@ -301,6 +312,7 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "balanceUpdatedEnabled",
       messageName: "whatsappBalanceMessage",
       enabled: automation.balanceUpdatedEnabled,
+      savedMessage: business.whatsappBalanceMessage,
       message:
         business.whatsappBalanceMessage ??
         getSuggestedWhatsAppTemplate(
@@ -315,6 +327,7 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "rewardReadyEnabled",
       messageName: "whatsappRewardMessage",
       enabled: automation.rewardReadyEnabled,
+      savedMessage: business.whatsappRewardMessage,
       message:
         business.whatsappRewardMessage ??
         getSuggestedWhatsAppTemplate(
@@ -329,6 +342,7 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "rewardRedeemedEnabled",
       messageName: "whatsappRedeemedMessage",
       enabled: automation.rewardRedeemedEnabled,
+      savedMessage: business.whatsappRedeemedMessage,
       message:
         business.whatsappRedeemedMessage ??
         getSuggestedWhatsAppTemplate(
@@ -343,6 +357,7 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "newRewardEnabled",
       messageName: "newRewardMessage",
       enabled: automation.newRewardEnabled,
+      savedMessage: automation.newRewardMessage,
       message:
         automation.newRewardMessage ??
         getSuggestedWhatsAppTemplate(
@@ -357,6 +372,7 @@ export default async function BusinessWhatsAppSettingsPage({
       toggleName: "newOfferEnabled",
       messageName: "newOfferMessage",
       enabled: automation.newOfferEnabled,
+      savedMessage: automation.newOfferMessage,
       message:
         automation.newOfferMessage ??
         getSuggestedWhatsAppTemplate(business.cardDefaultLanguage, "NEW_OFFER"),
@@ -390,6 +406,12 @@ export default async function BusinessWhatsAppSettingsPage({
             {t(
               "اربط WhatsApp مرة واحدة، ثم تحكم في كل رسالة تلقائية ونصها بشكل مستقل.",
               "Connect WhatsApp once, then control every automatic message and its copy independently.",
+            )}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-foreground-subtle">
+            {t(
+              "الترتيب الآمن: احفظ النص → أرسله إلى Meta → بعد ما يبقى Approved فعّل الـEvent. لو حاولت تفعّله بدري، Tanee يحفظ النص ويترك الـEvent متوقفًا بدل إنشاء رسائل فاشلة.",
+              "Safe setup order: save copy → submit it to Meta → once Approved, enable the event. If you enable it too early, Tanee saves the copy but keeps that event OFF instead of creating failed deliveries.",
             )}
           </p>
         </header>
@@ -620,6 +642,21 @@ export default async function BusinessWhatsAppSettingsPage({
               </span>
             </label>
 
+            <div className="rounded-xl border border-primary/10 bg-primary-subtle/40 p-3 text-xs leading-5 text-foreground-muted">
+              <p className="font-bold text-foreground">
+                {t("المتغيرات المتاحة", "Available variables")}
+              </p>
+              <p className="mt-1 break-words font-mono" dir="ltr">
+                {"{customer} {business} {balance} {unit} {reward} {offer} {remaining} {card_link}"}
+              </p>
+              <p className="mt-1">
+                {t(
+                  "{offer} يُستخدم لاسم العرض في New Offer، و{reward} يُستخدم لاسم المكافأة.",
+                  "{offer} is the live offer name for New Offer; {reward} is the reward name.",
+                )}
+              </p>
+            </div>
+
             {automationRows.map((row) => (
               <div
                 key={row.event}
@@ -632,6 +669,19 @@ export default async function BusinessWhatsAppSettingsPage({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="font-black text-foreground">{row.title}</p>
+                    <p
+                      className={`mt-1 text-xs font-semibold ${row.savedMessage ? "text-success" : "text-warning"}`}
+                      data-whatsapp-copy-state={
+                        row.savedMessage ? "saved" : "suggested-draft"
+                      }
+                    >
+                      {row.savedMessage
+                        ? t("النص محفوظ", "Copy saved")
+                        : t(
+                            "مسودة مقترحة — احفظ إعدادات WhatsApp أولًا قبل إرسالها إلى Meta.",
+                            "Suggested draft — save WhatsApp settings before submitting it to Meta.",
+                          )}
+                    </p>
                     {!row.producerReady ? (
                       <p className="mt-1 text-xs leading-5 text-warning">
                         {t(
@@ -676,6 +726,7 @@ export default async function BusinessWhatsAppSettingsPage({
                       balance: 8,
                       unit: business.unitName ?? t("نقاط", "points"),
                       reward: business.rewardName ?? t("مكافأة", "Reward"),
+                      offer: t("خصم 20% في نهاية الأسبوع", "20% weekend offer"),
                       remaining: 2,
                       cardLink: "https://gettanee.com/card/example",
                     })}
@@ -700,14 +751,14 @@ export default async function BusinessWhatsAppSettingsPage({
           </h2>
           <p className="mt-2 text-sm leading-6 text-foreground-muted">
             {t(
-              `Tanee يرسل نفس النص الذي كتبه الـOwner إلى Meta تحت لغة البرنامج الحالية (${business.cardDefaultLanguage}). حالة الاعتماد تأتي من Meta وليست اختيارًا يدويًا داخل Tanee.`,
-              `Tanee submits the same Owner-authored copy to Meta under the current program language (${business.cardDefaultLanguage}). Approval state comes from Meta and cannot be selected manually in Tanee.`,
+              `Tanee يرسل نفس النص المحفوظ الذي كتبه الـOwner إلى Meta تحت لغة البرنامج الحالية (${business.cardDefaultLanguage}). لازم تحفظ المسودة فوق الأول؛ المسودة المقترحة غير المحفوظة لا تُرسل إلى Meta. حالة الاعتماد تأتي من Meta وليست اختيارًا يدويًا داخل Tanee.`,
+              `Tanee submits the same saved Owner-authored copy to Meta under the current program language (${business.cardDefaultLanguage}). Save the draft above first; an unsaved suggested draft is never submitted to Meta. Approval state comes from Meta and cannot be selected manually in Tanee.`,
             )}
           </p>
 
           <div className="mt-5 grid gap-3">
             {automationRows.map((row) => {
-              const message = row.message?.trim() ?? "";
+              const message = row.savedMessage?.trim() ?? "";
               const binding = bindingByEvent.get(row.event);
               const currentHash = message
                 ? hashBusinessWhatsAppTemplate(message)
@@ -736,8 +787,8 @@ export default async function BusinessWhatsAppSettingsPage({
                         {message
                           ? `${t("حالة Meta", "Meta status")}: ${providerStatusLabel(providerStatus)}`
                           : t(
-                              "لا يوجد نص حالي لإرساله إلى Meta.",
-                              "There is no current copy to submit to Meta.",
+                              "لا يوجد نص محفوظ لإرساله إلى Meta. احفظ المسودة في قسم الأتمتة أولًا.",
+                              "There is no saved copy to submit to Meta. Save the draft in Automations first.",
                             )}
                       </p>
                       {bindingMatchesCurrent && binding ? (
@@ -763,7 +814,7 @@ export default async function BusinessWhatsAppSettingsPage({
                         >
                           {bindingMatchesCurrent
                             ? t("إعادة التحقق/الإرسال", "Reconcile/submit")
-                            : t("إرسال النسخة الحالية", "Submit current copy")}
+                            : t("إرسال النص المحفوظ", "Submit saved copy")}
                         </button>
                         {bindingMatchesCurrent ? (
                           <button

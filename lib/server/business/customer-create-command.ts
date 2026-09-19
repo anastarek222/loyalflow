@@ -166,13 +166,19 @@ export async function createCustomerCommand(input: {
       });
     }
 
+    const actorFields = activityActorFields(input.actor, input.businessId);
     const activity = await transaction.businessActivity.create({
       data: {
         type: "CUSTOMER_CREATED",
         description: `تم إنشاء العميل ${customerName}`,
         businessId: input.businessId,
         customerId: customer.id,
-        ...activityActorFields(input.actor, input.businessId),
+        ...actorFields,
+        metadata: {
+          ...("metadata" in actorFields ? actorFields.metadata : {}),
+          whatsappConsentAction: input.whatsappOptIn ? "OPT_IN" : "NOT_GRANTED",
+          whatsappConsentSource: "CUSTOMER_REGISTRATION",
+        },
         ...activityRequestMetadata(activityContext),
       },
       select: { id: true },

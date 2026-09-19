@@ -9,12 +9,13 @@ const source = (path: string) => readFileSync(join(process.cwd(), path), "utf8")
 
 function inboundPayload(body: string, overrides?: { from?: string; id?: string }) {
   return {
+    object: "whatsapp_business_account",
     entry: [
       {
         changes: [
           {
             value: {
-              metadata: { phone_number_id: "sender-123" },
+              metadata: { phone_number_id: "222222" },
               messages: [
                 {
                   id: overrides?.id ?? "wamid.1",
@@ -34,7 +35,7 @@ function inboundPayload(body: string, overrides?: { from?: string; id?: string }
 test("signed WhatsApp inbound STOP is parsed as an explicit opt-out request", () => {
   assert.deepEqual(extractWhatsAppOptOutRequests(inboundPayload(" STOP ")), [
     {
-      phoneNumberId: "sender-123",
+      phoneNumberId: "222222",
       senderPhone: "201001234567",
       providerMessageId: "wamid.1",
     },
@@ -71,6 +72,9 @@ test("webhook consent boundary records opt-out while preserving consent history 
   assert.match(consentSource, /setCustomerWhatsAppConsent\(transaction/);
   assert.doesNotMatch(consentSource, /whatsappOptInAt:\s*null/);
   assert.match(consentSource, /WHATSAPP_INBOUND_OPTOUT/);
+  assert.match(consentSource, /consentAction: "OPT_OUT"/);
+  assert.match(consentSource, /providerPhoneNumberId: request\.phoneNumberId/);
+  assert.doesNotMatch(consentSource, /LIMIT 50/);
   assert.match(consentSource, /enqueueIntegrationJob/);
   assert.match(consentSource, /scheduleIntegrationJobs\(integrationJobIds\)/);
   assert.match(routeSource, /revokeWhatsAppConsentFromWebhook\(payload\)/);
@@ -78,4 +82,24 @@ test("webhook consent boundary records opt-out while preserving consent history 
     workerSource,
     /!customer\.whatsappOptInAt\s*\|\|\s*customer\.whatsappOptedOutAt/,
   );
+});
+
+test("STOP persistence is atomic so concurrent webhook replay cannot create duplicate revocations", () => {
+  const consentState = source(
+    "lib/server/integrations/customer-whatsapp-consent-state.ts",
+  );
+  assert.match(
+    consentState,
+    /SET "whatsappOptedOutAt" = \$\{input\.changedAt\}[\s\S]*AND "whatsappOptInAt" IS NOT NULL[\s\S]*AND "whatsappOptedOutAt" IS NULL/,
+  );
+});
+
+test("opt-out intake fails closed for non-WhatsApp webhook objects and invalid sender IDs", () => {
+  const wrongObject = inboundPayload("STOP");
+  wrongObject.object = "instagram";
+  assert.equal(extractWhatsAppOptOutRequests(wrongObject).length, 0);
+
+  const invalidPhoneId = inboundPayload("STOP");
+  invalidPhoneId.entry[0].changes[0].value.metadata.phone_number_id = "sender-123";
+  assert.equal(extractWhatsAppOptOutRequests(invalidPhoneId).length, 0);
 });

@@ -38,6 +38,10 @@ const manualReadinessSource = readFileSync(
   "lib/server/integrations/whatsapp-manual-readiness.ts",
   "utf8",
 );
+const historyPageSource = readFileSync(
+  "app/businesses/[slug]/whatsapp-history/page.tsx",
+  "utf8",
+);
 
 test("manual WhatsApp shares the durable outbox without automation-toggle coupling", () => {
   assert.match(messagingSource, /deliveryMode\?: CustomerMessageDeliveryMode/);
@@ -72,20 +76,31 @@ test("message history is business-scoped and filters the durable WhatsApp jobs",
   );
 });
 
-test("Retry revives the same delivery job only before provider acceptance", () => {
+test("Retry revives the same delivery job only when the shared recovery policy allows it", () => {
   assert.match(recoverySource, /status: \{ in: \["FAILED", "DEAD"\] \}/);
+  assert.match(recoverySource, /getWhatsAppRecoveryDecision\(job\.lastErrorCode\)/);
+  assert.match(recoverySource, /!recoveryDecision\.retryAllowed/);
+  assert.match(recoverySource, /whatsappPhoneE164:\s*\{ not: null \}/);
+  assert.match(recoverySource, /customer\.whatsappPhoneE164 !== customer\.phone/);
+  assert.match(historyPageSource, /getWhatsAppRecoveryDecision\(/);
+  assert.match(historyPageSource, /recoveryDecision\.retryAllowed/);
+  assert.match(historyPageSource, /const safeRetry =[\s\S]*eligible &&/);
   assert.match(recoverySource, /providerMessageId: null/);
   assert.match(recoverySource, /providerDeliveryStatus: null/);
+  assert.match(recoverySource, /lastErrorCode: job\.lastErrorCode/);
   assert.match(recoverySource, /status: "PENDING"/);
   assert.match(recoverySource, /lastErrorCode: null/);
   assert.match(recoverySource, /scheduleIntegrationJob\(job\.id\)/);
   assert.doesNotMatch(recoverySource, /rewardRedemption|loyaltyTransaction/);
 });
 
-test("Resend creates a delivery-only job and never replays business mutation", () => {
-  assert.match(recoverySource, /enqueueCustomerMessageJob\(transaction/);
+test("Resend creates a delivery-only job, preserves automatic payload identity, and never replays business mutation", () => {
+  assert.match(
+    recoverySource,
+    /enqueueAutomaticCustomerMessageResendJob\(transaction/,
+  );
   assert.match(recoverySource, /enqueueManualCustomerMessageJob\(transaction/);
-  assert.match(recoverySource, /manual-resend:/);
+  assert.match(recoverySource, /payload,/);
   assert.doesNotMatch(recoverySource, /redeemReward|addLoyalty|balanceAfter/);
 });
 
@@ -97,9 +112,15 @@ test("contextual customer action uses the manual queue and authoritative Reward 
   assert.doesNotMatch(manualSource, /wa\.me/);
 });
 
-test("Customer Profile removes legacy direct WhatsApp links from the render source", () => {
+test("Customer Profile elevates the guarded WhatsApp panel without restoring direct WhatsApp links", () => {
   assert.match(wrapperSource, /LegacyCustomerDetailsPage/);
-  assert.match(wrapperSource, /CustomerWhatsAppPanel/);
+  assert.doesNotMatch(wrapperSource, /CustomerWhatsAppPanel/);
+  assert.match(legacyProfileSource, /CustomerWhatsAppPanel/);
+  assert.match(legacyProfileSource, /href="#customer-whatsapp"/);
+  assert.match(legacyProfileSource, /embedded/);
+  assert.match(panelSource, /id="customer-whatsapp"/);
+  assert.match(panelSource, /Automatic messages are triggered by business events themselves/);
+  assert.match(panelSource, /Optional manual send/);
   assert.doesNotMatch(wrapperSource, /href\^=.*wa\.me/);
   assert.doesNotMatch(legacyProfileSource, /buildWhatsAppUrl|wa\.me/);
 });
@@ -126,4 +147,27 @@ test("manual delivery UI and action share provider, sender and current-template 
     manualReadinessSource,
     /binding\.wabaId === credential\?\.wabaId/,
   );
+});
+
+test("WhatsApp recovery authority matches customer edit permission", () => {
+  assert.match(recoverySource, /canPerform[\s\S]*"CUSTOMERS_EDIT"/);
+  assert.match(historyPageSource, /canPerform[\s\S]*"CUSTOMERS_EDIT"/);
+  assert.doesNotMatch(historyPageSource, /canRecoverForRole/);
+});
+
+test("WhatsApp history eligibility is phone-bound to the customer's current number", () => {
+  assert.match(historySource, /whatsappPhoneMatchesCustomer/);
+  assert.match(historySource, /customer\.whatsappPhoneE164 === customer\.phone/);
+  assert.match(historyPageSource, /entry\.whatsappPhoneMatchesCustomer/);
+});
+
+test("global WhatsApp history labels manual and automatic delivery distinctly", () => {
+  assert.match(historyPageSource, /payload\.deliveryMode === "MANUAL"/);
+  assert.match(historyPageSource, /"يدوي", "Manual"/);
+  assert.match(historyPageSource, /"تلقائي", "Automatic"/);
+});
+
+test("customer WhatsApp panel uses theme-aware surfaces", () => {
+  assert.match(panelSource, /bg-surface p-5 shadow-sm/);
+  assert.doesNotMatch(panelSource, /bg-white p-5 shadow-sm/);
 });

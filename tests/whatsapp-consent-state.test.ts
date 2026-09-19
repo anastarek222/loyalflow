@@ -117,11 +117,15 @@ test("STOP uses canonical tenant-scoped identity and preserves opt-in history", 
 
   assert.match(
     stateSource,
-    /"whatsappOptInAt" = COALESCE\("whatsappOptInAt", \$\{input\.changedAt\}\),[\s\S]*"whatsappOptedOutAt" = NULL/,
+    /"whatsappOptInAt" = COALESCE\("whatsappOptInAt", \$\{input\.changedAt\}\)[\s\S]*AND "whatsappOptedOutAt" IS NULL/,
+  );
+  assert.doesNotMatch(
+    stateSource,
+    /"whatsappOptedOutAt" = NULL/,
   );
   assert.match(
     stateSource,
-    /SET "whatsappOptedOutAt" = COALESCE\("whatsappOptedOutAt", \$\{input\.changedAt\}\)/,
+    /SET "whatsappOptedOutAt" = \$\{input\.changedAt\}[\s\S]*AND "whatsappOptInAt" IS NOT NULL[\s\S]*AND "whatsappOptedOutAt" IS NULL/,
   );
 });
 

@@ -93,19 +93,20 @@ export async function setCustomerWhatsAppConsent(
   if (input.consent === "OPT_IN") {
     return client.$executeRaw`
       UPDATE "Customer"
-      SET
-        "whatsappOptInAt" = COALESCE("whatsappOptInAt", ${input.changedAt}),
-        "whatsappOptedOutAt" = NULL
+      SET "whatsappOptInAt" = COALESCE("whatsappOptInAt", ${input.changedAt})
       WHERE "businessId" = ${input.businessId}
         AND "id" = ${input.customerId}
+        AND "whatsappOptedOutAt" IS NULL
     `;
   }
 
   return client.$executeRaw`
     UPDATE "Customer"
-    SET "whatsappOptedOutAt" = COALESCE("whatsappOptedOutAt", ${input.changedAt})
+    SET "whatsappOptedOutAt" = ${input.changedAt}
     WHERE "businessId" = ${input.businessId}
       AND "id" = ${input.customerId}
+      AND "whatsappOptInAt" IS NOT NULL
+      AND "whatsappOptedOutAt" IS NULL
   `;
 }
 

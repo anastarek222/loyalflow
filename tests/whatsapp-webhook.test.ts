@@ -115,6 +115,7 @@ test("WhatsApp webhook status intake summarizes delivery lifecycle without retai
 
 test("WhatsApp delivery status intake extracts bounded provider ids, mapped states, and timestamps", () => {
   const payload = {
+    object: "whatsapp_business_account",
     entry: [
       {
         changes: [
@@ -272,4 +273,82 @@ test("WhatsApp webhook route is fail-closed and verifies signature before JSON p
   );
   assert.match(route, /status: 401/);
   assert.match(route, /status: 503/);
+});
+
+test("delivery status intake ignores signed payloads for non-WhatsApp objects", () => {
+  assert.deepEqual(
+    extractWhatsAppDeliveryStatusEvents({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            {
+              value: {
+                metadata: { phone_number_id: "222222" },
+                statuses: [{ id: "wamid.1", status: "sent" }],
+              },
+            },
+          ],
+        },
+      ],
+    }),
+    [],
+  );
+  assert.deepEqual(
+    summarizeWhatsAppWebhookStatuses({
+      object: "instagram",
+      entry: [
+        {
+          changes: [
+            { value: { statuses: [{ id: "wamid.1", status: "sent" }] } },
+          ],
+        },
+      ],
+    }),
+    {
+      total: 0,
+      sent: 0,
+      delivered: 0,
+      read: 0,
+      failed: 0,
+      other: 0,
+    },
+  );
+});
+
+test("signed webhook completes STOP revocation before delivery/template observability", () => {
+  const route = readFileSync(
+    join(process.cwd(), "app/api/webhooks/whatsapp/route.ts"),
+    "utf8",
+  );
+  const signatureCheck = route.indexOf("verifyWhatsAppWebhookSignature");
+  const parse = route.indexOf("JSON.parse(rawBody)");
+  const optOut = route.indexOf("await revokeWhatsAppConsentFromWebhook(payload)");
+  const delivery = route.indexOf("persistWhatsAppDeliveryStatusFromWebhook(payload)");
+  const template = route.indexOf("persistWhatsAppTemplateStatusFromWebhook(payload)");
+
+  assert.ok(signatureCheck >= 0);
+  assert.ok(parse > signatureCheck);
+  assert.ok(optOut > parse);
+  assert.ok(delivery > optOut);
+  assert.ok(template > optOut);
+  assert.match(route, /Consent revocation is the privacy-critical mutation/);
+});
+
+test("WhatsApp webhook operational log retains counters only, not raw bodies or customer identifiers", () => {
+  const route = readFileSync(
+    join(process.cwd(), "app/api/webhooks/whatsapp/route.ts"),
+    "utf8",
+  );
+  const logStart = route.indexOf('logServerEvent("WHATSAPP_WEBHOOK_RECEIVED"');
+  const returnStart = route.indexOf("return Response.json", logStart);
+  const logBlock = route.slice(logStart, returnStart);
+
+  assert.ok(logStart >= 0);
+  assert.doesNotMatch(logBlock, /rawBody/);
+  assert.doesNotMatch(logBlock, /senderPhone/);
+  assert.doesNotMatch(logBlock, /providerMessageId/);
+  assert.doesNotMatch(logBlock, /phoneNumberId/);
+  assert.match(logBlock, /optedOutCount/);
+  assert.match(logBlock, /persistedStatusCount/);
 });

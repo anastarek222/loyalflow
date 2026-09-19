@@ -92,6 +92,12 @@ export function isCustomerMessagePayload(
     isOptionalBoundedIdentifier(candidate.offerId);
 
   if (!validShape) return false;
+  if (
+    candidate.deliveryMode === "MANUAL" &&
+    !isManualCustomerMessageEvent(candidate.event as CustomerMessageEvent)
+  ) {
+    return false;
+  }
   if (candidate.event === "NEW_REWARD")
     return typeof candidate.rewardId === "string";
   if (candidate.event === "NEW_OFFER")
@@ -238,6 +244,52 @@ export async function enqueueCustomerMessagePublicationJobs(
   }
 
   return jobs;
+}
+
+/**
+ * Re-enqueues an explicit new delivery attempt for an existing automatic
+ * message without reconstructing its payload. This preserves publication
+ * identity (rewardId / offerId), balance and reward snapshot fields while
+ * still re-checking the Owner's current automation controls and the customer's
+ * current phone-bound consent before a new durable job is created.
+ */
+export async function enqueueAutomaticCustomerMessageResendJob(
+  transaction: Prisma.TransactionClient,
+  input: Readonly<{
+    businessId: string;
+    sourceJobId: string;
+    requestId: string;
+    payload: CustomerMessagePayload;
+  }>,
+) {
+  if (
+    input.payload.deliveryMode === "MANUAL" ||
+    !isAutomaticCustomerMessageEvent(input.payload.event)
+  ) {
+    return null;
+  }
+
+  const automationEnabled = await isBusinessWhatsAppAutomationEnabled(
+    transaction,
+    {
+      businessId: input.businessId,
+      event: input.payload.event,
+    },
+  );
+  if (!automationEnabled) return null;
+
+  const customer = await findEligibleCustomer(transaction, {
+    businessId: input.businessId,
+    customerId: input.payload.customerId,
+  });
+  if (!customer) return null;
+
+  return enqueueIntegrationJob(transaction, {
+    businessId: input.businessId,
+    kind: "WHATSAPP_CUSTOMER_NOTIFICATION",
+    idempotencyKey: `customer-message:resend:${input.sourceJobId}:${input.requestId}`,
+    payload: input.payload,
+  });
 }
 
 /**

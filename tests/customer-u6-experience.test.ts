@@ -140,3 +140,13 @@ test("U6 has separate route loading and error presentations without schema work"
   );
   assert.equal(source("prisma/schema.prisma").includes("U6"), false);
 });
+
+test("U6 exposes WhatsApp as a first-class customer quick action before deeper loyalty operations", () => {
+  const quickAction = detail.indexOf('href="#customer-whatsapp"');
+  const whatsappPanel = detail.indexOf("<CustomerWhatsAppPanel");
+  const dailyLoyalty = detail.indexOf('id="daily-loyalty"');
+
+  assert.ok(quickAction >= 0);
+  assert.ok(whatsappPanel > quickAction);
+  assert.ok(dailyLoyalty > whatsappPanel);
+});

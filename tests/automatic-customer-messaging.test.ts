@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   AUTOMATIC_CUSTOMER_MESSAGE_EVENTS,
+  enqueueAutomaticCustomerMessageResendJob,
   enqueueCustomerMessageJob,
   enqueueCustomerMessagePublicationJobs,
   isCustomerMessagePayload,
@@ -94,6 +95,16 @@ test("accepts only bounded versioned customer message payloads", () => {
   );
   assert.equal(
     isCustomerMessagePayload({
+      version: 1,
+      event: "NEW_REWARD",
+      customerId: "customer_1",
+      rewardId: "reward_1",
+      deliveryMode: "MANUAL",
+    }),
+    false,
+  );
+  assert.equal(
+    isCustomerMessagePayload({
       version: 2,
       event: "WELCOME",
       customerId: "customer_1",
@@ -169,6 +180,52 @@ test("catalogue publication jobs are phone-bound, idempotent, and schedulable", 
     offerId: "offer_1",
   });
   assert.deepEqual(create.availableAt, new Date("2026-09-20T10:00:00.000Z"));
+});
+
+test("automatic resend preserves immutable publication identity", async () => {
+  let upsertInput: Record<string, unknown> | null = null;
+  const transaction = {
+    $queryRaw: async () => [automationRow({ newRewardEnabled: true })],
+    customer: {
+      findFirst: async () => ({
+        id: "customer_1",
+        phone: "+201000000001",
+        whatsappPhoneE164: "+201000000001",
+      }),
+    },
+    integrationJob: {
+      upsert: async (input: Record<string, unknown>) => {
+        upsertInput = input;
+        return { id: "job_resend_1" };
+      },
+    },
+  };
+
+  const payload = {
+    version: 1,
+    event: "NEW_REWARD",
+    customerId: "customer_1",
+    rewardId: "reward_1",
+  } as const;
+
+  const result = await enqueueAutomaticCustomerMessageResendJob(
+    transaction as never,
+    {
+      businessId: "business_1",
+      sourceJobId: "source_job_1",
+      requestId: "request_1",
+      payload,
+    },
+  );
+
+  assert.equal(result?.id, "job_resend_1");
+  assert.ok(upsertInput);
+  const create = (upsertInput as { create: Record<string, unknown> }).create;
+  assert.equal(
+    create.idempotencyKey,
+    "customer-message:resend:source_job_1:request_1",
+  );
+  assert.deepEqual(create.payload, payload);
 });
 
 test("automatic WhatsApp contract contains six independently controlled events", () => {
@@ -337,6 +394,102 @@ test("reward-ready keeps the existing earned success UI and adds a feedback flag
     }),
     "/businesses/coffee-shop/scan/customer/customer_1?success=redeemed",
   );
+});
+
+test("automatic customer messages originate from business events without manual-send actions", () => {
+  const createCommand = readFileSync(
+    "lib/server/business/customer-create-command.ts",
+    "utf8",
+  );
+  const createAction = readFileSync(
+    "app/businesses/[slug]/customers/actions.ts",
+    "utf8",
+  );
+  const publicJoinCommand = readFileSync(
+    "lib/server/business/public-membership-command.ts",
+    "utf8",
+  );
+  const publicJoinAction = readFileSync(
+    "app/join/[slug]/actions.ts",
+    "utf8",
+  );
+  const earnCommand = readFileSync(
+    "lib/server/business/loyalty-earn-command.ts",
+    "utf8",
+  );
+  const earnAction = readFileSync(
+    "app/businesses/[slug]/customers/[customerId]/loyalty-earn-actions.ts",
+    "utf8",
+  );
+  const adjustmentCommand = readFileSync(
+    "lib/server/business/customer-balance-adjustment-command.ts",
+    "utf8",
+  );
+  const adjustmentAction = readFileSync(
+    "app/businesses/[slug]/customers/[customerId]/balance-adjustment-action.ts",
+    "utf8",
+  );
+  const redemptionCommand = readFileSync(
+    "lib/server/business/loyalty-redemption-command.ts",
+    "utf8",
+  );
+  const redemptionAction = readFileSync(
+    "app/businesses/[slug]/customers/[customerId]/redemption-actions.ts",
+    "utf8",
+  );
+
+  assert.match(
+    createCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "WELCOME"/,
+  );
+  assert.match(
+    publicJoinCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "WELCOME"/,
+  );
+  assert.match(
+    earnCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "BALANCE_UPDATED"/,
+  );
+  assert.match(
+    earnCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "REWARD_READY"/,
+  );
+  assert.match(
+    adjustmentCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "BALANCE_UPDATED"/,
+  );
+  assert.match(
+    adjustmentCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "REWARD_READY"/,
+  );
+  assert.match(
+    redemptionCommand,
+    /enqueueCustomerMessageJob\(transaction,[\s\S]*event: "REWARD_REDEEMED"/,
+  );
+
+  for (const actionSource of [
+    createAction,
+    publicJoinAction,
+    earnAction,
+    adjustmentAction,
+    redemptionAction,
+  ]) {
+    assert.match(
+      actionSource,
+      /scheduleIntegrationJobs\([^)]*integrationJobIds[^)]*\)/,
+    );
+    assert.doesNotMatch(actionSource, /sendManualCustomerWhatsAppAction/);
+  }
+
+  for (const commandSource of [
+    createCommand,
+    publicJoinCommand,
+    earnCommand,
+    adjustmentCommand,
+    redemptionCommand,
+  ]) {
+    assert.doesNotMatch(commandSource, /enqueueManualCustomerMessageJob/);
+  }
 });
 
 test("public and staff customer creation expose explicit WhatsApp consent", () => {
@@ -523,4 +676,30 @@ test("manual customer-profile WhatsApp actions require customer edit permission"
     actionSource,
     /!canPerform\(session\.user, business\.id, "CUSTOMERS_EDIT"\)/,
   );
+});
+
+test("New Offer provider rendering carries the live offer name into template context", () => {
+  const sender = readFileSync(
+    "lib/server/integrations/whatsapp-cloud.ts",
+    "utf8",
+  );
+  assert.match(
+    sender,
+    /payload\.event === "NEW_OFFER"[\s\S]*publishedSubjectName = offer\.name/,
+  );
+  assert.match(
+    sender,
+    /offer:[\s\S]*payload\.event === "NEW_OFFER"[\s\S]*publishedSubjectName/,
+  );
+});
+
+test("Owner settings fail closed when an automatic event lacks current Meta readiness", () => {
+  const actions = readFileSync(
+    "app/businesses/[slug]/settings/whatsapp-actions.ts",
+    "utf8",
+  );
+  assert.match(actions, /getBusinessWhatsAppAutomaticReadiness\(transaction/);
+  assert.match(actions, /welcomeEnabled: enabled\("WELCOME"/);
+  assert.match(actions, /newRewardEnabled: enabled\("NEW_REWARD"/);
+  assert.match(actions, /newOfferEnabled: enabled\("NEW_OFFER"/);
 });
