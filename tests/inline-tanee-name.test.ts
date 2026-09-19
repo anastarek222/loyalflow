@@ -20,6 +20,7 @@ test("inline Tanee references stay as text instead of embedding the full wordmar
   assert.match(inlineName, /text-\[#FF6652\]/);
   assert.match(inlineName, /data-inline-tanee-ee-vector/);
   assert.match(inlineName, /viewBox="850 0 650 384"/);
+  assert.match(inlineName, /preserveAspectRatio="xMidYMid meet"/);
   assert.match(inlineName, /fillRule="evenodd"/);
   const canonicalWordmark = source("public/brand/tanee-wordmark-en.svg");
   const canonicalEePath = canonicalWordmark.match(

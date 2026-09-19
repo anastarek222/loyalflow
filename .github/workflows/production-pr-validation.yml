@@ -149,6 +149,7 @@ jobs:
           set -e
           find test-results -type f -name 'saas-shell-*.png' -exec cp {} visual-artifacts/saas-shell/ \;
           find test-results -type f -name 'notification-centre-*.png' -exec cp {} visual-artifacts/shared-ui/ \;
+          find test-results -type f \( -name 'marketing-shell-*.png' -o -name 'marketing-inline-tanee-*.png' \) -exec cp {} visual-artifacts/marketing-shell/ \;
           if (( pr_smoke_status != 0 )); then
             exit "$pr_smoke_status"
           fi
