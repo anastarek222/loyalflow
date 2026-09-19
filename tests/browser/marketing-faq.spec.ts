@@ -353,14 +353,21 @@ for (const viewport of [
               }),
           );
           expect(links, `${route} nav slots`).toHaveLength(7);
+          const overflowingNavSlots = await navLocator
+            .locator(":scope > a")
+            .evaluateAll((nodes) =>
+              nodes
+                .map((node) => ({
+                  label: node.textContent?.trim() ?? "",
+                  clientWidth: node.clientWidth,
+                  scrollWidth: node.scrollWidth,
+                }))
+                .filter((slot) => slot.scrollWidth > slot.clientWidth),
+            );
           expect(
-            await navLocator.locator(":scope > a").evaluateAll((nodes) =>
-              nodes.every(
-                (node) => node.scrollWidth <= node.clientWidth,
-              ),
-            ),
+            overflowingNavSlots,
             `${route} navigation text must stay inside fixed slots`,
-          ).toBe(true);
+          ).toEqual([]);
           expect(
             await page
               .locator(
@@ -526,14 +533,21 @@ for (const viewport of [
             const optionalNav = page.locator(
               '[data-marketing-header-nav="true"]',
             );
+            const optionalOverflowingNavSlots = await optionalNav
+              .locator(":scope > a")
+              .evaluateAll((nodes) =>
+                nodes
+                  .map((node) => ({
+                    label: node.textContent?.trim() ?? "",
+                    clientWidth: node.clientWidth,
+                    scrollWidth: node.scrollWidth,
+                  }))
+                  .filter((slot) => slot.scrollWidth > slot.clientWidth),
+              );
             expect(
-              await optionalNav.locator(":scope > a").evaluateAll((nodes) =>
-                nodes.every(
-                  (node) => node.scrollWidth <= node.clientWidth,
-                ),
-              ),
+              optionalOverflowingNavSlots,
               `${route} navigation text must stay inside fixed slots`,
-            ).toBe(true);
+            ).toEqual([]);
 
             expect(shellBaseline).toBeDefined();
             expectSameRect(
