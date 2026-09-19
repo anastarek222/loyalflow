@@ -1333,6 +1333,187 @@ test.describe.serial("PR browser smoke", () => {
     await signOut(page);
   });
 
+  test("Staff reports SIMPLE preserves summary and filters while hiding advanced staff detail across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "owner-a");
+    const route = `/businesses/${fixture.businessA}/reports/staff`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const workspace = page.locator(
+            '[data-staff-reports-workspace="true"]',
+          );
+          await expect(workspace).toBeVisible();
+          await expect(workspace).toHaveAttribute(
+            "data-experience-mode",
+            "SIMPLE",
+          );
+          await expect(
+            workspace.getByRole("heading", {
+              level: 1,
+              name: locale === "ar" ? "أداء الفريق" : "Staff performance",
+              exact: true,
+            }),
+          ).toBeVisible();
+
+          const filters = workspace.locator(
+            '[data-staff-report-filters="true"]',
+          );
+          await expect(filters).toBeVisible();
+          await expect(
+            filters.getByLabel(locale === "ar" ? "الفرع" : "Branch", {
+              exact: true,
+            }),
+          ).toBeVisible();
+          await expect(
+            filters.getByLabel(
+              locale === "ar" ? "الموظف المنسوب إليه" : "Attributed staff",
+              { exact: true },
+            ),
+          ).toBeVisible();
+
+          const summary = workspace.locator(
+            '[data-staff-report-summary="true"]',
+          );
+          await expect(summary).toBeVisible();
+          await expect(summary.locator(":scope > article")).toHaveCount(4);
+          await expect(
+            workspace.locator('[data-staff-report-desktop="table"]'),
+          ).toBeHidden();
+          await expect(
+            workspace.locator('[data-staff-report-mobile="cards"]'),
+          ).toBeHidden();
+
+          await expect(page.locator("html")).toHaveAttribute(
+            "data-theme",
+            theme,
+          );
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-staff-reports-simple-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
+  test("Staff reports ADVANCED preserves responsive staff detail across locale theme and viewport @desktop @pr-smoke", async ({
+    page,
+  }) => {
+    await signIn(page, "manager-a");
+    const route = `/businesses/${fixture.businessA}/reports/staff`;
+
+    for (const viewport of [
+      { width: 390, height: 844, name: "390" },
+      { width: 1366, height: 768, name: "1366" },
+    ] as const) {
+      await page.setViewportSize(viewport);
+
+      for (const locale of ["en", "ar"] as const) {
+        await setAuthenticatedLanguage(page, locale);
+
+        for (const theme of ["light", "dark"] as const) {
+          await page.evaluate(
+            (value) => localStorage.setItem("tanee-theme", value),
+            theme,
+          );
+          const response = await page.goto(route);
+          expect(response?.status()).toBe(200);
+
+          const workspace = page.locator(
+            '[data-staff-reports-workspace="true"]',
+          );
+          await expect(workspace).toBeVisible();
+          await expect(workspace).toHaveAttribute(
+            "data-experience-mode",
+            "ADVANCED",
+          );
+
+          const filters = workspace.locator(
+            '[data-staff-report-filters="true"]',
+          );
+          await expect(filters).toBeVisible();
+          const summary = workspace.locator(
+            '[data-staff-report-summary="true"]',
+          );
+          await expect(summary).toBeVisible();
+          await expect(summary.locator(":scope > article")).toHaveCount(4);
+
+          const desktopTable = workspace.locator(
+            '[data-staff-report-desktop="table"]',
+          );
+          const mobileCards = workspace.locator(
+            '[data-staff-report-mobile="cards"]',
+          );
+          if (viewport.width < 1024) {
+            await expect(desktopTable).toBeHidden();
+            await expect(mobileCards).toBeVisible();
+            expect(await mobileCards.locator(":scope > article").count()).toBeGreaterThan(0);
+          } else {
+            await expect(mobileCards).toBeHidden();
+            await expect(desktopTable).toBeVisible();
+            expect(await desktopTable.locator("tbody tr").count()).toBeGreaterThan(0);
+          }
+
+          await expect(page.locator("html")).toHaveAttribute(
+            "data-theme",
+            theme,
+          );
+          await expect(page.locator("[data-app-language]").first()).toHaveAttribute(
+            "dir",
+            locale === "ar" ? "rtl" : "ltr",
+          );
+          expect(
+            await page.evaluate(
+              () => document.documentElement.scrollWidth <= window.innerWidth,
+            ),
+          ).toBe(true);
+
+          await page.screenshot({
+            path: test.info().outputPath(
+              `saas-shell-staff-reports-advanced-${viewport.name}-${locale}-${theme}.png`,
+            ),
+            fullPage: true,
+          });
+        }
+      }
+    }
+
+    await setAuthenticatedLanguage(page, "en");
+    await signOut(page);
+  });
+
   test("notification centre follows SaaS locale and theme @desktop @pr-smoke", async ({
     page,
   }) => {

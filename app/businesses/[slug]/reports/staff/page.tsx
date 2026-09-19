@@ -337,6 +337,7 @@ export default async function StaffReportsPage({
 
         <form
           method="get"
+          data-staff-report-filters="true"
           className="mt-5 grid gap-4 rounded-[var(--lf-radius-card)] border border-border bg-surface p-5 shadow-sm sm:grid-cols-2 sm:p-6 xl:grid-cols-4"
           aria-label={t("فلاتر أداء الفريق", "Staff performance filters")}
         >
@@ -461,6 +462,7 @@ export default async function StaffReportsPage({
         </p>
 
         <section
+          data-staff-report-summary="true"
           className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4"
           aria-label={t("ملخص أداء الفريق", "Staff performance summary")}
         >
@@ -523,6 +525,7 @@ export default async function StaffReportsPage({
         ) : (
           <>
             <section
+              data-staff-report-desktop="table"
               className={`${simple ? "hidden" : "hidden lg:block"} mt-5 overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-sm`}
               aria-label={t("جدول أداء الفريق", "Staff performance table")}
             >
@@ -605,6 +608,7 @@ export default async function StaffReportsPage({
             </section>
 
             <section
+              data-staff-report-mobile="cards"
               className={`${simple ? "hidden" : "lg:hidden"} mt-5 space-y-3`}
               aria-label={t("بطاقات أداء الفريق", "Staff performance cards")}
             >
