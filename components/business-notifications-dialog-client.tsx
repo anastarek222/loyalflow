@@ -133,7 +133,7 @@ export default function BusinessNotificationsDialogClient({
               ? t.unreadTitle(visibleUnreadCount)
               : t.allReadTitle
           }
-          className="relative inline-flex w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-bold text-foreground-muted shadow-sm transition hover:border-primary/30 hover:text-primary sm:w-auto"
+          className="relative inline-flex w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] border border-border bg-surface px-6 py-4 font-bold text-foreground-muted shadow-[var(--lf-shadow-raised)] transition hover:border-primary/30 hover:bg-surface-subtle hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] sm:w-auto"
         >
           <span className="text-xl" aria-hidden="true">🔔</span>
           <span>{t.button}</span>
@@ -148,6 +148,7 @@ export default function BusinessNotificationsDialogClient({
       {isOpen && (
         <div
           role="dialog"
+          data-testid="business-notifications-dialog"
           aria-modal="true"
           aria-labelledby="notifications-title"
           className="fixed inset-0 z-[100] flex items-end justify-center bg-foreground/70 p-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm sm:items-center sm:p-6"
@@ -155,14 +156,15 @@ export default function BusinessNotificationsDialogClient({
             if (event.target === event.currentTarget) setIsOpen(false);
           }}
         >
-          <section className="flex h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] max-h-none w-full max-w-4xl flex-col overflow-hidden rounded-[var(--lf-radius-card)] bg-white shadow-2xl sm:h-auto sm:max-h-[92vh]">
-            <header className="flex shrink-0 items-start justify-between gap-3 bg-foreground p-4 text-white sm:gap-4 sm:p-6">
+          <section data-testid="business-notifications-panel"
+            className="flex h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] max-h-none w-full max-w-4xl flex-col overflow-hidden rounded-[var(--lf-radius-card)] border border-border bg-surface shadow-[var(--lf-shadow-overlay)] sm:h-auto sm:max-h-[92vh]">
+            <header className="flex shrink-0 items-start justify-between gap-3 border-b border-border bg-surface-subtle p-4 text-foreground sm:gap-4 sm:p-6">
               <div>
                 <p className="text-sm font-bold text-primary">{t.eyebrow}</p>
                 <h2 id="notifications-title" className="mt-1 text-xl font-black sm:text-2xl">
                   {t.title}
                 </h2>
-                <p className="mt-1 hidden text-sm text-white/65 sm:block">
+                <p className="mt-1 hidden text-sm text-foreground-muted sm:block">
                   {t.description}
                 </p>
               </div>
@@ -170,13 +172,13 @@ export default function BusinessNotificationsDialogClient({
                 type="button"
                 aria-label={t.close}
                 onClick={() => setIsOpen(false)}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-2xl font-black transition hover:bg-white/20"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-2xl font-black text-foreground-muted transition hover:bg-[var(--lf-primary-soft)] hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
               >
                 ×
               </button>
             </header>
 
-            <div className="flex shrink-0 flex-col gap-2 border-b border-border bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
+            <div className="flex shrink-0 flex-col gap-2 border-b border-border bg-surface p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-danger-subtle px-4 py-1.5 text-sm font-black text-danger">
                   {t.unread}: {visibleUnreadCount}
@@ -196,7 +198,7 @@ export default function BusinessNotificationsDialogClient({
                 type="button"
                 onClick={markAllAsRead}
                 disabled={visibleUnreadCount === 0 || isMarkingRead}
-                className="w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-black text-[var(--lf-primary-foreground)] transition hover:bg-primary-subtle disabled:cursor-not-allowed disabled:bg-surface-subtle sm:w-auto sm:px-6 sm:py-4"
+                className="w-full rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-black text-primary-foreground transition hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)] disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-foreground-subtle sm:w-auto sm:px-6 sm:py-4"
               >
                 {isMarkingRead
                   ? t.saving
@@ -214,8 +216,8 @@ export default function BusinessNotificationsDialogClient({
                 onClick={() => setFilter("all")}
                 className={
                   filter === "all"
-                    ? "rounded-[var(--lf-radius-input)] bg-foreground px-4 py-2 text-sm font-black text-white"
-                    : "rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-black text-foreground-muted transition hover:border-primary/30 hover:text-primary"
+                    ? "rounded-[var(--lf-radius-input)] bg-primary px-4 py-2 text-sm font-black text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
+                    : "rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm font-black text-foreground-muted transition hover:border-primary/30 hover:bg-surface-subtle hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
                 }
               >
                 {t.all}
@@ -226,8 +228,8 @@ export default function BusinessNotificationsDialogClient({
                 onClick={() => setFilter("unread")}
                 className={
                   filter === "unread"
-                    ? "rounded-[var(--lf-radius-input)] bg-danger px-4 py-2 text-sm font-black text-[var(--lf-inverse)]"
-                    : "rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-2 text-sm font-black text-foreground-muted transition hover:border-danger/30 hover:text-danger"
+                    ? "rounded-[var(--lf-radius-input)] bg-danger px-4 py-2 text-sm font-black text-[var(--lf-inverse)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
+                    : "rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-2 text-sm font-black text-foreground-muted transition hover:border-danger/30 hover:bg-surface-subtle hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lf-focus)]"
                 }
               >
                 {t.unreadOnly}{visibleUnreadCount > 0 ? ` (${visibleUnreadCount})` : ""}
@@ -243,7 +245,7 @@ export default function BusinessNotificationsDialogClient({
               `}</style>
             )}
 
-            <div id="business-notifications-content" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div id="business-notifications-content" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-canvas">
               {filter === "unread" && visibleUnreadCount === 0 ? (
                 <div className="p-8 text-center sm:p-12">
                   <div className="text-5xl" aria-hidden="true">✅</div>
