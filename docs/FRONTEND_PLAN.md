@@ -57,7 +57,7 @@ Browser evidence on code SHA `b495f74fe6c70ff5953edb1b737b75cc2b26a57c`, Product
 - [x] Reports
 - [x] Staff reports
 - [x] Settings
-- [ ] Account security
+- [x] Account security
 - [ ] Team / branches / rewards / offers
 
 #### Reports verification checkpoint — 2026-09-19
@@ -93,6 +93,18 @@ Browser evidence on code SHA `f51e07ba2c721936b54a464b29e0a72dbcdb07d5`, Product
 - The run completed 19/19 PR smoke tests and 74/74 marketing/browser matrix tests; full tests, typecheck, workspace boundaries, lint, build, browser smoke, and patch whitespace all passed.
 - Visual artifacts were reviewed for the verified Settings variants.
 - Settings actions, tenant authorization, plan enforcement, integrations, export permissions, and deletion behavior were not changed by this frontend pass.
+
+
+#### Account security verification checkpoint — 2026-09-19
+
+Browser evidence on code SHA `5ade8fe9f5174ae3533ed4663b75dfb6426fd7e1`, Production PR Validation run #405:
+
+- Account security passed at 390px and 1366px across English/Arabic and light/dark variants.
+- Verified the password-change workspace, current/new/confirmation password fields, log-out-everywhere surface, recent security alerts, locale direction, theme parity, and no horizontal overflow.
+- Password inputs remained LTR in both locales while the surrounding authenticated shell preserved the correct RTL/LTR direction.
+- The run completed 20/20 PR smoke tests and 74/74 marketing/browser matrix tests; full tests, typecheck, workspace boundaries, lint, build, browser smoke, screenshot capture, and patch whitespace all passed.
+- Visual artifacts were reviewed for all eight Account security viewport/locale/theme variants.
+- Password-change actions, session invalidation behavior, account scoping, and security-notification logic were not changed by this frontend verification pass.
 
 
 ### Customer-facing
