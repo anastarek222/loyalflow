@@ -432,7 +432,7 @@ export default async function StaffReportsPage({
           <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-4">
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+              className="inline-flex min-h-11 items-center justify-center rounded-[var(--lf-radius-input)] bg-primary px-5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover"
             >
               {t("تطبيق الفلاتر", "Apply filters")}
             </button>
@@ -496,9 +496,9 @@ export default async function StaffReportsPage({
               <p
                 className={`lf-type-numeric mt-2 text-2xl font-black sm:text-3xl ${
                   metric.tone === "success"
-                    ? "text-emerald-700"
+                    ? "text-success"
                     : metric.tone === "warning"
-                      ? "text-amber-700"
+                      ? "text-warning"
                       : "text-foreground"
                 }`}
               >
@@ -561,7 +561,7 @@ export default async function StaffReportsPage({
                             <span
                               className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                                 row.isActive
-                                  ? "bg-emerald-50 text-emerald-700"
+                                  ? "bg-success-subtle text-success"
                                   : "bg-surface-subtle text-foreground-subtle"
                               }`}
                             >
@@ -577,13 +577,13 @@ export default async function StaffReportsPage({
                         <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.earnActions)}
                         </td>
-                        <td className="px-5 py-4 font-bold text-emerald-700">
+                        <td className="px-5 py-4 font-bold text-success">
                           {numberFormatter.format(row.earnedAmount)}
                         </td>
                         <td className="px-5 py-4 font-bold text-foreground">
                           {numberFormatter.format(row.redeemActions)}
                         </td>
-                        <td className="px-5 py-4 font-bold text-amber-700">
+                        <td className="px-5 py-4 font-bold text-warning">
                           {numberFormatter.format(row.redeemedAmount)}
                         </td>
                         <td className="px-5 py-4 font-bold text-foreground">
@@ -645,27 +645,27 @@ export default async function StaffReportsPage({
                         {numberFormatter.format(row.customersCount)}
                       </p>
                     </div>
-                    <div className="rounded-[var(--lf-radius-input)] bg-amber-50 p-3">
-                      <p className="text-amber-800">
+                    <div className="rounded-[var(--lf-radius-input)] bg-warning-subtle p-3">
+                      <p className="text-warning">
                         {t("مكافآت مستبدلة", "Reward redemptions")}
                       </p>
-                      <p className="mt-1 font-black text-amber-950">
+                      <p className="mt-1 font-black text-warning">
                         {numberFormatter.format(row.rewardRedemptions)}
                       </p>
                     </div>
-                    <div className="rounded-[var(--lf-radius-input)] bg-emerald-50 p-3">
-                      <p className="text-emerald-700">
+                    <div className="rounded-[var(--lf-radius-input)] bg-success-subtle p-3">
+                      <p className="text-success">
                         {t("الرصيد المضاف", "Earned balance")}
                       </p>
-                      <p className="mt-1 font-black text-emerald-900">
+                      <p className="mt-1 font-black text-success">
                         {numberFormatter.format(row.earnedAmount)}
                       </p>
                     </div>
-                    <div className="rounded-[var(--lf-radius-input)] bg-amber-50 p-3">
-                      <p className="text-amber-700">
+                    <div className="rounded-[var(--lf-radius-input)] bg-warning-subtle p-3">
+                      <p className="text-warning">
                         {t("الرصيد المستبدل", "Redeemed balance")}
                       </p>
-                      <p className="mt-1 font-black text-amber-900">
+                      <p className="mt-1 font-black text-warning">
                         {numberFormatter.format(row.redeemedAmount)}
                       </p>
                     </div>

@@ -1269,7 +1269,7 @@ export default async function ReportsPage({
           {canExportData && (
             <a
               href={`/businesses/${business.slug}/reports/export?${reportQuery}`}
-              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-emerald-300 bg-emerald-50 px-4 text-sm font-bold text-emerald-900 transition-colors hover:bg-emerald-100"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--lf-radius-input)] border border-success/30 bg-success-subtle px-4 text-sm font-bold text-success transition-colors hover:bg-success/10"
             >
               <Download className="size-4" aria-hidden="true" />
               {t("تصدير حركات الفترة CSV", "Export period activity CSV")}
@@ -1453,7 +1453,7 @@ export default async function ReportsPage({
 
             <button
               type="submit"
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-white transition-colors hover:bg-primary-hover sm:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--lf-radius-input)] bg-primary px-5 font-bold text-primary-foreground transition-colors hover:bg-primary-hover sm:w-auto"
             >
               <CheckCircle2 className="size-4" aria-hidden="true" />
               {copy.apply}
@@ -1470,7 +1470,7 @@ export default async function ReportsPage({
                   href={`/businesses/${business.slug}/reports?period=${shortcut}${reportFilterSuffix}`}
                   className={`inline-flex min-h-11 items-center rounded-[var(--lf-radius-input)] border px-4 text-center text-sm font-bold transition-colors ${
                     period === shortcut
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-surface text-foreground-muted hover:border-primary/40 hover:text-primary"
                   }`}
                 >
@@ -1526,11 +1526,11 @@ export default async function ReportsPage({
             const Icon = metric.icon;
             const toneClass =
               metric.tone === "success"
-                ? "bg-emerald-50 text-emerald-700"
+                ? "bg-success-subtle text-success"
                 : metric.tone === "warning"
-                  ? "bg-amber-50 text-amber-700"
+                  ? "bg-warning-subtle text-warning"
                   : metric.tone === "danger"
-                    ? "bg-red-50 text-red-700"
+                    ? "bg-danger-subtle text-danger"
                     : "bg-primary-soft text-primary";
             const content = (
               <>
@@ -1791,11 +1791,11 @@ export default async function ReportsPage({
             {advancedMetrics.map((metric) => {
               const valueClass =
                 metric.tone === "success"
-                  ? "text-emerald-700"
+                  ? "text-success"
                   : metric.tone === "warning"
-                    ? "text-amber-700"
+                    ? "text-warning"
                     : metric.tone === "danger"
-                      ? "text-red-700"
+                      ? "text-danger"
                       : metric.tone === "primary"
                         ? "text-primary"
                         : "text-foreground";
@@ -1863,7 +1863,7 @@ export default async function ReportsPage({
               </div>
               <p className="max-w-xl text-sm leading-6 text-surface/75">
                 {t(
-                  "تعرض هذه المؤشرات ما سجله تاني فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.",
+                  "تعرض هذه المؤشرات ما سجله Tanee فقط. لا تنسب إيرادًا أو عائدًا للبرنامج ما لم يكن مسجلاً صراحةً كعملية بيع.",
                   "These metrics show only what Tanee recorded. They do not attribute revenue or ROI to the programme unless it was explicitly recorded as a sale.",
                 )}
               </p>
@@ -2043,7 +2043,7 @@ export default async function ReportsPage({
                               </span>
                             </span>
                             <span
-                              className={`lf-type-numeric shrink-0 font-black ${transaction.amount >= 0 ? "text-emerald-700" : "text-amber-700"}`}
+                              className={`lf-type-numeric shrink-0 font-black ${transaction.amount >= 0 ? "text-success" : "text-warning"}`}
                             >
                               {transaction.amount > 0 ? "+" : ""}
                               {numberFormatter.format(transaction.amount)}
@@ -2128,9 +2128,9 @@ export default async function ReportsPage({
                                 <span
                                   className={
                                     transaction.type === "EARN"
-                                      ? "rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+                                      ? "rounded-full bg-success-subtle px-3 py-1 text-xs font-semibold text-success"
                                       : transaction.type === "REDEEM"
-                                        ? "rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700"
+                                        ? "rounded-full bg-warning-subtle px-3 py-1 text-xs font-semibold text-warning"
                                         : "rounded-full bg-surface-subtle px-3 py-1 text-xs font-semibold text-foreground-muted"
                                   }
                                 >
@@ -2145,8 +2145,8 @@ export default async function ReportsPage({
                               <td
                                 className={`lf-type-numeric px-6 py-4 font-bold ${
                                   transaction.amount >= 0
-                                    ? "text-emerald-700"
-                                    : "text-amber-700"
+                                    ? "text-success"
+                                    : "text-warning"
                                 }`}
                               >
                                 {transaction.amount > 0 ? "+" : ""}
