@@ -12,7 +12,7 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 ## Execution order
 
 ### Foundation
-- [ ] Inline Tanee canonical text/ligature reconciliation (reopened for exact A15 geometry)
+- [x] Inline Tanee canonical text/ligature reconciliation (exact A15 geometry browser-verified)
 - [x] English-only Tanee brand-name authority
 - [x] Stable Arabic web font
 - [x] Shared RTL tracking/uppercase normalization
@@ -22,12 +22,24 @@ This plan covers frontend only: marketing, authentication, onboarding, authentic
 - [x] Complete semantic-color migration for remaining hard-coded product surfaces
 
 ### Shared shell
-- [ ] Marketing header exact desktop geometry pass (reopened)
-- [ ] Marketing footer exact desktop geometry pass (reopened)
+- [x] Marketing header exact desktop geometry pass
+- [x] Marketing footer exact desktop geometry pass
 - [x] Auth shell unification
 - [x] Onboarding alignment
 - [x] SaaS desktop/mobile brand alignment
 - [x] Shared status, toast, pagination, modal, and dropdown visual pass
+
+#### Marketing shell verification checkpoint — 2026-09-19
+
+Browser evidence on code SHA `b495f74fe6c70ff5953edb1b737b75cc2b26a57c`, Production PR Validation run #397:
+
+- Shared marketing header/footer geometry passed at 1366px and 1440px across English/Arabic and light/dark variants.
+- The canonical inline Tanee A15 connected-`ee` geometry passed across rendered text sizes.
+- The marketing desktop geometry suite passed at both 1366px and 1440px, including fixed bilingual navigation slots.
+- Marketing FAQ/browser matrix completed 74/74 passing tests.
+- CI also passed full tests, typecheck, workspace boundaries, lint, build, browser smoke, and patch whitespace.
+- Visual screenshot artifacts were captured for the verified marketing shell variants.
+- This checkpoint closes the reopened marketing shell/A15 desktop items only; global mobile, product-page, and remaining state validation stay open.
 
 ### Marketing pages
 - [x] Home
