@@ -34,6 +34,8 @@ type Props = {
   configId: string;
   graphApiVersion: string;
   enabled: boolean;
+  fallbackWabaId?: string;
+  fallbackPhoneNumberId?: string;
   action: (formData: FormData) => void | Promise<void>;
   getActionFormData?: () => FormData;
 };
@@ -137,6 +139,8 @@ export function WhatsAppEmbeddedSignupButton({
   configId,
   graphApiVersion,
   enabled,
+  fallbackWabaId,
+  fallbackPhoneNumberId,
   action,
   getActionFormData,
 }: Props) {
@@ -151,6 +155,7 @@ export function WhatsAppEmbeddedSignupButton({
   const [sdkReady, setSdkReady] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
+  const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -210,6 +215,10 @@ export function WhatsAppEmbeddedSignupButton({
       modeRef.current.value = pendingIds.current.mode;
       wabaRef.current.value = pendingIds.current.wabaId;
       phoneRef.current.value = pendingIds.current.phoneNumberId ?? "";
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
       formRef.current?.requestSubmit();
     };
 
@@ -222,7 +231,13 @@ export function WhatsAppEmbeddedSignupButton({
     };
 
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
+    };
   }, [enabled]);
 
   const startConnection = () => {
@@ -232,6 +247,10 @@ export function WhatsAppEmbeddedSignupButton({
     setConnecting(true);
     pendingCode.current = null;
     pendingIds.current = null;
+    if (completionTimeoutRef.current) {
+      clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = null;
+    }
 
     window.FB.login(
       (response) => {
@@ -248,6 +267,23 @@ export function WhatsAppEmbeddedSignupButton({
         }
 
         pendingCode.current = code;
+
+        // Meta can occasionally return the OAuth code without replaying the
+        // WA_EMBEDDED_SIGNUP completion event on reconnect. If this tenant has
+        // a previously verified sender, reuse only those non-secret IDs and
+        // let the server verify the new token against them before persisting.
+        if (
+          !pendingIds.current &&
+          validMetaId(fallbackWabaId) &&
+          validMetaId(fallbackPhoneNumberId)
+        ) {
+          pendingIds.current = {
+            mode: "STANDARD",
+            wabaId: fallbackWabaId,
+            phoneNumberId: fallbackPhoneNumberId,
+          };
+        }
+
         if (
           pendingIds.current &&
           codeRef.current &&
@@ -259,8 +295,26 @@ export function WhatsAppEmbeddedSignupButton({
           modeRef.current.value = pendingIds.current.mode;
           wabaRef.current.value = pendingIds.current.wabaId;
           phoneRef.current.value = pendingIds.current.phoneNumberId ?? "";
+          if (completionTimeoutRef.current) {
+            clearTimeout(completionTimeoutRef.current);
+            completionTimeoutRef.current = null;
+          }
           formRef.current?.requestSubmit();
+          return;
         }
+
+        completionTimeoutRef.current = setTimeout(() => {
+          if (pendingCode.current && !pendingIds.current) {
+            pendingCode.current = null;
+            setConnecting(false);
+            setClientError(
+              t(
+                "Meta أكملت تسجيل الدخول لكنها لم تُرجع حساب WhatsApp والرقم. حاول مرة أخرى أو راجع إعداد Embedded Signup في Meta.",
+                "Meta completed login but did not return the WhatsApp account and phone. Try again or review the Meta Embedded Signup configuration.",
+              ),
+            );
+          }
+        }, 12000);
       },
       {
         config_id: configId,
