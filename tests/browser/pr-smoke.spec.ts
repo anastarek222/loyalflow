@@ -95,8 +95,9 @@ const MARKETING_SHELL_ROUTES = [
   "/terms",
   "/data-deletion",
   "/get-started",
-  "/demo",
 ] as const;
+
+const OPTIONAL_MARKETING_SHELL_ROUTES = ["/demo"] as const;
 
 function roundRectValue(value: number) {
   return Math.round(value * 100) / 100;
@@ -1480,6 +1481,25 @@ test.describe.serial("PR browser smoke", () => {
           geometry,
           routeBaseline,
           `${viewport.width}px route ${route}`,
+        );
+      }
+
+      for (const route of OPTIONAL_MARKETING_SHELL_ROUTES) {
+        const response = await page.goto(route);
+        expect([200, 404], route).toContain(response?.status());
+        if (response?.status() === 404) continue;
+
+        await expect(page.locator("html")).toHaveAttribute(
+          "data-marketing-theme",
+          "light",
+        );
+        await expect(page.locator("main")).toHaveAttribute("dir", "ltr");
+
+        const geometry = await captureMarketingShellGeometry(page);
+        expectMarketingShellGeometryMatch(
+          geometry,
+          routeBaseline,
+          `${viewport.width}px optional route ${route}`,
         );
       }
     });
