@@ -108,7 +108,7 @@ test("unapproved automatic events stay off instead of creating doomed deliveries
   assert.match(actions, /getBusinessWhatsAppAutomaticReadiness\(transaction/);
   assert.match(actions, /readiness\.missingCopyEvents/);
   assert.match(actions, /readiness\.blockedEvents/);
-  assert.match(actions, /requested && !blockedEvents\.has/);
+  assert.match(actions, /requested &&[\\s\\S]*!blockedEvents\\.has\\(event\\)/);
   assert.match(actions, /saved-needs-approval/);
   assert.match(page, /keeps that event OFF instead of creating failed deliveries/);
 });
