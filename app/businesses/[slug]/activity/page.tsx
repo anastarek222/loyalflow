@@ -248,24 +248,24 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
             hideLabel={t(language, "إخفاء", "Hide")}
             defaultOpen={hasActiveFilters}
           >
-            <section className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6">
+            <section className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-6">
               <form className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="xl:col-span-2">
               <label htmlFor="q" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "البحث", "Search")}</label>
               <input id="q" name="q" type="search" maxLength={200} defaultValue={searchQuery}
                 placeholder={t(language, "الوصف، العميل، الموظف، الفرع، الجهاز أو IP", "Description, customer, employee, branch, device, or IP")}
-                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none placeholder:text-foreground-subtle focus:border-primary/30" />
+                className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none placeholder:text-foreground-subtle focus:border-primary/30" />
             </div>
             <div>
               <label htmlFor="type" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "نوع العملية", "Activity type")}</label>
-              <select id="type" name="type" defaultValue={selectedType ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30">
+              <select id="type" name="type" defaultValue={selectedType ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30">
                 <option value="">{t(language, "كل أنواع العمليات", "All activity types")}</option>
                 {activityTypes.map((type) => <option key={type} value={type}>{getActivityLabel(type, language)}</option>)}
               </select>
             </div>
             <div>
               <label htmlFor="actor" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "المنفذ", "Actor")}</label>
-              <select id="actor" name="actor" defaultValue={selectedActor ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30">
+              <select id="actor" name="actor" defaultValue={selectedActor ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30">
                 <option value="">{t(language, "كل المنفذين", "All actors")}</option>
                 {actorOptions.map((actor) => {
                   const actorName = [actor.firstName, actor.lastName].filter(Boolean).join(" ");
@@ -275,7 +275,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
             </div>
             <div>
               <label htmlFor="customer" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "العميل", "Customer")}</label>
-              <select id="customer" name="customer" defaultValue={selectedCustomer ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30">
+              <select id="customer" name="customer" defaultValue={selectedCustomer ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30">
                 <option value="">{t(language, "كل العملاء", "All customers")}</option>
                 {customerOptions.map((customer) => {
                   const customerName = [customer.firstName, customer.lastName].filter(Boolean).join(" ");
@@ -285,21 +285,21 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
             </div>
             <div>
               <label htmlFor="branch" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "الفرع", "Branch")}</label>
-              <select id="branch" name="branch" defaultValue={selectedBranch ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30">
+              <select id="branch" name="branch" defaultValue={selectedBranch ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30">
                 <option value="">{t(language, "كل الفروع", "All branches")}</option>
                 {branchOptions.map((branch) => <option key={branch.id} value={branch.id}>{branch.name}</option>)}
               </select>
             </div>
             <div>
               <label htmlFor="device" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "الجهاز", "Device")}</label>
-              <select id="device" name="device" defaultValue={selectedDevice ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30">
+              <select id="device" name="device" defaultValue={selectedDevice ?? ""} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30">
                 <option value="">{t(language, "كل الأجهزة", "All devices")}</option>
                 {deviceOptions.map((device) => <option key={device} value={device}>{device}</option>)}
               </select>
             </div>
             <div>
               <label htmlFor="sort" className="mb-2 block text-sm font-medium text-foreground-muted">{t(language, "الترتيب", "Sort")}</label>
-              <select id="sort" name="sort" defaultValue={selectedSort} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-white px-4 py-4 outline-none focus:border-primary/30">
+              <select id="sort" name="sort" defaultValue={selectedSort} className="w-full rounded-[var(--lf-radius-input)] border border-border bg-surface px-4 py-4 outline-none focus:border-primary/30">
                 <option value="newest">{t(language, "الأحدث أولًا", "Newest first")}</option>
                 <option value="oldest">{t(language, "الأقدم أولًا", "Oldest first")}</option>
               </select>
@@ -325,12 +325,12 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
         </div>
 
         {totalActivities === 0 ? (
-          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
+          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-surface p-12 text-center">
             <h2 className="text-xl font-bold text-foreground">{t(language, "لا توجد عمليات مسجلة", "No activities recorded")}</h2>
             <p className="mt-2 text-foreground-subtle">{t(language, "ستظهر العمليات الجديدة هنا تلقائيًا.", "New activities will appear here automatically.")}</p>
           </section>
         ) : activities.length === 0 ? (
-          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-white p-12 text-center">
+          <section className="mt-6 rounded-[var(--lf-radius-card)] border border-dashed border-border bg-surface p-12 text-center">
             <h2 className="text-xl font-bold text-foreground">{t(language, "لا توجد عمليات تطابق البحث أو الفلاتر المحددة", "No activities match the selected search or filters")}</h2>
             <p className="mt-2 text-foreground-subtle">{t(language, "جرّب تعديل معايير البحث أو إزالة الفلاتر للعثور على عمليات أخرى.", "Adjust the search criteria or clear filters to find other activities.")}</p>
             <Link href={`/businesses/${business.slug}/activity`} className="mt-6 inline-flex rounded-[var(--lf-radius-input)] border border-border px-6 py-4 font-semibold text-foreground-muted transition hover:bg-surface-subtle">
@@ -351,7 +351,7 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
                 : null;
               const renderedDescription = getActivityDescription(activity, language);
               return (
-                <article key={activity.id} className="rounded-[var(--lf-radius-card)] border border-border bg-white p-6 shadow-sm">
+                <article key={activity.id} className="rounded-[var(--lf-radius-card)] border border-border bg-surface p-6 shadow-sm">
                   <div className="flex flex-col justify-between gap-4 sm:flex-row">
                     <div className="min-w-0">
                       <span className={`inline-flex rounded-full px-4 py-1 text-xs font-semibold ${getActivityBadgeClass(activity.type)}`}>
@@ -389,13 +389,13 @@ export default async function ActivityPage({ params, searchParams }: ActivityPag
         {totalPages > 1 && (
           <nav className="mt-8 flex items-center justify-center gap-4" aria-label={t(language, "صفحات سجل النشاط", "Activity log pages")}>
             {currentPage > 1 ? (
-              <Link href={getPageUrl(currentPage - 1)} className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted">{t(language, "→ السابق", "← Previous")}</Link>
+              <Link href={getPageUrl(currentPage - 1)} className="rounded-[var(--lf-radius-input)] border border-border bg-surface px-6 py-4 font-semibold text-foreground-muted">{t(language, "→ السابق", "← Previous")}</Link>
             ) : (
               <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">{t(language, "→ السابق", "← Previous")}</span>
             )}
-            <span className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-white">{currentPage} / {totalPages}</span>
+            <span className="rounded-[var(--lf-radius-input)] bg-foreground px-6 py-4 font-semibold text-inverse">{currentPage} / {totalPages}</span>
             {currentPage < totalPages ? (
-              <Link href={getPageUrl(currentPage + 1)} className="rounded-[var(--lf-radius-input)] border border-border bg-white px-6 py-4 font-semibold text-foreground-muted">{t(language, "التالي ←", "Next →")}</Link>
+              <Link href={getPageUrl(currentPage + 1)} className="rounded-[var(--lf-radius-input)] border border-border bg-surface px-6 py-4 font-semibold text-foreground-muted">{t(language, "التالي ←", "Next →")}</Link>
             ) : (
               <span className="cursor-not-allowed rounded-[var(--lf-radius-input)] border border-border bg-surface-subtle px-6 py-4 font-semibold text-foreground-subtle">{t(language, "التالي ←", "Next →")}</span>
             )}
